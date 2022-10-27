@@ -1,5 +1,8 @@
 *.agdai
-MAlonzo/**
+*/MAlonzo/**
 
 # emacs
 *.#*
+
+# build
+src/cc
