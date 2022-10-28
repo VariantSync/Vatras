@@ -1,5 +1,5 @@
 ```agda
-module cc where
+module CC where
 
 open import Function.Base
 
@@ -9,6 +9,7 @@ open import Data.List.Base renaming (map to mapl) hiding (_++_)
 open import Data.List.NonEmpty.Base renaming (map to mapl⁺)
 
 import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 open import Extensionality
@@ -74,9 +75,18 @@ selectAlternative : {A : Set} → Tag → List⁺ A → A
 selectAlternative t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
 {-# TERMINATING #-}
-ccsem : {A : Set} → CC A → Configuration → Variant A
-ccsem (Artifact a es) c = Artifactᵥ a (mapl (flip ccsem c) es)
-ccsem (D ⟨ alternatives ⟩) c = ccsem (selectAlternative (c D) alternatives) c
+⟦_⟧ : {A : Set} → CC A → Configuration → Variant A
+⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ selectAlternative (c D) alternatives ⟧ c
+```
+
+Semantic Equivalence: Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
+```agda
+-- ⟦⟧-≡ : ∀ {A : Set} {v : Variant} {e₁ e₂ : CC A}
+--   → ∃ (c : Configuration) with ⟦ e₁ ⟧ c = v
+--   → ∃ (c : Configuration) with ⟦ e₁ ⟧ c = v
+--     ---------------------------------------
+--   → e₁ equiv e₂
 ```
 
 Let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
@@ -89,25 +99,26 @@ cc_example_walk : CC String
 cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
 
 cc_example_walk_zoom : Variant String
-cc_example_walk_zoom = ccsem cc_example_walk (λ {"Ekko" → 0; _ → 0})
+cc_example_walk_zoom = ⟦ cc_example_walk ⟧ (λ {"Ekko" → 0; _ → 0})
 ```
 
 Print the example:
 ```agda
-open import Agda.Builtin.IO using (IO)
-open import Agda.Builtin.Unit using (⊤)
-open import Agda.Builtin.String using (String)
-
-postulate putStrLn : String → IO ⊤
-{-# FOREIGN GHC import qualified Data.Text as T #-}
-{-# COMPILE GHC putStrLn = putStrLn . T.unpack #-}
-
 {-# TERMINATING #-}
 showVariant : Variant String → String
+showVariant (Artifactᵥ a []) = a
 showVariant (Artifactᵥ a es) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
 
-main : IO ⊤
-main = putStrLn (showVariant cc_example_walk_zoom)
+mainStr : String
+mainStr = showVariant cc_example_walk_zoom
+```
+
+Some transformation rules
+```agda
+D⟨e⟩≡e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+    ---------------
+  → D ⟨ e ∷ [] ⟩ ≡ e
+D⟨e⟩≡e = {!!}
 ```
 
 In the following we introduce normal forms for choice calculus expressions.
@@ -115,11 +126,17 @@ We express each normal form as a new data type such that a conversion of a choic
 
 An algebaric decision diagram (ADD) is a choice calculus expression in which all leaves are artifacts.
 We refer to a choice calculus expression whose abstract syntax is an ADD, as being in _product normal form_ (PNF):
-In _A Formal Framework on Software Product Line Analyses_ and the 1997 ADD paper, ADDs are defined to be binary.
+In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
 ```agda
+open import Data.Bool
+
 data ADD (A : Set) : Set where
-  Product : A → ADD A -- ModelBase
-  Choice : Dimension → ADD A → ADD A → ADD A -- ModelChoice, has a presence condition here instead of a dimension
+  Terminal : A → ADD A -- ModelBase in FFSPL
+  Choice : Dimension → ADD A → ADD A → ADD A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
+
+-- BDDs are ADDs in which we can only end at true or false.
+BDD : Set
+BDD = ADD Bool
 ```
 
 To convert to product normal form, it is easier to first convert to binary normal form of choice calculus.
@@ -130,9 +147,9 @@ data CC₂ (A : Set) : Set where
   _⟨_,_⟩₂ : Dimension → CC₂ A → CC₂ A → CC₂ A
 
 {-# TERMINATING #-} -- Todo: Can we prove this terminating?
-toCC : {A : Set} → CC₂ A → CC A
-toCC (Artifact₂ a es) = Artifact a (mapl toCC es)
-toCC (D ⟨ l , r ⟩₂) = D ⟨ (toCC l) ∷ (toCC r) ∷ [] ⟩
+asCC : {A : Set} → CC₂ A → CC A
+asCC (Artifact₂ a es) = Artifact a (mapl asCC es)
+asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 
 newDim : Dimension → Dimension
 newDim s = s ++ "'"
@@ -148,5 +165,17 @@ toCC₂ (D ⟨ e ∷ [] ⟩) = toCC₂ e
 toCC₂ (D ⟨ then ∷ elze ∷ [] ⟩) = D ⟨ toCC₂ then , toCC₂ elze ⟩₂
 -- Perform recursive nesting on choices with arity n > 2.
 toCC₂ (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ ((newDim D) ⟨ e₂ ∷ es ⟩) ⟩₂
+```
 
+Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
+```
+-- This theorem wont work so far because both expressions have different dimensions.
+-- We also have to assume that no dimension ends with a tick mark in e.
+-- For example toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) = D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩
+-- which is wrong. We could add this assumption to the toCC₂ function.
+CC⇒CC₂ : ∀ {A : Set}
+  → (e : CC A)
+    --------------------------------
+  → ⟦ e ⟧ ≡ ⟦ asCC (toCC₂ e) ⟧
+CC⇒CC₂ e = {!!}
 ```
