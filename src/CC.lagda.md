@@ -71,22 +71,25 @@ clampTagWithin {suc n} {nz} = minFinFromLimit n
 
 -- Selects the alternative at the given tag.
 -- Agda can implicitly prove that the length of the list is positive, because it is a non-empty list, and by type inference, it supplies the list length to clampWithin.
-selectAlternative : {A : Set} → Tag → List⁺ A → A
-selectAlternative t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
+choice-elimination : {A : Set} → Tag → List⁺ A → A
+choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
 {-# TERMINATING #-}
 ⟦_⟧ : {A : Set} → CC A → Configuration → Variant A
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
-⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ selectAlternative (c D) alternatives ⟧ c
+⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
 
 Semantic Equivalence: Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
 ```agda
+-- For every variant v and choice calculus expressions e₁ and e₂, if there exists configuration under which e₁ produces v and if there exists a configuration un der which e₂ produces v, then we consider e₁ and e₂ to be equivalent.
 -- ⟦⟧-≡ : ∀ {A : Set} {v : Variant} {e₁ e₂ : CC A}
 --   → ∃ (c : Configuration) with ⟦ e₁ ⟧ c = v
---   → ∃ (c : Configuration) with ⟦ e₁ ⟧ c = v
+--   → ∃ (c : Configuration) with ⟦ e₂ ⟧ c = v
 --     ---------------------------------------
 --   → e₁ equiv e₂
+
+-- Alternative definition: Forall variants v, given (1) two expressions e₁  e₂ and (2) two configurations c₁ c₂ and (3) a proofs that ⟦ e₁ ⟧ c₁ = v and ⟦ e₂ ⟧ c₂ = v, we consider e₁ and e₂ to be equivalent.
 ```
 
 Let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
