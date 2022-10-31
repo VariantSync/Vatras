@@ -3,14 +3,20 @@ module CC where
 
 open import Function.Base
 
-open import Data.String.Base hiding (toList)
+open import Data.String.Base
+  using (String; _++_)
 open import Data.Nat.Base
-open import Data.List.Base renaming (map to mapl) hiding (_++_)
-open import Data.List.NonEmpty.Base renaming (map to mapl⁺)
+  using (ℕ; zero; suc; NonZero)
+open import Data.List.Base
+  using (List; []; _∷_; lookup)
+  renaming (map to mapl)
+open import Data.List.NonEmpty.Base
+  using(List⁺; _∷_; toList)
+  renaming (map to mapl⁺)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
-open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+--open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 open import Extensionality
 ```
@@ -76,23 +82,153 @@ choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
 {-# TERMINATING #-}
 ⟦_⟧ : {A : Set} → CC A → Configuration → Variant A
-⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+⟦ Artifact a es ⟧     c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
 
-Semantic Equivalence: Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
+Semantic equivalence means that the same configurations yield the same variants:
 ```agda
--- For every variant v and choice calculus expressions e₁ and e₂, if there exists configuration under which e₁ produces v and if there exists a configuration un der which e₂ produces v, then we consider e₁ and e₂ to be equivalent.
--- ⟦⟧-≡ : ∀ {A : Set} {v : Variant} {e₁ e₂ : CC A}
---   → ∃ (c : Configuration) with ⟦ e₁ ⟧ c = v
---   → ∃ (c : Configuration) with ⟦ e₂ ⟧ c = v
---     ---------------------------------------
---   → e₁ equiv e₂
+_≈_ : {A : Set} (a b : CC A) → Set
+a ≈ b = ⟦ a ⟧ ≡ ⟦ b ⟧
+infix 5 _≈_
 
--- Alternative definition: Forall variants v, given (1) two expressions e₁  e₂ and (2) two configurations c₁ c₂ and (3) a proofs that ⟦ e₁ ⟧ c₁ = v and ⟦ e₂ ⟧ c₂ = v, we consider e₁ and e₂ to be equivalent.
+-- Semantic equivalence ≈ inherits all properties from structural equality ≡ because it is just an alias.
+
+-- Syntactic equality implies semantic equality.
+≡→≈ : ∀ {A : Set} (a b : CC A)
+  → a ≡ b
+    -------
+  → a ≈ b
+≡→≈ _ _ eq rewrite eq = refl
+
+module _≈_-Reasoning {A : Set} where
+  infix  1 ≈-begin_
+  infixr 2 _≈⟨⟩_ _≈⟨_⟩_
+  infix  3 _≈-∎
+
+  ≈-begin_ : ∀ {a b : CC A}
+    → a ≈ b
+      -----
+    → a ≈ b
+  ≈-begin eq = eq
+
+  _≈⟨⟩_ : ∀ (a : CC A) {b : CC A}
+    → a ≈ b
+      -----
+    → a ≈ b
+  a ≈⟨⟩ eqchain = eqchain
+
+  _≈⟨_⟩_ : ∀ (a : CC A) {b c : CC A}
+    → a ≈ b
+    → b ≈ c
+      -----
+    → a ≈ c
+  a ≈⟨ a≈b ⟩ b≈c = Eq.trans a≈b b≈c
+
+  _≈-∎ : ∀ (a : CC A)
+      -----
+    → a ≈ a
+  a ≈-∎ = refl
 ```
 
-Let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
+Some transformation rules
+```agda
+D⟨e⟩≈e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+    ---------------
+  → D ⟨ e ∷ [] ⟩ ≈ e
+D⟨e⟩≈e = refl
+
+-- -- This is impossible to prove because the configurations are different!
+-- chc-sym : ∀ {A : Set} → {a b : CC A} → {D : Dimension}
+--   → D ⟨ a ∷ b ∷ [] ⟩ ≈ D ⟨ b ∷ a ∷ [] ⟩
+-- chc-sym {A} {a} {b} {D} = (extensionality {!!})
+```
+
+For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence.
+Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
+
+```agda
+{-
+Given two expressions e₁ e₂. We want to express the following:
+
+Every variant described by e₁
+is also described by e₂.
+
+->
+
+∀ variants v in the image of ⟦ e₁ ⟧
+there exists a configuration c
+such that ⟦ e₂ ⟧ c ≡ v.
+
+->
+
+For all configurations c₁
+there exists a configuration c₂
+such that ⟦ e₁ ⟧ c₁ = ⟦ e₂ ⟧ c₂.
+-}
+open import Data.Product using (∃; ∃-syntax; _,_)
+open import Data.Product using (_×_; proj₁; proj₂)
+
+infix 5 _⊂̌_ --\sub\v
+_⊂̌_ : ∀ {A : Set} (e₁ : CC A) (e₂ : CC A) → Set
+e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
+
+-- unicode for ≚ is \or=.
+-- Semantic equality of CC is structural equality of all described variants.
+-- (It is not semantic equality of variants because we do not the semantics of
+-- the object language!)
+_≚_ : ∀ {A : Set} (e₁ : CC A) (e₂ : CC A) → Set
+e₁ ≚ e₂ = (e₁ ⊂̌ e₂) × (e₂ ⊂̌ e₁)
+infix 5 _≚_
+
+-- As an example, we now prove D ⟨ e ∷ [] ⟩ ≚ e.
+
+D⟨e⟩⊂̌e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+    ---------------
+  → D ⟨ e ∷ [] ⟩ ⊂̌ e
+D⟨e⟩⊂̌e config = ( config , refl )
+
+e⊂̌D⟨e⟩ : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+    ---------------
+  → e ⊂̌ D ⟨ e ∷ [] ⟩
+e⊂̌D⟨e⟩ config = ( config , refl )
+
+D⟨e⟩≚e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+    ---------------
+  → D ⟨ e ∷ [] ⟩ ≚ e
+D⟨e⟩≚e {A} {e} {D} = D⟨e⟩⊂̌e {A} {e} {D} , e⊂̌D⟨e⟩ {A} {e} {D} -- I don't know why but we have to list the implicit arguments here.
+```
+In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `D ⟨ e ∷ [] ⟩ ≚ e` follows:
+```agda
+-- Semantic equivalence implies that the described set of variants is a subset.
+≈→⊂̌ : ∀ {A : Set} {a b : CC A}
+  → a ≈ b
+    -----
+  → a ⊂̌ b
+-- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We just keep the assumed configuration and apply it to bot hsides of the equation of a≈b.
+≈→⊂̌ a≈b config = config , Eq.cong (λ sem → sem config) a≈b
+
+-- Semantic equivalence implies variant-preserving equivalence.
+≈→≚ : ∀ {A : Set} {a b : CC A}
+  → a ≈ b
+    -----
+  → a ≚ b
+≈→≚ {A} {a} {b} a≈b =
+    ≈→⊂̌ {A} {a} {b} a≈b
+  , ≈→⊂̌ {A} {b} {a} (Eq.sym a≈b)
+-- We have to list the implicit parameters here because they are swapped for the second direction.
+```
+
+Finally we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
+```agda
+D⟨e⟩≚e' : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+    ---------------
+  → D ⟨ e ∷ [] ⟩ ≚ e
+D⟨e⟩≚e' {A} {e} {D} = ≈→≚ {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {A} {e} {D})
+-- For some reason we keep to have reapeating the implicit parameters which is a bit annoying but still ok because the proves are short.
+```
+
+Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
 ```agda
 -- smart constructor for plain artifacts
 leaf : {A : Set} → A → CC A
@@ -114,14 +250,6 @@ showVariant (Artifactᵥ a es) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (map
 
 mainStr : String
 mainStr = showVariant cc_example_walk_zoom
-```
-
-Some transformation rules
-```agda
-D⟨e⟩≡e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
-    ---------------
-  → D ⟨ e ∷ [] ⟩ ≡ e
-D⟨e⟩≡e = {!!}
 ```
 
 In the following we introduce normal forms for choice calculus expressions.
@@ -178,7 +306,7 @@ Now we prove that conversion to binary normal form is semantics preserving (i.e.
 -- which is wrong. We could add this assumption to the toCC₂ function.
 CC⇒CC₂ : ∀ {A : Set}
   → (e : CC A)
-    --------------------------------
-  → ⟦ e ⟧ ≡ ⟦ asCC (toCC₂ e) ⟧
+    ------------------
+  → e ≚ asCC (toCC₂ e)
 CC⇒CC₂ e = {!!}
 ```
