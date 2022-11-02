@@ -6,7 +6,7 @@ open import Function.Base
 open import Data.String.Base
   using (String; _++_)
 open import Data.Nat.Base
-  using (ℕ; zero; suc; NonZero)
+  using (ℕ; zero; suc; _*_; NonZero) renaming (_+_ to _+++_)
 open import Data.List.Base
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
@@ -16,7 +16,7 @@ open import Data.List.NonEmpty.Base
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
---open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 open import Extensionality
 ```
@@ -82,7 +82,7 @@ choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
 {-# TERMINATING #-}
 ⟦_⟧ : {A : Set} → CC A → Configuration → Variant A
-⟦ Artifact a es ⟧     c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
 
@@ -94,7 +94,7 @@ infix 5 _≈_
 
 -- Semantic equivalence ≈ inherits all properties from structural equality ≡ because it is just an alias.
 
--- Syntactic equality implies semantic equality.
+-- Structural equality implies semantic equality.
 ≡→≈ : ∀ {A : Set} (a b : CC A)
   → a ≡ b
     -------
@@ -137,19 +137,14 @@ D⟨e⟩≈e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≈ e
 D⟨e⟩≈e = refl
-
--- -- This is impossible to prove because the configurations are different!
--- chc-sym : ∀ {A : Set} → {a b : CC A} → {D : Dimension}
---   → D ⟨ a ∷ b ∷ [] ⟩ ≈ D ⟨ b ∷ a ∷ [] ⟩
--- chc-sym {A} {a} {b} {D} = (extensionality {!!})
 ```
 
 For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence.
 Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
-
+We thus first describe the variant-subset relation ⊂̌ and then define variant-equality as a bi-directional subset. 
 ```agda
 {-
-Given two expressions e₁ e₂. We want to express the following:
+For the variant-subset relation, we want to express the following, given two expressions e₁ e₂:
 
 Every variant described by e₁
 is also described by e₂.
@@ -170,16 +165,46 @@ open import Data.Product using (∃; ∃-syntax; _,_)
 open import Data.Product using (_×_; proj₁; proj₂)
 
 infix 5 _⊂̌_ --\sub\v
-_⊂̌_ : ∀ {A : Set} (e₁ : CC A) (e₂ : CC A) → Set
+_⊂̌_ : ∀ {A : Set} (e₁ e₂ : CC A) → Set
 e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
 
--- unicode for ≚ is \or=.
--- Semantic equality of CC is structural equality of all described variants.
+-- some properties
+-- _⊂̌_ is not symmetric
+
+⊂̌-trans : ∀ {A : Set} {e₁ e₂ e₃ : CC A}
+  → e₁ ⊂̌ e₂
+  → e₂ ⊂̌ e₃
+    -------
+  → e₁ ⊂̌ e₃
+⊂̌-trans x y c₁ =
+  -- this somehow resembles the implementation of >>= of state monad
+  let (c₂ , eq₁₂) = x c₁
+      (c₃ , eq₂₃) = y c₂
+  in c₃ , Eq.trans eq₁₂ eq₂₃
+
+-- Variant-preserving equality of CC is structural equality of all described variants.
 -- (It is not semantic equality of variants because we do not the semantics of
 -- the object language!)
-_≚_ : ∀ {A : Set} (e₁ : CC A) (e₂ : CC A) → Set
+-- unicode for ≚ is \or=.
+_≚_ : ∀ {A : Set} (e₁ e₂ : CC A) → Set
 e₁ ≚ e₂ = (e₁ ⊂̌ e₂) × (e₂ ⊂̌ e₁)
 infix 5 _≚_
+
+-- properties of variant-preserving equivalence
+≚-sym : ∀ {A : Set} {e₁ e₂ : CC A}
+  → e₁ ≚ e₂
+    -------
+  → e₂ ≚ e₁
+≚-sym (e₁⊂̌e₂ , e₂⊂̌e₁) = e₂⊂̌e₁ , e₁⊂̌e₂
+
+≚-trans : ∀ {A : Set} {e₁ e₂ e₃ : CC A}
+  → e₁ ≚ e₂
+  → e₂ ≚ e₃
+    -------
+  → e₁ ≚ e₃
+≚-trans {A} {e₁} {e₂} {e₃} (e₁⊂̌e₂ , e₂⊂̌e₁) (e₂⊂̌e₃ , e₃⊂̌e₂) =
+    ⊂̌-trans {A} {e₁} {e₂} {e₃} e₁⊂̌e₂ e₂⊂̌e₃
+  , ⊂̌-trans {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
 
 -- As an example, we now prove D ⟨ e ∷ [] ⟩ ≚ e.
 
@@ -196,19 +221,20 @@ e⊂̌D⟨e⟩ config = ( config , refl )
 D⟨e⟩≚e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≚ e
-D⟨e⟩≚e {A} {e} {D} = D⟨e⟩⊂̌e {A} {e} {D} , e⊂̌D⟨e⟩ {A} {e} {D} -- I don't know why but we have to list the implicit arguments here.
+D⟨e⟩≚e {A} {e} {D} = D⟨e⟩⊂̌e {A} {e} {D} , e⊂̌D⟨e⟩ {A} {e} {D}
 ```
+
 In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `D ⟨ e ∷ [] ⟩ ≚ e` follows:
 ```agda
--- Semantic equivalence implies that the described set of variants is a subset.
+-- Semantic equivalence implies variant equivalence.
 ≈→⊂̌ : ∀ {A : Set} {a b : CC A}
   → a ≈ b
     -----
   → a ⊂̌ b
--- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We just keep the assumed configuration and apply it to bot hsides of the equation of a≈b.
-≈→⊂̌ a≈b config = config , Eq.cong (λ sem → sem config) a≈b
+-- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
+≈→⊂̌ a≈b config = config , Eq.cong (λ ⟦x⟧ → ⟦x⟧ config) a≈b
 
--- Semantic equivalence implies variant-preserving equivalence.
+-- Semantic equivalence implies variant equivalence.
 ≈→≚ : ∀ {A : Set} {a b : CC A}
   → a ≈ b
     -----
@@ -216,7 +242,6 @@ In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `
 ≈→≚ {A} {a} {b} a≈b =
     ≈→⊂̌ {A} {a} {b} a≈b
   , ≈→⊂̌ {A} {b} {a} (Eq.sym a≈b)
--- We have to list the implicit parameters here because they are swapped for the second direction.
 ```
 
 Finally we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
@@ -273,15 +298,72 @@ BDD = ADD Bool
 To convert to product normal form, it is easier to first convert to binary normal form of choice calculus.
 Every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
 ```agda
+Tag₂ : Set
+Tag₂ = Bool
+
+left  = true
+right = false
+
+asTag : Tag₂ → Tag
+asTag true  = 0
+asTag false = 1
+
 data CC₂ (A : Set) : Set where
   Artifact₂ : A → List (CC₂ A) → CC₂ A
   _⟨_,_⟩₂ : Dimension → CC₂ A → CC₂ A → CC₂ A
 
-{-# TERMINATING #-} -- Todo: Can we prove this terminating?
+-- Semantics for binary choice calculus
+Configuration₂ : Set
+Configuration₂ = Dimension → Tag₂
+
+{-# TERMINATING #-}
+⟦_⟧₂ : {A : Set} → CC₂ A → Configuration₂ → Variant A
+⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
+⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
+
+{-
+Convert back to normal choice calculus.
+Converts a binary choice calculus expression to a core choice calculus expression.
+The resulting expression is syntactically equivalent and thus still in binary normal form.
+We drop only the knowledge of being in binary normal form at the type level.
+-}
+{-# TERMINATING #-}
 asCC : {A : Set} → CC₂ A → CC A
 asCC (Artifact₂ a es) = Artifact a (mapl asCC es)
 asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 
+asCC-Conf : Configuration₂ → Configuration
+asCC-Conf conf₂ = asTag ∘ conf₂
+
+-- Semantic equivalence between a binary and n-ary choice calculus expression.
+_₂≈ₙ_ : ∀ {A : Set} (a : CC₂ A) (b : CC A) → Set
+cc₂ ₂≈ₙ ccₙ = ∀ (c₂ : Configuration₂) → ⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ (asCC-Conf c₂)
+infix 5 _₂≈ₙ_
+
+asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A} → e ₂≈ₙ asCC e
+asCC-preserves-semantics {A} {Artifact₂ a []} c₂ = refl
+asCC-preserves-semantics {A} {Artifact₂ a es} c₂ =
+  begin
+    (⟦ Artifact₂ a es ⟧₂ c₂)
+  ≡⟨⟩
+    Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)
+  ≡⟨ {!!} ⟩ -- Eq.cong (λ {foo → Artifactᵥ a (mapl (λ x → foo x) es)}) (asCC-preserves-semantics {A} {λ {x}} c₂) ⟩
+    Artifactᵥ a (mapl (λ x → ⟦ asCC x ⟧ (asCC-Conf c₂)) es)
+  ≡⟨ {!!} ⟩
+    (⟦ asCC (Artifact₂ a es) ⟧ (asCC-Conf c₂))
+  ∎
+asCC-preserves-semantics {A} {D ⟨ l , r ⟩₂} c₂ = {!!}
+
+-- Example for Alex
+1-assoc : ∀ {n : ℕ} → 1 * n ≡ n
+1-assoc {zero} = refl
+1-assoc {suc n} = Eq.cong suc (1-assoc {n})
+```
+
+To implement transformation to binary normal form, we have to generate new choices, and thus new names.
+When generating a new name, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
+For example, when generating names by appending tick marks, `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) = D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
+```agda
 newDim : Dimension → Dimension
 newDim s = s ++ "'"
 
@@ -290,7 +372,6 @@ toCC₂ : {A : Set} → CC A → CC₂ A
 -- Leave structures unchanged
 toCC₂ (Artifact a es) = Artifact₂ a (mapl toCC₂ es)
 -- Use the idempotency rule to unwrap unary choices
--- TODO: Prove that this is legal
 toCC₂ (D ⟨ e ∷ [] ⟩) = toCC₂ e
 -- Leave binary choices unchanged
 toCC₂ (D ⟨ then ∷ elze ∷ [] ⟩) = D ⟨ toCC₂ then , toCC₂ elze ⟩₂
@@ -300,13 +381,10 @@ toCC₂ (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ ((newDim
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
--- This theorem wont work so far because both expressions have different dimensions.
--- We also have to assume that no dimension ends with a tick mark in e.
--- For example toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) = D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩
--- which is wrong. We could add this assumption to the toCC₂ function.
-CC⇒CC₂ : ∀ {A : Set}
+-- Todo: Add assumption of different names
+CC→CC₂ : ∀ {A : Set}
   → (e : CC A)
     ------------------
   → e ≚ asCC (toCC₂ e)
-CC⇒CC₂ e = {!!}
+CC→CC₂ e = {!!}
 ```
