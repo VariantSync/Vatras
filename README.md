@@ -22,7 +22,7 @@
   - [x] syntax
   - [ ] semantics
   - [x] prove that BDDs are specialized ADDs
-  - [ ] prove that ADDs are a sublanguage of choice calculus by proving that a cc expression in binary normal form can be converted to ADD. By transitivity, we get that any choice calculus expression can be transformed to ADD
+  - [ ] prove that ADDs are equivalent to choice calculus by proving that a cc expression in binary normal form can be converted to ADD and vice versa. By transitivity `CC <-> Binary CC <-> ADD`, we get that any choice calculus expression can be transformed to ADD and vice versa.
 
 - [ ] prove that choice calculus can encode any variation, by proving that we can build an ADD for any kind of variants. By transitivity we get that any ADD is also a CC expression and thus any set of variants can be encoded in CC.
 
@@ -63,7 +63,8 @@ on the search for nice brackets:
 ### Evolution
 - [ ] implement variation diffs
   - [ ] syntax as Variation Tree subset with meta-variation nodes
-  - [x] semantics for free from CC/VT
+  - [ ] semantics
+  - [ ] semantics for free from CC/VT. Prove that it is equivalent to the self-defined semantics (commuting square)
   - [ ] derivation
   - [ ] integration
 
