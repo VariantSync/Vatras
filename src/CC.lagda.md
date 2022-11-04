@@ -21,11 +21,15 @@ open import Function.Base
   using (_∘_; flip)
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; _≗_; refl)
-open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+open Eq
+  using (_≡_; _≗_; refl)
+open Eq.≡-Reasoning
+  using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
-open import Extensionality using (extensionality)
+open import Extensionality
+  using (extensionality)
+  renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```
 
 ## Core Choice Calculus
@@ -368,13 +372,13 @@ asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
     ------------
   → e ₂≈ₙ asCC e
 
--- helper function to apply the inductive step for artifacts
+-- helper function for artifacts to apply the induction hypothesis
 asCC-preserves-semantics-ind : ∀ {A : Set}
-  → (c₂ : Configuration₂)
+  →   (c₂ : Configuration₂)
     ---------------------------------------------
   →   (λ (z : CC₂ A) → ⟦ z ⟧₂ c₂)
-    ≡ (λ (z : CC₂ A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
-asCC-preserves-semantics-ind {A} c = extensionality (λ x → asCC-preserves-semantics {A} {x} c)
+    ≗ (λ (z : CC₂ A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
+asCC-preserves-semantics-ind {A} c = λ z → asCC-preserves-semantics {A} {z} c
 
 -- helper function for choices
 asCC-preserves-semantics-choice-case-analyses : ∀ {A : Set} {D : Dimension} {l r : CC₂ A} (c₂ : Configuration₂)
@@ -398,17 +402,21 @@ asCC-preserves-semantics-choice-case-analyses {A} {D} {l} {r} c₂ with c₂ D
 open import Data.List.Properties renaming (map-cong to mapl-cong; map-compose to mapl-∘)
 open Extensionality using (≡→≗)
 
--- proof is a bit intricate because of map and flip
+-- Curiously, the the proof is easier for choices than for artifacts.
+-- For some reason it was really hard to just prove the application of the induction hypothesis over all subtrees for Artifacts.
+-- The use of flip and map made it hard.
 {-# TERMINATING #-}
+-- If we have just artifacts, there is nothing left to do.
 asCC-preserves-semantics {A} {Artifact₂ a []} c₂ = refl
+-- The semantics "just" recurses on Artifacts.
 asCC-preserves-semantics {A} {Artifact₂ a es} c₂ =
   begin
     (⟦ Artifact₂ a es ⟧₂ c₂)
   ≡⟨⟩
     Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)
-  ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) -- apply the induction hypothesis below the Artifactᵥ constructor
-     ( (extensionality ∘ mapl-cong) -- and below the mapl
-       (≡→≗ (asCC-preserves-semantics-ind c₂)) -- set the configuration but leave the CC expression x as first parameter
+  ≡⟨ Eq.cong (λ m → Artifactᵥ a (m es)) -- apply the induction hypothesis below the Artifactᵥ constructor
+     ( mapl-cong-≗-≡ -- and below the mapl
+       (asCC-preserves-semantics-ind c₂) -- set the configuration but leave the CC expression x as first parameter
      )
    ⟩
     Artifactᵥ a (mapl (λ x → ⟦ asCC x ⟧ (asCC-Conf c₂)) es)
@@ -417,6 +425,8 @@ asCC-preserves-semantics {A} {Artifact₂ a es} c₂ =
   ≡⟨⟩
     (⟦ asCC (Artifact₂ a es) ⟧ (asCC-Conf c₂))
   ∎
+-- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
+-- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
 asCC-preserves-semantics {A} {D ⟨ l , r ⟩₂} c₂ =
   begin
     ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂
