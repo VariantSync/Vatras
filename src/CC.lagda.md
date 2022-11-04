@@ -11,14 +11,14 @@ open import Data.List.Base
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
 open import Data.List.NonEmpty.Base
-  using(List⁺; _∷_; toList)
+  using (List⁺; _∷_; toList)
   renaming (map to mapl⁺)
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 
-open import Extensionality
+open import Extensionality using (extensionality)
 ```
 
 # Choice Calculus in Agda
@@ -320,8 +320,13 @@ Configuration₂ = Dimension → Tag₂
 ⟦_⟧₂ : {A : Set} → CC₂ A → Configuration₂ → Variant A
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
+```
 
-{-
+Now that we've introduce the binary normal form at the type level, we want to show that (1) any n-ary choice calculus expression can be transformed to binary normal form, and (2) any binary normal form expression is a choice calculus expression.
+We start with the second task: Converting a choice calculus expression of which we know at the type level that it is in binary normal form, back to n-ary choice calculus.
+It will still be an expression in binary normal form but we will lose that guarantee at the type level.
+```agda
+{- |
 Convert back to normal choice calculus.
 Converts a binary choice calculus expression to a core choice calculus expression.
 The resulting expression is syntactically equivalent and thus still in binary normal form.
@@ -332,32 +337,89 @@ asCC : {A : Set} → CC₂ A → CC A
 asCC (Artifact₂ a es) = Artifact a (mapl asCC es)
 asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 
+{- |
+Convert binary configuration to n-aray configuration.
+-}
 asCC-Conf : Configuration₂ → Configuration
 asCC-Conf conf₂ = asTag ∘ conf₂
+```
 
--- Semantic equivalence between a binary and n-ary choice calculus expression.
+To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression:
+```agda
+{- |
+Semantic equivalence between a binary and n-ary choice calculus expression.
+Both expressions are considered semantically equal if they yield the same variants for all configurations.
+-}
 _₂≈ₙ_ : ∀ {A : Set} (a : CC₂ A) (b : CC A) → Set
 cc₂ ₂≈ₙ ccₙ = ∀ (c₂ : Configuration₂) → ⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ (asCC-Conf c₂)
 infix 5 _₂≈ₙ_
 
-asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A} → e ₂≈ₙ asCC e
+-- Proof that converting a choice calculus formula in binary normal form, back to n-ary choice calculus preserves semantics.
+asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
+    ------------
+  → e ₂≈ₙ asCC e
+
+-- helper function to apply the inductive step for artifacts
+asCC-preserves-semantics-ind : ∀ {A : Set}
+  → (c₂ : Configuration₂)
+    ---------------------------------------------
+  →   (λ (z : CC₂ A) → ⟦ z ⟧₂ c₂)
+    ≡ (λ (z : CC₂ A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
+asCC-preserves-semantics-ind {A} c = extensionality (λ x → asCC-preserves-semantics {A} {x} c)
+
+-- helper function for choices
+asCC-preserves-semantics-choice-case-analyses : ∀ {A : Set} {D : Dimension} {l r : CC₂ A} (c₂ : Configuration₂)
+    ---------------------------------------------------------------------------------
+  →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
+    ≡ ⟦ (choice-elimination (asCC-Conf c₂ D) (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
+asCC-preserves-semantics-choice-case-analyses {A} {D} {l} {r} c₂ with c₂ D
+...                          | true  = begin
+                                         ⟦ if true then l else r ⟧₂ c₂
+                                       ≡⟨⟩
+                                         ⟦ l ⟧₂ c₂
+                                       ≡⟨ asCC-preserves-semantics {A} {l} c₂ ⟩
+                                         ⟦ asCC l ⟧ (asCC-Conf c₂)
+                                       ≡⟨⟩
+                                         ⟦ (choice-elimination 0 (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
+                                       ∎
+                             -- This proof is analoguous to the proof for the "true" case.
+                             -- Thus, we simplify the step-by-step-proof to the only reasoning necessary below:
+...                          | false = asCC-preserves-semantics {A} {r} c₂
+
+open import Data.List.Properties renaming (map-cong to mapl-cong; map-compose to mapl-∘)
+open Extensionality using (≡→≗)
+
+-- proof is a bit intricate because of map and flip
+{-# TERMINATING #-}
 asCC-preserves-semantics {A} {Artifact₂ a []} c₂ = refl
 asCC-preserves-semantics {A} {Artifact₂ a es} c₂ =
   begin
     (⟦ Artifact₂ a es ⟧₂ c₂)
   ≡⟨⟩
     Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)
-  ≡⟨ {!!} ⟩ -- Eq.cong (λ {foo → Artifactᵥ a (mapl (λ x → foo x) es)}) (asCC-preserves-semantics {A} {λ {x}} c₂) ⟩
+  ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) -- apply the induction hypothesis below the Artifactᵥ constructor
+     ( (extensionality ∘ mapl-cong) -- and below the mapl
+       (≡→≗ (asCC-preserves-semantics-ind c₂)) -- set the configuration but leave the CC expression x as first parameter
+     )
+   ⟩
     Artifactᵥ a (mapl (λ x → ⟦ asCC x ⟧ (asCC-Conf c₂)) es)
-  ≡⟨ {!!} ⟩
+  ≡⟨ Eq.cong (λ m → Artifactᵥ a m) (mapl-∘ es) ⟩
+    Artifactᵥ a (mapl (λ x → ⟦ x ⟧ (asCC-Conf c₂)) (mapl asCC es))
+  ≡⟨⟩
     (⟦ asCC (Artifact₂ a es) ⟧ (asCC-Conf c₂))
   ∎
-asCC-preserves-semantics {A} {D ⟨ l , r ⟩₂} c₂ = {!!}
-
--- Example for Alex
-1-assoc : ∀ {n : ℕ} → 1 * n ≡ n
-1-assoc {zero} = refl
-1-assoc {suc n} = Eq.cong suc (1-assoc {n})
+asCC-preserves-semantics {A} {D ⟨ l , r ⟩₂} c₂ =
+  begin
+    ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂
+  ≡⟨⟩
+    ⟦ if c₂ D then l else r ⟧₂ c₂
+  ≡⟨ asCC-preserves-semantics-choice-case-analyses c₂ ⟩
+    ⟦ choice-elimination ((asCC-Conf c₂) D) (asCC l ∷ asCC r ∷ []) ⟧ (asCC-Conf c₂)
+  ≡⟨⟩
+    ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ (asCC-Conf c₂)
+  ≡⟨⟩
+    ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ (asCC-Conf c₂)
+  ∎
 ```
 
 To implement transformation to binary normal form, we have to generate new choices, and thus new names.
