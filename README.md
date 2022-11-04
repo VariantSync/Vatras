@@ -15,7 +15,9 @@
   - [x] semantics
 - [/] bnf transformation
   - [x] implementation
-  - [ ] proof of being variant-preserving
+  - [/] proof of being variant-preserving
+    - [x] Binary CC -> CC
+    - [ ] CC -> Binary CC
 
 ### Algebraic Decision Diagrams
 - [/] implement algebaric decision diagrams (ADDs)
@@ -37,9 +39,9 @@ on the search for nice brackets:
   - [ ] syntax: Which dialect is the best? singleton options I guess!?
   - [ ] semantics
     - [ ] Decide on how to handle the empty variant induced by options at the root of an expression:
-      - forbid
-      - make root option mandatory via semantics
-      - include empty variant explicitly
+      - forbid?
+      - make root option mandatory via semantics?
+      - include empty variant explicitly?
   - [ ] are there any transformation rules?
 - [ ] Show that option calculus is subsumed by choice calculus (except for the empty variant? s.a.)
   - [ ] implement conversion
