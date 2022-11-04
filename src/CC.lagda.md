@@ -1,27 +1,34 @@
 ```agda
 module CC where
+```
 
-open import Function.Base
+# Choice Calculus in Agda
 
-open import Data.String.Base
-  using (String; _++_)
-open import Data.Nat.Base
-  using (ℕ; zero; suc; _*_; NonZero) renaming (_+_ to _+++_)
+## Imports
+```agda
+-- Imports from Standard Library
 open import Data.List.Base
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
 open import Data.List.NonEmpty.Base
   using (List⁺; _∷_; toList)
   renaming (map to mapl⁺)
+open import Data.Nat.Base
+  using (ℕ; zero; suc; NonZero)
+open import Data.String.Base
+  using (String; _++_)
+open import Function.Base
+  using (_∘_; flip)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 
+-- Imports of own modules
 open import Extensionality using (extensionality)
 ```
 
-# Choice Calculus in Agda
+## Core Choice Calculus
 
 Let's define core choices calculus as defined in Eric's phd thesis:
 ```agda
@@ -277,6 +284,8 @@ mainStr : String
 mainStr = showVariant cc_example_walk_zoom
 ```
 
+## Algebraic Decision Diagrams and Binary Normal Form
+
 In the following we introduce normal forms for choice calculus expressions.
 We express each normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system.
 
@@ -450,3 +459,16 @@ CC→CC₂ : ∀ {A : Set}
   → e ≚ asCC (toCC₂ e)
 CC→CC₂ e = {!!}
 ```
+
+## Unicode Characters in Emacs Agda Mode
+```text
+≗ is \=o
+≈ is \~~
+⊂̌ is \sub\v
+≚ is \or=
+
+₁ is \_1
+₂ is \_2
+ₙ is \_n
+```
+
