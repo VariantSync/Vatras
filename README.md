@@ -56,6 +56,14 @@ on the search for nice brackets:
 - [ ] prove that choice calculus is subsumed by variation trees
 - [ ] prove that there is nothing more in variation trees rather than option calculus and choice calculus (follows actually from syntax): This is essentially a proof that "option calculus + else = choice calculus".
 
+### Artefact Trees
+same as option calculus but with inline annotations?
+
+### Variability-Aware ASTs
+same as variation trees but with inline annotations?
+
+### Literature Search on Further Formalisms
+
 ### Sharing
 - [ ] Investigate sharing.
   - [ ] prove for which set of problems, OC is better?
