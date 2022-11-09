@@ -357,11 +357,23 @@ asCC-Conf : Configuration₂ → Configuration
 asCC-Conf conf₂ = asTag ∘ conf₂
 ```
 
-To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression:
+To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression.
+Semantic equivalence between a binary and n-ary choice calculus expression cannot be expressed directly because the semantics of binary and n-ary choice calculus use different semantics.
+Yet, we can compare the set of described variants in terms of variant-preserving equivalence.
+Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
+
+As for variant equivalence for n-ary-choice calculus, we go both subset directions???
 ```agda
 {- |
-Semantic equivalence between a binary and n-ary choice calculus expression.
-Both expressions are considered semantically equal if they yield the same variants for all configurations.
+Is this equals or subset?
+Do we also have to range over n-ary configurations?
+These cannot be unambiguously transformed to binary configurations.
+
+Maybe we have to adapt the formulation to be similar to the one for variant equivalence.
+cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[cₙ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ cₙ)
+ccₙ ₙ⊂̌₂ cc₂ = ∀ (cₙ : Configuration) → ∃[c₂] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ cₙ)
+Then equivalence is subset in both dirs.
+We cannot show the second direction though because we cannot constrain the codomain of the n-ary configurations to yield binary results. But isn't this automatically handled correctly by the min-function in choice-eliminiation such that indices > 1 will be clamped to 1?
 -}
 _₂≈ₙ_ : ∀ {A : Set} (a : CC₂ A) (b : CC A) → Set
 cc₂ ₂≈ₙ ccₙ = ∀ (c₂ : Configuration₂) → ⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ (asCC-Conf c₂)

@@ -28,4 +28,3 @@ map-cong-≗-≡ f≗g = ≗→≡ (map-cong f≗g)
 
 map-cong-≡ : ∀ {A B : Set} {f g : A → B} → f ≡ g → map f ≡ map g
 map-cong-≡ = map-cong-≗-≡ ∘ ≡→≗
-
