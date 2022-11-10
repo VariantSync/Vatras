@@ -332,23 +332,34 @@ To prove that both conversions are valid, we define semantic equivalence between
 Semantic equivalence between a binary and n-ary choice calculus expression cannot be expressed directly because the semantics of binary and n-ary choice calculus use different semantics.
 Yet, we can compare the set of described variants in terms of variant-preserving equivalence.
 Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
-
-As for variant equivalence for n-ary-choice calculus, we go both subset directions???
 ```agda
 {- |
-Is this equals or subset?
-Do we also have to range over n-ary configurations?
-These cannot be unambiguously transformed to binary configurations.
-
-Maybe we have to adapt the formulation to be similar to the one for variant equivalence.
-cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[cₙ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ cₙ)
-ccₙ ₙ⊂̌₂ cc₂ = ∀ (cₙ : Configuration) → ∃[c₂] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ cₙ)
-Then equivalence is subset in both dirs.
-We cannot show the second direction though because we cannot constrain the codomain of the n-ary configurations to yield binary results. But isn't this automatically handled correctly by the min-function in choice-eliminiation such that indices > 1 will be clamped to 1?
+My first take on defining semantic equivalence between n-ary and binary choice calculus.
+I think this is not what we want because it does not compare the variants described by the n-ary expressions with the variat set of the binary expression.
 -}
-_₂≈ₙ_ : ∀ {A : Set} (a : CC₂ A) (b : CC A) → Set
+_₂≈ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
 cc₂ ₂≈ₙ ccₙ = ∀ (c₂ : Configuration₂) → ⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ (asCC-Conf c₂)
 infix 5 _₂≈ₙ_
+
+{-
+Maybe we have to adapt the formulation to be similar to the one for variant equivalence.
+Then equivalence is subset in both directionss.
+Can we show the second direction though?
+We cannot constrain the codomain of the n-ary configurations to yield binary results.
+But isn't this automatically handled correctly by the min-function in choice-eliminiation such that indices > 1 will be clamped to 1?
+
+TODO: Exchange the above equivalence relation _₂≈ₙ_ with the following?
+      We should be able to reuse the proof below for the proof of ₂⊂̌ₙ with the configuration being chosen to be (asCC-Conf c₂).
+-}
+_₂⊂̌ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
+cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[ c ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
+
+_ₙ⊂̌₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
+ccₙ ₙ⊂̌₂ cc₂ = ∀ (c : Configuration) → ∃[ c₂ ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
+
+_₂≈ₙ-new_ : ∀ {A : Set} → CC₂ A → CC A → Set
+cc₂ ₂≈ₙ-new ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
+---- NEW DEFINITIONS END (still unused)
 
 -- Proof that converting a choice calculus formula in binary normal form, back to n-ary choice calculus preserves semantics.
 asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
