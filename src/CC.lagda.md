@@ -357,8 +357,12 @@ cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[ c ] (⟦ cc₂ 
 _ₙ⊂̌₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
 ccₙ ₙ⊂̌₂ cc₂ = ∀ (c : Configuration) → ∃[ c₂ ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
 
-_₂≈ₙ-new_ : ∀ {A : Set} → CC₂ A → CC A → Set
+_₂≈ₙ-new_ : ∀ {A : Set} → CC₂ A → CC A → Set -- rename to _₂≈ₙ_ if accepted
 cc₂ ₂≈ₙ-new ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
+
+-- sugar for inverse direction
+_ₙ≈₂-new_ : ∀ {A : Set} → CC A → CC₂ A → Set
+ccₙ ₙ≈₂-new cc₂ = cc₂ ₂≈ₙ-new ccₙ
 ---- NEW DEFINITIONS END (still unused)
 
 -- Proof that converting a choice calculus formula in binary normal form, back to n-ary choice calculus preserves semantics.
