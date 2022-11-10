@@ -111,35 +111,6 @@ infix 5 _≈_
     -------
   → a ≈ b
 ≡→≈ _ _ eq rewrite eq = refl
-
-module _≈_-Reasoning {A : Set} where
-  infix  1 ≈-begin_
-  infixr 2 _≈⟨⟩_ _≈⟨_⟩_
-  infix  3 _≈-∎
-
-  ≈-begin_ : ∀ {a b : CC A}
-    → a ≈ b
-      -----
-    → a ≈ b
-  ≈-begin eq = eq
-
-  _≈⟨⟩_ : ∀ (a : CC A) {b : CC A}
-    → a ≈ b
-      -----
-    → a ≈ b
-  a ≈⟨⟩ eqchain = eqchain
-
-  _≈⟨_⟩_ : ∀ (a : CC A) {b c : CC A}
-    → a ≈ b
-    → b ≈ c
-      -----
-    → a ≈ c
-  a ≈⟨ a≈b ⟩ b≈c = Eq.trans a≈b b≈c
-
-  _≈-∎ : ∀ (a : CC A)
-      -----
-    → a ≈ a
-  a ≈-∎ = refl
 ```
 
 Some transformation rules
@@ -474,12 +445,7 @@ toCC₂ (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ ((newDim
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
--- Todo: Add assumption of different names
-CC→CC₂ : ∀ {A : Set}
-  → (e : CC A)
-    ------------------
-  → e ≚ asCC (toCC₂ e)
-CC→CC₂ e = {!!}
+-- Todo. Also add assumption of different names
 ```
 
 ## Unicode Characters in Emacs Agda Mode
