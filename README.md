@@ -1,6 +1,8 @@
 ﻿
 # Roadmap of Option Calculus
 
+![](res/taxonomy.jpg)
+
 ## On the Structure of Variability
 
 ### Choice Calculus
