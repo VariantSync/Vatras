@@ -455,7 +455,7 @@ toCC₂ (D ⟨ e ∷ [] ⟩) = toCC₂ e
 -- Leave binary choices unchanged
 toCC₂ (D ⟨ then ∷ elze ∷ [] ⟩) = D ⟨ toCC₂ then , toCC₂ elze ⟩₂
 -- Perform recursive nesting on choices with arity n > 2.
-toCC₂ (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ ((newDim D) ⟨ e₂ ∷ es ⟩) ⟩₂
+toCC₂ (D ⟨ e₁ ∷ e₂ ∷ e₃ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ (newDim D ⟨ e₂ ∷ e₃ ∷ es ⟩) ⟩₂
 ```
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
