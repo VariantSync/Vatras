@@ -460,7 +460,14 @@ toCC₂ (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ ((newDim
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
--- Todo. Also add assumption of different names
+{-
+--- Todo ---
+How to handle naming in toCC₂?
+We have to either prove or assume that all new names introduced in that function are unique.
+How can we express that without opening the box of pandora?
+Maybe redefining Dimension to ℕ or something more convenient than String could help?
+It should remain close to the definition in Eric's thesis/papers though.
+-}
 ```
 
 ## Unicode Characters in Emacs Agda Mode
