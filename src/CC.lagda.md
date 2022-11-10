@@ -74,8 +74,8 @@ In case a configuration picks an undefined tag for a dimension (i.e., the number
 This allows us to introduce complex error handling and we cannot easily define a configuration to only produce tags within ranges.
 
 ```agda
-open import Data.Fin.Base
-open import AuxProofs
+open import Data.Fin.Base using (Fin)
+open import AuxProofs using (minFinFromLimit)
 
 {-|
 Clamps a tag at the given length.
@@ -268,7 +268,7 @@ An algebaric decision diagram (ADD) is a choice calculus expression in which all
 We refer to a choice calculus expression whose abstract syntax is an ADD, as being in _product normal form_ (PNF):
 In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
 ```agda
-open import Data.Bool
+open import Data.Bool using (Bool; true; false; if_then_else_)
 
 data ADD (A : Set) : Set where
   Terminal : A → ADD A -- ModelBase in FFSPL
