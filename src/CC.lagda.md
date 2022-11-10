@@ -322,14 +322,14 @@ asCC (Artifact₂ a es) = Artifact a (mapl asCC es)
 asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 
 {- |
-Convert binary configuration to n-aray configuration.
+Convert binary configuration to n-ary configuration.
 -}
 asCC-Conf : Configuration₂ → Configuration
 asCC-Conf conf₂ = asTag ∘ conf₂
 ```
 
 To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression.
-Semantic equivalence between a binary and n-ary choice calculus expression cannot be expressed directly because the semantics of binary and n-ary choice calculus use different semantics.
+Semantic equivalence between a binary and n-ary choice calculus expression cannot be expressed directly because the semantics of binary and n-ary choice calculus use different types of configurations.
 Yet, we can compare the set of described variants in terms of variant-preserving equivalence.
 Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
 ```agda
@@ -357,14 +357,17 @@ cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[ c ] (⟦ cc₂ 
 _ₙ⊂̌₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
 ccₙ ₙ⊂̌₂ cc₂ = ∀ (c : Configuration) → ∃[ c₂ ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
 
-_₂≈ₙ-new_ : ∀ {A : Set} → CC₂ A → CC A → Set -- rename to _₂≈ₙ_ if accepted
-cc₂ ₂≈ₙ-new ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
+_₂≚ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
+cc₂ ₂≚ₙ ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
 
 -- sugar for inverse direction
-_ₙ≈₂-new_ : ∀ {A : Set} → CC A → CC₂ A → Set
-ccₙ ₙ≈₂-new cc₂ = cc₂ ₂≈ₙ-new ccₙ
+_ₙ≚₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
+ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
 ---- NEW DEFINITIONS END (still unused)
+```
 
+And now for the proofs:
+```agda
 -- Proof that converting a choice calculus formula in binary normal form, back to n-ary choice calculus preserves semantics.
 asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
     ------------
@@ -439,9 +442,9 @@ asCC-preserves-semantics {A} {D ⟨ l , r ⟩₂} c₂ =
   ∎
 ```
 
-To implement transformation to binary normal form, we have to generate new choices, and thus new names.
-When generating a new name, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
-For example, when generating names by appending tick marks, `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) = D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
+To implement transformation to binary normal form, we have to generate new choices, and thus new dimensions.
+When generating a new name for a new dimension, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
+For example, when generating names by appending tick marks, we may get `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) ≡ D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
 ```agda
 newDim : Dimension → Dimension
 newDim s = s ++ "'"
