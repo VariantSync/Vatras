@@ -91,11 +91,23 @@ clampTagWithin {suc n} {nz} = minFinFromLimit n
 choice-elimination : {A : Set} → Tag → List⁺ A → A
 choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
+{-|
+Semantics of core choice calculus.
+The semantic domain is a function that generates variants given configurations.
+-}
 {-# TERMINATING #-}
 ⟦_⟧ : {A : Set} → CC A → Configuration → Variant A
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
+Agda cannot determine that the semantics function terminates and thus we just tell Agda to assume that it does with the `{-# TERMINATING #-}` pragma.
+I am not sure yet why Agda cannot see this terminating because in every case, we unwrap a constructor level.
+Could it be because of the lists that can be infinite?
+
+An alternative implementation of core choice calculus using sized types can be found in [SizedCC.agda](SizedCC.agda).
+Using sized types, recursive functions are detected to terminate by Agda but carrying the size all the time is clumsy.
+Also, the lists are still just lists and termination checking succeeds.
+It has to be the lists somehow though because for binary trees (i.e., when the number of children is known to be 2), termination checking works just fine as shown in [TerminationOnTrees.agda](TerminationOnTrees.agda).
 
 Semantic equivalence means that the same configurations yield the same variants:
 ```agda
@@ -334,7 +346,7 @@ Yet, we can compare the set of described variants in terms of variant-preserving
 Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
 ```agda
 {-
-We use a formulation similar to the one for variant equivalence.
+We use a formulation similar to the one for variant equivalence for n-ary choice calculus.
 Equivalence is subset in both directionss.
 Can we show the second direction though?
 We cannot constrain the codomain of the n-ary configurations to yield binary results.
@@ -367,7 +379,7 @@ asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
     ------------
   → e ₂≚ₙ asCC e
 asCC-preserves-semantics {A} {e} =
-    asCC-preserves-semantics-left {A} {e}
+    asCC-preserves-semantics-left  {A} {e}
   , asCC-preserves-semantics-right {A} {e}
 ```
 
@@ -412,7 +424,7 @@ asCC-preserves-semantics-left-asCCConf-choice-case-analyses {A} {D} {l} {r} c₂
 open import Data.List.Properties renaming (map-cong to mapl-cong; map-compose to mapl-∘)
 open Extensionality using (≡→≗)
 
--- Curiously, the the proof is easier for choices than for artifacts.
+-- Curiously, the proof is easier for choices than for artifacts.
 -- For some reason it was really hard to just prove the application of the induction hypothesis over all subtrees for Artifacts.
 -- The use of flip and map made it hard.
 {-# TERMINATING #-}
