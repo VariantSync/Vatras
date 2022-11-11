@@ -102,12 +102,14 @@ The semantic domain is a function that generates variants given configurations.
 ```
 Agda cannot determine that the semantics function terminates and thus we just tell Agda to assume that it does with the `{-# TERMINATING #-}` pragma.
 I am not sure yet why Agda cannot see this terminating because in every case, we unwrap a constructor level.
-Could it be because of the lists that can be infinite?
 
 An alternative implementation of core choice calculus using sized types can be found in [SizedCC.agda](SizedCC.agda).
-Using sized types, recursive functions are detected to terminate by Agda but carrying the size all the time is clumsy.
-Also, the lists are still just lists and termination checking succeeds.
-It has to be the lists somehow though because for binary trees (i.e., when the number of children is known to be 2), termination checking works just fine as shown in [TerminationOnTrees.agda](TerminationOnTrees.agda).
+Using sized types, recursive functions are detected to terminate by Agda but carrying the size all the time is a bit clumsy.
+The size constraint of the choice calculus in [SizedCC.agda](SizedCC.agda) is an upper bound on the nesting depth.
+So whenever we visit children, we are guaranteed to go one nesting depth deeper until it eventually hits zero.
+Somehow though, the termination checking has to have problems with the lists though because for binary trees (i.e., when the number of children is known to be 2), termination checking works just fine as shown in [TerminationOnTrees.agda](TerminationOnTrees.agda).
+
+So I guess we should switch to a sized type here, just to make the proofs stronger by ensuring that we have no infinite loops (i.e., proving something by itself).
 
 Semantic equivalence means that the same configurations yield the same variants:
 ```agda
@@ -158,10 +160,12 @@ such that ⟦ e₁ ⟧ c₁ = ⟦ e₂ ⟧ c₂.
 open import Data.Product using (∃; ∃-syntax; _,_)
 open import Data.Product using (_×_; proj₁; proj₂)
 
-infix 5 _⊂̌_ --\sub\v
+-- Beware! This symbol renders different on Github. The v should be on top of ⊂ but on Github is next to it.
+-- So don't be confused in case the v appears on top of a character next to ⊂.
+-- Unicode for ⊂̌ is \sub\v
 _⊂̌_ : ∀ {A : Set} (e₁ e₂ : CC A) → Set
 e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
-
+infix 5 _⊂̌_
 -- some properties
 -- _⊂̌_ is not symmetric
 
@@ -171,7 +175,7 @@ e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ 
     -------
   → e₁ ⊂̌ e₃
 ⊂̌-trans x y c₁ =
-  -- this somehow resembles the implementation of >>= of state monad
+  -- this somehow resembles the implementation of bind >>= of state monad
   let (c₂ , eq₁₂) = x c₁
       (c₃ , eq₂₃) = y c₂
   in c₃ , Eq.trans eq₁₂ eq₂₃
@@ -179,7 +183,7 @@ e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ 
 -- Variant-preserving equality of CC is structural equality of all described variants.
 -- (It is not semantic equality of variants because we do not the semantics of
 -- the object language!)
--- unicode for ≚ is \or=.
+-- Unicode for ≚ is \or=
 _≚_ : ∀ {A : Set} (e₁ e₂ : CC A) → Set
 e₁ ≚ e₂ = (e₁ ⊂̌ e₂) × (e₂ ⊂̌ e₁)
 infix 5 _≚_
@@ -199,9 +203,10 @@ infix 5 _≚_
 ≚-trans {A} {e₁} {e₂} {e₃} (e₁⊂̌e₂ , e₂⊂̌e₁) (e₂⊂̌e₃ , e₃⊂̌e₂) =
     ⊂̌-trans {A} {e₁} {e₂} {e₃} e₁⊂̌e₂ e₂⊂̌e₃
   , ⊂̌-trans {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
+```
 
--- As an example, we now prove D ⟨ e ∷ [] ⟩ ≚ e.
-
+As an example, we now prove `D ⟨ e ∷ [] ⟩ ≚ e`.
+```agda
 D⟨e⟩⊂̌e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ⊂̌ e
@@ -238,12 +243,13 @@ In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `
   , ≈→⊂̌ {A} {b} {a} (Eq.sym a≈b)
 ```
 
-Finally we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
+Finally, we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
 ```agda
 D⟨e⟩≚e' : ∀ {A : Set} → {e : CC A} → {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≚ e
-D⟨e⟩≚e' {A} {e} {D} = ≈→≚ {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {A} {e} {D})
+D⟨e⟩≚e' {A} {e} {D} =
+  ≈→≚ {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {A} {e} {D})
 -- For some reason we keep to have reapeating the implicit parameters which is a bit annoying but still ok because the proves are short.
 ```
 
