@@ -333,23 +333,12 @@ Semantic equivalence between a binary and n-ary choice calculus expression canno
 Yet, we can compare the set of described variants in terms of variant-preserving equivalence.
 Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
 ```agda
-{- |
-My first take on defining semantic equivalence between n-ary and binary choice calculus.
-I think this is not what we want because it does not compare the variants described by the n-ary expressions with the variat set of the binary expression.
--}
-_₂≈ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
-cc₂ ₂≈ₙ ccₙ = ∀ (c₂ : Configuration₂) → ⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ (asCC-Conf c₂)
-infix 5 _₂≈ₙ_
-
 {-
-Maybe we have to adapt the formulation to be similar to the one for variant equivalence.
-Then equivalence is subset in both directionss.
+We use a formulation similar to the one for variant equivalence.
+Equivalence is subset in both directionss.
 Can we show the second direction though?
 We cannot constrain the codomain of the n-ary configurations to yield binary results.
 But isn't this automatically handled correctly by the min-function in choice-eliminiation such that indices > 1 will be clamped to 1?
-
-TODO: Exchange the above equivalence relation _₂≈ₙ_ with the following?
-      We should be able to reuse the proof below for the proof of ₂⊂̌ₙ with the configuration being chosen to be (asCC-Conf c₂).
 -}
 _₂⊂̌ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
 cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[ c ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
@@ -363,42 +352,62 @@ cc₂ ₂≚ₙ ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
 -- sugar for inverse direction
 _ₙ≚₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
 ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
----- NEW DEFINITIONS END (still unused)
 ```
 
 And now for the proofs:
 ```agda
--- Proof that converting a choice calculus formula in binary normal form, back to n-ary choice calculus preserves semantics.
+asCC-preserves-semantics-left : ∀ {A : Set} {e : CC₂ A}
+    ------------
+  → e ₂⊂̌ₙ asCC e
+
+asCC-preserves-semantics-right : ∀ {A : Set} {e : CC₂ A}
+  → asCC e ₙ⊂̌₂ e
+
 asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
     ------------
-  → e ₂≈ₙ asCC e
+  → e ₂≚ₙ asCC e
+asCC-preserves-semantics {A} {e} =
+    asCC-preserves-semantics-left {A} {e}
+  , asCC-preserves-semantics-right {A} {e}
+```
+
+Proof of the left side:
+```agda
+-- helper function that tells us that the existing n-ary configuration, given a binary configuration, is asCC-Conf c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
+asCC-preserves-semantics-left-asCCConf : ∀ {A : Set} {e : CC₂ A}
+  → ∀ (c₂ : Configuration₂)
+    --------------------------------------
+  → ⟦ e ⟧₂ c₂ ≡ ⟦ asCC e ⟧ (asCC-Conf c₂)
+
+-- Prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
+asCC-preserves-semantics-left {A} {e} c₂ = asCC-Conf c₂ , asCC-preserves-semantics-left-asCCConf {A} {e} c₂
 
 -- helper function for artifacts to apply the induction hypothesis
-asCC-preserves-semantics-ind : ∀ {A : Set}
+asCC-preserves-semantics-left-asCCConf-ind : ∀ {A : Set}
   →   (c₂ : Configuration₂)
     ---------------------------------------------
   →   (λ (z : CC₂ A) → ⟦ z ⟧₂ c₂)
     ≗ (λ (z : CC₂ A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
-asCC-preserves-semantics-ind {A} c = λ z → asCC-preserves-semantics {A} {z} c
+asCC-preserves-semantics-left-asCCConf-ind {A} c = λ z → asCC-preserves-semantics-left-asCCConf {A} {z} c
 
 -- helper function for choices
-asCC-preserves-semantics-choice-case-analyses : ∀ {A : Set} {D : Dimension} {l r : CC₂ A} (c₂ : Configuration₂)
+asCC-preserves-semantics-left-asCCConf-choice-case-analyses : ∀ {A : Set} {D : Dimension} {l r : CC₂ A} (c₂ : Configuration₂)
     ---------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
     ≡ ⟦ (choice-elimination (asCC-Conf c₂ D) (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
-asCC-preserves-semantics-choice-case-analyses {A} {D} {l} {r} c₂ with c₂ D
+asCC-preserves-semantics-left-asCCConf-choice-case-analyses {A} {D} {l} {r} c₂ with c₂ D
 ...                          | true  = begin
                                          ⟦ if true then l else r ⟧₂ c₂
                                        ≡⟨⟩
                                          ⟦ l ⟧₂ c₂
-                                       ≡⟨ asCC-preserves-semantics {A} {l} c₂ ⟩
+                                       ≡⟨ asCC-preserves-semantics-left-asCCConf {A} {l} c₂ ⟩
                                          ⟦ asCC l ⟧ (asCC-Conf c₂)
                                        ≡⟨⟩
                                          ⟦ (choice-elimination 0 (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
                                        ∎
                              -- This proof is analoguous to the proof for the "true" case.
                              -- Thus, we simplify the step-by-step-proof to the only reasoning necessary below:
-...                          | false = asCC-preserves-semantics {A} {r} c₂
+...                          | false = asCC-preserves-semantics-left-asCCConf {A} {r} c₂
 
 open import Data.List.Properties renaming (map-cong to mapl-cong; map-compose to mapl-∘)
 open Extensionality using (≡→≗)
@@ -408,16 +417,16 @@ open Extensionality using (≡→≗)
 -- The use of flip and map made it hard.
 {-# TERMINATING #-}
 -- If we have just artifacts, there is nothing left to do.
-asCC-preserves-semantics {A} {Artifact₂ a []} c₂ = refl
+asCC-preserves-semantics-left-asCCConf {A} {Artifact₂ a []} c₂ = refl
 -- The semantics "just" recurses on Artifacts.
-asCC-preserves-semantics {A} {Artifact₂ a es} c₂ =
+asCC-preserves-semantics-left-asCCConf {A} {Artifact₂ a es} c₂ =
   begin
     (⟦ Artifact₂ a es ⟧₂ c₂)
   ≡⟨⟩
     Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)
   ≡⟨ Eq.cong (λ m → Artifactᵥ a (m es)) -- apply the induction hypothesis below the Artifactᵥ constructor
      ( mapl-cong-≗-≡ -- and below the mapl
-       (asCC-preserves-semantics-ind c₂) -- set the configuration but leave the CC expression x as first parameter
+       (asCC-preserves-semantics-left-asCCConf-ind c₂) -- set the configuration but leave the CC expression x as first parameter
      )
    ⟩
     Artifactᵥ a (mapl (λ x → ⟦ asCC x ⟧ (asCC-Conf c₂)) es)
@@ -428,18 +437,24 @@ asCC-preserves-semantics {A} {Artifact₂ a es} c₂ =
   ∎
 -- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
 -- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
-asCC-preserves-semantics {A} {D ⟨ l , r ⟩₂} c₂ =
+asCC-preserves-semantics-left-asCCConf {A} {D ⟨ l , r ⟩₂} c₂ =
   begin
     ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂
   ≡⟨⟩
     ⟦ if c₂ D then l else r ⟧₂ c₂
-  ≡⟨ asCC-preserves-semantics-choice-case-analyses c₂ ⟩
+  ≡⟨ asCC-preserves-semantics-left-asCCConf-choice-case-analyses c₂ ⟩
     ⟦ choice-elimination ((asCC-Conf c₂) D) (asCC l ∷ asCC r ∷ []) ⟧ (asCC-Conf c₂)
   ≡⟨⟩
     ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ (asCC-Conf c₂)
   ≡⟨⟩
     ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ (asCC-Conf c₂)
   ∎
+```
+
+Proof of the right side:
+```agda
+-- TODO
+asCC-preserves-semantics-right = {!!}
 ```
 
 To implement transformation to binary normal form, we have to generate new choices, and thus new dimensions.
