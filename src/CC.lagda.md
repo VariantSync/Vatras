@@ -335,6 +335,10 @@ asTag : Tag₂ → Tag
 asTag true  = 0
 asTag false = 1
 
+asTag₂ : Tag → Tag₂
+asTag₂ 0 = true
+asTag₂ _ = false
+
 data CC₂ (i : Size) (A : Set) : Set where
   Artifact₂ : {j : Size< i} →
     A → List (CC₂ j A) → CC₂ i A
@@ -368,7 +372,10 @@ asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 Convert binary configuration to n-ary configuration.
 -}
 asCC-Conf : Configuration₂ → Configuration
-asCC-Conf conf₂ = asTag ∘ conf₂
+asCC-Conf c₂ = asTag ∘ c₂
+
+asCC₂-Conf : Configuration → Configuration₂
+asCC₂-Conf c = asTag₂ ∘ c
 ```
 
 To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression.
@@ -423,11 +430,8 @@ Proof of the left side:
 -- helper function that tells us that the existing n-ary configuration, given a binary configuration, is asCC-Conf c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
 asCC-preserves-semantics-left-asCCConf : ∀ {i : Size} {A : Set} {e : CC₂ i A}
   → ∀ (c₂ : Configuration₂)
-    --------------------------------------
+    -------------------------------------
   → ⟦ e ⟧₂ c₂ ≡ ⟦ asCC e ⟧ (asCC-Conf c₂)
-
--- Prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
-asCC-preserves-semantics-left {i} {A} {e} c₂ = asCC-Conf c₂ , asCC-preserves-semantics-left-asCCConf {i} {A} {e} c₂
 
 -- helper function for artifacts to apply the induction hypothesis
 asCC-preserves-semantics-left-asCCConf-ind : ∀ {i : Size} {A : Set}
@@ -496,12 +500,51 @@ asCC-preserves-semantics-left-asCCConf {i} {A} {D ⟨ l , r ⟩₂} c₂ =
   ≡⟨⟩
     ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ (asCC-Conf c₂)
   ∎
+
+-- Finally, prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
+asCC-preserves-semantics-left {i} {A} {e} c₂ = asCC-Conf c₂ , asCC-preserves-semantics-left-asCCConf {i} {A} {e} c₂
 ```
 
-Proof of the right side:
+Proof of the right side. This proof is very similar to the left side. Maybe we can simplify both proofs if we extract some similarities.
 ```agda
--- TODO
-asCC-preserves-semantics-right = {!!}
+asCC-preserves-semantics-right-asCCConf : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+  → ∀ (c : Configuration)
+    ------------------------------------
+  → ⟦ e ⟧₂ (asCC₂-Conf c) ≡ ⟦ asCC e ⟧ c
+
+-- case analyses for choices where we either have to proceed the proof on the left or right side of a binary choice depending on our configuration
+asCC-preserves-semantics-right-asCCConf-caseanalysis : ∀ {i : Size} {A : Set} {D : Dimension} {l r : CC₂ i A}
+  → ∀ (c : Configuration)
+    -------------------------------------------
+  →   ⟦ if asTag₂ (c D) then l else r ⟧₂ (asCC₂-Conf c)
+    ≡ ⟦ choice-elimination (c D) (asCC l ∷ asCC r ∷ []) ⟧ c
+asCC-preserves-semantics-right-asCCConf-caseanalysis {i} {A} {D} {l} {r} c with c D
+... | zero  = asCC-preserves-semantics-right-asCCConf {i} {A} {l} c
+... | suc n = asCC-preserves-semantics-right-asCCConf {i} {A} {r} c
+
+asCC-preserves-semantics-right-asCCConf {i} {A} {Artifact₂ a []} c = refl
+asCC-preserves-semantics-right-asCCConf {i} {A} {Artifact₂ a (e ∷ es)} c =
+  begin
+    ⟦ Artifact₂ a (e ∷ es) ⟧₂ (asCC₂-Conf c)
+  --≡⟨⟩
+  --  Artifactᵥ a (⟦ e ⟧₂ (asCC₂-Conf c)) ∷ mapl (λ x → ⟦ x ⟧₂ (asCC₂-Conf c)) es
+  ≡⟨ {!!} ⟩
+    ⟦ asCC (Artifact₂ a (e ∷ es)) ⟧ c
+  ∎
+asCC-preserves-semantics-right-asCCConf {i} {A} {D ⟨ l , r ⟩₂} c =
+  begin
+    ⟦ D ⟨ l , r ⟩₂ ⟧₂ (asCC₂-Conf c)
+  ≡⟨⟩
+    ⟦ if asTag₂ (c D) then l else r ⟧₂ (asCC₂-Conf c)
+  ≡⟨ asCC-preserves-semantics-right-asCCConf-caseanalysis c ⟩
+    ⟦ choice-elimination (c D) (asCC l ∷ asCC r ∷ []) ⟧ c
+  ≡⟨⟩
+    ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ c
+  ≡⟨⟩
+    ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ c
+  ∎
+
+asCC-preserves-semantics-right {i} {A} {e} c = asCC₂-Conf c , asCC-preserves-semantics-right-asCCConf {i} {A} {e} c
 ```
 
 To implement transformation to binary normal form, we have to generate new choices, and thus new dimensions.
