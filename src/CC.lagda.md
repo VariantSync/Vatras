@@ -1,8 +1,18 @@
+# Choice Calculus in Agda
+
+## Options
+
+For termination checking, we have to use sized types (i.e., types that are bounded by a certain size).
+We use sizes to constrain the maximum tree-depth of an expression.
+```agda
+{-# OPTIONS --sized-types #-}
+```
+
+## Module
+
 ```agda
 module CC where
 ```
-
-# Choice Calculus in Agda
 
 ## Imports
 ```agda
@@ -19,6 +29,8 @@ open import Data.String.Base
   using (String; _++_)
 open import Function.Base
   using (_∘_; flip)
+open import Size
+  using (Size; Size<_; ↑_; ∞)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
@@ -34,7 +46,11 @@ open import Extensionality
 
 ## Core Choice Calculus
 
-Let's define core choices calculus as defined in Eric's phd thesis:
+Let's define core choices calculus as defined in Eric's phd thesis.
+To prove that our functions terminate and thus prove that our proofs are not self-referential and sound inductions, we extend the definition of the core choice calculus by a size parameter.
+The size parameter is an upper bound for nesting depth of a choice calculus expression.
+In the constructors, j denotes an upper bound for the nesting depth of children.
+
 ```agda
 Dimension : Set
 Dimension = String
@@ -42,9 +58,20 @@ Dimension = String
 Tag : Set
 Tag = ℕ
 
-data CC (A : Set) : Set where
-  Artifact : A → List (CC A) → CC A
-  _⟨_⟩ : Dimension → List⁺ (CC A) → CC A
+data CC (i : Size) (A : Set) : Set where
+  Artifact : ∀ {j : Size< i} →
+    A → List (CC j A) → CC i A
+  _⟨_⟩ : ∀ {j : Size< i} →
+    Dimension → List⁺ (CC j A) → CC i A
+
+-- When just speaking of core choice calculus, we neither care for nor know the depth of an expression. So infinity is a proper upper bound here as we just speak about expressions of arbitrary depth.
+CoreCC : Set → Set
+CoreCC = CC ∞
+
+-- Increasing the upper bound is always valid.
+-- For example, an expression which has at most depth d, also is at most d+1 deep.
+weakenDepthBound : ∀ {i : Size} {j : Size< i} {A : Set} → CC j A → CC i A
+weakenDepthBound c = c
 ```
 
 Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
@@ -95,41 +122,31 @@ choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-{-# TERMINATING #-}
-⟦_⟧ : {A : Set} → CC A → Configuration → Variant A
+⟦_⟧ : ∀ {i : Size} {A : Set} → CC i A → Configuration → Variant A
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
-Agda cannot determine that the semantics function terminates and thus we just tell Agda to assume that it does with the `{-# TERMINATING #-}` pragma.
-I am not sure yet why Agda cannot see this terminating because in every case, we unwrap a constructor level.
-
-An alternative implementation of core choice calculus using sized types can be found in [SizedCC.agda](SizedCC.agda).
-Using sized types, recursive functions are detected to terminate by Agda but carrying the size all the time is a bit clumsy.
-The size constraint of the choice calculus in [SizedCC.agda](SizedCC.agda) is an upper bound on the nesting depth.
-So whenever we visit children, we are guaranteed to go one nesting depth deeper until it eventually hits zero.
-Somehow though, the termination checking has to have problems with the lists though because for binary trees (i.e., when the number of children is known to be 2), termination checking works just fine as shown in [TerminationOnTrees.agda](TerminationOnTrees.agda).
-
-So I guess we should switch to a sized type here, just to make the proofs stronger by ensuring that we have no infinite loops (i.e., proving something by itself).
 
 Semantic equivalence means that the same configurations yield the same variants:
 ```agda
-_≈_ : {A : Set} (a b : CC A) → Set
+_≈_ : ∀ {i j : Size} {A : Set}
+  → (a : CC i A) → (b : CC j A) → Set
 a ≈ b = ⟦ a ⟧ ≡ ⟦ b ⟧
 infix 5 _≈_
 
 -- Semantic equivalence ≈ inherits all properties from structural equality ≡ because it is just an alias.
 
 -- Structural equality implies semantic equality.
-≡→≈ : ∀ {A : Set} (a b : CC A)
+≡→≈ : ∀ {i : Size} {A : Set} {a b : CC i A}
   → a ≡ b
     -------
   → a ≈ b
-≡→≈ _ _ eq rewrite eq = refl
+≡→≈ eq rewrite eq = refl
 ```
 
 Some transformation rules
 ```agda
-D⟨e⟩≈e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≈ e
 D⟨e⟩≈e = refl
@@ -163,13 +180,15 @@ open import Data.Product using (_×_; proj₁; proj₂)
 -- Beware! This symbol renders different on Github. The v should be on top of ⊂ but on Github is next to it.
 -- So don't be confused in case the v appears on top of a character next to ⊂.
 -- Unicode for ⊂̌ is \sub\v
-_⊂̌_ : ∀ {A : Set} (e₁ e₂ : CC A) → Set
+_⊂̌_ : ∀ {i j : Size} {A : Set}
+  → (e₁ : CC i A) → (e₂ : CC j A) → Set
 e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
 infix 5 _⊂̌_
+
 -- some properties
 -- _⊂̌_ is not symmetric
 
-⊂̌-trans : ∀ {A : Set} {e₁ e₂ e₃ : CC A}
+⊂̌-trans : ∀ {i j k : Size} {A : Set} {e₁ : CC i A} {e₂ : CC j A} {e₃ : CC k A}
   → e₁ ⊂̌ e₂
   → e₂ ⊂̌ e₃
     -------
@@ -184,49 +203,50 @@ infix 5 _⊂̌_
 -- (It is not semantic equality of variants because we do not the semantics of
 -- the object language!)
 -- Unicode for ≚ is \or=
-_≚_ : ∀ {A : Set} (e₁ e₂ : CC A) → Set
+_≚_ : ∀ {i j : Size} {A : Set}
+  → (e₁ : CC i A) → (e₂ : CC j A) → Set
 e₁ ≚ e₂ = (e₁ ⊂̌ e₂) × (e₂ ⊂̌ e₁)
 infix 5 _≚_
 
 -- properties of variant-preserving equivalence
-≚-sym : ∀ {A : Set} {e₁ e₂ : CC A}
+≚-sym : ∀ {i j : Size} {A : Set} {e₁ : CC i A} {e₂ : CC j A}
   → e₁ ≚ e₂
     -------
   → e₂ ≚ e₁
 ≚-sym (e₁⊂̌e₂ , e₂⊂̌e₁) = e₂⊂̌e₁ , e₁⊂̌e₂
 
-≚-trans : ∀ {A : Set} {e₁ e₂ e₃ : CC A}
+≚-trans : ∀ {A : Set} {i j k : Size} {e₁ : CC i A} {e₂ : CC j A} {e₃ : CC k A}
   → e₁ ≚ e₂
   → e₂ ≚ e₃
     -------
   → e₁ ≚ e₃
-≚-trans {A} {e₁} {e₂} {e₃} (e₁⊂̌e₂ , e₂⊂̌e₁) (e₂⊂̌e₃ , e₃⊂̌e₂) =
-    ⊂̌-trans {A} {e₁} {e₂} {e₃} e₁⊂̌e₂ e₂⊂̌e₃
-  , ⊂̌-trans {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
+≚-trans {A} {i} {j} {k} {e₁} {e₂} {e₃} (e₁⊂̌e₂ , e₂⊂̌e₁) (e₂⊂̌e₃ , e₃⊂̌e₂) =
+    ⊂̌-trans {i} {j} {k} {A} {e₁} {e₂} {e₃} e₁⊂̌e₂ e₂⊂̌e₃
+  , ⊂̌-trans {k} {j} {i} {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
 ```
 
 As an example, we now prove `D ⟨ e ∷ [] ⟩ ≚ e`.
 ```agda
-D⟨e⟩⊂̌e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ⊂̌ e
 D⟨e⟩⊂̌e config = ( config , refl )
 
-e⊂̌D⟨e⟩ : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+e⊂̌D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
   → e ⊂̌ D ⟨ e ∷ [] ⟩
 e⊂̌D⟨e⟩ config = ( config , refl )
 
-D⟨e⟩≚e : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≚ e
-D⟨e⟩≚e {A} {e} {D} = D⟨e⟩⊂̌e {A} {e} {D} , e⊂̌D⟨e⟩ {A} {e} {D}
+D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊂̌e {i} {A} {e} {D} , e⊂̌D⟨e⟩ {i} {A} {e} {D}
 ```
 
 In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `D ⟨ e ∷ [] ⟩ ≚ e` follows:
 ```agda
 -- Semantic equivalence implies variant equivalence.
-≈→⊂̌ : ∀ {A : Set} {a b : CC A}
+≈→⊂̌ : ∀ {i j : Size} {A : Set} {a : CC i A} {b : CC j A}
   → a ≈ b
     -----
   → a ⊂̌ b
@@ -234,40 +254,44 @@ In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `
 ≈→⊂̌ a≈b config = config , Eq.cong (λ ⟦x⟧ → ⟦x⟧ config) a≈b
 
 -- Semantic equivalence implies variant equivalence.
-≈→≚ : ∀ {A : Set} {a b : CC A}
+≈→≚ : ∀ {i j : Size} {A : Set} {a : CC i A} {b : CC j A}
   → a ≈ b
     -----
   → a ≚ b
-≈→≚ {A} {a} {b} a≈b =
-    ≈→⊂̌ {A} {a} {b} a≈b
-  , ≈→⊂̌ {A} {b} {a} (Eq.sym a≈b)
+≈→≚ {i} {j} {A} {a} {b} a≈b =
+    ≈→⊂̌ {i} {j} {A} {a} {b} a≈b
+  , ≈→⊂̌ {j} {i} {A} {b} {a} (Eq.sym a≈b)
 ```
 
 Finally, we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
 ```agda
-D⟨e⟩≚e' : ∀ {A : Set} → {e : CC A} → {D : Dimension}
+D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≚ e
-D⟨e⟩≚e' {A} {e} {D} =
-  ≈→≚ {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {A} {e} {D})
+D⟨e⟩≚e' {i} {A} {e} {D} =
+  ≈→≚ {↑ i} {i} {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {i} {A} {e} {D})
 -- For some reason we keep to have reapeating the implicit parameters which is a bit annoying but still ok because the proves are short.
 ```
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
 ```agda
 -- smart constructor for plain artifacts
-leaf : {A : Set} → A → CC A
+-- Any upper bound is fine but we are at least 1 deep.
+leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
 leaf a = Artifact a []
 
-cc_example_walk : CC String
+cc_example_walk : ∀ {i : Size} → CC (↑ ↑ i) String
 cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
 
+-- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk_zoom : Variant String
 cc_example_walk_zoom = ⟦ cc_example_walk ⟧ (λ {"Ekko" → 0; _ → 0})
 ```
 
 Print the example:
 ```agda
+-- We omit proving termination for debugging stuff.
+-- TODO: Move this function to another file and forbid TERMINATING macro in the CC module.
 {-# TERMINATING #-}
 showVariant : Variant String → String
 showVariant (Artifactᵥ a []) = a
@@ -288,6 +312,7 @@ In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 A
 ```agda
 open import Data.Bool using (Bool; true; false; if_then_else_)
 
+-- TODO: Make sized
 data ADD (A : Set) : Set where
   Terminal : A → ADD A -- ModelBase in FFSPL
   Choice : Dimension → ADD A → ADD A → ADD A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
@@ -310,16 +335,17 @@ asTag : Tag₂ → Tag
 asTag true  = 0
 asTag false = 1
 
-data CC₂ (A : Set) : Set where
-  Artifact₂ : A → List (CC₂ A) → CC₂ A
-  _⟨_,_⟩₂ : Dimension → CC₂ A → CC₂ A → CC₂ A
+data CC₂ (i : Size) (A : Set) : Set where
+  Artifact₂ : {j : Size< i} →
+    A → List (CC₂ j A) → CC₂ i A
+  _⟨_,_⟩₂ : {j : Size< i} →
+    Dimension → CC₂ j A → CC₂ j A → CC₂ i A
 
 -- Semantics for binary choice calculus
 Configuration₂ : Set
 Configuration₂ = Dimension → Tag₂
 
-{-# TERMINATING #-}
-⟦_⟧₂ : {A : Set} → CC₂ A → Configuration₂ → Variant A
+⟦_⟧₂ : ∀ {i : Size} {A : Set} → CC₂ i A → Configuration₂ → Variant A
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
 ```
@@ -334,8 +360,7 @@ Converts a binary choice calculus expression to a core choice calculus expressio
 The resulting expression is syntactically equivalent and thus still in binary normal form.
 We drop only the knowledge of being in binary normal form at the type level.
 -}
-{-# TERMINATING #-}
-asCC : {A : Set} → CC₂ A → CC A
+asCC : ∀ {i : Size} {A : Set} → CC₂ i A → CC i A
 asCC (Artifact₂ a es) = Artifact a (mapl asCC es)
 asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 
@@ -358,86 +383,90 @@ Can we show the second direction though?
 We cannot constrain the codomain of the n-ary configurations to yield binary results.
 But isn't this automatically handled correctly by the min-function in choice-eliminiation such that indices > 1 will be clamped to 1?
 -}
-_₂⊂̌ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
+_₂⊂̌ₙ_ : ∀ {i j : Size} {A : Set}
+  → CC₂ i A → CC j A → Set
 cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[ c ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
 
-_ₙ⊂̌₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
+_ₙ⊂̌₂_ : ∀ {i j : Size} {A : Set}
+  → CC i A → CC₂ j A → Set
 ccₙ ₙ⊂̌₂ cc₂ = ∀ (c : Configuration) → ∃[ c₂ ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
 
-_₂≚ₙ_ : ∀ {A : Set} → CC₂ A → CC A → Set
+_₂≚ₙ_ : ∀ {i j : Size} {A : Set}
+  → CC₂ i A → CC j A → Set
 cc₂ ₂≚ₙ ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
 
 -- sugar for inverse direction
-_ₙ≚₂_ : ∀ {A : Set} → CC A → CC₂ A → Set
+_ₙ≚₂_ : ∀ {i j : Size} {A : Set}
+  → CC i A → CC₂ j A → Set
 ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
 ```
 
 And now for the proofs:
 ```agda
-asCC-preserves-semantics-left : ∀ {A : Set} {e : CC₂ A}
+asCC-preserves-semantics-left : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
   → e ₂⊂̌ₙ asCC e
 
-asCC-preserves-semantics-right : ∀ {A : Set} {e : CC₂ A}
+asCC-preserves-semantics-right : ∀ {i : Size} {A : Set} {e : CC₂ i A}
   → asCC e ₙ⊂̌₂ e
 
-asCC-preserves-semantics : ∀ {A : Set} {e : CC₂ A}
+asCC-preserves-semantics : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
   → e ₂≚ₙ asCC e
-asCC-preserves-semantics {A} {e} =
-    asCC-preserves-semantics-left  {A} {e}
-  , asCC-preserves-semantics-right {A} {e}
+asCC-preserves-semantics {i} {A} {e} =
+    asCC-preserves-semantics-left  {i} {A} {e}
+  , asCC-preserves-semantics-right {i} {A} {e}
 ```
 
 Proof of the left side:
 ```agda
 -- helper function that tells us that the existing n-ary configuration, given a binary configuration, is asCC-Conf c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
-asCC-preserves-semantics-left-asCCConf : ∀ {A : Set} {e : CC₂ A}
+asCC-preserves-semantics-left-asCCConf : ∀ {i : Size} {A : Set} {e : CC₂ i A}
   → ∀ (c₂ : Configuration₂)
     --------------------------------------
   → ⟦ e ⟧₂ c₂ ≡ ⟦ asCC e ⟧ (asCC-Conf c₂)
 
 -- Prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
-asCC-preserves-semantics-left {A} {e} c₂ = asCC-Conf c₂ , asCC-preserves-semantics-left-asCCConf {A} {e} c₂
+asCC-preserves-semantics-left {i} {A} {e} c₂ = asCC-Conf c₂ , asCC-preserves-semantics-left-asCCConf {i} {A} {e} c₂
 
 -- helper function for artifacts to apply the induction hypothesis
-asCC-preserves-semantics-left-asCCConf-ind : ∀ {A : Set}
-  →   (c₂ : Configuration₂)
-    ---------------------------------------------
-  →   (λ (z : CC₂ A) → ⟦ z ⟧₂ c₂)
-    ≗ (λ (z : CC₂ A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
-asCC-preserves-semantics-left-asCCConf-ind {A} c = λ z → asCC-preserves-semantics-left-asCCConf {A} {z} c
+asCC-preserves-semantics-left-asCCConf-ind : ∀ {i : Size} {A : Set}
+  → ∀ (c₂ : Configuration₂)
+    -----------------------------------------------
+  →   (λ (z : CC₂ i A) → ⟦ z ⟧₂ c₂)
+    ≗ (λ (z : CC₂ i A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
+asCC-preserves-semantics-left-asCCConf-ind {A} {i} c =
+  λ z → asCC-preserves-semantics-left-asCCConf {A} {i} {z} c
 
 -- helper function for choices
-asCC-preserves-semantics-left-asCCConf-choice-case-analyses : ∀ {A : Set} {D : Dimension} {l r : CC₂ A} (c₂ : Configuration₂)
+asCC-preserves-semantics-left-asCCConf-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : CC₂ i A} {r : CC₂ i A}
+  → ∀ (c₂ : Configuration₂)
     ---------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
     ≡ ⟦ (choice-elimination (asCC-Conf c₂ D) (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
-asCC-preserves-semantics-left-asCCConf-choice-case-analyses {A} {D} {l} {r} c₂ with c₂ D
+asCC-preserves-semantics-left-asCCConf-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
 ...                          | true  = begin
                                          ⟦ if true then l else r ⟧₂ c₂
                                        ≡⟨⟩
                                          ⟦ l ⟧₂ c₂
-                                       ≡⟨ asCC-preserves-semantics-left-asCCConf {A} {l} c₂ ⟩
+                                       ≡⟨ asCC-preserves-semantics-left-asCCConf {i} {A} {l} c₂ ⟩
                                          ⟦ asCC l ⟧ (asCC-Conf c₂)
                                        ≡⟨⟩
                                          ⟦ (choice-elimination 0 (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
                                        ∎
                              -- This proof is analoguous to the proof for the "true" case.
                              -- Thus, we simplify the step-by-step-proof to the only reasoning necessary below:
-...                          | false = asCC-preserves-semantics-left-asCCConf {A} {r} c₂
+...                          | false = asCC-preserves-semantics-left-asCCConf {i} {A} {r} c₂
 
-open import Data.List.Properties renaming (map-cong to mapl-cong; map-compose to mapl-∘)
-open Extensionality using (≡→≗)
+open import Data.List.Properties renaming (map-compose to mapl-∘)
 
 -- Curiously, the proof is easier for choices than for artifacts.
 -- For some reason it was really hard to just prove the application of the induction hypothesis over all subtrees for Artifacts.
 -- The use of flip and map made it hard.
-{-# TERMINATING #-}
 -- If we have just artifacts, there is nothing left to do.
-asCC-preserves-semantics-left-asCCConf {A} {Artifact₂ a []} c₂ = refl
+asCC-preserves-semantics-left-asCCConf {i} {A} {Artifact₂ a []} c₂ = refl
 -- The semantics "just" recurses on Artifacts.
-asCC-preserves-semantics-left-asCCConf {A} {Artifact₂ a es} c₂ =
+asCC-preserves-semantics-left-asCCConf {i} {A} {Artifact₂ a es} c₂ =
   begin
     (⟦ Artifact₂ a es ⟧₂ c₂)
   ≡⟨⟩
@@ -455,7 +484,7 @@ asCC-preserves-semantics-left-asCCConf {A} {Artifact₂ a es} c₂ =
   ∎
 -- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
 -- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
-asCC-preserves-semantics-left-asCCConf {A} {D ⟨ l , r ⟩₂} c₂ =
+asCC-preserves-semantics-left-asCCConf {i} {A} {D ⟨ l , r ⟩₂} c₂ =
   begin
     ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂
   ≡⟨⟩
@@ -482,8 +511,17 @@ For example, when generating names by appending tick marks, we may get `toCC₂ 
 newDim : Dimension → Dimension
 newDim s = s ++ "'"
 
+{-
+Sadly, we cannot prove this terminating yet.
+The problem is that a list of children is converted to a recursive nesting structure.
+For example, D ⟨ a , b , c , e ⟩ becomes D ⟨ a , D' ⟨ b , D'' ⟨ c , d ⟩₂ ⟩₂ ⟩₂.
+So the number of children of a CC expression determines the nesting depth of the resulting binary expression.
+Since we have no guarantees on the number of children (i.e., no bound / estimate), we cannot make any guarantees on the maximum depth of the resulting expression.
+Moreover, because a children list thus could be infinite, also the resulting expression could be infinite.
+Thus, this function might indeed not terminate.
+-}
 {-# TERMINATING #-}
-toCC₂ : {A : Set} → CC A → CC₂ A
+toCC₂ : ∀ {i : Size} {A : Set} → CC i A → CC₂ ∞ A
 -- Leave structures unchanged
 toCC₂ (Artifact a es) = Artifact₂ a (mapl toCC₂ es)
 -- Use the idempotency rule to unwrap unary choices
