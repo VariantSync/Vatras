@@ -336,8 +336,8 @@ asTag true  = 0
 asTag false = 1
 
 asTag₂ : Tag → Tag₂
-asTag₂ 0 = true
-asTag₂ _ = false
+asTag₂ zero    = true
+asTag₂ (suc n) = false
 
 data CC₂ (i : Size) (A : Set) : Set where
   Artifact₂ : {j : Size< i} →
@@ -371,11 +371,14 @@ asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 {- |
 Convert binary configuration to n-ary configuration.
 -}
-asCC-Conf : Configuration₂ → Configuration
-asCC-Conf c₂ = asTag ∘ c₂
+toNaryConfig : Configuration₂ → Configuration
+toNaryConfig c₂ = asTag ∘ c₂
 
-asCC₂-Conf : Configuration → Configuration₂
-asCC₂-Conf c = asTag₂ ∘ c
+{- |
+Convert n-ary configuration to binary.
+-}
+toBinaryConfig : Configuration → Configuration₂
+toBinaryConfig c = asTag₂ ∘ c
 ```
 
 To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression.
@@ -386,9 +389,6 @@ Thus, both expressions are considered semantically equal if they yield the same 
 {-
 We use a formulation similar to the one for variant equivalence for n-ary choice calculus.
 Equivalence is subset in both directionss.
-Can we show the second direction though?
-We cannot constrain the codomain of the n-ary configurations to yield binary results.
-But isn't this automatically handled correctly by the min-function in choice-eliminiation such that indices > 1 will be clamped to 1?
 -}
 _₂⊂̌ₙ_ : ∀ {i j : Size} {A : Set}
   → CC₂ i A → CC j A → Set
@@ -408,59 +408,54 @@ _ₙ≚₂_ : ∀ {i j : Size} {A : Set}
 ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
 ```
 
-And now for the proofs:
+And now for the proofs.
+We prove first that any binary choice calculus expression can be converted to an n-ary choice calculus expression (core choice calculus expression).
 ```agda
-asCC-preserves-semantics-left : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+CC₂→CC-left : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
   → e ₂⊂̌ₙ asCC e
 
-asCC-preserves-semantics-right : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+CC₂→CC-right : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+    ------------
   → asCC e ₙ⊂̌₂ e
 
-asCC-preserves-semantics : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+-- Main theorem for drawing an arrow from CC₂ to CC.
+CC₂→CC : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
   → e ₂≚ₙ asCC e
-asCC-preserves-semantics {i} {A} {e} =
-    asCC-preserves-semantics-left  {i} {A} {e}
-  , asCC-preserves-semantics-right {i} {A} {e}
+CC₂→CC {i} {A} {e} =
+    CC₂→CC-left  {i} {A} {e}
+  , CC₂→CC-right {i} {A} {e}
 ```
 
 Proof of the left side:
 ```agda
--- helper function that tells us that the existing n-ary configuration, given a binary configuration, is asCC-Conf c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
-asCC-preserves-semantics-left-asCCConf : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+-- helper function that tells us that the existing n-ary configuration, given a binary configuration, is toNaryConfig c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
+CC₂→CC-left-toNaryConfig : ∀ {i : Size} {A : Set}
+  → ∀ (e : CC₂ i A)
   → ∀ (c₂ : Configuration₂)
     -------------------------------------
-  → ⟦ e ⟧₂ c₂ ≡ ⟦ asCC e ⟧ (asCC-Conf c₂)
-
--- helper function for artifacts to apply the induction hypothesis
-asCC-preserves-semantics-left-asCCConf-ind : ∀ {i : Size} {A : Set}
-  → ∀ (c₂ : Configuration₂)
-    -----------------------------------------------
-  →   (λ (z : CC₂ i A) → ⟦ z ⟧₂ c₂)
-    ≗ (λ (z : CC₂ i A) → ⟦ asCC z ⟧ (asCC-Conf c₂))
-asCC-preserves-semantics-left-asCCConf-ind {A} {i} c =
-  λ z → asCC-preserves-semantics-left-asCCConf {A} {i} {z} c
+  → ⟦ e ⟧₂ c₂ ≡ ⟦ asCC e ⟧ (toNaryConfig c₂)
 
 -- helper function for choices
-asCC-preserves-semantics-left-asCCConf-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : CC₂ i A} {r : CC₂ i A}
+CC₂→CC-left-toNaryConfig-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : CC₂ i A} {r : CC₂ i A}
   → ∀ (c₂ : Configuration₂)
     ---------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
-    ≡ ⟦ (choice-elimination (asCC-Conf c₂ D) (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
-asCC-preserves-semantics-left-asCCConf-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
+    ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (asCC l ∷ asCC r ∷ [])) ⟧ (toNaryConfig c₂)
+CC₂→CC-left-toNaryConfig-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
 ...                          | true  = begin
                                          ⟦ if true then l else r ⟧₂ c₂
                                        ≡⟨⟩
                                          ⟦ l ⟧₂ c₂
-                                       ≡⟨ asCC-preserves-semantics-left-asCCConf {i} {A} {l} c₂ ⟩
-                                         ⟦ asCC l ⟧ (asCC-Conf c₂)
+                                       ≡⟨ CC₂→CC-left-toNaryConfig l c₂ ⟩
+                                         ⟦ asCC l ⟧ (toNaryConfig c₂)
                                        ≡⟨⟩
-                                         ⟦ (choice-elimination 0 (asCC l ∷ asCC r ∷ [])) ⟧ (asCC-Conf c₂)
+                                         ⟦ (choice-elimination 0 (asCC l ∷ asCC r ∷ [])) ⟧ (toNaryConfig c₂)
                                        ∎
                              -- This proof is analoguous to the proof for the "true" case.
-                             -- Thus, we simplify the step-by-step-proof to the only reasoning necessary below:
-...                          | false = asCC-preserves-semantics-left-asCCConf {i} {A} {r} c₂
+                             -- Thus, we simplify the step-by-step-proof to the only reasoning necessary.
+...                          | false = CC₂→CC-left-toNaryConfig r c₂
 
 open import Data.List.Properties renaming (map-compose to mapl-∘)
 
@@ -468,75 +463,80 @@ open import Data.List.Properties renaming (map-compose to mapl-∘)
 -- For some reason it was really hard to just prove the application of the induction hypothesis over all subtrees for Artifacts.
 -- The use of flip and map made it hard.
 -- If we have just artifacts, there is nothing left to do.
-asCC-preserves-semantics-left-asCCConf {i} {A} {Artifact₂ a []} c₂ = refl
+CC₂→CC-left-toNaryConfig (Artifact₂ a []) c₂ = refl
 -- The semantics "just" recurses on Artifacts.
-asCC-preserves-semantics-left-asCCConf {i} {A} {Artifact₂ a es} c₂ =
+CC₂→CC-left-toNaryConfig (Artifact₂ a es@(_ ∷ _)) c₂ =
   begin
     (⟦ Artifact₂ a es ⟧₂ c₂)
   ≡⟨⟩
     Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)
   ≡⟨ Eq.cong (λ m → Artifactᵥ a (m es)) -- apply the induction hypothesis below the Artifactᵥ constructor
      ( mapl-cong-≗-≡ -- and below the mapl
-       (asCC-preserves-semantics-left-asCCConf-ind c₂) -- set the configuration but leave the CC expression x as first parameter
+       (λ {v → CC₂→CC-left-toNaryConfig v c₂})
      )
    ⟩
-    Artifactᵥ a (mapl (λ x → ⟦ asCC x ⟧ (asCC-Conf c₂)) es)
+     Artifactᵥ a (mapl (flip (⟦_⟧ ∘ asCC) (toNaryConfig c₂)) es)
   ≡⟨ Eq.cong (λ m → Artifactᵥ a m) (mapl-∘ es) ⟩
-    Artifactᵥ a (mapl (λ x → ⟦ x ⟧ (asCC-Conf c₂)) (mapl asCC es))
+    Artifactᵥ a (mapl (flip ⟦_⟧ (toNaryConfig c₂)) (mapl asCC es))
   ≡⟨⟩
-    (⟦ asCC (Artifact₂ a es) ⟧ (asCC-Conf c₂))
+    (⟦ asCC (Artifact₂ a es) ⟧ (toNaryConfig c₂))
   ∎
 -- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
 -- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
-asCC-preserves-semantics-left-asCCConf {i} {A} {D ⟨ l , r ⟩₂} c₂ =
+CC₂→CC-left-toNaryConfig (D ⟨ l , r ⟩₂) c₂ =
   begin
     ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂
   ≡⟨⟩
     ⟦ if c₂ D then l else r ⟧₂ c₂
-  ≡⟨ asCC-preserves-semantics-left-asCCConf-choice-case-analyses c₂ ⟩
-    ⟦ choice-elimination ((asCC-Conf c₂) D) (asCC l ∷ asCC r ∷ []) ⟧ (asCC-Conf c₂)
+  ≡⟨ CC₂→CC-left-toNaryConfig-choice-case-analyses c₂ ⟩
+    ⟦ choice-elimination ((toNaryConfig c₂) D) (asCC l ∷ asCC r ∷ []) ⟧ (toNaryConfig c₂)
   ≡⟨⟩
-    ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ (asCC-Conf c₂)
+    ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ (toNaryConfig c₂)
   ≡⟨⟩
-    ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ (asCC-Conf c₂)
+    ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ (toNaryConfig c₂)
   ∎
 
 -- Finally, prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
-asCC-preserves-semantics-left {i} {A} {e} c₂ = asCC-Conf c₂ , asCC-preserves-semantics-left-asCCConf {i} {A} {e} c₂
+CC₂→CC-left {i} {A} {e} c₂ = toNaryConfig c₂ , CC₂→CC-left-toNaryConfig e c₂
 ```
 
 Proof of the right side. This proof is very similar to the left side. Maybe we can simplify both proofs if we extract some similarities.
 ```agda
-asCC-preserves-semantics-right-asCCConf : ∀ {i : Size} {A : Set} {e : CC₂ i A}
+CC₂→CC-right-toBinaryConfig : ∀ {i : Size} {A : Set}
+  → ∀ (e : CC₂ i A)
   → ∀ (c : Configuration)
     ------------------------------------
-  → ⟦ e ⟧₂ (asCC₂-Conf c) ≡ ⟦ asCC e ⟧ c
+  → ⟦ e ⟧₂ (toBinaryConfig c) ≡ ⟦ asCC e ⟧ c
 
 -- case analyses for choices where we either have to proceed the proof on the left or right side of a binary choice depending on our configuration
-asCC-preserves-semantics-right-asCCConf-caseanalysis : ∀ {i : Size} {A : Set} {D : Dimension} {l r : CC₂ i A}
+CC₂→CC-right-toBinaryConfig-choice-case-analysis : ∀ {i : Size} {A : Set} {D : Dimension} {l r : CC₂ i A}
   → ∀ (c : Configuration)
     -------------------------------------------
-  →   ⟦ if asTag₂ (c D) then l else r ⟧₂ (asCC₂-Conf c)
+  →   ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
     ≡ ⟦ choice-elimination (c D) (asCC l ∷ asCC r ∷ []) ⟧ c
-asCC-preserves-semantics-right-asCCConf-caseanalysis {i} {A} {D} {l} {r} c with c D
-... | zero  = asCC-preserves-semantics-right-asCCConf {i} {A} {l} c
-... | suc n = asCC-preserves-semantics-right-asCCConf {i} {A} {r} c
+CC₂→CC-right-toBinaryConfig-choice-case-analysis {i} {A} {D} {l} {r} c with c D
+... | zero  = CC₂→CC-right-toBinaryConfig l c
+... | suc n = CC₂→CC-right-toBinaryConfig r c
 
-asCC-preserves-semantics-right-asCCConf {i} {A} {Artifact₂ a []} c = refl
-asCC-preserves-semantics-right-asCCConf {i} {A} {Artifact₂ a (e ∷ es)} c =
+CC₂→CC-right-toBinaryConfig (Artifact₂ a []) c = refl
+CC₂→CC-right-toBinaryConfig (Artifact₂ a es@(_ ∷ _)) c =
   begin
-    ⟦ Artifact₂ a (e ∷ es) ⟧₂ (asCC₂-Conf c)
-  --≡⟨⟩
-  --  Artifactᵥ a (⟦ e ⟧₂ (asCC₂-Conf c)) ∷ mapl (λ x → ⟦ x ⟧₂ (asCC₂-Conf c)) es
-  ≡⟨ {!!} ⟩
-    ⟦ asCC (Artifact₂ a (e ∷ es)) ⟧ c
-  ∎
-asCC-preserves-semantics-right-asCCConf {i} {A} {D ⟨ l , r ⟩₂} c =
-  begin
-    ⟦ D ⟨ l , r ⟩₂ ⟧₂ (asCC₂-Conf c)
+    ⟦ Artifact₂ a es ⟧₂ (toBinaryConfig c)
   ≡⟨⟩
-    ⟦ if asTag₂ (c D) then l else r ⟧₂ (asCC₂-Conf c)
-  ≡⟨ asCC-preserves-semantics-right-asCCConf-caseanalysis c ⟩
+    Artifactᵥ a (mapl (flip ⟦_⟧₂ (toBinaryConfig c)) es)
+  ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) (mapl-cong-≗-≡ (λ {v → CC₂→CC-right-toBinaryConfig v c})) ⟩
+    Artifactᵥ a (mapl ((flip ⟦_⟧ c) ∘ asCC) es)
+  ≡⟨ Eq.cong (λ {x → Artifactᵥ a x}) (mapl-∘ es) ⟩
+    Artifactᵥ a (mapl (flip ⟦_⟧ c) (mapl asCC es))
+  ≡⟨⟩
+    ⟦ asCC (Artifact₂ a es) ⟧ c
+  ∎
+CC₂→CC-right-toBinaryConfig (D ⟨ l , r ⟩₂) c =
+  begin
+    ⟦ D ⟨ l , r ⟩₂ ⟧₂ (toBinaryConfig c)
+  ≡⟨⟩
+    ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
+  ≡⟨ CC₂→CC-right-toBinaryConfig-choice-case-analysis c ⟩
     ⟦ choice-elimination (c D) (asCC l ∷ asCC r ∷ []) ⟧ c
   ≡⟨⟩
     ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ c
@@ -544,7 +544,7 @@ asCC-preserves-semantics-right-asCCConf {i} {A} {D ⟨ l , r ⟩₂} c =
     ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ c
   ∎
 
-asCC-preserves-semantics-right {i} {A} {e} c = asCC₂-Conf c , asCC-preserves-semantics-right-asCCConf {i} {A} {e} c
+CC₂→CC-right {i} {A} {e} c = toBinaryConfig c , CC₂→CC-right-toBinaryConfig e c
 ```
 
 To implement transformation to binary normal form, we have to generate new choices, and thus new dimensions.
@@ -557,11 +557,12 @@ newDim s = s ++ "'"
 {-
 Sadly, we cannot prove this terminating yet.
 The problem is that a list of children is converted to a recursive nesting structure.
-For example, D ⟨ a , b , c , e ⟩ becomes D ⟨ a , D' ⟨ b , D'' ⟨ c , d ⟩₂ ⟩₂ ⟩₂.
+For example, D ⟨ a , b , c , d ⟩ becomes D ⟨ a , D' ⟨ b , D'' ⟨ c , d ⟩₂ ⟩₂ ⟩₂.
 So the number of children of a CC expression determines the nesting depth of the resulting binary expression.
 Since we have no guarantees on the number of children (i.e., no bound / estimate), we cannot make any guarantees on the maximum depth of the resulting expression.
 Moreover, because a children list thus could be infinite, also the resulting expression could be infinite.
 Thus, this function might indeed not terminate.
+To solve this, we would have to introduce yet another bound to n-ary choice calculus: an upper bound for the number of children of each node.
 -}
 {-# TERMINATING #-}
 toCC₂ : ∀ {i : Size} {A : Set} → CC i A → CC₂ ∞ A
