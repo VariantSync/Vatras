@@ -17,6 +17,8 @@ module CC where
 ## Imports
 ```agda
 -- Imports from Standard Library
+open import Data.Bool
+  using (Bool; true; false; if_then_else_)
 open import Data.List.Base
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
@@ -139,7 +141,7 @@ infix 5 _≈_
 -- Structural equality implies semantic equality.
 ≡→≈ : ∀ {i : Size} {A : Set} {a b : CC i A}
   → a ≡ b
-    -------
+    -----
   → a ≈ b
 ≡→≈ eq rewrite eq = refl
 ```
@@ -162,13 +164,13 @@ For the variant-subset relation, we want to express the following, given two exp
 Every variant described by e₁
 is also described by e₂.
 
-->
+<->
 
 ∀ variants v in the image of ⟦ e₁ ⟧
 there exists a configuration c
 such that ⟦ e₂ ⟧ c ≡ v.
 
-->
+<->
 
 For all configurations c₁
 there exists a configuration c₂
@@ -270,7 +272,6 @@ D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
   → D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e' {i} {A} {e} {D} =
   ≈→≚ {↑ i} {i} {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {i} {A} {e} {D})
--- For some reason we keep to have reapeating the implicit parameters which is a bit annoying but still ok because the proves are short.
 ```
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
@@ -280,10 +281,10 @@ Finally, let's build an example over strings. For this example, option calculus 
 leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
 leaf a = Artifact a []
 
+-- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk : ∀ {i : Size} → CC (↑ ↑ i) String
 cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
 
--- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk_zoom : Variant String
 cc_example_walk_zoom = ⟦ cc_example_walk ⟧ (λ {"Ekko" → 0; _ → 0})
 ```
@@ -295,34 +296,17 @@ Print the example:
 {-# TERMINATING #-}
 showVariant : Variant String → String
 showVariant (Artifactᵥ a []) = a
-showVariant (Artifactᵥ a es) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
+showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
 
 mainStr : String
 mainStr = showVariant cc_example_walk_zoom
 ```
 
-## Algebraic Decision Diagrams and Binary Normal Form
+## Binary Normal Form
 
 In the following we introduce normal forms for choice calculus expressions.
 We express each normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system.
 
-An algebaric decision diagram (ADD) is a choice calculus expression in which all leaves are artifacts.
-We refer to a choice calculus expression whose abstract syntax is an ADD, as being in _product normal form_ (PNF):
-In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
-```agda
-open import Data.Bool using (Bool; true; false; if_then_else_)
-
--- TODO: Make sized
-data ADD (A : Set) : Set where
-  Terminal : A → ADD A -- ModelBase in FFSPL
-  Choice : Dimension → ADD A → ADD A → ADD A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
-
--- BDDs are ADDs in which we can only end at true or false.
-BDD : Set
-BDD = ADD Bool
-```
-
-To convert to product normal form, it is easier to first convert to binary normal form of choice calculus.
 Every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
 ```agda
 Tag₂ : Set
@@ -407,6 +391,8 @@ _ₙ≚₂_ : ∀ {i j : Size} {A : Set}
   → CC i A → CC₂ j A → Set
 ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
 ```
+
+### Binary to N-ary Choice Calculus
 
 And now for the proofs.
 We prove first that any binary choice calculus expression can be converted to an n-ary choice calculus expression (core choice calculus expression).
@@ -547,13 +533,29 @@ CC₂→CC-right-toBinaryConfig (D ⟨ l , r ⟩₂) c =
 CC₂→CC-right {i} {A} {e} c = toBinaryConfig c , CC₂→CC-right-toBinaryConfig e c
 ```
 
+### N-ary to Binary Choice Calculus
+
 To implement transformation to binary normal form, we have to generate new choices, and thus new dimensions.
 When generating a new name for a new dimension, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
 For example, when generating names by appending tick marks, we may get `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) ≡ D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
+
+So far I came up with two principle ways to ensure the uniqueness of generated names:
+
+1. Bake uniqueness into the type-level by using a different type for dimension in the output expression. Values of the new type would ensure that these values were never part of the original input expression. However, this is very intrusive into the language design and introduces complexity for all matters other than conversion to binary normal form.
+2. Ensure somehow that any new value does not exist in the input expression yet. One solution would be to take all existing names and concatenate them. The resulting name is unique. This would work from a mathy point of view but would be very inconvenient in practice.
+
+Can we abstract (2) in a name generator "object" that generates names together with proves for uniqueness (potentially making additional assumptions)?
+
+This name generate has also be used by the configuration to determine values for the new names.
+
 ```agda
+-- very simple name generator that only works when we assume that input names have no ' at the end of their names.
 newDim : Dimension → Dimension
 newDim s = s ++ "'"
+```
 
+Conversion of n-ary to binary choice calculus:
+```agda
 {-
 Sadly, we cannot prove this terminating yet.
 The problem is that a list of children is converted to a recursive nesting structure.
@@ -586,6 +588,26 @@ How can we express that without opening the box of pandora?
 Maybe redefining Dimension to ℕ or something more convenient than String could help?
 It should remain close to the definition in Eric's thesis/papers though.
 -}
+CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
+    -------------
+  → toCC₂ e ₂⊂̌ₙ e
+
+CC→CC₂-right : ∀ {i : Size} {A : Set} {e : CC i A}
+    -------------
+  → e ₙ⊂̌₂ toCC₂ e
+
+CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
+    ----------
+  → toCC₂ e ₂≚ₙ e
+CC→CC₂ {i} {A} {e} =
+    CC→CC₂-left  {i} {A} {e}
+  , CC→CC₂-right {i} {A} {e}
+```
+
+
+```agda
+CC→CC₂-left = {!!}
+CC→CC₂-right = {!!}
 ```
 
 ## Unicode Characters in Emacs Agda Mode
