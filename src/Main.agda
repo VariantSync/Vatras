@@ -1,3 +1,5 @@
+{-# OPTIONS --sized-types #-}
+
 module Main where
 
 open import Agda.Builtin.IO using (IO)

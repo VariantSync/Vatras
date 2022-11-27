@@ -74,6 +74,13 @@ CoreCC = CC ∞
 -- For example, an expression which has at most depth d, also is at most d+1 deep.
 weakenDepthBound : ∀ {i : Size} {j : Size< i} {A : Set} → CC j A → CC i A
 weakenDepthBound c = c
+
+-- printing for examples
+{-# TERMINATING #-}
+showCC : ∀ {i : Size} → CC i String → String
+showCC (Artifact a []) = a
+showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC es)) ++ ">-"
+showCC (D ⟨ es ⟩) = D ++ "⟨" ++ (Data.String.Base.intersperse ", " (toList (mapl⁺ showCC es))) ++ "⟩"
 ```
 
 Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
@@ -148,6 +155,7 @@ infix 5 _≈_
 
 Some transformation rules
 ```agda
+-- unary choices are mandatory
 D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
   → D ⟨ e ∷ [] ⟩ ≈ e
@@ -297,9 +305,6 @@ Print the example:
 showVariant : Variant String → String
 showVariant (Artifactᵥ a []) = a
 showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
-
-mainStr : String
-mainStr = showVariant cc_example_walk_zoom
 ```
 
 ## Binary Normal Form
@@ -336,6 +341,13 @@ Configuration₂ = Dimension → Tag₂
 ⟦_⟧₂ : ∀ {i : Size} {A : Set} → CC₂ i A → Configuration₂ → Variant A
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
+
+-- printing for examples
+{-# TERMINATING #-}
+showCC₂ : ∀ {i : Size} → CC₂ i String → String
+showCC₂ (Artifact₂ a []) = a
+showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
+showCC₂ (D ⟨ l , r ⟩₂) = D ++ "⟨" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ "⟩"
 ```
 
 Now that we've introduce the binary normal form at the type level, we want to show that (1) any n-ary choice calculus expression can be transformed to binary normal form, and (2) any binary normal form expression is a choice calculus expression.
@@ -354,12 +366,14 @@ asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
 
 {- |
 Convert binary configuration to n-ary configuration.
+Only valid for our translation from CC₂ to CC.
 -}
 toNaryConfig : Configuration₂ → Configuration
 toNaryConfig c₂ = asTag ∘ c₂
 
 {- |
 Convert n-ary configuration to binary.
+Only valid for our translation from CC₂ to CC.
 -}
 toBinaryConfig : Configuration → Configuration₂
 toBinaryConfig c = asTag₂ ∘ c
@@ -443,7 +457,7 @@ CC₂→CC-left-toNaryConfig-choice-case-analyses {i} {A} {D} {l} {r} c₂ with 
                              -- Thus, we simplify the step-by-step-proof to the only reasoning necessary.
 ...                          | false = CC₂→CC-left-toNaryConfig r c₂
 
-open import Data.List.Properties renaming (map-compose to mapl-∘)
+open import Data.List.Properties renaming (map-∘ to mapl-∘)
 
 -- Curiously, the proof is easier for choices than for artifacts.
 -- For some reason it was really hard to just prove the application of the induction hypothesis over all subtrees for Artifacts.
@@ -556,6 +570,57 @@ newDim s = s ++ "'"
 
 Conversion of n-ary to binary choice calculus:
 ```agda
+-- Import monad and applicative operators
+open import Effect.Functor using (RawFunctor)
+--open RawFunctor using (_<$>_)
+
+open import Effect.Applicative using (RawApplicative)
+--open RawApplicative using (pure)
+
+open import Effect.Monad using (RawMonad)
+--open RawMonad using (_>>=_)
+
+-- Import state monad
+open import Effect.Monad.State
+  using (State; RawMonadState; runState)
+  renaming (functor to state-functor;
+            applicative to state-applicative;
+            monad to state-monad;
+            monadState to state-monad-specifics)
+
+-- Import traversable for lists
+import Data.List.Effectful -- using (TraversableA)
+open Data.List.Effectful.TraversableA using (sequenceA)
+
+-- Import show for nats to make names from numbers
+open import Data.Nat.Show renaming (show to show-nat)
+
+open import Data.Maybe using (Maybe; just; nothing)
+
+open import Agda.Builtin.String using (primStringEquality)
+
+
+ConfigurationTranslator : Set
+ConfigurationTranslator = Configuration → Configuration₂
+
+record TranslationData : Set where
+  field
+    nextName : ℕ
+    nameDict : String → Maybe ℕ
+    cₙ→c₂ : ConfigurationTranslator
+open TranslationData
+
+TranslationState : Set → Set
+TranslationState = State TranslationData
+
+emptyTranslationData : TranslationData
+emptyTranslationData =
+  record
+    { nextName = zero
+    ; nameDict = λ {x → nothing}
+    ; cₙ→c₂ = λ {cₙ d → true}
+    }
+
 {-
 Sadly, we cannot prove this terminating yet.
 The problem is that a list of children is converted to a recursive nesting structure.
@@ -566,16 +631,90 @@ Moreover, because a children list thus could be infinite, also the resulting exp
 Thus, this function might indeed not terminate.
 To solve this, we would have to introduce yet another bound to n-ary choice calculus: an upper bound for the number of children of each node.
 -}
+
+-- helper function to keep track of state
+{-#TERMINATING #-}
+toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
+
+-- actual translation
 {-# TERMINATING #-}
-toCC₂ : ∀ {i : Size} {A : Set} → CC i A → CC₂ ∞ A
+toCC₂ : ∀ {i : Size} {A : Set} → CC i A → CC₂ ∞ A × ConfigurationTranslator
+toCC₂ cc =
+  let translationData , cc₂ = runState (toCC₂' cc) emptyTranslationData
+  in cc₂ , (cₙ→c₂ translationData)
+
+toDim : ℕ → Dimension
+toDim n = "D" ++ (show-nat n)
+
+-- Agda has no "case-of" statement like haskell. The closest is the with-statement.
+-- with can only be used on the left-hand side of an equation so we have to introduce this
+-- extra-function toUniqueName'
+toUniqueDimension' : Dimension → TranslationData → TranslationState Dimension
+toUniqueDimension' D translationData with nameDict translationData D
+... | just n  = pure (toDim n)
+                where open RawApplicative state-applicative
+... | nothing = let open RawMonad state-monad
+                    open RawMonadState state-monad-specifics
+                in do
+                  let dimname = nextName translationData
+                      oldNameDict = nameDict translationData
+                  put (record translationData {
+                    nextName = suc dimname;
+                    nameDict = λ {dim →
+                      if (primStringEquality dim D)
+                      then just dimname
+                      else (oldNameDict dim)
+                      }
+                    })
+                  pure (toDim dimname)
+
+toUniqueDimension : Dimension → TranslationState Dimension
+toUniqueDimension D =
+  let open RawMonad state-monad
+      open RawMonadState state-monad-specifics
+  in do
+    translationData ← get
+    toUniqueDimension' D translationData
+
 -- Leave structures unchanged
-toCC₂ (Artifact a es) = Artifact₂ a (mapl toCC₂ es)
--- Use the idempotency rule to unwrap unary choices
-toCC₂ (D ⟨ e ∷ [] ⟩) = toCC₂ e
--- Leave binary choices unchanged
-toCC₂ (D ⟨ then ∷ elze ∷ [] ⟩) = D ⟨ toCC₂ then , toCC₂ elze ⟩₂
+toCC₂' (Artifact a []) = pure (Artifact₂ a [])
+  where open RawApplicative state-applicative
+toCC₂' (Artifact a (e ∷ es)) =
+  -- First, translate all children recursively.
+  -- This yields a list of states which we evaluate in sequence via sequenceA.
+  let open RawFunctor state-functor
+      translated-children = mapl toCC₂' (e ∷ es) in
+  Artifact₂ a <$> (sequenceA state-applicative translated-children)
+-- Use the idempotency rule to unwrap unary choices.
+toCC₂' (D ⟨ e ∷ [] ⟩) = toCC₂' e
+-- Leave binary choices unchanged.
+toCC₂' (D ⟨ then ∷ elze ∷ [] ⟩) =
+  let open RawMonad state-monad
+  in do
+    -- TODO: Generate configuration!
+    D' ← toUniqueDimension D
+    cc₂-then ← toCC₂' then
+    cc₂-elze ← toCC₂' elze
+    pure (D' ⟨ cc₂-then , cc₂-elze ⟩₂)
 -- Perform recursive nesting on choices with arity n > 2.
-toCC₂ (D ⟨ e₁ ∷ e₂ ∷ e₃ ∷ es ⟩) = D ⟨ toCC₂ e₁ , toCC₂ (newDim D ⟨ e₂ ∷ e₃ ∷ es ⟩) ⟩₂
+toCC₂' (D ⟨ e₁ ∷ e₂ ∷ e₃ ∷ es ⟩) =
+  let open RawMonad state-monad
+  in do
+    -- TODO: Generate configuration!
+    D' ← toUniqueDimension D
+    cc₂-e₁ ← toCC₂' e₁
+    D'' ← toUniqueDimension D' -- This is a trick to get the same name for the else branch whenever we find the same dimension D again. We pretend D' is a dimension from the input n-ary choice calculus expression to get a new name for it. This name will be stable (whenever we ask we get the same name). This ensures that for any n-ary choice with n>2, that has to be split into multiple new dimensions, the new dimension names will always be the same. That's the idea at least but we still have to prove it.
+    -- The trick does not work because we cannot ensure that the generated name is not within the input formula and thus sabotaging the translation.
+    -- The problem is: We cannot perform this conversion recursively. We cannot do so because this requires generating a name that is unique within the input formula! However, all names we generated so far are only guaranteed to be unique in the output formula!
+    -- Maybe its easier to traverse the tree twice: First to generate a name mapping, second, given any name mapping, to perform the translation.
+    cc₂-tail ← toCC₂' (D'' ⟨ e₂ ∷ e₃ ∷ es ⟩) -- repeat tail expression explicitly here as a proof of non-emptiness
+    pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
+```
+
+Example time:
+```agda
+cc_example_zoom_binary : CC₂ ∞ String
+cc_example_zoom_binary = proj₁ (toCC₂ cc_example_walk)
 ```
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
@@ -588,26 +727,43 @@ How can we express that without opening the box of pandora?
 Maybe redefining Dimension to ℕ or something more convenient than String could help?
 It should remain close to the definition in Eric's thesis/papers though.
 -}
+{-
 CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
-  → toCC₂ e ₂⊂̌ₙ e
+  → proj₁ (toCC₂ e) ₂⊂̌ₙ e
 
 CC→CC₂-right : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
-  → e ₙ⊂̌₂ toCC₂ e
+  → e ₙ⊂̌₂ proj₁ (toCC₂ e)
 
 CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
     ----------
-  → toCC₂ e ₂≚ₙ e
-CC→CC₂ {i} {A} {e} =
+  → proj₁ (tocc₂ e) ₂≚ₙ e
+cc→cc₂ {i} {A} {e} =
     CC→CC₂-left  {i} {A} {e}
   , CC→CC₂-right {i} {A} {e}
+  -}
 ```
 
 
 ```agda
-CC→CC₂-left = {!!}
-CC→CC₂-right = {!!}
+--CC→CC₂-left = {!!}
+--CC→CC₂-right = {!!}
+```
+
+## Example Printing
+```agda
+open Data.String.Base using (unlines)
+
+mainStr : String
+mainStr = unlines (
+   "Example CC expression with Ekko" ∷
+   ("x = " ++ (showCC cc_example_walk)) ∷
+   "Example where Ekko wants to zoom:" ∷
+   ("⟦x⟧ (λ \"Ekko\" → 0) = " ++ (showVariant cc_example_walk_zoom)) ∷
+   "Translation to binary normal form" ∷
+   ("toCC₂ x = " ++ (showCC₂ cc_example_zoom_binary)) ∷ []
+   )
 ```
 
 ## Unicode Characters in Emacs Agda Mode
