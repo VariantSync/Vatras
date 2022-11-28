@@ -565,23 +565,11 @@ Can we abstract (2) in a name generator "object" that generates names together w
 
 This name generate has also be used by the configuration to determine values for the new names.
 
-```agda
--- very simple name generator that only works when we assume that input names have no ' at the end of their names.
-newDim : Dimension → Dimension
-newDim s = s ++ "'"
-```
-
 Conversion of n-ary to binary choice calculus:
 ```agda
 -- Import monad and applicative operators
 open import Effect.Functor using (RawFunctor)
---open RawFunctor using (_<$>_)
-
-open import Effect.Applicative using (RawApplicative)
---open RawApplicative using (pure)
-
 open import Effect.Monad using (RawMonad)
---open RawMonad using (_>>=_)
 
 -- Import state monad
 open import Effect.Monad.State
@@ -597,10 +585,7 @@ open Data.List.Effectful.TraversableA using (sequenceA)
 
 -- Import show for nats to make names from numbers
 open import Data.Nat.Show renaming (show to show-nat)
-
-open import Data.Maybe using (Maybe; just; nothing)
-
-open import Agda.Builtin.String using (primStringEquality)
+open import Agda.Builtin.String using (primStringEquality) -- used to compare dimensions
 
 -- A converter that converts configurations for n-ary choice calculus to configurations for binary choice calculus.
 ConfigurationTranslator : Set
@@ -680,7 +665,6 @@ toCC₂' (D ⟨ es ⟩) =
     -}
     toCC₂'-choice-unroll D zero es
 
-open import Function.Base using (case_of_)
 open import Data.Nat using (_≡ᵇ_)
 
 -- Use the idempotency rule to unwrap unary choices.
