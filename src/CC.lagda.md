@@ -602,23 +602,19 @@ open import Data.Maybe using (Maybe; just; nothing)
 
 open import Agda.Builtin.String using (primStringEquality)
 
-
+-- A converter that converts configurations for n-ary choice calculus to configurations for binary choice calculus.
 ConfigurationTranslator : Set
 ConfigurationTranslator = Configuration → Configuration₂
 
-record TranslationData : Set where
-  field
-    cₙ→c₂ : ConfigurationTranslator
-open TranslationData
+-- Default configuration converter that always goes left.
+-- We use it as a base case when we have no other information.
+unknownConfigurationTranslation : ConfigurationTranslator
+unknownConfigurationTranslation cₙ = λ D₂ → true
 
+-- The state we are going to use during the translation from n-ary to binary choice calculus.
+-- We keep track of the current configuration converter and update it when necessary.
 TranslationState : Set → Set
-TranslationState = State TranslationData
-
-emptyTranslationData : TranslationData
-emptyTranslationData =
-  record
-    { cₙ→c₂ = λ {cₙ d → true}
-    }
+TranslationState = State ConfigurationTranslator
 
 {-
 Sadly, we cannot prove this terminating yet.
@@ -635,20 +631,21 @@ To solve this, we would have to introduce yet another bound to n-ary choice calc
 {-#TERMINATING #-}
 toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
 
--- actual translation
+-- actual translation that yields the translated formula together with a converter for configurations.
+-- The converter converts any configuration for the input formula to a configuration for the output formula that yields the same variant.
 {-# TERMINATING #-}
-toCC₂ : ∀ {i : Size} {A : Set} → CC i A → CC₂ ∞ A × ConfigurationTranslator
-toCC₂ cc =
-  let translationData , cc₂ = runState (toCC₂' cc) emptyTranslationData
-  in cc₂ , (cₙ→c₂ translationData)
+toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationTranslator × CC₂ ∞ A
+toCC₂ cc = runState (toCC₂' cc) unknownConfigurationTranslation
 
 indexedDim : Dimension → ℕ → Dimension
-indexedDim D n = D ++ "." ++ (show-nat n)
+indexedDim D n = D ++ "." ++ (show-nat n) -- Do not simplify for n ≡ᵇ zero! I know names like A.0 are ugly if we can avoid them but dropping the .0 where possible can cause name collisions in the output formula!
 
+-- Unrolls an n-ary choice to a binary choice by recursively nesting alternatives beyong the first one in else-branches.
+-- Example: D ⟨ 1 ∷ 2 ∷ 3 ∷ [] ⟩ → D.0 ⟨ 1 , D.1 ⟨ 2 , 3 ⟩₂ ⟩₂
 toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
   → Dimension -- initial dimension in input formula
-  → ℕ -- new dimension in the output formula of the current choice
-  → List⁺ (CC i A)
+  → ℕ -- Current alternative of the given dimension we are translating. zero is left-most alternative.
+  → List⁺ (CC i A) -- alternatives of the choice to unroll
   → TranslationState (CC₂ ∞ A)
 
 -- Leave structures unchanged
@@ -683,23 +680,42 @@ toCC₂' (D ⟨ es ⟩) =
     -}
     toCC₂'-choice-unroll D zero es
 
+open import Function.Base using (case_of_)
+open import Data.Nat using (_≡ᵇ_)
+
 -- Use the idempotency rule to unwrap unary choices.
 toCC₂'-choice-unroll D n (e₁ ∷ []) = toCC₂' e₁
 -- For n-ary choices with n > 1, convert the head and recursively convert the tail.
 toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
   let open RawMonad state-monad
+      open RawMonadState state-monad-specifics
   in do
-    -- TODO: Generate configuration!
+    -- translation of the formula
     let D' = indexedDim D n
     cc₂-e₁ ← toCC₂' e₁
     cc₂-tail ← toCC₂'-choice-unroll D (suc n) (e₂ ∷ es)
+
+    -- translation of configurations
+    conf-trans ← get
+  --  let conf-trans = cₙ→c₂ state
+    put (λ {cₙ D₂ → -- given an n-ary configuration cₙ, we want to find out the value of a given dimension D₂ in the binary output-formula
+      if (primStringEquality D₂ D') -- if the queried dimension D₂ was translated from our currently translated dimension D
+      then (if (cₙ D ≡ᵇ n) -- if the selection made in the input formula selected the left alternative of our choice
+            then true -- then also pick it in the binary output formula
+            else false -- otherwise, do not pick it
+                       -- In case cₙ D < n, the result does not matter. Then, an alternative above this choice was already chosen (and we are within an else branch). So it does not matter what we pick here. Could be true, false, or conf-trans cₙ D₂.
+                       -- In case cₙ D > n, the result has to be false because we alternative that has to be picked is on the right, which is only checked if we do not go left here.
+        )
+      else (conf-trans cₙ D₂) -- if not, ask our existing configuration translation knowledge
+      })
+
     pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
 ```
 
 Example time:
 ```agda
 cc_example_zoom_binary : CC₂ ∞ String
-cc_example_zoom_binary = proj₁ (toCC₂ cc_example_walk)
+cc_example_zoom_binary = proj₂ (toCC₂ cc_example_walk)
 ```
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
@@ -752,7 +768,7 @@ printExample name cc = unlines (
       "[[" ++ name ++ "]] (λ x → " ++ (show-nat n) ++ ") = "
       ++ (showVariant (⟦ cc ⟧ (λ x → n)))}
 
-    cc₂ , configtranslator = toCC₂ cc
+    configtranslator , cc₂ = toCC₂ cc
 
     select₂ : ℕ → String
     select₂ = λ {n →
