@@ -75,12 +75,15 @@ CoreCC = CC ∞
 weakenDepthBound : ∀ {i : Size} {j : Size< i} {A : Set} → CC j A → CC i A
 weakenDepthBound c = c
 
+forgetDepthBound : ∀ {i : Size} {A : Set} → CC i A → CoreCC A
+forgetDepthBound c = c
+
 -- printing for examples
 {-# TERMINATING #-}
 showCC : ∀ {i : Size} → CC i String → String
 showCC (Artifact a []) = a
 showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC es)) ++ ">-"
-showCC (D ⟨ es ⟩) = D ++ "⟨" ++ (Data.String.Base.intersperse ", " (toList (mapl⁺ showCC es))) ++ "⟩"
+showCC (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.Base.intersperse ", " (toList (mapl⁺ showCC es))) ++ ">"
 ```
 
 Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
@@ -347,7 +350,7 @@ Configuration₂ = Dimension → Tag₂
 showCC₂ : ∀ {i : Size} → CC₂ i String → String
 showCC₂ (Artifact₂ a []) = a
 showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
-showCC₂ (D ⟨ l , r ⟩₂) = D ++ "⟨" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ "⟩"
+showCC₂ (D ⟨ l , r ⟩₂) = D ++ "<" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ ">"
 ```
 
 Now that we've introduce the binary normal form at the type level, we want to show that (1) any n-ary choice calculus expression can be transformed to binary normal form, and (2) any binary normal form expression is a choice calculus expression.
@@ -605,8 +608,6 @@ ConfigurationTranslator = Configuration → Configuration₂
 
 record TranslationData : Set where
   field
-    nextName : ℕ
-    nameDict : String → Maybe ℕ
     cₙ→c₂ : ConfigurationTranslator
 open TranslationData
 
@@ -616,9 +617,7 @@ TranslationState = State TranslationData
 emptyTranslationData : TranslationData
 emptyTranslationData =
   record
-    { nextName = zero
-    ; nameDict = λ {x → nothing}
-    ; cₙ→c₂ = λ {cₙ d → true}
+    { cₙ→c₂ = λ {cₙ d → true}
     }
 
 {-
@@ -643,71 +642,57 @@ toCC₂ cc =
   let translationData , cc₂ = runState (toCC₂' cc) emptyTranslationData
   in cc₂ , (cₙ→c₂ translationData)
 
-toDim : ℕ → Dimension
-toDim n = "D" ++ (show-nat n)
+indexedDim : Dimension → ℕ → Dimension
+indexedDim D n = D ++ "." ++ (show-nat n)
 
--- Agda has no "case-of" statement like haskell. The closest is the with-statement.
--- with can only be used on the left-hand side of an equation so we have to introduce this
--- extra-function toUniqueName'
-toUniqueDimension' : Dimension → TranslationData → TranslationState Dimension
-toUniqueDimension' D translationData with nameDict translationData D
-... | just n  = pure (toDim n)
-                where open RawApplicative state-applicative
-... | nothing = let open RawMonad state-monad
-                    open RawMonadState state-monad-specifics
-                in do
-                  let dimname = nextName translationData
-                      oldNameDict = nameDict translationData
-                  put (record translationData {
-                    nextName = suc dimname;
-                    nameDict = λ {dim →
-                      if (primStringEquality dim D)
-                      then just dimname
-                      else (oldNameDict dim)
-                      }
-                    })
-                  pure (toDim dimname)
-
-toUniqueDimension : Dimension → TranslationState Dimension
-toUniqueDimension D =
-  let open RawMonad state-monad
-      open RawMonadState state-monad-specifics
-  in do
-    translationData ← get
-    toUniqueDimension' D translationData
+toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
+  → Dimension -- initial dimension in input formula
+  → ℕ -- new dimension in the output formula of the current choice
+  → List⁺ (CC i A)
+  → TranslationState (CC₂ ∞ A)
 
 -- Leave structures unchanged
-toCC₂' (Artifact a []) = pure (Artifact₂ a [])
-  where open RawApplicative state-applicative
-toCC₂' (Artifact a (e ∷ es)) =
+toCC₂' (Artifact a es) =
   -- First, translate all children recursively.
   -- This yields a list of states which we evaluate in sequence via sequenceA.
   let open RawFunctor state-functor
-      translated-children = mapl toCC₂' (e ∷ es) in
+      translated-children = mapl toCC₂' es in
   Artifact₂ a <$> (sequenceA state-applicative translated-children)
+toCC₂' (D ⟨ es ⟩) =
+    {-
+    We have to take an indirection here for which we introduce the toCC₂'-choice-unroll function.
+    We do so to ensure that newly introduced dimensions do not collide with dimensions from the input formula.
+
+    Informal proof for uniqueness of names:
+    Every dimension D in the input formula is renamed to (D ++ ".0").
+    Thus every dimension is manipulated equally and thus, this transformation is a true renaming.
+
+    Removal of dimensions occurs only for unary choices and cannot invalidate uniqueness of names anyway.
+
+    New dimensions are introduced only to unroll a dimension from the input formula.
+    This means, each generated dimension G is associated to exactly one dimension D from the input formula.
+    The name of G is (D ++ "." ++ suc n) for an n : ℕ.
+    The name of G is new because of proof by contradiction:
+      Assume the name of G is not new (i.e., collides).
+      This means there is dimension A in the output formula with the same name as G
+      but A was associated to another dimension in the input formula.
+      The name of A is of the form (I ++ "." m) for an m : ℕ and a dimension I from the input formula.
+      Because A has the same name as G, we know that I = D and suc n = m.
+      Thus, both A and G originate from the same dimension in the input formula.
+      This contradicts our assumption that G collided.
+    -}
+    toCC₂'-choice-unroll D zero es
+
 -- Use the idempotency rule to unwrap unary choices.
-toCC₂' (D ⟨ e ∷ [] ⟩) = toCC₂' e
--- Leave binary choices unchanged.
-toCC₂' (D ⟨ then ∷ elze ∷ [] ⟩) =
+toCC₂'-choice-unroll D n (e₁ ∷ []) = toCC₂' e₁
+-- For n-ary choices with n > 1, convert the head and recursively convert the tail.
+toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
   let open RawMonad state-monad
   in do
     -- TODO: Generate configuration!
-    D' ← toUniqueDimension D
-    cc₂-then ← toCC₂' then
-    cc₂-elze ← toCC₂' elze
-    pure (D' ⟨ cc₂-then , cc₂-elze ⟩₂)
--- Perform recursive nesting on choices with arity n > 2.
-toCC₂' (D ⟨ e₁ ∷ e₂ ∷ e₃ ∷ es ⟩) =
-  let open RawMonad state-monad
-  in do
-    -- TODO: Generate configuration!
-    D' ← toUniqueDimension D
+    let D' = indexedDim D n
     cc₂-e₁ ← toCC₂' e₁
-    D'' ← toUniqueDimension D' -- This is a trick to get the same name for the else branch whenever we find the same dimension D again. We pretend D' is a dimension from the input n-ary choice calculus expression to get a new name for it. This name will be stable (whenever we ask we get the same name). This ensures that for any n-ary choice with n>2, that has to be split into multiple new dimensions, the new dimension names will always be the same. That's the idea at least but we still have to prove it.
-    -- The trick does not work because we cannot ensure that the generated name is not within the input formula and thus sabotaging the translation.
-    -- The problem is: We cannot perform this conversion recursively. We cannot do so because this requires generating a name that is unique within the input formula! However, all names we generated so far are only guaranteed to be unique in the output formula!
-    -- Maybe its easier to traverse the tree twice: First to generate a name mapping, second, given any name mapping, to perform the translation.
-    cc₂-tail ← toCC₂' (D'' ⟨ e₂ ∷ e₃ ∷ es ⟩) -- repeat tail expression explicitly here as a proof of non-emptiness
+    cc₂-tail ← toCC₂'-choice-unroll D (suc n) (e₂ ∷ es)
     pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
 ```
 
@@ -753,17 +738,63 @@ cc→cc₂ {i} {A} {e} =
 
 ## Example Printing
 ```agda
-open Data.String.Base using (unlines)
+open Data.String.Base using (unlines; intersperse)
+
+show-bool : Bool → String
+show-bool true = "true"
+show-bool false = "false"
+
+printExample : ∀ {i : Size} → String → CC i String → String
+printExample name cc = unlines (
+  let
+    selectₙ : ℕ → String
+    selectₙ = λ {n →
+      "[[" ++ name ++ "]] (λ x → " ++ (show-nat n) ++ ") = "
+      ++ (showVariant (⟦ cc ⟧ (λ x → n)))}
+
+    cc₂ , configtranslator = toCC₂ cc
+
+    select₂ : ℕ → String
+    select₂ = λ {n →
+      "[[toCC₂ " ++ name ++ "]] (λ x → " ++ show-nat n ++ ") = "
+      ++ (showVariant (⟦ cc₂ ⟧₂ (configtranslator (λ x → n))))}
+  in
+  ("=== Example: " ++ name ++ " ===") ∷
+  (name ++ " = " ++ (showCC cc)) ∷
+  (selectₙ 0) ∷
+  (selectₙ 1) ∷
+  ("toCC₂ " ++ name ++ " = " ++ (showCC₂ cc₂)) ∷
+  (select₂ 0) ∷
+  (select₂ 1) ∷
+  [])
 
 mainStr : String
-mainStr = unlines (
-   "Example CC expression with Ekko" ∷
-   ("x = " ++ (showCC cc_example_walk)) ∷
-   "Example where Ekko wants to zoom:" ∷
-   ("⟦x⟧ (λ \"Ekko\" → 0) = " ++ (showVariant cc_example_walk_zoom)) ∷
-   "Translation to binary normal form" ∷
-   ("toCC₂ x = " ++ (showCC₂ cc_example_zoom_binary)) ∷ []
-   )
+mainStr = intersperse "\n\n" (
+  (printExample "ekko" cc_example_walk) ∷
+  (printExample "binary" ("D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩)) ∷
+  (printExample "binary-nested" (
+      "A" ⟨ ("A" ⟨ leaf "1" ∷
+                  leaf "2" ∷ [] ⟩) ∷
+           ("A" ⟨ leaf "3" ∷
+                  leaf "4" ∷ [] ⟩) ∷ []
+          ⟩
+    )) ∷
+  (printExample "complex1" (
+      "A" ⟨ ("B" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
+            ("C" ⟨ leaf "c" ∷ [] ⟩) ∷
+            ("A" ⟨ leaf "4" ∷
+                   ("D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩) ∷
+                   leaf "5" ∷ []
+                 ⟩
+              ) ∷ []
+          ⟩
+    )) ∷
+  (printExample "name-trick" (
+    "A" ⟨ ("A.0" ⟨ leaf "A.0-left" ∷ leaf "A.0-right" ∷ [] ⟩) ∷
+          leaf "x" ∷ []
+        ⟩
+    )) ∷
+  [])
 ```
 
 ## Unicode Characters in Emacs Agda Mode
