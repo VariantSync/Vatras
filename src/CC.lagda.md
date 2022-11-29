@@ -591,15 +591,25 @@ open import Agda.Builtin.String using (primStringEquality) -- used to compare di
 ConfigurationTranslator : Set
 ConfigurationTranslator = Configuration → Configuration₂
 
+-- resembles a specialized version of _⇔_ in the plfa book
+record ConfigurationConverter : Set where
+  field
+    nary→binary : Configuration → Configuration₂
+    binary→nary : Configuration₂ → Configuration
+open ConfigurationConverter
+
 -- Default configuration converter that always goes left.
 -- We use it as a base case when we have no other information.
-unknownConfigurationTranslation : ConfigurationTranslator
-unknownConfigurationTranslation cₙ = λ D₂ → true
+unknownConfigurationConverter : ConfigurationConverter
+unknownConfigurationConverter = record
+  { nary→binary = λ _ _ → true
+  ; binary→nary = λ _ _ → 0
+  }
 
 -- The state we are going to use during the translation from n-ary to binary choice calculus.
 -- We keep track of the current configuration converter and update it when necessary.
 TranslationState : Set → Set
-TranslationState = State ConfigurationTranslator
+TranslationState = State ConfigurationConverter
 
 {-
 Sadly, we cannot prove this terminating yet.
@@ -619,8 +629,8 @@ toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A
 -- actual translation that yields the translated formula together with a converter for configurations.
 -- The converter converts any configuration for the input formula to a configuration for the output formula that yields the same variant.
 {-# TERMINATING #-}
-toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationTranslator × CC₂ ∞ A
-toCC₂ cc = runState (toCC₂' cc) unknownConfigurationTranslation
+toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationConverter × CC₂ ∞ A
+toCC₂ cc = runState (toCC₂' cc) unknownConfigurationConverter
 
 indexedDim : Dimension → ℕ → Dimension
 indexedDim D n = D ++ "." ++ (show-nat n) -- Do not simplify for n ≡ᵇ zero! I know names like A.0 are ugly if we can avoid them but dropping the .0 where possible can cause name collisions in the output formula!
@@ -633,37 +643,40 @@ toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
   → List⁺ (CC i A) -- alternatives of the choice to unroll
   → TranslationState (CC₂ ∞ A)
 
--- Leave structures unchanged
+-- Leave structures unchanged but recursively translate all children.
+-- First, translate all children recursively.
+-- This yields a list of states which we evaluate in sequence via sequenceA.
 toCC₂' (Artifact a es) =
-  -- First, translate all children recursively.
-  -- This yields a list of states which we evaluate in sequence via sequenceA.
   let open RawFunctor state-functor
       translated-children = mapl toCC₂' es in
   Artifact₂ a <$> (sequenceA state-applicative translated-children)
-toCC₂' (D ⟨ es ⟩) =
-    {-
-    We have to take an indirection here for which we introduce the toCC₂'-choice-unroll function.
-    We do so to ensure that newly introduced dimensions do not collide with dimensions from the input formula.
+{-
+Unroll choices by recursively nesting any alternatives beyond the first.
+Therefore, we take an indirection via an auxiliary function toCC₂'-choice-unroll.
+We do so to ensure that names of newly introduced dimensions do not collide with existing dimension names in the input formula.
+This would secretely introduce unwanted dependencies similar to variable capture when renaming variables in lambda calculus unchecked.
+Example: Renaming A to D in D ⟨ 1 , A ⟨ 2 , 3 ⟩ ⟩ yields D ⟨ 1 , D ⟨ 2, 3 ⟩ ⟩ which has different semantics.
+The unroll function does so by renaming _ all_ variables in a similar way
+Informal proof for stability of names:
 
-    Informal proof for uniqueness of names:
-    Every dimension D in the input formula is renamed to (D ++ ".0").
-    Thus every dimension is manipulated equally and thus, this transformation is a true renaming.
+Every dimension D in the input formula is renamed to (D ++ ".0").
+Thus every dimension is manipulated equally and thus, this transformation is a true renaming.
 
-    Removal of dimensions occurs only for unary choices and cannot invalidate uniqueness of names anyway.
+Removal of dimensions occurs only for unary choices and cannot invalidate uniqueness of names anyway.
 
-    New dimensions are introduced only to unroll a dimension from the input formula.
-    This means, each generated dimension G is associated to exactly one dimension D from the input formula.
-    The name of G is (D ++ "." ++ suc n) for an n : ℕ.
-    The name of G is new because of proof by contradiction:
-      Assume the name of G is not new (i.e., collides).
-      This means there is dimension A in the output formula with the same name as G
-      but A was associated to another dimension in the input formula.
-      The name of A is of the form (I ++ "." m) for an m : ℕ and a dimension I from the input formula.
-      Because A has the same name as G, we know that I = D and suc n = m.
-      Thus, both A and G originate from the same dimension in the input formula.
-      This contradicts our assumption that G collided.
-    -}
-    toCC₂'-choice-unroll D zero es
+New dimensions are introduced only to unroll a dimension from the input formula.
+This means, each generated dimension G is associated to exactly one dimension D from the input formula.
+The name of G is (D ++ "." ++ suc n) for an n : ℕ.
+The name of G is new because of proof by contradiction:
+  Assume the name of G is not new (i.e., collides).
+  This means there is dimension A in the output formula with the same name as G
+  but A was associated to another dimension in the input formula.
+  The name of A is of the form (I ++ "." m) for an m : ℕ and a dimension I from the input formula.
+  Because A has the same name as G, we know that I = D and suc n = m.
+  Thus, both A and G originate from the same dimension in the input formula.
+  This contradicts our assumption that G collided.
+-}
+toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
 
 open import Data.Nat using (_≡ᵇ_)
 
@@ -680,17 +693,27 @@ toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
     cc₂-tail ← toCC₂'-choice-unroll D (suc n) (e₂ ∷ es)
 
     -- translation of configurations
-    conf-trans ← get
+    conf-converter ← get
+    let n→b = nary→binary conf-converter
+        b→n = binary→nary conf-converter
   --  let conf-trans = cₙ→c₂ state
-    put (λ {cₙ D₂ → -- given an n-ary configuration cₙ, we want to find out the value of a given dimension D₂ in the binary output-formula
-      if (primStringEquality D₂ D') -- if the queried dimension D₂ was translated from our currently translated dimension D
-      then (if (cₙ D ≡ᵇ n) -- if the selection made in the input formula selected the left alternative of our choice
-            then true -- then also pick it in the binary output formula
-            else false -- otherwise, do not pick it
+    put ( record -- conf-converter
+      { nary→binary = (λ {cₙ D₂ → -- given an n-ary configuration cₙ, we want to find out the value of a given dimension D₂ in the binary output-formula
+          if (primStringEquality D₂ D') -- if the queried dimension D₂ was translated from our currently translated dimension D
+          then (if (cₙ D ≡ᵇ n) -- if the selection made in the input formula selected the left alternative of our choice
+                then true -- then also pick it in the binary output formula
+                else false -- otherwise, do not pick it
                        -- In case cₙ D < n, the result does not matter. Then, an alternative above this choice was already chosen (and we are within an else branch). So it does not matter what we pick here. Could be true, false, or conf-trans cₙ D₂.
                        -- In case cₙ D > n, the result has to be false because we alternative that has to be picked is on the right, which is only checked if we do not go left here.
-        )
-      else (conf-trans cₙ D₂) -- if not, ask our existing configuration translation knowledge
+            )
+          else (n→b cₙ D₂) -- if not, ask our existing configuration translation knowledge
+          })
+      ; binary→nary = (λ {c₂ Dₙ →
+          -- This ist buggy. Todo: Sit down with coffee and write this down on paper, then come back.
+          if (primStringEquality Dₙ D)
+          then (if (c₂ D') then n else (b→n c₂ Dₙ))
+          else (b→n c₂ Dₙ)
+          })
       })
 
     pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
@@ -715,11 +738,11 @@ It should remain close to the definition in Eric's thesis/papers though.
 {-
 CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
-  → proj₁ (toCC₂ e) ₂⊂̌ₙ e
+  → proj₂ (toCC₂ e) ₂⊂̌ₙ e
 
 CC→CC₂-right : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
-  → e ₙ⊂̌₂ proj₁ (toCC₂ e)
+  → e ₙ⊂̌₂ proj₂ (toCC₂ e)
 
 CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
     ----------
@@ -732,8 +755,13 @@ cc→cc₂ {i} {A} {e} =
 
 
 ```agda
---CC→CC₂-left = {!!}
---CC→CC₂-right = {!!}
+{-
+CC→CC₂-left {i} {A} {e} c₂ =
+  let conf-trans , cc₂ = toCC₂ e in
+  binary→nary conf-trans c₂ , {!!}
+
+CC→CC₂-right = {!!}
+-}
 ```
 
 ## Example Printing
@@ -747,25 +775,47 @@ show-bool false = "false"
 printExample : ∀ {i : Size} → String → CC i String → String
 printExample name cc = unlines (
   let
-    selectₙ : ℕ → String
-    selectₙ = λ {n →
-      "[[" ++ name ++ "]] (λ x → " ++ (show-nat n) ++ ") = "
-      ++ (showVariant (⟦ cc ⟧ (λ x → n)))}
+    -- TODO: Consistent naming for toCC₂ and asCC
+    configconverter , cc₂ = toCC₂ cc
+    cc' = asCC cc₂
+    n→b = nary→binary configconverter
+    b→n = binary→nary configconverter
 
-    configtranslator , cc₂ = toCC₂ cc
+    -- Make a configuration that always selects n and also generate its name.
+    selectₙ : ℕ → Configuration × String
+    selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 
-    select₂ : ℕ → String
-    select₂ = λ {n →
-      "[[toCC₂ " ++ name ++ "]] (λ x → " ++ show-nat n ++ ") = "
-      ++ (showVariant (⟦ cc₂ ⟧₂ (configtranslator (λ x → n))))}
+    evalₙ : Configuration × String → String
+    evalₙ = λ { (conf , cname) →
+      "[[" ++ name ++ "]] " ++ cname ++ " = "
+      ++ (showVariant (⟦ cc ⟧ conf))}
+
+    eval-selectₙ = evalₙ ∘ selectₙ
+
+    eval₂ : Configuration × String → String
+    eval₂ = λ { (conf , cname) →
+      "[[toCC₂ " ++ name ++ "]] " ++ cname ++ " = "
+      ++ (showVariant (⟦ cc₂ ⟧₂ (n→b conf)))}
+
+    eval-select₂ = eval₂ ∘ selectₙ
+
+    eval₂ₙ : Configuration × String → String
+    eval₂ₙ = λ { (conf , cname) →
+      "[[asCC (toCC₂ " ++ name ++ ")]] " ++ cname ++ " = "
+      ++ (showVariant (⟦ cc' ⟧ (b→n (n→b conf))))}
+
+    eval-select₂ₙ = eval₂ₙ ∘ selectₙ
   in
   ("=== Example: " ++ name ++ " ===") ∷
   (name ++ " = " ++ (showCC cc)) ∷
-  (selectₙ 0) ∷
-  (selectₙ 1) ∷
+  (eval-selectₙ 0) ∷
+  (eval-selectₙ 1) ∷
   ("toCC₂ " ++ name ++ " = " ++ (showCC₂ cc₂)) ∷
-  (select₂ 0) ∷
-  (select₂ 1) ∷
+  (eval-select₂ 0) ∷
+  (eval-select₂ 1) ∷
+  ("asCC (toCC₂ " ++ name ++ ") = " ++ (showCC cc')) ∷
+  (eval-select₂ₙ 0) ∷
+  (eval-select₂ₙ 1) ∷
   [])
 
 mainStr : String
