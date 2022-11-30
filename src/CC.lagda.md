@@ -363,9 +363,9 @@ Converts a binary choice calculus expression to a core choice calculus expressio
 The resulting expression is syntactically equivalent and thus still in binary normal form.
 We drop only the knowledge of being in binary normal form at the type level.
 -}
-asCC : ∀ {i : Size} {A : Set} → CC₂ i A → CC i A
-asCC (Artifact₂ a es) = Artifact a (mapl asCC es)
-asCC (D ⟨ l , r ⟩₂) = D ⟨ (asCC l) ∷ (asCC r) ∷ [] ⟩
+toCC : ∀ {i : Size} {A : Set} → CC₂ i A → CC i A
+toCC (Artifact₂ a es) = Artifact a (mapl toCC es)
+toCC (D ⟨ l , r ⟩₂) = D ⟨ (toCC l) ∷ (toCC r) ∷ [] ⟩
 
 {- |
 Convert binary configuration to n-ary configuration.
@@ -416,16 +416,16 @@ We prove first that any binary choice calculus expression can be converted to an
 ```agda
 CC₂→CC-left : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
-  → e ₂⊂̌ₙ asCC e
+  → e ₂⊂̌ₙ toCC e
 
 CC₂→CC-right : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
-  → asCC e ₙ⊂̌₂ e
+  → toCC e ₙ⊂̌₂ e
 
 -- Main theorem for drawing an arrow from CC₂ to CC.
 CC₂→CC : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
-  → e ₂≚ₙ asCC e
+  → e ₂≚ₙ toCC e
 CC₂→CC {i} {A} {e} =
     CC₂→CC-left  {i} {A} {e}
   , CC₂→CC-right {i} {A} {e}
@@ -438,23 +438,23 @@ CC₂→CC-left-toNaryConfig : ∀ {i : Size} {A : Set}
   → ∀ (e : CC₂ i A)
   → ∀ (c₂ : Configuration₂)
     -------------------------------------
-  → ⟦ e ⟧₂ c₂ ≡ ⟦ asCC e ⟧ (toNaryConfig c₂)
+  → ⟦ e ⟧₂ c₂ ≡ ⟦ toCC e ⟧ (toNaryConfig c₂)
 
 -- helper function for choices
 CC₂→CC-left-toNaryConfig-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : CC₂ i A} {r : CC₂ i A}
   → ∀ (c₂ : Configuration₂)
     ---------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
-    ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (asCC l ∷ asCC r ∷ [])) ⟧ (toNaryConfig c₂)
+    ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂)
 CC₂→CC-left-toNaryConfig-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
 ...                          | true  = begin
                                          ⟦ if true then l else r ⟧₂ c₂
                                        ≡⟨⟩
                                          ⟦ l ⟧₂ c₂
                                        ≡⟨ CC₂→CC-left-toNaryConfig l c₂ ⟩
-                                         ⟦ asCC l ⟧ (toNaryConfig c₂)
+                                         ⟦ toCC l ⟧ (toNaryConfig c₂)
                                        ≡⟨⟩
-                                         ⟦ (choice-elimination 0 (asCC l ∷ asCC r ∷ [])) ⟧ (toNaryConfig c₂)
+                                         ⟦ (choice-elimination 0 (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂)
                                        ∎
                              -- This proof is analoguous to the proof for the "true" case.
                              -- Thus, we simplify the step-by-step-proof to the only reasoning necessary.
@@ -478,11 +478,11 @@ CC₂→CC-left-toNaryConfig (Artifact₂ a es@(_ ∷ _)) c₂ =
        (λ {v → CC₂→CC-left-toNaryConfig v c₂})
      )
    ⟩
-     Artifactᵥ a (mapl (flip (⟦_⟧ ∘ asCC) (toNaryConfig c₂)) es)
+     Artifactᵥ a (mapl (flip (⟦_⟧ ∘ toCC) (toNaryConfig c₂)) es)
   ≡⟨ Eq.cong (λ m → Artifactᵥ a m) (mapl-∘ es) ⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧ (toNaryConfig c₂)) (mapl asCC es))
+    Artifactᵥ a (mapl (flip ⟦_⟧ (toNaryConfig c₂)) (mapl toCC es))
   ≡⟨⟩
-    (⟦ asCC (Artifact₂ a es) ⟧ (toNaryConfig c₂))
+    (⟦ toCC (Artifact₂ a es) ⟧ (toNaryConfig c₂))
   ∎
 -- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
 -- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
@@ -492,11 +492,11 @@ CC₂→CC-left-toNaryConfig (D ⟨ l , r ⟩₂) c₂ =
   ≡⟨⟩
     ⟦ if c₂ D then l else r ⟧₂ c₂
   ≡⟨ CC₂→CC-left-toNaryConfig-choice-case-analyses c₂ ⟩
-    ⟦ choice-elimination ((toNaryConfig c₂) D) (asCC l ∷ asCC r ∷ []) ⟧ (toNaryConfig c₂)
+    ⟦ choice-elimination ((toNaryConfig c₂) D) (toCC l ∷ toCC r ∷ []) ⟧ (toNaryConfig c₂)
   ≡⟨⟩
-    ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ (toNaryConfig c₂)
+    ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ (toNaryConfig c₂)
   ≡⟨⟩
-    ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ (toNaryConfig c₂)
+    ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ (toNaryConfig c₂)
   ∎
 
 -- Finally, prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
@@ -509,14 +509,14 @@ CC₂→CC-right-toBinaryConfig : ∀ {i : Size} {A : Set}
   → ∀ (e : CC₂ i A)
   → ∀ (c : Configuration)
     ------------------------------------
-  → ⟦ e ⟧₂ (toBinaryConfig c) ≡ ⟦ asCC e ⟧ c
+  → ⟦ e ⟧₂ (toBinaryConfig c) ≡ ⟦ toCC e ⟧ c
 
 -- case analyses for choices where we either have to proceed the proof on the left or right side of a binary choice depending on our configuration
 CC₂→CC-right-toBinaryConfig-choice-case-analysis : ∀ {i : Size} {A : Set} {D : Dimension} {l r : CC₂ i A}
   → ∀ (c : Configuration)
     -------------------------------------------
   →   ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
-    ≡ ⟦ choice-elimination (c D) (asCC l ∷ asCC r ∷ []) ⟧ c
+    ≡ ⟦ choice-elimination (c D) (toCC l ∷ toCC r ∷ []) ⟧ c
 CC₂→CC-right-toBinaryConfig-choice-case-analysis {i} {A} {D} {l} {r} c with c D
 ... | zero  = CC₂→CC-right-toBinaryConfig l c
 ... | suc n = CC₂→CC-right-toBinaryConfig r c
@@ -528,11 +528,11 @@ CC₂→CC-right-toBinaryConfig (Artifact₂ a es@(_ ∷ _)) c =
   ≡⟨⟩
     Artifactᵥ a (mapl (flip ⟦_⟧₂ (toBinaryConfig c)) es)
   ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) (mapl-cong-≗-≡ (λ {v → CC₂→CC-right-toBinaryConfig v c})) ⟩
-    Artifactᵥ a (mapl ((flip ⟦_⟧ c) ∘ asCC) es)
+    Artifactᵥ a (mapl ((flip ⟦_⟧ c) ∘ toCC) es)
   ≡⟨ Eq.cong (λ {x → Artifactᵥ a x}) (mapl-∘ es) ⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧ c) (mapl asCC es))
+    Artifactᵥ a (mapl (flip ⟦_⟧ c) (mapl toCC es))
   ≡⟨⟩
-    ⟦ asCC (Artifact₂ a es) ⟧ c
+    ⟦ toCC (Artifact₂ a es) ⟧ c
   ∎
 CC₂→CC-right-toBinaryConfig (D ⟨ l , r ⟩₂) c =
   begin
@@ -540,11 +540,11 @@ CC₂→CC-right-toBinaryConfig (D ⟨ l , r ⟩₂) c =
   ≡⟨⟩
     ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
   ≡⟨ CC₂→CC-right-toBinaryConfig-choice-case-analysis c ⟩
-    ⟦ choice-elimination (c D) (asCC l ∷ asCC r ∷ []) ⟧ c
+    ⟦ choice-elimination (c D) (toCC l ∷ toCC r ∷ []) ⟧ c
   ≡⟨⟩
-    ⟦ D ⟨ asCC l ∷ asCC r ∷ [] ⟩ ⟧ c
+    ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ c
   ≡⟨⟩
-    ⟦ asCC (D ⟨ l , r ⟩₂) ⟧ c
+    ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ c
   ∎
 
 CC₂→CC-right {i} {A} {e} c = toBinaryConfig c , CC₂→CC-right-toBinaryConfig e c
@@ -820,7 +820,6 @@ selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 printExample : ∀ {i : Size} → String → CC i String → String
 printExample name cc = unlines (
   let
-    -- TODO: Consistent naming for toCC₂ and asCC
     configconverter , cc₂ = toCC₂ cc
     n→b = nary→binary configconverter
     b→n = binary→nary configconverter
