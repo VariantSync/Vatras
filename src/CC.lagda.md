@@ -772,15 +772,70 @@ CC→CC₂-right = {!!}
 ```
 
 ## Example Printing
+
+### Examples
+
+```agda
+CCExample : Set
+CCExample = String × CC ∞ String
+
+ccex-ekko : CCExample
+ccex-ekko = "ekko" , cc_example_walk
+
+ccex-binary : CCExample
+ccex-binary = "binary" , "D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩
+
+ccex-binary-nested : CCExample
+ccex-binary-nested = "binary-nested" ,
+  "A" ⟨ ("A" ⟨ leaf "1" ∷ leaf "2" ∷ [] ⟩) ∷
+        ("A" ⟨ leaf "3" ∷ leaf "4" ∷ [] ⟩) ∷ []
+      ⟩
+
+ccex-ternary-nested : CCExample
+ccex-ternary-nested = "ternary-nested" ,
+  "A" ⟨ ("A" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
+        ("A" ⟨ leaf "4" ∷ leaf "5" ∷ leaf "6" ∷ [] ⟩) ∷
+        ("A" ⟨ leaf "7" ∷ leaf "8" ∷ leaf "9" ∷ [] ⟩) ∷ []
+      ⟩
+
+ccex-complex1 : CCExample
+ccex-complex1 = "complex1" ,
+  "A" ⟨ ("B" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
+        ("C" ⟨ leaf "c" ∷ [] ⟩) ∷
+        ("A" ⟨ leaf "4" ∷
+               ("D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩) ∷
+               leaf "5" ∷ []
+             ⟩) ∷ []
+      ⟩
+
+ccex-nametrick : CCExample
+ccex-nametrick = "name-trick" ,
+  "A" ⟨ ("A.0" ⟨ leaf "A.0-left" ∷ leaf "A.0-right" ∷ [] ⟩) ∷ leaf "x" ∷ [] ⟩
+
+ccex-all : List CCExample
+ccex-all =
+  ccex-ekko ∷
+  ccex-binary ∷
+  ccex-binary-nested ∷
+  ccex-ternary-nested ∷
+  ccex-complex1 ∷
+  ccex-nametrick ∷
+  []
+```
+
+### Print Helper Functions
+
+Extra imports/opening of functions we use for conversion to string of some data structures:
 ```agda
 open Data.String.Base using (unlines; intersperse)
 open Data.List.Base using (concatMap) renaming (_++_ to _++l_)
 open Function.Base using (id)
 
-show-bool : Bool → String
-show-bool true = "true"
-show-bool false = "false"
+open import ShowHelpers
+```
 
+Helper functions to collect all dimensions within a choice calculus expression. These might give duplicates because we use lists instead of sets for implementation convenience:
+```agda
 -- get all dimensions used in a CC expression
 dims-CC : ∀ {i : Size} {A : Set} → CC i A → List Dimension
 dims-CC (Artifact _ es) = concatMap dims-CC es
@@ -790,35 +845,29 @@ dims-CC (D ⟨ es ⟩) = D ∷ concatMap dims-CC (toList es)
 dims-CC₂ : ∀ {i : Size} {A : Set} → CC₂ i A → List Dimension
 dims-CC₂ (Artifact₂ _ es) = concatMap dims-CC₂ es
 dims-CC₂ (D ⟨ l , r ⟩₂) = D ∷ (dims-CC₂ l ++l dims-CC₂ r)
+```
 
-show-fun-at : ∀ {i : Size} {A B : Set}
-  → (A → String) -- print input values
-  → (B → String) -- print output values
-  → (A → B)
-  → A
-  → String
-show-fun-at show-a show-b f a = show-a a ++ " |-> " ++ show-b (f a)
-
-show-fun : {A B : Set}
-  → (A → String)
-  → (B → String)
-  → (A → B)
-  → List A
-  → String
-show-fun show-a show-b f as = intersperse "; " (mapl (show-fun-at show-a show-b f) as)
-
+Print all values of a configuration for a list of given dimensions:
+```agda
 show-nary-config : Configuration → List Dimension → String
 show-nary-config = show-fun {Dimension} {ℕ} id show-nat
 
 show-binary-config : Configuration₂ → List Dimension → String
 show-binary-config = show-fun {Dimension} {Bool} id show-bool
+```
 
--- Make a configuration that always selects n and also generate its name.
+Make a configuration that always selects n and also generate its name.
+```agda
 selectₙ : ℕ → Configuration × String
 selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
+```
 
-printExample : ∀ {i : Size} → String → CC i String → String
-printExample name cc = unlines (
+### Conversion of Examples to Binary CC and Back
+Convert a given named choice calculus formula to binary normal form and back and print all intermediate results.
+Do so for two configurations, one configuration that always selects 0, and one that always selects 1.
+```agda
+ccex-toBinaryAndBack : CCExample → String
+ccex-toBinaryAndBack (name , cc) = unlines (
   let
     configconverter , cc₂ = toCC₂ cc
     n→b = nary→binary configconverter
@@ -869,40 +918,13 @@ printExample name cc = unlines (
   (eval-select₂ₙ 0) ∷
   (eval-select₂ₙ 1) ∷
   [])
+```
 
+### Final Printing
+Print the binary-conversion for all examples:
+```agda
 mainStr : String
-mainStr = intersperse "\n\n" (
-  (printExample "ekko" cc_example_walk) ∷
-  (printExample "binary" ("D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩)) ∷
-  (printExample "binary-nested" (
-      "A" ⟨ ("A" ⟨ leaf "1" ∷
-                  leaf "2" ∷ [] ⟩) ∷
-           ("A" ⟨ leaf "3" ∷
-                  leaf "4" ∷ [] ⟩) ∷ []
-          ⟩
-    )) ∷
-  (printExample "ternary-nested" (
-      "A" ⟨ ("A" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
-            ("A" ⟨ leaf "4" ∷ leaf "5" ∷ leaf "6" ∷ [] ⟩) ∷
-            ("A" ⟨ leaf "7" ∷ leaf "8" ∷ leaf "9" ∷ [] ⟩) ∷ []
-          ⟩
-    )) ∷
-  (printExample "complex1" (
-      "A" ⟨ ("B" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
-            ("C" ⟨ leaf "c" ∷ [] ⟩) ∷
-            ("A" ⟨ leaf "4" ∷
-                   ("D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩) ∷
-                   leaf "5" ∷ []
-                 ⟩
-              ) ∷ []
-          ⟩
-    )) ∷
-  (printExample "name-trick" (
-    "A" ⟨ ("A.0" ⟨ leaf "A.0-left" ∷ leaf "A.0-right" ∷ [] ⟩) ∷
-          leaf "x" ∷ []
-        ⟩
-    )) ∷
-  [])
+mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
 ```
 
 ## Unicode Characters in Emacs Agda Mode
