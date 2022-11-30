@@ -292,6 +292,9 @@ Finally, let's build an example over strings. For this example, option calculus 
 leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
 leaf a = Artifact a []
 
+leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
+leaves = mapl⁺ leaf
+
 -- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk : ∀ {i : Size} → CC (↑ ↑ i) String
 cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
@@ -779,6 +782,15 @@ CC→CC₂-right = {!!}
 CCExample : Set
 CCExample = String × CC ∞ String
 
+-- some smart constructors
+chcA : ∀ {i : Size} {A : Set} → List⁺ (CC i A) → CC (↑ i) A
+chcA es = "A" ⟨ es ⟩
+
+chcA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CC (↑ ↑ i) A
+chcA-leaves es = chcA (leaves es)
+
+-- examples
+
 ccex-ekko : CCExample
 ccex-ekko = "ekko" , cc_example_walk
 
@@ -793,10 +805,9 @@ ccex-binary-nested = "binary-nested" ,
 
 ccex-ternary-nested : CCExample
 ccex-ternary-nested = "ternary-nested" ,
-  "A" ⟨ ("A" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
-        ("A" ⟨ leaf "4" ∷ leaf "5" ∷ leaf "6" ∷ [] ⟩) ∷
-        ("A" ⟨ leaf "7" ∷ leaf "8" ∷ leaf "9" ∷ [] ⟩) ∷ []
-      ⟩
+  chcA ( chcA-leaves ("1" ∷ "2" ∷ "3" ∷ []) ∷
+         chcA-leaves ("4" ∷ "5" ∷ "6" ∷ []) ∷
+         chcA-leaves ("7" ∷ "8" ∷ "9" ∷ []) ∷ [])
 
 ccex-complex1 : CCExample
 ccex-complex1 = "complex1" ,
