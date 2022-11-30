@@ -65,25 +65,14 @@ data CC (i : Size) (A : Set) : Set where
     A → List (CC j A) → CC i A
   _⟨_⟩ : ∀ {j : Size< i} →
     Dimension → List⁺ (CC j A) → CC i A
+```
 
--- When just speaking of core choice calculus, we neither care for nor know the depth of an expression. So infinity is a proper upper bound here as we just speak about expressions of arbitrary depth.
+From this slightly more complex definition, we can obtain the original definition of choice calculus without an upper bound for the expression depth.
+In the original definition, we neither care for nor know the depth of an expression.
+So we just pick infinity as a proper upper bound because we speak about expressions of arbitrary depth.
+```agda
 CoreCC : Set → Set
 CoreCC = CC ∞
-
--- Increasing the upper bound is always valid.
--- For example, an expression which has at most depth d, also is at most d+1 deep.
-weakenDepthBound : ∀ {i : Size} {j : Size< i} {A : Set} → CC j A → CC i A
-weakenDepthBound c = c
-
-forgetDepthBound : ∀ {i : Size} {A : Set} → CC i A → CoreCC A
-forgetDepthBound c = c
-
--- printing for examples
-{-# TERMINATING #-}
-showCC : ∀ {i : Size} → CC i String → String
-showCC (Artifact a []) = a
-showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC es)) ++ ">-"
-showCC (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.Base.intersperse ", " (toList (mapl⁺ showCC es))) ++ ">"
 ```
 
 Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
@@ -167,26 +156,25 @@ D⟨e⟩≈e = refl
 
 For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence.
 Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
-We thus first describe the variant-subset relation ⊂̌ and then define variant-equality as a bi-directional subset. 
-```agda
-{-
-For the variant-subset relation, we want to express the following, given two expressions e₁ e₂:
+We thus first describe the variant-subset relation ⊂̌ and then define variant-equality as a bi-directional subset.
 
-Every variant described by e₁
-is also described by e₂.
+For the variant-subset relation, we want to express the following, given two expressions `e₁` and `e₂`:
 
-<->
+Every variant described by `e₁` is also described by `e₂`.
 
-∀ variants v in the image of ⟦ e₁ ⟧
-there exists a configuration c
-such that ⟦ e₂ ⟧ c ≡ v.
+⇔
 
-<->
+For all variants `v` in the image of `⟦ e₁ ⟧`
+there exists a configuration `c`
+such that `⟦ e₂ ⟧ c ≡ v`.
 
-For all configurations c₁
-there exists a configuration c₂
-such that ⟦ e₁ ⟧ c₁ = ⟦ e₂ ⟧ c₂.
+⇔
+
+For all configurations `c₁`
+there exists a configuration `c₂`
+such that `⟦ e₁ ⟧ c₁ = ⟦ e₂ ⟧ c₂`.
 -}
+```agda
 open import Data.Product using (∃; ∃-syntax; _,_)
 open import Data.Product using (_×_; proj₁; proj₂)
 
@@ -287,7 +275,7 @@ D⟨e⟩≚e' {i} {A} {e} {D} =
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
 ```agda
--- smart constructor for plain artifacts
+-- smart constructors for plain artifacts
 -- Any upper bound is fine but we are at least 1 deep.
 leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
 leaf a = Artifact a []
@@ -303,22 +291,39 @@ cc_example_walk_zoom : Variant String
 cc_example_walk_zoom = ⟦ cc_example_walk ⟧ (λ {"Ekko" → 0; _ → 0})
 ```
 
-Print the example:
+Running this program shows that `cc_example_walk_zoom` indeed evaluates to the String `zoom`.
+But we can also prove it:
 ```agda
--- We omit proving termination for debugging stuff.
--- TODO: Move this function to another file and forbid TERMINATING macro in the CC module.
-{-# TERMINATING #-}
-showVariant : Variant String → String
-showVariant (Artifactᵥ a []) = a
-showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
+_ : cc_example_walk_zoom ≡ Artifactᵥ "zoom" []
+_ = refl
 ```
 
 ## Binary Normal Form
 
 In the following we introduce normal forms for choice calculus expressions.
 We express each normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system.
+Our goal is to prove that every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
 
-Every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
+As for choice calculus, `i` is an upper bound for the depth of the expression tree.
+```agda
+data CC₂ (i : Size) (A : Set) : Set where
+  Artifact₂ : {j : Size< i} →
+    A → List (CC₂ j A) → CC₂ i A
+  _⟨_,_⟩₂ : {j : Size< i} →
+    Dimension → CC₂ j A → CC₂ j A → CC₂ i A
+```
+
+The semantics of binary normal form is essentially the same as for n-ary choice calculus.
+We define the semantics explicitly though because of two reasons:
+
+1. Specializing the semantics to the binary case gives rise to further simplifications and transformation rules.
+2. Defining binary semantics explicitly allows us to prove that a conversion from and to binary normal form is semantics preserving.
+
+To define the semantics of the binary normal form, we also introduce new binary tags because configurations now have to choose from two alternatives.
+Doing so is isomorphic to choosing a boolean value (i.e., being a predicate).
+We define `true` to mean choosing the left alternative and `false` to choose the right alternative.
+Defining it the other way around is also ok but we have to pick one definition and stay consistent.
+We choose this order to follow the known _if c then a else b_ pattern where the evaluation of a condition _c_ to true means choosing the then-branch, which is the left one.
 ```agda
 Tag₂ : Set
 Tag₂ = Bool
@@ -326,66 +331,19 @@ Tag₂ = Bool
 left  = true
 right = false
 
-asTag : Tag₂ → Tag
-asTag true  = 0
-asTag false = 1
-
-asTag₂ : Tag → Tag₂
-asTag₂ zero    = true
-asTag₂ (suc n) = false
-
-data CC₂ (i : Size) (A : Set) : Set where
-  Artifact₂ : {j : Size< i} →
-    A → List (CC₂ j A) → CC₂ i A
-  _⟨_,_⟩₂ : {j : Size< i} →
-    Dimension → CC₂ j A → CC₂ j A → CC₂ i A
-
--- Semantics for binary choice calculus
 Configuration₂ : Set
 Configuration₂ = Dimension → Tag₂
 
 ⟦_⟧₂ : ∀ {i : Size} {A : Set} → CC₂ i A → Configuration₂ → Variant A
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
-
--- printing for examples
-{-# TERMINATING #-}
-showCC₂ : ∀ {i : Size} → CC₂ i String → String
-showCC₂ (Artifact₂ a []) = a
-showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
-showCC₂ (D ⟨ l , r ⟩₂) = D ++ "<" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ ">"
 ```
 
-Now that we've introduce the binary normal form at the type level, we want to show that (1) any n-ary choice calculus expression can be transformed to binary normal form, and (2) any binary normal form expression is a choice calculus expression.
-We start with the second task: Converting a choice calculus expression of which we know at the type level that it is in binary normal form, back to n-ary choice calculus.
-It will still be an expression in binary normal form but we will lose that guarantee at the type level.
-```agda
-{- |
-Convert back to normal choice calculus.
-Converts a binary choice calculus expression to a core choice calculus expression.
-The resulting expression is syntactically equivalent and thus still in binary normal form.
-We drop only the knowledge of being in binary normal form at the type level.
--}
-toCC : ∀ {i : Size} {A : Set} → CC₂ i A → CC i A
-toCC (Artifact₂ a es) = Artifact a (mapl toCC es)
-toCC (D ⟨ l , r ⟩₂) = D ⟨ (toCC l) ∷ (toCC r) ∷ [] ⟩
+## Semantic Equivalence of Choice Calculus and Binary Normal Form
 
-{- |
-Convert binary configuration to n-ary configuration.
-Only valid for our translation from CC₂ to CC.
--}
-toNaryConfig : Configuration₂ → Configuration
-toNaryConfig c₂ = asTag ∘ c₂
+Now that we've introduced the binary normal form at the type level, we want to show that (1) any n-ary choice calculus expression can be transformed to binary normal form, and (2) any binary normal form expression is a choice calculus expression. Therefore, we construct the respective transformations in the following.
 
-{- |
-Convert n-ary configuration to binary.
-Only valid for our translation from CC₂ to CC.
--}
-toBinaryConfig : Configuration → Configuration₂
-toBinaryConfig c = asTag₂ ∘ c
-```
-
-To prove that both conversions are valid, we define semantic equivalence between a binary, and an n-ary choice calculus expression.
+To prove that both transformations are valid, we define semantic equivalence between a binary and an n-ary choice calculus expression.
 Semantic equivalence between a binary and n-ary choice calculus expression cannot be expressed directly because the semantics of binary and n-ary choice calculus use different types of configurations.
 Yet, we can compare the set of described variants in terms of variant-preserving equivalence.
 Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
@@ -414,8 +372,49 @@ ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
 
 ### Binary to N-ary Choice Calculus
 
+We start with the second task: Converting a choice calculus expression of which we know at the type level that it is in binary normal form, back to n-ary choice calculus.
+It will still be an expression in binary normal form but we will lose that guarantee at the type level.
+```agda
+{- |
+Converts a binary choice calculus expression to a core choice calculus expression.
+The resulting expression is syntactically equivalent and thus still in binary normal form.
+We only drop the knowledge of being in binary normal form at the type level.
+-}
+toCC : ∀ {i : Size} {A : Set} → CC₂ i A → CC i A
+toCC (Artifact₂ a es) = Artifact a (mapl toCC es)
+toCC (D ⟨ l , r ⟩₂) = D ⟨ (toCC l) ∷ (toCC r) ∷ [] ⟩
+
+-- Conversion of configurations.
+{-
+When converting configurations for toCC, we have decide on a possible mapping between booleans and natural numbers.
+We chose a mapping that preserves semantics:
+true means going left in a binary expression, as does 0 in an n-ary choice calculus expression.
+Analoguous for false.
+-}
+asTag : Tag₂ → Tag
+asTag true  = 0
+asTag false = 1
+
+asTag₂ : Tag → Tag₂
+asTag₂ zero    = true
+asTag₂ (suc n) = false
+
+{- |
+Convert binary configuration to n-ary configuration.
+Only valid for our translation from CC₂ to CC.
+-}
+toNaryConfig : Configuration₂ → Configuration
+toNaryConfig c₂ = asTag ∘ c₂
+
+{- |
+Convert n-ary configuration to binary.
+Only valid for our translation from CC₂ to CC.
+-}
+toBinaryConfig : Configuration → Configuration₂
+toBinaryConfig c = asTag₂ ∘ c
+```
+
 And now for the proofs.
-We prove first that any binary choice calculus expression can be converted to an n-ary choice calculus expression (core choice calculus expression).
 ```agda
 CC₂→CC-left : ∀ {i : Size} {A : Set} {e : CC₂ i A}
     ------------
@@ -434,7 +433,8 @@ CC₂→CC {i} {A} {e} =
   , CC₂→CC-right {i} {A} {e}
 ```
 
-Proof of the left side:
+#### Proof of the left side
+
 ```agda
 -- helper function that tells us that the existing n-ary configuration, given a binary configuration, is toNaryConfig c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
 CC₂→CC-left-toNaryConfig : ∀ {i : Size} {A : Set}
@@ -489,7 +489,9 @@ CC₂→CC-left-toNaryConfig (D ⟨ l , r ⟩₂) c₂ =
 CC₂→CC-left {i} {A} {e} c₂ = toNaryConfig c₂ , CC₂→CC-left-toNaryConfig e c₂
 ```
 
-Proof of the right side. This proof is very similar to the left side. Maybe we can simplify both proofs if we extract some similarities.
+#### Proof of the right side
+
+This proof is very similar to the left side. Maybe we can simplify both proofs if we extract some similarities.
 ```agda
 CC₂→CC-right-toBinaryConfig : ∀ {i : Size} {A : Set}
   → ∀ (e : CC₂ i A)
@@ -526,22 +528,71 @@ CC₂→CC-right {i} {A} {e} c = toBinaryConfig c , CC₂→CC-right-toBinaryCon
 
 ### N-ary to Binary Choice Calculus
 
-To implement transformation to binary normal form, we have to generate new choices, and thus new dimensions.
+To convert choice calculus to binary normal form, we have to convert n-ary choices to binary choices.
+We can do so by recursively nesting alternatives beyond the second in nested binary decisions.
+This translation follows the similar observations for if-statements that an `elseif` expression is equivalent to an `else` branch with a nested `if`:
+
+      if x
+      then a
+      elif b
+      else c
+
+    ≡ if x
+      then a
+      else (if x'
+            then b
+            else c)
+
+One of the key challenges for this translations is to introduce correct new conditions `x'` (i.e., dimensions) for the nested choices.
+Here, this means, we have to generate new choices, and thus new dimensions (just as `x'`).
 When generating a new name for a new dimension, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
 For example, when generating names by appending tick marks, we may get `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) ≡ D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
 
-So far I came up with two principle ways to ensure the uniqueness of generated names:
+We identified two possible ways to ensure that new generated names do not collide with existing dimension names:
 
-1. Bake uniqueness into the type-level by using a different type for dimension in the output expression. Values of the new type would ensure that these values were never part of the original input expression. However, this is very intrusive into the language design and introduces complexity for all matters other than conversion to binary normal form.
-2. Ensure somehow that any new value does not exist in the input expression yet. One solution would be to take all existing names and concatenate them. The resulting name is unique. This would work from a mathy point of view but would be very inconvenient in practice.
+1. Bake uniqueness into the type-level by using a different type for dimension in the output expression: Values of the new type would ensure that these values were never part of the original input expression. However, this is very intrusive into the language design and introduces complexity for all matters other than conversion to binary normal form. It also obfuscates the language design for an easier solution to this particular problem. That is why we choose the second alternative below.
+2. Ensure that any new dimension name does not collide (as shown in the example above). Collision can either occur with names from the input formula or in the output formula. When generating a new name, we can only guarantee that it does not collide with another name in the input formula by comparing it to every name in the input formula. This is an intricate process, vastly complicating proofs. Another strategy would be to ensure that any generated name in the output formula collides exactly with those names in the output formula for which both respective dimensions in the input formula collided. For example, when transforming `D⟨D⟨x, y, z⟩, A⟨u, v, w⟩, n⟩`, we have to introduce new dimensions for `D` and `A` because these have arity greater 2. For both occurences of `D`, the generated dimension has to have the same name to ensure choice synchronization (see Erics PhD thesis). And these two names must collide in the output but must not collide with any other name. For example, `D⟨D⟨x, D'⟨y, z⟩⟩, D'⟨A⟨u, A'⟨v, w⟩⟩, n⟩⟩` would be valid but the generated name `D'` can still collide with names for the input formula.
 
-Can we abstract (2) in a name generator "object" that generates names together with proves for uniqueness (potentially making additional assumptions)?
+To prevent collisions of names, we (1) rename every dimension in the input in a consistent way and (2) also generate new names following this way. This allows us to ensure that generated names do not collide with other existing names.
+The idea is to append an index to every dimension that indicates the tag that had to be chosen in the input formula to pick that choice's left alternative.
 
-This name generate has also be used by the configuration to determine values for the new names.
+Example: `D⟨x, y, z, w⟩ ↦ D.0⟨x, D.1⟨y, D.2⟨z, w⟩⟩⟩`
 
-Conversion of n-ary to binary choice calculus:
+Definition:
 ```agda
--- Import monad and applicative operators
+open import Data.Nat.Show renaming (show to show-nat)
+
+indexedDim : Dimension → ℕ → Dimension
+indexedDim D n = D ++ "." ++ (show-nat n) -- Do not simplify for n ≡ᵇ zero! I know names like A.0 are ugly if we can avoid them but dropping the .0 where possible can cause name collisions in the output formula!
+```
+
+Here is an informal proof that using `indexedDim` to rename every dimension does not cause unintended choice synchronizations:
+
+    Every dimension D in the input formula is renamed to (D ++ ".0").
+    Thus every dimension is manipulated equally and thus, this transformation is a true renaming.
+
+    Removal of dimensions occurs only for unary choices and cannot invalidate uniqueness of names anyway.
+
+    New dimensions are introduced only to unroll a dimension from the input formula.
+    This means, each generated dimension G is associated to exactly one dimension D from the input formula.
+    The name of G is (D ++ "." ++ suc n) for an n : ℕ.
+    The name of G is new because of proof by contradiction:
+      Assume the name of G is not new (i.e., collides).
+      This means there is dimension A in the output formula with the same name as G
+      but A was associated to another dimension in the input formula.
+      The name of A is of the form (I ++ "." m) for an m : ℕ and a dimension I from the input formula.
+      Because A has the same name as G, we know that I = D and suc n = m.
+      Thus, both A and G originate from the same dimension in the input formula.
+      This contradicts our assumption that G collided.
+
+To prove that a translation from choice calculus to binary normal form is semantics-preserving, we have to show that both, the input as well as the output expression, describe the same set of variants (just as we did earlier for the inverse translation).
+As we will see later, this requires is to not only translate an expression from n-ary to binary form, but also configurations.
+Our implementation of the translation thus takes an n-ary choice calculus expression as input and yields two results: (1) a converter that can translate configurations for the input formula to configurations for the output formula and vice versa, and (2) the expression in binary normal form.
+To define the configuration converter, we use the state monad that keeps track of our current progress of translating configurations.
+
+We thus first import the necessary definitions from the standard library:
+```agda
+-- Import general functor and monad operations.
 open import Effect.Functor using (RawFunctor)
 open import Effect.Monad using (RawMonad)
 
@@ -554,17 +605,19 @@ open import Effect.Monad.State
             monadState to state-monad-specifics)
 
 -- Import traversable for lists
-import Data.List.Effectful -- using (TraversableA)
+import Data.List.Effectful -- using (TraversableA) -- This using declaration is unfortunately not valid but we only need TraversableA.
 open Data.List.Effectful.TraversableA using (sequenceA)
+```
 
+We also have to be able to compare dimensions which are defined to be strings:
+```agda
 -- Import show for nats to make names from numbers
-open import Data.Nat.Show renaming (show to show-nat)
 open import Agda.Builtin.String using (primStringEquality) -- used to compare dimensions
+```
 
--- A converter that converts configurations for n-ary choice calculus to configurations for binary choice calculus.
-ConfigurationTranslator : Set
-ConfigurationTranslator = Configuration → Configuration₂
-
+To convert configurations for the input formula to configurations for the output formula and vice versa, we introduce the following record.
+We use this record as the state during our translation.
+```agda
 -- resembles a specialized version of _⇔_ in the plfa book
 record ConfigurationConverter : Set where
   field
@@ -573,7 +626,7 @@ record ConfigurationConverter : Set where
 open ConfigurationConverter
 
 -- Default configuration converter that always goes left.
--- We use it as a base case when we have no other information.
+-- We use it as a base case when we have no further information.
 unknownConfigurationConverter : ConfigurationConverter
 unknownConfigurationConverter = record
   { nary→binary = λ _ _ → true
@@ -584,165 +637,151 @@ unknownConfigurationConverter = record
 -- We keep track of the current configuration converter and update it when necessary.
 TranslationState : Set → Set
 TranslationState = State ConfigurationConverter
+```
 
-{-
-Sadly, we cannot prove this terminating yet.
-The problem is that a list of children is converted to a recursive nesting structure.
-For example, D ⟨ a , b , c , d ⟩ becomes D ⟨ a , D' ⟨ b , D'' ⟨ c , d ⟩₂ ⟩₂ ⟩₂.
-So the number of children of a CC expression determines the nesting depth of the resulting binary expression.
+We can now define our translation function `toCC₂`.
+Sadly, we cannot prove it terminating yet.
+The problem is that the alternatives of a choice are a list, and this list is converted to a recursive nesting structure.
+For example, D ⟨ a , b , c , d ⟩ becomes D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩₂ ⟩₂ ⟩₂.
+Hence, the number of children of a CC expression determines the nesting depth of the resulting binary expression.
 Since we have no guarantees on the number of children (i.e., no bound / estimate), we cannot make any guarantees on the maximum depth of the resulting expression.
 Moreover, because a children list thus could be infinite, also the resulting expression could be infinite.
 Thus, this function might indeed not terminate.
 To solve this, we would have to introduce yet another bound to n-ary choice calculus: an upper bound for the number of children of each node.
--}
+We should later decide if this extra boilerplate is worth it or not.
 
+We first introduce a he
+```agda
 -- helper function to keep track of state
-{-#TERMINATING #-}
+{-# TERMINATING #-}
 toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
 
--- actual translation that yields the translated formula together with a converter for configurations.
--- The converter converts any configuration for the input formula to a configuration for the output formula that yields the same variant.
-{-# TERMINATING #-}
+-- actural translation function
 toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationConverter × CC₂ ∞ A
 toCC₂ cc = runState (toCC₂' cc) unknownConfigurationConverter
 
-indexedDim : Dimension → ℕ → Dimension
-indexedDim D n = D ++ "." ++ (show-nat n) -- Do not simplify for n ≡ᵇ zero! I know names like A.0 are ugly if we can avoid them but dropping the .0 where possible can cause name collisions in the output formula!
-
--- Unrolls an n-ary choice to a binary choice by recursively nesting alternatives beyong the first one in else-branches.
--- Example: D ⟨ 1 ∷ 2 ∷ 3 ∷ [] ⟩ → D.0 ⟨ 1 , D.1 ⟨ 2 , 3 ⟩₂ ⟩₂
+{- |
+Unroll choices by recursively nesting any alternatives beyond the first.
+Example: D ⟨ u ∷ v ∷ w ∷ [] ⟩ → D.0 ⟨ u, D.1 ⟨ v , w ⟩₂ ⟩₂
+-}
 toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
-  → Dimension -- initial dimension in input formula
-  → ℕ -- Current alternative of the given dimension we are translating. zero is left-most alternative.
-  → List⁺ (CC i A) -- alternatives of the choice to unroll
+  → Dimension      -- initial dimension in input formula that we translate (D in the example above).
+  → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
+  → List⁺ (CC i A) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
   → TranslationState (CC₂ ∞ A)
 
--- Leave structures unchanged but recursively translate all children.
--- First, translate all children recursively.
--- This yields a list of states which we evaluate in sequence via sequenceA.
+-- Leave artifact structures unchanged but recursively translate all children.
+-- Translating all children yields a list of states which we evaluate in sequence.
 toCC₂' (Artifact a es) =
   let open RawFunctor state-functor
       translated-children = mapl toCC₂' es in
   Artifact₂ a <$> (sequenceA state-applicative translated-children)
-{-
-Unroll choices by recursively nesting any alternatives beyond the first.
-Therefore, we take an indirection via an auxiliary function toCC₂'-choice-unroll.
-We do so to ensure that names of newly introduced dimensions do not collide with existing dimension names in the input formula.
-This would secretely introduce unwanted dependencies similar to variable capture when renaming variables in lambda calculus unchecked.
-Example: Renaming A to D in D ⟨ 1 , A ⟨ 2 , 3 ⟩ ⟩ yields D ⟨ 1 , D ⟨ 2, 3 ⟩ ⟩ which has different semantics.
-The unroll function does so by renaming _ all_ variables in a similar way
-Informal proof for stability of names:
-
-Every dimension D in the input formula is renamed to (D ++ ".0").
-Thus every dimension is manipulated equally and thus, this transformation is a true renaming.
-
-Removal of dimensions occurs only for unary choices and cannot invalidate uniqueness of names anyway.
-
-New dimensions are introduced only to unroll a dimension from the input formula.
-This means, each generated dimension G is associated to exactly one dimension D from the input formula.
-The name of G is (D ++ "." ++ suc n) for an n : ℕ.
-The name of G is new because of proof by contradiction:
-  Assume the name of G is not new (i.e., collides).
-  This means there is dimension A in the output formula with the same name as G
-  but A was associated to another dimension in the input formula.
-  The name of A is of the form (I ++ "." m) for an m : ℕ and a dimension I from the input formula.
-  Because A has the same name as G, we know that I = D and suc n = m.
-  Thus, both A and G originate from the same dimension in the input formula.
-  This contradicts our assumption that G collided.
--}
 toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
 
 open import Data.Nat using (_≡ᵇ_)
 open import Data.Bool using (_∧_)
 
--- Use the idempotency rule to unwrap unary choices.
+empty? : ∀ {A : Set} → List A → Bool
+empty? [] = true
+empty? (x ∷ xs) = false
+
+update-configuration-converter :
+    ConfigurationConverter
+  → Dimension  -- corresponding dimension in the input n-ary expression
+  → ℕ         -- current nesting depth (see toCC₂'-choice-unroll)
+  → Dimension  -- name of the corresponding dimension in the output binary expression
+  → Bool       -- True iff the currently inspected choice is binary.
+  → ConfigurationConverter
+update-configuration-converter conf-converter D n D' binary? =
+    let n→b = nary→binary conf-converter
+        b→n = binary→nary conf-converter
+    in record
+      -- Given an n-ary configuration cₙ for the input formula, we want to find the value of a given dimension in the binary output formula
+      { nary→binary = (λ {cₙ queried-output-dimension →
+          -- If the queried dimension was translated from our currently translated dimension D.
+          if (primStringEquality queried-output-dimension D')
+          -- If the selection made in the input formula did select the left alternative of our choice
+          -- then also pick it in the binary output formula. Otherwise, do not pick it.
+          -- In case cₙ D <ᵇ n, the result does not matter. Then, an alternative above this choice was already chosen
+          -- (and we are within an else branch). So it does not matter what we pick here. Could be true, false, or n→b cₙ queried-output-dimension.
+          -- In case cₙ D >ᵇ n, the result has to be false because the alternative that has to be picked is on the right, which is only checked if we do not go left here.
+          then (cₙ D ≡ᵇ n)
+          -- If not, ask our existing configuration translation knowledge.
+          else (n→b cₙ queried-output-dimension)
+          })
+      -- Given a binary configuration c₂ for the output formula, we want to find the value of a queried dimension in the n-ary input formula.
+      ; binary→nary = (λ {c₂ queried-input-dimension →
+          let recursive-result = b→n c₂ queried-input-dimension in
+          -- If the queried dimension is the dimension we currently translate.
+          if (primStringEquality queried-input-dimension D)
+          then (if (c₂ D')       -- If the binary configuration has chosen the left alternative of the nested binary dimension
+                then n           -- ... then that is the alternative we have to pick in the input formula.
+                else (if binary? -- ... if not, we check if the current choice is already.
+                      then suc n -- If it is, we pick the right alternative.
+                      else recursive-result -- Otherwise, we check further nested branches recursively.
+                      )
+                )
+          else recursive-result
+          })
+      }
+
+-- Use the idempotency rule D⟨e⟩≈e to unwrap unary choices.
+-- This is where recursion stops.
 toCC₂'-choice-unroll D n (e₁ ∷ []) = toCC₂' e₁
 -- For n-ary choices with n > 1, convert the head and recursively convert the tail.
 toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
   let open RawMonad state-monad
       open RawMonadState state-monad-specifics
   in do
-    -- translation of the formula
     let D' = indexedDim D n
+
+    -- translation of the formula
     cc₂-e₁   ← toCC₂' e₁
     cc₂-tail ← toCC₂'-choice-unroll D (suc n) (e₂ ∷ es)
 
     -- translation of configurations
+    -- The tail length check is actually a recursion end that checks if we are left with a binary choice.
+    -- So we might want to introduce a pattern matching case for binary choices instead of doing this runtime-check here.
+    -- However, this abstraction causes more boilerplate than it simplifies.
+    -- Let's see how much more complicated the proofs become.
     conf-converter ← get
-    let n→b = nary→binary conf-converter
-        b→n = binary→nary conf-converter
-  --  let conf-trans = cₙ→c₂ state
-    put ( record
-      { nary→binary = (λ {cₙ queried-output-dimension → -- given an n-ary configuration cₙ for the input formula, we want to find the value of a given dimension in the binary output formula
-          if (primStringEquality queried-output-dimension D') -- if the queried dimension D₂ was translated from our currently translated dimension D
-          then (if (cₙ D ≡ᵇ n) -- if the selection made in the input formula selected the left alternative of our choice
-                -- todo simplify term here
-                then true  -- then also pick it in the binary output formula
-                else false -- otherwise, do not pick it
-                           -- In case cₙ D < n, the result does not matter. Then, an alternative above this choice was already chosen (and we are within an else branch). So it does not matter what we pick here. Could be true, false, or n→b cₙ D₂.
-                           -- In case cₙ D > n, the result has to be false because the alternative that has to be picked is on the right, which is only checked if we do not go left here.
-            )
-          else (n→b cₙ queried-output-dimension) -- if not, ask our existing configuration translation knowledge
-          })
-      ; binary→nary = (λ {c₂ queried-input-dimension → -- given a binary configuration c₂ for the output formula, we want to find the value of a given dimension Dₙ in the n-ary input formula
-          if (primStringEquality queried-input-dimension D) -- if the queried dimension
-          then (if (c₂ D')
-                then zero
-                else (if (Data.List.Base.length (e₂ ∷ es) ≡ᵇ 1) -- todo: this is actually a recursion end so we might want to introduce a pattern matching case for binary choices. This works though too.
-                      then 1
-                      else suc (b→n c₂ queried-input-dimension)
-                      )
-                )
-          else (b→n c₂ queried-input-dimension)
-          })
-      })
+    put (update-configuration-converter conf-converter D n D' (empty? es))
 
     pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
 ```
 
-Example time:
-```agda
-cc_example_zoom_binary : CC₂ ∞ String
-cc_example_zoom_binary = proj₂ (toCC₂ cc_example_walk)
-```
-
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
-{-
---- Todo ---
-How to handle naming in toCC₂?
-We have to either prove or assume that all new names introduced in that function are unique.
-How can we express that without opening the box of pandora?
-Maybe redefining Dimension to ℕ or something more convenient than String could help?
-It should remain close to the definition in Eric's thesis/papers though.
--}
-{-
 CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
   → proj₂ (toCC₂ e) ₂⊂̌ₙ e
 
+{-
 CC→CC₂-right : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
   → e ₙ⊂̌₂ proj₂ (toCC₂ e)
 
 CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
     ----------
-  → proj₁ (tocc₂ e) ₂≚ₙ e
-cc→cc₂ {i} {A} {e} =
+  → proj₂ (toCC₂ e) ₂≚ₙ e
+CC→CC₂ {i} {A} {e} =
     CC→CC₂-left  {i} {A} {e}
   , CC→CC₂-right {i} {A} {e}
-  -}
+-}
 ```
 
+#### Proof of the left side
 
 ```agda
-{-
 CC→CC₂-left {i} {A} {e} c₂ =
   let conf-trans , cc₂ = toCC₂ e in
   binary→nary conf-trans c₂ , {!!}
+```
 
-CC→CC₂-right = {!!}
--}
+#### Proof of the right side
+
+```agda
+--CC→CC₂-right = {!!}
 ```
 
 ## Example Printing
@@ -816,6 +855,25 @@ open Function.Base using (id)
 open import ShowHelpers
 ```
 
+Showing choice calculus expressions:
+```agda
+showCC : ∀ {i : Size} → CC i String → String
+showCC (Artifact a []) = a
+showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC es)) ++ ">-"
+showCC (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.Base.intersperse ", " (toList (mapl⁺ showCC es))) ++ ">"
+
+showCC₂ : ∀ {i : Size} → CC₂ i String → String
+showCC₂ (Artifact₂ a []) = a
+showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
+showCC₂ (D ⟨ l , r ⟩₂) = D ++ "<" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ ">"
+
+-- We did not equip variants with bounds yet so we hust assume this terminates.
+{-# TERMINATING #-}
+showVariant : Variant String → String
+showVariant (Artifactᵥ a []) = a
+showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
+```
+
 Helper functions to collect all dimensions within a choice calculus expression. These might give duplicates because we use lists instead of sets for implementation convenience:
 ```agda
 -- get all dimensions used in a CC expression
@@ -887,18 +945,24 @@ ccex-toBinaryAndBack (name , cc) = unlines (
   (name ++ " = " ++ (showCC cc)) ∷
   (show-selectₙ 0) ∷
   (show-selectₙ 1) ∷
+  (show-selectₙ 2) ∷
   (eval-selectₙ 0) ∷
   (eval-selectₙ 1) ∷
+  (eval-selectₙ 2) ∷
   ("toCC₂ " ++ name ++ " = " ++ (showCC₂ cc₂)) ∷
   (show-select₂ 0) ∷
   (show-select₂ 1) ∷
+  (show-select₂ 2) ∷
   (eval-select₂ 0) ∷
   (eval-select₂ 1) ∷
+  (eval-select₂ 2) ∷
   (name ++ " with configurations converted back and forth ") ∷
   (show-select₂ₙ 0) ∷
   (show-select₂ₙ 1) ∷
+  (show-select₂ₙ 2) ∷
   (eval-select₂ₙ 0) ∷
   (eval-select₂ₙ 1) ∷
+  (eval-select₂ₙ 2) ∷
   [])
 ```
 
