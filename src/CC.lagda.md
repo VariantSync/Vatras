@@ -450,15 +450,10 @@ CC₂→CC-left-toNaryConfig-choice-case-analyses : ∀ {i : Size} {A : Set} {D 
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
     ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂)
 CC₂→CC-left-toNaryConfig-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
-...                          | true  = begin
-                                         ⟦ if true then l else r ⟧₂ c₂
-                                       ≡⟨⟩
-                                         ⟦ l ⟧₂ c₂
-                                       ≡⟨ CC₂→CC-left-toNaryConfig l c₂ ⟩
-                                         ⟦ toCC l ⟧ (toNaryConfig c₂)
-                                       ≡⟨⟩
-                                         ⟦ (choice-elimination 0 (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂)
-                                       ∎
+...                          | true  = ⟦ if true then l else r ⟧₂ c₂                                       ≡⟨⟩
+                                       ⟦ l ⟧₂ c₂                                                           ≡⟨ CC₂→CC-left-toNaryConfig l c₂ ⟩
+                                       ⟦ toCC l ⟧ (toNaryConfig c₂)                                        ≡⟨⟩
+                                       ⟦ (choice-elimination 0 (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂) ∎
                              -- This proof is analoguous to the proof for the "true" case.
                              -- Thus, we simplify the step-by-step-proof to the only reasoning necessary.
 ...                          | false = CC₂→CC-left-toNaryConfig r c₂
@@ -472,35 +467,23 @@ open import Data.List.Properties renaming (map-∘ to mapl-∘)
 CC₂→CC-left-toNaryConfig (Artifact₂ a []) c₂ = refl
 -- The semantics "just" recurses on Artifacts.
 CC₂→CC-left-toNaryConfig (Artifact₂ a es@(_ ∷ _)) c₂ =
-  begin
-    (⟦ Artifact₂ a es ⟧₂ c₂)
-  ≡⟨⟩
-    Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)
-  ≡⟨ Eq.cong (λ m → Artifactᵥ a (m es)) -- apply the induction hypothesis below the Artifactᵥ constructor
-     ( mapl-cong-≗-≡ -- and below the mapl
-       (λ {v → CC₂→CC-left-toNaryConfig v c₂})
-     )
-   ⟩
-     Artifactᵥ a (mapl (flip (⟦_⟧ ∘ toCC) (toNaryConfig c₂)) es)
-  ≡⟨ Eq.cong (λ m → Artifactᵥ a m) (mapl-∘ es) ⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧ (toNaryConfig c₂)) (mapl toCC es))
-  ≡⟨⟩
-    (⟦ toCC (Artifact₂ a es) ⟧ (toNaryConfig c₂))
-  ∎
+  ⟦ Artifact₂ a es ⟧₂ c₂                                        ≡⟨⟩
+  Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)                        ≡⟨ Eq.cong (λ m → Artifactᵥ a (m es)) -- apply the induction hypothesis below the Artifactᵥ constructor
+                                                                   ( mapl-cong-≗-≡ -- and below the mapl
+                                                                     (λ {v → CC₂→CC-left-toNaryConfig v c₂})
+                                                                   )
+                                                                  ⟩
+  Artifactᵥ a (mapl (flip (⟦_⟧ ∘ toCC) (toNaryConfig c₂)) es)    ≡⟨ Eq.cong (λ m → Artifactᵥ a m) (mapl-∘ es) ⟩
+  Artifactᵥ a (mapl (flip ⟦_⟧ (toNaryConfig c₂)) (mapl toCC es)) ≡⟨⟩
+  (⟦ toCC (Artifact₂ a es) ⟧ (toNaryConfig c₂))                  ∎
 -- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
 -- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
 CC₂→CC-left-toNaryConfig (D ⟨ l , r ⟩₂) c₂ =
-  begin
-    ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂
-  ≡⟨⟩
-    ⟦ if c₂ D then l else r ⟧₂ c₂
-  ≡⟨ CC₂→CC-left-toNaryConfig-choice-case-analyses c₂ ⟩
-    ⟦ choice-elimination ((toNaryConfig c₂) D) (toCC l ∷ toCC r ∷ []) ⟧ (toNaryConfig c₂)
-  ≡⟨⟩
-    ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ (toNaryConfig c₂)
-  ≡⟨⟩
-    ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ (toNaryConfig c₂)
-  ∎
+  ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂                                                                   ≡⟨⟩
+  ⟦ if c₂ D then l else r ⟧₂ c₂                                                         ≡⟨ CC₂→CC-left-toNaryConfig-choice-case-analyses c₂ ⟩
+  ⟦ choice-elimination ((toNaryConfig c₂) D) (toCC l ∷ toCC r ∷ []) ⟧ (toNaryConfig c₂) ≡⟨⟩
+  ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ (toNaryConfig c₂)                                       ≡⟨⟩
+  ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ (toNaryConfig c₂)                                              ∎
 
 -- Finally, prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
 CC₂→CC-left {i} {A} {e} c₂ = toNaryConfig c₂ , CC₂→CC-left-toNaryConfig e c₂
@@ -526,29 +509,17 @@ CC₂→CC-right-toBinaryConfig-choice-case-analysis {i} {A} {D} {l} {r} c with 
 
 CC₂→CC-right-toBinaryConfig (Artifact₂ a []) c = refl
 CC₂→CC-right-toBinaryConfig (Artifact₂ a es@(_ ∷ _)) c =
-  begin
-    ⟦ Artifact₂ a es ⟧₂ (toBinaryConfig c)
-  ≡⟨⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧₂ (toBinaryConfig c)) es)
-  ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) (mapl-cong-≗-≡ (λ {v → CC₂→CC-right-toBinaryConfig v c})) ⟩
-    Artifactᵥ a (mapl ((flip ⟦_⟧ c) ∘ toCC) es)
-  ≡⟨ Eq.cong (λ {x → Artifactᵥ a x}) (mapl-∘ es) ⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧ c) (mapl toCC es))
-  ≡⟨⟩
-    ⟦ toCC (Artifact₂ a es) ⟧ c
-  ∎
+  ⟦ Artifact₂ a es ⟧₂ (toBinaryConfig c)               ≡⟨⟩
+  Artifactᵥ a (mapl (flip ⟦_⟧₂ (toBinaryConfig c)) es) ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) (mapl-cong-≗-≡ (λ {v → CC₂→CC-right-toBinaryConfig v c})) ⟩
+  Artifactᵥ a (mapl ((flip ⟦_⟧ c) ∘ toCC) es)           ≡⟨ Eq.cong (λ {x → Artifactᵥ a x}) (mapl-∘ es) ⟩
+  Artifactᵥ a (mapl (flip ⟦_⟧ c) (mapl toCC es))       ≡⟨⟩
+  ⟦ toCC (Artifact₂ a es) ⟧ c                          ∎
 CC₂→CC-right-toBinaryConfig (D ⟨ l , r ⟩₂) c =
-  begin
-    ⟦ D ⟨ l , r ⟩₂ ⟧₂ (toBinaryConfig c)
-  ≡⟨⟩
-    ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
-  ≡⟨ CC₂→CC-right-toBinaryConfig-choice-case-analysis c ⟩
-    ⟦ choice-elimination (c D) (toCC l ∷ toCC r ∷ []) ⟧ c
-  ≡⟨⟩
-    ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ c
-  ≡⟨⟩
-    ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ c
-  ∎
+  ⟦ D ⟨ l , r ⟩₂ ⟧₂ (toBinaryConfig c)                   ≡⟨⟩
+  ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c) ≡⟨ CC₂→CC-right-toBinaryConfig-choice-case-analysis c ⟩
+  ⟦ choice-elimination (c D) (toCC l ∷ toCC r ∷ []) ⟧ c ≡⟨⟩
+  ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ c                       ≡⟨⟩
+  ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ c                              ∎
 
 CC₂→CC-right {i} {A} {e} c = toBinaryConfig c , CC₂→CC-right-toBinaryConfig e c
 ```
