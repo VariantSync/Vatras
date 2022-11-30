@@ -160,20 +160,14 @@ We thus first describe the variant-subset relation ⊂̌ and then define variant
 
 For the variant-subset relation, we want to express the following, given two expressions `e₁` and `e₂`:
 
-Every variant described by `e₁` is also described by `e₂`.
+       Every variant described by e₁ is also described by e₂.
+    ⇔ For all variants v in the image of ⟦ e₁ ⟧
+       there exists a configuration c
+       such that ⟦ e₂ ⟧ c ≡ v.
+    ⇔ For all configurations c₁
+       there exists a configuration c₂
+       such that ⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂.
 
-⇔
-
-For all variants `v` in the image of `⟦ e₁ ⟧`
-there exists a configuration `c`
-such that `⟦ e₂ ⟧ c ≡ v`.
-
-⇔
-
-For all configurations `c₁`
-there exists a configuration `c₂`
-such that `⟦ e₁ ⟧ c₁ = ⟦ e₂ ⟧ c₂`.
--}
 ```agda
 open import Data.Product using (∃; ∃-syntax; _,_)
 open import Data.Product using (_×_; proj₁; proj₂)
@@ -773,9 +767,52 @@ CC→CC₂ {i} {A} {e} =
 #### Proof of the left side
 
 ```agda
+CC→CC₂-left' : ∀ {i : Size} {A : Set}
+  → ∀ (e : CC i A)
+  → ∀ (c₂ : Configuration₂)
+    ------------------------------------------------------------------
+  → ⟦ proj₂ (toCC₂ e) ⟧₂ c₂ ≡ ⟦ e ⟧ (binary→nary (proj₁ (toCC₂ e)) c₂)
+CC→CC₂-left' (Artifact a []) c₂ = refl
+CC→CC₂-left' e@(Artifact a es@(_ ∷ _)) c₂ =
+  let open RawFunctor state-functor
+      translated-children = mapl toCC₂' es
+      c = binary→nary (proj₁ (toCC₂ e)) c₂
+  in
+  begin
+    ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
+  ≡⟨⟩
+    ⟦ proj₂ (runState (Artifact₂ a <$> (sequenceA state-applicative translated-children)) unknownConfigurationConverter) ⟧₂ c₂
+  ≡⟨⟩
+    Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (proj₂ (runState (sequenceA state-applicative (mapl toCC₂' es)) unknownConfigurationConverter)))
+  -- TODO: Somehow apply the induction hypothesis below the below the sequenceA below the runState below the mapl below the Artifactᵥ
+  ≡⟨ Eq.cong (λ m → Artifactᵥ a m) {!!} ⟩
+    Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+  ≡⟨⟩
+    ⟦ e ⟧ c
+  ∎
+CC→CC₂-left' (D ⟨ e ∷ [] ⟩) c₂ =
+  let conf = binary→nary (proj₁ (toCC₂ (D ⟨ e ∷ [] ⟩))) c₂ in
+  ⟦ proj₂ (toCC₂ (D ⟨ e ∷ [] ⟩)) ⟧₂ c₂ ≡⟨⟩
+  ⟦ proj₂ (toCC₂ e            ) ⟧₂ c₂ ≡⟨ CC→CC₂-left' e c₂ ⟩
+  ⟦ e           ⟧ conf                ≡⟨⟩
+  ⟦ D ⟨ e ∷ [] ⟩ ⟧ conf                ∎
+CC→CC₂-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
+  let conf = binary→nary (proj₁ (toCC₂ e)) c₂
+      e₂ = proj₂ (toCC₂ e)
+  in
+  begin
+    ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
+  ≡⟨ {!!} ⟩
+    ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
+  ≡⟨ {!!} ⟩
+    ⟦ choice-elimination (conf D) es ⟧ conf
+  ≡⟨⟩
+    ⟦ e ⟧ conf
+  ∎
+
 CC→CC₂-left {i} {A} {e} c₂ =
   let conf-trans , cc₂ = toCC₂ e in
-  binary→nary conf-trans c₂ , {!!}
+  binary→nary conf-trans c₂ , CC→CC₂-left' e c₂
 ```
 
 #### Proof of the right side
