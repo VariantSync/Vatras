@@ -134,10 +134,13 @@ _≈_ : ∀ {i j : Size} {A : Set}
   → (a : CC i A) → (b : CC j A) → Set
 a ≈ b = ⟦ a ⟧ ≡ ⟦ b ⟧
 infix 5 _≈_
+```
 
--- Semantic equivalence ≈ inherits all properties from structural equality ≡ because it is just an alias.
+Semantic equivalence `≈` inherits all properties from structural equality `≡` because it is just an alias.
+In particular, these properties include reflexivity (by definition), symmetry, transitivity, and congruence as stated in the choice calculus TOSEM paper.
 
--- Structural equality implies semantic equality.
+Obviously, syntactic equality (or rather structural equality) implies semantic equality:
+```agda
 ≡→≈ : ∀ {i : Size} {A : Set} {a b : CC i A}
   → a ≡ b
     -----
