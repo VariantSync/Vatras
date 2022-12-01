@@ -65,6 +65,15 @@ data CC (i : Size) (A : Set) : Set where
     A → List (CC j A) → CC i A
   _⟨_⟩ : ∀ {j : Size< i} →
     Dimension → List⁺ (CC j A) → CC i A
+
+-- smart constructors for plain artifacts
+-- Any upper bound is fine but we are at least 1 deep.
+leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
+leaf a = Artifact a []
+
+leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
+leaves = mapl⁺ leaf
+
 ```
 
 From this slightly more complex definition, we can obtain the original definition of choice calculus without an upper bound for the expression depth.
@@ -186,6 +195,11 @@ infix 5 _⊂̌_
 -- some properties
 -- _⊂̌_ is not symmetric
 
+⊂̌-refl : ∀ {i : Size} {A : Set} {e : CC i A}
+    -----
+  → e ⊂̌ e
+⊂̌-refl c = c , refl
+
 ⊂̌-trans : ∀ {i j k : Size} {A : Set} {e₁ : CC i A} {e₂ : CC j A} {e₃ : CC k A}
   → e₁ ⊂̌ e₂
   → e₂ ⊂̌ e₃
@@ -221,6 +235,117 @@ infix 5 _≚_
 ≚-trans {A} {i} {j} {k} {e₁} {e₂} {e₃} (e₁⊂̌e₂ , e₂⊂̌e₁) (e₂⊂̌e₃ , e₃⊂̌e₂) =
     ⊂̌-trans {i} {j} {k} {A} {e₁} {e₂} {e₃} e₁⊂̌e₂ e₂⊂̌e₃
   , ⊂̌-trans {k} {j} {i} {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
+```
+
+Reasoning:
+```agda
+open Data.String.Base using () renaming (_≈_ to _str-≈_; toList to strToList)
+open import Data.Char.Base using (Char) --renaming (_≈ᵇ_ to same-char?)
+--open import Data.Char.Properties using () renaming (_==_ to same-char?; decSetoid to char-isDecEquivalence)
+open Data.Bool using (_∧_)
+open import Data.Bool.Properties using (∧-identityˡ)
+open import Data.String.Properties using () renaming (_≈?_ to _str-≈?_; ≈-refl to str-≈-refl)
+
+open import Relation.Binary.Definitions using (Decidable)
+open import Relation.Nullary.Decidable -- using (True; proof; does)
+
+{-
+char-refl : ∀ {c : Char} → true ≡ same-char? c c
+char-refl {c} = char-decSetoid
+
+same-list? : List Char → List Char → Bool
+same-list? [] [] = true
+same-list? [] (m ∷ ms) = false
+same-list? (l ∷ ls) [] = false
+same-list? (l ∷ ls) (m ∷ ms) = same-char? l m ∧ (same-list? ls ms)
+
+list-refl : ∀ {l : List Char} → true ≡ same-list? l l
+list-refl {[]} = refl
+list-refl {l ∷ ls} =
+  begin
+    true
+  ≡⟨ list-refl {ls} ⟩
+    same-list? ls ls
+  ≡⟨ ∧-identityˡ (same-list? ls ls) ⟩
+    true ∧ (same-list? ls ls)
+  ≡⟨ Eq.cong (λ eq → eq ∧ (same-list? ls ls)) (char-refl {l}) ⟩
+    (same-char? l l) ∧ (same-list? ls ls)
+  ≡⟨⟩
+    same-list? (l ∷ ls) (l ∷ ls)
+  ∎
+-}
+
+_dim-≈?_ : Decidable _str-≈_
+_dim-≈?_ = _str-≈?_
+
+D=D : ∀ {D : Dimension} → true ≡ does (D dim-≈? D)
+D=D {D} =
+  let fuck = Data.String.Properties.≈-refl {D} in
+  begin
+    true
+  ≡⟨ {!!} ⟩
+    does (D dim-≈? D)
+  ∎
+
+module ⊂̌-Reasoning {i j : Size} {A : Set} where
+  infix 3 ⊂̌-begin
+  infix 2 _⊂̌⟨⟩_
+
+  ⊂̌-begin : {a : CC i A} {b : CC j A} → (c∃ : Configuration → Configuration) → ⟦ a ⟧ ≗ ⟦ b ⟧ ∘ c∃ → a ⊂̌ b
+  ⊂̌-begin c∃ eq = λ c∀ → c∃ c∀ , eq c∀
+
+  _⊂̌⟨⟩_ : (a : CC j A) {b : CC j A} {c∃ : Configuration → Configuration} → ⟦ a ⟧ ≡ ⟦ b ⟧ ∘ c∃ → ⟦ a ⟧ ≗ ⟦ b ⟧ ∘ c∃
+  _ ⊂̌⟨⟩ eq = λ c∀ → Eq.cong (λ ⟦x⟧ → ⟦x⟧ c∀) eq
+
+  -- _⊂̌-∎ : ∀ (a : CC i A) → a ⊂̌ a
+  -- a ⊂̌-∎ = ⊂̌-refl {i} {A} {a}
+
+
+-- rename first to second
+renameDim : Dimension → Dimension → Configuration → Configuration
+renameDim D E conf dim = if (does (dim dim-≈? E))
+                         then (conf D)
+                         else (conf dim)
+
+module TestReasoning where
+  open ⊂̌-Reasoning
+
+{-
+  testProof : ∀ {i : Size} {A : Set} {a : A} {D E : Dimension}
+    → D ⟨ Artifact a [] ∷ [] ⟩ ⊂̌ E ⟨ Artifact a [] ∷ [] ⟩
+  testProof {i} {A} {a} {D} {E} =
+    ⊂̌-begin (renameDim D E) (
+        D ⟨ Artifact a [] ∷ [] ⟩
+      ⊂̌⟨⟩
+        (E ⟨ Artifact a [] ∷ [] ⟩)
+      )
+-}
+
+testProof' : ∀ {i : Size} {A : Set} {as : List⁺ A} {D E : Dimension}
+  → D ⟨ leaves as ⟩ ⊂̌ E ⟨ leaves as ⟩
+testProof' {i} {A} {as} {D} {E} = λ c∀ →
+  let c∃ = renameDim D E c∀
+      ls = leaves as
+  in
+  c∃ , (
+  begin
+    ⟦ D ⟨ ls ⟩ ⟧ c∀
+  ≡⟨⟩
+    ⟦ choice-elimination (c∀ D) ls ⟧ c∀
+  ≡⟨ {!!} ⟩
+    ⟦ choice-elimination (c∀ D) ls ⟧ c∃
+  ≡⟨⟩
+    ⟦ choice-elimination (if true then (c∀ D) else (c∀ E)) ls ⟧ c∃
+  ≡⟨ Eq.cong (λ eq → ⟦ choice-elimination (if eq then (c∀ D) else (c∀ E)) ls ⟧ c∃) (D=D {E}) ⟩
+    ⟦ choice-elimination (if (does (E dim-≈? E)) then (c∀ D) else (c∀ E)) ls ⟧ c∃
+  ≡⟨⟩
+    ⟦ choice-elimination ((λ dim → if (does (dim dim-≈? E)) then (c∀ D) else (c∀ dim)) E) ls ⟧ c∃
+  ≡⟨⟩
+    ⟦ choice-elimination (c∃ E) ls ⟧ c∃
+  ≡⟨⟩
+    ⟦ E ⟨ ls ⟩ ⟧ c∃
+  ∎)
+
 ```
 
 As an example, we now prove `D ⟨ e ∷ [] ⟩ ≚ e`.
@@ -272,13 +397,6 @@ D⟨e⟩≚e' {i} {A} {e} {D} =
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
 ```agda
--- smart constructors for plain artifacts
--- Any upper bound is fine but we are at least 1 deep.
-leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
-leaf a = Artifact a []
-
-leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
-leaves = mapl⁺ leaf
 
 -- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk : ∀ {i : Size} → CC (↑ ↑ i) String
@@ -359,9 +477,6 @@ cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
 
 CC₂-Constructor : ∀ {i : Size} {A : Set} → Set
 CC₂-Constructor {i} {A} = ∀ {j : Size< i} → CC₂ j A → CC₂ i A
-
-aaaa : {A : Set} → A → CC₂-Constructor
-aaaa a = Artifact₂ a ∘ [_]
 
 -- This was a failed attempt to generalize cc₂-prefix-sharing.
 -- What is missing is a correct characterization of the kind of syntactic structure that
@@ -676,7 +791,6 @@ open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traver
 
 We also have to be able to compare dimensions which are defined to be strings:
 ```agda
--- Import show for nats to make names from numbers
 open import Agda.Builtin.String using (primStringEquality) -- used to compare dimensions
 ```
 
