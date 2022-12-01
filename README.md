@@ -20,6 +20,7 @@
   - [/] proof of being variant-preserving
     - [x] Binary CC -> CC
     - [ ] CC -> Binary CC
+- [/] I already wrote a bidirectional translation from choice calculus to choice calculus with local dimension declarations. The idea is that when not having local dimension declarations, one can identify the deepest spot in the choice calculus tree at which the declaration can be introduced. We could also add that to our map.
 
 ### Algebraic Decision Diagrams
 - [/] implement algebaric decision diagrams (ADDs)
