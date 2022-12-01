@@ -52,7 +52,7 @@ Let's define core choices calculus as defined in Eric's phd thesis.
 To prove that our functions terminate and thus prove that our proofs are not self-referential and sound inductions, we extend the definition of the core choice calculus by a size parameter.
 The size parameter is an upper bound for nesting depth of a choice calculus expression.
 In the constructors, j denotes an upper bound for the nesting depth of children.
-
+(Martin and Eric established a similar bound for termination checking in their TOSEM paper (p.17).)
 ```agda
 Dimension : Set
 Dimension = String
@@ -336,6 +336,73 @@ Configuration₂ = Dimension → Tag₂
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
 ```
 
+Semantic equivalence for binary choice calculus:
+```agda
+_≈₂_ : ∀ {i j : Size} {A : Set}
+  → (a : CC₂ i A) → (b : CC₂ j A) → Set
+a ≈₂ b = ⟦ a ⟧₂ ≡ ⟦ b ⟧₂
+infix 5 _≈₂_
+```
+
+Some transformation rules:
+```agda
+open AuxProofs using (if-idemp; if-cong)
+open Data.List.Base using ([_])
+
+cc₂-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : CC₂ i A}
+    ----------------
+  → D ⟨ e , e ⟩₂ ≈₂ e
+cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
+  ⟦ D ⟨ e , e ⟩₂ ⟧₂ c             ≡⟨⟩
+  ⟦ if (c D) then e else e ⟧₂ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-idemp (c D)) ⟩
+  ⟦ e ⟧₂ c                       ∎)
+
+CC₂-Constructor : ∀ {i : Size} {A : Set} → Set
+CC₂-Constructor {i} {A} = ∀ {j : Size< i} → CC₂ j A → CC₂ i A
+
+aaaa : {A : Set} → A → CC₂-Constructor
+aaaa a = Artifact₂ a ∘ [_]
+
+-- This was a failed attempt to generalize cc₂-prefix-sharing.
+-- What is missing is a correct characterization of the kind of syntactic structure that
+-- we are allowed to move around.
+cc₂-cong' : ∀ {i : Size} {A : Set} {D : Dimension} {x y : CC₂ i A}
+  → (P : ∀ {j : Size} → CC₂-Constructor {j} {A})
+  → (∀ {l : Size} {v : CC₂ l A} → P v ≈₂ v) -- this assumption is way to strong. It actually requires that P does nothing semantically which is not our desire here.
+    --------------------------------------------------
+  → D ⟨ P x , P y ⟩₂ ≈₂ P (D ⟨ x , y ⟩₂)
+cc₂-cong' {i} {A} {D} {x} {y} P P-≈₂ = extensionality (λ c →
+  begin
+    ⟦ D ⟨ P x , P y ⟩₂ ⟧₂ c
+  ≡⟨⟩
+    ⟦ if (c D) then (P x) else (P y) ⟧₂ c
+  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-cong (c D) P) ⟩
+    ⟦ P (if (c D) then x else y) ⟧₂ c
+  -- Todo: I guess this proof looks much nicer when we introduce custom equational reasoning for ≈₂
+  --       because then we do not have to constantly pack and unpack in and out of ⟦_⟧₂ and in particular
+  --       could avoid the congruence below.
+  ≡⟨ Eq.cong (λ ⟦x⟧ → ⟦x⟧ c) P-≈₂ ⟩
+    ⟦ if (c D) then x else y ⟧₂ c
+  ≡⟨⟩
+    ⟦ D ⟨ x , y ⟩₂ ⟧₂ c
+  ≡⟨ Eq.cong (λ ⟦x⟧ → ⟦x⟧ c) (Eq.sym P-≈₂) ⟩
+    ⟦ P (D ⟨ x , y ⟩₂) ⟧₂ c
+  ∎)
+
+cc₂-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : CC₂ i A}
+  → D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ≈₂ Artifact₂ a [ D ⟨ x , y ⟩₂ ]
+cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
+  begin
+    ⟦ D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ⟧₂ c
+  ≡⟨⟩
+    ⟦ if (c D) then (Artifact₂ a [ x ]) else (Artifact₂ a [ y ] ) ⟧₂ c
+  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-cong (c D) (λ {v → Artifact₂ a [ v ]}) ) ⟩
+    ⟦ Artifact₂ a [ if (c D) then x else y ] ⟧₂ c
+  ≡⟨⟩
+    ⟦ Artifact₂ a [ D ⟨ x , y ⟩₂ ] ⟧₂ c
+  ∎)
+```
+
 ## Semantic Equivalence of Choice Calculus and Binary Normal Form
 
 Now that we've introduced the binary normal form at the type level, we want to show that (1) any n-ary choice calculus expression can be transformed to binary normal form, and (2) any binary normal form expression is a choice calculus expression. Therefore, we construct the respective transformations in the following.
@@ -591,6 +658,7 @@ We thus first import the necessary definitions from the standard library:
 ```agda
 -- Import general functor and monad operations.
 open import Effect.Functor using (RawFunctor)
+--open import Effect.Applicative using (RawApplicative)
 open import Effect.Monad using (RawMonad)
 
 -- Import state monad
@@ -603,7 +671,7 @@ open import Effect.Monad.State
 
 -- Import traversable for lists
 import Data.List.Effectful -- using (TraversableA) -- This using declaration is unfortunately not valid but we only need TraversableA.
-open Data.List.Effectful.TraversableA using (sequenceA)
+open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traverse)
 ```
 
 We also have to be able to compare dimensions which are defined to be strings:
@@ -670,9 +738,8 @@ toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
 -- Leave artifact structures unchanged but recursively translate all children.
 -- Translating all children yields a list of states which we evaluate in sequence.
 toCC₂' (Artifact a es) =
-  let open RawFunctor state-functor
-      translated-children = mapl toCC₂' es in
-  Artifact₂ a <$> (sequenceA state-applicative translated-children)
+  let open RawFunctor state-functor in
+  Artifact₂ a <$> (traverse state-applicative toCC₂' es)
 toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
 
 open import Data.Nat using (_≡ᵇ_)
@@ -778,16 +845,15 @@ CC→CC₂-left' : ∀ {i : Size} {A : Set}
 CC→CC₂-left' (Artifact a []) c₂ = refl
 CC→CC₂-left' e@(Artifact a es@(_ ∷ _)) c₂ =
   let open RawFunctor state-functor
-      translated-children = mapl toCC₂' es
       c = binary→nary (proj₁ (toCC₂ e)) c₂
   in
   begin
     ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
   ≡⟨⟩
-    ⟦ proj₂ (runState (Artifact₂ a <$> (sequenceA state-applicative translated-children)) unknownConfigurationConverter) ⟧₂ c₂
+    ⟦ proj₂ (runState (Artifact₂ a <$> (traverse state-applicative toCC₂' es)) unknownConfigurationConverter) ⟧₂ c₂
   ≡⟨⟩
     Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (proj₂ (runState (sequenceA state-applicative (mapl toCC₂' es)) unknownConfigurationConverter)))
-  -- TODO: Somehow apply the induction hypothesis below the below the sequenceA below the runState below the mapl below the Artifactᵥ
+  -- TODO: Somehow apply the induction hypothesis below the sequenceA below the runState below the mapl below the Artifactᵥ
   ≡⟨ Eq.cong (λ m → Artifactᵥ a m) {!!} ⟩
     Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
   ≡⟨⟩
