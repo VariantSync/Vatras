@@ -1,3 +1,5 @@
+module AuxProofs where
+
 open import Data.Nat.Base
 open import Data.Fin.Base using (Fin; fromℕ<)
 
@@ -20,3 +22,21 @@ minFinFromLimit n-1 t =
   let min = n-1 ⊓ t
       x = m⊓n≤m n-1 t
    in fromℕ< (m≤n⇒m<1+n min n-1 x)
+
+open import Data.Bool using (Bool; false; true; if_then_else_)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+
+if-idemp : ∀ {A : Set} {a : A}
+  → (c : Bool)
+    ------------------------
+  → (if c then a else a) ≡ a
+if-idemp false = refl
+if-idemp true  = refl
+
+if-cong : ∀ {A B : Set} {a b : A}
+  → (c : Bool)
+  → (P : A → B)
+    -------------------------------------------------
+  → (if c then P a else P b) ≡ P (if c then a else b)
+if-cong false _ = refl
+if-cong true  _ = refl

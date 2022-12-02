@@ -52,7 +52,7 @@ Let's define core choices calculus as defined in Eric's phd thesis.
 To prove that our functions terminate and thus prove that our proofs are not self-referential and sound inductions, we extend the definition of the core choice calculus by a size parameter.
 The size parameter is an upper bound for nesting depth of a choice calculus expression.
 In the constructors, j denotes an upper bound for the nesting depth of children.
-
+(Martin and Eric established a similar bound for termination checking in their TOSEM paper (p.17).)
 ```agda
 Dimension : Set
 Dimension = String
@@ -74,6 +74,33 @@ So we just pick infinity as a proper upper bound because we speak about expressi
 CoreCC : Set → Set
 CoreCC = CC ∞
 ```
+
+### Helpful Functions for Later
+
+Equality of dimensions:
+```agda
+import Data.String.Properties
+open import Relation.Binary.Definitions using (Decidable)
+--open import Relation.Nullary.Decidable using (isYes; yes)
+
+_dim-≟_ : Decidable (_≡_)
+_dim-≟_ = Data.String.Properties._≟_
+
+_dim-==_ : Dimension → Dimension → Bool
+_dim-==_ = Data.String.Properties._==_
+```
+
+Smart constructors for plain artifacts.
+Any upper bound is fine but we are at least 1 deep.
+```agda
+leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
+leaf a = Artifact a []
+
+leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
+leaves = mapl⁺ leaf
+```
+
+### Semantics
 
 Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
 Semantics for choice calculus can be defined in different ways.
@@ -186,6 +213,11 @@ infix 5 _⊂̌_
 -- some properties
 -- _⊂̌_ is not symmetric
 
+⊂̌-refl : ∀ {i : Size} {A : Set} {e : CC i A}
+    -----
+  → e ⊂̌ e
+⊂̌-refl c = c , refl
+
 ⊂̌-trans : ∀ {i j k : Size} {A : Set} {e₁ : CC i A} {e₂ : CC j A} {e₃ : CC k A}
   → e₁ ⊂̌ e₂
   → e₂ ⊂̌ e₃
@@ -272,13 +304,6 @@ D⟨e⟩≚e' {i} {A} {e} {D} =
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
 ```agda
--- smart constructors for plain artifacts
--- Any upper bound is fine but we are at least 1 deep.
-leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
-leaf a = Artifact a []
-
-leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
-leaves = mapl⁺ leaf
 
 -- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk : ∀ {i : Size} → CC (↑ ↑ i) String
@@ -334,6 +359,47 @@ Configuration₂ = Dimension → Tag₂
 ⟦_⟧₂ : ∀ {i : Size} {A : Set} → CC₂ i A → Configuration₂ → Variant A
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
+```
+
+Semantic equivalence for binary choice calculus:
+```agda
+_≈₂_ : ∀ {i j : Size} {A : Set}
+  → (a : CC₂ i A) → (b : CC₂ j A) → Set
+a ≈₂ b = ⟦ a ⟧₂ ≡ ⟦ b ⟧₂
+infix 5 _≈₂_
+```
+
+Some transformation rules:
+```agda
+open AuxProofs using (if-idemp; if-cong)
+open Data.List.Base using ([_])
+
+cc₂-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : CC₂ i A}
+    ----------------
+  → D ⟨ e , e ⟩₂ ≈₂ e
+cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
+  ⟦ D ⟨ e , e ⟩₂ ⟧₂ c             ≡⟨⟩
+  ⟦ if (c D) then e else e ⟧₂ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-idemp (c D)) ⟩
+  ⟦ e ⟧₂ c                       ∎)
+
+-- Sharing of equal prefixes in sub-expressions
+-- Note: This is hard to generalize to Artifact₂'s with multiple children because
+--       we cannot put these children below the choice directly. Instead we would have
+--       to introduce empty artifacts that do not represent expression in the object language but
+--       rather containers in the meta-language. Maybe it would make sense to generalize choice
+--       calculus to have lists of lists of children in choices instead of exactly one subtree per alternative.
+cc₂-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : CC₂ i A}
+  → D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ≈₂ Artifact₂ a [ D ⟨ x , y ⟩₂ ]
+cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
+  begin
+    ⟦ D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ⟧₂ c
+  ≡⟨⟩
+    ⟦ if (c D) then (Artifact₂ a [ x ]) else (Artifact₂ a [ y ] ) ⟧₂ c
+  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-cong (c D) (λ {v → Artifact₂ a [ v ]}) ) ⟩
+    ⟦ Artifact₂ a [ if (c D) then x else y ] ⟧₂ c
+  ≡⟨⟩
+    ⟦ Artifact₂ a [ D ⟨ x , y ⟩₂ ] ⟧₂ c
+  ∎)
 ```
 
 ## Semantic Equivalence of Choice Calculus and Binary Normal Form
@@ -591,6 +657,7 @@ We thus first import the necessary definitions from the standard library:
 ```agda
 -- Import general functor and monad operations.
 open import Effect.Functor using (RawFunctor)
+--open import Effect.Applicative using (RawApplicative)
 open import Effect.Monad using (RawMonad)
 
 -- Import state monad
@@ -602,14 +669,8 @@ open import Effect.Monad.State
             monadState to state-monad-specifics)
 
 -- Import traversable for lists
-import Data.List.Effectful -- using (TraversableA) -- This using declaration is unfortunately not valid but we only need TraversableA.
-open Data.List.Effectful.TraversableA using (sequenceA)
-```
-
-We also have to be able to compare dimensions which are defined to be strings:
-```agda
--- Import show for nats to make names from numbers
-open import Agda.Builtin.String using (primStringEquality) -- used to compare dimensions
+import Data.List.Effectful
+open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traverse)
 ```
 
 To convert configurations for the input formula to configurations for the output formula and vice versa, we introduce the following record.
@@ -670,9 +731,8 @@ toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
 -- Leave artifact structures unchanged but recursively translate all children.
 -- Translating all children yields a list of states which we evaluate in sequence.
 toCC₂' (Artifact a es) =
-  let open RawFunctor state-functor
-      translated-children = mapl toCC₂' es in
-  Artifact₂ a <$> (sequenceA state-applicative translated-children)
+  let open RawFunctor state-functor in
+  Artifact₂ a <$> (traverse state-applicative toCC₂' es)
 toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
 
 open import Data.Nat using (_≡ᵇ_)
@@ -696,7 +756,7 @@ update-configuration-converter conf-converter D n D' binary? =
       -- Given an n-ary configuration cₙ for the input formula, we want to find the value of a given dimension in the binary output formula
       { nary→binary = (λ {cₙ queried-output-dimension →
           -- If the queried dimension was translated from our currently translated dimension D.
-          if (primStringEquality queried-output-dimension D')
+          if (queried-output-dimension dim-== D')
           -- If the selection made in the input formula did select the left alternative of our choice
           -- then also pick it in the binary output formula. Otherwise, do not pick it.
           -- In case cₙ D <ᵇ n, the result does not matter. Then, an alternative above this choice was already chosen
@@ -710,7 +770,7 @@ update-configuration-converter conf-converter D n D' binary? =
       ; binary→nary = (λ {c₂ queried-input-dimension →
           let recursive-result = b→n c₂ queried-input-dimension in
           -- If the queried dimension is the dimension we currently translate.
-          if (primStringEquality queried-input-dimension D)
+          if (queried-input-dimension dim-== D)
           then (if (c₂ D')       -- If the binary configuration has chosen the left alternative of the nested binary dimension
                 then n           -- ... then that is the alternative we have to pick in the input formula.
                 else (if binary? -- ... if not, we check if the current choice is already.
@@ -778,16 +838,15 @@ CC→CC₂-left' : ∀ {i : Size} {A : Set}
 CC→CC₂-left' (Artifact a []) c₂ = refl
 CC→CC₂-left' e@(Artifact a es@(_ ∷ _)) c₂ =
   let open RawFunctor state-functor
-      translated-children = mapl toCC₂' es
       c = binary→nary (proj₁ (toCC₂ e)) c₂
   in
   begin
     ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
   ≡⟨⟩
-    ⟦ proj₂ (runState (Artifact₂ a <$> (sequenceA state-applicative translated-children)) unknownConfigurationConverter) ⟧₂ c₂
+    ⟦ proj₂ (runState (Artifact₂ a <$> (traverse state-applicative toCC₂' es)) unknownConfigurationConverter) ⟧₂ c₂
   ≡⟨⟩
     Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (proj₂ (runState (sequenceA state-applicative (mapl toCC₂' es)) unknownConfigurationConverter)))
-  -- TODO: Somehow apply the induction hypothesis below the below the sequenceA below the runState below the mapl below the Artifactᵥ
+  -- TODO: Somehow apply the induction hypothesis below the sequenceA below the runState below the mapl below the Artifactᵥ
   ≡⟨ Eq.cong (λ m → Artifactᵥ a m) {!!} ⟩
     Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
   ≡⟨⟩
@@ -824,13 +883,13 @@ CC→CC₂-left {i} {A} {e} c₂ =
 --CC→CC₂-right = {!!}
 ```
 
-## Example Printing
+## Example and Test Time
 
 ### Examples
 
 ```agda
 CCExample : Set
-CCExample = String × CC ∞ String
+CCExample = String × CC ∞ String -- name and expression
 
 -- some smart constructors
 chcA : ∀ {i : Size} {A : Set} → List⁺ (CC i A) → CC (↑ i) A
@@ -1015,13 +1074,33 @@ mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
 
 ## Unicode Characters in Emacs Agda Mode
 ```text
+≟ is \?=
 ≗ is \=o
 ≈ is \~~
+≡ is \==
 ⊂̌ is \sub\v
 ≚ is \or=
+
+→ is \to
+     \->
+↑ is \u
+
+∷ is \::
+∃ is \ex
+∀ is \all
+ℕ is \bN
+∞ is \inf
+
+⟨ is \<
+⟩ is \>
+⟦ is \[[
+⟧ is \]]
 
 ₁ is \_1
 ₂ is \_2
 ₙ is \_n
+ᵥ is \_v (option 4)
+
+∎ is \qed
 ```
 
