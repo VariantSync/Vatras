@@ -735,12 +735,8 @@ toCC₂' (Artifact a es) =
   Artifact₂ a <$> (traverse state-applicative toCC₂' es)
 toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
 
-open import Data.Nat using (_≡ᵇ_)
-open import Data.Bool using (_∧_)
-
-empty? : ∀ {A : Set} → List A → Bool
-empty? [] = true
-empty? (x ∷ xs) = false
+open import Data.Nat renaming (_≡ᵇ_ to _nat-≡ᵇ_)
+open import Util using (empty?)
 
 update-configuration-converter :
     ConfigurationConverter
@@ -762,7 +758,7 @@ update-configuration-converter conf-converter D n D' binary? =
           -- In case cₙ D <ᵇ n, the result does not matter. Then, an alternative above this choice was already chosen
           -- (and we are within an else branch). So it does not matter what we pick here. Could be true, false, or n→b cₙ queried-output-dimension.
           -- In case cₙ D >ᵇ n, the result has to be false because the alternative that has to be picked is on the right, which is only checked if we do not go left here.
-          then (cₙ D ≡ᵇ n)
+          then (cₙ D nat-≡ᵇ n)
           -- If not, ask our existing configuration translation knowledge.
           else (n→b cₙ queried-output-dimension)
           })
