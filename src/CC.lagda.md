@@ -73,7 +73,6 @@ leaf a = Artifact a []
 
 leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
 leaves = mapl⁺ leaf
-
 ```
 
 From this slightly more complex definition, we can obtain the original definition of choice calculus without an upper bound for the expression depth.
@@ -83,6 +82,23 @@ So we just pick infinity as a proper upper bound because we speak about expressi
 CoreCC : Set → Set
 CoreCC = CC ∞
 ```
+
+###
+
+Equality of dimensions:
+```agda
+import Data.String.Properties
+open import Relation.Binary.Definitions using (Decidable)
+--open import Relation.Nullary.Decidable using (isYes; yes)
+
+_dim-≟_ : Decidable (_≡_)
+_dim-≟_ = Data.String.Properties._≟_
+
+_dim-==_ : Dimension → Dimension → Bool
+_dim-==_ = Data.String.Properties._==_
+```
+
+### Semantics
 
 Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
 Semantics for choice calculus can be defined in different ways.
@@ -237,57 +253,6 @@ infix 5 _≚_
   , ⊂̌-trans {k} {j} {i} {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
 ```
 
-Reasoning:
-```agda
-open import Data.String.Properties using () renaming (_≟_ to _str-≟_)
-open import Relation.Binary.Definitions using (Decidable)
-open import Relation.Nullary.Decidable using (does; yes)
-open Eq using (≡-≟-identity)
-
-_dim-≟_ : Decidable (_≡_)
-_dim-≟_ = _str-≟_
-
-dim-≟-refl : ∀ {D : Dimension} → (D dim-≟ D) ≡ yes refl
-dim-≟-refl = ≡-≟-identity _dim-≟_ refl
-
-_dim-==_ : Dimension → Dimension → Bool
-_dim-==_ A B = does (A dim-≟ B)
-
-dim-==-refl : ∀ {D : Dimension} → D dim-== D ≡ true
-dim-==-refl {D} = Eq.cong does (dim-≟-refl {D})
-
--- rename first to second
-renameDim : Dimension → Dimension → Configuration → Configuration
-renameDim D E conf dim = if (dim dim-== E)
-                         then (conf D)
-                         else (conf dim)
-
-testProof' : ∀ {i : Size} {A : Set} {a : A} {D E : Dimension}
-  → D ⟨ leaf a ∷ [] ⟩ ⊂̌ E ⟨ leaf a ∷ [] ⟩
-testProof' {i} {A} {a} {D} {E} = λ c∀ →
-  let c∃ = renameDim D E c∀
-      l = leaf a ∷ []
-  in
-  c∃ , (
-  begin
-    ⟦ D ⟨ l ⟩ ⟧ c∀
-  ≡⟨⟩
-    ⟦ choice-elimination (c∀ D) l ⟧ c∀
-  ≡⟨⟩
-    ⟦ choice-elimination (c∀ D) l ⟧ c∃
-  ≡⟨⟩
-    ⟦ choice-elimination (if true then (c∀ D) else (c∀ E)) l ⟧ c∃
-  ≡⟨⟩ -- Eq.cong (λ eq → ⟦ choice-elimination (if eq then (c∀ D) else (c∀ E)) l ⟧ c∃) (Eq.sym (dim-==-refl {E})) ⟩
-    ⟦ choice-elimination (if (E dim-== E) then (c∀ D) else (c∀ E)) l ⟧ c∃
-  ≡⟨⟩
-    ⟦ choice-elimination ((λ dim → if (dim dim-== E) then (c∀ D) else (c∀ dim)) E) l ⟧ c∃
-  ≡⟨⟩
-    ⟦ choice-elimination (c∃ E) l ⟧ c∃
-  ≡⟨⟩
-    ⟦ E ⟨ l ⟩ ⟧ c∃
-  ∎)
-```
-
 As an example, we now prove `D ⟨ e ∷ [] ⟩ ≚ e`.
 ```agda
 D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
@@ -415,35 +380,12 @@ cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
   ⟦ if (c D) then e else e ⟧₂ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-idemp (c D)) ⟩
   ⟦ e ⟧₂ c                       ∎)
 
-CC₂-Constructor : ∀ {i : Size} {A : Set} → Set
-CC₂-Constructor {i} {A} = ∀ {j : Size< i} → CC₂ j A → CC₂ i A
-
--- This was a failed attempt to generalize cc₂-prefix-sharing.
--- What is missing is a correct characterization of the kind of syntactic structure that
--- we are allowed to move around.
-cc₂-cong' : ∀ {i : Size} {A : Set} {D : Dimension} {x y : CC₂ i A}
-  → (P : ∀ {j : Size} → CC₂-Constructor {j} {A})
-  → (∀ {l : Size} {v : CC₂ l A} → P v ≈₂ v) -- this assumption is way to strong. It actually requires that P does nothing semantically which is not our desire here.
-    --------------------------------------------------
-  → D ⟨ P x , P y ⟩₂ ≈₂ P (D ⟨ x , y ⟩₂)
-cc₂-cong' {i} {A} {D} {x} {y} P P-≈₂ = extensionality (λ c →
-  begin
-    ⟦ D ⟨ P x , P y ⟩₂ ⟧₂ c
-  ≡⟨⟩
-    ⟦ if (c D) then (P x) else (P y) ⟧₂ c
-  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-cong (c D) P) ⟩
-    ⟦ P (if (c D) then x else y) ⟧₂ c
-  -- Todo: I guess this proof looks much nicer when we introduce custom equational reasoning for ≈₂
-  --       because then we do not have to constantly pack and unpack in and out of ⟦_⟧₂ and in particular
-  --       could avoid the congruence below.
-  ≡⟨ Eq.cong (λ ⟦x⟧ → ⟦x⟧ c) P-≈₂ ⟩
-    ⟦ if (c D) then x else y ⟧₂ c
-  ≡⟨⟩
-    ⟦ D ⟨ x , y ⟩₂ ⟧₂ c
-  ≡⟨ Eq.cong (λ ⟦x⟧ → ⟦x⟧ c) (Eq.sym P-≈₂) ⟩
-    ⟦ P (D ⟨ x , y ⟩₂) ⟧₂ c
-  ∎)
-
+-- Sharing of equal prefixes in sub-expressions
+-- Note: This is hard to generalize to Artifact₂'s with multiple children because
+--       we cannot put these children below the choice directly. Instead we would have
+--       to introduce empty artifacts that do not represent expression in the object language but
+--       rather containers in the meta-language. Maybe it would make sense to generalize choice
+--       calculus to have lists of lists of children in choices instead of exactly one subtree per alternative.
 cc₂-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : CC₂ i A}
   → D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ≈₂ Artifact₂ a [ D ⟨ x , y ⟩₂ ]
 cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
@@ -725,13 +667,8 @@ open import Effect.Monad.State
             monadState to state-monad-specifics)
 
 -- Import traversable for lists
-import Data.List.Effectful -- using (TraversableA) -- This using declaration is unfortunately not valid but we only need TraversableA.
+import Data.List.Effectful
 open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traverse)
-```
-
-We also have to be able to compare dimensions which are defined to be strings:
-```agda
-open import Agda.Builtin.String using (primStringEquality) -- used to compare dimensions
 ```
 
 To convert configurations for the input formula to configurations for the output formula and vice versa, we introduce the following record.
@@ -817,7 +754,7 @@ update-configuration-converter conf-converter D n D' binary? =
       -- Given an n-ary configuration cₙ for the input formula, we want to find the value of a given dimension in the binary output formula
       { nary→binary = (λ {cₙ queried-output-dimension →
           -- If the queried dimension was translated from our currently translated dimension D.
-          if (primStringEquality queried-output-dimension D')
+          if (queried-output-dimension dim-== D')
           -- If the selection made in the input formula did select the left alternative of our choice
           -- then also pick it in the binary output formula. Otherwise, do not pick it.
           -- In case cₙ D <ᵇ n, the result does not matter. Then, an alternative above this choice was already chosen
@@ -831,7 +768,7 @@ update-configuration-converter conf-converter D n D' binary? =
       ; binary→nary = (λ {c₂ queried-input-dimension →
           let recursive-result = b→n c₂ queried-input-dimension in
           -- If the queried dimension is the dimension we currently translate.
-          if (primStringEquality queried-input-dimension D)
+          if (queried-input-dimension dim-== D)
           then (if (c₂ D')       -- If the binary configuration has chosen the left alternative of the nested binary dimension
                 then n           -- ... then that is the alternative we have to pick in the input formula.
                 else (if binary? -- ... if not, we check if the current choice is already.
@@ -944,13 +881,13 @@ CC→CC₂-left {i} {A} {e} c₂ =
 --CC→CC₂-right = {!!}
 ```
 
-## Example Printing
+## Example and Test Time
 
 ### Examples
 
 ```agda
 CCExample : Set
-CCExample = String × CC ∞ String
+CCExample = String × CC ∞ String -- name and expression
 
 -- some smart constructors
 chcA : ∀ {i : Size} {A : Set} → List⁺ (CC i A) → CC (↑ i) A
@@ -1135,13 +1072,33 @@ mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
 
 ## Unicode Characters in Emacs Agda Mode
 ```text
+≟ is \?=
 ≗ is \=o
 ≈ is \~~
+≡ is \==
 ⊂̌ is \sub\v
 ≚ is \or=
+
+→ is \to
+     \->
+↑ is \u
+
+∷ is \::
+∃ is \ex
+∀ is \all
+ℕ is \bN
+∞ is \inf
+
+⟨ is \<
+⟩ is \>
+⟦ is \[[
+⟧ is \]]
 
 ₁ is \_1
 ₂ is \_2
 ₙ is \_n
+ᵥ is \_v (option 4)
+
+∎ is \qed
 ```
 
