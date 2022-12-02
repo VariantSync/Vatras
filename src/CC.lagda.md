@@ -239,113 +239,53 @@ infix 5 _≚_
 
 Reasoning:
 ```agda
-open Data.String.Base using () renaming (_≈_ to _str-≈_; toList to strToList)
-open import Data.Char.Base using (Char) --renaming (_≈ᵇ_ to same-char?)
---open import Data.Char.Properties using () renaming (_==_ to same-char?; decSetoid to char-isDecEquivalence)
-open Data.Bool using (_∧_)
-open import Data.Bool.Properties using (∧-identityˡ)
-open import Data.String.Properties using () renaming (_≈?_ to _str-≈?_; ≈-refl to str-≈-refl)
-
+open import Data.String.Properties using () renaming (_≟_ to _str-≟_)
 open import Relation.Binary.Definitions using (Decidable)
-open import Relation.Nullary.Decidable -- using (True; proof; does)
+open import Relation.Nullary.Decidable using (does; yes)
+open Eq using (≡-≟-identity)
 
-{-
-char-refl : ∀ {c : Char} → true ≡ same-char? c c
-char-refl {c} = char-decSetoid
+_dim-≟_ : Decidable (_≡_)
+_dim-≟_ = _str-≟_
 
-same-list? : List Char → List Char → Bool
-same-list? [] [] = true
-same-list? [] (m ∷ ms) = false
-same-list? (l ∷ ls) [] = false
-same-list? (l ∷ ls) (m ∷ ms) = same-char? l m ∧ (same-list? ls ms)
+dim-≟-refl : ∀ {D : Dimension} → (D dim-≟ D) ≡ yes refl
+dim-≟-refl = ≡-≟-identity _dim-≟_ refl
 
-list-refl : ∀ {l : List Char} → true ≡ same-list? l l
-list-refl {[]} = refl
-list-refl {l ∷ ls} =
-  begin
-    true
-  ≡⟨ list-refl {ls} ⟩
-    same-list? ls ls
-  ≡⟨ ∧-identityˡ (same-list? ls ls) ⟩
-    true ∧ (same-list? ls ls)
-  ≡⟨ Eq.cong (λ eq → eq ∧ (same-list? ls ls)) (char-refl {l}) ⟩
-    (same-char? l l) ∧ (same-list? ls ls)
-  ≡⟨⟩
-    same-list? (l ∷ ls) (l ∷ ls)
-  ∎
--}
+_dim-==_ : Dimension → Dimension → Bool
+_dim-==_ A B = does (A dim-≟ B)
 
-_dim-≈?_ : Decidable _str-≈_
-_dim-≈?_ = _str-≈?_
-
-D=D : ∀ {D : Dimension} → true ≡ does (D dim-≈? D)
-D=D {D} =
-  let fuck = Data.String.Properties.≈-refl {D} in
-  begin
-    true
-  ≡⟨ {!!} ⟩
-    does (D dim-≈? D)
-  ∎
-
-module ⊂̌-Reasoning {i j : Size} {A : Set} where
-  infix 3 ⊂̌-begin
-  infix 2 _⊂̌⟨⟩_
-
-  ⊂̌-begin : {a : CC i A} {b : CC j A} → (c∃ : Configuration → Configuration) → ⟦ a ⟧ ≗ ⟦ b ⟧ ∘ c∃ → a ⊂̌ b
-  ⊂̌-begin c∃ eq = λ c∀ → c∃ c∀ , eq c∀
-
-  _⊂̌⟨⟩_ : (a : CC j A) {b : CC j A} {c∃ : Configuration → Configuration} → ⟦ a ⟧ ≡ ⟦ b ⟧ ∘ c∃ → ⟦ a ⟧ ≗ ⟦ b ⟧ ∘ c∃
-  _ ⊂̌⟨⟩ eq = λ c∀ → Eq.cong (λ ⟦x⟧ → ⟦x⟧ c∀) eq
-
-  -- _⊂̌-∎ : ∀ (a : CC i A) → a ⊂̌ a
-  -- a ⊂̌-∎ = ⊂̌-refl {i} {A} {a}
-
+dim-==-refl : ∀ {D : Dimension} → D dim-== D ≡ true
+dim-==-refl {D} = Eq.cong does (dim-≟-refl {D})
 
 -- rename first to second
 renameDim : Dimension → Dimension → Configuration → Configuration
-renameDim D E conf dim = if (does (dim dim-≈? E))
+renameDim D E conf dim = if (dim dim-== E)
                          then (conf D)
                          else (conf dim)
 
-module TestReasoning where
-  open ⊂̌-Reasoning
-
-{-
-  testProof : ∀ {i : Size} {A : Set} {a : A} {D E : Dimension}
-    → D ⟨ Artifact a [] ∷ [] ⟩ ⊂̌ E ⟨ Artifact a [] ∷ [] ⟩
-  testProof {i} {A} {a} {D} {E} =
-    ⊂̌-begin (renameDim D E) (
-        D ⟨ Artifact a [] ∷ [] ⟩
-      ⊂̌⟨⟩
-        (E ⟨ Artifact a [] ∷ [] ⟩)
-      )
--}
-
-testProof' : ∀ {i : Size} {A : Set} {as : List⁺ A} {D E : Dimension}
-  → D ⟨ leaves as ⟩ ⊂̌ E ⟨ leaves as ⟩
-testProof' {i} {A} {as} {D} {E} = λ c∀ →
+testProof' : ∀ {i : Size} {A : Set} {a : A} {D E : Dimension}
+  → D ⟨ leaf a ∷ [] ⟩ ⊂̌ E ⟨ leaf a ∷ [] ⟩
+testProof' {i} {A} {a} {D} {E} = λ c∀ →
   let c∃ = renameDim D E c∀
-      ls = leaves as
+      l = leaf a ∷ []
   in
   c∃ , (
   begin
-    ⟦ D ⟨ ls ⟩ ⟧ c∀
+    ⟦ D ⟨ l ⟩ ⟧ c∀
   ≡⟨⟩
-    ⟦ choice-elimination (c∀ D) ls ⟧ c∀
-  ≡⟨ {!!} ⟩
-    ⟦ choice-elimination (c∀ D) ls ⟧ c∃
+    ⟦ choice-elimination (c∀ D) l ⟧ c∀
   ≡⟨⟩
-    ⟦ choice-elimination (if true then (c∀ D) else (c∀ E)) ls ⟧ c∃
-  ≡⟨ Eq.cong (λ eq → ⟦ choice-elimination (if eq then (c∀ D) else (c∀ E)) ls ⟧ c∃) (D=D {E}) ⟩
-    ⟦ choice-elimination (if (does (E dim-≈? E)) then (c∀ D) else (c∀ E)) ls ⟧ c∃
+    ⟦ choice-elimination (c∀ D) l ⟧ c∃
   ≡⟨⟩
-    ⟦ choice-elimination ((λ dim → if (does (dim dim-≈? E)) then (c∀ D) else (c∀ dim)) E) ls ⟧ c∃
+    ⟦ choice-elimination (if true then (c∀ D) else (c∀ E)) l ⟧ c∃
+  ≡⟨⟩ -- Eq.cong (λ eq → ⟦ choice-elimination (if eq then (c∀ D) else (c∀ E)) l ⟧ c∃) (Eq.sym (dim-==-refl {E})) ⟩
+    ⟦ choice-elimination (if (E dim-== E) then (c∀ D) else (c∀ E)) l ⟧ c∃
   ≡⟨⟩
-    ⟦ choice-elimination (c∃ E) ls ⟧ c∃
+    ⟦ choice-elimination ((λ dim → if (dim dim-== E) then (c∀ D) else (c∀ dim)) E) l ⟧ c∃
   ≡⟨⟩
-    ⟦ E ⟨ ls ⟩ ⟧ c∃
+    ⟦ choice-elimination (c∃ E) l ⟧ c∃
+  ≡⟨⟩
+    ⟦ E ⟨ l ⟩ ⟧ c∃
   ∎)
-
 ```
 
 As an example, we now prove `D ⟨ e ∷ [] ⟩ ≚ e`.
