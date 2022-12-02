@@ -65,14 +65,6 @@ data CC (i : Size) (A : Set) : Set where
     A → List (CC j A) → CC i A
   _⟨_⟩ : ∀ {j : Size< i} →
     Dimension → List⁺ (CC j A) → CC i A
-
--- smart constructors for plain artifacts
--- Any upper bound is fine but we are at least 1 deep.
-leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
-leaf a = Artifact a []
-
-leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
-leaves = mapl⁺ leaf
 ```
 
 From this slightly more complex definition, we can obtain the original definition of choice calculus without an upper bound for the expression depth.
@@ -83,7 +75,7 @@ CoreCC : Set → Set
 CoreCC = CC ∞
 ```
 
-###
+### Helpful Functions for Later
 
 Equality of dimensions:
 ```agda
@@ -96,6 +88,16 @@ _dim-≟_ = Data.String.Properties._≟_
 
 _dim-==_ : Dimension → Dimension → Bool
 _dim-==_ = Data.String.Properties._==_
+```
+
+Smart constructors for plain artifacts.
+Any upper bound is fine but we are at least 1 deep.
+```agda
+leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
+leaf a = Artifact a []
+
+leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
+leaves = mapl⁺ leaf
 ```
 
 ### Semantics
