@@ -108,12 +108,10 @@ In his phd thesis, Eric defined the semantics to be the set of all variants desc
 So the semantic domain was a set of choice calculus expressions without any choices.
 We can encode a choice calculus expression without choices at the type level:
 ```agda
-data Variant (A : Set) : Set where
-  Artifactᵥ : A → List (Variant A) → Variant A
+open import SemanticDomains using (Variant; Artifactᵥ)
 ```
-This is basically just a tree structure of artifacts.
 
-An equivalent definition produces a configuration function `Config → Variant` that generates variants from configurations.
+An equivalent definition of semantics produces a configuration function `Config → Variant` that generates variants from configurations.
 This definition separates the concerns of (1) generating a variant, and (2) enumerating all possible variants.
 Enumeration of variants is still possible by generating all possible configurations first.
 Thus, and for much simpler proofs, we choose the functional semantics.
@@ -708,7 +706,6 @@ Thus, this function might indeed not terminate.
 To solve this, we would have to introduce yet another bound to n-ary choice calculus: an upper bound for the number of children of each node.
 We should later decide if this extra boilerplate is worth it or not.
 
-We first introduce a he
 ```agda
 -- helper function to keep track of state
 {-# TERMINATING #-}
@@ -809,7 +806,6 @@ CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
   → proj₂ (toCC₂ e) ₂⊂̌ₙ e
 
-{-
 CC→CC₂-right : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
   → e ₙ⊂̌₂ proj₂ (toCC₂ e)
@@ -820,17 +816,18 @@ CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
 CC→CC₂ {i} {A} {e} =
     CC→CC₂-left  {i} {A} {e}
   , CC→CC₂-right {i} {A} {e}
--}
 ```
 
 #### Proof of the left side
 
 ```agda
+-- Every variant described by the translated expression is also described by the initial expression.
 CC→CC₂-left' : ∀ {i : Size} {A : Set}
   → ∀ (e : CC i A)
   → ∀ (c₂ : Configuration₂)
     ------------------------------------------------------------------
   → ⟦ proj₂ (toCC₂ e) ⟧₂ c₂ ≡ ⟦ e ⟧ (binary→nary (proj₁ (toCC₂ e)) c₂)
+
 CC→CC₂-left' (Artifact a []) c₂ = refl
 CC→CC₂-left' e@(Artifact a es@(_ ∷ _)) c₂ =
   let open RawFunctor state-functor
@@ -860,8 +857,8 @@ CC→CC₂-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
   in
   begin
     ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
-  ≡⟨ {!!} ⟩
-    ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
+  --≡⟨ {!!} ⟩
+  --  ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
   ≡⟨ {!!} ⟩
     ⟦ choice-elimination (conf D) es ⟧ conf
   ≡⟨⟩
@@ -876,7 +873,21 @@ CC→CC₂-left {i} {A} {e} c₂ =
 #### Proof of the right side
 
 ```agda
---CC→CC₂-right = {!!}
+-- Every variant described by an n-ary CC expression, is also described by its translation to binray CC.
+CC→CC₂-right' : ∀ {i : Size} {A : Set}
+  → ∀ (e : CC i A)
+  → ∀ (c : Configuration)
+    -----------------------------------------------------------------
+  → ⟦ proj₂ (toCC₂ e) ⟧₂ (nary→binary (proj₁ (toCC₂ e)) c) ≡  ⟦ e ⟧ c
+
+CC→CC₂-right' (Artifact a []) c = refl
+CC→CC₂-right' (Artifact a es@(_ ∷ _)) c = {!!}
+CC→CC₂-right' (D ⟨ e ∷ [] ⟩) c = CC→CC₂-right' e c -- just apply the induction hypothesis on the only mandatory alternative
+CC→CC₂-right' (D ⟨ es@(_ ∷ _ ∷ _) ⟩) c = {!!}
+
+CC→CC₂-right {i} {A} {e} c =
+  let conf-trans , cc₂ = toCC₂ e in
+  nary→binary conf-trans c , CC→CC₂-right' e c
 ```
 
 ## Example and Test Time
@@ -962,11 +973,7 @@ showCC₂ (Artifact₂ a []) = a
 showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
 showCC₂ (D ⟨ l , r ⟩₂) = D ++ "<" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ ">"
 
--- We did not equip variants with bounds yet so we hust assume this terminates.
-{-# TERMINATING #-}
-showVariant : Variant String → String
-showVariant (Artifactᵥ a []) = a
-showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showVariant es)) ++ ">-"
+open SemanticDomains using (showVariant)
 ```
 
 Helper functions to collect all dimensions within a choice calculus expression. These might give duplicates because we use lists instead of sets for implementation convenience:
