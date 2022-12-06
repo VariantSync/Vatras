@@ -1,5 +1,3 @@
-# Algebraic Decision Diagrams
-
 # Algebraic Decision Diagrams in Agda
 
 ## Options
@@ -34,28 +32,27 @@ In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 A
 ### Syntax
 
 ```agda
-Dimension : Set
-Dimension = String
+Variable : Set
+Variable = String
 
--- TODO: Make sized
 data ADD (i : Size) (A : Set) : Set where
   Terminal : A → ADD i A -- ModelBase in FFSPL
   Choice : ∀ {j : Size< i} →
-    Dimension → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
+    Variable → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
 
 ### Semantics
 
 ```agda
-Tag : Set
-Tag = Bool
-
+{-|
+Configurations denote a path in the tree by making a decision at each variable to select a certain terminal at the end.
+-}
 Configuration : Set
-Configuration = Dimension → Tag
+Configuration = Variable → Bool
 
 ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant A
-⟦ Terminal a ⟧ _ = Artifactᵥ a []
-⟦ Choice D l r ⟧ c = ⟦ if (c D) then l else r ⟧ c
+⟦ Terminal a ⟧ _   = Artifactᵥ a []
+⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
 ```
 
 ### Translation to Binary Choice Calculus
@@ -65,7 +62,7 @@ TODO: Prove variant-preserving equivalence.
 
 ## Binary Decision Diagrams
 
-BDDs are ADDs in which we can only end at true or false.
+Binary Decision Diagrams (BDDs) are ADDs in which we can only end at true or false.
 
 ```agda
 BDD : Size → Set
@@ -73,7 +70,7 @@ BDD i = ADD i Bool
 ```
 
 Thus, a translation from BDDs to ADDs exists trivially.
-In the following we prove that the inverse does not apply:
+Yet, the inverse does not apply:
 Not every ADD can be translated to a BDD.
+This is proven by the fact that not every data type (e.g., natural numbers `ℕ`) is isomorphic to `Bool` and thus an ADD can describe a set of variants that cannot be described by any BDD.
 
-`TODO: Isn't this obvious? Do we need an explicit proof?`
