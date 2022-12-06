@@ -197,8 +197,7 @@ For the variant-subset relation, we want to express the following, given two exp
        such that ⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂.
 
 ```agda
-open import Data.Product using (∃; ∃-syntax; _,_)
-open import Data.Product using (_×_; proj₁; proj₂)
+open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
 
 -- Beware! This symbol renders different on Github. The v should be on top of ⊂ but on Github is next to it.
 -- So don't be confused in case the v appears on top of a character next to ⊂.
