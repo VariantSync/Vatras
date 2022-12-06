@@ -1,7 +1,7 @@
 module SemanticDomains where
 
-open import Data.List using (List; []; _∷_; map; foldl)
-open import Data.String using (String; _++_)
+open import Data.List using (List; []; _∷_; map)
+open import Data.String using (String; _++_; intersperse)
 
 data Variant (A : Set) : Set where
   Artifactᵥ : A → List (Variant A) → Variant A
@@ -10,4 +10,4 @@ data Variant (A : Set) : Set where
 {-# TERMINATING #-}
 showVariant : Variant String → String
 showVariant (Artifactᵥ a []) = a
-showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (foldl _++_ "" (map showVariant es)) ++ ">-"
+showVariant (Artifactᵥ a es@(_ ∷ _)) = a ++ "-<" ++ (intersperse ", " (map showVariant es)) ++ ">-"
