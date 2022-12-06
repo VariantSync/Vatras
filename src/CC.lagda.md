@@ -19,17 +19,17 @@ module CC where
 -- Imports from Standard Library
 open import Data.Bool
   using (Bool; true; false; if_then_else_)
-open import Data.List.Base
+open import Data.List
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
-open import Data.List.NonEmpty.Base
+open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
   renaming (map to mapl⁺)
-open import Data.Nat.Base
+open import Data.Nat
   using (ℕ; zero; suc; NonZero)
-open import Data.String.Base
+open import Data.String
   using (String; _++_)
-open import Function.Base
+open import Function
   using (_∘_; flip)
 open import Size
   using (Size; Size<_; ↑_; ∞)
@@ -370,7 +370,7 @@ infix 5 _≈₂_
 Some transformation rules:
 ```agda
 open AuxProofs using (if-idemp; if-cong)
-open Data.List.Base using ([_])
+open Data.List using ([_])
 
 cc₂-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : CC₂ i A}
     ----------------
@@ -954,9 +954,9 @@ ccex-all =
 
 Extra imports/opening of functions we use for conversion to string of some data structures:
 ```agda
-open Data.String.Base using (unlines; intersperse)
-open Data.List.Base using (concatMap) renaming (_++_ to _++l_)
-open Function.Base using (id)
+open Data.String using (unlines; intersperse)
+open Data.List using (concatMap) renaming (_++_ to _++l_)
+open Function using (id)
 
 open import ShowHelpers
 ```
@@ -965,12 +965,12 @@ Showing choice calculus expressions:
 ```agda
 showCC : ∀ {i : Size} → CC i String → String
 showCC (Artifact a []) = a
-showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC es)) ++ ">-"
-showCC (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.Base.intersperse ", " (toList (mapl⁺ showCC es))) ++ ">"
+showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl showCC es)) ++ ">-"
+showCC (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.intersperse ", " (toList (mapl⁺ showCC es))) ++ ">"
 
 showCC₂ : ∀ {i : Size} → CC₂ i String → String
 showCC₂ (Artifact₂ a []) = a
-showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.Base.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
+showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
 showCC₂ (D ⟨ l , r ⟩₂) = D ++ "<" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ ">"
 
 open SemanticDomains using (showVariant)
