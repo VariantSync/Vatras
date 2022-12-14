@@ -6,6 +6,7 @@ For termination checking, we have to use sized types (i.e., types that are bound
 We use sizes to constrain the maximum tree-depth of an expression.
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-} -- REMOVE AT THE END!
 ```
 
 ## Module
