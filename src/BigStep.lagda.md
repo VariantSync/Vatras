@@ -22,12 +22,12 @@ open import Size using (Size; ↑_; ∞)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
-  using (_≡_; _≗_; refl)
-open Eq.≡-Reasoning
-  using (begin_; _≡⟨⟩_; step-≡; _∎)
+  using (_≡_; _≢_; refl)
+--open Eq.≡-Reasoning
+--  using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
-open import CC using (CC₂; Artifact₂; _⟨_,_⟩₂; Configuration₂; left; right)
+open import CC using (Dimension; Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right)
 open import SemanticDomains using (Variant; Artifactᵥ)
 open import Extensionality
   using (extensionality)
@@ -37,24 +37,47 @@ open import Data.List.Relation.Unary.All using (All; reduce; []; _∷_)
 
 ## Binary Choice Calculus
 
+Configurations as lists instead of functions so we can inspect them:
+```agda
+infixl 5 _and_↦_
+data Assignment (L R : Set) : Set where
+  ∅ : Assignment L R
+  _and_↦_ : Assignment L R → L → R → Assignment L R
+
+infix 4 _∋_↦_
+data _∋_↦_ : {L R : Set} → Assignment L R → L → R → Set where
+   here : ∀ {L R : Set} {l : L} {r : R} {A}
+       ---------------------
+     → A and l ↦ r ∋ l ↦ r
+
+   there : ∀ {L R : Set} {l l' : L} {r r' : R} {A}
+     → l ≢ l'
+     → A ∋ l ↦ r
+       ---------------------
+     → A and l' ↦ r' ∋ l ↦ r
+
+Configuration : Set
+Configuration = Assignment Dimension Tag₂
+```
+
 ```agda
 -- Denotational Semantics as big-step relation
 
 infix 4 _⊢_⟶_
-data _⊢_⟶_ : ∀ {i A} → Configuration₂ → CC₂ i A → Variant A → Set where
+data _⊢_⟶_ : ∀ {i A} → Configuration → CC₂ i A → Variant A → Set where
   ξ-A₂ : ∀ {A c j a} {es : List (CC₂ j A)}
     → (esᵥ : All (λ e → ∃[ v ] (c ⊢ e ⟶ v)) es)
       -------------------------------------------------------
     → c ⊢ (Artifact₂ a es) ⟶ (Artifactᵥ a (reduce proj₁ esᵥ))
 
   C-l : ∀ {A c j D} {l r : CC₂ j A} {v : Variant A}
-    → c D ≡ left -- formulate this as evidence predicate ⊤?
+    → c ∋ D ↦ left -- formulate this as evidence predicate ⊤?
     → c ⊢ l ⟶ v
       --------------------
     → c ⊢ D ⟨ l , r ⟩₂ ⟶ v
 
   C-r : ∀ {A c j D} {l r : CC₂ j A} {v : Variant A}
-    → c D ≡ right
+    → c ∋ D ↦ right
     → c ⊢ r ⟶ v
       --------------------
     → c ⊢ D ⟨ l , r ⟩₂ ⟶ v
@@ -79,8 +102,8 @@ Example 1:
 bin : ∀ {i} → CC₂ (↑ ↑ i) String
 bin = "D" ⟨ leaf "l" , leaf "r" ⟩₂
 
-_ : (λ _ → left) ⊢ bin ⟶ leafᵥ "l"
-_ = C-l refl ξ-leaf
+_ : ∅ and "D" ↦ left  ⊢ bin ⟶ leafᵥ "l"
+_ = C-l here ξ-leaf
 ```
 
 Example 2:
@@ -99,16 +122,14 @@ burger-stabil = Artifactᵥ "Sandwich" (
   ∷ leafᵥ "Halloumi"
   ∷ [])
 
-burger-stabil-conf : Configuration₂
-burger-stabil-conf "Sauce" = left
-burger-stabil-conf "Patty" = right
-burger-stabil-conf _ = left
+burger-stabil-conf : Configuration
+burger-stabil-conf = ∅ and "Sauce" ↦ left and "Patty" ↦ right
 
 _ : burger-stabil-conf ⊢ burger ⟶ burger-stabil
 _ = ξ-A₂ (
     ((leafᵥ "Salad") , ξ-leaf)
-  ∷ ((leafᵥ "Ketchup") , C-l refl ξ-leaf)
-  ∷ ((leafᵥ "Halloumi") , C-r refl ξ-leaf)
+  ∷ ((leafᵥ "Ketchup") , C-l (there (λ ()) here) ξ-leaf)
+  ∷ ((leafᵥ "Halloumi") , C-r here ξ-leaf)
   ∷ []
   )
 ```
