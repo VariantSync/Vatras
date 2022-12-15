@@ -46,6 +46,10 @@ data Assignment (L R : Set) : Set where
   ∅ : Assignment L R
   _and_↦_ : Assignment L R → L → R → Assignment L R
 
+-- helper function for a nicer beginning of list
+assign_↦_ : {L R : Set} → L → R → Assignment L R
+assign l ↦ r = ∅ and l ↦ r
+
 infix 4 _∋_↦_
 data _∋_↦_ : {L R : Set} → Assignment L R → L → R → Set where
    here : ∀ {L R : Set} {l : L} {r : R} {A}
@@ -71,9 +75,8 @@ Configuration : Set
 Configuration = Assignment Dimension Tag₂
 ```
 
+Denotational semantics of binary choice calculus as big-step semantics:
 ```agda
--- Denotational Semantics as big-step relation
-
 infix 4 _⊢_⟶_
 data _⊢_⟶_ : ∀ {i A} → Configuration → CC₂ i A → Variant A → Set where
   ξ-A₂ : ∀ {A c j a} {es : List (CC₂ j A)}
@@ -113,7 +116,7 @@ Example 1:
 bin : ∀ {i} → CC₂ (↑ ↑ i) String
 bin = "D" ⟨ leaf "l" , leaf "r" ⟩₂
 
-_ : ∅ and "D" ↦ left  ⊢ bin ⟶ leafᵥ "l"
+_ : (assign "D" ↦ left) ⊢ bin ⟶ leafᵥ "l"
 _ = C-l here ξ-leaf
 ```
 
@@ -134,7 +137,7 @@ burger-stabil = Artifactᵥ "Sandwich" (
   ∷ [])
 
 burger-stabil-conf : Configuration
-burger-stabil-conf = ∅ and "Sauce" ↦ left and "Patty" ↦ right
+burger-stabil-conf = assign "Sauce" ↦ left and "Patty" ↦ right
 
 _ : burger-stabil-conf ⊢ burger ⟶ burger-stabil
 _ = ξ-A₂ (
