@@ -27,12 +27,14 @@ open Eq
 --  using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
-open import CC using (Dimension; Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right)
+open import CC using (Dimension; Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right; _dim-≟_)
 open import SemanticDomains using (Variant; Artifactᵥ)
 open import Extensionality
   using (extensionality)
 
 open import Data.List.Relation.Unary.All using (All; reduce; []; _∷_)
+
+open import Relation.Nullary.Decidable using (False; toWitnessFalse)
 ```
 
 ## Binary Choice Calculus
@@ -55,6 +57,15 @@ data _∋_↦_ : {L R : Set} → Assignment L R → L → R → Set where
      → A ∋ l ↦ r
        ---------------------
      → A and l' ↦ r' ∋ l ↦ r
+
+-- Smart constructor for there that will make Agda
+-- figure out the proof. This is still magic to me.
+there' : ∀ {R : Set} {l l' : Dimension} {r r' : R} {A}
+  → {l≢l' : False (l dim-≟ l')}
+  → A ∋ l ↦ r
+    ---------------------
+  → A and l' ↦ r' ∋ l ↦ r
+there' {l≢l' = l≢l'} = there (toWitnessFalse l≢l')
 
 Configuration : Set
 Configuration = Assignment Dimension Tag₂
@@ -128,7 +139,7 @@ burger-stabil-conf = ∅ and "Sauce" ↦ left and "Patty" ↦ right
 _ : burger-stabil-conf ⊢ burger ⟶ burger-stabil
 _ = ξ-A₂ (
     ((leafᵥ "Salad") , ξ-leaf)
-  ∷ ((leafᵥ "Ketchup") , C-l (there (λ ()) here) ξ-leaf)
+  ∷ ((leafᵥ "Ketchup") , C-l (there' here) ξ-leaf)
   ∷ ((leafᵥ "Halloumi") , C-r here ξ-leaf)
   ∷ []
   )
