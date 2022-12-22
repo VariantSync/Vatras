@@ -74,6 +74,15 @@ Configuration = Option → Bool
 ⟦ O ❲ e ❳ ⟧ c       = ⟦ e ⟧ c
 ```
 
+### Translations
+
+Idea:
+
+1. Prove completeness of core choice calculus as written on my note slides.
+2. Prove incompleteness of option calculus by showing that there exists at least one set of variants that cannot be described. The simplest counterexample here should be a set of two different symbols `{ leaf "a" , leaf "b" }`.
+3. By (1) and transitivity of our translation we conclude that binary choice calculus is complete.
+4. Prove that there can be no translation from binary choice calculus to option calculus because option calculus is incomplete. Assuming there would be a translation, we could translate a binary cc expression describing our counterexample from (2) which violates (2).
+
 ### Example and Test Time
 
 Definitions:
