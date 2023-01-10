@@ -1,5 +1,12 @@
 # Definitions for Translation of Variability Languages
 
+## Todo
+
+- Can we make the definitions less clunky? For example by turning semantics into implicit parameters more frequently?
+- Redefine the relations within a single language as a specialication of the relations for two languages (by comparing a language with itself)?
+- Formulate configuration preservation (see below).
+- Test if we can instantiate these for some concrete languages, such as our translations for CCC <-> BCC,
+
 ## Module
 
 ```agda
@@ -139,12 +146,53 @@ Variant-preserving equality is an equivalence relation:
 
 ### Definitions of equivalencies across languages
 
+```agda
+_⊆_within_and_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Set}
+  → (e₁ : L₁ A)
+  → (e₂ : L₂ A)
+  → Semantics L₁ C₁
+  → Semantics L₂ C₂
+  → Set
+_⊆_within_and_ {_} {_} {C₁} {_} {_} e₁ e₂ ⟦_⟧₁ ⟦_⟧₂ =
+  ∀ (c₁ : C₁) → ∃[ c₂ ] (⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ c₂) -- Todo: This should be the location where we have to add extra rules like c₁ ≈ c₂ for configuration preservation. How to do this nicely?
+
+_≚_within_and_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Set}
+  → (e₁ : L₁ A)
+  → (e₂ : L₂ A)
+  → Semantics L₁ C₁
+  → Semantics L₂ C₂
+  → Set
+e₁ ≚ e₂ within s₁ and s₂ =
+    (e₁ ⊆ e₂ within s₁ and s₂)
+  × (e₂ ⊆ e₁ within s₂ and s₁)
+
+-- TODO: Formalize configuration language equivalencies and then compound relations.
+--       For example, semantic equivalence between two languages means that isomorphic configurations yield equal variants.
+```
+
 ### Comparing languages as a whole
 
-Expressiveness:
+We say that a language `L₁` is as expressive as another language `L₂` **iff** for any expression `e₁` in `L₁`, there exists an expression `e₂` in `L₂` that describes the same set of variants. This means that there exists a translation from `L₁` to `L₂`:
 ```agda
---_is-as-expressive-as_ : (L₁ L₂ : VarLang) → Set
---L₁ is-as-expressive-as L₂ = ∀ (e₁ : L₁) → ∃[e₂ : L₂] (e₁ ≚ e₂ within)
+_is-as-expressive-as_within_and_ : {C₁ C₂ : ConfLang}
+  → (L₁ L₂ : VarLang)
+  → Semantics L₁ C₁
+  → Semantics L₂ C₂
+  → Set₁
+L₁ is-as-expressive-as L₂ within S₁ and S₂ =
+  ∀ {A : Set} (e₁ : L₁ A) → ∃[ e₂ ] (e₁ ≚ e₂ within S₁ and S₂)
+```
+
+A language `L₁` is variant equivalent to another language `L₂` **iff** they are equally expressive. This means that we can translate between both languages.
+```agda
+_is-variant-equivalent-to_within_and_ : {C₁ C₂ : ConfLang}
+  → (L₁ L₂ : VarLang)
+  → Semantics L₁ C₁
+  → Semantics L₂ C₂
+  → Set₁
+L₁ is-variant-equivalent-to L₂ within S₁ and S₂ =
+    (L₁ is-as-expressive-as L₂ within S₁ and S₂)
+  × (L₂ is-as-expressive-as L₁ within S₂ and S₁)
 ```
 
 ### Translations
