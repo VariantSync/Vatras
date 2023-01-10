@@ -10,7 +10,7 @@
 ## Module
 
 ```agda
-module BigStep where
+module Lang.BigStep where
 ```
 
 ## Imports
@@ -27,7 +27,7 @@ open Eq
 --  using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
-open import CC using (Dimension; Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right; _dim-≟_)
+open import Lang.CC using (Dimension; Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right; _dim-≟_)
 open import SemanticDomains using (Variant; Artifactᵥ)
 open import Extensionality
   using (extensionality)

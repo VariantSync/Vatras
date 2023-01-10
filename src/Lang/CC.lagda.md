@@ -12,7 +12,7 @@ We use sizes to constrain the maximum tree-depth of an expression.
 ## Module
 
 ```agda
-module CC where
+module Lang.CC where
 ```
 
 ## Imports
@@ -733,7 +733,7 @@ toCC₂' (Artifact a es) =
 toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
 
 open import Data.Nat renaming (_≡ᵇ_ to _nat-≡ᵇ_)
-open import Util using (empty?)
+open import Util.Util using (empty?)
 
 update-configuration-converter :
     ConfigurationConverter
@@ -958,7 +958,7 @@ open Data.String using (unlines; intersperse)
 open Data.List using (concatMap) renaming (_++_ to _++l_)
 open Function using (id)
 
-open import ShowHelpers
+open import Util.ShowHelpers
 ```
 
 Showing choice calculus expressions:

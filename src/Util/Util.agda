@@ -1,4 +1,4 @@
-module Util where
+module Util.Util where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (List; _∷_; [])

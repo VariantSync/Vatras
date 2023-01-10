@@ -1,4 +1,4 @@
-module Test where
+module Util.Test where
 
 open import Data.String using (String)
 open import Data.Maybe using (Maybe)

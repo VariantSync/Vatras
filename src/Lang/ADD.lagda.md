@@ -9,7 +9,7 @@
 ## Module
 
 ```agda
-module ADD where
+module Lang.ADD where
 ```
 
 ## Imports

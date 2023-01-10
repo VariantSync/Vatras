@@ -9,7 +9,7 @@
 ## Module
 
 ```agda
-module OC where
+module Lang.OC where
 ```
 
 ## Imports

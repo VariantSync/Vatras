@@ -1,4 +1,4 @@
-module ShowHelpers where
+module Util.ShowHelpers where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (List; map)
