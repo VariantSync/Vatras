@@ -82,6 +82,7 @@ Variant subset is not symmetric, but reflexive and transitive:
 
 -- _⊆_within_ is not symmetric.
 -- _⊆_within_ is not antisymmetric because two syntactically different expression can describe the same set of variants. For example, in choice calculus `D ⟨ e , e ⟩` and `e` are different but describe the same set of variants.
+-- _⊆_within_ is antisymmentric in the sense that the described set of variants is equal though which is formalized as _≚_within_ below.
 
 ⊆-refl : ∀ {L : VarLang} {C : ConfLang} {A : Set} {e : L A} {s : Semantics L C}
     --------------
