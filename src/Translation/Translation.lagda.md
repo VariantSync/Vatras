@@ -38,7 +38,13 @@ Semantics L C = ∀ {A : Set} → L A → C → Variant A
 
 ### Semantic equivalencies within a single language
 
-Semantic equivalence of two expression in the same language means that same configurations yield the same variants:
+We consider three kinds of semantic relations between two expressions `a` and `b` in the same language:
+- Subset `a ⊆ b` **iff** `a` describes a subset of the variants described by `b`.
+- Variant equivalence `a ≚ b` **iff** `a` and `b` describe the same set of variants (i.e., `a ⊆ b` and `b ⊆ a`)
+- Semantic equivalence `a ≈ b` **iff** `a` and `b` are variant equivalent and same configurations yield same variants.
+
+We start with semantic equivalence because it is the easierst to define.
+Any two expressions are equivalent if their semantics are equivalent:
 ```agda
 _≈_within_ : {L : VarLang} {C : ConfLang} {A : Set} → (a b : L A) → Semantics L C → Set
 a ≈ b within ⟦_⟧ = ⟦ a ⟧ ≡ ⟦ b ⟧
@@ -55,7 +61,7 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
 ≡→≈ sem eq rewrite eq = refl
 ```
 
-For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence. Each variant that can be derived from the first expression, can also be derived from the second expression and vice versa. We thus first describe the variant-subset relation ⊂̌ and then define variant-equality as a bi-directional subset.
+For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence. Each variant that can be derived from the first expression, can also be derived from the second expression and vice versa. We thus first describe the variant-subset relation `⊆` and then define variant-equality as a bi-directional subset.
 ```agda
 open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
 
@@ -74,7 +80,8 @@ infix 5 _⊆_within_
 Variant subset is not symmetric, but reflexive and transitive:
 ```agda
 
--- _⊆_within_ is not symmetric
+-- _⊆_within_ is not symmetric.
+-- _⊆_within_ is not antisymmetric because two syntactically different expression can describe the same set of variants. For example, in choice calculus `D ⟨ e , e ⟩` and `e` are different but describe the same set of variants.
 
 ⊆-refl : ∀ {L : VarLang} {C : ConfLang} {A : Set} {e : L A} {s : Semantics L C}
     --------------
@@ -91,8 +98,6 @@ Variant subset is not symmetric, but reflexive and transitive:
   let (c₂ , eq₁₂) = x c₁
       (c₃ , eq₂₃) = y c₂
   in c₃ , Eq.trans eq₁₂ eq₂₃
-
--- TODO: It should also be antisymmetric right? And thus form a partial order.
 ```
 
 Variant-preserving equality:
