@@ -1027,7 +1027,7 @@ ccex-toBinaryAndBack (name , cc) = unlines (
 
     eval₂ₙ : Configuration × String → String
     eval₂ₙ = λ { (conf , cname) →
-      "[[" ++ name ++ "]] " ++ "(b→n (b→n " ++ cname ++ "))" ++ " = "
+      "[[" ++ name ++ "]] " ++ "(b→n (n→b " ++ cname ++ "))" ++ " = "
       ++ (showVariant (⟦ cc ⟧ (b→n (n→b conf))))}
 
     eval-selectₙ = evalₙ ∘ selectₙ
