@@ -594,18 +594,25 @@ We can do so by recursively nesting alternatives beyond the second in nested bin
 This translation follows the similar observations for if-statements that an `elseif` expression is equivalent to an `else` branch with a nested `if`:
 
       if x
-      then a
-      elif b
-      else c
+        then a
+      elif y
+        then b
+      else
+        c
 
     ≡ if x
-      then a
-      else (if x'
-            then b
-            else c)
+        then a
+      else
+        if y
+          then b
+        else
+          c
 
-One of the key challenges for this translations is to introduce correct new conditions `x'` (i.e., dimensions) for the nested choices.
-Here, this means, we have to generate new choices, and thus new dimensions (just as `x'`).
+One of the key challenges for this translations is to introduce correct new conditions (i.e., dimensions) for the nested choices.
+Here, this means, we have to generate new choices, and thus new dimensions.
+In the above example, this is not necessary because every branch already has a condition, but in choice calculus, every alternative is just identified by an index below a dimension.
+So for example, the first if-elif-else chain would be expressed as `D⟨a, b, c⟩`, where `D` somehow reflects the conditions `x` and `y`.
+So to translate this chain to binary, we have to nest every alternatives beyond the first, such that `D⟨a, b, c⟩` becomes `D⟨a, E⟨b, c⟩⟩`, where `E` is a new new name that corresponds to `y` in the second if-else-if-else chain above.
 When generating a new name for a new dimension, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
 For example, when generating names by appending tick marks, we may get `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) ≡ D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
 
@@ -647,7 +654,7 @@ Here is an informal proof that using `indexedDim` to rename every dimension does
       This contradicts our assumption that G collided.
 
 To prove that a translation from choice calculus to binary normal form is semantics-preserving, we have to show that both, the input as well as the output expression, describe the same set of variants (just as we did earlier for the inverse translation).
-As we will see later, this requires is to not only translate an expression from n-ary to binary form, but also configurations.
+As we will see later, this requires us to not only translate an expression from n-ary to binary form, but also configurations.
 Our implementation of the translation thus takes an n-ary choice calculus expression as input and yields two results: (1) a converter that can translate configurations for the input formula to configurations for the output formula and vice versa, and (2) the expression in binary normal form.
 To define the configuration converter, we use the state monad that keeps track of our current progress of translating configurations.
 
@@ -677,7 +684,7 @@ We use this record as the state during our translation.
 -- resembles a specialized version of _⇔_ in the plfa book
 record ConfigurationConverter : Set where
   field
-    nary→binary : Configuration → Configuration₂
+    nary→binary : Configuration  → Configuration₂
     binary→nary : Configuration₂ → Configuration
 open ConfigurationConverter
 
@@ -698,7 +705,7 @@ TranslationState = State ConfigurationConverter
 We can now define our translation function `toCC₂`.
 Sadly, we cannot prove it terminating yet.
 The problem is that the alternatives of a choice are a list, and this list is converted to a recursive nesting structure.
-For example, D ⟨ a , b , c , d ⟩ becomes D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩₂ ⟩₂ ⟩₂.
+For example, `D ⟨ a , b , c , d ⟩` becomes `D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩₂ ⟩₂ ⟩₂`.
 Hence, the number of children of a CC expression determines the nesting depth of the resulting binary expression.
 Since we have no guarantees on the number of children (i.e., no bound / estimate), we cannot make any guarantees on the maximum depth of the resulting expression.
 Moreover, because a children list thus could be infinite, also the resulting expression could be infinite.
