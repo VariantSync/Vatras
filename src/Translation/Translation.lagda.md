@@ -225,7 +225,7 @@ record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
 open Translation
 ```
 
-We know reformulate our relations to compare expressions between languages to translations.
+We now reformulate our relations to compare expressions between languages to translations.
 An expression `e₁` describes a subset of the variants of its translated expression `lang translation e₁` if we can also translate the configuration to produce the same variant.
 ```agda
 _⊆-via_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
@@ -302,7 +302,9 @@ _is-variant-preserving {L₁} {_} {_} {_} t = ∀ {A : Domain} (e₁ : L₁ A) �
 ```
 
 A translation is semantics preserving iff its semantics preserving and the same configuration yields the same variants.
--- We identify a configuration to be the same iff it can be uniquely translated back (i.e., if conf is an embedding into C₂).
+We identify a configuration to be the same if it can be uniquely translated back (i.e., if `conf` is an embedding into `C₂` via its inverse `fnoc`).
+We do not require the inverse direction (`fnoc` being an embedding of configurations from `C₂` into `C₁`) because `C₂` could be larger than `C₁` (when interpreted as a set).
+For example, the set of features in `C₂` could be bigger (e.g., when going from core choice calculus to binary choice calculus) but all information can be derived by `conf` from our initial configuration `c₁`.
 ```agda
 _is-semantics-preserving : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} → Translation L₁ L₂ C₁ C₂ → Set₁
 _is-semantics-preserving {_} {_} {C₁} {_} t =
