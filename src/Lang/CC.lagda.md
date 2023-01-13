@@ -28,12 +28,14 @@ open import Data.List.NonEmpty
   renaming (map to mapl⁺)
 open import Data.Nat
   using (ℕ; zero; suc; NonZero)
+open import Data.Product
+  using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
 open import Data.String
   using (String; _++_)
 open import Function
   using (_∘_; flip)
 open import Size
-  using (Size; Size<_; ↑_; ∞)
+  using (Size; Size<_; ↑_; ∞; _⊔ˢ_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
@@ -42,7 +44,11 @@ open Eq.≡-Reasoning
   using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
-open import Translation.Translation using (VarLang; ConfLang; Domain; Semantics)
+open import Translation.Translation
+  -- Names
+  using (VarLang; ConfLang; Domain; Semantics)
+  -- Relations of expression in a variability language
+  using (_≈_within_; _⊆_within_; _≚_within_)
 open import Extensionality
   using (extensionality)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
@@ -62,10 +68,10 @@ Dimension = String
 Tag : Set
 Tag = ℕ
 
-data CC (i : Size) : VarLang where
-  Artifact : ∀ {j : Size< i} {A : Domain} →
+data CC : VarLang where
+  Artifact : ∀ {i : Size} {j : Size< i} {A : Domain} →
     A → List (CC j A) → CC i A
-  _⟨_⟩ : ∀ {j : Size< i} {A : Domain} →
+  _⟨_⟩ : ∀ {i : Size} {j : Size< i} {A : Domain} →
     Dimension → List⁺ (CC j A) → CC i A
 ```
 
@@ -73,8 +79,8 @@ From this slightly more complex definition, we can obtain the original definitio
 In the original definition, we neither care for nor know the depth of an expression.
 So we just pick infinity as a proper upper bound because we speak about expressions of arbitrary depth.
 ```agda
-CoreCC : Set → Set
-CoreCC = CC ∞
+CCC : Set → Set
+CCC = CC ∞
 ```
 
 ### Helpful Functions for Later
@@ -95,11 +101,14 @@ _dim-==_ = Data.String.Properties._==_
 Smart constructors for plain artifacts.
 Any upper bound is fine but we are at least 1 deep.
 ```agda
-leaf : ∀ {i : Size} {A : Set} → A → CC (↑ i) A
+leaf : ∀ {i : Size} {A : Domain} → A → CC (↑ i) A
 leaf a = Artifact a []
 
-leaves : ∀ {i : Size} {A : Set} → List⁺ A → List⁺ (CC (↑ i) A)
+leaves : ∀ {i : Size} {A : Domain} → List⁺ A → List⁺ (CC (↑ i) A)
 leaves = mapl⁺ leaf
+
+upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CC j A → CC i A
+upcast e = e
 ```
 
 ### Semantics
@@ -143,132 +152,49 @@ clampTagWithin {suc n} {nz} = minFinFromLimit n
 
 -- Selects the alternative at the given tag.
 -- Agda can implicitly prove that the length of the list is positive, because it is a non-empty list, and by type inference, it supplies the list length to clampWithin.
-choice-elimination : {A : Set} → Tag → List⁺ A → A
+choice-elimination : {A : Domain} → Tag → List⁺ A → A
 choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
 {-|
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-⟦_⟧ : ∀ {i : Size} → Semantics (CC i) Configuration
+⟦_⟧ : Semantics CC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
 
-Semantic equivalence means that the same configurations yield the same variants:
-```agda
-_≈_ : ∀ {i j : Size} {A : Set}
-  → (a : CC i A) → (b : CC j A) → Set
-a ≈ b = ⟦ a ⟧ ≡ ⟦ b ⟧
-infix 5 _≈_
-```
-
-Semantic equivalence `≈` inherits all properties from structural equality `≡` because it is just an alias.
-In particular, these properties include reflexivity (by definition), symmetry, transitivity, and congruence as stated in the choice calculus TOSEM paper.
-
-Obviously, syntactic equality (or rather structural equality) implies semantic equality:
-```agda
-≡→≈ : ∀ {i : Size} {A : Set} {a b : CC i A}
-  → a ≡ b
-    -----
-  → a ≈ b
-≡→≈ eq rewrite eq = refl
-```
-
 Some transformation rules
 ```agda
+_≈c_x_ : ∀ {i j : Size} {A : Set}
+  → (a : CC i A) → (b : CC j A) → Semantics CC Configuration → Set
+a ≈c b x ⟦_⟧ = ⟦ a ⟧ ≡ ⟦ b ⟧
+infix 5 _≈c_x_
+
 -- unary choices are mandatory
 D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
-  → D ⟨ e ∷ [] ⟩ ≈ e
+     → D ⟨ e ∷ [] ⟩ ≈c e x ⟦_⟧
+--   → D ⟨ e ∷ [] ⟩ ≈ e within ⟦_⟧
+--    → _≈_within_ {L = CC} (D ⟨ e ∷ [] ⟩) e ⟦_⟧
+--  → _≈_within_ {↑ i} {i} {CC} {Configuration} {A} (D ⟨ e ∷ [] ⟩) e ⟦_⟧
 D⟨e⟩≈e = refl
-```
 
-For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence.
-Each variant that can be derived from the first CC expression, can also be derived from the second CC expression and vice versa.
-We thus first describe the variant-subset relation ⊂̌ and then define variant-equality as a bi-directional subset.
+-- other way to prove the above via variant-equivalence
 
-For the variant-subset relation, we want to express the following, given two expressions `e₁` and `e₂`:
-
-       Every variant described by e₁ is also described by e₂.
-    ⇔ For all variants v in the image of ⟦ e₁ ⟧
-       there exists a configuration c
-       such that ⟦ e₂ ⟧ c ≡ v.
-    ⇔ For all configurations c₁
-       there exists a configuration c₂
-       such that ⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂.
-
-```agda
-open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
-
--- Beware! This symbol renders different on Github. The v should be on top of ⊂ but on Github is next to it.
--- So don't be confused in case the v appears on top of a character next to ⊂.
--- Unicode for ⊂̌ is \sub\v
-_⊂̌_ : ∀ {i j : Size} {A : Set}
-  → (e₁ : CC i A) → (e₂ : CC j A) → Set
-e₁ ⊂̌ e₂ = ∀ (c₁ : Configuration) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
-infix 5 _⊂̌_
-
--- some properties
--- _⊂̌_ is not symmetric
-
-⊂̌-refl : ∀ {i : Size} {A : Set} {e : CC i A}
-    -----
-  → e ⊂̌ e
-⊂̌-refl c = c , refl
-
-⊂̌-trans : ∀ {i j k : Size} {A : Set} {e₁ : CC i A} {e₂ : CC j A} {e₃ : CC k A}
-  → e₁ ⊂̌ e₂
-  → e₂ ⊂̌ e₃
-    -------
-  → e₁ ⊂̌ e₃
-⊂̌-trans x y c₁ =
-  -- this somehow resembles the implementation of bind >>= of state monad
-  let (c₂ , eq₁₂) = x c₁
-      (c₃ , eq₂₃) = y c₂
-  in c₃ , Eq.trans eq₁₂ eq₂₃
-
--- Variant-preserving equality of CC is structural equality of all described variants.
--- (It is not semantic equality of variants because we do not the semantics of
--- the object language!)
--- Unicode for ≚ is \or=
-_≚_ : ∀ {i j : Size} {A : Set}
-  → (e₁ : CC i A) → (e₂ : CC j A) → Set
-e₁ ≚ e₂ = (e₁ ⊂̌ e₂) × (e₂ ⊂̌ e₁)
-infix 5 _≚_
-
--- properties of variant-preserving equivalence
-≚-sym : ∀ {i j : Size} {A : Set} {e₁ : CC i A} {e₂ : CC j A}
-  → e₁ ≚ e₂
-    -------
-  → e₂ ≚ e₁
-≚-sym (e₁⊂̌e₂ , e₂⊂̌e₁) = e₂⊂̌e₁ , e₁⊂̌e₂
-
-≚-trans : ∀ {A : Set} {i j k : Size} {e₁ : CC i A} {e₂ : CC j A} {e₃ : CC k A}
-  → e₁ ≚ e₂
-  → e₂ ≚ e₃
-    -------
-  → e₁ ≚ e₃
-≚-trans {A} {i} {j} {k} {e₁} {e₂} {e₃} (e₁⊂̌e₂ , e₂⊂̌e₁) (e₂⊂̌e₃ , e₃⊂̌e₂) =
-    ⊂̌-trans {i} {j} {k} {A} {e₁} {e₂} {e₃} e₁⊂̌e₂ e₂⊂̌e₃
-  , ⊂̌-trans {k} {j} {i} {A} {e₃} {e₂} {e₁} e₃⊂̌e₂ e₂⊂̌e₁
-```
-
-As an example, we now prove `D ⟨ e ∷ [] ⟩ ≚ e`.
-```agda
 D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
-  → D ⟨ e ∷ [] ⟩ ⊂̌ e
-D⟨e⟩⊂̌e config = ( config , refl )
+  → D ⟨ e ∷ [] ⟩ ⊆ e within ⟦_⟧
+D⟨e⟩⊂̌e config = ( config , {!!} )
 
 e⊂̌D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
-  → e ⊂̌ D ⟨ e ∷ [] ⟩
-e⊂̌D⟨e⟩ config = ( config , refl )
+  → e ⊆ D ⟨ e ∷ [] ⟩ within ⟦_⟧
+e⊂̌D⟨e⟩ config = ( config , {!!} )
 
 D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
-  → D ⟨ e ∷ [] ⟩ ≚ e
+  → D ⟨ e ∷ [] ⟩ ≚ e within ⟦_⟧
 D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊂̌e {i} {A} {e} {D} , e⊂̌D⟨e⟩ {i} {A} {e} {D}
 ```
 
@@ -276,17 +202,17 @@ In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `
 ```agda
 -- Semantic equivalence implies variant equivalence.
 ≈→⊂̌ : ∀ {i j : Size} {A : Set} {a : CC i A} {b : CC j A}
-  → a ≈ b
+  → a ≈ b within ⟦_⟧
     -----
-  → a ⊂̌ b
+  → a ⊆ b within ⟦_⟧
 -- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
 ≈→⊂̌ a≈b config = config , Eq.cong (λ ⟦x⟧ → ⟦x⟧ config) a≈b
 
 -- Semantic equivalence implies variant equivalence.
 ≈→≚ : ∀ {i j : Size} {A : Set} {a : CC i A} {b : CC j A}
-  → a ≈ b
+  → a ≈ b within ⟦_⟧
     -----
-  → a ≚ b
+  → a ≚ b within ⟦_⟧
 ≈→≚ {i} {j} {A} {a} {b} a≈b =
     ≈→⊂̌ {i} {j} {A} {a} {b} a≈b
   , ≈→⊂̌ {j} {i} {A} {b} {a} (Eq.sym a≈b)
@@ -296,9 +222,9 @@ Finally, we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
 ```agda
 D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
-  → D ⟨ e ∷ [] ⟩ ≚ e
-D⟨e⟩≚e' {i} {A} {e} {D} =
-  ≈→≚ {↑ i} {i} {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {i} {A} {e} {D})
+  → D ⟨ e ∷ [] ⟩ ≚ e within ⟦_⟧
+D⟨e⟩≚e' {i} {A} {e} {D} = {!!}
+  --≈→≚ {↑ i} {i} {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {i} {A} {e} {D})
 ```
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
@@ -327,10 +253,10 @@ Our goal is to prove that every choice calculus expression can be expressed as a
 
 As for choice calculus, `i` is an upper bound for the depth of the expression tree.
 ```agda
-data CC₂ (i : Size) : VarLang where
-  Artifact₂ : {j : Size< i} {A : Domain} →
+data CC₂ : VarLang where
+  Artifact₂ : {i : Size} {j : Size< i} {A : Domain} →
     A → List (CC₂ j A) → CC₂ i A
-  _⟨_,_⟩₂ : {j : Size< i} {A : Domain} →
+  _⟨_,_⟩₂ : {i : Size} {j : Size< i} {A : Domain} →
     Dimension → CC₂ j A → CC₂ j A → CC₂ i A
 ```
 
@@ -355,7 +281,7 @@ right = false
 Configuration₂ : ConfLang
 Configuration₂ = Dimension → Tag₂
 
-⟦_⟧₂ : ∀ {i : Size} → Semantics (CC₂ i) Configuration₂
+⟦_⟧₂ : Semantics CC₂ Configuration₂
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
 ```

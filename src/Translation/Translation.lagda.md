@@ -26,6 +26,8 @@ module Translation.Translation where
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
+open import Size using (Size; Size<_; _⊔ˢ_; ↑_)
+
 open import SemanticDomains
 open import Extensionality using (_embeds-via_)
 ```
@@ -39,7 +41,7 @@ Domain : Set₁ -- Object Language
 Domain = Set
 
 VarLang : Set₁
-VarLang = Domain → Set
+VarLang = Size → Domain → Set
 ```
 
 We also model configurations as types but they do not have parameters.
@@ -51,7 +53,7 @@ ConfLang = Set
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
 ```agda
 Semantics : VarLang → ConfLang → Set₁
-Semantics L C = ∀ {A : Domain} → L A → C → Variant A
+Semantics L C = ∀ {i : Size} {A : Domain} → L i A → C → Variant A
 ```
 
 ### Semantic equivalencies within a single language
@@ -64,18 +66,22 @@ We consider three kinds of semantic relations between two expressions `a` and `b
 We start with semantic equivalence because it is the easierst to define.
 Any two expressions are equivalent if their semantics are equivalent:
 ```agda
-_≈_within_ : {L : VarLang} {C : ConfLang} {A : Domain} → (a b : L A) → Semantics L C → Set
-a ≈ b within ⟦_⟧ = ⟦ a ⟧ ≡ ⟦ b ⟧
-infix 5 _≈_within_
+-- find-lang : Term → TC ⊤
+
+In_፦_≈_within_ : ∀ {i j : Size} {C : ConfLang} {A : Domain} → (L : VarLang) → (a : L i A) → (b : L j A) → Semantics L C → Set
+In L ፦ a ≈ b within ⟦_⟧ = ⟦ a ⟧ ≡ ⟦ b ⟧
+infix 5 In_፦_≈_within_
 ```
+
+Semantic equivalence `≈` inherits all properties from structural equality `≡` because it is just an alias. In particular, these properties include reflexivity (by definition), symmetry, transitivity, and congruence (e.g., as stated in the choice calculus TOSEM paper).
 
 Obviously, syntactic equality (or rather structural equality) implies semantic equality:
 ```agda
-≡→≈ : ∀ {L : VarLang} {C : ConfLang} {A : Domain} {a b : L A}
+≡→≈ : ∀ {i : Size} {L : VarLang} {C : ConfLang} {A : Domain} {a b : L i A}
   → ∀ (sem : Semantics L C)
   → a ≡ b
     ----------------
-  → a ≈ b within sem
+  → In L ፦ a ≈ b within sem
 ≡→≈ sem eq rewrite eq = refl
 ```
 
@@ -83,11 +89,12 @@ For most transformations, we are interested in a weaker form of semantic equival
 ```agda
 open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
 
-_⊆_within_ : ∀ {L : VarLang} {C : ConfLang} {A : Domain}
-  → (e₁ e₂ : L A)
+_⊆_within_ : ∀ {i j : Size} → {L : VarLang} {C : ConfLang} {A : Domain}
+  → (e₁ : L i A)
+  → (e₂ : L j A)
   → (⟦_⟧ : Semantics L C)
   → Set
-_⊆_within_ {L} {C} {A} e₁ e₂ ⟦_⟧ = ∀ (c₁ : C) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
+_⊆_within_ {_} {_} {L} {C} {A} e₁ e₂ ⟦_⟧ = ∀ (c₁ : C) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
 infix 5 _⊆_within_
 ```
 
@@ -98,16 +105,16 @@ Variant subset is not symmetric, but reflexive and transitive:
 -- _⊆_within_ is not antisymmetric because two syntactically different expression can describe the same set of variants. For example, in choice calculus `D ⟨ e , e ⟩` and `e` are different but describe the same set of variants.
 -- _⊆_within_ is antisymmentric in the sense that the described set of variants is equal though which is formalized as _≚_within_ below.
 
-⊆-refl : ∀ {L : VarLang} {C : ConfLang} {A : Domain} {e : L A} {s : Semantics L C}
+⊆-refl : ∀ {i : Size} {L : VarLang} {C : ConfLang} {A : Domain} {e : L i A} {s : Semantics L C}
     --------------
-  → e ⊆ e within s
+  → _⊆_within_ {i} {i} {L} {C} {A} e e s
 ⊆-refl c = c , refl
 
-⊆-trans : ∀ {L : VarLang} {C : ConfLang} {A : Domain} {e₁ e₂ e₃ : L A} {s : Semantics L C}
-  → e₁ ⊆ e₂ within s
-  → e₂ ⊆ e₃ within s
+⊆-trans : ∀ {i j k : Size} {L : VarLang} {C : ConfLang} {A : Domain} {e₁ : L i A} {e₂ : L j A} {e₃ : L k A} {s : Semantics L C}
+  → _⊆_within_ {i} {j} {L} {C} {A} e₁ e₂ s
+  → _⊆_within_ {j} {k} {L} {C} {A} e₂ e₃ s
     ----------------
-  → e₁ ⊆ e₃ within s
+  → _⊆_within_ {i} {k} {L} {C} {A} e₁ e₃ s
 ⊆-trans x y c₁ =
   -- this somehow resembles the implementation of bind >>= of state monad
   let (c₂ , eq₁₂) = x c₁
@@ -117,36 +124,41 @@ Variant subset is not symmetric, but reflexive and transitive:
 
 Variant-preserving equality:
 ```agda
-_≚_within_ : ∀ {L : VarLang} {C : ConfLang} {A : Domain}
-  → (e₁ e₂ : L A)
+_≚_within_ : ∀ {i j : Size} {L : VarLang} {C : ConfLang} {A : Domain}
+  → (e₁ : L i A)
+  → (e₂ : L j A)
   → (⟦_⟧ : Semantics L C)
   → Set
-e₁ ≚ e₂ within s = (e₁ ⊆ e₂ within s) × (e₂ ⊆ e₁ within s)
+_≚_within_ {i} {j} {L} {C} {A} e₁ e₂ s =
+    (_⊆_within_ {i} {j} {L} {C} {A} e₁ e₂ s)
+  × (_⊆_within_ {j} {i} {L} {C} {A} e₂ e₁ s)
+infix 5 _≚_within_
 ```
+
 
 Variant-preserving equality is an equivalence relation:
 ```agda
-≚-refl : ∀ {L : VarLang} {C : ConfLang} {A : Domain} {e : L A} {s : Semantics L C}
+≚-refl : ∀ {i : Size} {L : VarLang} {C : ConfLang} {A : Domain} {e : L i A} {s : Semantics L C}
     --------------
-  → e ≚ e within s
-≚-refl {L} {C} {A} {e} {s} =
-    ⊆-refl {L} {C} {A} {e} {s}
-  , ⊆-refl {L} {C} {A} {e} {s}
+  → _≚_within_ {i} {i} {L} {C} {A} e e s
+≚-refl {i} {L} {C} {A} {e} {s} =
+    ⊆-refl {i} {L} {C} {A} {e} {s}
+  , ⊆-refl {i} {L} {C} {A} {e} {s}
 
-≚-sym : ∀ {L : VarLang} {C : ConfLang} {A : Domain} {e₁ e₂ : L A} {s : Semantics L C}
-  → e₁ ≚ e₂ within s
+≚-sym : ∀ {i j : Size} {L : VarLang} {C : ConfLang} {A : Domain} {e₁ : L i A} {e₂ : L j A} {s : Semantics L C}
+  → _≚_within_ {i} {j} {L} {C} {A} e₁ e₂ s
     ----------------
-  → e₂ ≚ e₁ within s
+  → _≚_within_ {j} {i} {L} {C} {A} e₂ e₁ s
 ≚-sym (e₁⊆e₂ , e₂⊆e₁) = e₂⊆e₁ , e₁⊆e₂
 
-≚-trans : ∀ {L : VarLang} {C : ConfLang} {A : Domain} {e₁ e₂ e₃ : L A} {s : Semantics L C}
-  → e₁ ≚ e₂ within s
-  → e₂ ≚ e₃ within s
+≚-trans : ∀ {i j k : Size} {L : VarLang} {C : ConfLang} {A : Domain} {e₁ : L i A} {e₂ : L j A} {e₃ : L k A} {s : Semantics L C}
+  → _≚_within_ {i} {j} {L} {C} {A} e₁ e₂ s
+  → _≚_within_ {j} {k} {L} {C} {A} e₂ e₃ s
     ----------------
-  → e₁ ≚ e₃ within s
-≚-trans {L} {C} {A} {e₁} {e₂} {e₃} {s} (e₁⊆e₂ , e₂⊆e₁) (e₂⊆e₃ , e₃⊆e₂) =
-    ⊆-trans {L} {C} {A} {e₁} {e₂} {e₃} {s} e₁⊆e₂ e₂⊆e₃
-  , ⊆-trans {L} {C} {A} {e₃} {e₂} {e₁} {s} e₃⊆e₂ e₂⊆e₁
+  → _≚_within_ {i} {k} {L} {C} {A} e₁ e₃ s
+≚-trans {i} {j} {k} {L} {C} {A} {e₁} {e₂} {e₃} {s} (e₁⊆e₂ , e₂⊆e₁) (e₂⊆e₃ , e₃⊆e₂) =
+    ⊆-trans {i} {j} {k} {L} {C} {A} {e₁} {e₂} {e₃} {s} e₁⊆e₂ e₂⊆e₃
+  , ⊆-trans {k} {j} {i} {L} {C} {A} {e₃} {e₂} {e₁} {s} e₃⊆e₂ e₂⊆e₁
 ```
 
 ## Comparing Languages
@@ -161,24 +173,24 @@ First we generalize `_⊆_within_` and `_≚_within_` from single languages to t
 This step is straighforward as it just requires us to introduce additional parameters for the second language and reformulating the right-hand side of relations to refer to the second language.
 The main insight here is that we can compare expressions across languages because they share the same semantic domain: variants.
 ```agda
-_⊆_within_and_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
-  → (e₁ : L₁ A)
-  → (e₂ : L₂ A)
+_⊆_within_and_ : ∀ {i j : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
+  → (e₁ : L₁ i A)
+  → (e₂ : L₂ j A)
   → Semantics L₁ C₁
   → Semantics L₂ C₂
   → Set
-_⊆_within_and_ {_} {_} {C₁} {_} {_} e₁ e₂ ⟦_⟧₁ ⟦_⟧₂ =
+_⊆_within_and_ {_} {_} {_} {_} {C₁} {_} {_} e₁ e₂ ⟦_⟧₁ ⟦_⟧₂ =
   ∀ (c₁ : C₁) → ∃[ c₂ ] (⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ c₂)
 
-_≚_within_and_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
-  → (e₁ : L₁ A)
-  → (e₂ : L₂ A)
+_≚_within_and_ : ∀ {i j : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
+  → (e₁ : L₁ i A)
+  → (e₂ : L₂ j A)
   → Semantics L₁ C₁
   → Semantics L₂ C₂
   → Set
-e₁ ≚ e₂ within s₁ and s₂ =
-    (e₁ ⊆ e₂ within s₁ and s₂)
-  × (e₂ ⊆ e₁ within s₂ and s₁)
+_≚_within_and_ {i} {j} {L₁} {L₂} {C₁} {C₂} {A} e₁ e₂ s₁ s₂ =
+    (_⊆_within_and_ {i} {j} {L₁} {L₂} {C₁} {C₂} {A} e₁ e₂ s₁ s₂)
+  × (_⊆_within_and_ {j} {i} {L₂} {L₁} {C₂} {C₁} {A} e₂ e₁ s₂ s₁)
 ```
 
 ### Comparing languages as a whole
@@ -190,8 +202,8 @@ _is-as-expressive-as_within_and_ : {C₁ C₂ : ConfLang}
   → Semantics L₁ C₁
   → Semantics L₂ C₂
   → Set₁
-L₁ is-as-expressive-as L₂ within S₁ and S₂ =
-  ∀ {A : Domain} (e₁ : L₁ A) → ∃[ e₂ ] (e₁ ≚ e₂ within S₁ and S₂)
+_is-as-expressive-as_within_and_ {C₁} {C₂} L₁ L₂ S₁ S₂ =
+  ∀ {i : Size} {A : Domain} (e₁ : L₁ i A) → ∃[ e₂ ] (_≚_within_and_ {i} {i} {L₁} {L₂} {C₁} {C₂}  e₁ e₂ S₁ S₂)
 ```
 
 A language `L₁` is variant equivalent to another language `L₂` **iff** they are equally expressive. This means that we can translate between both languages.
@@ -219,7 +231,7 @@ record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
     sem₁ : Semantics L₁ C₁
     sem₂ : Semantics L₂ C₂
 
-    lang : ∀ {D : Domain} → L₁ D → L₂ D
+    lang : ∀ {i j : Size} {D : Domain} → L₁ i D → L₂ j D
     conf : C₁ → C₂
     fnoc : C₂ → C₁ -- We need this to quantify over the set of variants described by the translated expression.
 open Translation
@@ -228,11 +240,11 @@ open Translation
 We now reformulate our relations to compare expressions between languages to translations.
 An expression `e₁` describes a subset of the variants of its translated expression `lang translation e₁` if we can also translate the configuration to produce the same variant.
 ```agda
-_⊆-via_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
-  → (e₁ : L₁ A)
+_⊆-via_ : ∀ {i : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
+  → (e₁ : L₁ i A)
   → Translation L₁ L₂ C₁ C₂
   → Set
-_⊆-via_ {_} {_} {C₁} {_} {_} e₁ translation =
+_⊆-via_ {_} {_} {_} {C₁} {_} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
@@ -241,12 +253,12 @@ _⊆-via_ {_} {_} {C₁} {_} {_} e₁ translation =
 
 From our reformulation for translations, we can indeed conclude that an expression describes a subset of the variants of its translated expression.
 ```agda
-⊆-via→⊆-within : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain} → {e₁ : L₁ A}
+⊆-via→⊆-within : ∀ {i : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain} → {e₁ : L₁ i A}
   → (t : Translation L₁ L₂ C₁ C₂)
-  → e₁ ⊆-via t
+  → _⊆-via_ {i} {L₁} {L₂} {C₁} {C₂} {A} e₁ t
     ---------------------------------------------
-  → e₁ ⊆ (lang t e₁) within (sem₁ t) and (sem₂ t)
-⊆-via→⊆-within t ⊆-via = λ c₁ → conf t c₁ , ⊆-via c₁
+  → _⊆_within_and_ {i} {Size.∞} {L₁} {L₂} {C₁} {C₂} {A} e₁ (lang t e₁) (sem₁ t) (sem₂ t)
+⊆-via→⊆-within {i} t ⊆-via = λ c₁ → conf t c₁ , ⊆-via c₁
 ```
 
 Analogously, we proceed for the inverse direction.
@@ -254,6 +266,7 @@ We cannot reuse our above definitions as we did for `_⊆-_within_and_` because 
 To check if a variant described by translated expression `lang translation e₁` is also described by the original expression `e₁`, we have to inspect whether any possible configuration of the translated expression can also be made to `e₁`.
 That is the reason why we require translations to also provide backwards translations for configurations: We are not directly dealing with sets of variants but with the semantics as a function describing this set indirectly via its configuration parameter.
 ```agda
+{-
 _⊇-via_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
   → (e₁ : L₁ A)
   → Translation L₁ L₂ C₁ C₂
@@ -271,10 +284,12 @@ _⊇-via_ {_} {_} {_} {C₂} {_} e₁ translation =
     ---------------------------------------------
   → (lang t e₁) ⊆ e₁ within (sem₂ t) and (sem₁ t)
 ⊇-via→⊆-within t ⊇-via = λ c₂ → fnoc t c₂ , Eq.sym (⊇-via c₂)
+-}
 ```
 
 As earlier, we can compose the above definitions to say that an expression `e₁` describes the same set of variants as its translated expression.
 ```agda
+{-
 _≚-via_ : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain}
   → (e₁ : L₁ A)
   → Translation L₁ L₂ C₁ C₂
@@ -291,14 +306,17 @@ _≚-via_ {_} {_} {C₁} {_} {_} e₁ t =
 ≚-via→≚-within t (⊆-via , ⊇-via) =
     ⊆-via→⊆-within t ⊆-via
   , ⊇-via→⊆-within t ⊇-via
+  -}
 ```
 
 Finally, we can establish whether a translation is variant- or semantics-preserving.
 A translation is variability-preserving if it translates every expression ot a variant-equivalent expression.
 This is one of the major theorems we ought to show for translation between variability languages.
 ```agda
+{-
 _is-variant-preserving : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} → Translation L₁ L₂ C₁ C₂ → Set₁
 _is-variant-preserving {L₁} {_} {_} {_} t = ∀ {A : Domain} (e₁ : L₁ A) → e₁ ≚-via t
+-}
 ```
 
 A translation is semantics preserving iff its semantics preserving and the same configuration yields the same variants.
@@ -306,15 +324,18 @@ We identify a configuration to be the same if it can be uniquely translated back
 We do not require the inverse direction (`fnoc` being an embedding of configurations from `C₂` into `C₁`) because `C₂` could be larger than `C₁` (when interpreted as a set).
 For example, the set of features in `C₂` could be bigger (e.g., when going from core choice calculus to binary choice calculus) but all information can be derived by `conf` from our initial configuration `c₁`.
 ```agda
+{-
 _is-semantics-preserving : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} → Translation L₁ L₂ C₁ C₂ → Set₁
 _is-semantics-preserving {_} {_} {C₁} {_} t =
     t is-variant-preserving
   × (conf t) embeds-via (fnoc t)
+  -}
 ```
 
 We can conclude that a language is as expressive as another language if there exists a variant preserving translation.
 This is our major theorem that allows us to prove relations about languages from writing translations.
 ```agda
+{-
 translation-proves-variant-preservation : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang}
   → (t : Translation L₁ L₂ C₁ C₂)
   → t is-variant-preserving
@@ -323,5 +344,5 @@ translation-proves-variant-preservation : ∀ {L₁ L₂ : VarLang} {C₁ C₂ :
 translation-proves-variant-preservation trans preservation e₁ =
     lang trans e₁
   , ≚-via→≚-within trans (preservation e₁)
+  -}
 ```
-
