@@ -42,6 +42,7 @@ open Eq.≡-Reasoning
   using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
+open import Translation.Translation using (VarLang; ConfLang; Domain; Semantics)
 open import Extensionality
   using (extensionality)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
@@ -61,10 +62,10 @@ Dimension = String
 Tag : Set
 Tag = ℕ
 
-data CC (i : Size) (A : Set) : Set where
-  Artifact : ∀ {j : Size< i} →
+data CC (i : Size) : VarLang where
+  Artifact : ∀ {j : Size< i} {A : Domain} →
     A → List (CC j A) → CC i A
-  _⟨_⟩ : ∀ {j : Size< i} →
+  _⟨_⟩ : ∀ {j : Size< i} {A : Domain} →
     Dimension → List⁺ (CC j A) → CC i A
 ```
 
@@ -119,7 +120,7 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 
 First, we define configurations as functions that evaluate dimensions by tags, according to Eric's phd thesis:
 ```agda
-Configuration : Set
+Configuration : ConfLang
 Configuration = Dimension → Tag
 ```
 
@@ -149,7 +150,7 @@ choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-⟦_⟧ : ∀ {i : Size} {A : Set} → CC i A → Configuration → Variant A
+⟦_⟧ : ∀ {i : Size} → Semantics (CC i) Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
@@ -326,10 +327,10 @@ Our goal is to prove that every choice calculus expression can be expressed as a
 
 As for choice calculus, `i` is an upper bound for the depth of the expression tree.
 ```agda
-data CC₂ (i : Size) (A : Set) : Set where
-  Artifact₂ : {j : Size< i} →
+data CC₂ (i : Size) : VarLang where
+  Artifact₂ : {j : Size< i} {A : Domain} →
     A → List (CC₂ j A) → CC₂ i A
-  _⟨_,_⟩₂ : {j : Size< i} →
+  _⟨_,_⟩₂ : {j : Size< i} {A : Domain} →
     Dimension → CC₂ j A → CC₂ j A → CC₂ i A
 ```
 
@@ -351,10 +352,10 @@ Tag₂ = Bool
 left  = true
 right = false
 
-Configuration₂ : Set
+Configuration₂ : ConfLang
 Configuration₂ = Dimension → Tag₂
 
-⟦_⟧₂ : ∀ {i : Size} {A : Set} → CC₂ i A → Configuration₂ → Variant A
+⟦_⟧₂ : ∀ {i : Size} → Semantics (CC₂ i) Configuration₂
 ⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
 ```
@@ -773,8 +774,8 @@ update-configuration-converter conf-converter D n D' binary? =
           if (queried-input-dimension dim-== D)
           then (if (c₂ D')       -- If the binary configuration has chosen the left alternative of the nested binary dimension
                 then n           -- ... then that is the alternative we have to pick in the input formula.
-                else (if binary? -- ... if not, we check if the current choice is already.
-                      then suc n -- If it is, we pick the right alternative.
+                else (if binary? -- ... if not, we check if the current choice is already binary.
+                      then suc n            -- If it is, we pick the right alternative.
                       else recursive-result -- Otherwise, we check further nested branches recursively.
                       )
                 )
