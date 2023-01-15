@@ -261,7 +261,7 @@ record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
     lang : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ (size i) D
     conf : C₁ → C₂
     fnoc : C₂ → C₁ -- We need this to quantify over the set of variants described by the translated expression.
-open Translation
+open Translation public
 ```
 
 We now reformulate our relations to compare expressions between languages to translations.

@@ -48,9 +48,15 @@ open import Translation.Translation
   -- Names
   using (VarLang; ConfLang; Domain; Semantics)
   -- Relations of expression in a variability language
-  using (_≈_within_; _⊆_within_; _≚_within_)
+  using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
+  -- Relations of expression in two variability languages
+  using (_,_and_,_⊢_⊆_; _,_and_,_⊢_≚_)
+  -- Translations
+  using (Translation; conf; fnoc)
+  -- Translation properties
+  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving)
 open import Extensionality
-  using (extensionality)
+  using (extensionality; _embeds-via_)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```
 
@@ -166,65 +172,40 @@ The semantic domain is a function that generates variants given configurations.
 
 Some transformation rules
 ```agda
-_≈c_x_ : ∀ {i j : Size} {A : Set}
-  → (a : CC i A) → (b : CC j A) → Semantics CC Configuration → Set
-a ≈c b x ⟦_⟧ = ⟦ a ⟧ ≡ ⟦ b ⟧
-infix 5 _≈c_x_
-
 -- unary choices are mandatory
 D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
-    ---------------
-     → D ⟨ e ∷ [] ⟩ ≈c e x ⟦_⟧
---   → D ⟨ e ∷ [] ⟩ ≈ e within ⟦_⟧
---    → _≈_within_ {L = CC} (D ⟨ e ∷ [] ⟩) e ⟦_⟧
---  → _≈_within_ {↑ i} {i} {CC} {Configuration} {A} (D ⟨ e ∷ [] ⟩) e ⟦_⟧
+    --------------------------
+  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≈ e
 D⟨e⟩≈e = refl
 
 -- other way to prove the above via variant-equivalence
 
 D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
-    ---------------
-  → D ⟨ e ∷ [] ⟩ ⊆ e within ⟦_⟧
-D⟨e⟩⊂̌e config = ( config , {!!} )
+    --------------------------
+  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ⊆ e
+D⟨e⟩⊂̌e config = ( config , refl )
 
 e⊂̌D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
-    ---------------
-  → e ⊆ D ⟨ e ∷ [] ⟩ within ⟦_⟧
-e⊂̌D⟨e⟩ config = ( config , {!!} )
+    --------------------------
+  → CC , ⟦_⟧ ⊢ e ⊆ D ⟨ e ∷ [] ⟩
+e⊂̌D⟨e⟩ config = ( config , refl )
 
 D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
-    ---------------
-  → D ⟨ e ∷ [] ⟩ ≚ e within ⟦_⟧
+    --------------------------
+  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊂̌e {i} {A} {e} {D} , e⊂̌D⟨e⟩ {i} {A} {e} {D}
-```
-
-In fact, we already have proven `D ⟨ e ∷ [] ⟩ ≈ e` earlier, from which `D ⟨ e ∷ [] ⟩ ≚ e` follows:
-```agda
--- Semantic equivalence implies variant equivalence.
-≈→⊂̌ : ∀ {i j : Size} {A : Set} {a : CC i A} {b : CC j A}
-  → a ≈ b within ⟦_⟧
-    -----
-  → a ⊆ b within ⟦_⟧
--- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
-≈→⊂̌ a≈b config = config , Eq.cong (λ ⟦x⟧ → ⟦x⟧ config) a≈b
-
--- Semantic equivalence implies variant equivalence.
-≈→≚ : ∀ {i j : Size} {A : Set} {a : CC i A} {b : CC j A}
-  → a ≈ b within ⟦_⟧
-    -----
-  → a ≚ b within ⟦_⟧
-≈→≚ {i} {j} {A} {a} {b} a≈b =
-    ≈→⊂̌ {i} {j} {A} {a} {b} a≈b
-  , ≈→⊂̌ {j} {i} {A} {b} {a} (Eq.sym a≈b)
 ```
 
 Finally, we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
 ```agda
 D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
     ---------------
-  → D ⟨ e ∷ [] ⟩ ≚ e within ⟦_⟧
-D⟨e⟩≚e' {i} {A} {e} {D} = {!!}
-  --≈→≚ {↑ i} {i} {A} {D ⟨ e ∷ [] ⟩} {e} (D⟨e⟩≈e {i} {A} {e} {D})
+  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
+D⟨e⟩≚e' {i} {A} {e} {D} =
+  ≈→≚ {↑ i} {i}
+      {CC} {Configuration} {⟦_⟧} {A}
+      {D ⟨ e ∷ [] ⟩} {e}
+      (D⟨e⟩≈e {i} {A} {e} {D})
 ```
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
@@ -286,22 +267,14 @@ Configuration₂ = Dimension → Tag₂
 ⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
 ```
 
-Semantic equivalence for binary choice calculus:
-```agda
-_≈₂_ : ∀ {i j : Size} {A : Set}
-  → (a : CC₂ i A) → (b : CC₂ j A) → Set
-a ≈₂ b = ⟦ a ⟧₂ ≡ ⟦ b ⟧₂
-infix 5 _≈₂_
-```
-
 Some transformation rules:
 ```agda
 open AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
 
 cc₂-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : CC₂ i A}
-    ----------------
-  → D ⟨ e , e ⟩₂ ≈₂ e
+    -----------------------------
+  → CC₂ , ⟦_⟧₂ ⊢ D ⟨ e , e ⟩₂ ≈ e
 cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
   ⟦ D ⟨ e , e ⟩₂ ⟧₂ c             ≡⟨⟩
   ⟦ if (c D) then e else e ⟧₂ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-idemp (c D)) ⟩
@@ -314,7 +287,7 @@ cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
 --       rather containers in the meta-language. Maybe it would make sense to generalize choice
 --       calculus to have lists of lists of children in choices instead of exactly one subtree per alternative.
 cc₂-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : CC₂ i A}
-  → D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ≈₂ Artifact₂ a [ D ⟨ x , y ⟩₂ ]
+  → CC₂ , ⟦_⟧₂ ⊢ D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ≈ Artifact₂ a [ D ⟨ x , y ⟩₂ ]
 cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
   begin
     ⟦ D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ⟧₂ c
@@ -335,28 +308,6 @@ To prove that both transformations are valid, we define semantic equivalence bet
 Semantic equivalence between a binary and n-ary choice calculus expression cannot be expressed directly because the semantics of binary and n-ary choice calculus use different types of configurations.
 Yet, we can compare the set of described variants in terms of variant-preserving equivalence.
 Thus, both expressions are considered semantically equal if they yield the same variants for all configurations.
-```agda
-{-
-We use a formulation similar to the one for variant equivalence for n-ary choice calculus.
-Equivalence is subset in both directionss.
--}
-_₂⊂̌ₙ_ : ∀ {i j : Size} {A : Set}
-  → CC₂ i A → CC j A → Set
-cc₂ ₂⊂̌ₙ ccₙ = ∀ (c₂ : Configuration₂) → ∃[ c ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
-
-_ₙ⊂̌₂_ : ∀ {i j : Size} {A : Set}
-  → CC i A → CC₂ j A → Set
-ccₙ ₙ⊂̌₂ cc₂ = ∀ (c : Configuration) → ∃[ c₂ ] (⟦ cc₂ ⟧₂ c₂ ≡ ⟦ ccₙ ⟧ c)
-
-_₂≚ₙ_ : ∀ {i j : Size} {A : Set}
-  → CC₂ i A → CC j A → Set
-cc₂ ₂≚ₙ ccₙ = (cc₂ ₂⊂̌ₙ ccₙ) × (ccₙ ₙ⊂̌₂ cc₂)
-
--- sugar for inverse direction
-_ₙ≚₂_ : ∀ {i j : Size} {A : Set}
-  → CC i A → CC₂ j A → Set
-ccₙ ₙ≚₂ cc₂ = cc₂ ₂≚ₙ ccₙ
-```
 
 ### Binary to N-ary Choice Calculus
 
@@ -400,65 +351,78 @@ Only valid for our translation from CC₂ to CC.
 -}
 toBinaryConfig : Configuration → Configuration₂
 toBinaryConfig c = asTag₂ ∘ c
+
+CC₂→CC : Translation CC₂ CC Configuration₂ Configuration
+CC₂→CC = record
+  { sem₁ = ⟦_⟧₂
+  ; sem₂ = ⟦_⟧
+  ; size = λ i → i
+  ; lang = toCC
+  ; conf = toNaryConfig
+  ; fnoc = toBinaryConfig
+  }
 ```
 
 And now for the proofs.
 ```agda
-CC₂→CC-left : ∀ {i : Size} {A : Set} {e : CC₂ i A}
-    ------------
-  → e ₂⊂̌ₙ toCC e
+CC₂→CC-left : ∀ {i : Size} {A : Domain}
+  → (cc₂-expr : CC₂ i A)
+    ---------------------
+  → cc₂-expr ⊆-via CC₂→CC
 
-CC₂→CC-right : ∀ {i : Size} {A : Set} {e : CC₂ i A}
-    ------------
-  → toCC e ₙ⊂̌₂ e
+CC₂→CC-right : ∀ {i : Size} {A : Domain}
+  → (cc₂-expr : CC₂ i A)
+    ---------------------
+  → cc₂-expr ⊇-via CC₂→CC
 
--- Main theorem for drawing an arrow from CC₂ to CC.
-CC₂→CC : ∀ {i : Size} {A : Set} {e : CC₂ i A}
-    ------------
-  → e ₂≚ₙ toCC e
-CC₂→CC {i} {A} {e} =
-    CC₂→CC-left  {i} {A} {e}
-  , CC₂→CC-right {i} {A} {e}
+conf-remains-same :
+    (c₂ : Configuration₂)
+  → (d : Dimension)
+    ----------------------------
+  → asTag₂ (asTag (c₂ d)) ≡ c₂ d
+conf-remains-same c₂ d with c₂ d
+... | true  = refl
+... | false = refl
+
+CC₂→CC-is-variant-preserving : CC₂→CC is-variant-preserving
+CC₂→CC-is-variant-preserving e = CC₂→CC-left e , CC₂→CC-right e
+
+CC₂→CC-is-semantics-preserving : CC₂→CC is-semantics-preserving
+CC₂→CC-is-semantics-preserving = CC₂→CC-is-variant-preserving , extensionality ∘ conf-remains-same
 ```
 
 #### Proof of the left side
 
 ```agda
--- helper function that tells us that the existing n-ary configuration, given a binary configuration, is toNaryConfig c₂. That basically unwraps the ∃ and avoids to write pairs all the time.
-CC₂→CC-left-toNaryConfig : ∀ {i : Size} {A : Set}
-  → ∀ (e : CC₂ i A)
-  → ∀ (c₂ : Configuration₂)
-    -------------------------------------
-  → ⟦ e ⟧₂ c₂ ≡ ⟦ toCC e ⟧ (toNaryConfig c₂)
-
 -- helper function for choices
-CC₂→CC-left-toNaryConfig-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : CC₂ i A} {r : CC₂ i A}
+CC₂→CC-left-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : CC₂ i A} {r : CC₂ i A}
   → ∀ (c₂ : Configuration₂)
-    ---------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
     ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂)
-CC₂→CC-left-toNaryConfig-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
-...                          | true  = ⟦ if true then l else r ⟧₂ c₂                                       ≡⟨⟩
-                                       ⟦ l ⟧₂ c₂                                                           ≡⟨ CC₂→CC-left-toNaryConfig l c₂ ⟩
-                                       ⟦ toCC l ⟧ (toNaryConfig c₂)                                        ≡⟨⟩
-                                       ⟦ (choice-elimination 0 (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂) ∎
-                             -- This proof is analoguous to the proof for the "true" case.
-                             -- Thus, we simplify the step-by-step-proof to the only reasoning necessary.
-...                          | false = CC₂→CC-left-toNaryConfig r c₂
+CC₂→CC-left-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
+... | true  = ⟦ if true then l else r ⟧₂ c₂                                       ≡⟨⟩
+              ⟦ l ⟧₂ c₂                                                           ≡⟨ CC₂→CC-left l c₂ ⟩
+              ⟦ toCC l ⟧ (toNaryConfig c₂)                                        ≡⟨⟩
+              ⟦ (choice-elimination 0 (toCC l ∷ toCC r ∷ [])) ⟧ (toNaryConfig c₂) ∎
+    -- This proof is analoguous to the proof for the "true" case.
+    -- Thus, we simplify the step-by-step-proof to the only reasoning necessary.
+... | false = CC₂→CC-left r c₂
 
 open import Data.List.Properties renaming (map-∘ to mapl-∘)
 
 -- Curiously, the proof is easier for choices than for artifacts.
 -- For some reason it was really hard to just prove the application of the induction hypothesis over all subtrees for Artifacts.
 -- The use of flip and map made it hard.
--- If we have just artifacts, there is nothing left to do.
-CC₂→CC-left-toNaryConfig (Artifact₂ a []) c₂ = refl
+
+-- If we have just artifact leaves, there is nothing left to do.
+CC₂→CC-left (Artifact₂ a []) c₂ = refl
 -- The semantics "just" recurses on Artifacts.
-CC₂→CC-left-toNaryConfig (Artifact₂ a es@(_ ∷ _)) c₂ =
+CC₂→CC-left (Artifact₂ a es@(_ ∷ _)) c₂ =
   ⟦ Artifact₂ a es ⟧₂ c₂                                        ≡⟨⟩
   Artifactᵥ a (mapl (λ x → ⟦ x ⟧₂ c₂) es)                        ≡⟨ Eq.cong (λ m → Artifactᵥ a (m es)) -- apply the induction hypothesis below the Artifactᵥ constructor
                                                                    ( mapl-cong-≗-≡ -- and below the mapl
-                                                                     (λ {v → CC₂→CC-left-toNaryConfig v c₂})
+                                                                     (λ {v → CC₂→CC-left v c₂})
                                                                    )
                                                                   ⟩
   Artifactᵥ a (mapl (flip (⟦_⟧ ∘ toCC) (toNaryConfig c₂)) es)    ≡⟨ Eq.cong (λ m → Artifactᵥ a m) (mapl-∘ es) ⟩
@@ -466,52 +430,41 @@ CC₂→CC-left-toNaryConfig (Artifact₂ a es@(_ ∷ _)) c₂ =
   (⟦ toCC (Artifact₂ a es) ⟧ (toNaryConfig c₂))                  ∎
 -- The proof for choices could be greatly simplified because when doing a case analyses on (c₂ D), only the induction hypthesis
 -- is necessary for reasoning. We leave the long proof version though because it better explains the proof.
-CC₂→CC-left-toNaryConfig (D ⟨ l , r ⟩₂) c₂ =
+CC₂→CC-left (D ⟨ l , r ⟩₂) c₂ =
   ⟦ D ⟨ l , r ⟩₂ ⟧₂ c₂                                                                   ≡⟨⟩
-  ⟦ if c₂ D then l else r ⟧₂ c₂                                                         ≡⟨ CC₂→CC-left-toNaryConfig-choice-case-analyses c₂ ⟩
+  ⟦ if c₂ D then l else r ⟧₂ c₂                                                         ≡⟨ CC₂→CC-left-choice-case-analyses c₂ ⟩
   ⟦ choice-elimination ((toNaryConfig c₂) D) (toCC l ∷ toCC r ∷ []) ⟧ (toNaryConfig c₂) ≡⟨⟩
   ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ (toNaryConfig c₂)                                       ≡⟨⟩
   ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ (toNaryConfig c₂)                                              ∎
-
--- Finally, prove left side by showing that asCC-Conf c₂ is a configuration satisfying the subset relation. (We substitute asCC-Conf c₂ for the configuration in ∃ [c] ... in the relation).
-CC₂→CC-left {i} {A} {e} c₂ = toNaryConfig c₂ , CC₂→CC-left-toNaryConfig e c₂
 ```
 
 #### Proof of the right side
 
 This proof is very similar to the left side. Maybe we can simplify both proofs if we extract some similarities.
 ```agda
-CC₂→CC-right-toBinaryConfig : ∀ {i : Size} {A : Set}
-  → ∀ (e : CC₂ i A)
-  → ∀ (c : Configuration)
-    ------------------------------------
-  → ⟦ e ⟧₂ (toBinaryConfig c) ≡ ⟦ toCC e ⟧ c
-
 -- case analyses for choices where we either have to proceed the proof on the left or right side of a binary choice depending on our configuration
-CC₂→CC-right-toBinaryConfig-choice-case-analysis : ∀ {i : Size} {A : Set} {D : Dimension} {l r : CC₂ i A}
+CC₂→CC-right-choice-case-analysis : ∀ {i : Size} {A : Set} {D : Dimension} {l r : CC₂ i A}
   → ∀ (c : Configuration)
-    -------------------------------------------
+    -------------------------------------------------------
   →   ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
     ≡ ⟦ choice-elimination (c D) (toCC l ∷ toCC r ∷ []) ⟧ c
-CC₂→CC-right-toBinaryConfig-choice-case-analysis {i} {A} {D} {l} {r} c with c D
-... | zero  = CC₂→CC-right-toBinaryConfig l c
-... | suc n = CC₂→CC-right-toBinaryConfig r c
+CC₂→CC-right-choice-case-analysis {i} {A} {D} {l} {r} c with c D
+... | zero  = CC₂→CC-right l c
+... | suc n = CC₂→CC-right r c
 
-CC₂→CC-right-toBinaryConfig (Artifact₂ a []) c = refl
-CC₂→CC-right-toBinaryConfig (Artifact₂ a es@(_ ∷ _)) c =
+CC₂→CC-right (Artifact₂ a []) c = refl
+CC₂→CC-right (Artifact₂ a es@(_ ∷ _)) c =
   ⟦ Artifact₂ a es ⟧₂ (toBinaryConfig c)               ≡⟨⟩
-  Artifactᵥ a (mapl (flip ⟦_⟧₂ (toBinaryConfig c)) es) ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) (mapl-cong-≗-≡ (λ {v → CC₂→CC-right-toBinaryConfig v c})) ⟩
+  Artifactᵥ a (mapl (flip ⟦_⟧₂ (toBinaryConfig c)) es) ≡⟨ Eq.cong (λ {m → Artifactᵥ a (m es)}) (mapl-cong-≗-≡ (λ {v → CC₂→CC-right v c})) ⟩
   Artifactᵥ a (mapl ((flip ⟦_⟧ c) ∘ toCC) es)           ≡⟨ Eq.cong (λ {x → Artifactᵥ a x}) (mapl-∘ es) ⟩
   Artifactᵥ a (mapl (flip ⟦_⟧ c) (mapl toCC es))       ≡⟨⟩
   ⟦ toCC (Artifact₂ a es) ⟧ c                          ∎
-CC₂→CC-right-toBinaryConfig (D ⟨ l , r ⟩₂) c =
+CC₂→CC-right (D ⟨ l , r ⟩₂) c =
   ⟦ D ⟨ l , r ⟩₂ ⟧₂ (toBinaryConfig c)                   ≡⟨⟩
-  ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c) ≡⟨ CC₂→CC-right-toBinaryConfig-choice-case-analysis c ⟩
+  ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c) ≡⟨ CC₂→CC-right-choice-case-analysis c ⟩
   ⟦ choice-elimination (c D) (toCC l ∷ toCC r ∷ []) ⟧ c ≡⟨⟩
   ⟦ D ⟨ toCC l ∷ toCC r ∷ [] ⟩ ⟧ c                       ≡⟨⟩
   ⟦ toCC (D ⟨ l , r ⟩₂) ⟧ c                              ∎
-
-CC₂→CC-right {i} {A} {e} c = toBinaryConfig c , CC₂→CC-right-toBinaryConfig e c
 ```
 
 ### N-ary to Binary Choice Calculus
@@ -608,6 +561,7 @@ open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traver
 To convert configurations for the input formula to configurations for the output formula and vice versa, we introduce the following record.
 We use this record as the state during our translation.
 ```agda
+{-
 -- resembles a specialized version of _⇔_ in the plfa book
 record ConfigurationConverter : Set where
   field
@@ -627,6 +581,7 @@ unknownConfigurationConverter = record
 -- We keep track of the current configuration converter and update it when necessary.
 TranslationState : Set → Set
 TranslationState = State ConfigurationConverter
+-}
 ```
 
 We can now define our translation function `toCC₂`.
@@ -643,16 +598,17 @@ We should later decide if this extra boilerplate is worth it or not.
 ```agda
 -- helper function to keep track of state
 {-# TERMINATING #-}
-toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
+{-toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
 
 -- actural translation function
 toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationConverter × CC₂ ∞ A
 toCC₂ cc = runState (toCC₂' cc) unknownConfigurationConverter
-
+-}
 {- |
 Unroll choices by recursively nesting any alternatives beyond the first.
 Example: D ⟨ u ∷ v ∷ w ∷ [] ⟩ → D.0 ⟨ u, D.1 ⟨ v , w ⟩₂ ⟩₂
 -}
+{-
 toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
   → Dimension      -- initial dimension in input formula that we translate (D in the example above).
   → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
@@ -731,11 +687,12 @@ toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
     conf-converter ← get
     put (update-configuration-converter conf-converter D n D' (empty? es))
 
-    pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
+    pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)-}
 ```
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
+{-
 CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
   → proj₂ (toCC₂ e) ₂⊂̌ₙ e
@@ -749,12 +706,13 @@ CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
   → proj₂ (toCC₂ e) ₂≚ₙ e
 CC→CC₂ {i} {A} {e} =
     CC→CC₂-left  {i} {A} {e}
-  , CC→CC₂-right {i} {A} {e}
+  , CC→CC₂-right {i} {A} {e} -}
 ```
 
 #### Proof of the left side
 
 ```agda
+{-
 -- Every variant described by the translated expression is also described by the initial expression.
 CC→CC₂-left' : ∀ {i : Size} {A : Set}
   → ∀ (e : CC i A)
@@ -801,13 +759,14 @@ CC→CC₂-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
 
 CC→CC₂-left {i} {A} {e} c₂ =
   let conf-trans , cc₂ = toCC₂ e in
-  binary→nary conf-trans c₂ , CC→CC₂-left' e c₂
+  binary→nary conf-trans c₂ , CC→CC₂-left' e c₂ -}
 ```
 
 #### Proof of the right side
 
 ```agda
 -- Every variant described by an n-ary CC expression, is also described by its translation to binray CC.
+{-
 CC→CC₂-right' : ∀ {i : Size} {A : Set}
   → ∀ (e : CC i A)
   → ∀ (c : Configuration)
@@ -821,7 +780,7 @@ CC→CC₂-right' (D ⟨ es@(_ ∷ _ ∷ _) ⟩) c = {!!}
 
 CC→CC₂-right {i} {A} {e} c =
   let conf-trans , cc₂ = toCC₂ e in
-  nary→binary conf-trans c , CC→CC₂-right' e c
+  nary→binary conf-trans c , CC→CC₂-right' e c -}
 ```
 
 ## Example and Test Time
@@ -942,6 +901,7 @@ selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 Convert a given named choice calculus formula to binary normal form and back and print all intermediate results.
 Do so for two configurations, one configuration that always selects 0, and one that always selects 1.
 ```agda
+{-
 ccex-toBinaryAndBack : CCExample → String
 ccex-toBinaryAndBack (name , cc) = unlines (
   let
@@ -999,14 +959,14 @@ ccex-toBinaryAndBack (name , cc) = unlines (
   (eval-select₂ₙ 0) ∷
   (eval-select₂ₙ 1) ∷
   (eval-select₂ₙ 2) ∷
-  [])
+  []) -}
 ```
 
 ### Final Printing
 Print the binary-conversion for all examples:
 ```agda
-mainStr : String
-mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
+--mainStr : String
+--mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
 ```
 
 ## Unicode Characters in Emacs Agda Mode
