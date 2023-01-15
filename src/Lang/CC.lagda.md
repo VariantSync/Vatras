@@ -51,10 +51,12 @@ open import Translation.Translation
   using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
   -- Relations of expression in two variability languages
   using (_,_and_,_⊢_⊆_; _,_and_,_⊢_≚_)
+  -- Relations between variability languages
+  using (_,_is-as-expressive-as_,_)
   -- Translations
   using (Translation; conf; fnoc)
   -- Translation properties
-  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving)
+  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 open import Extensionality
   using (extensionality; _embeds-via_)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
@@ -389,6 +391,9 @@ CC₂→CC-is-variant-preserving e = CC₂→CC-left e , CC₂→CC-right e
 
 CC₂→CC-is-semantics-preserving : CC₂→CC is-semantics-preserving
 CC₂→CC-is-semantics-preserving = CC₂→CC-is-variant-preserving , extensionality ∘ conf-remains-same
+
+CC-is-as-expressive-as-CC₂ : CC , ⟦_⟧ is-as-expressive-as CC₂ , ⟦_⟧₂
+CC-is-as-expressive-as-CC₂ = translation-proves-variant-preservation CC₂→CC CC₂→CC-is-variant-preserving
 ```
 
 #### Proof of the left side
