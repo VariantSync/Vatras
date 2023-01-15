@@ -315,6 +315,9 @@ Thus, both expressions are considered semantically equal if they yield the same 
 
 We start with the second task: Converting a choice calculus expression of which we know at the type level that it is in binary normal form, back to n-ary choice calculus.
 It will still be an expression in binary normal form but we will lose that guarantee at the type level.
+
+#### Translation
+
 ```agda
 {- |
 Converts a binary choice calculus expression to a core choice calculus expression.
@@ -365,7 +368,8 @@ CC₂→CC = record
   }
 ```
 
-And now for the proofs.
+#### Proofs
+
 ```agda
 CC₂→CC-left : ∀ {i : Size} {A : Domain}
   → (cc₂-expr : CC₂ i A)
@@ -566,7 +570,6 @@ open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traver
 To convert configurations for the input formula to configurations for the output formula and vice versa, we introduce the following record.
 We use this record as the state during our translation.
 ```agda
-{-
 -- resembles a specialized version of _⇔_ in the plfa book
 record ConfigurationConverter : Set where
   field
@@ -586,7 +589,6 @@ unknownConfigurationConverter = record
 -- We keep track of the current configuration converter and update it when necessary.
 TranslationState : Set → Set
 TranslationState = State ConfigurationConverter
--}
 ```
 
 We can now define our translation function `toCC₂`.
@@ -603,17 +605,17 @@ We should later decide if this extra boilerplate is worth it or not.
 ```agda
 -- helper function to keep track of state
 {-# TERMINATING #-}
-{-toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
+toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
 
 -- actural translation function
 toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationConverter × CC₂ ∞ A
 toCC₂ cc = runState (toCC₂' cc) unknownConfigurationConverter
--}
+
 {- |
 Unroll choices by recursively nesting any alternatives beyond the first.
 Example: D ⟨ u ∷ v ∷ w ∷ [] ⟩ → D.0 ⟨ u, D.1 ⟨ v , w ⟩₂ ⟩₂
 -}
-{-
+
 toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
   → Dimension      -- initial dimension in input formula that we translate (D in the example above).
   → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
@@ -692,7 +694,7 @@ toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
     conf-converter ← get
     put (update-configuration-converter conf-converter D n D' (empty? es))
 
-    pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)-}
+    pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
 ```
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).

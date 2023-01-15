@@ -2,11 +2,12 @@
 
 ## Todo
 
+- In a translation `conf` and `fnoc` might depend on the initial expression `e₁` in `L₁` to know features names and annotation structure to know how to properly translate. This happens when we translate from n-ary to binary choice calculus. I suppose that is reasonable.
 - Can we make the definitions less clunky? For example by turning semantics into implicit parameters more frequently?
-- Redefine the relations within a single language as a specialication of the relations for two languages (by comparing a language with itself)? I guess we could just leave as is because it is more didactic and enables simplifications (especially for semantic equivalence).
-- Test if we can instantiate these for some concrete languages, such as our translations for CCC <-> BCC.
+- Redefine the relations within a single language as a specialication of the relations for two languages (by comparing a language with itself)? I guess we could just leave as is because it is more didactic and enables simplifications (especially for semantic equivalence). ⇒ We could do so but it is more didactic this way. We could provide proof that they are equivalent when applied to the same single language.
 - We are still missing the the annotation language over which we did not yet abstract.
 - Are these definitions in line with OC for which we have an additional well-formedness constraint?
+-- Is one size in the parameters enough? For CC we actually need two sizes, one constraining the tree depth and one constraining its width. This is necessary because when translating from CC to BCC, width of choices becomes depth.
 
 ## Options
 
