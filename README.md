@@ -1,9 +1,29 @@
 ﻿
-# Roadmap of Option Calculus
+# On the Expressive Power of Variability Languages
+
+## Setup
+
+The only dependency of the project is the agda standard library. I do not know the version I am using though (as I don't know yet how to know that).
+I am using Agda version 2.6.2.2 but newer version should be fine too and I guess also some older versions, I did not do any testing on that.
+To setup Agda and the standard library, I followed the guide from the _Programming Language Foundations in Agda_ (PLFA) book. You can finde the instructions [here](https://plfa.github.io/GettingStarted/). If everything works (hehe) then it should not take too long to setup Agda and the standard library.
+
+As an editor, I am using spacemacs with agda-mode. Setting emacs up for Agda is also explained in the PFLA setup instructions linked above.
+
+## Project Structure
+
+The semantic domain of all languages is defined in `src/SemanticDomain.agda`.
+Relations between languages and translations are formalized in `src/Translation/Translation.lagda.md`.
+All languages are formalized within the `src/Lang` subdirectory. Every language has its own file.
+Translations and theorems on relations between two such concrete languages are defined in the `src/Translation` directory.
+
+## (A bit outdated) Roadmap
 
 ![](res/taxonomy.jpg)
 
-## On the Structure of Variability
+###
+
+- [/] Relations for languages and translations
+- [ ] Completeness and Incompleteness Theorems
 
 ### Choice Calculus
 - [x] implement n-ary choice calculus
@@ -20,14 +40,14 @@
   - [/] proof of being variant-preserving
     - [x] Binary CC -> CC
     - [ ] CC -> Binary CC
-- [/] I already wrote a bidirectional translation from choice calculus to choice calculus with local dimension declarations. The idea is that when not having local dimension declarations, one can identify the deepest spot in the choice calculus tree at which the declaration can be introduced. We could also add that to our map.
+- [/] I already wrote a bidirectional translation from choice calculus to choice calculus with local dimension declarations in Haskell [here](https://github.com/VariantSync/ProofsCC/blob/main/src/CC/CCL.hs). The idea is that when not having local dimension declarations, one can identify the deepest spot in the choice calculus tree at which the declaration must be introduced. We could also add that to our map.
 
 ### Algebraic Decision Diagrams
 - [/] implement algebaric decision diagrams (ADDs)
   - [x] syntax
-  - [ ] semantics
+  - [x] semantics
   - [x] prove that BDDs are specialized ADDs
-  - [ ] prove that ADDs are equivalent to choice calculus by proving that a cc expression in binary normal form can be converted to ADD and vice versa. By transitivity `CC <-> Binary CC <-> ADD`, we get that any choice calculus expression can be transformed to ADD and vice versa.
+  - [ ] prove that ADDs are equivalent to choice calculus by proving that a CC expression in binary normal form can be converted to ADD and vice versa. By transitivity `CC <-> Binary CC <-> ADD`, we get that any choice calculus expression can be transformed to ADD and vice versa.
 
 - [ ] prove that choice calculus can encode any variation, by proving that we can build an ADD for any kind of variants. By transitivity we get that any ADD is also a CC expression and thus any set of variants can be encoded in CC.
 
