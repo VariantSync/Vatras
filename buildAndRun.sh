@@ -1,0 +1,2 @@
+./compile.sh
+./run.sh
