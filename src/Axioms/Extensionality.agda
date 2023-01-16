@@ -1,3 +1,5 @@
+module Axioms.Extensionality where
+
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 open Eq using (_≗_)

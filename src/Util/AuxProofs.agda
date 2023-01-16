@@ -1,4 +1,4 @@
-module AuxProofs where
+module Util.AuxProofs where
 
 open import Data.Nat.Base
 open import Data.Fin.Base using (Fin; fromℕ<)

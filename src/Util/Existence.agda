@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 
-module Existence where
+module Util.Existence where
 
 open import Agda.Primitive using (Level; _⊔_)
 open import Data.Product using (Σ)

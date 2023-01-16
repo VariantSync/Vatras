@@ -1,4 +1,4 @@
-module State where
+module Util.State where
 
 open import Data.Product using (_×_; proj₁; proj₂)
 

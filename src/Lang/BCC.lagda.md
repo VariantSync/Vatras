@@ -36,7 +36,7 @@ open Eq.≡-Reasoning
   using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- own modules
-open import Extensionality using (extensionality)
+open import Axioms.Extensionality using (extensionality)
 open import Lang.Annotation.Dimension using (Dimension)
 open import Translation.Translation
   -- Names
@@ -90,7 +90,7 @@ Configuration = Dimension → Tag
 
 Some transformation rules:
 ```agda
-open import AuxProofs using (if-idemp; if-cong)
+open import Util.AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
 
 cc-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : BCC i A}

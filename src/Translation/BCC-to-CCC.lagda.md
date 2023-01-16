@@ -68,7 +68,7 @@ open import Translation.Translation
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 
-open import Extensionality
+open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```

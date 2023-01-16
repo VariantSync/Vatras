@@ -30,11 +30,11 @@ open Eq using (_≡_; refl)
 
 open import Size using (Size)
 
-open import Data.Product using (_,_; ∃-syntax; _×_)
-open import Existence    using (_,_; ∃-Size; ∃-syntax-with-type)
+open import Data.Product   using (_,_; ∃-syntax; _×_)
+open import Util.Existence using (_,_; ∃-Size; ∃-syntax-with-type)
 
 open import SemanticDomain using (Variant)
-open import Extensionality using (_embeds-via_)
+open import Axioms.Extensionality using (_embeds-via_)
 ```
 
 ## Definitions

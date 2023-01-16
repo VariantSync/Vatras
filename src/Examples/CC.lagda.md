@@ -9,7 +9,7 @@
 ## Module
 
 ```agda
-module Example.CC where
+module Examples.CC where
 ```
 
 ## Imports

@@ -57,9 +57,6 @@ open import Translation.Translation
   using (Translation; conf; fnoc)
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
-open import Extensionality
-  using (extensionality; _embeds-via_)
-  renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```
 
 ## Syntax
@@ -121,7 +118,7 @@ This allows us to introduce complex error handling and we cannot easily define a
 
 ```agda
 open import Data.Fin.Base using (Fin)
-open import AuxProofs using (minFinFromLimit)
+open import Util.AuxProofs using (minFinFromLimit)
 
 {-|
 Clamps a tag at the given length.

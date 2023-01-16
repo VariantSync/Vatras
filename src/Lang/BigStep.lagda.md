@@ -26,9 +26,9 @@ open Eq
 
 -- Imports of own modules
 open import Lang.Annotation.Dimension using (Dimension; _≟_)
-open import Lang.BCC using (Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right)
+open import Lang.BCC using (Tag; BCC; Artifact; _⟨_,_⟩; left; right)
 open import SemanticDomain using (Variant; Artifactᵥ)
-open import Extensionality
+open import Axioms.Extensionality
   using (extensionality)
 
 open import Data.List.Relation.Unary.All using (All; reduce; []; _∷_)
@@ -71,40 +71,40 @@ there' : ∀ {R : Set} {l l' : Dimension} {r r' : R} {A}
 there' {l≢l' = l≢l'} = there (toWitnessFalse l≢l')
 
 Configuration : Set
-Configuration = Assignment Dimension Tag₂
+Configuration = Assignment Dimension Tag
 ```
 
 Denotational semantics of binary choice calculus as big-step semantics:
 ```agda
 infix 4 _⊢_⟶_
-data _⊢_⟶_ : ∀ {i A} → Configuration → CC₂ i A → Variant A → Set where
-  ξ-A₂ : ∀ {A c j a} {es : List (CC₂ j A)}
+data _⊢_⟶_ : ∀ {i A} → Configuration → BCC i A → Variant A → Set where
+  ξ-A₂ : ∀ {A c j a} {es : List (BCC j A)}
     → (esᵥ : All (λ e → ∃[ v ] (c ⊢ e ⟶ v)) es)
       -------------------------------------------------------
-    → c ⊢ (Artifact₂ a es) ⟶ (Artifactᵥ a (reduce proj₁ esᵥ))
+    → c ⊢ (Artifact a es) ⟶ (Artifactᵥ a (reduce proj₁ esᵥ))
 
-  C-l : ∀ {A c j D} {l r : CC₂ j A} {v : Variant A}
+  C-l : ∀ {A c j D} {l r : BCC j A} {v : Variant A}
     → c ∋ D ↦ left -- formulate this as evidence predicate ⊤?
     → c ⊢ l ⟶ v
       --------------------
-    → c ⊢ D ⟨ l , r ⟩₂ ⟶ v
+    → c ⊢ D ⟨ l , r ⟩ ⟶ v
 
-  C-r : ∀ {A c j D} {l r : CC₂ j A} {v : Variant A}
+  C-r : ∀ {A c j D} {l r : BCC j A} {v : Variant A}
     → c ∋ D ↦ right
     → c ⊢ r ⟶ v
       --------------------
-    → c ⊢ D ⟨ l , r ⟩₂ ⟶ v
+    → c ⊢ D ⟨ l , r ⟩ ⟶ v
 
 ξ-leaf : ∀ {A : Set} {c} {a : A}
     ------------------------------------
-  → c ⊢ Artifact₂ a [] ⟶ Artifactᵥ a []
+  → c ⊢ Artifact a [] ⟶ Artifactᵥ a []
 ξ-leaf = ξ-A₂ []
 ```
 
 Example:
 ```
-leaf : ∀ {i A} → A → CC₂ (↑ i) A
-leaf a = Artifact₂ a []
+leaf : ∀ {i A} → A → BCC (↑ i) A
+leaf a = Artifact a []
 
 leafᵥ : ∀ {A} → A → Variant A
 leafᵥ a = Artifactᵥ a []
@@ -112,8 +112,8 @@ leafᵥ a = Artifactᵥ a []
 
 Example 1:
 ```
-bin : ∀ {i} → CC₂ (↑ ↑ i) String
-bin = "D" ⟨ leaf "l" , leaf "r" ⟩₂
+bin : ∀ {i} → BCC (↑ ↑ i) String
+bin = "D" ⟨ leaf "l" , leaf "r" ⟩
 
 _ : (assign "D" ↦ left) ⊢ bin ⟶ leafᵥ "l"
 _ = C-l here ξ-leaf
@@ -121,11 +121,11 @@ _ = C-l here ξ-leaf
 
 Example 2:
 ```agda
-burger : ∀ {i} → CC₂ (↑ ↑ ↑ i) String
-burger = Artifact₂ "Sandwich" (
+burger : ∀ {i} → BCC (↑ ↑ ↑ i) String
+burger = Artifact "Sandwich" (
       leaf "Salad"
-    ∷ "Sauce" ⟨ leaf "Ketchup" , leaf "Mayonnaise" ⟩₂
-    ∷ "Patty" ⟨ leaf "Soy" , leaf "Halloumi" ⟩₂
+    ∷ "Sauce" ⟨ leaf "Ketchup" , leaf "Mayonnaise" ⟩
+    ∷ "Patty" ⟨ leaf "Soy" , leaf "Halloumi" ⟩
     ∷ [])
 
 burger-stabil : Variant String
