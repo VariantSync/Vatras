@@ -1,4 +1,4 @@
-# Algebraic Decision Diagrams in Agda
+# Algebraic Decision Diagrams
 
 ## Options
 
@@ -23,13 +23,11 @@ open import Size using (Size; Size<_)
 open import SemanticDomains using (Variant; Artifactᵥ)
 ```
 
-## Algebraic Decision Diagrams
+## Syntax
 
 An algebraic decision diagram (ADD) is a choice calculus expression in which all leaves are artifacts.
 We refer to a choice calculus expression whose abstract syntax is an ADD, as being in _product normal form_ (PNF):
 In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
-
-### Syntax
 
 ```agda
 Variable : Set
@@ -41,7 +39,7 @@ data ADD (i : Size) (A : Set) : Set where
     Variable → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
 
-### Semantics
+## Semantics
 
 ```agda
 {-|

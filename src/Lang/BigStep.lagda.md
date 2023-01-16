@@ -1,4 +1,4 @@
-# Alternative Formulation of Semantics as Transition Relations (Currently Playground)
+# Alternative Formulation of Semantics of BCC as Transition Relations (Currently Playground)
 
 ## Options
 
