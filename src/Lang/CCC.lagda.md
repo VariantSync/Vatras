@@ -17,8 +17,6 @@ module Lang.CCC where
 ## Imports
 ```agda
 -- Imports from Standard Library
-open import Data.Bool
-  using (Bool; true; false; if_then_else_)
 open import Data.List
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
@@ -26,37 +24,25 @@ open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
   renaming (map to mapl⁺)
 open import Data.Nat
-  using (ℕ; zero; suc; NonZero)
+  using (ℕ; suc; NonZero)
 open import Data.Product
-  using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
-open import Data.String
-  using (String; _++_)
+  using (_,_)
 open import Function
-  using (_∘_; flip)
+  using (flip)
 open import Size
-  using (Size; Size<_; ↑_; ∞; _⊔ˢ_)
+  using (Size; Size<_; ↑_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
-  using (_≡_; _≗_; refl)
-open Eq.≡-Reasoning
-  using (begin_; _≡⟨⟩_; step-≡; _∎)
+  using (_≡_; refl)
 
 -- Imports of own modules
-open import Lang.Annotation.Dimension using (Dimension; _==_)
+open import Lang.Annotation.Dimension using (Dimension)
 open import Translation.Translation
   -- Names
   using (VarLang; ConfLang; Domain; Semantics)
   -- Relations of expression in a variability language
   using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
-  -- Relations of expression in two variability languages
-  using (_,_and_,_⊢_⊆_; _,_and_,_⊢_≚_)
-  -- Relations between variability languages
-  using (_,_is-as-expressive-as_,_)
-  -- Translations
-  using (Translation; conf; fnoc)
-  -- Translation properties
-  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 ```
 
 ## Syntax
@@ -155,24 +141,21 @@ D⟨e⟩≈e = refl
 
 -- other way to prove the above via variant-equivalence
 
-D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
+D⟨e⟩⊆e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
   → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ⊆ e
-D⟨e⟩⊂̌e config = ( config , refl )
+D⟨e⟩⊆e config = ( config , refl )
 
-e⊂̌D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
+e⊆D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
   → CCC , ⟦_⟧ ⊢ e ⊆ D ⟨ e ∷ [] ⟩
-e⊂̌D⟨e⟩ config = ( config , refl )
+e⊆D⟨e⟩ config = ( config , refl )
 
 D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
   → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
-D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊂̌e {i} {A} {e} {D} , e⊂̌D⟨e⟩ {i} {A} {e} {D}
-```
+D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊆e {i} {A} {e} {D} , e⊆D⟨e⟩ {i} {A} {e} {D}
 
-Finally, we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
-```agda
 D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     ---------------
   → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
@@ -185,6 +168,7 @@ D⟨e⟩≚e' {i} {A} {e} {D} =
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
 ```agda
+open import Data.String using (String)
 
 -- Any upper bound is fine but we are at least 2 deep.
 cc_example_walk : ∀ {i : Size} → CCC (↑ ↑ i) String
@@ -215,6 +199,8 @@ dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
 ## Show
 
 ```agda
+open Data.String using (_++_)
+
 show : ∀ {i : Size} → CCC i String → String
 show (Artifact a []) = a
 show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
