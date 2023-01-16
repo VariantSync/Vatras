@@ -68,17 +68,23 @@ We consider three kinds of semantic relations between two expressions `a` and `b
 - Variant equivalence `a ≚ b` **iff** `a` and `b` describe the same set of variants (i.e., `a ⊆ b` and `b ⊆ a`)
 - Semantic equivalence `a ≈ b` **iff** `a` and `b` are variant equivalent and same configurations yield same variants.
 
-We start with semantic equivalence because it is the easierst to define.
+We start with semantic equivalence because it is the easiest to define.
 Any two expressions `a` and `b` in a variability language `L` are equivalent if their semantics `⟦_⟧` are equivalent:
 ```agda
-_,_⊢_≈_ : ∀ {i j : Size} {C : ConfLang} {A : Domain} → (L : VarLang) → Semantics L C → (a : L i A) → (b : L j A) → Set
-L , ⟦_⟧ ⊢ a ≈ b = ⟦ a ⟧ ≡ ⟦ b ⟧
+_,_⊢_≈_ : ∀ {i j : Size} {C : ConfLang} {A : Domain}
+  → (L : VarLang)
+  → Semantics L C
+  → L i A
+  → L j A
+  → Set
+L , ⟦_⟧ ⊢ e₁ ≈ e₂ = ⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧
 infix 5 _,_⊢_≈_
 ```
+A proposition `L , ⟦_⟧ ⊢ e₁ ≈ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expressions `e₁` and `e₂` are semantically equivalent, i.e., `⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧`.
 
 Semantic equivalence `≈` inherits all properties from structural equality `≡` because it is just an alias. In particular, these properties include reflexivity (by definition), symmetry, transitivity, and congruence (e.g., as stated in the choice calculus TOSEM paper).
 
-Obviously, syntactic equality (or rather structural equality) implies semantic equality:
+Obviously, syntactic equality (or rather structural equality) implies semantic equality, independent of the semantics:
 ```agda
 ≡→≈ : ∀ {i : Size} {L : VarLang} {C : ConfLang} {A : Domain} {a b : L i A}
   → ∀ (sem : Semantics L C)
@@ -92,13 +98,14 @@ For most transformations, we are interested in a weaker form of semantic equival
 ```agda
 _,_⊢_⊆_ : ∀ {i j : Size} {C : ConfLang} {A : Domain}
   → (L : VarLang)
-  → (⟦_⟧ : Semantics L C)
-  → (e₁ : L i A)
-  → (e₂ : L j A)
+  → Semantics L C
+  → L i A
+  → L j A
   → Set
 _,_⊢_⊆_ {_} {_} {C} {_} _ ⟦_⟧ e₁ e₂ = ∀ (c₁ : C) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
 infix 5 _,_⊢_⊆_
 ```
+A proposition `L , ⟦_⟧ ⊢ e₁ ⊆ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expression `e₁` describes a subset of the variants described by `e₂`.
 
 Variant subset is not symmetric, but reflexive and transitive:
 ```agda
@@ -136,16 +143,15 @@ Variant-preserving equality:
 ```agda
 _,_⊢_≚_ : ∀ {i j : Size} {C : ConfLang} {A : Domain}
   → (L : VarLang)
-  → (⟦_⟧ : Semantics L C)
-  → (e₁ : L i A)
-  → (e₂ : L j A)
+  → Semantics L C
+  → L i A
+  → L j A
   → Set
 _,_⊢_≚_      {i}     {j}    {_} {_} L s e₁ e₂ =
     (_,_⊢_⊆_ {i = i} {j = j}        L s e₁ e₂)
   × (_,_⊢_⊆_ {i = j} {j = i}        L s e₂ e₁)
 infix 5 _,_⊢_≚_
 ```
-
 
 Variant-preserving equality is an equivalence relation:
 ```agda
