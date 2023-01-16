@@ -15,7 +15,35 @@ module Lang.BCC where
 ## Imports
 
 ```agda
+-- stdlib
+open import Data.Bool
+  using (Bool; true; false; if_then_else_)
+open import Data.List
+  using (List; []; _∷_; lookup)
+  renaming (map to mapl)
+open import Data.List.NonEmpty
+  using (List⁺; _∷_; toList)
+  renaming (map to mapl⁺)
+open import Function
+  using (flip)
+open import Size
+  using (Size; Size<_)
 
+import Relation.Binary.PropositionalEquality as Eq
+open Eq
+  using (_≡_; _≗_; refl)
+open Eq.≡-Reasoning
+  using (begin_; _≡⟨⟩_; step-≡; _∎)
+
+-- own modules
+open import Extensionality using (extensionality)
+open import Lang.Annotation.Dimension using (Dimension)
+open import Translation.Translation
+  -- Names
+  using (VarLang; ConfLang; Domain; Semantics)
+  -- Relations of expression in a variability language
+  using (_,_⊢_≈_)
+open import SemanticDomains using (Variant; Artifactᵥ)
 ```
 
 ## Syntax
@@ -62,7 +90,7 @@ Configuration₂ = Dimension → Tag₂
 
 Some transformation rules:
 ```agda
-open AuxProofs using (if-idemp; if-cong)
+open import AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
 
 cc₂-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : CC₂ i A}
@@ -91,4 +119,26 @@ cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
   ≡⟨⟩
     ⟦ Artifact₂ a [ D ⟨ x , y ⟩₂ ] ⟧₂ c
   ∎)
+```
+
+## Utility
+
+```agda
+open Data.List using (concatMap) renaming (_++_ to _++l_)
+
+-- get all dimensions used in a binary CC expression
+dims : ∀ {i : Size} {A : Set} → CC₂ i A → List Dimension
+dims (Artifact₂ _ es) = concatMap dims es
+dims (D ⟨ l , r ⟩₂) = D ∷ (dims l ++l dims r)
+```
+
+## Show
+
+```agda
+open import Data.String using (String; _++_)
+
+show : ∀ {i : Size} → CC₂ i String → String
+show (Artifact₂ a []) = a
+show (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
+show (D ⟨ l , r ⟩₂) = D ++ "<" ++ (show l) ++ ", " ++ (show r) ++ ">"
 ```

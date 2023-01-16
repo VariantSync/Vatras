@@ -212,3 +212,23 @@ But we can also prove it:
 _ : cc_example_walk_zoom ≡ Artifactᵥ "zoom" []
 _ = refl
 ```
+
+## Utility
+
+```agda
+-- get all dimensions used in a CC expression
+open Data.List using (concatMap)
+
+dims : ∀ {i : Size} {A : Set} → CC i A → List Dimension
+dims (Artifact _ es) = concatMap dims es
+dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
+```
+
+## Show
+
+```agda
+show : ∀ {i : Size} → CC i String → String
+show (Artifact a []) = a
+show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
+show (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.intersperse ", " (toList (mapl⁺ show es))) ++ ">"
+```

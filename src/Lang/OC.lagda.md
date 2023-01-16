@@ -26,6 +26,7 @@ open import Size using (Size; Size<_)
 ### Syntax
 
 ```agda
+-- TODO: Reuse dimension here? Maybe having an alias is nice and we should add that to Dimension.agda. Same for ADDs where we referred to dimensions as variables, initially.
 Option : Set
 Option = String
 

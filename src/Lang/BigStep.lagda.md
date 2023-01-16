@@ -23,11 +23,10 @@ open import Size using (Size; ↑_; ∞)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
   using (_≡_; _≢_; refl)
---open Eq.≡-Reasoning
---  using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- Imports of own modules
-open import Lang.CC using (Dimension; Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right; _dim-≟_)
+open import Lang.Annotation.Dimension using (Dimension; _≟_)
+open import Lang.BCC using (Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right)
 open import SemanticDomains using (Variant; Artifactᵥ)
 open import Extensionality
   using (extensionality)
@@ -65,7 +64,7 @@ data _∋_↦_ : {L R : Set} → Assignment L R → L → R → Set where
 -- Smart constructor for there that will make Agda
 -- figure out the proof. This is still magic to me.
 there' : ∀ {R : Set} {l l' : Dimension} {r r' : R} {A}
-  → {l≢l' : False (l dim-≟ l')}
+  → {l≢l' : False (l ≟ l')}
   → A ∋ l ↦ r
     ---------------------
   → A and l' ↦ r' ∋ l ↦ r

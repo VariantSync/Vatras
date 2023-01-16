@@ -15,7 +15,50 @@ module Translation.BCC-to-CCC where
 ## Imports
 
 ```agda
+-- stdlib
+open import Data.Bool
+  using (Bool; true; false; if_then_else_)
+open import Data.List
+  using (List; []; _∷_; lookup)
+  renaming (map to mapl)
+open import Data.List.NonEmpty
+  using (List⁺; _∷_; toList)
+  renaming (map to mapl⁺)
+open import Data.Nat
+  using (ℕ; zero; suc; NonZero)
+open import Data.Product
+  using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
+open import Function
+  using (_∘_; flip)
+open import Size
+  using (Size)
 
+import Relation.Binary.PropositionalEquality as Eq
+open Eq
+  using (_≡_; _≗_; refl)
+open Eq.≡-Reasoning
+  using (begin_; _≡⟨⟩_; step-≡; _∎)
+
+-- own modules
+
+open import Lang.Annotation.Dimension using (Dimension)
+open import Lang.CC using (CC; Artifact; _⟨_⟩; Tag; Configuration; ⟦_⟧; choice-elimination)
+open import Lang.BCC using (CC₂; Artifact₂; _⟨_,_⟩₂; Tag₂; Configuration₂; ⟦_⟧₂)
+
+open import SemanticDomains using (Variant; Artifactᵥ)
+open import Translation.Translation
+  -- Names
+  using (VarLang; ConfLang; Domain; Semantics)
+  -- Relations between variability languages
+  using (_,_is-as-expressive-as_,_)
+  -- Translations
+  using (Translation; conf; fnoc)
+  -- Translation properties
+  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
+
+open import Extensionality
+  using (extensionality; _embeds-via_)
+  renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```
 
 ## Translation

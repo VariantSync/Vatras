@@ -20,6 +20,7 @@ open import Data.List using ([])
 open import Data.String using (String)
 open import Size using (Size; Size<_)
 
+open import Lang.Annotation.Dimension using (Dimension)
 open import SemanticDomains using (Variant; Artifactᵥ)
 ```
 
@@ -30,13 +31,10 @@ We refer to a choice calculus expression whose abstract syntax is an ADD, as bei
 In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
 
 ```agda
-Variable : Set
-Variable = String
-
 data ADD (i : Size) (A : Set) : Set where
   Terminal : A → ADD i A -- ModelBase in FFSPL
   Choice : ∀ {j : Size< i} →
-    Variable → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
+    Dimension → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
 
 ## Semantics
@@ -46,7 +44,7 @@ data ADD (i : Size) (A : Set) : Set where
 Configurations denote a path in the tree by making a decision at each variable to select a certain terminal at the end.
 -}
 Configuration : Set
-Configuration = Variable → Bool
+Configuration = Dimension → Bool
 
 ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant A
 ⟦ Terminal a ⟧ _   = Artifactᵥ a []

@@ -6,8 +6,11 @@ open import Agda.Builtin.IO using (IO)
 open import Agda.Builtin.Unit using (⊤)
 open import Agda.Builtin.String using (String)
 
-open import Lang.CC
---open import Lang.OC
+--open import Lang.CC
+open import Example.CC
+-- open import Lang.OC
+
+postulate
 
 postulate putStrLn : String → IO ⊤
 {-# FOREIGN GHC import qualified Data.Text as T #-}
@@ -15,3 +18,4 @@ postulate putStrLn : String → IO ⊤
 
 main : IO ⊤
 main = putStrLn mainStr
+

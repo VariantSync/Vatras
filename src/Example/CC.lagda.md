@@ -1,9 +1,9 @@
-# 
+# Examples of Core and Binary Choice Calculus
 
 ## Options
 
 ```agda
---{-# OPTIONS --sized-types #-}
+{-# OPTIONS --sized-types #-}
 ```
 
 ## Module
@@ -15,7 +15,37 @@ module Example.CC where
 ## Imports
 
 ```agda
+-- stdlib
+open import Data.Bool
+  using (Bool)
+open import Data.List
+  using (List; []; _∷_; lookup; concatMap)
+  renaming (map to mapl; _++_ to _++l_)
+open import Data.List.NonEmpty
+  using (List⁺; _∷_; toList)
+  renaming (map to mapl⁺)
+open import Data.Nat
+  using (ℕ)
+open import Data.Nat.Show
+  renaming (show to show-nat)
+open import Data.Product
+  using (_,_; _×_)
+open import Data.String
+  using (String; _++_; unlines; intersperse)
+open import Function
+  using (_∘_; id)
+open import Size
+  using (Size; ∞; ↑_)
 
+-- own modules
+open import Lang.Annotation.Dimension using (Dimension)
+open import SemanticDomains using (showVariant)
+open import Lang.CC
+open import Lang.BCC
+
+open import Translation.CCC-to-BCC
+
+open import Util.ShowHelpers
 ```
 
 ### Examples
@@ -78,43 +108,6 @@ ccex-all =
 
 ### Print Helper Functions
 
-Extra imports/opening of functions we use for conversion to string of some data structures:
-```agda
-open Data.String using (unlines; intersperse)
-open Data.List using (concatMap) renaming (_++_ to _++l_)
-open Function using (id)
-
-open import Util.ShowHelpers
-```
-
-Showing choice calculus expressions:
-```agda
-showCC : ∀ {i : Size} → CC i String → String
-showCC (Artifact a []) = a
-showCC (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl showCC es)) ++ ">-"
-showCC (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.intersperse ", " (toList (mapl⁺ showCC es))) ++ ">"
-
-showCC₂ : ∀ {i : Size} → CC₂ i String → String
-showCC₂ (Artifact₂ a []) = a
-showCC₂ (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl showCC₂ es)) ++ ">-"
-showCC₂ (D ⟨ l , r ⟩₂) = D ++ "<" ++ (showCC₂ l) ++ ", " ++ (showCC₂ r) ++ ">"
-
-open SemanticDomains using (showVariant)
-```
-
-Helper functions to collect all dimensions within a choice calculus expression. These might give duplicates because we use lists instead of sets for implementation convenience:
-```agda
--- get all dimensions used in a CC expression
-dims-CC : ∀ {i : Size} {A : Set} → CC i A → List Dimension
-dims-CC (Artifact _ es) = concatMap dims-CC es
-dims-CC (D ⟨ es ⟩) = D ∷ concatMap dims-CC (toList es)
-
--- get all dimensions used in a binary CC expression
-dims-CC₂ : ∀ {i : Size} {A : Set} → CC₂ i A → List Dimension
-dims-CC₂ (Artifact₂ _ es) = concatMap dims-CC₂ es
-dims-CC₂ (D ⟨ l , r ⟩₂) = D ∷ (dims-CC₂ l ++l dims-CC₂ r)
-```
-
 Print all values of a configuration for a list of given dimensions:
 ```agda
 show-nary-config : Configuration → List Dimension → String
@@ -134,7 +127,6 @@ selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 Convert a given named choice calculus formula to binary normal form and back and print all intermediate results.
 Do so for two configurations, one configuration that always selects 0, and one that always selects 1.
 ```agda
-{-
 ccex-toBinaryAndBack : CCExample → String
 ccex-toBinaryAndBack (name , cc) = unlines (
   let
@@ -166,19 +158,19 @@ ccex-toBinaryAndBack (name , cc) = unlines (
       let conf-print , name = show-config (selectₙ n)
       in
       name ++ ": " ++ conf-print
-    show-selectₙ = show-config-named (λ (conf , name) → show-nary-config conf (dims-CC cc) , name)
-    show-select₂ = show-config-named (λ (conf , name) → (show-binary-config ∘ n→b) conf (dims-CC₂ cc₂) , ("n→b " ++ name))
-    show-select₂ₙ = show-config-named (λ (conf , name) → (show-nary-config ∘ b→n ∘ n→b) conf (dims-CC cc) , ("b→n (n→b " ++ name ++ ")"))
+    show-selectₙ = show-config-named (λ (conf , name) → show-nary-config conf (Lang.CC.dims cc) , name)
+    show-select₂ = show-config-named (λ (conf , name) → (show-binary-config ∘ n→b) conf (Lang.BCC.dims cc₂) , ("n→b " ++ name))
+    show-select₂ₙ = show-config-named (λ (conf , name) → (show-nary-config ∘ b→n ∘ n→b) conf (Lang.CC.dims cc) , ("b→n (n→b " ++ name ++ ")"))
   in
   ("=== Example: " ++ name ++ " ===") ∷
-  (name ++ " = " ++ (showCC cc)) ∷
+  (name ++ " = " ++ (Lang.CC.show cc)) ∷
   (show-selectₙ 0) ∷
   (show-selectₙ 1) ∷
   (show-selectₙ 2) ∷
   (eval-selectₙ 0) ∷
   (eval-selectₙ 1) ∷
   (eval-selectₙ 2) ∷
-  ("toCC₂ " ++ name ++ " = " ++ (showCC₂ cc₂)) ∷
+  ("toCC₂ " ++ name ++ " = " ++ (Lang.BCC.show cc₂)) ∷
   (show-select₂ 0) ∷
   (show-select₂ 1) ∷
   (show-select₂ 2) ∷
@@ -192,12 +184,12 @@ ccex-toBinaryAndBack (name , cc) = unlines (
   (eval-select₂ₙ 0) ∷
   (eval-select₂ₙ 1) ∷
   (eval-select₂ₙ 2) ∷
-  []) -}
+  [])
 ```
 
 ### Final Printing
 Print the binary-conversion for all examples:
 ```agda
---mainStr : String
---mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
+mainStr : String
+mainStr = intersperse "\n\n" (mapl ccex-toBinaryAndBack ccex-all)
 ```
