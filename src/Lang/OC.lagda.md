@@ -61,7 +61,7 @@ Selected options will vanish from the expression because their variability was r
 
 These following functions could also be implemented solely using lists but `Maybe` makes our intents more explicit and thus more readable (in particular the use of `catMaybes`).
 ```agda
-open import SemanticDomains using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ)
 open import Data.Maybe using (Maybe; just; nothing)
 open Data.List using (catMaybes; map)
 open import Function using (flip)
@@ -157,7 +157,7 @@ optex-all = (optex-sandwich ∷ [] )
 
 ```
 open Data.String using (unlines)
-open SemanticDomains using (showVariant)
+open SemanticDomain using (showVariant)
 
 optexp-1 : OCExample → String
 optexp-1 (example name is oc which-is-wellformed-because wf) = unlines (

@@ -39,7 +39,7 @@ open import Size
 
 -- own modules
 open import Lang.Annotation.Dimension using (Dimension)
-open import SemanticDomains using (showVariant)
+open import SemanticDomain using (showVariant)
 open import Lang.CCC
   renaming (Configuration to Configurationₙ;
             ⟦_⟧ to ⟦_⟧ₙ)

@@ -43,7 +43,7 @@ open import Translation.Translation
   using (VarLang; ConfLang; Domain; Semantics)
   -- Relations of expression in a variability language
   using (_,_⊢_≈_)
-open import SemanticDomains using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ)
 ```
 
 ## Syntax

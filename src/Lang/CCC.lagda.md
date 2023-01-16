@@ -101,7 +101,7 @@ In his phd thesis, Eric defined the semantics to be the set of all variants desc
 So the semantic domain was a set of choice calculus expressions without any choices.
 We can encode a choice calculus expression without choices at the type level:
 ```agda
-open import SemanticDomains using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ)
 ```
 
 An equivalent definition of semantics produces a configuration function `Config → Variant` that generates variants from configurations.

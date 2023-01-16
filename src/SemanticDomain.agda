@@ -1,4 +1,4 @@
-module SemanticDomains where
+module SemanticDomain where
 
 open import Data.List using (List; []; _∷_; map)
 open import Data.String using (String; _++_; intersperse)

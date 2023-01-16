@@ -33,8 +33,8 @@ open import Size using (Size)
 open import Data.Product using (_,_; ∃-syntax; _×_)
 open import Existence    using (_,_; ∃-Size; ∃-syntax-with-type)
 
-open import SemanticDomains using (Variant)
-open import Extensionality  using (_embeds-via_)
+open import SemanticDomain using (Variant)
+open import Extensionality using (_embeds-via_)
 ```
 
 ## Definitions

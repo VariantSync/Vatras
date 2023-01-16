@@ -21,7 +21,7 @@ open import Data.String using (String)
 open import Size using (Size; Size<_)
 
 open import Lang.Annotation.Dimension using (Dimension)
-open import SemanticDomains using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ)
 ```
 
 ## Syntax

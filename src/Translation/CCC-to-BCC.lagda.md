@@ -59,7 +59,7 @@ open import Lang.BCC
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import SemanticDomains using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ)
 open import Translation.Translation
   -- Names
   using (VarLang; ConfLang; Domain; Semantics)

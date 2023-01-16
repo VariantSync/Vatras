@@ -27,7 +27,7 @@ open Eq
 -- Imports of own modules
 open import Lang.Annotation.Dimension using (Dimension; _≟_)
 open import Lang.BCC using (Tag₂; CC₂; Artifact₂; _⟨_,_⟩₂; left; right)
-open import SemanticDomains using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ)
 open import Extensionality
   using (extensionality)
 
