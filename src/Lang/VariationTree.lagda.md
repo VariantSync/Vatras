@@ -1,7 +1,7 @@
 # Variation Trees
 
 ```agda
-module VariationTree where
+module Lang.VariationTree where
 
 open import Data.Nat using (ℕ)
 open import Data.List using (List; _∷_; [])
