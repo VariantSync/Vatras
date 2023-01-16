@@ -44,8 +44,20 @@ open Eq.≡-Reasoning
 -- own modules
 
 open import Lang.Annotation.Dimension using (Dimension; _==_)
-open import Lang.CC using (CC; Artifact; _⟨_⟩; Tag; Configuration; ⟦_⟧; choice-elimination)
-open import Lang.BCC using (CC₂; Artifact₂; _⟨_,_⟩₂; Tag₂; Configuration₂; ⟦_⟧₂)
+open import Lang.CCC
+  using (CCC; choice-elimination)
+  renaming (Artifact to Artifactₙ;
+            _⟨_⟩ to _⟨_⟩ₙ;
+            Tag to Tagₙ;
+            Configuration to Configurationₙ;
+            ⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.BCC
+  using (BCC)
+  renaming (Artifact to Artifact₂;
+            _⟨_,_⟩ to _⟨_,_⟩₂;
+            Tag to Tag₂;
+            Configuration to Configuration₂;
+            ⟦_⟧ to ⟦_⟧₂)
 
 open import SemanticDomains using (Variant; Artifactᵥ)
 open import Translation.Translation
@@ -90,7 +102,7 @@ In the above example, this is not necessary because every branch already has a c
 So for example, the first if-elif-else chain would be expressed as `D⟨a, b, c⟩`, where `D` somehow reflects the conditions `x` and `y`.
 So to translate this chain to binary, we have to nest every alternatives beyond the first, such that `D⟨a, b, c⟩` becomes `D⟨a, E⟨b, c⟩⟩`, where `E` is a new new name that corresponds to `y` in the second if-else-if-else chain above.
 When generating a new name for a new dimension, we have to assume that it does not exist yet or otherwise, we cannot preserve semantics.
-For example, when generating names by appending tick marks, we may get `toCC₂ (D⟨a,b,D'⟨c, d⟩⟩) ≡ D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
+For example, when generating names by appending tick marks, we may get `toBCC (D⟨a,b,D'⟨c, d⟩⟩) ≡ D⟨a, D'⟨b, D'⟨c, d⟩⟩⟩` which has different semantics than the input.
 
 We identified two possible ways to ensure that new generated names do not collide with existing dimension names:
 
@@ -160,8 +172,8 @@ We use this record as the state during our translation.
 -- resembles a specialized version of _⇔_ in the plfa book
 record ConfigurationConverter : Set where
   field
-    nary→binary : Configuration  → Configuration₂
-    binary→nary : Configuration₂ → Configuration
+    nary→binary : Configurationₙ → Configuration₂
+    binary→nary : Configuration₂ → Configurationₙ
 open ConfigurationConverter public
 
 -- Default configuration converter that always goes left.
@@ -178,7 +190,7 @@ TranslationState : Set → Set
 TranslationState = State ConfigurationConverter
 ```
 
-We can now define our translation function `toCC₂`.
+We can now define our translation function `toBCC`.
 Sadly, we cannot prove it terminating yet.
 The problem is that the alternatives of a choice are a list, and this list is converted to a recursive nesting structure.
 For example, `D ⟨ a , b , c , d ⟩` becomes `D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩₂ ⟩₂ ⟩₂`.
@@ -192,29 +204,29 @@ We should later decide if this extra boilerplate is worth it or not.
 ```agda
 -- helper function to keep track of state
 {-# TERMINATING #-}
-toCC₂' : ∀ {i : Size} {A : Set} → CC i A → TranslationState (CC₂ ∞ A)
+toBCC' : ∀ {i : Size} {A : Set} → CCC i A → TranslationState (BCC ∞ A)
 
 -- actural translation function
-toCC₂ : ∀ {i : Size} {A : Set} → CC i A → ConfigurationConverter × CC₂ ∞ A
-toCC₂ cc = runState (toCC₂' cc) unknownConfigurationConverter
+toBCC : ∀ {i : Size} {A : Set} → CCC i A → ConfigurationConverter × BCC ∞ A
+toBCC cc = runState (toBCC' cc) unknownConfigurationConverter
 
 {- |
 Unroll choices by recursively nesting any alternatives beyond the first.
 Example: D ⟨ u ∷ v ∷ w ∷ [] ⟩ → D.0 ⟨ u, D.1 ⟨ v , w ⟩₂ ⟩₂
 -}
 
-toCC₂'-choice-unroll : ∀ {i : Size} {A : Set}
+toBCC'-choice-unroll : ∀ {i : Size} {A : Set}
   → Dimension      -- initial dimension in input formula that we translate (D in the example above).
   → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
-  → List⁺ (CC i A) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
-  → TranslationState (CC₂ ∞ A)
+  → List⁺ (CCC i A) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
+  → TranslationState (BCC ∞ A)
 
 -- Leave artifact structures unchanged but recursively translate all children.
 -- Translating all children yields a list of states which we evaluate in sequence.
-toCC₂' (Artifact a es) =
+toBCC' (Artifactₙ a es) =
   let open RawFunctor state-functor in
-  Artifact₂ a <$> (traverse state-applicative toCC₂' es)
-toCC₂' (D ⟨ es ⟩) = toCC₂'-choice-unroll D zero es
+  Artifact₂ a <$> (traverse state-applicative toBCC' es)
+toBCC' (D ⟨ es ⟩ₙ) = toBCC'-choice-unroll D zero es
 
 open import Data.Nat renaming (_≡ᵇ_ to _nat-≡ᵇ_)
 open import Util.Util using (empty?)
@@ -222,7 +234,7 @@ open import Util.Util using (empty?)
 update-configuration-converter :
     ConfigurationConverter
   → Dimension  -- corresponding dimension in the input n-ary expression
-  → ℕ         -- current nesting depth (see toCC₂'-choice-unroll)
+  → ℕ         -- current nesting depth (see toBCC'-choice-unroll)
   → Dimension  -- name of the corresponding dimension in the output binary expression
   → Bool       -- True iff the currently inspected choice is binary.
   → ConfigurationConverter
@@ -261,17 +273,17 @@ update-configuration-converter conf-converter D n D' binary? =
 
 -- Use the idempotency rule D⟨e⟩≈e to unwrap unary choices.
 -- This is where recursion stops.
-toCC₂'-choice-unroll D n (e₁ ∷ []) = toCC₂' e₁
+toBCC'-choice-unroll D n (e₁ ∷ []) = toBCC' e₁
 -- For n-ary choices with n > 1, convert the head and recursively convert the tail.
-toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
+toBCC'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
   let open RawMonad state-monad
       open RawMonadState state-monad-specifics
   in do
     let D' = indexedDim D n
 
     -- translation of the formula
-    cc₂-e₁   ← toCC₂' e₁
-    cc₂-tail ← toCC₂'-choice-unroll D (suc n) (e₂ ∷ es)
+    cc₂-e₁   ← toBCC' e₁
+    cc₂-tail ← toBCC'-choice-unroll D (suc n) (e₂ ∷ es)
 
     -- translation of configurations
     -- The tail length check is actually a recursion end that checks if we are left with a binary choice.
@@ -287,20 +299,21 @@ toCC₂'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
 {-
-CC→CC₂-left : ∀ {i : Size} {A : Set} {e : CC i A}
+CCC→BCC-left : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
-  → proj₂ (toCC₂ e) ₂⊂̌ₙ e
+  → proj₂ (toBCC e) ₂⊂̌ₙ e
 
-CC→CC₂-right : ∀ {i : Size} {A : Set} {e : CC i A}
+CCC→BCC-right : ∀ {i : Size} {A : Set} {e : CC i A}
     -------------
-  → e ₙ⊂̌₂ proj₂ (toCC₂ e)
+  → e ₙ⊂̌₂ proj₂ (toBCC e)
 
-CC→CC₂ : ∀ {i : Size} {A : Set} {e : CC i A}
+CC→BCC : ∀ {i : Size} {A : Set} {e : CC i A}
     ----------
-  → proj₂ (toCC₂ e) ₂≚ₙ e
-CC→CC₂ {i} {A} {e} =
-    CC→CC₂-left  {i} {A} {e}
-  , CC→CC₂-right {i} {A} {e} -}
+  → proj₂ (toBCC e) ₂≚ₙ e
+CC→BCC {i} {A} {e} =
+    CC→BCC-left  {i} {A} {e}
+  , CC→BCC-right {i} {A} {e}
+  -}
 ```
 
 #### Proof of the left side
@@ -308,41 +321,41 @@ CC→CC₂ {i} {A} {e} =
 ```agda
 {-
 -- Every variant described by the translated expression is also described by the initial expression.
-CC→CC₂-left' : ∀ {i : Size} {A : Set}
+CC→BCC-left' : ∀ {i : Size} {A : Set}
   → ∀ (e : CC i A)
   → ∀ (c₂ : Configuration₂)
     ------------------------------------------------------------------
-  → ⟦ proj₂ (toCC₂ e) ⟧₂ c₂ ≡ ⟦ e ⟧ (binary→nary (proj₁ (toCC₂ e)) c₂)
+  → ⟦ proj₂ (toBCC e) ⟧₂ c₂ ≡ ⟦ e ⟧ (binary→nary (proj₁ (toBCC e)) c₂)
 
-CC→CC₂-left' (Artifact a []) c₂ = refl
-CC→CC₂-left' e@(Artifact a es@(_ ∷ _)) c₂ =
+CC→BCC-left' (Artifact a []) c₂ = refl
+CC→BCC-left' e@(Artifact a es@(_ ∷ _)) c₂ =
   let open RawFunctor state-functor
-      c = binary→nary (proj₁ (toCC₂ e)) c₂
+      c = binary→nary (proj₁ (toBCC e)) c₂
   in
   begin
-    ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
+    ⟦ proj₂ (toBCC e) ⟧₂ c₂
   ≡⟨⟩
-    ⟦ proj₂ (runState (Artifact₂ a <$> (traverse state-applicative toCC₂' es)) unknownConfigurationConverter) ⟧₂ c₂
+    ⟦ proj₂ (runState (Artifact₂ a <$> (traverse state-applicative toBCC' es)) unknownConfigurationConverter) ⟧₂ c₂
   ≡⟨⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (proj₂ (runState (sequenceA state-applicative (mapl toCC₂' es)) unknownConfigurationConverter)))
+    Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (proj₂ (runState (sequenceA state-applicative (mapl toBCC' es)) unknownConfigurationConverter)))
   -- TODO: Somehow apply the induction hypothesis below the sequenceA below the runState below the mapl below the Artifactᵥ
   ≡⟨ Eq.cong (λ m → Artifactᵥ a m) {!!} ⟩
     Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
   ≡⟨⟩
     ⟦ e ⟧ c
   ∎
-CC→CC₂-left' (D ⟨ e ∷ [] ⟩) c₂ =
-  let conf = binary→nary (proj₁ (toCC₂ (D ⟨ e ∷ [] ⟩))) c₂ in
-  ⟦ proj₂ (toCC₂ (D ⟨ e ∷ [] ⟩)) ⟧₂ c₂ ≡⟨⟩
-  ⟦ proj₂ (toCC₂ e            ) ⟧₂ c₂ ≡⟨ CC→CC₂-left' e c₂ ⟩
+CC→BCC-left' (D ⟨ e ∷ [] ⟩) c₂ =
+  let conf = binary→nary (proj₁ (toBCC (D ⟨ e ∷ [] ⟩))) c₂ in
+  ⟦ proj₂ (toBCC (D ⟨ e ∷ [] ⟩)) ⟧₂ c₂ ≡⟨⟩
+  ⟦ proj₂ (toBCC e            ) ⟧₂ c₂ ≡⟨ CC→BCC-left' e c₂ ⟩
   ⟦ e           ⟧ conf                ≡⟨⟩
   ⟦ D ⟨ e ∷ [] ⟩ ⟧ conf                ∎
-CC→CC₂-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
-  let conf = binary→nary (proj₁ (toCC₂ e)) c₂
-      e₂ = proj₂ (toCC₂ e)
+CC→BCC-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
+  let conf = binary→nary (proj₁ (toBCC e)) c₂
+      e₂ = proj₂ (toBCC e)
   in
   begin
-    ⟦ proj₂ (toCC₂ e) ⟧₂ c₂
+    ⟦ proj₂ (toBCC e) ⟧₂ c₂
   --≡⟨ {!!} ⟩
   --  ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
   ≡⟨ {!!} ⟩
@@ -351,9 +364,9 @@ CC→CC₂-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
     ⟦ e ⟧ conf
   ∎
 
-CC→CC₂-left {i} {A} {e} c₂ =
-  let conf-trans , cc₂ = toCC₂ e in
-  binary→nary conf-trans c₂ , CC→CC₂-left' e c₂ -}
+CC→BCC-left {i} {A} {e} c₂ =
+  let conf-trans , cc₂ = toBCC e in
+  binary→nary conf-trans c₂ , CC→BCC-left' e c₂ -}
 ```
 
 #### Proof of the right side
@@ -361,18 +374,18 @@ CC→CC₂-left {i} {A} {e} c₂ =
 ```agda
 -- Every variant described by an n-ary CC expression, is also described by its translation to binray CC.
 {-
-CC→CC₂-right' : ∀ {i : Size} {A : Set}
+CC→BCC-right' : ∀ {i : Size} {A : Set}
   → ∀ (e : CC i A)
   → ∀ (c : Configuration)
     -----------------------------------------------------------------
-  → ⟦ proj₂ (toCC₂ e) ⟧₂ (nary→binary (proj₁ (toCC₂ e)) c) ≡  ⟦ e ⟧ c
+  → ⟦ proj₂ (toBCC e) ⟧₂ (nary→binary (proj₁ (toBCC e)) c) ≡  ⟦ e ⟧ c
 
-CC→CC₂-right' (Artifact a []) c = refl
-CC→CC₂-right' (Artifact a es@(_ ∷ _)) c = {!!}
-CC→CC₂-right' (D ⟨ e ∷ [] ⟩) c = CC→CC₂-right' e c -- just apply the induction hypothesis on the only mandatory alternative
-CC→CC₂-right' (D ⟨ es@(_ ∷ _ ∷ _) ⟩) c = {!!}
+CC→BCC-right' (Artifact a []) c = refl
+CC→BCC-right' (Artifact a es@(_ ∷ _)) c = {!!}
+CC→BCC-right' (D ⟨ e ∷ [] ⟩) c = CC→BCC-right' e c -- just apply the induction hypothesis on the only mandatory alternative
+CC→BCC-right' (D ⟨ es@(_ ∷ _ ∷ _) ⟩) c = {!!}
 
-CC→CC₂-right {i} {A} {e} c =
-  let conf-trans , cc₂ = toCC₂ e in
-  nary→binary conf-trans c , CC→CC₂-right' e c -}
+CC→BCC-right {i} {A} {e} c =
+  let conf-trans , cc₂ = toBCC e in
+  nary→binary conf-trans c , CC→BCC-right' e c -}
 ```

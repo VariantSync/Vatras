@@ -51,11 +51,11 @@ open import SemanticDomains using (Variant; Artifactᵥ)
 In the following we formalize the binary normal forms for choice calculus. We express a normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system. Our goal is to prove that every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
 
 ```agda
-data CC₂ : VarLang where
-  Artifact₂ : {i : Size} {j : Size< i} {A : Domain} →
-    A → List (CC₂ j A) → CC₂ i A
-  _⟨_,_⟩₂ : {i : Size} {j : Size< i} {A : Domain} →
-    Dimension → CC₂ j A → CC₂ j A → CC₂ i A
+data BCC : VarLang where
+  Artifact : {i : Size} {j : Size< i} {A : Domain} →
+    A → List (BCC j A) → BCC i A
+  _⟨_,_⟩ : {i : Size} {j : Size< i} {A : Domain} →
+    Dimension → BCC j A → BCC j A → BCC i A
 ```
 
 ## Semantics
@@ -72,18 +72,18 @@ We define `true` to mean choosing the left alternative and `false` to choose the
 Defining it the other way around is also ok but we have to pick one definition and stay consistent.
 We choose this order to follow the known _if c then a else b_ pattern where the evaluation of a condition _c_ to true means choosing the then-branch, which is the left one.
 ```agda
-Tag₂ : Set
-Tag₂ = Bool
+Tag : Set
+Tag = Bool
 
 left  = true
 right = false
 
-Configuration₂ : ConfLang
-Configuration₂ = Dimension → Tag₂
+Configuration : ConfLang
+Configuration = Dimension → Tag
 
-⟦_⟧₂ : Semantics CC₂ Configuration₂
-⟦ Artifact₂ a es ⟧₂ c = Artifactᵥ a (mapl (flip ⟦_⟧₂ c) es)
-⟦ D ⟨ l , r ⟩₂ ⟧₂ c = ⟦ if (c D) then l else r ⟧₂ c
+⟦_⟧ : Semantics BCC Configuration
+⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+⟦ D ⟨ l , r ⟩ ⟧ c = ⟦ if (c D) then l else r ⟧ c
 ```
 
 ## Properties
@@ -93,31 +93,31 @@ Some transformation rules:
 open import AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
 
-cc₂-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : CC₂ i A}
+cc-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : BCC i A}
     -----------------------------
-  → CC₂ , ⟦_⟧₂ ⊢ D ⟨ e , e ⟩₂ ≈ e
-cc₂-idemp {i} {A} {D} {e} = extensionality (λ c →
-  ⟦ D ⟨ e , e ⟩₂ ⟧₂ c             ≡⟨⟩
-  ⟦ if (c D) then e else e ⟧₂ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-idemp (c D)) ⟩
-  ⟦ e ⟧₂ c                       ∎)
+  → BCC , ⟦_⟧ ⊢ D ⟨ e , e ⟩ ≈ e
+cc-idemp {i} {A} {D} {e} = extensionality (λ c →
+  ⟦ D ⟨ e , e ⟩ ⟧ c             ≡⟨⟩
+  ⟦ if (c D) then e else e ⟧ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧ c) (if-idemp (c D)) ⟩
+  ⟦ e ⟧ c                       ∎)
 
 -- Sharing of equal prefixes in sub-expressions
--- Note: This is hard to generalize to Artifact₂'s with multiple children because
+-- Note: This is hard to generalize to Artifact's with multiple children because
 --       we cannot put these children below the choice directly. Instead we would have
 --       to introduce empty artifacts that do not represent expression in the object language but
 --       rather containers in the meta-language. Maybe it would make sense to generalize choice
 --       calculus to have lists of lists of children in choices instead of exactly one subtree per alternative.
-cc₂-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : CC₂ i A}
-  → CC₂ , ⟦_⟧₂ ⊢ D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ≈ Artifact₂ a [ D ⟨ x , y ⟩₂ ]
-cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
+cc-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : BCC i A}
+  → BCC , ⟦_⟧ ⊢ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ≈ Artifact a [ D ⟨ x , y ⟩ ]
+cc-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
   begin
-    ⟦ D ⟨ Artifact₂ a [ x ] , Artifact₂ a [ y ] ⟩₂ ⟧₂ c
+    ⟦ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ⟧ c
   ≡⟨⟩
-    ⟦ if (c D) then (Artifact₂ a [ x ]) else (Artifact₂ a [ y ] ) ⟧₂ c
-  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧₂ c) (if-cong (c D) (λ {v → Artifact₂ a [ v ]}) ) ⟩
-    ⟦ Artifact₂ a [ if (c D) then x else y ] ⟧₂ c
+    ⟦ if (c D) then (Artifact a [ x ]) else (Artifact a [ y ] ) ⟧ c
+  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧ c) (if-cong (c D) (λ {v → Artifact a [ v ]}) ) ⟩
+    ⟦ Artifact a [ if (c D) then x else y ] ⟧ c
   ≡⟨⟩
-    ⟦ Artifact₂ a [ D ⟨ x , y ⟩₂ ] ⟧₂ c
+    ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
   ∎)
 ```
 
@@ -127,9 +127,9 @@ cc₂-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
 open Data.List using (concatMap) renaming (_++_ to _++l_)
 
 -- get all dimensions used in a binary CC expression
-dims : ∀ {i : Size} {A : Set} → CC₂ i A → List Dimension
-dims (Artifact₂ _ es) = concatMap dims es
-dims (D ⟨ l , r ⟩₂) = D ∷ (dims l ++l dims r)
+dims : ∀ {i : Size} {A : Set} → BCC i A → List Dimension
+dims (Artifact _ es) = concatMap dims es
+dims (D ⟨ l , r ⟩) = D ∷ (dims l ++l dims r)
 ```
 
 ## Show
@@ -137,8 +137,8 @@ dims (D ⟨ l , r ⟩₂) = D ∷ (dims l ++l dims r)
 ```agda
 open import Data.String using (String; _++_)
 
-show : ∀ {i : Size} → CC₂ i String → String
-show (Artifact₂ a []) = a
-show (Artifact₂ a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
-show (D ⟨ l , r ⟩₂) = D ++ "<" ++ (show l) ++ ", " ++ (show r) ++ ">"
+show : ∀ {i : Size} → BCC i String → String
+show (Artifact a []) = a
+show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
+show (D ⟨ l , r ⟩) = D ++ "<" ++ (show l) ++ ", " ++ (show r) ++ ">"
 ```

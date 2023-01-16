@@ -1,3 +1,3 @@
 ##!/bin/sh
-agda --compile Main.agda
+./compile
 ./Main

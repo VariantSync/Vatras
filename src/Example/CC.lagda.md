@@ -40,8 +40,12 @@ open import Size
 -- own modules
 open import Lang.Annotation.Dimension using (Dimension)
 open import SemanticDomains using (showVariant)
-open import Lang.CC
+open import Lang.CCC
+  renaming (Configuration to Configurationₙ;
+            ⟦_⟧ to ⟦_⟧ₙ)
 open import Lang.BCC
+  renaming (Configuration to Configuration₂;
+            ⟦_⟧ to ⟦_⟧₂)
 
 open import Translation.CCC-to-BCC
 
@@ -52,13 +56,13 @@ open import Util.ShowHelpers
 
 ```agda
 CCExample : Set
-CCExample = String × CC ∞ String -- name and expression
+CCExample = String × CCC ∞ String -- name and expression
 
 -- some smart constructors
-chcA : ∀ {i : Size} {A : Set} → List⁺ (CC i A) → CC (↑ i) A
+chcA : ∀ {i : Size} {A : Set} → List⁺ (CCC i A) → CCC (↑ i) A
 chcA es = "A" ⟨ es ⟩
 
-chcA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CC (↑ ↑ i) A
+chcA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CCC (↑ ↑ i) A
 chcA-leaves es = chcA (leaves es)
 
 -- examples
@@ -110,7 +114,7 @@ ccex-all =
 
 Print all values of a configuration for a list of given dimensions:
 ```agda
-show-nary-config : Configuration → List Dimension → String
+show-nary-config : Configurationₙ → List Dimension → String
 show-nary-config = show-fun {Dimension} {ℕ} id show-nat
 
 show-binary-config : Configuration₂ → List Dimension → String
@@ -119,7 +123,7 @@ show-binary-config = show-fun {Dimension} {Bool} id show-bool
 
 Make a configuration that always selects n and also generate its name.
 ```agda
-selectₙ : ℕ → Configuration × String
+selectₙ : ℕ → Configurationₙ × String
 selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 ```
 
@@ -130,40 +134,40 @@ Do so for two configurations, one configuration that always selects 0, and one t
 ccex-toBinaryAndBack : CCExample → String
 ccex-toBinaryAndBack (name , cc) = unlines (
   let
-    configconverter , cc₂ = toCC₂ cc
+    configconverter , cc₂ = toBCC cc
     n→b = nary→binary configconverter
     b→n = binary→nary configconverter
 
-    evalₙ : Configuration × String → String
+    evalₙ : Configurationₙ × String → String
     evalₙ = λ { (conf , cname) →
       "[[" ++ name ++ "]] " ++ cname ++ " = "
-      ++ (showVariant (⟦ cc ⟧ conf))}
+      ++ (showVariant (⟦ cc ⟧ₙ conf))}
 
-    eval₂ : Configuration × String → String
+    eval₂ : Configurationₙ × String → String
     eval₂ = λ { (conf , cname) →
-      "[[toCC₂ " ++ name ++ "]] " ++ "(n→b " ++ cname ++ ")" ++ " = "
+      "[[toBCC " ++ name ++ "]] " ++ "(n→b " ++ cname ++ ")" ++ " = "
       ++ (showVariant (⟦ cc₂ ⟧₂ (n→b conf)))}
 
-    eval₂ₙ : Configuration × String → String
+    eval₂ₙ : Configurationₙ × String → String
     eval₂ₙ = λ { (conf , cname) →
       "[[" ++ name ++ "]] " ++ "(b→n (n→b " ++ cname ++ "))" ++ " = "
-      ++ (showVariant (⟦ cc ⟧ (b→n (n→b conf))))}
+      ++ (showVariant (⟦ cc ⟧ₙ (b→n (n→b conf))))}
 
     eval-selectₙ = evalₙ ∘ selectₙ
     eval-select₂ = eval₂ ∘ selectₙ
     eval-select₂ₙ = eval₂ₙ ∘ selectₙ
 
-    show-config-named : (Configuration × String → String × String) → ℕ → String
+    show-config-named : (Configurationₙ × String → String × String) → ℕ → String
     show-config-named = λ show-config n →
       let conf-print , name = show-config (selectₙ n)
       in
       name ++ ": " ++ conf-print
-    show-selectₙ = show-config-named (λ (conf , name) → show-nary-config conf (Lang.CC.dims cc) , name)
+    show-selectₙ = show-config-named (λ (conf , name) → show-nary-config conf (Lang.CCC.dims cc) , name)
     show-select₂ = show-config-named (λ (conf , name) → (show-binary-config ∘ n→b) conf (Lang.BCC.dims cc₂) , ("n→b " ++ name))
-    show-select₂ₙ = show-config-named (λ (conf , name) → (show-nary-config ∘ b→n ∘ n→b) conf (Lang.CC.dims cc) , ("b→n (n→b " ++ name ++ ")"))
+    show-select₂ₙ = show-config-named (λ (conf , name) → (show-nary-config ∘ b→n ∘ n→b) conf (Lang.CCC.dims cc) , ("b→n (n→b " ++ name ++ ")"))
   in
   ("=== Example: " ++ name ++ " ===") ∷
-  (name ++ " = " ++ (Lang.CC.show cc)) ∷
+  (name ++ " = " ++ (Lang.CCC.show cc)) ∷
   (show-selectₙ 0) ∷
   (show-selectₙ 1) ∷
   (show-selectₙ 2) ∷

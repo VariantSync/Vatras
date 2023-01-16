@@ -6,13 +6,12 @@ For termination checking, we have to use sized types (i.e., types that are bound
 We use sizes to constrain the maximum tree-depth of an expression.
 ```agda
 {-# OPTIONS --sized-types #-}
-{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module
 
 ```agda
-module Lang.CC where
+module Lang.CCC where
 ```
 
 ## Imports
@@ -74,31 +73,23 @@ In the constructors, j denotes an upper bound for the nesting depth of children.
 Tag : Set
 Tag = ℕ
 
-data CC : VarLang where
+data CCC : VarLang where
   Artifact : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    A → List (CC j A) → CC i A
+    A → List (CCC j A) → CCC i A
   _⟨_⟩ : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    Dimension → List⁺ (CC j A) → CC i A
-```
-
-From this slightly more complex definition, we can obtain the original definition of choice calculus without an upper bound for the expression depth.
-In the original definition, we neither care for nor know the depth of an expression.
-So we just pick infinity as a proper upper bound because we speak about expressions of arbitrary depth.
-```agda
-CCC : Domain → Set
-CCC = CC ∞
+    Dimension → List⁺ (CCC j A) → CCC i A
 ```
 
 Smart constructors for plain artifacts.
 Any upper bound is fine but we are at least 1 deep.
 ```agda
-leaf : ∀ {i : Size} {A : Domain} → A → CC (↑ i) A
+leaf : ∀ {i : Size} {A : Domain} → A → CCC (↑ i) A
 leaf a = Artifact a []
 
-leaves : ∀ {i : Size} {A : Domain} → List⁺ A → List⁺ (CC (↑ i) A)
+leaves : ∀ {i : Size} {A : Domain} → List⁺ A → List⁺ (CCC (↑ i) A)
 leaves = mapl⁺ leaf
 
-upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CC j A → CC i A
+upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CCC j A → CCC i A
 upcast e = e
 ```
 
@@ -150,7 +141,7 @@ choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-⟦_⟧ : Semantics CC Configuration
+⟦_⟧ : Semantics CCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 ```
@@ -160,37 +151,37 @@ The semantic domain is a function that generates variants given configurations.
 Some transformation rules
 ```agda
 -- unary choices are mandatory
-D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
+D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
-  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≈ e
+  → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≈ e
 D⟨e⟩≈e = refl
 
 -- other way to prove the above via variant-equivalence
 
-D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
+D⟨e⟩⊂̌e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
-  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ⊆ e
+  → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ⊆ e
 D⟨e⟩⊂̌e config = ( config , refl )
 
-e⊂̌D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
+e⊂̌D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
-  → CC , ⟦_⟧ ⊢ e ⊆ D ⟨ e ∷ [] ⟩
+  → CCC , ⟦_⟧ ⊢ e ⊆ D ⟨ e ∷ [] ⟩
 e⊂̌D⟨e⟩ config = ( config , refl )
 
-D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
+D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
-  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
+  → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊂̌e {i} {A} {e} {D} , e⊂̌D⟨e⟩ {i} {A} {e} {D}
 ```
 
 Finally, we get the alternative proof of `D ⟨ e ∷ [] ⟩ ≚ e`:
 ```agda
-D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CC i A} {D : Dimension}
+D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     ---------------
-  → CC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
+  → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e' {i} {A} {e} {D} =
   ≈→≚ {↑ i} {i}
-      {CC} {Configuration} {⟦_⟧} {A}
+      {CCC} {Configuration} {⟦_⟧} {A}
       {D ⟨ e ∷ [] ⟩} {e}
       (D⟨e⟩≈e {i} {A} {e} {D})
 ```
@@ -199,7 +190,7 @@ Finally, let's build an example over strings. For this example, option calculus 
 ```agda
 
 -- Any upper bound is fine but we are at least 2 deep.
-cc_example_walk : ∀ {i : Size} → CC (↑ ↑ i) String
+cc_example_walk : ∀ {i : Size} → CCC (↑ ↑ i) String
 cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
 
 cc_example_walk_zoom : Variant String
@@ -216,10 +207,10 @@ _ = refl
 ## Utility
 
 ```agda
--- get all dimensions used in a CC expression
+-- get all dimensions used in a CCC expression
 open Data.List using (concatMap)
 
-dims : ∀ {i : Size} {A : Set} → CC i A → List Dimension
+dims : ∀ {i : Size} {A : Set} → CCC i A → List Dimension
 dims (Artifact _ es) = concatMap dims es
 dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
 ```
@@ -227,7 +218,7 @@ dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
 ## Show
 
 ```agda
-show : ∀ {i : Size} → CC i String → String
+show : ∀ {i : Size} → CCC i String → String
 show (Artifact a []) = a
 show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
 show (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.intersperse ", " (toList (mapl⁺ show es))) ++ ">"
