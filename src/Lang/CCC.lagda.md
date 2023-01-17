@@ -185,6 +185,53 @@ _ : cc_example_walk_zoom ≡ Artifactᵥ "zoom" []
 _ = refl
 ```
 
+## Completeness
+
+Proof in progress:
+
+Idea: Show that we can embed any list of variants into a big choice.
+Maybe its smarter to do this for ADDs and then to conclude by transitivity of translations that CCC is also complete.
+
+```agda
+open import Data.List.Relation.Unary.All using (All; []; _∷_; construct; fromList)
+open import Lang.Properties.Completeness using (Incomplete; Complete; _,_,_⊢_describes-all_)
+open Data.Product using (proj₁; proj₂)
+open import Util.Existence using (_,_; ∃-syntax-with-type)
+open Size using (∞)
+open Data.Product using (_×_)
+
+-- Todo constrain the size of variants
+{-# TERMINATING #-}
+describe-variant : ∀ {A : Domain} → Variant A → CCC ∞ A
+describe-variant (Artifactᵥ a vs) = Artifact a (mapl describe-variant vs)
+
+indexed : ∀ {A : Set} → ℕ → List A → List (ℕ × A)
+indexed _     [] = []
+indexed start (x ∷ xs) = (start , x) ∷ indexed (suc start) xs
+
+variant-choice : ∀ {A : Set} → List⁺ (Variant A) → CCC ∞ A
+variant-choice vs = "D" ⟨ mapl⁺ describe-variant vs ⟩
+
+-- TODO: Prove this instead of postulating it
+postulate
+  variant-choice-describes-all : ∀ {A : Set}
+    → (vs : List⁺ (Variant A))
+      -------------------------------------------------------------------------
+    → CCC , Configuration , ⟦_⟧ ⊢ (variant-choice vs) describes-all (toList vs)
+
+describe-variants : ∀ {A : Domain}
+  → (empty : A)
+  → (variants : List (Variant A))
+  → ∃[ e ∈ (CCC ∞ A)] (CCC , Configuration , ⟦_⟧ ⊢ e describes-all variants)
+describe-variants z []       = Artifact z [] , []
+describe-variants _ (v ∷ vs) = variant-choice (v ∷ vs) , variant-choice-describes-all (v ∷ vs)
+
+-- todo use proper size
+CCC-is-complete : (empty : (A : Set) → A) → Complete CCC Configuration ⟦_⟧
+CCC-is-complete empty {A} variants = ∞ , describe-variants (empty A) variants
+```
+
+
 ## Utility
 
 ```agda

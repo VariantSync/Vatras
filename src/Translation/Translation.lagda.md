@@ -46,7 +46,7 @@ Domain : Set₁ -- Object Language
 Domain = Set
 
 VarLang : Set₁
-VarLang = Size → Domain → Set
+VarLang = (i : Size) → (A : Domain) → Set
 ```
 
 We also model configurations as types but they do not have parameters.
