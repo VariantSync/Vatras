@@ -11,10 +11,7 @@ As an editor, I am using spacemacs with agda-mode. Setting emacs up for Agda is 
 
 ## Project Structure
 
-The semantic domain of all languages is defined in `src/SemanticDomain.agda`.
-Relations between languages and translations are formalized in `src/Translation/Translation.lagda.md`.
-All languages are formalized within the `src/Lang` subdirectory. Every language has its own file.
-Translations and theorems on relations between two such concrete languages are defined in the `src/Translation` directory.
+The semantic domain of all languages is defined in [src/SemanticDomain.agda](src/SemanticDomain.agda). Variability languages, configuration languages, semantics, as well as relations between languages and translations are formalized in [src/Translation/Translation.lagda.md](src/Translation/Translation.lagda.md) (I plan to later modularize this later into _definitions of language kinds_, _definitions of language relations_, and _definitions of translations and their properties_). All languages are formalized within the [src/Lang](src/Lang) subdirectory. Every language has its own file. Translations and theorems on relations between two such concrete languages are defined in the [src/Translation](src/Translation) directory. Completeness and incompleteness are formalized in [src/Lang/Completeness.lagda.md](src/Lang/Completeness.lagda.md).
 
 ## (A bit outdated) Roadmap
 
