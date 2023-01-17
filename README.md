@@ -11,10 +11,7 @@ As an editor, I am using spacemacs with agda-mode. Setting emacs up for Agda is 
 
 ## Project Structure
 
-The semantic domain of all languages is defined in `src/SemanticDomain.agda`.
-Relations between languages and translations are formalized in `src/Translation/Translation.lagda.md`.
-All languages are formalized within the `src/Lang` subdirectory. Every language has its own file.
-Translations and theorems on relations between two such concrete languages are defined in the `src/Translation` directory.
+The semantic domain of all languages is defined in [src/SemanticDomain.agda](src/SemanticDomain.agda). Variability languages, configuration languages, semantics, as well as relations between languages and translations are formalized in [src/Translation/Translation.lagda.md](src/Translation/Translation.lagda.md) (I plan to later modularize this later into _definitions of language kinds_, _definitions of language relations_, and _definitions of translations and their properties_). All languages are planned to be formalized in the [src/Lang](src/Lang) subdirectory in a custom file each. So far, [core choice calculus](src/Lang/CCC.lagda.md), [binary choice calculus](src/Lang/BCC.lagda.md), [option calculus](src/Lang/OC.lagda.md), and [algebraic decision diagrams](src/Lang/ADD.lagda.md) are formalized. Translations and theorems on relations between two such concrete languages are defined in the [src/Translation](src/Translation) directory. The only finished translation so far is [from binary to core choice calculus](src/Translation/BCC-to-CCC.lagda.md). Completeness and incompleteness are formalized in [src/Lang/Properties/Completeness.lagda.md](src/Lang/Properties/Completeness.lagda.md).
 
 ## (A bit outdated) Roadmap
 
