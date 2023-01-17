@@ -153,6 +153,11 @@ OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
 ... | i , (e , ∃c→⟦e⟧c≡0 ∷ ∃c→⟦e⟧c≡1 ∷ []) = does-not-describe-variants-0-and-1 e ∃c→⟦e⟧c≡0 ∃c→⟦e⟧c≡1
 ```
 
+**This is an important result!**
+It shows that we need at least some constraints to be complete.
+This is a justification for choice calculus definiting variability annotations with constraints (being alternative) instead of being pure annotations.
+Annother way is to enrich the annotation language, for example using propositional logic.
+
 ### Example and Test Time
 
 Definitions:
