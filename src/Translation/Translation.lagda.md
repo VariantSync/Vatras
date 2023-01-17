@@ -39,14 +39,16 @@ open import Axioms.Extensionality using (_embeds-via_)
 
 ## Definitions
 
-We model variability languages as embedded domain specific languages.
-Each language is parameterized in its object language.
+We model variability languages as embedded domain specific languages. That is, each variability language is described by a type which in turn is described by the kind `VarLang`. (`Set` denotes the set of all types and `Set₁` denotes the set of all kinds, i.e., the set of all sets of types).
+Each language is parameterized in its domain (called _object language_ in choice calculus), such as text, source code, files, whatever.
+We model domains, also as types, such as `String`, `ℕ`, or some AST of a programming language.
+Each variability language `VarLang` is also parameterized in a size which is irrelevant for studying variation but we need it to ensure that our proofs terminate.
 ```agda
 Domain : Set₁ -- Object Language
 Domain = Set
 
 VarLang : Set₁
-VarLang = (i : Size) → (A : Domain) → Set
+VarLang = Size → Domain → Set
 ```
 
 We also model configurations as types but they do not have parameters.
