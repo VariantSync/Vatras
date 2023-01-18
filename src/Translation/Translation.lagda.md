@@ -7,8 +7,8 @@
 - Redefine the relations within a single language as a specialication of the relations for two languages (by comparing a language with itself)? I guess we could just leave as is because it is more didactic and enables simplifications (especially for semantic equivalence). ⇒ We could do so but it is more didactic this way. We could provide proof that they are equivalent when applied to the same single language.
 - We are still missing the the annotation language over which we did not yet abstract.
 - Are these definitions in line with OC for which we have an additional well-formedness constraint?
--- Is one size in the parameters enough? For CC we actually need two sizes, one constraining the tree depth and one constraining its width. This is necessary because when translating from CC to BCC, width of choices becomes depth.
-
+- Is one size in the parameters enough? For CC we actually need two sizes, one constraining the tree depth and one constraining its width. This is necessary because when translating from CC to BCC, width of choices becomes depth.
+- Syntactic equivalence between languages: binary choice calculus expressions are actually also core choice calculus expressions because every binary choice is an n-ary choice. Every ADD is also a binary choice calculus expression. How can we formalize this? Our current relations allow us to say "only" that the CCC is as expressive as CCC and BCC is as expressive as ADDs but without information that these languages actually _embed_ into each other. So we might want to formalize a more concrete kind of translation: an embedding (i.e., a one way isomorphism). We could then prove that a language can be trivially translated to the other language and back without any changes. Even an embedding could allow syntactically manipulations though as long as they can be uniquely reversed. Is there any way to exclude such transformations? Maybe we want to allow them? Checking out the extended embedding translations might be a first useful step though.
 
 ## Options
 
