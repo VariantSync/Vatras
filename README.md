@@ -13,76 +13,112 @@ As an editor, I am using spacemacs with agda-mode. Setting emacs up for Agda is 
 
 The semantic domain of all languages is defined in [src/SemanticDomain.agda](src/SemanticDomain.agda). Variability languages, configuration languages, semantics, as well as relations between languages and translations are formalized in [src/Translation/Translation.lagda.md](src/Translation/Translation.lagda.md) (I plan to later modularize this later into _definitions of language kinds_, _definitions of language relations_, and _definitions of translations and their properties_). All languages are planned to be formalized in the [src/Lang](src/Lang) subdirectory in a custom file each. So far, [core choice calculus](src/Lang/CCC.lagda.md), [binary choice calculus](src/Lang/BCC.lagda.md), [option calculus](src/Lang/OC.lagda.md), and [algebraic decision diagrams](src/Lang/ADD.lagda.md) are formalized. Translations and theorems on relations between two such concrete languages are defined in the [src/Translation](src/Translation) directory. The only finished translation so far is [from binary to core choice calculus](src/Translation/BCC-to-CCC.lagda.md). Completeness and incompleteness are formalized in [src/Lang/Properties/Completeness.lagda.md](src/Lang/Properties/Completeness.lagda.md).
 
-## (A bit outdated) Roadmap
+## Roadmap
 
 ![](res/taxonomy.jpg)
 
-###
+## Implementation Progress
 
-- [/] Relations for languages and translations
-- [ ] Completeness and Incompleteness Theorems
+### Language Formalizations
 
-### Choice Calculus
-- [x] implement n-ary choice calculus
-  - [x] syntax
-  - [x] semantics
-    - [x] semantic equivalence
-    - [x] variant-preserving equivalence
-    - [/] prove some transformation rules
-- [x] implement binary choice calculus
-  - [x] syntax
-  - [x] semantics
-- [/] bnf transformation
-  - [x] implementation
-  - [/] proof of being variant-preserving
-    - [x] Binary CC -> CC
-    - [ ] CC -> Binary CC
-- [/] I already wrote a bidirectional translation from choice calculus to choice calculus with local dimension declarations in Haskell [here](https://github.com/VariantSync/ProofsCC/blob/main/src/CC/CCL.hs). The idea is that when not having local dimension declarations, one can identify the deepest spot in the choice calculus tree at which the declaration must be introduced. We could also add that to our map.
+- [x] Core Choice Calculus (CCC)
+- [x] Binary Choice Calculus (BCC)
+- [x] Algebraic Decision Diagrams (ADD)
+- [x] Binary Decision Diagrams (BDD)
+- [x] Option Calculus (OC)
+- [ ] Variation Trees (VT)
 
-### Algebraic Decision Diagrams
-- [/] implement algebaric decision diagrams (ADDs)
-  - [x] syntax
-  - [x] semantics
-  - [x] prove that BDDs are specialized ADDs
-  - [ ] prove that ADDs are equivalent to choice calculus by proving that a CC expression in binary normal form can be converted to ADD and vice versa. By transitivity `CC <-> Binary CC <-> ADD`, we get that any choice calculus expression can be transformed to ADD and vice versa.
+For some of those language, showing the existence of some transforation rules might be handy. We did this for some few rules of CCC and BCC so far.
 
-- [ ] prove that choice calculus can encode any variation, by proving that we can build an ADD for any kind of variants. By transitivity we get that any ADD is also a CC expression and thus any set of variants can be encoded in CC.
+Languages we might also want to include are
 
-### Option Calculus
-on the search for nice brackets:
-```
-〔  U+3014  LEFT TORTOISE SHELL BRACKET (\( option 9 on page 2)
-〕  U+3015  RIGHT TORTOISE SHELL BRACKET (\) option 9 on page 2)
-```
+- [ ] Formula Choice Calculus
+- [ ] Artifact Trees (i.e., Option Calculus with Formulas + formulas stored within artifact nodes)
+- [ ] Variability-Aware ASTs
+- [ ] ...?
 
-- [ ] implement option calculus
-  - [ ] syntax: Which dialect is the best? singleton options I guess!?
-  - [ ] semantics
-    - [ ] Decide on how to handle the empty variant induced by options at the root of an expression:
-      - forbid?
-      - make root option mandatory via semantics?
-      - include empty variant explicitly?
-  - [ ] are there any transformation rules?
-- [ ] Show that option calculus is subsumed by choice calculus (except for the empty variant? s.a.)
-  - [ ] implement conversion
-  - [ ] proof of variant-preservingness
-- [ ] Show that choice calculus is not subsumed by option calculus.
+## Language Properties
 
-### Variation Trees
-- [ ] implement variation trees
-  - [ ] syntax
-  - [ ] semantics
-- [ ] prove that option calculus is subsumed by variation trees
-- [ ] prove that choice calculus is subsumed by variation trees
-- [ ] prove that there is nothing more in variation trees rather than option calculus and choice calculus (follows actually from syntax): This is essentially a proof that "option calculus + else = choice calculus".
+### In general
 
-### Artefact Trees
-same as option calculus but with inline annotations?
+- [x] Completeness
+- [x] Incompleteness
 
-### Variability-Aware ASTs
-same as variation trees but with inline annotations?
+### In concrete
 
-### Literature Search on Further Formalisms
+- [ ] Completeness of ADD
+- [ ] Completeness of CCC (begun; might be smarter to conclude from completeness of ADDs)
+- [x] Incompleteness of OC
+- [ ] Completeness of BCC
+- [ ] Completeness of VT
+
+We can derive some completeness proofs by transitivity with translations.
+
+## Language Relations
+
+Comparing expression within a single language:
+
+- [x] syntactic equivalence (defined in Agda STL)
+- [x] variant subset
+- [x] variant preserving equivalence
+- [x] semantic equivalence
+
+Comparing expression from two different languages:
+
+- syntactic equivalence does not exist
+- [x] variant subset
+- [x] variant preserving equivalence
+- [x] semantic equivalence
+
+Comparing two languages
+
+- [x] expressiveness
+- [x] variant equivalence
+
+## Translations
+
+### General Definitions
+
+- [x] Translation
+- [x] variant-preserving translations
+- [x] semantics-preserving translations: Defined but is it useful?
+- [x] conclude that a language is as expressive as another from a variant-preserving translation
+
+### Across Languages
+
+planed proofs are:
+
+- [ ] CCC to BCC (begun; stuck in state monad)
+- [x] BCC to CCC
+
+- [ ] BCC to ADD
+- [ ] ADD to BCC
+
+- [ ] OC to BCC
+- [ ] BCC cannot be encoded in OC
+
+- [ ] OC to VT
+- [ ] VT cannot be encoded in OC
+
+- [ ] BCC to VT
+- [ ] VT to BCC
+
+- [ ] BDD to ADD
+- [ ] ADD cannot be encoded in BDD
+
+## Annotation Languages
+
+Do we want to also abstract on the annotation language (i.e., dimensions vs. formulas vs. literals vs. ... any expression that describes a predicate (or an indexing `X \to N` for CCC))? This might be a good future work. This would require to generalize all the languages to tak the annotation langauge as a type parameter, thus yielding a family of variation language for every current language. I'd love to do this in the future but I think that might be too much for this paper.
+
+## Some other notes and thoughts
+
+- Eric used the core choice calculus + local dimension declarations in his phd thesis. I wrote a bidirectional translation from choice calculus to choice calculus with local dimension declarations in Haskell [here](https://github.com/VariantSync/ProofsCC/blob/main/src/CC/CCL.hs). The idea is that when not having local dimension declarations, one can identify the deepest spot in the choice calculus tree at which the declaration must be introduced. We could also add that to our map.
+- on the search for nice brackets for option calculus I found these in Agda
+  ```
+  〔  U+3014  LEFT TORTOISE SHELL BRACKET (\( option 9 on page 2)
+  〕  U+3015  RIGHT TORTOISE SHELL BRACKET (\) option 9 on page 2)
+  ```
+- We somehow would like to prove that there is nothing more in variation trees than option calculus and choice calculus (follows actually from syntax): This is essentially a proof that "option calculus + else = choice calculus".
 
 ### Sharing
 - [ ] Investigate sharing.
@@ -97,8 +133,3 @@ same as variation trees but with inline annotations?
   - [ ] semantics for free from CC/VT. Prove that it is equivalent to the self-defined semantics (commuting square)
   - [ ] derivation
   - [ ] integration
-
-### On Variant Quantification (What is a Feature Mapping?)
-- [ ] Generalization of Dimensions
-- [ ] Generalization of Options
-- Options and Binary Dimensions and thus feature mappings are expressions whose semantics is a predicate. For n-ary (core) choice calculus, such expression have semantics which is and indexing function (`Dim -> Nat`).
