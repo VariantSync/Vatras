@@ -33,6 +33,7 @@ map-cong-≗-≡ f≗g = ≗→≡ (map-cong f≗g)
 map-cong-≡ : ∀ {A B : Set} {f g : A → B} → f ≡ g → map f ≡ map g
 map-cong-≡ = map-cong-≗-≡ ∘ ≡→≗
 
+-- TODO: Put in extra file.
 _embeds-via_ : ∀ {A B : Set}
   → (to   : A → B)
   → (from : B → A)
