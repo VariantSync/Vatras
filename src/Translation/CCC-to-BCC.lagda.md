@@ -4,6 +4,7 @@
 
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module

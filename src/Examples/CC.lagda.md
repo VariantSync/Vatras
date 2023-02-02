@@ -47,7 +47,8 @@ open import Lang.BCC
   renaming (Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import Translation.CCC-to-BCC
+open import Translation.CCC-to-BCC using (CCC→BCC)
+open import Translation.Translation using (lang; conf; fnoc)
 
 open import Util.ShowHelpers
 ```
@@ -134,9 +135,9 @@ Do so for two configurations, one configuration that always selects 0, and one t
 ccex-toBinaryAndBack : CCExample → String
 ccex-toBinaryAndBack (name , cc) = unlines (
   let
-    configconverter , cc₂ = toBCC cc
-    n→b = nary→binary configconverter
-    b→n = binary→nary configconverter
+    cc₂ = lang CCC→BCC cc
+    n→b = conf CCC→BCC cc
+    b→n = fnoc CCC→BCC cc
 
     evalₙ : Configurationₙ × String → String
     evalₙ = λ { (conf , cname) →
