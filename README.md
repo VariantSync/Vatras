@@ -65,7 +65,7 @@ Comparing expression within a single language:
 
 Comparing expression from two different languages:
 
-- syntactic equivalence does not exist
+- [ ] syntactic equivalence does not exist
 - [x] variant subset
 - [x] variant preserving equivalence
 - [x] semantic equivalence
