@@ -66,7 +66,7 @@ open import Translation.Translation
   -- Relations between variability languages
   using (_,_is-as-expressive-as_,_)
   -- Translations
-  using (Translation; conf; fnoc)
+  using (Translation; lang; conf; fnoc)
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 
@@ -155,7 +155,7 @@ open import Effect.Monad using (RawMonad)
 
 -- Import state monad
 open import Effect.Monad.State
-  using (State; RawMonadState; runState)
+  using (State; RawMonadState; runState; execState; evalState)
   renaming (functor to state-functor;
             applicative to state-applicative;
             monad to state-monad;
@@ -206,15 +206,22 @@ We should later decide if this extra boilerplate is worth it or not.
 {-# TERMINATING #-}
 toBCC' : ∀ {i : Size} {A : Set} → CCC i A → TranslationState (BCC ∞ A)
 
--- actural translation function
-toBCC : ∀ {i : Size} {A : Set} → CCC i A → ConfigurationConverter × BCC ∞ A
-toBCC cc = runState (toBCC' cc) unknownConfigurationConverter
+-- actual translation function
+CCC→BCC : Translation CCC BCC Configurationₙ Configuration₂ -- CCC i A → ConfigurationConverter × BCC ∞ A
+CCC→BCC =
+  record
+  { sem₁ = ⟦_⟧ₙ
+  ; sem₂ = ⟦_⟧₂
+  ; size = λ i → ∞ -- Todo: Put real number here
+  ; lang = λ ccc → evalState (toBCC' ccc) unknownConfigurationConverter
+  ; conf = λ ccc → nary→binary (execState (toBCC' ccc) unknownConfigurationConverter)
+  ; fnoc = λ ccc → binary→nary (execState (toBCC' ccc) unknownConfigurationConverter)
+  }
 
 {- |
 Unroll choices by recursively nesting any alternatives beyond the first.
 Example: D ⟨ u ∷ v ∷ w ∷ [] ⟩ → D.0 ⟨ u, D.1 ⟨ v , w ⟩₂ ⟩₂
 -}
-
 toBCC'-choice-unroll : ∀ {i : Size} {A : Set}
   → Dimension      -- initial dimension in input formula that we translate (D in the example above).
   → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
@@ -298,94 +305,67 @@ toBCC'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
 
 Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
 ```
-{-
-CCC→BCC-left : ∀ {i : Size} {A : Set} {e : CC i A}
-    -------------
-  → proj₂ (toBCC e) ₂⊂̌ₙ e
+CCC→BCC-left : ∀ {i : Size} {A : Domain}
+  → (e : CCC i A)
+    ---------------------
+  → e ⊆-via CCC→BCC
 
-CCC→BCC-right : ∀ {i : Size} {A : Set} {e : CC i A}
-    -------------
-  → e ₙ⊂̌₂ proj₂ (toBCC e)
+CCC→BCC-right : ∀ {i : Size} {A : Domain}
+  → (e : CCC i A)
+    ---------------------
+  → e ⊇-via CCC→BCC
 
-CC→BCC : ∀ {i : Size} {A : Set} {e : CC i A}
-    ----------
-  → proj₂ (toBCC e) ₂≚ₙ e
-CC→BCC {i} {A} {e} =
-    CC→BCC-left  {i} {A} {e}
-  , CC→BCC-right {i} {A} {e}
-  -}
+CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
+CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
 ```
 
 #### Proof of the left side
 
 ```agda
-{-
--- Every variant described by the translated expression is also described by the initial expression.
-CC→BCC-left' : ∀ {i : Size} {A : Set}
-  → ∀ (e : CC i A)
-  → ∀ (c₂ : Configuration₂)
-    ------------------------------------------------------------------
-  → ⟦ proj₂ (toBCC e) ⟧₂ c₂ ≡ ⟦ e ⟧ (binary→nary (proj₁ (toBCC e)) c₂)
-
-CC→BCC-left' (Artifact a []) c₂ = refl
-CC→BCC-left' e@(Artifact a es@(_ ∷ _)) c₂ =
+CCC→BCC-left (Artifactₙ a []) c₂ = refl
+CCC→BCC-left e@(Artifactₙ a es@(_ ∷ _)) cₙ =
   let open RawFunctor state-functor
-      c = binary→nary (proj₁ (toBCC e)) c₂
+      c₂ = conf CCC→BCC e cₙ
   in
   begin
-    ⟦ proj₂ (toBCC e) ⟧₂ c₂
+    ⟦ e ⟧ₙ cₙ
   ≡⟨⟩
-    ⟦ proj₂ (runState (Artifact₂ a <$> (traverse state-applicative toBCC' es)) unknownConfigurationConverter) ⟧₂ c₂
-  ≡⟨⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (proj₂ (runState (sequenceA state-applicative (mapl toBCC' es)) unknownConfigurationConverter)))
+    Artifactᵥ a (mapl (flip ⟦_⟧ₙ cₙ) es)
   -- TODO: Somehow apply the induction hypothesis below the sequenceA below the runState below the mapl below the Artifactᵥ
   ≡⟨ Eq.cong (λ m → Artifactᵥ a m) {!!} ⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+    Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (evalState (sequenceA state-applicative (mapl toBCC' es)) unknownConfigurationConverter))
   ≡⟨⟩
-    ⟦ e ⟧ c
+    ⟦ (evalState (Artifact₂ a <$> (traverse state-applicative toBCC' es)) unknownConfigurationConverter) ⟧₂ c₂
+  ≡⟨⟩
+    ⟦ lang CCC→BCC e ⟧₂ c₂
   ∎
-CC→BCC-left' (D ⟨ e ∷ [] ⟩) c₂ =
-  let conf = binary→nary (proj₁ (toBCC (D ⟨ e ∷ [] ⟩))) c₂ in
-  ⟦ proj₂ (toBCC (D ⟨ e ∷ [] ⟩)) ⟧₂ c₂ ≡⟨⟩
-  ⟦ proj₂ (toBCC e            ) ⟧₂ c₂ ≡⟨ CC→BCC-left' e c₂ ⟩
-  ⟦ e           ⟧ conf                ≡⟨⟩
-  ⟦ D ⟨ e ∷ [] ⟩ ⟧ conf                ∎
-CC→BCC-left' e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩) c₂ =
-  let conf = binary→nary (proj₁ (toBCC e)) c₂
-      e₂ = proj₂ (toBCC e)
+CCC→BCC-left (D ⟨ e ∷ [] ⟩ₙ) cₙ =
+  let c₂ = conf CCC→BCC (D ⟨ e ∷ [] ⟩ₙ) cₙ in
+  ⟦ D ⟨ e ∷ [] ⟩ₙ ⟧ₙ cₙ                 ≡⟨⟩
+  ⟦ e           ⟧ₙ cₙ                  ≡⟨ CCC→BCC-left e cₙ ⟩
+  ⟦ lang CCC→BCC e              ⟧₂ c₂ ≡⟨⟩
+  ⟦ lang CCC→BCC (D ⟨ e ∷ [] ⟩ₙ) ⟧₂ c₂ ∎
+CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
+  let c₂ = conf CCC→BCC e cₙ
+      e₂ = lang CCC→BCC e
   in
   begin
-    ⟦ proj₂ (toBCC e) ⟧₂ c₂
+    ⟦ e ⟧ₙ cₙ
+  ≡⟨⟩
+    ⟦ choice-elimination (cₙ D) es ⟧ₙ cₙ
   --≡⟨ {!!} ⟩
   --  ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
   ≡⟨ {!!} ⟩
-    ⟦ choice-elimination (conf D) es ⟧ conf
-  ≡⟨⟩
-    ⟦ e ⟧ conf
+    ⟦ lang CCC→BCC e ⟧₂ c₂
   ∎
-
-CC→BCC-left {i} {A} {e} c₂ =
-  let conf-trans , cc₂ = toBCC e in
-  binary→nary conf-trans c₂ , CC→BCC-left' e c₂ -}
 ```
 
 #### Proof of the right side
 
 ```agda
 -- Every variant described by an n-ary CC expression, is also described by its translation to binray CC.
-{-
-CC→BCC-right' : ∀ {i : Size} {A : Set}
-  → ∀ (e : CC i A)
-  → ∀ (c : Configuration)
-    -----------------------------------------------------------------
-  → ⟦ proj₂ (toBCC e) ⟧₂ (nary→binary (proj₁ (toBCC e)) c) ≡  ⟦ e ⟧ c
-
-CC→BCC-right' (Artifact a []) c = refl
-CC→BCC-right' (Artifact a es@(_ ∷ _)) c = {!!}
-CC→BCC-right' (D ⟨ e ∷ [] ⟩) c = CC→BCC-right' e c -- just apply the induction hypothesis on the only mandatory alternative
-CC→BCC-right' (D ⟨ es@(_ ∷ _ ∷ _) ⟩) c = {!!}
-
-CC→BCC-right {i} {A} {e} c =
-  let conf-trans , cc₂ = toBCC e in
-  nary→binary conf-trans c , CC→BCC-right' e c -}
+CCC→BCC-right (Artifactₙ a []) _ = refl
+CCC→BCC-right (Artifactₙ a es@(_ ∷ _)) c₂ = {!!}
+CCC→BCC-right (D ⟨ e ∷ [] ⟩ₙ) c₂ = CCC→BCC-right e c₂ -- just apply the induction hypothesis on the only mandatory alternative
+CCC→BCC-right (D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) c₂ = {!!}
 ```

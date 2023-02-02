@@ -14,6 +14,7 @@
 
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module
@@ -296,8 +297,8 @@ record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
 
     size : Size → Size
     lang : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ (size i) D
-    conf : C₁ → C₂
-    fnoc : C₂ → C₁ -- We need this to quantify over the set of variants described by the translated expression.
+    conf : ∀ {i : Size} {D : Domain} → L₁ i D → C₁ → C₂
+    fnoc : ∀ {i : Size} {D : Domain} → L₁ i D → C₂ → C₁ -- We need this to quantify over the set of variants described by the translated expression.
 open Translation public
 ```
 
@@ -312,7 +313,7 @@ _⊆-via_ {_} {_} {_} {C₁} {_} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
-      ∀ (c₁ : C₁) → (⟦ e₁ ⟧₁ c₁ ≡ ⟦ lang translation e₁ ⟧₂ (conf translation c₁))
+      ∀ (c₁ : C₁) → (⟦ e₁ ⟧₁ c₁ ≡ ⟦ lang translation e₁ ⟧₂ (conf translation e₁ c₁))
 ```
 
 From our reformulation for translations, we can indeed conclude that an expression describes a subset of the variants of its translated expression.
@@ -322,7 +323,7 @@ From our reformulation for translations, we can indeed conclude that an expressi
   → _⊆-via_ {_} {L₁} {L₂} {_} {_} {_} e₁ t
     --------------------------------------------
   → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ lang t e₁
-⊆-via→⊆-within t ⊆-via = λ c₁ → conf t c₁ , ⊆-via c₁
+⊆-via→⊆-within {e₁ = e₁} t ⊆-via = λ c₁ → conf t e₁ c₁ , ⊆-via c₁
 ```
 
 Analogously, we proceed for the inverse direction.
@@ -338,7 +339,7 @@ _⊇-via_ {_} {_} {_} {_} {C₂} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
-    ∀ (c₂ : C₂) → (⟦ e₁ ⟧₁ (fnoc translation c₂) ≡ ⟦ lang translation e₁ ⟧₂ c₂)
+    ∀ (c₂ : C₂) → (⟦ e₁ ⟧₁ (fnoc translation e₁ c₂) ≡ ⟦ lang translation e₁ ⟧₂ c₂)
 
 -- Proof that our definition of translation is sufficient to conclude variant-subset of an expression and its translation.
 ⊇-via→⊆-within : ∀ {i : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain} → {e₁ : L₁ i A}
@@ -346,7 +347,7 @@ _⊇-via_ {_} {_} {_} {_} {C₂} {_} e₁ translation =
   → e₁ ⊇-via t
     --------------------------------------------
   → L₂ , sem₂ t and L₁ , sem₁ t ⊢ lang t e₁ ⊆ e₁
-⊇-via→⊆-within t ⊇-via = λ c₂ → fnoc t c₂ , Eq.sym (⊇-via c₂)
+⊇-via→⊆-within {e₁ = e₁} t ⊇-via = λ c₂ → fnoc t e₁ c₂ , Eq.sym (⊇-via c₂)
 ```
 
 As earlier, we can compose the above definitions to say that an expression `e₁` describes the same set of variants as its translated expression.
@@ -381,9 +382,9 @@ We do not require the inverse direction (`fnoc` being an embedding of configurat
 For example, the set of features in `C₂` could be bigger (e.g., when going from core choice calculus to binary choice calculus) but all information can be derived by `conf` from our initial configuration `c₁`.
 ```agda
 _is-semantics-preserving : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} → Translation L₁ L₂ C₁ C₂ → Set₁
-t is-semantics-preserving =
+_is-semantics-preserving {L₁ = L₁} t =
     t is-variant-preserving
-  × (conf t) embeds-via (fnoc t)
+  × (∀ {i : Size} {A : Domain} (e₁ : L₁ i A) → ((conf t e₁) embeds-via (fnoc t e₁)))
 ```
 
 We can conclude that a language is as expressive as another language if there exists a variant preserving translation.

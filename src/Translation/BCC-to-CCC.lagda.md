@@ -123,8 +123,8 @@ BCC→CCC = record
   ; sem₂ = ⟦_⟧ₙ
   ; size = λ i → i
   ; lang = toCCC
-  ; conf = toNaryConfig
-  ; fnoc = toBinaryConfig
+  ; conf = λ _ → toNaryConfig
+  ; fnoc = λ _ → toBinaryConfig
   }
 ```
 
@@ -154,7 +154,7 @@ BCC→CCC-is-variant-preserving : BCC→CCC is-variant-preserving
 BCC→CCC-is-variant-preserving e = BCC→CCC-left e , BCC→CCC-right e
 
 BCC→CCC-is-semantics-preserving : BCC→CCC is-semantics-preserving
-BCC→CCC-is-semantics-preserving = BCC→CCC-is-variant-preserving , extensionality ∘ conf-remains-same
+BCC→CCC-is-semantics-preserving = BCC→CCC-is-variant-preserving , λ _ → extensionality ∘ conf-remains-same
 
 CCC-is-as-expressive-as-BCC : CCC , ⟦_⟧ₙ is-as-expressive-as BCC , ⟦_⟧₂
 CCC-is-as-expressive-as-BCC = translation-proves-variant-preservation BCC→CCC BCC→CCC-is-variant-preserving
@@ -168,7 +168,7 @@ CCC-is-as-expressive-as-BCC = translation-proves-variant-preservation BCC→CCC 
 -- helper function for choices
 BCC→CCC-left-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {l : BCC i A} {r : BCC i A}
   → ∀ (c₂ : Configuration₂)
-    ---------------------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
     ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (toCCC l ∷ toCCC r ∷ [])) ⟧ₙ (toNaryConfig c₂)
 BCC→CCC-left-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
