@@ -32,7 +32,7 @@ open Eq using (_≡_; refl)
 open import Size using (Size)
 
 open import Data.Product   using (_,_; ∃-syntax; _×_)
-open import Util.Existence using (_,_; ∃-Size; ∃-syntax-with-type)
+open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂; ∃-syntax-with-type)
 
 open import SemanticDomain using (Variant)
 open import Axioms.Extensionality using (_embeds-via_)
@@ -295,11 +295,15 @@ record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
     sem₁ : Semantics L₁ C₁
     sem₂ : Semantics L₂ C₂
 
-    size : Size → Size
-    lang : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ (size i) D
+    lang : ∀ {i : Size} {D : Domain} → L₁ i D → ∃-Size[ j ] (L₂ j D)
+    --lang : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ (size i) D
     conf : ∀ {i : Size} {D : Domain} → L₁ i D → C₁ → C₂
     fnoc : ∀ {i : Size} {D : Domain} → L₁ i D → C₂ → C₁ -- We need this to quantify over the set of variants described by the translated expression.
 open Translation public
+
+open import Function using (_∘_)
+
+--translate = proj₂ ∘ lang
 ```
 
 We now reformulate our relations to compare expressions between languages to translations.
@@ -313,7 +317,7 @@ _⊆-via_ {_} {_} {_} {C₁} {_} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
-      ∀ (c₁ : C₁) → (⟦ e₁ ⟧₁ c₁ ≡ ⟦ lang translation e₁ ⟧₂ (conf translation e₁ c₁))
+      ∀ (c₁ : C₁) → (⟦ e₁ ⟧₁ c₁ ≡ ⟦ proj₂ (lang translation e₁) ⟧₂ (conf translation e₁ c₁))
 ```
 
 From our reformulation for translations, we can indeed conclude that an expression describes a subset of the variants of its translated expression.
@@ -322,7 +326,7 @@ From our reformulation for translations, we can indeed conclude that an expressi
   → (t : Translation L₁ L₂ C₁ C₂)
   → _⊆-via_ {_} {L₁} {L₂} {_} {_} {_} e₁ t
     --------------------------------------------
-  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ lang t e₁
+  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ proj₂ (lang t e₁)
 ⊆-via→⊆-within {e₁ = e₁} t ⊆-via = λ c₁ → conf t e₁ c₁ , ⊆-via c₁
 ```
 
@@ -339,14 +343,14 @@ _⊇-via_ {_} {_} {_} {_} {C₂} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
-    ∀ (c₂ : C₂) → (⟦ e₁ ⟧₁ (fnoc translation e₁ c₂) ≡ ⟦ lang translation e₁ ⟧₂ c₂)
+    ∀ (c₂ : C₂) → (⟦ e₁ ⟧₁ (fnoc translation e₁ c₂) ≡ ⟦ proj₂ (lang translation e₁) ⟧₂ c₂)
 
 -- Proof that our definition of translation is sufficient to conclude variant-subset of an expression and its translation.
 ⊇-via→⊆-within : ∀ {i : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain} → {e₁ : L₁ i A}
   → (t : Translation L₁ L₂ C₁ C₂)
   → e₁ ⊇-via t
     --------------------------------------------
-  → L₂ , sem₂ t and L₁ , sem₁ t ⊢ lang t e₁ ⊆ e₁
+  → L₂ , sem₂ t and L₁ , sem₁ t ⊢ proj₂ (lang t e₁) ⊆ e₁
 ⊇-via→⊆-within {e₁ = e₁} t ⊇-via = λ c₂ → fnoc t e₁ c₂ , Eq.sym (⊇-via c₂)
 ```
 
@@ -362,7 +366,7 @@ e₁ ≚-via t = e₁ ⊆-via t × e₁ ⊇-via t
   → (t : Translation L₁ L₂ C₁ C₂)
   → e₁ ≚-via t
     --------------------------------------------
-  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ≚ lang t e₁
+  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ≚ proj₂ (lang t e₁)
 ≚-via→≚-within t (⊆-via , ⊇-via) =
     ⊆-via→⊆-within t ⊆-via
   , ⊇-via→⊆-within t ⊇-via
@@ -395,9 +399,10 @@ translation-proves-variant-preservation : ∀ {L₁ L₂ : VarLang} {C₁ C₂ :
   → t is-variant-preserving
     -------------------------------------------
   → L₂ , sem₂ t is-as-expressive-as L₁ , sem₁ t
-translation-proves-variant-preservation trans preservation {i} {_} e₁ =
-    size trans i
-  , lang trans e₁
+translation-proves-variant-preservation trans preservation e₁ =
+  let size , e₂ = lang trans e₁ in
+    size
+  , e₂
   , ≚-via→≚-within trans (preservation e₁)
 ```
 

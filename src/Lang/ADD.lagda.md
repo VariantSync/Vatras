@@ -49,6 +49,9 @@ Configuration = Dimension → Bool
 ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant A
 ⟦ Terminal a ⟧ _   = Artifactᵥ a []
 ⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
+
+leaf : {i : Size} {A : Set} -> A -> ADD i A
+leaf = λ x → {!!}
 ```
 
 ### Translation to Binary Choice Calculus

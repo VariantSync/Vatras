@@ -11,8 +11,8 @@ open import Size using (SizeUniv)
 record Σ-Size {l : Level} (i : SizeUniv) (B : i → Set l) : Set l where
   constructor _,_
   field
-    fst : i
-    snd : B fst
+    proj₁ : i
+    proj₂ : B proj₁
 open Σ-Size public
 
 ∃-Size : ∀ {l : Level} {A : SizeUniv} → (A → Set l) → Set l

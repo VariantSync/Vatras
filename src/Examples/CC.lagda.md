@@ -47,7 +47,7 @@ open import Lang.BCC
   renaming (Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import Translation.CCC-to-BCC using (CCC→BCC)
+open import Translation.CCC-to-BCC  using (CCC→BCC)
 open import Translation.Translation using (lang; conf; fnoc)
 
 open import Util.ShowHelpers
@@ -132,10 +132,12 @@ selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 Convert a given named choice calculus formula to binary normal form and back and print all intermediate results.
 Do so for two configurations, one configuration that always selects 0, and one that always selects 1.
 ```agda
+open import Util.Existence using (proj₂)
+
 ccex-toBinaryAndBack : CCExample → String
 ccex-toBinaryAndBack (name , cc) = unlines (
   let
-    cc₂ = lang CCC→BCC cc
+    cc₂ = proj₂ (lang CCC→BCC cc)
     n→b = conf CCC→BCC cc
     b→n = fnoc CCC→BCC cc
 

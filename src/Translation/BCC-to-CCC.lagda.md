@@ -88,6 +88,11 @@ toCCC : ∀ {i : Size} {A : Set} → BCC i A → CCC i A
 toCCC (Artifact₂ a es) = Artifactₙ a (mapl toCCC es)
 toCCC (D ⟨ l , r ⟩₂) = D ⟨ (toCCC l) ∷ (toCCC r) ∷ [] ⟩ₙ
 
+open import Util.Existence using (∃-Size; _,_)
+
+with-size : ∀ {i : Size} {A : Domain} → CCC i A → ∃-Size[ i ] (CCC i A)
+with-size {i} {_} e = i , e
+
 -- Conversion of configurations.
 {-
 When converting configurations for toCC, we have decide on a possible mapping between booleans and natural numbers.
@@ -121,8 +126,8 @@ BCC→CCC : Translation BCC CCC Configuration₂ Configurationₙ
 BCC→CCC = record
   { sem₁ = ⟦_⟧₂
   ; sem₂ = ⟦_⟧ₙ
-  ; size = λ i → i
-  ; lang = toCCC
+  --; size = λ i → i
+  ; lang = with-size ∘ toCCC
   ; conf = λ _ → toNaryConfig
   ; fnoc = λ _ → toBinaryConfig
   }

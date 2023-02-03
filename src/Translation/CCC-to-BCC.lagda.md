@@ -74,6 +74,8 @@ open import Translation.Translation
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
+
+open import Util.Existence using (_,_; proj₂)
 ```
 
 ## Translation
@@ -213,8 +215,8 @@ CCC→BCC =
   record
   { sem₁ = ⟦_⟧ₙ
   ; sem₂ = ⟦_⟧₂
-  ; size = λ i → ∞ -- Todo: Put real number here
-  ; lang = λ ccc → evalState (toBCC' ccc) unknownConfigurationConverter
+  --; size = λ i → ∞ -- Todo: Put real number here
+  ; lang = λ ccc → (∞ , evalState (toBCC' ccc) unknownConfigurationConverter)
   ; conf = λ ccc → nary→binary (execState (toBCC' ccc) unknownConfigurationConverter)
   ; fnoc = λ ccc → binary→nary (execState (toBCC' ccc) unknownConfigurationConverter)
   }
@@ -338,14 +340,14 @@ CCC→BCC-left e@(Artifactₙ a es@(_ ∷ _)) cₙ =
   ≡⟨⟩
     ⟦ (evalState (Artifact₂ a <$> (traverse state-applicative toBCC' es)) unknownConfigurationConverter) ⟧₂ c₂
   ≡⟨⟩
-    ⟦ lang CCC→BCC e ⟧₂ c₂
+    ⟦ proj₂ (lang CCC→BCC e) ⟧₂ c₂
   ∎
 CCC→BCC-left (D ⟨ e ∷ [] ⟩ₙ) cₙ =
   let c₂ = conf CCC→BCC (D ⟨ e ∷ [] ⟩ₙ) cₙ in
-  ⟦ D ⟨ e ∷ [] ⟩ₙ ⟧ₙ cₙ                 ≡⟨⟩
-  ⟦ e           ⟧ₙ cₙ                  ≡⟨ CCC→BCC-left e cₙ ⟩
-  ⟦ lang CCC→BCC e              ⟧₂ c₂ ≡⟨⟩
-  ⟦ lang CCC→BCC (D ⟨ e ∷ [] ⟩ₙ) ⟧₂ c₂ ∎
+  ⟦ D ⟨ e ∷ [] ⟩ₙ ⟧ₙ cₙ                   ≡⟨⟩
+  ⟦ e           ⟧ₙ cₙ                    ≡⟨ CCC→BCC-left e cₙ ⟩
+  ⟦ proj₂ (lang CCC→BCC e)              ⟧₂ c₂ ≡⟨⟩
+  ⟦ proj₂ (lang CCC→BCC (D ⟨ e ∷ [] ⟩ₙ)) ⟧₂ c₂ ∎
 CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
   let c₂ = conf CCC→BCC e cₙ
       e₂ = lang CCC→BCC e
@@ -357,7 +359,7 @@ CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
   --≡⟨ {!!} ⟩
   --  ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
   ≡⟨ {!!} ⟩
-    ⟦ lang CCC→BCC e ⟧₂ c₂
+    ⟦ proj₂ (lang CCC→BCC e) ⟧₂ c₂
   ∎
 ```
 
