@@ -34,7 +34,7 @@ open import Data.String
 open import Function
   using (_∘_; flip)
 open import Size
-  using (Size; ∞)
+  using (Size; ∞; ↑_; _⊔ˢ_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
@@ -67,7 +67,7 @@ open import Translation.Translation
   -- Relations between variability languages
   using (_,_is-as-expressive-as_,_)
   -- Translations
-  using (Translation; lang; conf; fnoc)
+  using (Translation; TranslationResult; expr; conf; fnoc)
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 
@@ -75,7 +75,7 @@ open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 
-open import Util.Existence using (_,_; proj₂)
+open import Util.Existence using (_,_; proj₁; proj₂)
 ```
 
 ## Translation
@@ -153,7 +153,7 @@ We thus first import the necessary definitions from the standard library:
 ```agda
 -- Import general functor and monad operations.
 open import Effect.Functor using (RawFunctor)
---open import Effect.Applicative using (RawApplicative)
+open import Effect.Applicative using (RawApplicative)
 open import Effect.Monad using (RawMonad)
 
 -- Import state monad
@@ -164,9 +164,11 @@ open import Effect.Monad.State
             monad to state-monad;
             monadState to state-monad-specifics)
 
--- Import traversable for lists
-import Data.List.Effectful
-open Data.List.Effectful.TraversableA using (sequenceA) renaming (mapA to traverse)
+
+open import Util.Existence using (∃-Size; _,_)
+import Util.NonEmptyTraversable
+open Util.NonEmptyTraversable.TraversableA⁺ using (mapA⁺)
+
 ```
 
 To convert configurations for the input formula to configurations for the output formula and vice versa, we introduce the following record.
@@ -181,6 +183,7 @@ open ConfigurationConverter public
 
 -- Default configuration converter that always goes left.
 -- We use it as a base case when we have no further information.
+-- The actual values here do not matter as we will always have values from recursion ends.
 unknownConfigurationConverter : ConfigurationConverter
 unknownConfigurationConverter = record
   { nary→binary = λ _ _ → true
@@ -189,54 +192,76 @@ unknownConfigurationConverter = record
 
 -- The state we are going to use during the translation from n-ary to binary choice calculus.
 -- We keep track of the current configuration converter and update it when necessary.
-TranslationState : Set → Set
-TranslationState = State ConfigurationConverter
+-- During the translation, we keep track of the intermediate translated expression as well as its size.
+TranslationState : Domain → Set
+TranslationState D = State ConfigurationConverter (∃-Size[ i ] (BCC i D))
 ```
 
-We can now define our translation function `toBCC`.
-Sadly, we cannot prove it terminating yet.
-The problem is that the alternatives of a choice are a list, and this list is converted to a recursive nesting structure.
-For example, `D ⟨ a , b , c , d ⟩` becomes `D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩₂ ⟩₂ ⟩₂`.
-Hence, the number of children of a CC expression determines the nesting depth of the resulting binary expression.
-Since we have no guarantees on the number of children (i.e., no bound / estimate), we cannot make any guarantees on the maximum depth of the resulting expression.
-Moreover, because a children list thus could be infinite, also the resulting expression could be infinite.
-Thus, this function might indeed not terminate.
-To solve this, we would have to introduce yet another bound to n-ary choice calculus: an upper bound for the number of children of each node.
-We should later decide if this extra boilerplate is worth it or not.
-
+We also need some helper functions for the translations.
 ```agda
--- helper function to keep track of state
-{-# TERMINATING #-}
-toBCC' : ∀ {i : Size} {A : Set} → CCC i A → TranslationState (BCC ∞ A)
+{-
+Given a list of individually sized expressions, we find the maximum size and cast every expression to that maximum size. In case the list is empty, the given default value is returned.
+-}
+max-size : ∀ {A : Domain} → Size → List (∃-Size[ i ] (BCC i A)) → ∃-Size[ max ] (List (BCC max A))
+max-size ε [] = ε , []
+max-size ε ((i , e) ∷ xs) =
+  let (max-tail , tail) = max-size ε xs
+   in i ⊔ˢ max-tail , e ∷ tail -- Why is there a warning highlight without a message here?
 
--- actual translation function
-CCC→BCC : Translation CCC BCC Configurationₙ Configuration₂ -- CCC i A → ConfigurationConverter × BCC ∞ A
-CCC→BCC =
-  record
-  { sem₁ = ⟦_⟧ₙ
-  ; sem₂ = ⟦_⟧₂
-  --; size = λ i → ∞ -- Todo: Put real number here
-  ; lang = λ ccc → (∞ , evalState (toBCC' ccc) unknownConfigurationConverter)
-  ; conf = λ ccc → nary→binary (execState (toBCC' ccc) unknownConfigurationConverter)
-  ; fnoc = λ ccc → binary→nary (execState (toBCC' ccc) unknownConfigurationConverter)
-  }
+{-
+Same as max-size⁺ but for non-empty list.
+We can thus be sure that a maximum size exist and do not need a default value.
+-}
+max-size⁺ : ∀ {A : Domain} → List⁺ (∃-Size[ i ] (BCC i A)) → ∃-Size[ max ] (List (BCC max A))
+max-size⁺ list@((i , _) ∷ _) = max-size i (toList list)
+
+{-
+Creates an Artifact₂ from a list of expressions of a certain size.
+The size of the resulting expression is larger by 1.
+-}
+Sized-Artifact₂ : ∀ {A : Domain}
+  → A
+  → ∃-Size[ i ] (List (BCC i A))
+    ----------------------------
+  → ∃-Size[ j ] (BCC j A)
+Sized-Artifact₂ a (i , cs) = ↑ i , Artifact₂ a cs
+```
+
+We can now define our translation function.
+```agda
+-- Helper function to making our desired TranslationResult stateful via TranslationState.
+toBCC : ∀ {i : Size} {A : Set} → CCC i A → TranslationState A
 
 {- |
 Unroll choices by recursively nesting any alternatives beyond the first.
 Example: D ⟨ u ∷ v ∷ w ∷ [] ⟩ → D.0 ⟨ u, D.1 ⟨ v , w ⟩₂ ⟩₂
 -}
-toBCC'-choice-unroll : ∀ {i : Size} {A : Set}
+{-# TERMINATING #-} -- I do not know yet how to teach Agda that this terminates. TODO: Fix
+toBCC-choice-unroll : ∀ {i : Size} {A : Set}
   → Dimension      -- initial dimension in input formula that we translate (D in the example above).
   → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
   → List⁺ (CCC i A) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
-  → TranslationState (BCC ∞ A)
+  → TranslationState A
 
--- Leave artifact structures unchanged but recursively translate all children.
--- Translating all children yields a list of states which we evaluate in sequence.
-toBCC' (Artifactₙ a es) =
-  let open RawFunctor state-functor in
-  Artifact₂ a <$> (traverse state-applicative toBCC' es)
-toBCC' (D ⟨ es ⟩ₙ) = toBCC'-choice-unroll D zero es
+-- Translation of leaves:
+-- Just convert the constructor and keep the current bound i.
+toBCC {i = i} (Artifactₙ a []) =
+  let open RawMonad state-monad in
+    pure (i , Artifact₂ a [])
+-- Translation of inner artifact nodes:
+-- Basically, we are leaving the tree structure unchanged and just translate the n-ary artifact to a binary one without any changes.
+-- However, recursively translating all sub-expression is pretty complicated because of the sizes and the state.
+-- Recursively translating all children yields a list of states which we evaluate in sequence (using mapA⁺).
+-- The result "children-and-their-sizes" is a list of subtrees paired with their size each
+-- (children-and-their-sizes : List (∃-Size[ i ] (BCC i A))).
+-- We then find the maximum subtree depth from that list and put all children below an artifact node.
+toBCC (Artifactₙ a (e ∷ es)) =
+  let open RawMonad state-monad in
+  do
+    children-and-their-sizes ← mapA⁺ state-applicative toBCC (e ∷ es)
+    pure (Sized-Artifact₂ a (max-size⁺ children-and-their-sizes))
+-- Translation of choices, which we do via auxiliary unroll function.
+toBCC (D ⟨ es ⟩ₙ) = toBCC-choice-unroll D zero es
 
 open import Data.Nat renaming (_≡ᵇ_ to _nat-≡ᵇ_)
 open import Util.Util using (empty?)
@@ -250,8 +275,8 @@ update-configuration-converter :
   → ConfigurationConverter
 update-configuration-converter conf-converter D n D' binary? =
     let n→b = nary→binary conf-converter
-        b→n = binary→nary conf-converter
-    in record
+        b→n = binary→nary conf-converter in
+    record
       -- Given an n-ary configuration cₙ for the input formula, we want to find the value of a given dimension in the binary output formula
       { nary→binary = (λ {cₙ queried-output-dimension →
           -- If the queried dimension was translated from our currently translated dimension D.
@@ -283,17 +308,17 @@ update-configuration-converter conf-converter D n D' binary? =
 
 -- Use the idempotency rule D⟨e⟩≈e to unwrap unary choices.
 -- This is where recursion stops.
-toBCC'-choice-unroll D n (e₁ ∷ []) = toBCC' e₁
+toBCC-choice-unroll D n (e₁ ∷ []) = toBCC e₁
 -- For n-ary choices with n > 1, convert the head and recursively convert the tail.
-toBCC'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
+toBCC-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
   let open RawMonad state-monad
       open RawMonadState state-monad-specifics
   in do
     let D' = indexedDim D n
 
     -- translation of the formula
-    cc₂-e₁   ← toBCC' e₁
-    cc₂-tail ← toBCC'-choice-unroll D (suc n) (e₂ ∷ es)
+    (size-e₁   , cc₂-e₁  ) ← toBCC e₁
+    (size-tail , cc₂-tail) ← toBCC-choice-unroll D (suc n) (e₂ ∷ es)
 
     -- translation of configurations
     -- The tail length check is actually a recursion end that checks if we are left with a binary choice.
@@ -303,10 +328,37 @@ toBCC'-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
     conf-converter ← get
     put (update-configuration-converter conf-converter D n D' (empty? es))
 
-    pure (D' ⟨ cc₂-e₁ , cc₂-tail ⟩₂)
+    let max-child-size = size-e₁ ⊔ˢ size-tail
+        choice-size    = ↑ max-child-size
+    pure (choice-size , _⟨_,_⟩₂ {choice-size} {max-child-size} D' (cc₂-e₁) (cc₂-tail))
 ```
 
-Now we prove that conversion to binary normal form is semantics preserving (i.e., the set of described variants is the same).
+Finally, we can use `toBCC` to produce a `Translation`:
+```agda
+{-
+Translates a given n-ary expression to a (1) a binary expression of a certain size, (2) two conversion functions to translate configurations for the input and output expressions.
+-}
+translate : ∀ {i : Size} {A : Domain} → CCC i A → TranslationResult A BCC Configurationₙ Configuration₂
+translate {i} {_} ccc =
+  let (configConverter , (i , bcc)) = runState (toBCC ccc) unknownConfigurationConverter
+  in
+  record
+  { size = i
+  ; expr = bcc
+  ; conf = nary→binary configConverter
+  ; fnoc = binary→nary configConverter
+  }
+
+CCC→BCC : Translation CCC BCC Configurationₙ Configuration₂
+CCC→BCC =
+  record
+  { sem₁ = ⟦_⟧ₙ
+  ; sem₂ = ⟦_⟧₂
+  ; translate = translate
+  }
+```
+
+Now we prove that conversion to binary normal form is variant-preserving (i.e., the set of described variants is the same).
 ```
 CCC→BCC-left : ∀ {i : Size} {A : Domain}
   → (e : CCC i A)
@@ -320,6 +372,9 @@ CCC→BCC-right : ∀ {i : Size} {A : Domain}
 
 CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
 CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
+
+BCC-is-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-as-expressive-as CCC , ⟦_⟧ₙ
+BCC-is-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
 ```
 
 #### Proof of the left side
@@ -327,30 +382,26 @@ CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
 ```agda
 CCC→BCC-left (Artifactₙ a []) c₂ = refl
 CCC→BCC-left e@(Artifactₙ a es@(_ ∷ _)) cₙ =
-  let open RawFunctor state-functor
-      c₂ = conf CCC→BCC e cₙ
+  let -- open RawFunctor state-functor
+      c₂ = conf (translate e) cₙ
   in
   begin
     ⟦ e ⟧ₙ cₙ
   ≡⟨⟩
     Artifactᵥ a (mapl (flip ⟦_⟧ₙ cₙ) es)
   -- TODO: Somehow apply the induction hypothesis below the sequenceA below the runState below the mapl below the Artifactᵥ
-  ≡⟨ Eq.cong (λ m → Artifactᵥ a m) {!!} ⟩
-    Artifactᵥ a (mapl (flip ⟦_⟧₂ c₂) (evalState (sequenceA state-applicative (mapl toBCC' es)) unknownConfigurationConverter))
-  ≡⟨⟩
-    ⟦ (evalState (Artifact₂ a <$> (traverse state-applicative toBCC' es)) unknownConfigurationConverter) ⟧₂ c₂
-  ≡⟨⟩
-    ⟦ proj₂ (lang CCC→BCC e) ⟧₂ c₂
+  ≡⟨ {!!}  ⟩
+    ⟦ expr (translate e) ⟧₂ c₂
   ∎
 CCC→BCC-left (D ⟨ e ∷ [] ⟩ₙ) cₙ =
-  let c₂ = conf CCC→BCC (D ⟨ e ∷ [] ⟩ₙ) cₙ in
+  let c₂ = conf (translate (D ⟨ e ∷ [] ⟩ₙ)) cₙ in
   ⟦ D ⟨ e ∷ [] ⟩ₙ ⟧ₙ cₙ                   ≡⟨⟩
   ⟦ e           ⟧ₙ cₙ                    ≡⟨ CCC→BCC-left e cₙ ⟩
-  ⟦ proj₂ (lang CCC→BCC e)              ⟧₂ c₂ ≡⟨⟩
-  ⟦ proj₂ (lang CCC→BCC (D ⟨ e ∷ [] ⟩ₙ)) ⟧₂ c₂ ∎
+  ⟦ expr (translate e)              ⟧₂ c₂ ≡⟨⟩
+  ⟦ expr (translate (D ⟨ e ∷ [] ⟩ₙ)) ⟧₂ c₂ ∎
 CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
-  let c₂ = conf CCC→BCC e cₙ
-      e₂ = lang CCC→BCC e
+  let c₂ = conf (translate e) cₙ
+      e₂ = translate e
   in
   begin
     ⟦ e ⟧ₙ cₙ
@@ -359,7 +410,7 @@ CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
   --≡⟨ {!!} ⟩
   --  ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
   ≡⟨ {!!} ⟩
-    ⟦ proj₂ (lang CCC→BCC e) ⟧₂ c₂
+    ⟦ expr (translate e) ⟧₂ c₂
   ∎
 ```
 

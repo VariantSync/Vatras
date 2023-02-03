@@ -48,7 +48,7 @@ open import Lang.BCC
             ⟦_⟧ to ⟦_⟧₂)
 
 open import Translation.CCC-to-BCC  using (CCC→BCC)
-open import Translation.Translation using (lang; conf; fnoc)
+open import Translation.Translation using (translate; expr; conf; fnoc)
 
 open import Util.ShowHelpers
 ```
@@ -137,9 +137,10 @@ open import Util.Existence using (proj₂)
 ccex-toBinaryAndBack : CCExample → String
 ccex-toBinaryAndBack (name , cc) = unlines (
   let
-    cc₂ = proj₂ (lang CCC→BCC cc)
-    n→b = conf CCC→BCC cc
-    b→n = fnoc CCC→BCC cc
+    translation-result = translate CCC→BCC cc
+    cc₂ = expr translation-result
+    n→b = conf translation-result
+    b→n = fnoc translation-result
 
     evalₙ : Configurationₙ × String → String
     evalₙ = λ { (conf , cname) →

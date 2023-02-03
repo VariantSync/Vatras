@@ -290,20 +290,23 @@ While this asymmetry (compared to the translation of the variability language) s
 For convenience, a translation also carries the semantics of the language it intends to preserve. This might not really be necessary but it purifies the below definitions.
 Moreover, a translation also has to translate the size constraints over languages so that we can express that a translated expression does not become infinitely large.
 ```agda
+record TranslationResult (A : Domain) (L₂ : VarLang) (C₁ C₂ : ConfLang) : Set where
+  field
+    size : Size
+    expr : L₂ size A
+    conf : C₁ → C₂
+    fnoc : C₂ → C₁
+open TranslationResult public
+
 record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
   field
     sem₁ : Semantics L₁ C₁
     sem₂ : Semantics L₂ C₂
-
-    lang : ∀ {i : Size} {D : Domain} → L₁ i D → ∃-Size[ j ] (L₂ j D)
-    --lang : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ (size i) D
-    conf : ∀ {i : Size} {D : Domain} → L₁ i D → C₁ → C₂
-    fnoc : ∀ {i : Size} {D : Domain} → L₁ i D → C₂ → C₁ -- We need this to quantify over the set of variants described by the translated expression.
+    translate : ∀ {i : Size} {D : Domain} → L₁ i D → TranslationResult D L₂ C₁ C₂
 open Translation public
 
-open import Function using (_∘_)
-
---translate = proj₂ ∘ lang
+getSize : ∀ {i : Size} {D : Domain} {L : VarLang} → L i D → Size
+getSize {i = i} _ = i
 ```
 
 We now reformulate our relations to compare expressions between languages to translations.
@@ -317,7 +320,7 @@ _⊆-via_ {_} {_} {_} {C₁} {_} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
-      ∀ (c₁ : C₁) → (⟦ e₁ ⟧₁ c₁ ≡ ⟦ proj₂ (lang translation e₁) ⟧₂ (conf translation e₁ c₁))
+      ∀ (c₁ : C₁) → (⟦ e₁ ⟧₁ c₁ ≡ ⟦ expr (translate translation e₁) ⟧₂ (conf (translate translation e₁) c₁))
 ```
 
 From our reformulation for translations, we can indeed conclude that an expression describes a subset of the variants of its translated expression.
@@ -326,8 +329,8 @@ From our reformulation for translations, we can indeed conclude that an expressi
   → (t : Translation L₁ L₂ C₁ C₂)
   → _⊆-via_ {_} {L₁} {L₂} {_} {_} {_} e₁ t
     --------------------------------------------
-  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ proj₂ (lang t e₁)
-⊆-via→⊆-within {e₁ = e₁} t ⊆-via = λ c₁ → conf t e₁ c₁ , ⊆-via c₁
+  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ expr (translate t e₁)
+⊆-via→⊆-within {e₁ = e₁} t ⊆-via = λ c₁ → conf (translate t e₁) c₁ , ⊆-via c₁
 ```
 
 Analogously, we proceed for the inverse direction.
@@ -343,15 +346,15 @@ _⊇-via_ {_} {_} {_} {_} {C₂} {_} e₁ translation =
   let ⟦_⟧₁ = sem₁ translation
       ⟦_⟧₂ = sem₂ translation
   in
-    ∀ (c₂ : C₂) → (⟦ e₁ ⟧₁ (fnoc translation e₁ c₂) ≡ ⟦ proj₂ (lang translation e₁) ⟧₂ c₂)
+    ∀ (c₂ : C₂) → (⟦ e₁ ⟧₁ (fnoc (translate translation e₁) c₂) ≡ ⟦ expr (translate translation e₁) ⟧₂ c₂)
 
 -- Proof that our definition of translation is sufficient to conclude variant-subset of an expression and its translation.
 ⊇-via→⊆-within : ∀ {i : Size} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {A : Domain} → {e₁ : L₁ i A}
   → (t : Translation L₁ L₂ C₁ C₂)
   → e₁ ⊇-via t
     --------------------------------------------
-  → L₂ , sem₂ t and L₁ , sem₁ t ⊢ proj₂ (lang t e₁) ⊆ e₁
-⊇-via→⊆-within {e₁ = e₁} t ⊇-via = λ c₂ → fnoc t e₁ c₂ , Eq.sym (⊇-via c₂)
+  → L₂ , sem₂ t and L₁ , sem₁ t ⊢ expr (translate t e₁) ⊆ e₁
+⊇-via→⊆-within {e₁ = e₁} t ⊇-via = λ c₂ → fnoc (translate t e₁) c₂ , Eq.sym (⊇-via c₂)
 ```
 
 As earlier, we can compose the above definitions to say that an expression `e₁` describes the same set of variants as its translated expression.
@@ -366,7 +369,7 @@ e₁ ≚-via t = e₁ ⊆-via t × e₁ ⊇-via t
   → (t : Translation L₁ L₂ C₁ C₂)
   → e₁ ≚-via t
     --------------------------------------------
-  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ≚ proj₂ (lang t e₁)
+  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ≚ expr (translate t e₁)
 ≚-via→≚-within t (⊆-via , ⊇-via) =
     ⊆-via→⊆-within t ⊆-via
   , ⊇-via→⊆-within t ⊇-via
@@ -388,7 +391,7 @@ For example, the set of features in `C₂` could be bigger (e.g., when going fro
 _is-semantics-preserving : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} → Translation L₁ L₂ C₁ C₂ → Set₁
 _is-semantics-preserving {L₁ = L₁} t =
     t is-variant-preserving
-  × (∀ {i : Size} {A : Domain} (e₁ : L₁ i A) → ((conf t e₁) embeds-via (fnoc t e₁)))
+  × (∀ {i : Size} {A : Domain} (e₁ : L₁ i A) → ((conf (translate t e₁)) embeds-via (fnoc (translate t e₁))))
 ```
 
 We can conclude that a language is as expressive as another language if there exists a variant preserving translation.
@@ -400,9 +403,9 @@ translation-proves-variant-preservation : ∀ {L₁ L₂ : VarLang} {C₁ C₂ :
     -------------------------------------------
   → L₂ , sem₂ t is-as-expressive-as L₁ , sem₁ t
 translation-proves-variant-preservation trans preservation e₁ =
-  let size , e₂ = lang trans e₁ in
-    size
-  , e₂
+  let r = translate trans e₁ in
+    size r
+  , expr r
   , ≚-via→≚-within trans (preservation e₁)
 ```
 

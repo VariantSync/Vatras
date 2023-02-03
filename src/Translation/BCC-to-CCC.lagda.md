@@ -62,7 +62,7 @@ open import Lang.BCC
 open import SemanticDomain using (Variant; Artifactᵥ)
 open import Translation.Translation
   -- Names
-  using (VarLang; ConfLang; Domain; Semantics; Translation)
+  using (VarLang; ConfLang; Domain; Semantics; Translation; getSize)
   -- Relations between variability languages
   using (_,_is-as-expressive-as_,_)
   -- Translation properties
@@ -89,9 +89,6 @@ toCCC (Artifact₂ a es) = Artifactₙ a (mapl toCCC es)
 toCCC (D ⟨ l , r ⟩₂) = D ⟨ (toCCC l) ∷ (toCCC r) ∷ [] ⟩ₙ
 
 open import Util.Existence using (∃-Size; _,_)
-
-with-size : ∀ {i : Size} {A : Domain} → CCC i A → ∃-Size[ i ] (CCC i A)
-with-size {i} {_} e = i , e
 
 -- Conversion of configurations.
 {-
@@ -122,14 +119,19 @@ Only valid for our translation from BCC to CCC.
 toBinaryConfig : Configurationₙ → Configuration₂
 toBinaryConfig c = asTag₂ ∘ c
 
+translate : ∀ {i : Size} {D : Domain} → BCC i D → Translation.Translation.TranslationResult D CCC Configuration₂ Configurationₙ
+translate {i} {D} e = record
+  { size = i
+  ; expr = toCCC e
+  ; conf = toNaryConfig
+  ; fnoc = toBinaryConfig
+  }
+
 BCC→CCC : Translation BCC CCC Configuration₂ Configurationₙ
 BCC→CCC = record
   { sem₁ = ⟦_⟧₂
   ; sem₂ = ⟦_⟧ₙ
-  --; size = λ i → i
-  ; lang = with-size ∘ toCCC
-  ; conf = λ _ → toNaryConfig
-  ; fnoc = λ _ → toBinaryConfig
+  ; translate = translate
   }
 ```
 
