@@ -51,6 +51,9 @@ This knowledge is useful for simplifying function definitions where well-formedn
 ```agda
 forgetWF : ∀ {i : Size} {A : Domain} → WFOC i A → OC i A
 forgetWF (Root a es) = Artifact a es
+
+children-wf : ∀ {i : Size} {A : Domain} → WFOC (Size.↑_ i) A → List (OC i A)
+children-wf (Root _ es) = es
 ```
 
 ### Semantics
