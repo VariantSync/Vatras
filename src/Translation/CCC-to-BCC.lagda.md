@@ -44,7 +44,7 @@ open Eq.≡-Reasoning
 
 -- own modules
 
-open import Lang.Annotation.Dimension using (Dimension; _==_)
+open import Lang.Annotation.Name using (Dimension; _==_)
 open import Lang.CCC
   using (CCC; choice-elimination)
   renaming (Artifact to Artifactₙ;

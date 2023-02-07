@@ -20,15 +20,12 @@ open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; Size<_)
 open import Translation.Translation using (VarLang; Domain)
+open import Lang.Annotation.Name using (Option)
 ```
 
 ## Syntax
 
 ```agda
--- TODO: Reuse dimension here? Maybe having an alias is nice and we should add that to Dimension.agda. Same for ADDs where we referred to dimensions as variables, initially.
-Option : Set
-Option = String
-
 data OC : VarLang where
   Artifact : ∀ {i : Size} {j : Size< i} {A : Domain} →
     A → List (OC j A) → OC i A

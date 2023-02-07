@@ -38,7 +38,7 @@ open Eq
   using (_≡_; refl)
 
 -- Imports of own modules
-open import Lang.Annotation.Dimension using (Dimension)
+open import Lang.Annotation.Name using (Dimension)
 open import Translation.Translation
   -- Names
   using (VarLang; ConfLang; Domain; Semantics)

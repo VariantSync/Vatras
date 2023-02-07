@@ -25,7 +25,7 @@ open Eq
   using (_≡_; _≢_; refl)
 
 -- Imports of own modules
-open import Lang.Annotation.Dimension using (Dimension; _≟_)
+open import Lang.Annotation.Name using (Dimension; _≟_)
 open import Lang.BCC using (Tag; BCC; Artifact; _⟨_,_⟩; left; right)
 open import SemanticDomain using (Variant; Artifactᵥ)
 open import Axioms.Extensionality

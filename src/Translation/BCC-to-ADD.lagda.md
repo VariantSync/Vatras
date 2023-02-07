@@ -9,7 +9,7 @@
 ## Module
 
 ```agda
-module Translation.ADD-to-BCC where
+module Translation.BCC-to-ADD where
 ```
 
 ## Imports
