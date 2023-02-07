@@ -11,8 +11,8 @@ open import Function using (_∘_)
 
 open import Test.Example
 
-headline : String → String
-headline title = "====[ " ++ title ++ " ]===="
+headline : String → String → String
+headline tag title = "====[ " ++ tag ++ " ] " ++ title ++ " ===="
 
 linebreak : ∀ {ℓ : Level} → IO {ℓ} ⊤
 linebreak = putStrLn ""
@@ -25,10 +25,10 @@ open Experiment public
 
 runAll : {A : Set} → Experiment A → List (Example A) → IO {0ℓ} ⊤
 runAll experiment examples = do
-  putStrLn (headline ("BEGIN " ++ (name experiment)))
+  putStrLn (headline "BEGIN" (name experiment))
   linebreak
   -- Run and print each example sequentially. Put a linebreak after each example run.
   IO.List.mapM′ ((_>> linebreak) ∘ run experiment) examples
-  putStrLn (headline (" END " ++ (name experiment)))
+  putStrLn (headline "END" (name experiment))
   linebreak
 

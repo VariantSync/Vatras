@@ -1,5 +1,5 @@
 {-# OPTIONS --sized-types #-}
-module Test.Examples.CC where
+module Test.Examples.CCC where
 
 open import Data.String using (String)
 open import Data.List using (List; _∷_; [])

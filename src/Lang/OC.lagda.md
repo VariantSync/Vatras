@@ -18,7 +18,7 @@ module Lang.OC where
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
-open import Size using (Size; Size<_)
+open import Size using (Size; Size<_; ↑_)
 open import Translation.Translation using (VarLang; Domain)
 open import Lang.Annotation.Name using (Option)
 ```
@@ -156,20 +156,10 @@ OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
 **This is an important result!**
 It shows that we need at least some constraints to be complete.
 This is a justification for choice calculus definiting variability annotations with constraints (being alternative) instead of being pure annotations.
-Annother way is to enrich the annotation language, for example using propositional logic.
+Another way is to enrich the annotation language, for example using propositional logic.
 
-### Example and Test Time
+## Utility
 
-Definitions:
-```agda
-open Size using (∞; ↑_)
-open import Data.Product using (_,_; _×_; proj₁; proj₂)
-
-OCExample : Set
-OCExample = String × WFOC ∞ String
-```
-
-Some smart constructors:
 ```agda
 leaf : ∀ {i : Size} {A : Set} → A → OC (↑ i) A
 leaf a = Artifact a []
@@ -179,49 +169,18 @@ opt : ∀ {i : Size} {A : Set} → Option → OC i A → OC (↑ i) A
 opt O = _❲_❳ O
 ```
 
-Show:
+## Show
+
 ```agda
 open Data.String using (_++_; intersperse)
-open Function using (_∘_)
+open import Function using (_∘_)
 
-showOC : ∀ {i : Size} → OC i String → String
-showOC (Artifact s []) = s
-showOC (Artifact s es@(_ ∷ _)) = s ++ "-<" ++ (intersperse ", " (map showOC es)) ++ ">-"
-showOC (O ❲ e ❳) = O ++ "{" ++ showOC e ++ "}"
+show-oc : ∀ {i : Size} → OC i String → String
+show-oc (Artifact s []) = s
+show-oc (Artifact s es@(_ ∷ _)) = s ++ "-<" ++ (intersperse ", " (map show-oc es)) ++ ">-"
+show-oc (O ❲ e ❳) = O ++ "❲" ++ show-oc e ++ "❳"
 
-showWFOC : ∀ {i : Size} → WFOC i String → String
-showWFOC = showOC ∘ forgetWF
+show-wfoc : ∀ {i : Size} → WFOC i String → String
+show-wfoc = show-oc ∘ forgetWF
 ```
 
-Examples:
-```agda
-optex-sandwich : OCExample
-optex-sandwich = "sandwich" , (Root "Buns" (
-    "Tomato?" ❲ leaf "Tomato" ❳
-  ∷ "Salad?"  ❲ leaf "Salad"  ❳
-  ∷ "Cheese?" ❲ leaf "Cheese" ❳
-  ∷ leaf "Mayonnaise" -- we always put mayo on the sandwich
-  ∷ []))
-
-optex-all : List OCExample
-optex-all = (optex-sandwich ∷ [] )
-```
-
-```
-open Data.String using (unlines)
-open SemanticDomain using (showVariant)
-
-optexp-1 : OCExample → String
-optexp-1 (name , e) = unlines (
-    (name ++ " = " ++ showWFOC e)
-  ∷ ("[[" ++ name ++ "]] (λ x → true)  = " ++ showVariant (⟦ e ⟧ (λ _ → true) ))
-  ∷ ("[[" ++ name ++ "]] (λ x → false) = " ++ showVariant (⟦ e ⟧ (λ _ → false)))
-  ∷ [])
-```
-
-### Final Printing
-
-```agda
-mainStr : String
-mainStr = intersperse "\n\n" (map optexp-1 optex-all)
-```

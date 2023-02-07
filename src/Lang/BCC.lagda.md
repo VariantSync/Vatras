@@ -135,10 +135,10 @@ dims (D ⟨ l , r ⟩) = D ∷ (dims l ++l dims r)
 ## Show
 
 ```agda
-open import Data.String using (String; _++_)
+open import Data.String using (String; _++_; intersperse)
 
 show : ∀ {i : Size} → BCC i String → String
 show (Artifact a []) = a
-show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
-show (D ⟨ l , r ⟩) = D ++ "<" ++ (show l) ++ ", " ++ (show r) ++ ">"
+show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
+show (D ⟨ l , r ⟩) = D ++ "⟨" ++ (show l) ++ ", " ++ (show r) ++ "⟩"
 ```

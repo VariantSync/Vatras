@@ -74,9 +74,9 @@ selectₙ n = (λ {_ → n}) , ("(λ d → " ++ (show-nat n) ++ ")")
 Convert a given named choice calculus formula to binary normal form and back and print all intermediate results.
 Do so for two configurations, one configuration that always selects 0, and one that always selects 1.
 ```agda
-toBinaryAndBack : Experiment (CCC ∞ String)
-name toBinaryAndBack = "CCC to BCC and back"
-run  toBinaryAndBack = λ (name example: cc) → putStrLn (unlines (
+exp-to-binary-and-back : Experiment (CCC ∞ String)
+name exp-to-binary-and-back = "CCC to BCC and back"
+run  exp-to-binary-and-back (name example: cc) = putStrLn (unlines (
   let
     translation-result = translate CCC→BCC cc
     cc₂ = expr translation-result

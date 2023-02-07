@@ -252,5 +252,5 @@ open Data.String using (_++_)
 show : ∀ {i : Size} → CCC i String → String
 show (Artifact a []) = a
 show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
-show (D ⟨ es ⟩) = D ++ "<" ++ (Data.String.intersperse ", " (toList (mapl⁺ show es))) ++ ">"
+show (D ⟨ es ⟩) = D ++ "⟨" ++ (Data.String.intersperse ", " (toList (mapl⁺ show es))) ++ "⟩"
 ```
