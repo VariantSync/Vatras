@@ -22,6 +22,7 @@ open import Data.List using (List; _∷_; []; reverse; _++_; catMaybes) renaming
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Product using (_×_; _,_)
 open import Size using (Size; ↑_; ∞)
+open import Function using (id)
 
 open import Lang.OC
      using ( OC; WFOC; Root; _❲_❳; forgetWF; children-wf)
@@ -158,8 +159,8 @@ translate oc =
   record
   { size = j
   ; expr = bcc
-  ; conf = {!!}
-  ; fnoc = {!!}
+  ; conf = id
+  ; fnoc = id
   }
 
 OC→BCC : Translation WFOC BCC Confₒ Conf₂
