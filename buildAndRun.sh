@@ -1,2 +1,1 @@
-./compile.sh
-./run.sh
+./compile.sh && ./run.sh
