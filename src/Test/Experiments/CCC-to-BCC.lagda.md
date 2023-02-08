@@ -3,7 +3,7 @@
 ## Options
 
 ```agda
-{-# OPTIONS --sized-types --guardedness #-}
+{-# OPTIONS --sized-types #-}
 ```
 
 ## Module
@@ -27,12 +27,12 @@ open import Data.Nat.Show
 open import Data.Product
   using (_,_; _×_)
 open import Data.String
-  using (String; _++_; unlines; intersperse)
+  using (String; _++_; intersperse)
 open import Function
   using (_∘_; id)
 open import Size using (∞)
 
-open import IO using (putStrLn)
+open import Show.Lines
 
 open import Lang.Annotation.Name using (Dimension)
 open import Lang.CCC
@@ -42,7 +42,7 @@ open import Lang.BCC
   renaming (Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import SemanticDomain using (showVariant)
+open import SemanticDomain using (show-variant)
 
 open import Translation.CCC-to-BCC  using (CCC→BCC)
 open import Translation.Translation using (translate; expr; conf; fnoc)
@@ -76,7 +76,7 @@ Do so for two configurations, one configuration that always selects 0, and one t
 ```agda
 exp-to-binary-and-back : Experiment (CCC ∞ String)
 name exp-to-binary-and-back = "CCC to BCC and back"
-run  exp-to-binary-and-back (name example: cc) = putStrLn (unlines (
+run  exp-to-binary-and-back (name example: cc) =
   let
     translation-result = translate CCC→BCC cc
     cc₂ = expr translation-result
@@ -86,17 +86,17 @@ run  exp-to-binary-and-back (name example: cc) = putStrLn (unlines (
     evalₙ : Configurationₙ × String → String
     evalₙ = λ { (conf , cname) →
       "[[" ++ name ++ "]] " ++ cname ++ " = "
-      ++ (showVariant (⟦ cc ⟧ₙ conf))}
+      ++ (show-variant id (⟦ cc ⟧ₙ conf))}
 
     eval₂ : Configurationₙ × String → String
     eval₂ = λ { (conf , cname) →
       "[[toBCC " ++ name ++ "]] " ++ "(n→b " ++ cname ++ ")" ++ " = "
-      ++ (showVariant (⟦ cc₂ ⟧₂ (n→b conf)))}
+      ++ (show-variant id (⟦ cc₂ ⟧₂ (n→b conf)))}
 
     eval₂ₙ : Configurationₙ × String → String
     eval₂ₙ = λ { (conf , cname) →
       "[[" ++ name ++ "]] " ++ "(b→n (n→b " ++ cname ++ "))" ++ " = "
-      ++ (showVariant (⟦ cc ⟧ₙ (b→n (n→b conf))))}
+      ++ (show-variant id (⟦ cc ⟧ₙ (b→n (n→b conf))))}
 
     eval-selectₙ = evalₙ ∘ selectₙ
     eval-select₂ = eval₂ ∘ selectₙ
@@ -110,28 +110,27 @@ run  exp-to-binary-and-back (name example: cc) = putStrLn (unlines (
     show-selectₙ = show-config-named (λ (conf , name) → show-nary-config conf (Lang.CCC.dims cc) , name)
     show-select₂ = show-config-named (λ (conf , name) → (show-binary-config ∘ n→b) conf (Lang.BCC.dims cc₂) , ("n→b " ++ name))
     show-select₂ₙ = show-config-named (λ (conf , name) → (show-nary-config ∘ b→n ∘ n→b) conf (Lang.CCC.dims cc) , ("b→n (n→b " ++ name ++ ")"))
-  in
-  (name ++ " = " ++ (Lang.CCC.show cc)) ∷
-  (show-selectₙ 0) ∷
-  (show-selectₙ 1) ∷
-  (show-selectₙ 2) ∷
-  (eval-selectₙ 0) ∷
-  (eval-selectₙ 1) ∷
-  (eval-selectₙ 2) ∷
-  ("toCC₂ " ++ name ++ " = " ++ (Lang.BCC.show cc₂)) ∷
-  (show-select₂ 0) ∷
-  (show-select₂ 1) ∷
-  (show-select₂ 2) ∷
-  (eval-select₂ 0) ∷
-  (eval-select₂ 1) ∷
-  (eval-select₂ 2) ∷
-  (name ++ " with configurations converted back and forth ") ∷
-  (show-select₂ₙ 0) ∷
-  (show-select₂ₙ 1) ∷
-  (show-select₂ₙ 2) ∷
-  (eval-select₂ₙ 0) ∷
-  (eval-select₂ₙ 1) ∷
-  (eval-select₂ₙ 2) ∷
-  []))
+  in do
+  > name ++ " = " ++ (Lang.CCC.show cc)
+  > show-selectₙ 0
+  > show-selectₙ 1
+  > show-selectₙ 2
+  > eval-selectₙ 0
+  > eval-selectₙ 1
+  > eval-selectₙ 2
+  > "toCC₂ " ++ name ++ " = " ++ (Lang.BCC.show cc₂)
+  > show-select₂ 0
+  > show-select₂ 1
+  > show-select₂ 2
+  > eval-select₂ 0
+  > eval-select₂ 1
+  > eval-select₂ 2
+  > name ++ " with configurations converted back and forth "
+  > show-select₂ₙ 0
+  > show-select₂ₙ 1
+  > show-select₂ₙ 2
+  > eval-select₂ₙ 0
+  > eval-select₂ₙ 1
+  > eval-select₂ₙ 2
 ```
 

@@ -1,34 +1,31 @@
-{-# OPTIONS --guardedness #-}
-
 module Test.Experiment where
 
-open import Data.List using (List)
-open import Data.String using (String; _++_)
-open import Data.Unit.Polymorphic using (⊤)
-open import IO using (IO; putStrLn; _>>_)
-open import Level using (Level; 0ℓ)
-open import Function using (_∘_)
+open import Data.Nat using (_+_)
+open import Data.List using (List; map)
+open import Data.String using (String; _++_; length; replicate)
+
+open import Show.Lines
 
 open import Test.Example
-
-headline : String → String → String
-headline tag title = "====[ " ++ tag ++ " ] " ++ title ++ " ===="
-
-linebreak : ∀ {ℓ : Level} → IO {ℓ} ⊤
-linebreak = putStrLn ""
 
 record Experiment (A : Set) : Set₁ where
   field
     name : String
-    run : Example A → IO {0ℓ} ⊤
+    run : Example A → Lines
 open Experiment public
 
-runAll : {A : Set} → Experiment A → List (Example A) → IO {0ℓ} ⊤
-runAll experiment examples = do
-  putStrLn (headline "BEGIN" (name experiment))
-  linebreak
-  -- Run and print each example sequentially. Put a linebreak after each example run.
-  IO.List.mapM′ ((_>> linebreak) ∘ run experiment) examples
-  putStrLn (headline "END" (name experiment))
-  linebreak
+runOn : ∀ {A : Set} → Experiment A → Example A → Lines
+runOn experiment example =
+  let title = "───────────────── Example: " ++ name example ++ " ─────────────────"
+  in do
+    linebreak
+    >      "┌" ++ title
+    prefix "│" (indent 2 (run experiment example))
+    >      "└" ++ replicate (length title) '─'
+    linebreak
 
+runAll : {A : Set} → Experiment A → List (Example A) → Lines
+runAll experiment examples = do
+  headline "BEGIN Experiment" (name experiment)
+  indent 2 (lines (map (runOn experiment) examples))
+  headline " END Experiment " (name experiment)
