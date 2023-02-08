@@ -25,8 +25,8 @@ open import Test.Experiments.OC-to-BCC
 
 experimentsToRun : List (∃[ A ] (Experiment A × List (Example A)))
 experimentsToRun =
-    -- (CCC  ∞ String , exp-to-binary-and-back , ccex-all) ∷
-    -- (WFOC ∞ String , exp-run-allyes-and-allno , optex-all) ∷
+    (CCC  ∞ String , exp-to-binary-and-back , ccex-all) ∷
+    (WFOC ∞ String , exp-run-allyes-and-allno , optex-all) ∷
     (WFOC ∞ String , exp-oc-to-bcc , optex-all) ∷
   []
 
@@ -39,10 +39,15 @@ main_lines = do
   linebreak
   let runEntry = λ (A , exp , exa) → runAll exp exa
   linebreak
-  lines (map runEntry experimentsToRun)
+  overwrite-alignment-with
+    Center
+    (lines (map runEntry experimentsToRun))
   linebreak
 
 open import IO using (IO; Main; putStrLn)
 
+-- minor todo: use haskell to get width of current terminal
+TERMINAL-WIDTH = 120
+
 main : Main
-main = IO.run (print main_lines)
+main = IO.run (print TERMINAL-WIDTH main_lines)
