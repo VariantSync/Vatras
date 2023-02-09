@@ -21,7 +21,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; _∷_; []; reverse; _++_; catMaybes) renaming (map to mapl)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Product using (_×_; _,_)
-open import Size using (Size; ↑_; ∞)
+open import Size using (Size; Size<_; ↑_; ∞; _⊔ˢ_)
 open import Function using (id)
 
 open import Lang.OC
@@ -38,10 +38,11 @@ open import Lang.BCC
            )
 open import Lang.Annotation.Name using (Option; Dimension; _==_)
 open import Translation.Translation
-     using ( Domain; Translation; TranslationResult )
+     using (Domain; Translation; TranslationResult)
+     using (sequence-sized-artifact)
 open import Util.Existence using (∃-Size; _,_)
 
-open import Data.ReversedList using (_∷_)
+open import Data.ReversedList using ([]; _∷_)
 open import Data.ConveyorBelt
 ```
 
@@ -108,24 +109,53 @@ record TZipper (i : Size) (A : Domain) : Set where
   constructor _◀_ --\T
   field
     parent   : A
-    siblings : ConveyorBelt (OC i A) (BCC ∞ A)
+    siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A))
+
+max : ∀ (i j : Size) → Size
+max = _⊔ˢ_
+
+i<↑i : (i : Size) → Size< (↑ i)
+i<↑i i = i -- Do not eta reduce. It confuses Agda.
+
+upcast : ∀ {A : Domain} (i j : Size) → BCC i A → BCC (max i j) A
+upcast _ _ e = e
+
+swap : ∀ {A : Domain} → (i j : Size) → BCC (i<↑i (max i j)) A → BCC (i<↑i (max j i)) A
+swap _ _ e = e
+
+recast : ∀ {A : Domain} (i j : Size) → BCC i A → BCC (i<↑i (max i j)) A
+recast _ _ e = e
+
+open import Util.Existence using (proj₁)
 
 {-# TERMINATING #-}
-OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → BCC ∞ A
-OCtoBCC' (a ◀ belt@(ls ↢ [])) =
-  Artifact₂ a (finalize belt)
-OCtoBCC' (a ◀ (ls ↢ (Artifactₒ b es) ∷ rs)) =
+OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → ∃-Size[ j ] (BCC j A)
+OCtoBCC' {A = A} (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
+   let i , l = OCtoBCC' (a ◀ (ls ↢ e ∷ rs))
+       j , r = OCtoBCC' (a ◀ (ls ↢     rs))
+       choice-size : Size
+       choice-size = ↑ (max i j)
+       alternatives-size : Size< choice-size
+       alternatives-size = i<↑i (max i j)
+
+       l-sized : BCC alternatives-size A
+       l-sized = recast i j l
+       r-sized : BCC alternatives-size A
+       r-sized = swap j i (recast j i r)
+    in
+       choice-size , _⟨_,_⟩ {choice-size} {alternatives-size} O l-sized r-sized
+OCtoBCC' (a ◀ (ls ↢ Artifactₒ b es ∷ rs)) =
   let processedArtifact = OCtoBCC' (b ◀ putOnBelt es) in
   OCtoBCC' (a ◀ (ls ∷ processedArtifact ↢ rs))
-OCtoBCC' (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
-   let l = OCtoBCC' (a ◀ (ls ↢ e ∷ rs))
-       r = OCtoBCC' (a ◀ (ls ↢     rs))
-   in
-      O ⟨ l , r ⟩
+OCtoBCC' {i = i} (a ◀ (    [] ↢ [])) =
+  ↑ i , Artifact₂ a []
+OCtoBCC'         (a ◀ (ls ∷ l ↢ [])) =
+  let asList⁺ = Data.ReversedList.toList⁺ (ls ∷ l) in
+  sequence-sized-artifact Artifact₂ a asList⁺
 
 -- Todo: remove temp ∞
 OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
-OCtoBCC (Root a es) = ∞ , OCtoBCC' (a ◀ putOnBelt es)
+OCtoBCC (Root a es) = OCtoBCC' (a ◀ putOnBelt es)
 
 translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
 translate oc =

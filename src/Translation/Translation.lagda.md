@@ -391,7 +391,7 @@ For example, the set of features in `C₂` could be bigger (e.g., when going fro
 _is-semantics-preserving : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} → Translation L₁ L₂ C₁ C₂ → Set₁
 _is-semantics-preserving {L₁ = L₁} t =
     t is-variant-preserving
-  × (∀ {i : Size} {A : Domain} (e₁ : L₁ i A) → ((conf (translate t e₁)) embeds-via (fnoc (translate t e₁))))
+  × (∀ {i : Size} {A : Domain} (e₁ : L₁ i A) → (conf (translate t e₁)) embeds-via (fnoc (translate t e₁)))
 ```
 
 We can conclude that a language is as expressive as another language if there exists a variant preserving translation.

@@ -70,6 +70,8 @@ open import Translation.Translation
   using (Translation; TranslationResult; expr; conf; fnoc)
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
+  -- Helpers
+  using (max-size⁺; sequence-sized-artifact)
 
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
@@ -197,36 +199,6 @@ TranslationState : Domain → Set
 TranslationState D = State ConfigurationConverter (∃-Size[ i ] (BCC i D))
 ```
 
-We also need some helper functions for the translations.
-```agda
-{-
-Given a list of individually sized expressions, we find the maximum size and cast every expression to that maximum size. In case the list is empty, the given default value is returned.
--}
-max-size : ∀ {A : Domain} → Size → List (∃-Size[ i ] (BCC i A)) → ∃-Size[ max ] (List (BCC max A))
-max-size ε [] = ε , []
-max-size ε ((i , e) ∷ xs) =
-  let (max-tail , tail) = max-size ε xs
-   in i ⊔ˢ max-tail , e ∷ tail -- Why is there a warning highlight without a message here?
-
-{-
-Same as max-size⁺ but for non-empty list.
-We can thus be sure that a maximum size exist and do not need a default value.
--}
-max-size⁺ : ∀ {A : Domain} → List⁺ (∃-Size[ i ] (BCC i A)) → ∃-Size[ max ] (List (BCC max A))
-max-size⁺ list@((i , _) ∷ _) = max-size i (toList list)
-
-{-
-Creates an Artifact₂ from a list of expressions of a certain size.
-The size of the resulting expression is larger by 1.
--}
-Sized-Artifact₂ : ∀ {A : Domain}
-  → A
-  → ∃-Size[ i ] (List (BCC i A))
-    ----------------------------
-  → ∃-Size[ j ] (BCC j A)
-Sized-Artifact₂ a (i , cs) = ↑ i , Artifact₂ a cs
-```
-
 We can now define our translation function.
 ```agda
 -- Helper function to making our desired TranslationResult stateful via TranslationState.
@@ -259,7 +231,7 @@ toBCC (Artifactₙ a (e ∷ es)) =
   let open RawMonad state-monad in
   do
     children-and-their-sizes ← mapA⁺ state-applicative toBCC (e ∷ es)
-    pure (Sized-Artifact₂ a (max-size⁺ children-and-their-sizes))
+    pure (sequence-sized-artifact Artifact₂ a children-and-their-sizes)
 -- Translation of choices, which we do via auxiliary unroll function.
 toBCC (D ⟨ es ⟩ₙ) = toBCC-choice-unroll D zero es
 
