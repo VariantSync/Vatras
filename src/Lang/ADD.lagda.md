@@ -32,7 +32,7 @@ In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 A
 
 ```agda
 data ADD (i : Size) (A : Set) : Set where
-  Terminal : A → ADD i A -- ModelBase in FFSPL
+  Terminal : Variant A → ADD i A -- ModelBase in FFSPL
   Choice : ∀ {j : Size< i} →
     Variable → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
@@ -47,11 +47,8 @@ Configuration : Set
 Configuration = Variable → Bool
 
 ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant A
-⟦ Terminal a ⟧ _   = Artifactᵥ a []
+⟦ Terminal a ⟧ _   = a
 ⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
-
-leaf : {i : Size} {A : Set} -> A -> ADD i A
-leaf = λ x → {!!}
 ```
 
 ### Translation to Binary Choice Calculus
