@@ -41,6 +41,7 @@ open import Translation.Translation
      using (Domain; Translation; TranslationResult)
      using (sequence-sized-artifact)
 open import Util.Existence using (∃-Size; _,_)
+open import Util.SizeJuggle
 
 open import Data.ReversedList using ([]; _∷_)
 open import Data.ConveyorBelt
@@ -111,37 +112,37 @@ record TZipper (i : Size) (A : Domain) : Set where
     parent   : A
     siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A))
 
-max : ∀ (i j : Size) → Size
-max = _⊔ˢ_
+-- todo: move these boundes definition to BCC file
+BCC-is-bounded : ∀ Domain → Bounded
+BCC-is-bounded A i = BCC i A
 
-i<↑i : (i : Size) → Size< (↑ i)
-i<↑i i = i -- Do not eta reduce. It confuses Agda.
-
-upcast : ∀ {A : Domain} (i j : Size) → BCC i A → BCC (max i j) A
-upcast _ _ e = e
-
-swap : ∀ {A : Domain} → (i j : Size) → BCC (i<↑i (max i j)) A → BCC (i<↑i (max j i)) A
-swap _ _ e = e
-
-recast : ∀ {A : Domain} (i j : Size) → BCC i A → BCC (i<↑i (max i j)) A
-recast _ _ e = e
-
-open import Util.Existence using (proj₁)
+BCC-is-weakenable : ∀ {A : Domain} → Weaken (BCC-is-bounded A)
+to-larger BCC-is-weakenable _ _ e = e
+to-max    BCC-is-weakenable _ _ e = e
 
 {-# TERMINATING #-}
 OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → ∃-Size[ j ] (BCC j A)
 OCtoBCC' {A = A} (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
    let i , l = OCtoBCC' (a ◀ (ls ↢ e ∷ rs))
        j , r = OCtoBCC' (a ◀ (ls ↢     rs))
+
+       -- Unfortunately, we have to help the type-checker a lot with the sizes.
+       -- In other proofs this just worked out of the box but here we have to use lots of safe type casting to turn the sizes into the right types.
+       max-child-depth : Size
+       max-child-depth = i ⊔ˢ j
+
        choice-size : Size
-       choice-size = ↑ (max i j)
+       choice-size = ↑ max-child-depth -- ↑ (i ⊔ˢ j)
+
+       -- Prove that max-child-depth is indeed smaller than choice-size.
        alternatives-size : Size< choice-size
-       alternatives-size = i<↑i (max i j)
+       alternatives-size = i<↑i max-child-depth
 
        l-sized : BCC alternatives-size A
-       l-sized = recast i j l
+       l-sized = weaken-to-smaller-↑max BCC-is-weakenable i j l
+
        r-sized : BCC alternatives-size A
-       r-sized = swap j i (recast j i r)
+       r-sized = sym-smaller-↑max (BCC-is-bounded A) j i (weaken-to-smaller-↑max BCC-is-weakenable j i r)
     in
        choice-size , _⟨_,_⟩ {choice-size} {alternatives-size} O l-sized r-sized
 OCtoBCC' (a ◀ (ls ↢ Artifactₒ b es ∷ rs)) =

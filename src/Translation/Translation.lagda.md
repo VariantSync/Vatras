@@ -415,22 +415,23 @@ translation-proves-variant-preservation trans preservation e₁ =
 open import Data.List using (List; []; _∷_)
 open import Data.List.NonEmpty using (List⁺; _∷_; toList)
 open import Size using (Size<_; ↑_; _⊔ˢ_)
+open import Util.SizeJuggle
 
 {-
 Given a list of individually sized expressions, we find the maximum size and cast every expression to that maximum size. In case the list is empty, the given default value is returned.
 -}
-max-size : ∀ {A : Domain} → (L : VarLang) → Size → List (∃-Size[ i ] (L i A)) → ∃-Size[ max ] (List (L max A))
-max-size _ ε [] = ε , []
-max-size L ε ((i , e) ∷ xs) =
-  let (max-tail , tail) = max-size L ε xs
+unify-sizes : ∀ {A : Domain} → (L : VarLang) → Size → List (∃-Size[ i ] (L i A)) → ∃-Size[ max ] (List (L max A))
+unify-sizes _ ε [] = ε , []
+unify-sizes L ε ((i , e) ∷ xs) =
+  let (max-tail , tail) = unify-sizes L ε xs
    in i ⊔ˢ max-tail , e ∷ tail -- Why is there a warning highlight without a message here?
 
 {-
 Same as max-size⁺ but for non-empty list.
 We can thus be sure that a maximum size exist and do not need a default value.
 -}
-max-size⁺ : ∀ {A : Domain} → (L : VarLang) → List⁺ (∃-Size[ i ] (L i A)) → ∃-Size[ max ] (List (L max A))
-max-size⁺ L list@((i , _) ∷ _) = max-size L i (toList list)
+unify-sizes⁺ : ∀ {A : Domain} → (L : VarLang) → List⁺ (∃-Size[ i ] (L i A)) → ∃-Size[ max ] (List (L max A))
+unify-sizes⁺ L list@((i , _) ∷ _) = unify-sizes L i (toList list)
 
 {-
 Most languages feature Artifacts as arbitrary elements of the domain language.
@@ -451,9 +452,8 @@ sequence-sized-artifact : ∀ {A : Domain}
     ----------------------------
   → ∃-Size[ i ] (L i A)
 sequence-sized-artifact {A} {L} Artifact a cs =
-  let max , es = max-size⁺ L cs in
+  let max , es = unify-sizes⁺ L cs in
   ↑ max , Artifact {↑ max} {max} {A} a es
-
 ```
 
 
