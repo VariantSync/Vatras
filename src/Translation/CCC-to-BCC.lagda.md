@@ -278,32 +278,30 @@ update-configuration-converter conf-converter D n D' binary? =
         b→n = binary→nary conf-converter in
     record
       -- Given an n-ary configuration cₙ for the input formula, we want to find the value of a given dimension in the binary output formula
-      { nary→binary = (λ {cₙ queried-output-dimension →
+      { nary→binary = λ {cₙ queried-output-dimension →
           -- If the queried dimension was translated from our currently translated dimension D.
-          if (queried-output-dimension == D')
+          if queried-output-dimension == D'
           -- If the selection made in the input formula did select the left alternative of our choice
           -- then also pick it in the binary output formula. Otherwise, do not pick it.
           -- In case cₙ D <ᵇ n, the result does not matter. Then, an alternative above this choice was already chosen
           -- (and we are within an else branch). So it does not matter what we pick here. Could be true, false, or n→b cₙ queried-output-dimension.
           -- In case cₙ D >ᵇ n, the result has to be false because the alternative that has to be picked is on the right, which is only checked if we do not go left here.
-          then (cₙ D nat-≡ᵇ n)
+          then cₙ D nat-≡ᵇ n
           -- If not, ask our existing configuration translation knowledge.
-          else (n→b cₙ queried-output-dimension)
-          })
+          else n→b cₙ queried-output-dimension
+          }
       -- Given a binary configuration c₂ for the output formula, we want to find the value of a queried dimension in the n-ary input formula.
-      ; binary→nary = (λ {c₂ queried-input-dimension →
+      ; binary→nary = λ {c₂ queried-input-dimension →
           let recursive-result = b→n c₂ queried-input-dimension in
           -- If the queried dimension is the dimension we currently translate.
-          if (queried-input-dimension == D)
-          then (if (c₂ D')       -- If the binary configuration has chosen the left alternative of the nested binary dimension
-                then n           -- ... then that is the alternative we have to pick in the input formula.
-                else (if binary? -- ... if not, we check if the current choice is already binary.
-                      then suc n            -- If it is, we pick the right alternative.
-                      else recursive-result -- Otherwise, we check further nested branches recursively.
-                      )
-                )
+          if queried-input-dimension == D
+          then if c₂ D'        -- If the binary configuration has chosen the left alternative of the nested binary dimension
+               then n          -- ... then that is the alternative we have to pick in the input formula.
+               else if binary? -- ... if not, we check if the current choice is already binary.
+                    then suc n            -- If it is, we pick the right alternative.
+                    else recursive-result -- Otherwise, we check further nested branches recursively.
           else recursive-result
-          })
+          }
       }
 
 -- Use the idempotency rule D⟨e⟩≈e to unwrap unary choices.
@@ -330,7 +328,7 @@ toBCC-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
 
     let max-child-size = size-e₁ ⊔ˢ size-tail
         choice-size    = ↑ max-child-size
-    pure (choice-size , _⟨_,_⟩₂ {choice-size} {max-child-size} D' (cc₂-e₁) (cc₂-tail))
+    pure (choice-size , _⟨_,_⟩₂ {choice-size} {max-child-size} D' cc₂-e₁ cc₂-tail)
 ```
 
 Finally, we can use `toBCC` to produce a `Translation`:
@@ -376,6 +374,12 @@ CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
 BCC-is-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-as-expressive-as CCC , ⟦_⟧ₙ
 BCC-is-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
 ```
+
+Comments by Jeff:
+
+    I would think the state monad would need to keep track of proofs on the state for each bind.
+    I had something like this in mind: https://idris2.readthedocs.io/en/latest/tutorial/interp.html
+    which keeps a state of proofs for each term in the interpreter state. Then each proof is that the term is well typed
 
 #### Proof of the left side
 

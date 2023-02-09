@@ -40,6 +40,9 @@ open import Lang.Annotation.Name using (Option; Dimension; _==_)
 open import Translation.Translation
      using ( Domain; Translation; TranslationResult )
 open import Util.Existence using (∃-Size; _,_)
+
+open import Data.ReversedList using (_∷_)
+open import Data.ConveyorBelt
 ```
 
 ## Translation
@@ -88,17 +91,7 @@ What makes the translation hard?
 -- deselect-option-wf O (Root a es) with deselect-option O (Artifactₒ a es) | inspect (deselect-option O) (Artifactₒ a es)
 -- ... | just (Artifactₒ a' es') | _ = Root a' es'
 
-data ReversedList (A : Set) : Set where
-  []  :                      ReversedList A
-  _∷_ : ReversedList A → A → ReversedList A
 
-maprl : ∀ {A B : Set} → (f : A → B) → ReversedList A → ReversedList B
-maprl f []       = []
-maprl f (xs ∷ x) = maprl f xs ∷ f x
-
-unreverse : ∀ {A : Set} → ReversedList A → List A
-unreverse []       = []
-unreverse (xs ∷ x) = unreverse xs ++ (x ∷ [])
 
 -- open import Effect.Functor using (RawFunctor)
 -- --open import Effect.Applicative using (RawApplicative; pure)
@@ -112,24 +105,6 @@ unreverse (xs ∷ x) = unreverse xs ++ (x ∷ [])
 --             monad to state-monad;
 --             monadState to state-monad-specifics)
 
-record ConveyorBelt (A B : Set) : Set where
-   constructor _↢_ -- \l->
-   field
-     left  : ReversedList B
-     right : List A
-open ConveyorBelt public
-infix 4 _↢_
-
-putOnBelt : ∀ {A B : Set} → List A → ConveyorBelt A B
-putOnBelt l = record
-  { left  = []
-  ; right = l
-  }
-
-step : ∀ {A B : Set} → (A → B) → ConveyorBelt A B → ConveyorBelt A B
-step _ z@(_ ↢ [])    = z
-step f (ls ↢ r ∷ rs) = ls ∷ f r ↢ rs
-
 record TZipper (i : Size) (A : Domain) : Set where
   constructor _◀_ --\T
   field
@@ -138,8 +113,8 @@ record TZipper (i : Size) (A : Domain) : Set where
 
 {-# TERMINATING #-}
 OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → BCC ∞ A
-OCtoBCC' ((a ∷ p) ◀ (ls ↢ [])) =
-  Artifact₂ a (unreverse ls)
+OCtoBCC' ((a ∷ p) ◀ belt@(ls ↢ [])) =
+  Artifact₂ a (finalize belt)
 OCtoBCC' ((a ∷ p) ◀ (ls ↢ (Artifactₒ b es) ∷ rs)) =
   let processedArtifact = OCtoBCC' ((b ∷ a ∷ p) ◀ putOnBelt es) in
   OCtoBCC' ((a ∷ p) ◀ (ls ∷ processedArtifact ↢ rs))

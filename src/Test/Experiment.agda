@@ -21,18 +21,18 @@ record Experiment (A : Set) : Set₁ where
 open Experiment public
 
 runOn : ∀ {A : Set} → Experiment A → Example A → Lines
-runOn experiment example =
-  do
-    linebreak
-    boxed
-      EXAMPLE-BOX-WIDTH
-      ("Example: " ++ name example)
-      (run experiment example)
-    linebreak
+runOn experiment example = do
+  linebreak
+  boxed
+    EXAMPLE-BOX-WIDTH
+    ("Example: " ++ name example)
+    (run experiment example)
+  linebreak
 
 runAll : {A : Set} → Experiment A → List (Example A) → Lines
-runAll experiment examples =
+runAll experiment examples = do
   boxed
     EXPERIMENT-BOX-WIDTH
     ("Experiment: " ++ (name experiment))
     (lines (map (runOn experiment) examples))
+  linebreak

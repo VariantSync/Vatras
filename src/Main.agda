@@ -42,7 +42,6 @@ main_lines = do
   overwrite-alignment-with
     Center
     (lines (map runEntry experimentsToRun))
-  linebreak
 
 open import IO using (IO; Main; putStrLn)
 
