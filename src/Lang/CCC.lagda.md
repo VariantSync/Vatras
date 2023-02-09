@@ -41,7 +41,7 @@ open Eq
 open import Lang.Annotation.Name using (Dimension)
 open import Translation.Translation
   -- Names
-  using (VarLang; ConfLang; Domain; Semantics)
+  using (VarLang; ConfLang; Domain; Semantics; Artifactˡ)
   -- Relations of expression in a variability language
   using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
 ```
@@ -58,8 +58,7 @@ Tag : Set
 Tag = ℕ
 
 data CCC : VarLang where
-  Artifact : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    A → List (CCC j A) → CCC i A
+  Artifact : Artifactˡ CCC
   _⟨_⟩ : ∀ {i : Size} {j : Size< i} {A : Domain} →
     Dimension → List⁺ (CCC j A) → CCC i A
 ```

@@ -19,7 +19,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; Size<_; ↑_)
-open import Translation.Translation using (VarLang; Domain)
+open import Translation.Translation using (VarLang; Domain; Artifactˡ)
 open import Lang.Annotation.Name using (Option)
 ```
 
@@ -27,8 +27,7 @@ open import Lang.Annotation.Name using (Option)
 
 ```agda
 data OC : VarLang where
-  Artifact : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    A → List (OC j A) → OC i A
+  Artifact : Artifactˡ OC
   _❲_❳ : ∀ {i : Size} {j : Size< i} {A : Domain} →
     Option → OC j A → OC i A
 infixl 6 _❲_❳

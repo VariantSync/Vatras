@@ -409,6 +409,54 @@ translation-proves-variant-preservation trans preservation e₁ =
   , ≚-via→≚-within trans (preservation e₁)
 ```
 
+### Helper Functions and Theorems
+
+```agda
+open import Data.List using (List; []; _∷_)
+open import Data.List.NonEmpty using (List⁺; _∷_; toList)
+open import Size using (Size<_; ↑_; _⊔ˢ_)
+
+{-
+Given a list of individually sized expressions, we find the maximum size and cast every expression to that maximum size. In case the list is empty, the given default value is returned.
+-}
+max-size : ∀ {A : Domain} → (L : VarLang) → Size → List (∃-Size[ i ] (L i A)) → ∃-Size[ max ] (List (L max A))
+max-size _ ε [] = ε , []
+max-size L ε ((i , e) ∷ xs) =
+  let (max-tail , tail) = max-size L ε xs
+   in i ⊔ˢ max-tail , e ∷ tail -- Why is there a warning highlight without a message here?
+
+{-
+Same as max-size⁺ but for non-empty list.
+We can thus be sure that a maximum size exist and do not need a default value.
+-}
+max-size⁺ : ∀ {A : Domain} → (L : VarLang) → List⁺ (∃-Size[ i ] (L i A)) → ∃-Size[ max ] (List (L max A))
+max-size⁺ L list@((i , _) ∷ _) = max-size L i (toList list)
+
+{-
+Most languages feature Artifacts as arbitrary elements of the domain language.
+The constructor usually takes an element of the domain and a list of child expressions.
+-}
+Artifactˡ : VarLang → Set₁
+Artifactˡ L = ∀ {i : Size} {j : Size< i} {A : Domain} → A → List (L j A) → L i A
+
+{-
+Creates an Artifact₂ from a list of expressions of a certain size.
+The size of the resulting expression is larger by 1.
+-}
+sequence-sized-artifact : ∀ {A : Domain}
+  → {L : VarLang}
+  → Artifactˡ L
+  → A
+  → List⁺ (∃-Size[ i ] (L i A))
+    ----------------------------
+  → ∃-Size[ i ] (L i A)
+sequence-sized-artifact {A} {L} Artifact a cs =
+  let max , es = max-size⁺ L cs in
+  ↑ max , Artifact {↑ max} {max} {A} a es
+
+```
+
+
 ## Stronger Relations
 
 ### Strong Syntactic Equivalence

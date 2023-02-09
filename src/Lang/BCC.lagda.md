@@ -40,7 +40,7 @@ open import Axioms.Extensionality using (extensionality)
 open import Lang.Annotation.Name using (Dimension)
 open import Translation.Translation
   -- Names
-  using (VarLang; ConfLang; Domain; Semantics)
+  using (VarLang; ConfLang; Domain; Semantics; Artifactˡ)
   -- Relations of expression in a variability language
   using (_,_⊢_≈_)
 open import SemanticDomain using (Variant; Artifactᵥ)
@@ -52,8 +52,7 @@ In the following we formalize the binary normal forms for choice calculus. We ex
 
 ```agda
 data BCC : VarLang where
-  Artifact : {i : Size} {j : Size< i} {A : Domain} →
-    A → List (BCC j A) → BCC i A
+  Artifact : Artifactˡ BCC
   _⟨_,_⟩ : {i : Size} {j : Size< i} {A : Domain} →
     Dimension → BCC j A → BCC j A → BCC i A
 ```
