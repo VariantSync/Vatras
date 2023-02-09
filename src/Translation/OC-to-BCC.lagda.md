@@ -91,42 +91,41 @@ What makes the translation hard?
 -- deselect-option-wf O (Root a es) with deselect-option O (Artifactₒ a es) | inspect (deselect-option O) (Artifactₒ a es)
 -- ... | just (Artifactₒ a' es') | _ = Root a' es'
 
+{-
+A partial zipper for the translation.
+It stores some information about the context but not enough to fully restore a tree from the current focus.
+This limitation is intended to keep the structure as simple as possible and only as complex as necessary.
 
+The zipper remembers the last artefact above our currently translated subtree.
+This artifact always exists in a well-formed option calculus expression.
+The current parent will always be an artifact because it will never be an option because whenever we visit an option, we swap it with the artifact above.
+Said artifact will then be the parent of the translated children again.
 
--- open import Effect.Functor using (RawFunctor)
--- --open import Effect.Applicative using (RawApplicative; pure)
--- open import Effect.Monad using (RawMonad)
-
--- -- Import state monad
--- open import Effect.Monad.State
---   using (State; RawMonadState; runState; execState; evalState)
---   renaming (functor to state-functor;
--- --            applicative to state-applicative;
---             monad to state-monad;
---             monadState to state-monad-specifics)
-
+The zipper stores the children of the currently translated subtree in a ConveyorBelt.
+This ConveyorBelt keeps track of which children have already been translated and which have not.
+-}
 record TZipper (i : Size) (A : Domain) : Set where
   constructor _◀_ --\T
   field
-    context : List⁺ A
-    focus   : ConveyorBelt (OC i A) (BCC ∞ A)
+    parent   : A
+    siblings : ConveyorBelt (OC i A) (BCC ∞ A)
 
 {-# TERMINATING #-}
 OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → BCC ∞ A
-OCtoBCC' ((a ∷ p) ◀ belt@(ls ↢ [])) =
+OCtoBCC' (a ◀ belt@(ls ↢ [])) =
   Artifact₂ a (finalize belt)
-OCtoBCC' ((a ∷ p) ◀ (ls ↢ (Artifactₒ b es) ∷ rs)) =
-  let processedArtifact = OCtoBCC' ((b ∷ a ∷ p) ◀ putOnBelt es) in
-  OCtoBCC' ((a ∷ p) ◀ (ls ∷ processedArtifact ↢ rs))
-OCtoBCC' ((a ∷ p) ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
-   let l = OCtoBCC' ((a ∷ p) ◀ (ls ↢ e ∷ rs))
-       r = OCtoBCC' ((a ∷ p) ◀ (ls ↢     rs))
+OCtoBCC' (a ◀ (ls ↢ (Artifactₒ b es) ∷ rs)) =
+  let processedArtifact = OCtoBCC' (b ◀ putOnBelt es) in
+  OCtoBCC' (a ◀ (ls ∷ processedArtifact ↢ rs))
+OCtoBCC' (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
+   let l = OCtoBCC' (a ◀ (ls ↢ e ∷ rs))
+       r = OCtoBCC' (a ◀ (ls ↢     rs))
    in
       O ⟨ l , r ⟩
 
 -- Todo: remove temp ∞
 OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
-OCtoBCC (Root a es) = ∞ , OCtoBCC' ((a ∷ []) ◀ putOnBelt es)
+OCtoBCC (Root a es) = ∞ , OCtoBCC' (a ◀ putOnBelt es)
 
 translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
 translate oc =
