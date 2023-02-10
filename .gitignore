@@ -3,6 +3,7 @@
 
 # emacs
 *.#*
+.dir-locals.el
 
 # build
 src/cc
