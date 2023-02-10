@@ -16,18 +16,16 @@ open import Test.Experiment using (Experiment; runAll)
 open import Lang.CCC using (CCC)
 open import Lang.OC using (WFOC)
 
-open import Test.Examples.CCC using (ccex-all)
+open import Test.Examples.CCC using (cccex-all)
 open import Test.Examples.OC using (optex-all)
 
 open import Test.Experiments.CCC-to-BCC
-open import Test.Experiments.OC-yes-no
 open import Test.Experiments.OC-to-BCC
 
 experimentsToRun : List (∃[ A ] (Experiment A × List (Example A)))
 experimentsToRun =
-    (CCC  ∞ String , exp-to-binary-and-back , ccex-all) ∷
-    (WFOC ∞ String , exp-run-allyes-and-allno , optex-all) ∷
-    (WFOC ∞ String , exp-oc-to-bcc , optex-all) ∷
+    (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
+    (WFOC ∞ String ,          exp-oc-to-bcc , optex-all) ∷
   []
 
 main_lines : Lines

@@ -19,62 +19,52 @@ import Lang.BCC
 open Lang.OC renaming (⟦_⟧ to ⟦_⟧-oc; Configuration to Conf-oc)
 open Lang.BCC renaming (⟦_⟧ to ⟦_⟧-bcc; Configuration to Conf-bcc)
 
-open import Translation.Translation using (expr)
-open import Translation.OC-to-BCC using (translate)
+open import Translation.Translation using (expr; ConfLang)
+open import Translation.OC-to-BCC using (translate; OC→BCC)
 
 open import Show.Lines
+open import Util.Named
+open import Show.Eval
 
-open import Test.Test
 open import Test.Experiment
 open import Test.Example
 open import Test.Examples.OC
 
-test-variant-equality :
-    (confName : String)
-  → Conf-oc
-  → Conf-bcc
-  → (wfocName : String)
-  → (bccName : String)
-  → WFOC ∞ String
-  → BCC ∞ String
-  → Lines
-test-variant-equality = test-confs id ⟦_⟧-oc ⟦_⟧-bcc Data.String._≟_
+open import Test.UnitTest
 
--- TODO: Extract small unit test framework and apply it to all our examples
-UnitTest :
-    (cₒ : Conf-oc)
-  → (c₂ : Conf-bcc)
-  → Example (WFOC ∞ String)
-  → Set
-UnitTest cₒ c₂ (_ example: e) = ⟦ e ⟧-oc cₒ ≡ ⟦ expr (translate e) ⟧-bcc c₂
+OC→BCC-Test : UnitTest Conf-oc
+OC→BCC-Test c = ForAllExamplesIn optex-all (test-translation OC→BCC c)
 
-all-oc : Bool → Conf-oc
-all-oc b _ = b
+OC→BCC-Test-conffnoc : UnitTest Conf-oc
+OC→BCC-Test-conffnoc c = ForAllExamplesIn optex-all (test-translation-fnoc∘conf≡id OC→BCC c)
 
-all-bcc : Bool → Conf-bcc
-all-bcc b _ = b
-
-test-sandwich : UnitTest (all-oc true) (all-bcc true) optex-sandwich
-test-sandwich = refl
-
-open import Data.List.Relation.Unary.All using (All; []; _∷_)
-
--- agda could compute this value automatically!
+-- agda computes this value automatically!
 -- Better: When we add a new example to optex-all, the test wont compile before we adapted it. So we can never forget to test it.
-test-all : All (UnitTest (all-oc true) (all-bcc true)) optex-all
-test-all = refl ∷ (refl ∷ (refl ∷ []))
+OC→BCC-Test-allyes : RunTest OC→BCC-Test (get allyes-oc)
+OC→BCC-Test-allyes = refl ∷ (refl ∷ (refl ∷ []))
 
--- Configure an option calculus expression with an all-yes and an all-no config and print the resulting variants.
+OC→BCC-Test-allno : RunTest OC→BCC-Test (get allno-oc)
+OC→BCC-Test-allno = refl ∷ (refl ∷ (refl ∷ []))
+
+OC→BCC-Test-conffnoc-allyes : RunTest OC→BCC-Test-conffnoc (get allyes-oc)
+OC→BCC-Test-conffnoc-allyes = refl ∷ (refl ∷ (refl ∷ []))
+
+OC→BCC-Test-conffnoc-allno : RunTest OC→BCC-Test-conffnoc (get allno-oc)
+OC→BCC-Test-conffnoc-allno = refl ∷ (refl ∷ (refl ∷ []))
+
+-- Translate an option calculus expression.
+-- Then configure it with an all-yes and an all-no config and print the resulting variants.
 exp-oc-to-bcc : Experiment (WFOC ∞ String)
-name exp-oc-to-bcc = "Translate OC to BCC"
-run  exp-oc-to-bcc (name example: oc) = do
-  let oc-name  = "oc "
-      bcc-name = "bcc"
-      trans-result = translate oc
+getName exp-oc-to-bcc = "Translate OC to BCC"
+get     exp-oc-to-bcc ex@(name example: oc) = do
+  let trans-result = translate oc
       bcc = expr trans-result
   [ Center ]> show-wfoc oc
   [ Center ]> "↓"
   [ Center ]> Lang.BCC.show bcc
   linebreak
-  test-variant-equality "all-yes" (all-oc true)  (all-bcc true)  oc-name bcc-name oc bcc
-  test-variant-equality "all-no"  (all-oc false) (all-bcc false) oc-name bcc-name oc bcc
+  > "Variants:"
+  indent 2 do
+    show-eval-str ⟦_⟧-oc allyes-oc ex
+    show-eval-str ⟦_⟧-oc allno-oc  ex
+  > "proven to be the same for the translated expression"

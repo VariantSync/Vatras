@@ -53,4 +53,3 @@ show-variant : ∀ {A : Set} → (A → String) → Variant A → String
 show-variant s (Artifactᵥ a []) = s a
 show-variant s (Artifactᵥ a es@(_ ∷ _)) = s a ++ "-<" ++ (intersperse ", " (map (show-variant s) es)) ++ ">-"
 
-

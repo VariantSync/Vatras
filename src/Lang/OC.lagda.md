@@ -166,6 +166,17 @@ leaf a = Artifact a []
 -- alternative name that does not require writing tortoise shell braces
 opt : ∀ {i : Size} {A : Set} → Option → OC i A → OC (↑ i) A
 opt O = _❲_❳ O
+
+open import Util.Named
+
+all-oc : Bool → Configuration
+all-oc b _ = b
+
+allyes-oc : Named Configuration
+allyes-oc = all-oc true called "all-yes"
+
+allno-oc : Named Configuration
+allno-oc = all-oc false called "all-no " --space intended for nicer printing lol
 ```
 
 ## Show

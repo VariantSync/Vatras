@@ -1,14 +1,9 @@
 module Test.Example where
 
 open import Data.String using (String)
+open import Util.Named public
 
-record Example (A : Set) : Set where
-  constructor _example:_
-  field
-    name  : String
-    value : A
+Example = Named
+
+pattern _example:_ name e = e called name
 infix 2 _example:_
-open Example public
-
--- data Show (A : Set) : Set where
---   printer : (A → String) → Show A

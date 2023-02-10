@@ -14,7 +14,7 @@ show-fun-at : ∀ {A B : Set}
   → (A → B)
   → A
   → String
-show-fun-at show-a show-b f a = show-a a ++ " |-> " ++ show-b (f a)
+show-fun-at show-a show-b f a = show-a a ++ " ↦ " ++ show-b (f a)
 
 show-fun : {A B : Set}
   → (A → String)
@@ -22,4 +22,4 @@ show-fun : {A B : Set}
   → (A → B)
   → List A
   → String
-show-fun show-a show-b f as = intersperse "; " (map (show-fun-at show-a show-b f) as)
+show-fun show-a show-b f as = "{ " ++ intersperse ", " (map (show-fun-at show-a show-b f) as) ++ " }"

@@ -5,7 +5,7 @@ open import Data.Nat using (ℕ; _*_; _∸_; ⌊_/2⌋; ⌈_/2⌉; _≤ᵇ_)
 open import Data.List using (List; _∷_; map; concat; splitAt)
 open import Data.String using (String; _++_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
 open import Data.Product as Prod using (_,_)
-open import Function using (id)
+open import Function using (id; _∘_)
 
 open import Effect.Applicative using (RawApplicative)
 open import Effect.Monad using (RawMonad)
@@ -41,15 +41,6 @@ Lines = List Line
 single : Line → Lines
 single = pure list-applicative
 
--- syntactic sugar to create lines by preceeding expressions of type String with >
-[_]>_ : Alignment → String → Lines
-[ a ]> l = single (record { alignment = a; content = l })
-infix 1 [_]>_
-
->_ : String → Lines
->_ = [_]>_ Left
-infix 1 >_
-
 -- add a sequence of lines to the output at once
 lines : List Lines → Lines
 lines = concat
@@ -66,6 +57,18 @@ _>>_ : Lines → Lines → Lines
 _>>_ = Data.List._++_
 
 -- Some smart constructors
+
+[_]>_ : Alignment → String → Lines
+[ a ]> l = single (record { alignment = a; content = l })
+infix 1 [_]>_
+
+>_ : String → Lines
+>_ = [_]>_ Left
+infix 1 >_
+
+>∷_ : List String → Lines
+>∷_ = lines ∘ map >_
+infix 1 >∷_
 
 mantle : String → String → Lines → Lines
 mantle prefix suffix = map (manipulate (λ s → prefix ++ s ++ suffix))

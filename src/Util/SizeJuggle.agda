@@ -62,6 +62,7 @@ record Weaken (B : Bounded) : Set where
                 → B weaker-bound
 
     -- we cannot build to-max from to-larger because the maximum is not strictly larger than either i or j. It is equal to one of them.
+    -- This is a result of not being able to prove i≤i⊔j (see above).
     to-max :    ∀ (i j : Size)
                   (e : B i)
                   ------------

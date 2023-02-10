@@ -71,7 +71,7 @@ open import Translation.Translation
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
   -- Helpers
-  using (max-size⁺; sequence-sized-artifact)
+  using (sequence-sized-artifact)
 
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
