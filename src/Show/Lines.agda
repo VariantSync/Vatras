@@ -1,11 +1,13 @@
 module Show.Lines where
 
-open import Data.Bool using (true; false)
+open import Data.Bool using (true; false; if_then_else_)
 open import Data.Nat using (ℕ; _*_; _∸_; ⌊_/2⌋; ⌈_/2⌉; _≤ᵇ_)
 open import Data.List using (List; _∷_; map; concat; splitAt)
-open import Data.String using (String; _++_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
+open import Data.String using (String; _++_; _==_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
 open import Data.Product as Prod using (_,_)
 open import Function using (id; _∘_)
+
+open import Util.Util using (max)
 
 open import Effect.Applicative using (RawApplicative)
 open import Effect.Monad using (RawMonad)
@@ -86,6 +88,9 @@ indent i = prefix (replicate i ' ')
 linebreak : Lines
 linebreak = > ""
 
+width : Lines → ℕ
+width = max ∘ map length
+
 -- Given a maximum length, this function wraps a given line as often as necessary to not exceed that width,
 -- This is not guaranteed to terminate because the list could be infinite.
 {-# NON_TERMINATING #-}
@@ -112,6 +117,7 @@ boxed width title content =
       bl = '╰'
       tr = '╮'
       br = '╯'
+
       total-titlebar-len = width ∸ (Data.String.length title) ∸ 4 -- 2x whitespace + 2x corners
       left-titlebar-len  = ⌊ total-titlebar-len /2⌋
       right-titlebar-len = ⌈ total-titlebar-len /2⌉
@@ -120,7 +126,8 @@ boxed width title content =
       content-indent = replicate content-indent-width ' '
       content-width  = width ∸ (2 * content-indent-width) ∸ 2 -- left and right bound
 
-      header = (replicate left-titlebar-len h) ++ " " ++ title ++ " " ++ (replicate right-titlebar-len h)
+      title-spacing = fromChar (if (title == "") then h else ' ')
+      header = (replicate left-titlebar-len h) ++ title-spacing ++ title ++ title-spacing ++ (replicate right-titlebar-len h)
       footer = replicate (Data.String.length header) h
   in do
     -- print the header of the box

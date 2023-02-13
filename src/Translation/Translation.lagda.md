@@ -292,7 +292,7 @@ Moreover, a translation also has to translate the size constraints over language
 ```agda
 record TranslationResult (A : Domain) (L₂ : VarLang) (C₁ C₂ : ConfLang) : Set where
   field
-    size : Size
+    {size} : Size
     expr : L₂ size A
     conf : C₁ → C₂
     fnoc : C₂ → C₁
@@ -304,6 +304,10 @@ record Translation (L₁ L₂ : VarLang) (C₁ C₂ : ConfLang) : Set₁ where
     sem₂ : Semantics L₂ C₂
     translate : ∀ {i : Size} {D : Domain} → L₁ i D → TranslationResult D L₂ C₁ C₂
 open Translation public
+
+-- translation from a language to itself
+EndoTranslation : VarLang → ConfLang → Set₁
+EndoTranslation L C = Translation L L C C
 
 getSize : ∀ {i : Size} {D : Domain} {L : VarLang} → L i D → Size
 getSize {i = i} _ = i

@@ -4,6 +4,7 @@ module Test.Experiments.OC-to-BCC where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (_∷_; [])
+open import Data.Nat using (_+_)
 open import Data.String using (String; _++_; unlines)
 
 open import Size using (Size; ∞)
@@ -60,19 +61,23 @@ get     exp-oc-to-bcc ex@(name example: oc) = do
   let trans-result   = translate oc
       bcc            = expr trans-result
       bcc-simplified = eliminate-redundancy bcc
+      pretty-bcc     = Lang.BCC.pretty bcc
+      pretty-bcc-simplified = Lang.BCC.pretty bcc-simplified
   [ Center ]> show-wfoc oc
   linebreak
   [ Center ]> "│"
   [ Center ]> "          │ translate"
   [ Center ]> "↓"
   linebreak
-  [ Center ]> Lang.BCC.show bcc
+  overwrite-alignment-with Center
+    (boxed (6 + width pretty-bcc) "" pretty-bcc)
   linebreak
   [ Center ]> "│"
   [ Center ]> "                     │ eliminate redundancy"
   [ Center ]> "↓"
   linebreak
-  [ Center ]> Lang.BCC.show bcc-simplified
+  overwrite-alignment-with Center
+    (boxed (6 + width pretty-bcc-simplified) "" pretty-bcc-simplified)
   linebreak
   > "Variants:"
   indent 2 do

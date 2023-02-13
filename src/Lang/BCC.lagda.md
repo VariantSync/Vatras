@@ -125,41 +125,37 @@ cc-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
 ```agda
 open Lang.Annotation.Name using (_==_)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Translation.Translation using (Translation; TranslationResult)
+open import Translation.Translation using (EndoTranslation)
 
 Scope : Set
-Scope = (Dimension → Maybe Bool)
+Scope = Dimension → Maybe Bool
 
 refine : Scope → Dimension → Bool → Scope
 refine scope D b D' = if D == D'
                       then just b
                       else scope D'
 
-eliminate-redundancy' : ∀ {i : Size} {A : Domain} → Scope → BCC i A → BCC i A
-eliminate-redundancy' scope (Artifact a es) = Artifact a (mapl (eliminate-redundancy' scope) es)
-eliminate-redundancy' scope (D ⟨ l , r ⟩) with scope D
-... | just true  = eliminate-redundancy' scope l
-... | just false = eliminate-redundancy' scope r
-... | nothing    = D ⟨ eliminate-redundancy' (refine scope D true) l
-                     , eliminate-redundancy' (refine scope D false) r
+eliminate-redundancy-in : ∀ {i : Size} {A : Domain} → Scope → BCC i A → BCC i A
+eliminate-redundancy-in scope (Artifact a es) = Artifact a (mapl (eliminate-redundancy-in scope) es)
+eliminate-redundancy-in scope (D ⟨ l , r ⟩) with scope D
+... | just true  = eliminate-redundancy-in scope l
+... | just false = eliminate-redundancy-in scope r
+... | nothing    = D ⟨ eliminate-redundancy-in (refine scope D true) l
+                     , eliminate-redundancy-in (refine scope D false) r
                      ⟩
 
 eliminate-redundancy : ∀ {i : Size} {A : Domain} → BCC i A → BCC i A
-eliminate-redundancy = eliminate-redundancy' (λ _ → nothing)
+eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
-Redundancy-Elimination-For : ∀ {i : Size} {A : Domain} → BCC i A → TranslationResult A BCC Configuration Configuration
-Redundancy-Elimination-For {i = i} e = record
-  { size = i
-  ; expr = eliminate-redundancy e
-  ; conf = id
-  ; fnoc = id
-  }
-
-Redundancy-Elimination : Translation BCC BCC Configuration Configuration
+Redundancy-Elimination : EndoTranslation BCC Configuration
 Redundancy-Elimination = record
   { sem₁ = ⟦_⟧
   ; sem₂ = ⟦_⟧
-  ; translate = Redundancy-Elimination-For
+  ; translate = λ e → record
+                      { expr = eliminate-redundancy e
+                      ; conf = id
+                      ; fnoc = id
+                      }
   }
 ```
 
@@ -183,4 +179,21 @@ show : ∀ {i : Size} → BCC i String → String
 show (Artifact a []) = a
 show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
 show (D ⟨ l , r ⟩) = D ++ "⟨" ++ (show l) ++ ", " ++ (show r) ++ "⟩"
+
+open import Show.Lines
+
+pretty : ∀ {i : Size} → BCC i String → Lines
+pretty (Artifact a []) = > a
+pretty (Artifact a es@(_ ∷ _)) = do
+  > a ++ "-<"
+  indent 2 do
+    lines (mapl pretty es)
+  > ">-"
+pretty (D ⟨ l , r ⟩) = do
+  > D ++ "⟨"
+  indent 2 do
+    pretty l
+    > ","
+    pretty r
+  > "⟩"
 ```
