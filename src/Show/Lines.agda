@@ -108,10 +108,10 @@ boxed : ℕ → (title : String) → (content : Lines) → Lines
 boxed width title content =
   let h  = '─'
       v  = '│'
-      tl = '┌'
-      bl = '└'
-      tr = '┐'
-      br = '┘'
+      tl = '╭'
+      bl = '╰'
+      tr = '╮'
+      br = '╯'
       total-titlebar-len = width ∸ (Data.String.length title) ∸ 4 -- 2x whitespace + 2x corners
       left-titlebar-len  = ⌊ total-titlebar-len /2⌋
       right-titlebar-len = ⌈ total-titlebar-len /2⌉

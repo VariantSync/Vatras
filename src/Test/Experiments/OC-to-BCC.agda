@@ -57,11 +57,22 @@ OC→BCC-Test-conffnoc-allno = refl ∷ (refl ∷ (refl ∷ []))
 exp-oc-to-bcc : Experiment (WFOC ∞ String)
 getName exp-oc-to-bcc = "Translate OC to BCC"
 get     exp-oc-to-bcc ex@(name example: oc) = do
-  let trans-result = translate oc
-      bcc = expr trans-result
+  let trans-result   = translate oc
+      bcc            = expr trans-result
+      bcc-simplified = eliminate-redundancy bcc
   [ Center ]> show-wfoc oc
+  linebreak
+  [ Center ]> "│"
+  [ Center ]> "          │ translate"
   [ Center ]> "↓"
+  linebreak
   [ Center ]> Lang.BCC.show bcc
+  linebreak
+  [ Center ]> "│"
+  [ Center ]> "                     │ eliminate redundancy"
+  [ Center ]> "↓"
+  linebreak
+  [ Center ]> Lang.BCC.show bcc-simplified
   linebreak
   > "Variants:"
   indent 2 do

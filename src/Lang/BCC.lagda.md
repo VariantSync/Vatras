@@ -25,7 +25,7 @@ open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
   renaming (map to mapl⁺)
 open import Function
-  using (flip)
+  using (flip; id)
 open import Size
   using (Size; Size<_)
 
@@ -118,6 +118,49 @@ cc-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
   ≡⟨⟩
     ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
   ∎)
+```
+
+## Semantic Preserving Transformations
+
+```agda
+open Lang.Annotation.Name using (_==_)
+open import Data.Maybe using (Maybe; just; nothing)
+open import Translation.Translation using (Translation; TranslationResult)
+
+Scope : Set
+Scope = (Dimension → Maybe Bool)
+
+refine : Scope → Dimension → Bool → Scope
+refine scope D b D' = if D == D'
+                      then just b
+                      else scope D'
+
+eliminate-redundancy' : ∀ {i : Size} {A : Domain} → Scope → BCC i A → BCC i A
+eliminate-redundancy' scope (Artifact a es) = Artifact a (mapl (eliminate-redundancy' scope) es)
+eliminate-redundancy' scope (D ⟨ l , r ⟩) with scope D
+... | just true  = eliminate-redundancy' scope l
+... | just false = eliminate-redundancy' scope r
+... | nothing    = D ⟨ eliminate-redundancy' (refine scope D true) l
+                     , eliminate-redundancy' (refine scope D false) r
+                     ⟩
+
+eliminate-redundancy : ∀ {i : Size} {A : Domain} → BCC i A → BCC i A
+eliminate-redundancy = eliminate-redundancy' (λ _ → nothing)
+
+Redundancy-Elimination-For : ∀ {i : Size} {A : Domain} → BCC i A → TranslationResult A BCC Configuration Configuration
+Redundancy-Elimination-For {i = i} e = record
+  { size = i
+  ; expr = eliminate-redundancy e
+  ; conf = id
+  ; fnoc = id
+  }
+
+Redundancy-Elimination : Translation BCC BCC Configuration Configuration
+Redundancy-Elimination = record
+  { sem₁ = ⟦_⟧
+  ; sem₂ = ⟦_⟧
+  ; translate = Redundancy-Elimination-For
+  }
 ```
 
 ## Utility

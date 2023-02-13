@@ -92,7 +92,7 @@ get     exp-to-binary-and-back ex@(cc called name) =
     conf-named c = (conf translation-result (get c)) called ("(toCC₂ " ++ getName c ++ ")")
 
     fnoc-named : Named Configuration₂ → Named Configurationₙ
-    fnoc-named c = (fnoc translation-result (get c)) called ("toCCₙ " ++ getName c ++ ")")
+    fnoc-named c = (fnoc translation-result (get c)) called ("(toCCₙ " ++ getName c ++ ")")
 
     --- helper functions that show the result of "⟦ e ⟧ c", where e is either our original expression or its translation and c is a configuration that always selects n for a given n ∈ ℕ and that has been translated back and forth.
     eval-all-n       : ℕ → Lines

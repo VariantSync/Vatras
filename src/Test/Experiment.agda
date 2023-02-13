@@ -28,7 +28,11 @@ runOn experiment example = do
   boxed
     EXAMPLE-BOX-WIDTH
     ("Example: " ++ getName example)
-    (run experiment example)
+    (do
+      linebreak
+      run experiment example
+      linebreak
+    )
   linebreak
 
 runAll : {A : Set} → Experiment A → List (Example A) → Lines
