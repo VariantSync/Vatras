@@ -22,6 +22,7 @@ open import Size using (Size; Size<_)
 
 open import Lang.Annotation.Name using (Variable)
 open import SemanticDomain using (Variant; Artifactᵥ)
+open import Translation.Translation using (VarLang; Domain)
 ```
 
 ## Syntax
@@ -31,9 +32,10 @@ We refer to a choice calculus expression whose abstract syntax is an ADD, as bei
 In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
 
 ```agda
-data ADD (i : Size) (A : Set) : Set where
-  Terminal : Variant A → ADD i A -- ModelBase in FFSPL
-  Choice : ∀ {j : Size< i} →
+data ADD : VarLang where
+  Terminal : ∀ {i : Size} {A : Domain}
+    → Variant A → ADD i A -- ModelBase in FFSPL
+  Choice : ∀ {i : Size} {A : Domain} {j : Size< i} →
     Variable → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
 
@@ -49,6 +51,20 @@ Configuration = Variable → Bool
 ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant A
 ⟦ Terminal a ⟧ _   = a
 ⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
+```
+
+## Sized Helper Functions
+
+```agda
+open import Util.SizeJuggle using (Bounded; Weaken; to-larger; to-max)
+
+-- todo: move these boundes definition to BCC file
+ADD-is-bounded : ∀ Domain → Bounded
+ADD-is-bounded A i = ADD i A
+
+ADD-is-weakenable : ∀ {A : Domain} → Weaken (ADD-is-bounded A)
+to-larger ADD-is-weakenable _ _ e = e
+to-max    ADD-is-weakenable _ _ e = e
 ```
 
 ### Translation to Binary Choice Calculus

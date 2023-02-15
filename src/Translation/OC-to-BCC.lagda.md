@@ -31,7 +31,9 @@ open import Lang.OC
            ; Configuration to Confₒ
            )
 open import Lang.BCC
-     using ( BCC; _⟨_,_⟩)
+     using ( BCC; _⟨_,_⟩;
+             BCC-is-bounded; BCC-is-weakenable
+           )
   renaming ( ⟦_⟧ to ⟦_⟧₂
            ; Artifact to Artifact₂
            ; Configuration to Conf₂
@@ -41,7 +43,7 @@ open import Translation.Translation
      using (Domain; Translation; TranslationResult)
      using (sequence-sized-artifact)
 open import Util.Existence using (∃-Size; _,_)
-open import Util.SizeJuggle
+open import Util.SizeJuggle using (i<↑i; weaken-to-smaller-↑max; sym-smaller-↑max)
 
 open import Data.ReversedList using ([]; _∷_)
 open import Data.ConveyorBelt
@@ -55,44 +57,6 @@ What makes the translation hard?
 2. Reconstructing the tree:
 
 ```agda
--- PartialConf : Set
--- PartialConf = String → Maybe Bool
-
--- partialOC-Eval : ∀ {i : Size} {A : Domain} → PartialConf → OC i A → Maybe (OC i A)
--- partialOC-Eval c (Artifactₒ a es) = {!!}
--- partialOC-Eval c (O ❲ e ❳) with c O
--- ... | just b  = if b
---                 then partialOC-Eval c e
---                 else nothing
--- ... | nothing = mapm (λ e' → O ❲ e' ❳) (partialOC-Eval c e)
-
--- weaken-bound : ∀ {i : Size} {A : Domain} → OC i A → OC (↑ i) A
--- weaken-bound e = e
-
--- select-option : ∀ {i : Size} {A : Domain} → Option → OC i A → OC i A
--- select-option O (Artifactₒ a es) = Artifactₒ a (mapl (select-option O) es)
--- select-option O (O' ❲ e ❳) = let e' = select-option O e in
---                              if O == O'
---                              then weaken-bound e'
---                              else O' ❲ e' ❳
-
--- import Relation.Binary.PropositionalEquality as Eq
--- open Eq using (inspect)
-
--- select-option-wf : ∀ {i : Size} {A : Domain} → Option → WFOC i A → WFOC i A
--- select-option-wf O (Root a es) with select-option O (Artifactₒ a es) | inspect (select-option O) (Artifactₒ a es)
--- ... | Artifactₒ a' es' | _ = Root a' es'
-
--- deselect-option : ∀ {i : Size} {A : Domain} → Option → OC i A → Maybe (OC i A)
--- deselect-option O (Artifactₒ a es) = just (Artifactₒ a (catMaybes (mapl (deselect-option O) es)))
--- deselect-option O (O' ❲ e ❳) = if O == O'
---                                then nothing
---                                else mapm (λ x → O' ❲ x ❳) (deselect-option O e)
-
--- deselect-option-wf : ∀ {i : Size} {A : Domain} → Option → WFOC i A → WFOC i A
--- deselect-option-wf O (Root a es) with deselect-option O (Artifactₒ a es) | inspect (deselect-option O) (Artifactₒ a es)
--- ... | just (Artifactₒ a' es') | _ = Root a' es'
-
 {-
 A partial zipper for the translation.
 It stores some information about the context but not enough to fully restore a tree from the current focus.
@@ -111,14 +75,6 @@ record TZipper (i : Size) (A : Domain) : Set where
   field
     parent   : A
     siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A))
-
--- todo: move these boundes definition to BCC file
-BCC-is-bounded : ∀ Domain → Bounded
-BCC-is-bounded A i = BCC i A
-
-BCC-is-weakenable : ∀ {A : Domain} → Weaken (BCC-is-bounded A)
-to-larger BCC-is-weakenable _ _ e = e
-to-max    BCC-is-weakenable _ _ e = e
 
 {-# TERMINATING #-}
 OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → ∃-Size[ j ] (BCC j A)

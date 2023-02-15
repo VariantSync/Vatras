@@ -159,6 +159,20 @@ Redundancy-Elimination = record
   }
 ```
 
+## Sized Helper Functions
+
+```agda
+open import Util.SizeJuggle using (Bounded; Weaken; to-larger; to-max)
+
+-- todo: move these boundes definition to BCC file
+BCC-is-bounded : ∀ Domain → Bounded
+BCC-is-bounded A i = BCC i A
+
+BCC-is-weakenable : ∀ {A : Domain} → Weaken (BCC-is-bounded A)
+to-larger BCC-is-weakenable _ _ e = e
+to-max    BCC-is-weakenable _ _ e = e
+```
+
 ## Utility
 
 ```agda
