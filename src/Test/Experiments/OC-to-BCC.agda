@@ -42,16 +42,16 @@ OC→BCC-Test-conffnoc c = ForAllExamplesIn optex-all (test-translation-fnoc∘c
 -- agda computes this value automatically!
 -- Better: When we add a new example to optex-all, the test wont compile before we adapted it. So we can never forget to test it.
 OC→BCC-Test-allyes : RunTest OC→BCC-Test (get allyes-oc)
-OC→BCC-Test-allyes = refl ∷ (refl ∷ (refl ∷ []))
+OC→BCC-Test-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 OC→BCC-Test-allno : RunTest OC→BCC-Test (get allno-oc)
-OC→BCC-Test-allno = refl ∷ (refl ∷ (refl ∷ []))
+OC→BCC-Test-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 OC→BCC-Test-conffnoc-allyes : RunTest OC→BCC-Test-conffnoc (get allyes-oc)
-OC→BCC-Test-conffnoc-allyes = refl ∷ (refl ∷ (refl ∷ []))
+OC→BCC-Test-conffnoc-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 OC→BCC-Test-conffnoc-allno : RunTest OC→BCC-Test-conffnoc (get allno-oc)
-OC→BCC-Test-conffnoc-allno = refl ∷ (refl ∷ (refl ∷ []))
+OC→BCC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 -- Translate an option calculus expression.
 -- Then configure it with an all-yes and an all-no config and print the resulting variants.
