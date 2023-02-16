@@ -209,23 +209,23 @@ indexed start (x ∷ xs) = (start , x) ∷ indexed (suc start) xs
 variant-choice : ∀ {A : Set} → List⁺ (Variant A) → CCC ∞ A
 variant-choice vs = "D" ⟨ mapl⁺ describe-variant vs ⟩
 
--- TODO: Prove this instead of postulating it
-postulate
-  variant-choice-describes-all : ∀ {A : Set}
-    → (vs : List⁺ (Variant A))
-      -------------------------------------------------------------------------
-    → CCC , Configuration , ⟦_⟧ ⊢ (variant-choice vs) describes-all (toList vs)
+-- -- TODO: Prove this instead of postulating it
+-- postulate
+--   variant-choice-describes-all : ∀ {A : Set}
+--     → (vs : List⁺ (Variant A))
+--       -------------------------------------------------------------------------
+--     → CCC , Configuration , ⟦_⟧ ⊢ (variant-choice vs) describes-all (toList vs)
 
-describe-variants : ∀ {A : Domain}
-  → (empty : A)
-  → (variants : List (Variant A))
-  → ∃[ e ∈ (CCC ∞ A)] (CCC , Configuration , ⟦_⟧ ⊢ e describes-all variants)
-describe-variants z []       = Artifact z [] , []
-describe-variants _ (v ∷ vs) = variant-choice (v ∷ vs) , variant-choice-describes-all (v ∷ vs)
+-- describe-variants : ∀ {A : Domain}
+--   → (empty : A)
+--   → (variants : List (Variant A))
+--   → ∃[ e ∈ (CCC ∞ A)] (CCC , Configuration , ⟦_⟧ ⊢ e describes-all variants)
+-- describe-variants z []       = Artifact z [] , []
+-- describe-variants _ (v ∷ vs) = variant-choice (v ∷ vs) , variant-choice-describes-all (v ∷ vs)
 
--- todo use proper size
-CCC-is-complete : (empty : (A : Set) → A) → Complete CCC Configuration ⟦_⟧
-CCC-is-complete empty {A} variants = ∞ , describe-variants (empty A) variants
+-- -- todo use proper size
+-- CCC-is-complete : (empty : (A : Set) → A) → Complete CCC Configuration ⟦_⟧
+-- CCC-is-complete empty {A} variants = ∞ , describe-variants (empty A) variants
 ```
 
 

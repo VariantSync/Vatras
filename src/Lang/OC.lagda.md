@@ -4,6 +4,7 @@
 
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module
@@ -149,7 +150,7 @@ We pattern match on the assumed completeness evidence to unveil the expression `
 ```agda
 OC-is-incomplete : Incomplete WFOC Configuration ⟦_⟧
 OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
-... | i , (e , ∃c→⟦e⟧c≡0 ∷ ∃c→⟦e⟧c≡1 ∷ []) = does-not-describe-variants-0-and-1 e ∃c→⟦e⟧c≡0 ∃c→⟦e⟧c≡1
+... | _ , e , (∃c→⟦e⟧c≡0 ∷ ∃c→⟦e⟧c≡1 ∷ []) , _ = does-not-describe-variants-0-and-1 e ∃c→⟦e⟧c≡0 ∃c→⟦e⟧c≡1
 ```
 
 **This is an important result!**
