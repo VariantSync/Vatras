@@ -39,9 +39,8 @@ open import Lang.BCC
            ; Configuration to Conf₂
            )
 open import Lang.Annotation.Name using (Option; Dimension; _==_)
-open import Translation.Translation
-     using (Domain; Translation; TranslationResult)
-     using (sequence-sized-artifact)
+open import Definitions using (Domain; sequence-sized-artifact)
+open import Translation.Translation using (Translation; TranslationResult)
 open import Util.Existence using (∃-Size; _,_)
 open import Util.SizeJuggle using (i<↑i; weaken-to-smaller-↑max; sym-smaller-↑max)
 
@@ -108,7 +107,7 @@ OCtoBCC' {i = i} (a ◀ (    [] ↢ [])) =
   ↑ i , Artifact₂ a []
 OCtoBCC'         (a ◀ (ls ∷ l ↢ [])) =
   let asList⁺ = Data.ReversedList.toList⁺ (ls ∷ l) in
-  sequence-sized-artifact Artifact₂ a asList⁺
+  sequence-sized-artifact BCC-is-weakenable Artifact₂ a asList⁺
 
 -- Todo: remove temp ∞
 OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)

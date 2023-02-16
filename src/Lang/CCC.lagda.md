@@ -39,11 +39,8 @@ open Eq
 
 -- Imports of own modules
 open import Lang.Annotation.Name using (Dimension)
-open import Translation.Translation
-  -- Names
-  using (VarLang; ConfLang; Domain; Semantics; Artifactˡ)
-  -- Relations of expression in a variability language
-  using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
+open import Definitions using (Domain; VarLang; ConfLang; Semantics; Artifactˡ)
+open import Relations.Semantic using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
 ```
 
 ## Syntax

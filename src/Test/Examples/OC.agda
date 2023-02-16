@@ -7,7 +7,7 @@ open import Data.String using (String)
 open import Size using (Size; ↑_; ∞)
 
 open import Lang.Annotation.Name using (Option)
-open import Translation.Translation using (Domain)
+open import Definitions using (Domain)
 open import Lang.OC
 
 open import Test.Example

@@ -53,7 +53,7 @@ open import Lang.CCC
             Configuration to Configurationₙ;
             ⟦_⟧ to ⟦_⟧ₙ)
 open import Lang.BCC
-  using (BCC)
+  using (BCC; BCC-is-weakenable)
   renaming (Artifact to Artifact₂;
             _⟨_,_⟩ to _⟨_,_⟩₂;
             Tag to Tag₂;
@@ -61,17 +61,15 @@ open import Lang.BCC
             ⟦_⟧ to ⟦_⟧₂)
 
 open import SemanticDomain using (Variant; Artifactᵥ)
-open import Translation.Translation
-  -- Names
-  using (VarLang; ConfLang; Domain; Semantics)
+open import Definitions using (Domain; VarLang; ConfLang; Semantics; sequence-sized-artifact)
+open import Relations.Semantic
   -- Relations between variability languages
   using (_,_is-as-expressive-as_,_)
+open import Translation.Translation
   -- Translations
   using (Translation; TranslationResult; expr; conf; fnoc)
   -- Translation properties
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
-  -- Helpers
-  using (sequence-sized-artifact)
 
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
@@ -231,7 +229,7 @@ toBCC (Artifactₙ a (e ∷ es)) =
   let open RawMonad state-monad in
   do
     children-and-their-sizes ← mapA⁺ state-applicative toBCC (e ∷ es)
-    pure (sequence-sized-artifact Artifact₂ a children-and-their-sizes)
+    pure (sequence-sized-artifact BCC-is-weakenable Artifact₂ a children-and-their-sizes)
 -- Translation of choices, which we do via auxiliary unroll function.
 toBCC (D ⟨ es ⟩ₙ) = toBCC-choice-unroll D zero es
 

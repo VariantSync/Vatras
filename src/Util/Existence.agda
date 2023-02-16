@@ -14,6 +14,7 @@ record Σ-Size {l : Level} (i : SizeUniv) (B : i → Set l) : Set l where
     proj₁ : i
     proj₂ : B proj₁
 open Σ-Size public
+infixr 4 _,_ -- 4 is the same as for Σ in the standard library
 
 ∃-Size : ∀ {l : Level} {A : SizeUniv} → (A → Set l) → Set l
 ∃-Size = Σ-Size _

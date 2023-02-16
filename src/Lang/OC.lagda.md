@@ -19,7 +19,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; Size<_; ↑_)
-open import Translation.Translation using (VarLang; Domain; Artifactˡ)
+open import Definitions using (Domain; VarLang; Artifactˡ)
 open import Lang.Annotation.Name using (Option)
 ```
 

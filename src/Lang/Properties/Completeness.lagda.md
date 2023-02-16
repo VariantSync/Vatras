@@ -23,8 +23,8 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Data.List.Relation.Unary.All          using (All)
 open import Util.Existence                        using (∃-Size; ∃-syntax-with-type)
 
-open import SemanticDomain          using (Variant)
-open import Translation.Translation using (Domain; VarLang; ConfLang; Semantics)
+open import Definitions    using (Domain; VarLang; ConfLang; Semantics)
+open import SemanticDomain using (Variant)
 
 ```
 

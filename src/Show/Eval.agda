@@ -9,7 +9,7 @@ open import Size using (Size)
 open import Function using (id)
 
 open import SemanticDomain
-open import Translation.Translation using (Domain; VarLang; ConfLang; Semantics)
+open import Definitions using (Domain; VarLang; ConfLang; Semantics)
 
 open import Show.Lines
 open import Util.Named

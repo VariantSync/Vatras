@@ -29,10 +29,10 @@ open import Lang.BCC
   renaming (Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
+open import Definitions using (ConfLang)
 open import SemanticDomain using (show-variant)
-
 open import Translation.CCC-to-BCC  using (CCC→BCC)
-open import Translation.Translation using (ConfLang; translate; expr; conf; fnoc)
+open import Translation.Translation using (translate; expr; conf; fnoc)
 
 open import Util.ShowHelpers
 

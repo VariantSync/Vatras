@@ -10,6 +10,7 @@ open import Data.List.Relation.Unary.All using (All)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_)
 
+open import Definitions using (Domain; VarLang; ConfLang; Semantics)
 open import Translation.Translation
 
 open import Test.Example using (Example; _called_)
