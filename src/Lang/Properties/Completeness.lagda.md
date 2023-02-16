@@ -25,7 +25,6 @@ open import Util.Existence                        using (∃-Size; ∃-syntax-wi
 
 open import Definitions    using (Domain; VarLang; ConfLang; Semantics)
 open import SemanticDomain using (Variant)
-
 ```
 
 ## Definitions
@@ -66,4 +65,44 @@ This means assuming completeness for a language yields a contradiction.
 Incomplete : LanguageProperty
 Incomplete L C S = ¬ (Complete L C S)
 ```
+
+## Conclusions
+
+If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
+```agda
+open import Relations.Semantic
+
+less-expressive : ∀ {i : Size} {A : Domain} {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
+  →   Complete L₊ C₊ S₊
+  → Incomplete L₋ C₋ S₋
+    --------------------------------------
+  → ¬ (L₋ , S₋ is-as-expressive-as L₊ , S₊)
+{-
+Proof idea:
+Let V be an arbitrary set of variants.
+Since L₊ is complete, there exists an expression e₊ ∈ L₊ that describes V.
+By assumption, L₋ is as expressive as L₊.
+Thus, there exists an expression e₋ ∈ L₋ that also describes V.
+Since V was picked arbitrarily, L₋ can encode any set of variants.
+Thus, L₋ is complete.
+Yet, we already know that L₋ is incomplete.
+Contradiction ∎
+-}
+less-expressive L₊-comp L₋-incomp L₋-as-expressive-as-L₊ = {!!}
+```
+
+Hence, there cannot be a variant-preserving translation `L₊ → L₋`.
+```agda
+open import Translation.Translation --using (Translation; _is-variant-preserving)
+
+-- untranslateable : ∀ {i : Size} {A : Domain} {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
+--   → Complete L₊ C₊ S₊
+--   → Incomplete L₋ C₋ S₋
+--   → (t : Translation L₊ L₋ C₊ C₋)
+--   → (∀ (i : Size) (e : L₊ i A) → sem₁ t e ≡ S₊ e)
+-- --  → sem₂ t ≡ S₋
+--   → ¬ (t is-variant-preserving)
+-- untranslateable = {!!}
+```
+
 
