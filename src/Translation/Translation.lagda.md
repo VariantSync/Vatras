@@ -30,7 +30,6 @@ open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂; ∃-syntax-wi
 
 open import Definitions
 open import Relations.Semantic
-open import SemanticDomain using (Variant)
 open import Axioms.Extensionality using (_embeds-via_)
 ```
 

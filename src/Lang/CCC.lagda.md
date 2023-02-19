@@ -39,7 +39,7 @@ open Eq
 
 -- Imports of own modules
 open import Lang.Annotation.Name using (Dimension)
-open import Definitions using (Domain; VarLang; ConfLang; Semantics; Artifactˡ)
+open import Definitions using (Domain; VarLang; ConfLang; Variant; Artifactᵥ; Semantics; Artifactˡ)
 open import Relations.Semantic using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
 ```
 
@@ -80,9 +80,6 @@ Semantics for choice calculus can be defined in different ways.
 In his phd thesis, Eric defined the semantics to be the set of all variants described by the expression.
 So the semantic domain was a set of choice calculus expressions without any choices.
 We can encode a choice calculus expression without choices at the type level:
-```agda
-open import SemanticDomain using (Variant; Artifactᵥ)
-```
 
 An equivalent definition of semantics produces a configuration function `Config → Variant` that generates variants from configurations.
 This definition separates the concerns of (1) generating a variant, and (2) enumerating all possible variants.

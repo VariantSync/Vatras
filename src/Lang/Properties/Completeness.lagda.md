@@ -28,8 +28,7 @@ open import Data.List.Relation.Unary.Any          using (Any)
                                                   renaming (map to mapAny)
 open import Util.Existence                        using (∃-Size; ∃-syntax-with-type; _,_)
 
-open import Definitions    using (Domain; VarLang; ConfLang; Semantics)
-open import SemanticDomain using (Variant)
+open import Definitions    using (Domain; VarLang; ConfLang; Variant; Semantics)
 
 open import Relations.Semantic
 ```

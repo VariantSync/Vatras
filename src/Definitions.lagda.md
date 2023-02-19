@@ -7,9 +7,18 @@ module Definitions where
 # Definitions of Central Abstractions for Variability Languages
 
 ```agda
-open import Data.List using (List)
+open import Data.Bool using (Bool)
+open import Data.List using (List; []; _∷_; map)
+open import Data.List.Properties renaming (≡-dec to ≡-dec-l)
+open import Data.String using (String; _++_; intersperse)
+
+open import Function using (_∘_)
 open import Size using (Size; Size<_)
-open import SemanticDomain using (Variant)
+
+open import Relation.Binary.Definitions using (DecidableEquality)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
+open import Relation.Nullary.Decidable using (Dec; yes; no; isYes)
 ```
 
 ## Languages
@@ -34,14 +43,67 @@ ConfLang = Set
 
 ## Semantics
 
-The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
+The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant.
+
+We model variants as a generic tree structure. To this end, we assume that the domain is not more complex than a tree, which is reasonable since most languages are trees:
+```agda
+
+data Variant (A : Set) : Set where
+  Artifactᵥ : A → List (Variant A) → Variant A
+```
+
+Having variants defined, we can now finally formulate the semantics of a variability language:
 ```agda
 Semantics : VarLang → ConfLang → Set₁
 Semantics L C = ∀ {i : Size} {A : Domain} → L i A → C → Variant A
 ```
 
+## Assumptions on Variants
+
+```agda
+
+```
+
+## Equality of Variants
+
+We did not equip variants with bounds yet so we just assume the following functions to terminate.
+```agda
+root-equality : ∀ {A : Set} {a b : A} {as bs : List (Variant A)}
+   → Artifactᵥ a as ≡ Artifactᵥ b bs
+     ------------------------------
+   → a ≡ b
+root-equality refl = refl
+
+subtree-equality : ∀ {A : Set} {a b : A} {as bs : List (Variant A)}
+   → Artifactᵥ a as ≡ Artifactᵥ b bs
+     ------------------------------
+   → as ≡ bs
+subtree-equality refl = refl
+
+{-# TERMINATING #-}
+≡-dec : ∀ {A : Set} → DecidableEquality A → DecidableEquality (Variant A)
+≡-dec ≡-dec-A (Artifactᵥ a as) (Artifactᵥ b bs) with ≡-dec-A a b | ≡-dec-l (≡-dec ≡-dec-A) as bs
+... | yes a≡b | yes as≡bs = yes (Eq.cong₂ Artifactᵥ a≡b as≡bs)
+... | yes a≡b | no ¬as≡bs = no (¬as≡bs ∘ subtree-equality)
+... | no ¬a≡b | _         = no (¬a≡b   ∘ root-equality)
+
+equals : ∀ {A : Set} → DecidableEquality A → Variant A → Variant A → Bool
+equals ≡-dec-A V W = isYes (≡-dec ≡-dec-A V W)
+```
+
 ## Helper Functions and Theorems
 
+### Smart Constructors
+
+```agda
+leaf : ∀ {A : Set} → A → Variant A
+leaf a = Artifactᵥ a []
+
+leaves : ∀ {A : Set} → List A → List (Variant A)
+leaves as = map leaf as
+```
+
+### Common Elements
 Most languages feature Artifacts as arbitrary elements of the domain language.
 The constructor usually takes an element of the domain and a list of child expressions.
 ```agda
@@ -58,7 +120,8 @@ flip-VarLang : VarLang → Domain → Bounded
 flip-VarLang L A i = L i A
 ```
 
-More helpers:
+### Helpers for dealing with sizes
+
 ```agda
 open import Data.List.NonEmpty using (List⁺)
 open import Size using (↑_)
@@ -85,4 +148,13 @@ sequence-sized-artifact {A} {L} w Artifact a cs =
                {A}
                a
                (i<↑i-list (flip-VarLang L A) max es)
+```
+
+### Show
+
+```agda
+{-# TERMINATING #-}
+show-variant : ∀ {A : Set} → (A → String) → Variant A → String
+show-variant s (Artifactᵥ a []) = s a
+show-variant s (Artifactᵥ a es@(_ ∷ _)) = s a ++ "-<" ++ (intersperse ", " (map (show-variant s) es)) ++ ">-"
 ```

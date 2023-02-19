@@ -38,9 +38,8 @@ open Eq.≡-Reasoning
 -- own modules
 open import Axioms.Extensionality using (extensionality)
 open import Lang.Annotation.Name using (Dimension)
-open import Definitions using (Domain; VarLang; ConfLang; Semantics; Artifactˡ)
+open import Definitions using (Domain; VarLang; ConfLang; Variant; Artifactᵥ; Semantics; Artifactˡ)
 open import Relations.Semantic using (_,_⊢_≈_)
-open import SemanticDomain using (Variant; Artifactᵥ)
 ```
 
 ## Syntax

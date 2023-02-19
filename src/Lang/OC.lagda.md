@@ -20,7 +20,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; Size<_; ↑_)
-open import Definitions using (Domain; VarLang; Artifactˡ)
+open import Definitions using (Domain; VarLang; Variant; Artifactᵥ; Artifactˡ)
 open import Lang.Annotation.Name using (Option)
 ```
 
@@ -70,7 +70,6 @@ As `Maybe` is not in the semantic domain of our variability language, we cannot 
 
 Note: The following functions could also be implemented solely using lists but `Maybe` makes our intents more explicit and thus more readable (in particular the use of `catMaybes`).
 ```agda
-open import SemanticDomain using (Variant; Artifactᵥ)
 open import Data.Maybe using (Maybe; just; nothing)
 open Data.List using (catMaybes; map)
 open import Function using (flip)
@@ -121,8 +120,8 @@ We prove incompleteness by showing that there exists at least one set of variant
 In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
-variant-0 = SemanticDomain.leaf 0
-variant-1 = SemanticDomain.leaf 1
+variant-0 = Definitions.leaf 0
+variant-1 = Definitions.leaf 1
 
 variants-0-and-1 : List (Variant ℕ)
 variants-0-and-1 = (variant-0 ∷ variant-1 ∷ [])

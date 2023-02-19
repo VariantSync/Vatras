@@ -60,8 +60,7 @@ open import Lang.BCC
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import SemanticDomain using (Variant; Artifactᵥ)
-open import Definitions using (Domain; VarLang; ConfLang; Semantics; sequence-sized-artifact)
+open import Definitions using (Domain; VarLang; ConfLang; Variant; Artifactᵥ; Semantics; sequence-sized-artifact)
 open import Relations.Semantic
   -- Relations between variability languages
   using (_,_is-as-expressive-as_,_)
