@@ -230,6 +230,21 @@ completeness-by-expressiveness {L₁} {L₂} {_} {_} {S₁} {S₂} encode-in-L�
       , subst-vs-contains-all-e  {L₁ = L₁} {L₂ = L₂} {S₁ = S₁} {S₂ = S₂} vs e₁ e₂ e₂-describes-what-e₁-describes vs-contains-e₁
 ```
 
+Conversely, we can conclude that two languages must be equally expressive when they are both complete.
+```agda
+-- expressiveness-by-completeness : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂}
+--   → Complete L₁ C₁ S₁
+--   → Complete L₂ C₂ S₂
+--     -----------------------------------
+--   → L₂ , S₂ is-as-expressive-as L₁ , S₁
+-- expressiveness-by-completeness encode-in-L₁ encode-in-L₂ = λ e₁ →
+--   let vs = 
+--       e₂ = encode-in-L₂ vs
+--     {!!}
+--   , {!!}
+--   , {!!}
+```
+
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
 
 **Proof sketch:**
