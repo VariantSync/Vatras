@@ -14,6 +14,8 @@ open Eq using (_≡_; refl)
 data Variant (A : Set) : Set where
   Artifactᵥ : A → List (Variant A) → Variant A
 
+-- smart constructors
+
 leaf : ∀ {A : Set} → A → Variant A
 leaf a = Artifactᵥ a []
 
