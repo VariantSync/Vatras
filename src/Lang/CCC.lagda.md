@@ -235,6 +235,40 @@ open Data.List using (concatMap)
 dims : ∀ {i : Size} {A : Set} → CCC i A → List Dimension
 dims (Artifact _ es) = concatMap dims es
 dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
+
+open Definitions using (SizedVariant; ObjectLanguage)
+open Function using (_∘_)
+open import Util.SizeJuggle using (Bounded)
+
+CCC-is-bounded : ∀ Domain → Bounded
+CCC-is-bounded = Definitions.flip-VarLang CCC
+
+data CCCLabel (A : Domain) : Set where
+  ArtifactLabel : A → CCCLabel A
+  ChoiceLabel   : Dimension → CCCLabel A
+
+embed-ccc : ∀ {A : Domain} {i : Size} → CCC i A → SizedVariant i (CCCLabel A)
+embed-ccc (Artifact a es) =
+  Artifactᵥ (ArtifactLabel a) (mapl embed-ccc es)
+embed-ccc (D ⟨ es ⟩) =
+  Artifactᵥ (ChoiceLabel D) (mapl embed-ccc (toList es))
+
+restore-ccc : ∀ {A : Domain} {i : Size} → SizedVariant i (CCCLabel A) → CCC i A
+restore-ccc (Artifactᵥ (ArtifactLabel a) es) = Artifact a (mapl restore-ccc es)
+restore-ccc (Artifactᵥ (ChoiceLabel D) es) =
+  let es' = mapl restore-ccc es
+   in -- There is no way to prove that es is non-empty. We lost that information in embed. We might have to store that information in the label somehow. But then the label references the structure which we wanted to avoid. Is that a problem?
+      -- The general problem here is that when splitting structure from content, we lose information on constraints on children (e.g. that it was exactly one, or exactly two, or that (as in this case) was at least one).
+      -- For ASTs this is not unusual though! An AST label may dictate the node's _type_ and with it the legal number of children.
+      D ⟨ {!!} ⟩
+
+CCC-is-ObjectLang : ∀ {A : Domain} → ObjectLanguage (CCC-is-bounded A) (CCCLabel A)
+CCC-is-ObjectLang = record
+  {
+    embed = embed-ccc
+  ; restore = restore-ccc
+  ; iso-l = {!!}
+  ; iso-r = {!!} }
 ```
 
 ## Show

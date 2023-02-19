@@ -12,12 +12,12 @@ open import Data.List using (List; []; _∷_; map)
 open import Data.List.Properties renaming (≡-dec to ≡-dec-l)
 open import Data.String using (String; _++_; intersperse)
 
-open import Function using (_∘_)
-open import Size using (Size; Size<_)
+open import Function using (_∘_; id)
+open import Size using (Size; Size<_; ∞)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Decidable using (Dec; yes; no; isYes)
 ```
 
@@ -41,28 +41,69 @@ ConfLang : Set₁
 ConfLang = Set
 ```
 
+## Common Elements
+Most languages feature Artifacts as arbitrary elements of the domain language.
+The constructor usually takes an element of the domain and a list of child expressions.
+```agda
+Artifactˡ : VarLang → Set₁
+Artifactˡ L = ∀ {i : Size} {j : Size< i} {A : Domain} → A → List (L j A) → L i A
+```
+
 ## Semantics
 
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant.
 
 We model variants as a generic tree structure. To this end, we assume that the domain is not more complex than a tree, which is reasonable since most languages are trees:
 ```agda
+data SizedVariant : VarLang where
+  Artifactᵥ : Artifactˡ SizedVariant
 
-data Variant (A : Set) : Set where
-  Artifactᵥ : A → List (Variant A) → Variant A
+Variant : Domain → Set
+Variant = SizedVariant ∞
 ```
 
 Having variants defined, we can now finally formulate the semantics of a variability language:
 ```agda
+open import Util.Existence using (∃-Size)
+
 Semantics : VarLang → ConfLang → Set₁
 Semantics L C = ∀ {i : Size} {A : Domain} → L i A → C → Variant A
 ```
 
 ## Assumptions on Variants
 
-```agda
+The result of a configuration process is a variant and with that, an instance of our `Variant` data type.
+The `Variant` type models the tree structure in the domain.
+Yet, it is auxiliary and does not denote meaning in within the domain by itself.
+We assume though that the structure imposed by the `Variant` exists in the domain and thus is meaningful.
+Thus, variants themselves have semantics which embeds them fully into the domain.
+In particular, for a variant to really caputure a structure within the domain (and nothing more) it must be isomorphic to the domain.
+This means that we can extract the hierarchical structure within an element of our domain to model it explicitly in our `Variant` type; and that `Variant` all hierarchical information necessary to restore the domain element.
 
+To extract the domains hierarchical structure means to divide it into two parts:
+- its tree
+- and the tree node contents.
+With `Variant`, we have a data type that models the `tree` but we miss a model for node contents so far, for which we introduce the `Label` data type:
+```agda
+Label : Set₁
+Label = Set
 ```
+A label is a datatype parameterized in the domain to capture the contents of a particular node in the domains tree hierarchy.
+
+We can now formalize our assumption that it must be legal to split the domain into its hierarchy and contents:
+```agda
+-- Todo: Reuse generic isomorphism definition
+open import Util.SizeJuggle
+
+record ObjectLanguage (A : Bounded) (L : Label) : Set where
+  field
+    embed   : ∀ {i : Size} → A i → SizedVariant i L
+    restore : ∀ {i : Size} → SizedVariant i L → A i
+    iso-l   : embed ∘ restore ≗ id
+    iso-r   : restore ∘ embed ≗ id
+```
+
+## Variant is a Functor
 
 ## Equality of Variants
 
@@ -80,15 +121,15 @@ subtree-equality : ∀ {A : Set} {a b : A} {as bs : List (Variant A)}
    → as ≡ bs
 subtree-equality refl = refl
 
-{-# TERMINATING #-}
-≡-dec : ∀ {A : Set} → DecidableEquality A → DecidableEquality (Variant A)
-≡-dec ≡-dec-A (Artifactᵥ a as) (Artifactᵥ b bs) with ≡-dec-A a b | ≡-dec-l (≡-dec ≡-dec-A) as bs
-... | yes a≡b | yes as≡bs = yes (Eq.cong₂ Artifactᵥ a≡b as≡bs)
-... | yes a≡b | no ¬as≡bs = no (¬as≡bs ∘ subtree-equality)
-... | no ¬a≡b | _         = no (¬a≡b   ∘ root-equality)
+-- {-# TERMINATING #-}
+-- ≡-dec : ∀ {A : Set} → DecidableEquality A → DecidableEquality (Variant A)
+-- ≡-dec ≡-dec-A (Artifactᵥ a as) (Artifactᵥ b bs) with ≡-dec-A a b | ≡-dec-l (≡-dec ≡-dec-A) as bs
+-- ... | yes a≡b | yes as≡bs = yes (Eq.cong₂ Artifactᵥ a≡b as≡bs)
+-- ... | yes a≡b | no ¬as≡bs = no (¬as≡bs ∘ subtree-equality)
+-- ... | no ¬a≡b | _         = no (¬a≡b   ∘ root-equality)
 
-equals : ∀ {A : Set} → DecidableEquality A → Variant A → Variant A → Bool
-equals ≡-dec-A V W = isYes (≡-dec ≡-dec-A V W)
+-- equals : ∀ {A : Set} → DecidableEquality A → Variant A → Variant A → Bool
+-- equals ≡-dec-A V W = isYes (≡-dec ≡-dec-A V W)
 ```
 
 ## Helper Functions and Theorems
@@ -103,18 +144,11 @@ leaves : ∀ {A : Set} → List A → List (Variant A)
 leaves as = map leaf as
 ```
 
-### Common Elements
-Most languages feature Artifacts as arbitrary elements of the domain language.
-The constructor usually takes an element of the domain and a list of child expressions.
-```agda
-Artifactˡ : VarLang → Set₁
-Artifactˡ L = ∀ {i : Size} {j : Size< i} {A : Domain} → A → List (L j A) → L i A
-```
+
 
 Sometimes, it is convenient to invert the order of arguments for variability languages. So instead of speaking of a language `L i A` of size `i` over a domain `A`, we sometimes would like two write `L A i`.
 When writing `L A i` we can observer that `L A` is a `Bounded` type which means it is a data type parameterized in only a size:
 ```agda
-open import Util.SizeJuggle
 
 flip-VarLang : VarLang → Domain → Bounded
 flip-VarLang L A i = L i A
