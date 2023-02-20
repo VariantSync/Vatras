@@ -204,6 +204,12 @@ _,_and_,_⊢_≚_      {i} {j} {C₁} {C₂} {A} L₁ s₁ L₂ s₂ e₁ e₂ =
   × (_,_and_,_⊢_⊆_ {j} {i} {C₂} {C₁} {A} L₂ s₂ L₁ s₁ e₂ e₁)
 ```
 
+Properties:
+```agda
+-- todo show reflexivity, symmetry, and transitivity of the relations above
+```
+
+
 ### Relating Languages
 
 We say that a language `L₁` is as expressive as another language `L₂` **iff** for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same set of variants. This means that there exists a translation from `L₂` to `L₁`, and thus `L₁` can model `L₂`:
@@ -233,3 +239,18 @@ L₁ , S₁ is-variant-equivalent-to L₂ , S₂ =
     (L₁ , S₁ is-as-expressive-as L₂ , S₂)
   × (L₂ , S₂ is-as-expressive-as L₁ , S₁)
 ```
+
+Expressiveness is transitive:
+```agda
+trans-expressiveness : ∀ {L₁ L₂ L₃ : VarLang} {C₁ C₂ C₃ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {S₃ : Semantics L₃ C₃}
+  → L₁ , S₁ is-as-expressive-as L₂ , S₂
+  → L₂ , S₂ is-as-expressive-as L₃ , S₃
+    -----------------------------------
+  → L₁ , S₁ is-as-expressive-as L₃ , S₃
+trans-expressiveness L₂→L₁ L₃→L₂ e₃ =
+  let i₂ , e₂ , e₃≚e₂ = L₃→L₂ e₃
+      i₁ , e₁ , e₂≚e₁ = L₂→L₁ e₂
+   in
+      i₁ , e₁ , {!!} -- (≚-trans for ≚ of two langs)
+```
+
