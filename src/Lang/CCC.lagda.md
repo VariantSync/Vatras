@@ -157,8 +157,8 @@ D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     ---------------
   → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e' {i} {A} {e} {D} =
-  ≈→≚ {↑ i} {i}
-      {CCC} {Configuration} {⟦_⟧} {A}
+  ≈→≚ {↑ i} {i} {A}
+      {CCC} {Configuration} {⟦_⟧}
       {D ⟨ e ∷ [] ⟩} {e}
       (D⟨e⟩≈e {i} {A} {e} {D})
 ```
