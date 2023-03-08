@@ -4,6 +4,7 @@
 
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module
@@ -19,7 +20,7 @@ module Lang.BCC where
 open import Data.Bool
   using (Bool; true; false; if_then_else_)
 open import Data.List
-  using (List; []; _∷_; lookup)
+  using (List; []; _∷_; lookup; zipWith)
   renaming (map to mapl)
 open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
@@ -77,6 +78,11 @@ right = false
 Configuration : ConfLang
 Configuration = Dimension → Tag
 
+{-
+This is the semantics for choice calculus as defined in
+"Projectional Editing of Variational Software, Walkingshaw and Ostermann, GPCE'14"
+with the minor simplification of using booleans instead of selectors for dimensions.
+-}
 ⟦_⟧ : Semantics BCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ l , r ⟩ ⟧ c = ⟦ if (c D) then l else r ⟧ c
@@ -84,37 +90,75 @@ Configuration = Dimension → Tag
 
 ## Properties
 
-Some transformation rules:
+Some transformation rules from the GPCE'14 paper:
 ```agda
 open import Util.AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
 
-cc-idemp : ∀ {i : Size} {A : Set} {D : Dimension} {e : BCC i A}
-    -----------------------------
-  → BCC , ⟦_⟧ ⊢ D ⟨ e , e ⟩ ≈ e
-cc-idemp {i} {A} {D} {e} = extensionality (λ c →
-  ⟦ D ⟨ e , e ⟩ ⟧ c             ≡⟨⟩
-  ⟦ if (c D) then e else e ⟧ c  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧ c) (if-idemp (c D)) ⟩
-  ⟦ e ⟧ c                       ∎)
-
--- Sharing of equal prefixes in sub-expressions
--- Note: This is hard to generalize to Artifact's with multiple children because
---       we cannot put these children below the choice directly. Instead we would have
---       to introduce empty artifacts that do not represent expression in the object language but
---       rather containers in the meta-language. Maybe it would make sense to generalize choice
---       calculus to have lists of lists of children in choices instead of exactly one subtree per alternative.
-cc-prefix-sharing : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {x y : BCC i A}
+-- This is a special case of ast-factoring where artifacts have only one child.
+-- As soon as 'ast-factoring' is proven, we can reformulate the proof for this theorem
+-- to just apply ast-factoring.
+ast-factoring-1 : ∀ {i : Size} {A : Domain} {D : Dimension} {a : A} {x y : BCC i A}
+    ---------------------------------------------------------------------------------
   → BCC , ⟦_⟧ ⊢ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ≈ Artifact a [ D ⟨ x , y ⟩ ]
-cc-prefix-sharing {_} {_} {D} {a} {x} {y} = extensionality (λ c →
+ast-factoring-1 {_} {_} {D} {a} {x} {y} = extensionality (λ c →
   begin
     ⟦ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ⟧ c
   ≡⟨⟩
     ⟦ if (c D) then (Artifact a [ x ]) else (Artifact a [ y ] ) ⟧ c
-  ≡⟨ Eq.cong (λ eq → ⟦ eq ⟧ c) (if-cong (c D) (λ {v → Artifact a [ v ]}) ) ⟩
+  ≡⟨ Eq.cong (flip ⟦_⟧ c) (if-cong (c D) (λ {v → Artifact a [ v ]}) ) ⟩
     ⟦ Artifact a [ if (c D) then x else y ] ⟧ c
   ≡⟨⟩
     ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
   ∎)
+
+ast-factoring : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {xs ys : List (BCC i A)}
+    -------------------------------------------------------------------------------------
+  → BCC , ⟦_⟧ ⊢ D ⟨ Artifact a xs , Artifact a ys ⟩ ≈ Artifact a (zipWith (D ⟨_,_⟩) xs ys)
+ast-factoring = {!!}
+
+choice-idempotency : ∀ {i : Size} {A : Domain} {D : Dimension} {e : BCC i A}
+    ---------------------------
+  → BCC , ⟦_⟧ ⊢ D ⟨ e , e ⟩ ≈ e
+choice-idempotency {i} {A} {D} {e} = extensionality (λ c →
+  ⟦ D ⟨ e , e ⟩ ⟧ c             ≡⟨⟩
+  ⟦ if (c D) then e else e ⟧ c  ≡⟨ Eq.cong (flip ⟦_⟧ c) (if-idemp (c D)) ⟩
+  ⟦ e ⟧ c                       ∎)
+
+{-
+TODO: Formulate choice-domination.
+We cannot do this currently because we only cover total configurations so far.
+We have to implement choice-elimination as an extra function first.
+-}
+
+{-
+TODO: Formulate AST-congruence.
+This is tricky because it ranges over any sub-expression below an artifact (i.e., an arbitrary element in that list).
+Maybe using a zipper on lists (i.e., a list where we can focus any element except for just the head) is what we want here.
+Then we could say:
+∀ expressions 'e' and 'e′',
+  prefix 'p', and tail 't'
+  with 'BCC , ⟦_⟧ ⊢ e ≈ e′'
+  -----------------------------------------------------------------------------------
+  'BCC , ⟦_⟧ ⊢ Artifact a (toList (p -∷ e ∷- t)) ≈ Artifact a (toList (p -∷ e′ ∷- t))'
+where toList turns a zipper to a list and '-∷' and '∷-' denote the focus location behind the prefix and before the tail in the zipper.
+I expect proving this theorem to be quite boilerplaty but easy in theory:
+To show that both artifacts are semantically equivalent, we have to show that all the child nodes remain semantically equal.
+We know this by identity for all children in p and t.
+for e and e′, we know it per assumption.
+-}
+
+choice-l-congruence : ∀ {i j k : Size} {A : Domain} {D : Dimension} {eₗ eₗ′ eᵣ : BCC i A}
+  → BCC , ⟦_⟧ ⊢ eₗ ≈ eₗ′
+    ---------------------------------------
+  → BCC , ⟦_⟧ ⊢ D ⟨ eₗ , eᵣ ⟩ ≈ D ⟨ eₗ′ , eᵣ ⟩
+choice-l-congruence eₗ≡eₗ′ = {!!}
+
+choice-r-congruence : ∀ {i j k : Size} {A : Domain} {D : Dimension} {eₗ eᵣ eᵣ′ : BCC i A}
+  → BCC , ⟦_⟧ ⊢ eᵣ ≈ eᵣ′
+    ---------------------------------------
+  → BCC , ⟦_⟧ ⊢ D ⟨ eₗ , eᵣ ⟩ ≈ D ⟨ eₗ , eᵣ′ ⟩
+choice-r-congruence eₗ≡eₗ′ = {!!}
 ```
 
 ## Semantic Preserving Transformations
