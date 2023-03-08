@@ -20,11 +20,8 @@ module Lang.BCC where
 open import Data.Bool
   using (Bool; true; false; if_then_else_)
 open import Data.List
-  using (List; []; _∷_; lookup; zipWith)
+  using (List; []; _∷_; lookup)
   renaming (map to mapl)
-open import Data.List.NonEmpty
-  using (List⁺; _∷_; toList)
-  renaming (map to mapl⁺)
 open import Function
   using (flip; id)
 open import Size
@@ -94,6 +91,8 @@ Some transformation rules from the GPCE'14 paper:
 ```agda
 open import Util.AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
+open import Data.Nat using (ℕ)
+open import Data.Vec using (Vec; toList; zipWith)
 
 -- This is a special case of ast-factoring where artifacts have only one child.
 -- As soon as 'ast-factoring' is proven, we can reformulate the proof for this theorem
@@ -112,9 +111,12 @@ ast-factoring-1 {_} {_} {D} {a} {x} {y} = extensionality (λ c →
     ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
   ∎)
 
-ast-factoring : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {xs ys : List (BCC i A)}
+ast-factoring : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {n : ℕ}
+  → (xs ys : Vec (BCC i A) n)
     -------------------------------------------------------------------------------------
-  → BCC , ⟦_⟧ ⊢ D ⟨ Artifact a xs , Artifact a ys ⟩ ≈ Artifact a (zipWith (D ⟨_,_⟩) xs ys)
+  → BCC , ⟦_⟧ ⊢
+        D ⟨ Artifact a (toList xs) , Artifact a (toList ys) ⟩
+      ≈ Artifact a (toList (zipWith (D ⟨_,_⟩) xs ys))
 ast-factoring = {!!}
 
 choice-idempotency : ∀ {i : Size} {A : Domain} {D : Dimension} {e : BCC i A}
