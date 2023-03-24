@@ -15,12 +15,12 @@ module Translation.OC-to-BCC where
 ## Imports
 
 ```agda
-open import Data.String using (String)
-open import Data.Maybe using (Maybe; just; nothing) renaming (map to mapm)
-open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.List using (List; _∷_; []; reverse; _++_; catMaybes) renaming (map to mapl)
+open import Data.List using (List; []; length)
 open import Data.List.NonEmpty using (List⁺; _∷_)
-open import Data.Product using (_×_; _,_)
+open import Data.Nat using (ℕ; suc; zero; _≤_; z≤n; s≤s)
+open import Data.Nat.Properties using (≤-refl; <⇒≤)
+open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
+open import Data.Vec using ([]; _∷_; _∷ʳ_; toList)
 open import Size using (Size; Size<_; ↑_; ∞; _⊔ˢ_)
 open import Function using (id)
 
@@ -40,11 +40,14 @@ open import Lang.BCC
            )
 open import Lang.Annotation.Name using (Option; Dimension; _==_)
 open import Definitions using (Domain; sequence-sized-artifact)
-open import Translation.Translation using (Translation; TranslationResult)
-open import Util.Existence using (∃-Size; _,_)
+open import Translation.Translation using (Translation; TranslationResult; _⊆-via_; _⊇-via_; _≚-via_; _is-variant-preserving; translation-proves-variant-preservation)
+open import Relations.Semantic using (_,_is-as-expressive-as_,_)
+
+open import Util.AuxProofs using (m≤n⇒m<1+n)
+open import Util.Existence using (∃-Size; ∃-syntax-with-type; _,_)
+
 open import Util.SizeJuggle using (i<↑i; weaken-to-smaller-↑max; sym-smaller-↑max)
 
-open import Data.ReversedList using ([]; _∷_)
 open import Data.ConveyorBelt
 ```
 
@@ -68,18 +71,30 @@ Said artifact will then be the parent of the translated children again.
 
 The zipper stores the children of the currently translated subtree in a ConveyorBelt.
 This ConveyorBelt keeps track of which children have already been translated and which have not.
+The parameter numChildren is the number of children of the current subtree.
+The parameter numChildrenRight is the number of children yet to translate.
+These children are to the right of the already translated children.
 -}
-record TZipper (i : Size) (A : Domain) : Set where
+record TZipper
+  (i : Size)
+  (A : Domain)
+  (numChildren numChildrenRight : ℕ)
+  (numChildren≤numChildrenRight : numChildrenRight ≤ numChildren) : Set where
   constructor _◀_ --\T
   field
     parent   : A
-    siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A))
+    siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A)) numChildren numChildrenRight numChildren≤numChildrenRight
 
-{-# TERMINATING #-}
-OCtoBCC' : ∀ {i : Size} {A : Domain} → TZipper i A → ∃-Size[ j ] (BCC j A)
-OCtoBCC' {A = A} (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
-   let i , l = OCtoBCC' (a ◀ (ls ↢ e ∷ rs))
-       j , r = OCtoBCC' (a ◀ (ls ↢     rs))
+OCtoBCC' :
+  ∀ {i : Size}
+    {A : Domain}
+  → (load left : ℕ)
+  → (left≤load : left ≤ load)
+  → TZipper i A load left left≤load
+  → ∃-Size[ j ] (BCC j A)
+OCtoBCC' {A = A} (suc load-1) (suc left-1) (s≤s load-1≤left-1) (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
+   let i , l = OCtoBCC' (suc load-1) (suc left-1) (s≤s load-1≤left-1) (a ◀ (ls ↢ e ∷ rs))
+       j , r = OCtoBCC'      load-1       left-1       load-1≤left-1  (a ◀ (ls ↢     rs))
 
        -- Unfortunately, we have to help the type-checker a lot with the sizes.
        -- In other proofs this just worked out of the box but here we have to use lots of safe type casting to turn the sizes into the right types.
@@ -100,18 +115,26 @@ OCtoBCC' {A = A} (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
        r-sized = sym-smaller-↑max (BCC-is-bounded A) j i (weaken-to-smaller-↑max BCC-is-weakenable j i r)
     in
        choice-size , _⟨_,_⟩ {choice-size} {alternatives-size} O l-sized r-sized
-OCtoBCC' (a ◀ (ls ↢ Artifactₒ b es ∷ rs)) =
-  let processedArtifact = OCtoBCC' (b ◀ putOnBelt es) in
-  OCtoBCC' (a ◀ (ls ∷ processedArtifact ↢ rs))
-OCtoBCC' {i = i} (a ◀ (    [] ↢ [])) =
+OCtoBCC' (suc load-1) (suc left-1) (s≤s left-1≤load-1) (a ◀ belt@(ls ↢ Artifactₒ b es ∷ rs)) =
+  let work = length es
+      processedArtifact = OCtoBCC' work work ≤-refl (b ◀ putOnBelt es)
+      left-1≤load : left-1 ≤ (suc load-1)
+      left-1≤load = <⇒≤ (s≤s left-1≤load-1)
+   in OCtoBCC'
+        (suc load-1)
+        left-1
+        left-1≤load
+        --(a ◀ (ls ∷ʳ processedArtifact ↢ rs))
+        (a ◀ (step (λ _ → processedArtifact) belt))
+OCtoBCC' {i = i} zero zero z≤n (a ◀ (    [] ↢ [])) =
   ↑ i , Artifact₂ a []
-OCtoBCC'         (a ◀ (ls ∷ l ↢ [])) =
-  let asList⁺ = Data.ReversedList.toList⁺ (ls ∷ l) in
-  sequence-sized-artifact BCC-is-weakenable Artifact₂ a asList⁺
+OCtoBCC'         load zero z≤n (a ◀ (l ∷ ls ↢ [])) =
+  sequence-sized-artifact BCC-is-weakenable Artifact₂ a (l ∷ toList ls)
 
--- Todo: remove temp ∞
 OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
-OCtoBCC (Root a es) = OCtoBCC' (a ◀ putOnBelt es)
+OCtoBCC (Root a es) =
+  let work = length es
+   in OCtoBCC' work work ≤-refl (a ◀ putOnBelt es)
 
 translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
 translate oc =
@@ -130,4 +153,5 @@ OC→BCC = record
   ; translate = translate
   }
 ```
+
 
