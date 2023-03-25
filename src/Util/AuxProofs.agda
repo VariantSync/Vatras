@@ -3,8 +3,9 @@ module Util.AuxProofs where
 open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.Nat using (ℕ; _⊓_; zero; suc; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Fin.Base using (Fin; fromℕ<)
+open import Data.Vec using (Vec; []; cast)
 
-open import Data.Nat.Properties using (m⊓n≤m; +-comm; +-∸-comm)
+open import Data.Nat.Properties using (m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
@@ -68,3 +69,12 @@ if-cong : ∀ {A B : Set} {a b : A}
   → (if c then P a else P b) ≡ P (if c then a else b)
 if-cong false _ = refl
 if-cong true  _ = refl
+
+vec0 : ∀ {A : Set} → Vec A zero
+vec0 = []
+
+{-|
+Zero vector but cast to have size n∸n.
+-}
+vec-n∸n : ∀ {A : Set} → (n : ℕ) → Vec A (n ∸ n)
+vec-n∸n l = cast (Eq.sym (n∸n≡0 l)) vec0

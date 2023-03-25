@@ -4,7 +4,7 @@ module Util.Existence where
 
 open import Agda.Primitive using (Level; _⊔_)
 open import Data.Product using (Σ)
-open import Size using (SizeUniv)
+open import Size using (Size; SizeUniv)
 
 -- Existence of sizes
 
@@ -27,3 +27,16 @@ syntax ∃-Size (λ i → B) = ∃-Size[ i ] B
 ∃-syntax-with-type = Σ
 
 syntax ∃-syntax-with-type A (λ x → B) = ∃[ x ∈ A ] B
+
+-- Properties (Todo: Move to own file to follow agda stdlib)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
+
+-- ,-injectiveʳ :
+--   ∀ {A : Size → Set}
+--     {l : ∃-Size[ i ] (A i)}
+--     {r : ∃-Size[ j ] (A j)}
+--   → l ≡ r
+--     -----------------
+--   → proj₂ l ≡ proj₂ r
+-- ,-injectiveʳ = ?
