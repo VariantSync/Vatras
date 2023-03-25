@@ -20,9 +20,9 @@ open import Data.List using ([])
 open import Data.String using (String)
 open import Size using (Size; Size<_)
 
+open import Definitions using (VarLang; Domain)
 open import Lang.Annotation.Name using (Variable)
 open import SemanticDomain using (Variant; Artifactᵥ)
-open import Translation.Translation using (VarLang; Domain)
 ```
 
 ## Syntax
