@@ -6,8 +6,9 @@ open import Data.Nat.Properties using (≤-refl; <⇒≤; n∸n≡0)
 open import Data.List using (List; length)
 open import Data.Vec using (Vec; _∷_; []; _∷ʳ_; cast; fromList)
 
-open import Util.AuxProofs using (1+[m-[1+n]]=m-n)
+open import Util.AuxProofs using (1+[m-[1+n]]=m-n; vec-n∸n)
 
+open import Relation.Nullary.Decidable using (Dec; yes; no; True)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
@@ -15,30 +16,18 @@ private
   variable
     ℓ : Level
 
-record ConveyorBelt (A B : Set) (workload workleft : ℕ) (a : workleft ≤ workload) : Set where
-  constructor _↢_ --\l->
+record ConveyorBelt (A B : Set ℓ) (workload workleft : ℕ) (a : workleft ≤ workload) : Set ℓ where
+  constructor _↢_ -- \l->
   field
-     proc   : Vec B (workload ∸ workleft)
-     unproc : Vec A (workleft)
+     processed   : Vec B (workload ∸ workleft)
+     unprocessed : Vec A (workleft)
 infix 4 _↢_
 
 {-|
 Puts the given list on a conveyor belt to process.
 -}
 putOnBelt : ∀ {A B : Set} → (work : List A) → ConveyorBelt A B (length work) (length work) ≤-refl
-putOnBelt {_} {B} ls =
-  let -- Nothing has been processed so far, so everything is left to do.
-      workleft = length ls
-
-      vec0 : Vec B zero
-      vec0 = []
-
-      -- Nothing has been processed so far but we have to convince the
-      -- type checker that zero is the same as workleft ∸ workleft.
-      workDone : Vec B (workleft ∸ workleft)
-      workDone = cast (Eq.sym (n∸n≡0 (length ls))) vec0
-   in
-      workDone ↢ (fromList ls)
+putOnBelt ls = vec-n∸n (length ls) ↢ fromList ls
 
 {-|
 Advance the conveyor belt by one using the given conversion function f.
@@ -65,20 +54,21 @@ stepAll :
     {left≤load : left ≤ load}
   → (f : A → B)
   → ConveyorBelt A B load left left≤load
-    --------------------------------
+    ------------------------------------
   → ConveyorBelt A B load zero z≤n
-stepAll f (ls ↢ []) = ls ↢ []
-stepAll {left≤load = left<load} f c@(ls ↢ (r ∷ rs)) =
-  stepAll f (step {left≤load = left<load} f c)
-
-open import Relation.Nullary.Decidable using (Dec; yes; no; True)
+stepAll f   (ls ↢ [])     = ls ↢ []
+stepAll f c@(ls ↢ r ∷ rs) = stepAll f (step f c)
 
 -- True iff nothing is left to process, false otherwise.
-done : ∀ {A B : Set} {load left : ℕ} {left≤load : left ≤ load}
+done :
+  ∀ {A B : Set}
+    {load left : ℕ}
+    {left≤load : left ≤ load}
   → (belt : ConveyorBelt A B load left left≤load)
+    ---------------------------------------------
   → Dec (left ≡ zero)
-done (processed ↢ []) = yes refl
-done (processed ↢ u ∷ unprocessed) = no λ ()
+done (ls ↢ [])     = yes refl
+done (ls ↢ r ∷ rs) = no λ ()
 
 -- Returns the processed elements of a done belt.
 finalize : ∀ {A B : Set} {load : ℕ}
