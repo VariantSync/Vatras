@@ -32,11 +32,5 @@ syntax ∃-syntax-with-type A (λ x → B) = ∃[ x ∈ A ] B
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
--- ,-injectiveʳ :
---   ∀ {A : Size → Set}
---     {l : ∃-Size[ i ] (A i)}
---     {r : ∃-Size[ j ] (A j)}
---   → l ≡ r
---     -----------------
---   → proj₂ l ≡ proj₂ r
--- ,-injectiveʳ = ?
+,-injectiveʳ : ∀ {A : Set} {i j : Size} {a b : A} → (i , a) ≡ (j , b) → a ≡ b
+,-injectiveʳ refl = refl
