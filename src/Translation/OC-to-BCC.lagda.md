@@ -241,37 +241,28 @@ BCC-is-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC
 ```
 
 ```agda
--- foo : ∀ {i} {A} {j : Size< i} {a : A} {es : List (OC j A)}
---         {c₁ = cₒ} →
---       Artifactᵥ a (catMaybes (map (λ x → ⟦ x ⟧ₒ cₒ) es)) ≡
---       ⟦ proj₂ (zip2bcc (length es) (length es) ≤-refl (a ◀ putOnBelt es)) ⟧₂ cₒ
--- foo = {!!}
-
 open import Data.Vec using (Vec; cast; fromList)
 open Data.Nat using (_∸_)
 open import Data.Product.Properties using ()
 
-bar : ∀ {A : Domain} {i : Size} (a : A) (es : List (OC i A))
- →   zip2bcc (length es) (length es) ≤-refl (a ◀ (vec-n∸n (length es) ↢ fromList es))
-   ≡ zip2bcc (length es) (length es) ≤-refl (a ◀ putOnBelt es)
-bar a es = refl
-
 es-size : ∀ {i : Size} {A : Domain} {L : Definitions.VarLang} (es : List (L i A)) → Size
 es-size {i = i} _ = i
 
-WFOC→BCC-left {i} {A} r@(Root a es) cₒ =
+-- foo : ∀
+    -- zip2bcc l-es l-es ≤-refl (a ◀ (vec-n∸n l-es ↢ head ∷ fromList tail))
+
+WFOC→BCC-left {i} {A} r@(Root a []) cₒ = refl
+WFOC→BCC-left {i} {A} r@(Root a es@(Artifactₒ a' a'-es ∷ tail)) cₒ = {!!}
+WFOC→BCC-left {i} {A} r@(Root a es@(O ❲ head ❳ ∷ tail)) cₒ =
+-- WFOC→BCC-left {i} {A} r@(Root a es@(_ ∷ _)) cₒ =
   let l-es = length es
-      -- i-es = es-size es
 
-      pair : ∃-Size[ j ] (BCC j A)
-      pair = OCtoBCC r
-      j : Size
-      j = proj₁ pair
-      r' : BCC j A
-      r' = proj₂ pair
-
-      --∃-Size[ j' ] (BCC j' A) ≡ ∃-Size[ j ] (BCC j A)
-      lel = bar a es
+      result : ∃-Size[ j ] (BCC j A)
+      result = OCtoBCC r
+      result-size : Size
+      result-size = proj₁ result
+      result-expr : BCC result-size A
+      result-expr = proj₂ result
   in
   begin
     ⟦ r ⟧ cₒ
@@ -280,11 +271,13 @@ WFOC→BCC-left {i} {A} r@(Root a es) cₒ =
   ≡⟨ Eq.cong (Artifactᵥ a) refl ⟩
     Artifactᵥ a (catMaybes (map (λ x → ⟦ x ⟧ₒ cₒ) es))
   ≡⟨ {!!} ⟩
-    --⟦ proj₂ (zip2bcc l-es l-es ≤-refl (a ◀ (vec-n∸n l-es ↢ fromList es))) ⟧₂ cₒ
-  --≡⟨ Eq.cong (λ x → ⟦ x ⟧₂ cₒ) (,-injectiveʳ {BCC } {i = j} {j = j} refl) ⟩
+    -- ⟦ proj₂ (zip2bcc l-es l-es ≤-refl (a ◀ (vec-n∸n l-es ↢ head ∷ fromList tail))) ⟧₂ cₒ
+  -- ≡⟨⟩
+    ⟦ proj₂ (zip2bcc l-es l-es ≤-refl (a ◀ (vec-n∸n l-es ↢ fromList es))) ⟧₂ cₒ
+  ≡⟨ Eq.cong (Function.flip ⟦_⟧₂ cₒ) {result-expr} {result-expr} refl ⟩ -- For some reason, we have to pass at least one implicit argument here to Eq.cong but I have not idea why and it took too much time to figure that out. -- (,-injectiveʳ {BCC j A} {j} {j} refl) ⟩
     ⟦ proj₂ (zip2bcc l-es l-es ≤-refl (a ◀ putOnBelt es)) ⟧₂ cₒ
   ≡⟨⟩
-    ⟦ r' ⟧₂ cₒ
+    ⟦ result-expr ⟧₂ cₒ
   ∎
 ```
 
