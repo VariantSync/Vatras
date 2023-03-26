@@ -16,7 +16,7 @@ module Translation.OC-to-BCC where
 ## Imports
 
 ```agda
-open import Data.List using (List; []; length; map; catMaybes)
+open import Data.List using (List; _∷_; []; length; map; catMaybes)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-refl; <⇒≤)
@@ -101,9 +101,9 @@ zip2bcc :
   → (left≤load : left ≤ load)
   → TZipper i A load left left≤load
   → ∃-Size[ j ] (BCC j A)
-zip2bcc {A = A} (suc load-1) (suc left-1) (s≤s load-1≤left-1) (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
-   let i , l = zip2bcc (suc load-1) (suc left-1) (s≤s load-1≤left-1) (a ◀ (ls ↢ e ∷ rs))
-       j , r = zip2bcc      load-1       left-1       load-1≤left-1  (a ◀ (ls ↢     rs))
+zip2bcc {A = A} (suc load-1) (suc left-1) (s≤s left≤load-1) (a ◀ (ls ↢ O ❲ e ❳ ∷ rs)) =
+   let i , l = zip2bcc (suc load-1) (suc left-1) (s≤s left≤load-1) (a ◀ (ls ↢ e ∷ rs))
+       j , r = zip2bcc      load-1       left-1       left≤load-1  (a ◀ (ls ↢     rs))
 
        max-child-depth = i ⊔ˢ j
        choice-size = ↑ max-child-depth -- ↑ (i ⊔ˢ j)
