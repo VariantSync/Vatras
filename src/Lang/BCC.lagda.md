@@ -25,7 +25,7 @@ open import Data.List
 open import Function
   using (flip; id)
 open import Size
-  using (Size; Size<_)
+  using (Size; ↑_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
@@ -48,8 +48,8 @@ In the following we formalize the binary normal forms for choice calculus. We ex
 ```agda
 data BCC : VarLang where
   Artifact : Artifactˡ BCC
-  _⟨_,_⟩ : {i : Size} {j : Size< i} {A : Domain} →
-    Dimension → BCC j A → BCC j A → BCC i A
+  _⟨_,_⟩ : {i : Size} {A : Domain} →
+    Dimension → BCC i A → BCC i A → BCC (↑ i) A
 ```
 
 ## Semantics

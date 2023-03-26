@@ -18,7 +18,7 @@ module Lang.ADD where
 open import Data.Bool using (Bool; if_then_else_)
 open import Data.List using ([])
 open import Data.String using (String)
-open import Size using (Size; Size<_)
+open import Size using (Size; ↑_)
 
 open import Definitions using (VarLang; Domain)
 open import Lang.Annotation.Name using (Variable)
@@ -35,8 +35,8 @@ In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 A
 data ADD : VarLang where
   Terminal : ∀ {i : Size} {A : Domain}
     → Variant A → ADD i A -- ModelBase in FFSPL
-  Choice : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    Variable → ADD j A → ADD j A → ADD i A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
+  Choice : ∀ {i : Size} {A : Domain} →
+    Variable → ADD i A → ADD i A → ADD (↑ i) A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
 
 ## Semantics

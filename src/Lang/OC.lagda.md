@@ -19,7 +19,7 @@ module Lang.OC where
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
-open import Size using (Size; Size<_; ↑_)
+open import Size using (Size; ↑_)
 open import Definitions using (Domain; VarLang; Artifactˡ)
 open import Lang.Annotation.Name using (Option)
 ```
@@ -29,8 +29,8 @@ open import Lang.Annotation.Name using (Option)
 ```agda
 data OC : VarLang where
   Artifact : Artifactˡ OC
-  _❲_❳ : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    Option → OC j A → OC i A
+  _❲_❳ : ∀ {i : Size} {A : Domain} →
+    Option → OC i A → OC (↑ i) A
 infixl 6 _❲_❳
 ```
 
@@ -39,8 +39,8 @@ Otherwise, we would allow empty variants which would again require either (1) th
 This is issue is more deeply discussed in Paul's slides on option calculus.
 ```agda
 data WFOC : VarLang where
-  Root : ∀ {i : Size} {j : Size< i} {A : Set} →
-    A → List (OC j A) → WFOC i A
+  Root : ∀ {i : Size} {A : Set} →
+    A → List (OC i A) → WFOC (↑ i) A
 ```
 
 Well-formedness can be forgotten, meaning that we lose the knowledge that an expression is well-formed in the type-system.

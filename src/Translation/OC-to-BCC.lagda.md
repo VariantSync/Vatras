@@ -49,9 +49,9 @@ open import Translation.Translation using
 open import Relations.Semantic using (_,_is-as-expressive-as_,_)
 
 open import Util.AuxProofs using (m≤n⇒m<1+n; vec-n∸n)
-open import Util.Existence using (∃-Size; ∃-syntax-with-type; _,_; proj₁; proj₂)
+open import Util.Existence using (∃-Size; ∃-syntax-with-type; _,_; proj₁; proj₂; ,-injectiveʳ)
 
-open import Util.SizeJuggle using (i<↑i; weaken-to-smaller-↑max; sym-smaller-↑max)
+open import Util.SizeJuggle using (to-max; sym-max)
 
 open import Data.ConveyorBelt
 
@@ -87,12 +87,12 @@ These children are to the right of the already translated children.
 record TZipper
   (i : Size)
   (A : Domain)
-  (numChildren numChildrenRight : ℕ)
-  (numChildren≤numChildrenRight : numChildrenRight ≤ numChildren) : Set where
+  (#cs #work : ℕ)
+  (work≤cs : #work ≤ #cs) : Set where
   constructor _◀_ --\T
   field
     parent   : A
-    siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A)) numChildren numChildrenRight numChildren≤numChildrenRight
+    siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A)) #cs #work work≤cs
 
 zip2bcc :
   ∀ {i : Size}
@@ -105,25 +105,16 @@ zip2bcc {A = A} (suc load-1) (suc left-1) (s≤s load-1≤left-1) (a ◀ (ls ↢
    let i , l = zip2bcc (suc load-1) (suc left-1) (s≤s load-1≤left-1) (a ◀ (ls ↢ e ∷ rs))
        j , r = zip2bcc      load-1       left-1       load-1≤left-1  (a ◀ (ls ↢     rs))
 
-       -- Unfortunately, we have to help the type-checker a lot with the sizes.
-       -- In other proofs this just worked out of the box but here we have to use lots of safe type casting to turn the sizes into the right types.
-       max-child-depth : Size
        max-child-depth = i ⊔ˢ j
-
-       choice-size : Size
        choice-size = ↑ max-child-depth -- ↑ (i ⊔ˢ j)
 
-       -- Prove that max-child-depth is indeed smaller than choice-size.
-       alternatives-size : Size< choice-size
-       alternatives-size = i<↑i max-child-depth
+       l-sized : BCC max-child-depth A
+       l-sized = to-max BCC-is-weakenable i j l
 
-       l-sized : BCC alternatives-size A
-       l-sized = weaken-to-smaller-↑max BCC-is-weakenable i j l
-
-       r-sized : BCC alternatives-size A
-       r-sized = sym-smaller-↑max (BCC-is-bounded A) j i (weaken-to-smaller-↑max BCC-is-weakenable j i r)
+       r-sized : BCC max-child-depth A
+       r-sized = sym-max {BCC-is-bounded A} {j} {i} (to-max BCC-is-weakenable j i r)
     in
-       choice-size , _⟨_,_⟩ {choice-size} {alternatives-size} O l-sized r-sized
+       choice-size , _⟨_,_⟩ {max-child-depth} O l-sized r-sized
 zip2bcc (suc load-1) (suc left-1) (s≤s left-1≤load-1) (a ◀ belt@(ls ↢ Artifactₒ b es ∷ rs)) =
   let work = length es
       processedArtifact = zip2bcc work work ≤-refl (b ◀ putOnBelt es)

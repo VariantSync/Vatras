@@ -31,7 +31,7 @@ open import Data.Product
 open import Function
   using (flip)
 open import Size
-  using (Size; Size<_; ↑_)
+  using (Size; ↑_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
@@ -56,8 +56,8 @@ Tag = ℕ
 
 data CCC : VarLang where
   Artifact : Artifactˡ CCC
-  _⟨_⟩ : ∀ {i : Size} {j : Size< i} {A : Domain} →
-    Dimension → List⁺ (CCC j A) → CCC i A
+  _⟨_⟩ : ∀ {i : Size} {A : Domain} →
+    Dimension → List⁺ (CCC i A) → CCC (↑ i) A
 ```
 
 Smart constructors for plain artifacts.
@@ -69,8 +69,8 @@ leaf a = Artifact a []
 leaves : ∀ {i : Size} {A : Domain} → List⁺ A → List⁺ (CCC (↑ i) A)
 leaves = mapl⁺ leaf
 
-upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CCC j A → CCC i A
-upcast e = e
+-- upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CCC j A → CCC i A
+-- upcast e = e
 ```
 
 ## Semantics

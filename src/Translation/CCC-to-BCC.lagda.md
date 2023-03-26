@@ -298,7 +298,7 @@ toBCC-choice-unroll D n (e₁ ∷ e₂ ∷ es) =
 
     let max-child-size = size-e₁ ⊔ˢ size-tail
         choice-size    = ↑ max-child-size
-    pure (choice-size , _⟨_,_⟩₂ {choice-size} {max-child-size} D' cc₂-e₁ cc₂-tail)
+    pure (choice-size , _⟨_,_⟩₂ {max-child-size} D' cc₂-e₁ cc₂-tail)
 ```
 
 Finally, we can use `toBCC` to produce a `Translation`:

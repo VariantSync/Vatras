@@ -59,14 +59,10 @@ open import Lang.BCC
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
+open import Definitions using (VarLang; ConfLang; Domain; Semantics)
+open import Relations.Semantic using (_,_is-as-expressive-as_,_)
 open import SemanticDomain using (Variant; Artifactᵥ)
-open import Translation.Translation
-  -- Names
-  using (VarLang; ConfLang; Domain; Semantics; Translation; getSize)
-  -- Relations between variability languages
-  using (_,_is-as-expressive-as_,_)
-  -- Translation properties
-  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
+open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)

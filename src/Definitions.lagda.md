@@ -8,7 +8,7 @@ module Definitions where
 
 ```agda
 open import Data.List using (List)
-open import Size using (Size; Size<_)
+open import Size using (Size; ↑_)
 open import SemanticDomain using (Variant)
 ```
 
@@ -40,7 +40,7 @@ Most languages feature Artifacts as arbitrary elements of the domain language.
 The constructor usually takes an element of the domain and a list of child expressions.
 ```agda
 Artifactˡ : VarLang → Set₁
-Artifactˡ L = ∀ {i : Size} {j : Size< i} {A : Domain} → A → List (L j A) → L i A
+Artifactˡ L = ∀ {i : Size} {A : Domain} → A → List (L i A) → L (↑ i) A
 ```
 
 ## Helper Functions and Theorems
@@ -57,9 +57,11 @@ flip-VarLang L A i = L i A
 {-
 Creates an Artifact from a list of expressions of a certain size.
 The size of the resulting expression is larger by 1.
+TODO: REMOVE WEAKENABLE.
 -}
-sequence-sized-artifact : ∀ {A : Domain}
-  → {L : VarLang}
+sequence-sized-artifact :
+  ∀ {A : Domain}
+    {L : VarLang}
   → Weaken (flip-VarLang L A)
   → Artifactˡ L
   → A
@@ -69,10 +71,5 @@ sequence-sized-artifact : ∀ {A : Domain}
 sequence-sized-artifact {A} {L} w Artifact a cs =
   let max , es = unify-sizes⁺ w cs
    in
-      ↑ max ,
-      Artifact {↑ max}
-               {i<↑i max}
-               {A}
-               a
-               (i<↑i-list (flip-VarLang L A) max es)
+      ↑ max , Artifact a es
 ```
