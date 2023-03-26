@@ -16,11 +16,11 @@ private
   variable
     ℓ : Level
 
-record ConveyorBelt (A B : Set ℓ) (workload workleft : ℕ) (a : workleft ≤ workload) : Set ℓ where
+record ConveyorBelt (A B : Set ℓ) (todo total : ℕ) (well : todo ≤ total) : Set ℓ where
   constructor _↢_ -- \l->
   field
-     processed   : Vec B (workload ∸ workleft)
-     unprocessed : Vec A (workleft)
+     processed   : Vec B (total ∸ todo)
+     unprocessed : Vec A (todo)
 infix 4 _↢_
 
 {-|
@@ -37,9 +37,9 @@ step :
     {load left-1 : ℕ}
     {left≤load : left-1 < load}
   → (f : A → B)
-  → ConveyorBelt A B load (suc left-1) left≤load
+  → ConveyorBelt A B (suc left-1) load left≤load
     --------------------------------------------
-  → ConveyorBelt A B load left-1 (<⇒≤ left≤load)
+  → ConveyorBelt A B left-1 load (<⇒≤ left≤load)
 step {_} {_} {load} {left-1} {left-1<load} f (ls ↢ (r ∷ rs)) =
   let next = cast (1+[m-[1+n]]=m-n load left-1 left-1<load) (ls ∷ʳ (f r))
    in next ↢ rs
@@ -53,9 +53,9 @@ stepAll :
     {load left : ℕ}
     {left≤load : left ≤ load}
   → (f : A → B)
-  → ConveyorBelt A B load left left≤load
+  → ConveyorBelt A B left load left≤load
     ------------------------------------
-  → ConveyorBelt A B load zero z≤n
+  → ConveyorBelt A B zero load z≤n
 stepAll f   (ls ↢ [])     = ls ↢ []
 stepAll f c@(ls ↢ r ∷ rs) = stepAll f (step f c)
 
@@ -64,7 +64,7 @@ done :
   ∀ {A B : Set}
     {load left : ℕ}
     {left≤load : left ≤ load}
-  → (belt : ConveyorBelt A B load left left≤load)
+  → (belt : ConveyorBelt A B left load left≤load)
     ---------------------------------------------
   → Dec (left ≡ zero)
 done (ls ↢ [])     = yes refl
@@ -72,7 +72,7 @@ done (ls ↢ r ∷ rs) = no λ ()
 
 -- Returns the processed elements of a done belt.
 finalize : ∀ {A B : Set} {load : ℕ}
-  → ConveyorBelt A B load zero z≤n
+  → ConveyorBelt A B zero load z≤n
   → Vec B load
 finalize (ls ↢ []) = ls
 
