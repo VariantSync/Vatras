@@ -94,6 +94,16 @@ record TZipper
     parent   : A
     siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A)) #work #cs work≤cs
 
+record Zip
+  (A : Domain)
+  (#cs #work : ℕ)
+  (work≤cs : #work ≤ #cs) : Set where
+  constructor _X_ --\T
+  field
+    {i j} : Size
+    parent   : A
+    siblings : ConveyorBelt (OC i A) (BCC j A) #work #cs work≤cs
+
 -- TODO: Zulip: Ask if ∃-Size is the way to go for functions from sized types to sized types and when having to prove termination.
 
 zip2bcc :
@@ -133,10 +143,10 @@ zip2bcc {i = i} zero zero z≤n (a ◀ (    [] ↢ [])) =
 zip2bcc         load zero z≤n (a ◀ (l ∷ ls ↢ [])) =
   sequence-sized-artifact BCC-is-weakenable Artifact₂ a (l ∷ toList ls)
 
-data _OF_LEFT-TODO_⊢_⟶_ {A : Domain} : {i : Size}
-  → (left load : ℕ)
+data _OF_LEFT-TODO_⊢_⟶_ {A : Domain} :
+    (left load : ℕ)
   → (left≤load : left ≤ load)
-  → TZipper i A load left left≤load
+  → Zip A load left left≤load
   → ∃-Size[ j ] (BCC j A)
   → Set
   where
@@ -144,45 +154,47 @@ data _OF_LEFT-TODO_⊢_⟶_ {A : Domain} : {i : Size}
     ∀ {i : Size}
       (a : A)
       ---------------------------------------------------------------------
-    → zero OF zero LEFT-TODO z≤n ⊢ a ◀ ([] ↢ []) ⟶ (↑ i , Artifact₂ a [])
+    → zero OF zero LEFT-TODO z≤n ⊢ a X ([] ↢ []) ⟶ (↑ i , Artifact₂ a [])
 
   T-done :
-    ∀ (load-1 : ℕ)
+    ∀ {i : Size}
+      (load-1 : ℕ)
       (a : A)
-      (l : ∃-Size[ i ] (BCC i A))
-      (ls : Vec (∃-Size[ i ] (BCC i A)) load-1)
-      ------------------------------------------------------------------------------------------------------------------------------
-    → zero OF suc load-1 LEFT-TODO z≤n ⊢ a ◀ (l ∷ ls ↢ []) ⟶ sequence-sized-artifact BCC-is-weakenable Artifact₂ a (l ∷ toList ls)
+      (l : BCC i A)
+      (ls : Vec (BCC i A) load-1)
+      --------------------------------------------------------------------------------------------
+    → zero OF suc load-1 LEFT-TODO z≤n ⊢ a X (l ∷ ls ↢ []) ⟶ (↑ i , Artifact₂ a (l ∷ toList ls))
 
   T-artifact :
-    ∀ {i : Size}
+    ∀ {i i-e₁ i-e₂ : Size}
       (left-1 load-1 : ℕ)
       (left-1≤load-1 : left-1 ≤ load-1)
       (a b : A)
-      (ls : Vec (∃-Size[ k ](BCC k A)) (load-1 ∸ left-1))
       (es : List (OC i A))
       (rs : Vec (OC (↑ i) A) left-1)
-      (e₁ e₂ : ∃-Size[ k ] (BCC k A))
-    →  length es OF  length es LEFT-TODO           ≤-refl        ⊢ b ◀ (putOnBelt es)                               ⟶ e₁
-    →     left-1 OF suc load-1 LEFT-TODO <⇒≤ (s≤s left-1≤load-1) ⊢ a ◀ (step (λ _ → e₁) (ls ↢ Artifactₒ b es ∷ rs)) ⟶ e₂
-      --------------------------------------------------------------------------------------------------------------------
-    → suc left-1 OF suc load-1 LEFT-TODO      s≤s left-1≤load-1  ⊢ a ◀ (ls ↢ Artifactₒ b es ∷ rs)                   ⟶ e₂
+      (ls : Vec (BCC i-e₁ A) (load-1 ∸ left-1))
+      (e₁ : BCC i-e₁ A)
+      (e₂ : BCC i-e₂ A)
+    →  length es OF  length es LEFT-TODO           ≤-refl        ⊢ b X (putOnBelt es)                               ⟶ (i-e₁ , e₁)
+    →     left-1 OF suc load-1 LEFT-TODO <⇒≤ (s≤s left-1≤load-1) ⊢ a X (step (λ _ → e₁) (ls ↢ Artifactₒ b es ∷ rs)) ⟶ (i-e₂ , e₂)
+      -----------------------------------------------------------------------------------------------------------------------------
+    → suc left-1 OF suc load-1 LEFT-TODO      s≤s left-1≤load-1  ⊢ a X (ls ↢ Artifactₒ b es ∷ rs)                   ⟶ (i-e₂ , e₂)
 
   T-option :
-    ∀ {i j k : Size}
+    ∀ {i j k l : Size}
       (left-1 load-1 : ℕ)
       (left-1≤load-1 : left-1 ≤ load-1)
       (O : Option)
       (a : A)
       (e : OC k A)
       (rs : Vec (OC (↑ k) A) left-1)
-      (ls : Vec (∃-Size[ l ] (BCC l A)) (load-1 ∸ left-1))
+      (ls : Vec (BCC l A) (load-1 ∸ left-1))
       (eᵒ⁻ʸ : BCC i A)
       (eᵒ⁻ⁿ : BCC j A)
-    → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a ◀ (ls ↢ e ∷ rs)       ⟶ (i , eᵒ⁻ʸ)
-    →     left-1 OF     load-1 LEFT-TODO     left-1≤load-1 ⊢ a ◀ (ls ↢     rs)       ⟶ (j , eᵒ⁻ⁿ)
+    → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a X (ls ↢ e ∷ rs)       ⟶ (i , eᵒ⁻ʸ)
+    →     left-1 OF     load-1 LEFT-TODO     left-1≤load-1 ⊢ a X (ls ↢     rs)       ⟶ (j , eᵒ⁻ⁿ)
       ---------------------------------------------------------------------------------------------------------------------------
-    → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a ◀ (ls ↢ O ❲ e ❳ ∷ rs) ⟶ (↑ (i ⊔ˢ j) , _⟨_,_⟩ {i ⊔ˢ j} O eᵒ⁻ʸ eᵒ⁻ⁿ)
+    → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a X (ls ↢ O ❲ e ❳ ∷ rs) ⟶ (↑ (i ⊔ˢ j) , _⟨_,_⟩ {i ⊔ˢ j} O eᵒ⁻ʸ eᵒ⁻ⁿ)
 
 
 OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
