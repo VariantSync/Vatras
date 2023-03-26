@@ -196,6 +196,20 @@ data _OF_LEFT-TODO_⊢_⟶_ {A : Domain} :
       ---------------------------------------------------------------------------------------------------------------------------
     → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a X (ls ↢ O ❲ e ❳ ∷ rs) ⟶ (↑ (i ⊔ˢ j) , _⟨_,_⟩ {i ⊔ˢ j} O eᵒ⁻ʸ eᵒ⁻ⁿ)
 
+data _⟶_ {A : Domain} :
+  ∀ {i : Size}
+  → WFOC i A
+  → ∃-Size[ j ] (BCC j A)
+  → Set
+  where
+  T-root :
+    ∀ {i : Size}
+      (a : A)
+      (es : List (OC i A))
+      (e : ∃-Size[ j ] (BCC j A))
+    → length es OF length es LEFT-TODO ≤-refl ⊢ a X (putOnBelt es) ⟶ e
+      -----------------------------------------------------------------
+    → Root a es ⟶ e
 
 OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
 OCtoBCC (Root a es) =
