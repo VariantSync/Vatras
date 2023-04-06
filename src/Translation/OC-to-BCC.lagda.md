@@ -16,12 +16,12 @@ module Translation.OC-to-BCC where
 ## Imports
 
 ```agda
-open import Data.List using (List; _∷_; []; length; map; catMaybes)
+open import Data.List using (List; _∷_; []; _∷ʳ_; length; map; catMaybes)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero; _∸_; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-refl; <⇒≤)
 open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
-open import Data.Vec using (Vec; []; _∷_; _∷ʳ_; toList)
+open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Size using (Size; Size<_; ↑_; ∞; _⊔ˢ_)
 open import Function using (id)
 
@@ -157,88 +157,140 @@ OC→BCC = record
 ```
 
 ```agda
-record Zip
-  (A : Domain)
-  (#cs #work : ℕ)
-  (work≤cs : #work ≤ #cs) : Set where
-  constructor _X_ --\T
+record Zip {i : Size} {n : ℕ} (A : Domain) : Set where
+  constructor _-<_◀_>- --\T
   field
-    {i j} : Size
-    parent   : A
-    siblings : ConveyorBelt (OC i A) (BCC j A) #work #cs work≤cs
+    --{i j} : Size
+    parent    : A
+    siblingsL : List (BCC ∞ A) -- j
+    siblingsR : Vec (OC i A) n -- i
+open Zip public
+infix 4 _-<_◀_>-
 
 {-
 TODO:
 I suspect hat we can remove all the constraints on left and load here and just define how translation works.
 Then in a second, evaluator relation, we can use the constraints to prove that reduction indeed terminates.
 -}
-data _OF_LEFT-TODO_⊢_⟶_ {A : Domain} :
-    (left load : ℕ)
-  → (left≤load : left ≤ load)
-  → Zip A load left left≤load
-  → ∃-Size[ j ] (BCC j A)
+data _⊢_⟶ₒ_ :
+  ∀ {n : ℕ} {A : Domain}
+  → (i : Size)
+  → Zip {i} {n} A
+  → BCC ∞ A
   → Set
-  where
-  T-leaf :
-    ∀ {i : Size}
-      (a : A)
-      ---------------------------------------------------------------------
-    → zero OF zero LEFT-TODO z≤n ⊢ a X ([] ↢ []) ⟶ (↑ i , Artifact₂ a [])
-
+infix 3 _⊢_⟶ₒ_
+data _⊢_⟶ₒ_ where
   T-done :
-    ∀ {i : Size}
-      (load-1 : ℕ)
-      (a : A)
-      (l : BCC i A)
-      (ls : Vec (BCC i A) load-1)
-      --------------------------------------------------------------------------------------------
-    → zero OF suc load-1 LEFT-TODO z≤n ⊢ a X (l ∷ ls ↢ []) ⟶ (↑ i , Artifact₂ a (l ∷ toList ls))
+    ∀ {A : Domain} {i : Size}
+      {a : A}
+      {ls : List (BCC ∞ A)} -- i
+      ---------------------------------------------------
+    → i ⊢ a -< ls ◀ [] >- ⟶ₒ Artifact₂ a ls --(↑ i , Artifact₂ a (l ∷ ls))
 
   T-artifact :
-    ∀ {i i-e₁ i-e₂ : Size}
-      (left-1 load-1 : ℕ)
-      (left-1≤load-1 : left-1 ≤ load-1)
-      (a b : A)
-      (es : List (OC i A))
-      (rs : Vec (OC (↑ i) A) left-1)
-      (ls : Vec (BCC i-e₁ A) (load-1 ∸ left-1))
-      (e₁ : BCC i-e₁ A)
-      (e₂ : BCC i-e₂ A)
-    →  length es OF  length es LEFT-TODO           ≤-refl        ⊢ b X (putOnBelt es)                               ⟶ (i-e₁ , e₁)
-    →     left-1 OF suc load-1 LEFT-TODO <⇒≤ (s≤s left-1≤load-1) ⊢ a X (step (λ _ → e₁) (ls ↢ Artifactₒ b es ∷ rs)) ⟶ (i-e₂ , e₂)
-      -----------------------------------------------------------------------------------------------------------------------------
-    → suc left-1 OF suc load-1 LEFT-TODO      s≤s left-1≤load-1  ⊢ a X (ls ↢ Artifactₒ b es ∷ rs)                   ⟶ (i-e₂ , e₂)
+    ∀ {A : Domain} {i : Size}-- {i i-e₁ i-e₂ : Size}
+      {a b : A}
+      {n : ℕ}
+      {es : List (OC    i  A)  } -- i
+      {rs : Vec  (OC (↑ i) A) n} -- ↑ i
+      {ls : List (BCC ∞ A)} -- i-e₁
+      {e₁ : BCC ∞ A} -- i-e₁
+      {e₂ : BCC ∞ A} -- i-e₂
+    →   i ⊢ b -< [] ◀ (fromList es) >-       ⟶ₒ e₁ --(i-e₁ , e₁)
+    → ↑ i ⊢ a -< ls ∷ʳ e₁ ◀ rs >-            ⟶ₒ e₂ --(i-e₂ , e₂)
+      -----------------------------------------------
+    → ↑ i ⊢ a -< ls ◀ Artifactₒ b es ∷ rs >- ⟶ₒ e₂ --(i-e₂ , e₂)
 
   T-option :
-    ∀ {i j k l : Size}
-      (left-1 load-1 : ℕ)
-      (left-1≤load-1 : left-1 ≤ load-1)
-      (O : Option)
-      (a : A)
-      (e : OC k A)
-      (rs : Vec (OC (↑ k) A) left-1)
-      (ls : Vec (BCC l A) (load-1 ∸ left-1))
-      (eᵒ⁻ʸ : BCC i A)
-      (eᵒ⁻ⁿ : BCC j A)
-    → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a X (ls ↢ e ∷ rs)       ⟶ (i , eᵒ⁻ʸ)
-    →     left-1 OF     load-1 LEFT-TODO     left-1≤load-1 ⊢ a X (ls ↢     rs)       ⟶ (j , eᵒ⁻ⁿ)
-      ---------------------------------------------------------------------------------------------------------------------------
-    → suc left-1 OF suc load-1 LEFT-TODO s≤s left-1≤load-1 ⊢ a X (ls ↢ O ❲ e ❳ ∷ rs) ⟶ (↑ (i ⊔ˢ j) , _⟨_,_⟩ {i ⊔ˢ j} O eᵒ⁻ʸ eᵒ⁻ⁿ)
+    ∀ {A : Domain} {k : Size} --{i j k l : Size}
+      {O : Option}
+      {a : A}
+      {n : ℕ}
+      {e : OC k A} -- k
+      {rs : Vec (OC (↑ k) A) n} -- ↑ k
+      {ls : List (BCC ∞ A)} -- l
+      {eᵒ⁻ʸ : BCC ∞ A} -- i
+      {eᵒ⁻ⁿ : BCC ∞ A} -- j
+    → ↑ k ⊢ a -< ls ◀ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ --(i , eᵒ⁻ʸ)
+    → ↑ k ⊢ a -< ls ◀     rs >-       ⟶ₒ eᵒ⁻ⁿ --(j , eᵒ⁻ⁿ)
+      ----------------------------------------------------------------------
+    → ↑ k ⊢ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟶ₒ O ⟨ eᵒ⁻ʸ , eᵒ⁻ⁿ ⟩ --(↑ (i ⊔ˢ j) , _⟨_,_⟩ {i ⊔ˢ j} O eᵒ⁻ʸ eᵒ⁻ⁿ)
 
-data _⟶_ {A : Domain} :
-  ∀ {i : Size}
+data _⟶_  :
+  ∀ {A : Domain}
+  → {i : Size}
   → WFOC i A
-  → ∃-Size[ j ] (BCC j A)
+  → BCC ∞ A --∃-Size[ j ] (BCC j A)
   → Set
-  where
+infix 4 _⟶_
+data _⟶_ where
   T-root :
-    ∀ {i : Size}
-      (a : A)
-      (es : List (OC i A))
-      (e : ∃-Size[ j ] (BCC j A))
-    → length es OF length es LEFT-TODO ≤-refl ⊢ a X (putOnBelt es) ⟶ e
-      -----------------------------------------------------------------
+    ∀ {A : Domain} {i : Size}
+      {a : A}
+      {es : List (OC i A)}
+      {e : BCC ∞ A} --(e : ∃-Size[ j ] (BCC j A))
+    → i ⊢ a -< [] ◀ (fromList es) >- ⟶ₒ e
+      ----------------------------
     → Root a es ⟶ e
+```
+
+
+Function: Every OC expression is in relation to at most one BCC expression.
+```agda
+⟶ₒ-is-deterministic : ∀ {i} {n} {A} {z : Zip {i} {n} A} {b b' : BCC ∞ A}
+  → i ⊢ z ⟶ₒ b
+  → i ⊢ z ⟶ₒ b'
+    ----------
+  → b ≡ b'
+⟶ₒ-is-deterministic T-done T-done = refl
+⟶ₒ-is-deterministic (T-artifact ⟶e₁ ⟶b)
+                     (T-artifact ⟶e₂ ⟶b')
+                     rewrite (⟶ₒ-is-deterministic ⟶e₁ ⟶e₂)
+                     = ⟶ₒ-is-deterministic ⟶b ⟶b'
+⟶ₒ-is-deterministic {z = a -< ls ◀ O ❲ _ ❳ ∷ _ >- } (T-option ⟶l₁ ⟶r₁) (T-option ⟶l₂ ⟶r₂) =
+  let l₁≡l₂ = ⟶ₒ-is-deterministic ⟶l₁ ⟶l₂
+      r₁≡r₂ = ⟶ₒ-is-deterministic ⟶r₁ ⟶r₂
+   in Eq.cong₂ (O ⟨_,_⟩) l₁≡l₂ r₁≡r₂
+
+⟶-is-deterministic : ∀ {i} {A} {e : WFOC i A} {b b' : BCC ∞ A}
+  → e ⟶ b
+  → e ⟶ b'
+    -------
+  → b ≡ b'
+⟶-is-deterministic (T-root ⟶b) (T-root ⟶b') = ⟶ₒ-is-deterministic ⟶b ⟶b'
+```
+
+Totality: Every OC expression is in relation to at least one BCC expression (Progress).
+```agda
+Totalₒ : ∀ {i} {n} {A} → (e : Zip {i} {n} A) → Set
+Totalₒ {i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
+
+totalₒ : ∀ {i} {n} {A} {e : Zip {i} {n} A} {b} → (i ⊢ e ⟶ₒ b) → Totalₒ e
+totalₒ {b = b} r = b , r
+
+⟶ₒ-is-total : ∀ {n} {i} {A} (e : Zip {i} {n} A) → Totalₒ e
+⟶ₒ-is-total (a -< ls ◀ [] >-) = totalₒ T-done
+⟶ₒ-is-total (a -< ls ◀ Artifactₒ b es ∷ rs >-) =
+  -- We must use "let" here and are should not use "with".
+  -- "with" forgets some information (I don't know what exactly) that
+  -- makes the termination checker fail.
+  let recursion-on-children-is-total = ⟶ₒ-is-total (b -< [] ◀ fromList es >-)
+      e₁   = proj₁ recursion-on-children-is-total
+      ⟶e₁ = proj₂ recursion-on-children-is-total
+      ⟶e₂ = proj₂ (⟶ₒ-is-total (a -< ls ∷ʳ e₁ ◀ rs >-))
+   in totalₒ (T-artifact ⟶e₁ ⟶e₂)
+⟶ₒ-is-total (a -< ls ◀ O ❲ e ❳ ∷ rs >-)
+  with ⟶ₒ-is-total (a -< ls ◀ e ∷ rs >-)
+     | ⟶ₒ-is-total (a -< ls ◀     rs >-)
+...  | _ , ⟶eᵒ⁻ʸ | _ , ⟶eᵒ⁻ⁿ = totalₒ (T-option ⟶eᵒ⁻ʸ ⟶eᵒ⁻ⁿ)
+
+Total : ∀ {i} {A} → (e : WFOC i A) → Set
+Total {i} e = ∃[ b ] (e ⟶ b)
+
+⟶-is-total : ∀ {i} {A} → (e : WFOC i A) → Total e
+⟶-is-total (Root a es) =
+  let rec = ⟶ₒ-is-total (a -< [] ◀ (fromList es) >-)
+   in proj₁ rec , T-root (proj₂ rec)
 ```
 
 ## Proofs

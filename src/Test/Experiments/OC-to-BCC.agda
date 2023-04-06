@@ -5,6 +5,7 @@ module Test.Experiments.OC-to-BCC where
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (_∷_; [])
 open import Data.Nat using (_+_)
+open import Data.Product using (proj₁; proj₂)
 open import Data.String using (String; _++_; unlines)
 
 open import Size using (Size; ∞)
@@ -22,7 +23,7 @@ open Lang.BCC renaming (⟦_⟧ to ⟦_⟧-bcc; Configuration to Conf-bcc)
 
 open import Definitions using (ConfLang)
 open import Translation.Translation using (expr)
-open import Translation.OC-to-BCC using (translate; OC→BCC)
+open import Translation.OC-to-BCC using (translate; OC→BCC; ⟶-is-total)
 
 open import Show.Lines
 open import Util.Named
@@ -59,8 +60,11 @@ OC→BCC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 exp-oc-to-bcc : Experiment (WFOC ∞ String)
 getName exp-oc-to-bcc = "Translate OC to BCC"
 get     exp-oc-to-bcc ex@(name example: oc) = do
-  let trans-result   = translate oc
-      bcc            = expr trans-result
+  let --trans-result   = translate oc
+      --bcc            = expr trans-result
+      trans-result   = ⟶-is-total oc
+      bcc            = proj₁ trans-result
+
       bcc-simplified = eliminate-redundancy bcc
       pretty-bcc     = Lang.BCC.pretty bcc
       pretty-bcc-simplified = Lang.BCC.pretty bcc-simplified
