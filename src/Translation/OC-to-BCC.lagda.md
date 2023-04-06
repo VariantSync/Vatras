@@ -157,87 +157,85 @@ OC→BCC = record
 ```
 
 ```agda
-record Zip {i : Size} {n : ℕ} (A : Domain) : Set where
+record Zip (i : Size) (work : ℕ) (A : Domain) : Set where
   constructor _-<_◀_>- --\T
   field
     --{i j} : Size
     parent    : A
     siblingsL : List (BCC ∞ A) -- j
-    siblingsR : Vec (OC i A) n -- i
+    siblingsR : Vec (OC i A) work -- i
 open Zip public
 infix 4 _-<_◀_>-
 
-{-
-TODO:
-I suspect hat we can remove all the constraints on left and load here and just define how translation works.
-Then in a second, evaluator relation, we can use the constraints to prove that reduction indeed terminates.
--}
 data _⊢_⟶ₒ_ :
   ∀ {n : ℕ} {A : Domain}
   → (i : Size)
-  → Zip {i} {n} A
+  → Zip i n A
   → BCC ∞ A
   → Set
 infix 3 _⊢_⟶ₒ_
 data _⊢_⟶ₒ_ where
   T-done :
-    ∀ {A : Domain} {i : Size}
-      {a : A}
-      {ls : List (BCC ∞ A)} -- i
-      ---------------------------------------------------
-    → i ⊢ a -< ls ◀ [] >- ⟶ₒ Artifact₂ a ls --(↑ i , Artifact₂ a (l ∷ ls))
+    ∀ {i  : Size}
+      {A  : Domain}
+      {a  : A}
+      {ls : List (BCC ∞ A)}
+      --------------------------------------
+    → i ⊢ a -< ls ◀ [] >- ⟶ₒ Artifact₂ a ls
 
   T-artifact :
-    ∀ {A : Domain} {i : Size}-- {i i-e₁ i-e₂ : Size}
-      {a b : A}
-      {n : ℕ}
-      {es : List (OC    i  A)  } -- i
-      {rs : Vec  (OC (↑ i) A) n} -- ↑ i
-      {ls : List (BCC ∞ A)} -- i-e₁
-      {e₁ : BCC ∞ A} -- i-e₁
-      {e₂ : BCC ∞ A} -- i-e₂
-    →   i ⊢ b -< [] ◀ (fromList es) >-       ⟶ₒ e₁ --(i-e₁ , e₁)
-    → ↑ i ⊢ a -< ls ∷ʳ e₁ ◀ rs >-            ⟶ₒ e₂ --(i-e₂ , e₂)
-      -----------------------------------------------
-    → ↑ i ⊢ a -< ls ◀ Artifactₒ b es ∷ rs >- ⟶ₒ e₂ --(i-e₂ , e₂)
+    ∀ {i   : Size  }
+      {n   : ℕ    }
+      {A   : Domain}
+      {a b : A     }
+      {ls  : List (BCC ∞    A)  }
+      {es  : List (OC    i  A)  }
+      {rs  : Vec  (OC (↑ i) A) n}
+      {e₁  : BCC ∞ A}
+      {e₂  : BCC ∞ A}
+    →   i ⊢ b -< [] ◀ (fromList es) >-       ⟶ₒ e₁
+    → ↑ i ⊢ a -< ls ∷ʳ e₁ ◀ rs >-            ⟶ₒ e₂
+      ---------------------------------------------
+    → ↑ i ⊢ a -< ls ◀ Artifactₒ b es ∷ rs >- ⟶ₒ e₂
 
   T-option :
-    ∀ {A : Domain} {k : Size} --{i j k l : Size}
-      {O : Option}
-      {a : A}
-      {n : ℕ}
-      {e : OC k A} -- k
-      {rs : Vec (OC (↑ k) A) n} -- ↑ k
-      {ls : List (BCC ∞ A)} -- l
-      {eᵒ⁻ʸ : BCC ∞ A} -- i
-      {eᵒ⁻ⁿ : BCC ∞ A} -- j
-    → ↑ k ⊢ a -< ls ◀ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ --(i , eᵒ⁻ʸ)
-    → ↑ k ⊢ a -< ls ◀     rs >-       ⟶ₒ eᵒ⁻ⁿ --(j , eᵒ⁻ⁿ)
-      ----------------------------------------------------------------------
-    → ↑ k ⊢ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟶ₒ O ⟨ eᵒ⁻ʸ , eᵒ⁻ⁿ ⟩ --(↑ (i ⊔ˢ j) , _⟨_,_⟩ {i ⊔ˢ j} O eᵒ⁻ʸ eᵒ⁻ⁿ)
+    ∀ {i   : Size  }
+      {n   : ℕ    }
+      {A   : Domain}
+      {a   : A     }
+      {O   : Option}
+      {e   : OC i A}
+      {ls  : List (BCC ∞ A)    }
+      {rs  : Vec (OC (↑ i) A) n}
+      {eᵒ⁻ʸ : BCC ∞ A}
+      {eᵒ⁻ⁿ : BCC ∞ A}
+    → ↑ i ⊢ a -< ls ◀ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ
+    → ↑ i ⊢ a -< ls ◀     rs >-       ⟶ₒ eᵒ⁻ⁿ
+      ----------------------------------------------------
+    → ↑ i ⊢ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟶ₒ O ⟨ eᵒ⁻ʸ , eᵒ⁻ⁿ ⟩
 
 data _⟶_  :
-  ∀ {A : Domain}
-  → {i : Size}
+  ∀ {i : Size} {A : Domain}
   → WFOC i A
-  → BCC ∞ A --∃-Size[ j ] (BCC j A)
+  → BCC ∞ A
   → Set
 infix 4 _⟶_
 data _⟶_ where
   T-root :
-    ∀ {A : Domain} {i : Size}
-      {a : A}
+    ∀ {i  : Size}
+      {A  : Domain}
+      {a  : A}
       {es : List (OC i A)}
-      {e : BCC ∞ A} --(e : ∃-Size[ j ] (BCC j A))
+      {e  : BCC ∞ A}
     → i ⊢ a -< [] ◀ (fromList es) >- ⟶ₒ e
-      ----------------------------
+      ------------------------------------
     → Root a es ⟶ e
 ```
 
 
 Function: Every OC expression is in relation to at most one BCC expression.
 ```agda
-⟶ₒ-is-deterministic : ∀ {i} {n} {A} {z : Zip {i} {n} A} {b b' : BCC ∞ A}
+⟶ₒ-is-deterministic : ∀ {i} {n} {A} {z : Zip i n A} {b b' : BCC ∞ A}
   → i ⊢ z ⟶ₒ b
   → i ⊢ z ⟶ₒ b'
     ----------
@@ -262,13 +260,20 @@ Function: Every OC expression is in relation to at most one BCC expression.
 
 Totality: Every OC expression is in relation to at least one BCC expression (Progress).
 ```agda
-Totalₒ : ∀ {i} {n} {A} → (e : Zip {i} {n} A) → Set
+Totalₒ : ∀ {i} {n} {A} → (e : Zip i n A) → Set
 Totalₒ {i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
 
-totalₒ : ∀ {i} {n} {A} {e : Zip {i} {n} A} {b} → (i ⊢ e ⟶ₒ b) → Totalₒ e
+-- smart constructor for Totalₒ
+totalₒ : ∀ {i} {n} {A} {e : Zip i n A} {b}
+  → (i ⊢ e ⟶ₒ b)
+    -------------
+  → Totalₒ e
 totalₒ {b = b} r = b , r
 
-⟶ₒ-is-total : ∀ {n} {i} {A} (e : Zip {i} {n} A) → Totalₒ e
+⟶ₒ-is-total : ∀ {i} {n} {A}
+  → (e : Zip i n A)
+    ---------------
+  → Totalₒ e
 ⟶ₒ-is-total (a -< ls ◀ [] >-) = totalₒ T-done
 ⟶ₒ-is-total (a -< ls ◀ Artifactₒ b es ∷ rs >-) =
   -- We must use "let" here and are should not use "with".
@@ -287,7 +292,10 @@ totalₒ {b = b} r = b , r
 Total : ∀ {i} {A} → (e : WFOC i A) → Set
 Total {i} e = ∃[ b ] (e ⟶ b)
 
-⟶-is-total : ∀ {i} {A} → (e : WFOC i A) → Total e
+⟶-is-total : ∀ {i} {A}
+  → (e : WFOC i A)
+    --------------
+  → Total e
 ⟶-is-total (Root a es) =
   let rec = ⟶ₒ-is-total (a -< [] ◀ (fromList es) >-)
    in proj₁ rec , T-root (proj₂ rec)
