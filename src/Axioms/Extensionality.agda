@@ -12,13 +12,13 @@ postulate
       -----------------------
     → f ≡ g
 
-eta-equivalence : ∀ {A B : Set} {f : A → B}
+η-equivalence : ∀ {A B : Set} {f : A → B}
     ---------------
   → f ≡ λ {x → f x}
-eta-equivalence = refl
+η-equivalence = refl
 
 ≗→≡ : ∀ {A B : Set} {f g : A → B} → f ≗ g → f ≡ g
-≗→≡ f≗g = extensionality f≗g
+≗→≡ = extensionality
 
 ≡→≗ : ∀ {A B : Set} {f g : A → B} → f ≡ g → f ≗ g
 ≡→≗ f≡g rewrite f≡g = λ x → refl
