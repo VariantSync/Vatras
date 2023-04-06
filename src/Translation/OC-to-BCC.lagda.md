@@ -94,16 +94,6 @@ record TZipper
     parent   : A
     siblings : ConveyorBelt (OC i A) (∃-Size[ j ] (BCC j A)) #work #cs work≤cs
 
-record Zip
-  (A : Domain)
-  (#cs #work : ℕ)
-  (work≤cs : #work ≤ #cs) : Set where
-  constructor _X_ --\T
-  field
-    {i j} : Size
-    parent   : A
-    siblings : ConveyorBelt (OC i A) (BCC j A) #work #cs work≤cs
-
 -- TODO: Zulip: Ask if ∃-Size is the way to go for functions from sized types to sized types and when having to prove termination.
 
 zip2bcc :
@@ -143,6 +133,45 @@ zip2bcc {i = i} zero zero z≤n (a ◀ (    [] ↢ [])) =
 zip2bcc         load zero z≤n (a ◀ (l ∷ ls ↢ [])) =
   sequence-sized-artifact BCC-is-weakenable Artifact₂ a (l ∷ toList ls)
 
+OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
+OCtoBCC (Root a es) =
+  let work = length es
+   in zip2bcc work work ≤-refl (a ◀ putOnBelt es)
+
+translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
+translate oc =
+  let j , bcc = OCtoBCC oc in
+  record
+  { size = j
+  ; expr = bcc
+  ; conf = id
+  ; fnoc = id
+  }
+
+OC→BCC : Translation WFOC BCC Confₒ Conf₂
+OC→BCC = record
+  { sem₁ = ⟦_⟧
+  ; sem₂ = ⟦_⟧₂
+  ; translate = translate
+  }
+```
+
+```agda
+record Zip
+  (A : Domain)
+  (#cs #work : ℕ)
+  (work≤cs : #work ≤ #cs) : Set where
+  constructor _X_ --\T
+  field
+    {i j} : Size
+    parent   : A
+    siblings : ConveyorBelt (OC i A) (BCC j A) #work #cs work≤cs
+
+{-
+TODO:
+I suspect hat we can remove all the constraints on left and load here and just define how translation works.
+Then in a second, evaluator relation, we can use the constraints to prove that reduction indeed terminates.
+-}
 data _OF_LEFT-TODO_⊢_⟶_ {A : Domain} :
     (left load : ℕ)
   → (left≤load : left ≤ load)
@@ -210,33 +239,11 @@ data _⟶_ {A : Domain} :
     → length es OF length es LEFT-TODO ≤-refl ⊢ a X (putOnBelt es) ⟶ e
       -----------------------------------------------------------------
     → Root a es ⟶ e
-
-OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
-OCtoBCC (Root a es) =
-  let work = length es
-   in zip2bcc work work ≤-refl (a ◀ putOnBelt es)
-
-translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
-translate oc =
-  let j , bcc = OCtoBCC oc in
-  record
-  { size = j
-  ; expr = bcc
-  ; conf = id
-  ; fnoc = id
-  }
-
-OC→BCC : Translation WFOC BCC Confₒ Conf₂
-OC→BCC = record
-  { sem₁ = ⟦_⟧
-  ; sem₂ = ⟦_⟧₂
-  ; translate = translate
-  }
 ```
 
 ## Proofs
 
-```agda
+```text
 WFOC→BCC-left : ∀ {i : Size} {A : Domain}
   → (e : WFOC i A)
     --------------
@@ -254,7 +261,7 @@ BCC-is-as-expressive-as-OC : BCC , ⟦_⟧₂ is-as-expressive-as WFOC , ⟦_⟧
 BCC-is-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
 ```
 
-```agda
+```text
 open import Data.Vec using (Vec; cast; fromList)
 open Data.Nat using (_∸_)
 open import Data.Product.Properties using ()
@@ -295,7 +302,7 @@ WFOC→BCC-left {i} {A} r@(Root a es@(O ❲ head ❳ ∷ tail)) cₒ =
   ∎
 ```
 
-```agda
+```text
 -- When the translation of configurations is id, then the theorems for both sides become equivalent.
 -- TODO: Maybe we want to gerneralize this observation to the framework?
 WFOC→BCC-right = WFOC→BCC-left
