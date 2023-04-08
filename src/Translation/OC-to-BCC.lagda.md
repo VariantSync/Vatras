@@ -488,7 +488,7 @@ WFOC→BCC-left {i} {A} r@(Root a es@(O ❲ head ❳ ∷ tail)) cₒ =
   ∎
 ```
 
-```text
+```agda
 -- When the translation of configurations is id, then the theorems for both sides become equivalent.
 -- TODO: Maybe we want to gerneralize this observation to the framework?
 WFOC→BCC-right = WFOC→BCC-left
