@@ -16,14 +16,14 @@ module Translation.OC-to-BCC where
 ## Imports
 
 ```agda
-open import Data.List using (List; _∷_; []; _∷ʳ_; length; map; catMaybes)
+open import Data.List using (List; _∷_; []; _∷ʳ_; _++_; length; map; catMaybes)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero; _∸_; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-refl; <⇒≤)
 open import Data.Product using (∃; ∃-syntax; _,_; _×_; proj₁; proj₂)
 open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Size using (Size; Size<_; ↑_; ∞; _⊔ˢ_)
-open import Function using (id)
+open import Function using (id; flip)
 
 open import Lang.OC
      using ( OC; WFOC; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse; forgetWF; children-wf)
@@ -137,23 +137,6 @@ OCtoBCC : ∀ {i : Size} {A : Domain} → WFOC i A → ∃-Size[ j ] (BCC j A)
 OCtoBCC (Root a es) =
   let work = length es
    in zip2bcc work work ≤-refl (a ◀ putOnBelt es)
-
-translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
-translate oc =
-  let j , bcc = OCtoBCC oc in
-  record
-  { size = j
-  ; expr = bcc
-  ; conf = id
-  ; fnoc = id
-  }
-
-OC→BCC : Translation WFOC BCC Confₒ Conf₂
-OC→BCC = record
-  { sem₁ = ⟦_⟧
-  ; sem₂ = ⟦_⟧₂
-  ; translate = translate
-  }
 ```
 
 ```agda
@@ -243,6 +226,7 @@ data _⟶_ where
     → Root a es ⟶ e
 ```
 
+## Determinism
 
 Function: Every OC expression is in relation to at most one BCC expression.
 ```agda
@@ -268,6 +252,8 @@ Function: Every OC expression is in relation to at most one BCC expression.
   → b ≡ b'
 ⟶-is-deterministic (T-root ⟶b) (T-root ⟶b') = ⟶ₒ-is-deterministic ⟶b ⟶b'
 ```
+
+## Totality (Progress)
 
 Totality: Every OC expression is in relation to at least one BCC expression (Progress).
 ```agda
@@ -299,7 +285,9 @@ totalₒ {b = b} r = b , r
   with ⟶ₒ-is-total (a -< ls ◀ e ∷ rs >-)
      | ⟶ₒ-is-total (a -< ls ◀     rs >-)
 ...  | _ , ⟶eᵒ⁻ʸ | _ , ⟶eᵒ⁻ⁿ = totalₒ (T-option ⟶eᵒ⁻ʸ ⟶eᵒ⁻ⁿ)
+```
 
+```agda
 Total : ∀ {i} {A} → (e : WFOC i A) → Set
 Total {i} e = ∃[ b ] (e ⟶ b)
 
@@ -312,9 +300,126 @@ Total {i} e = ∃[ b ] (e ⟶ b)
    in proj₁ rec , T-root (proj₂ rec)
 ```
 
+## Preservation
+
+```agda
+open import Data.List.Properties using (++-identityʳ)
+
+-- zipper preservation theorem for artifacts
+helper : ∀ {A} {c} {i}
+           {b : A}
+           {ls : List (BCC ∞ A)}
+           {es : List (OC i A)}
+           {e  : BCC ∞ A}
+           (rs : List (Variant A))
+           (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
+         →   (map (flip ⟦_⟧₂ c) ls)             ++ (Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ rs)
+           ≡ (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
+helper {A} {c} {i} {n} {b} {ls} {es} rs ⟶e = {!!}
+
+
+preservesₒ :
+  ∀ {i} {n} {A}
+    {b : BCC ∞ A}
+    {v : Variant A}
+    {c : Confₒ}
+    {z : Zip i n A}
+  → v ≡ ⟦ z ⟧ₜ c
+  → i ⊢ z ⟶ₒ b
+    ------------
+  → v ≡ ⟦ b ⟧₂ c
+preservesₒ {c = c} refl (T-done {a = a} {ls = ls}) =
+  begin
+    ⟦ a -< ls ◀ [] >- ⟧ₜ c
+  ≡⟨⟩
+    Artifactᵥ a ((map (flip ⟦_⟧₂ c) ls) ++ [])
+  ≡⟨ Eq.cong
+       (Artifactᵥ a)
+       (++-identityʳ
+         (map (flip ⟦_⟧₂ c) ls))
+   ⟩
+    Artifactᵥ a (map (flip ⟦_⟧₂ c) ls)
+  ∎
+preservesₒ {c = c} refl (T-artifact {a = a} {b = b} {ls = ls} {es = es}
+ {rs = rs} {e₁ = e₁}{e₂ = e₂} ⟶e ⟶b) =
+  let all-rs = Artifactₒ b es ∷ rs
+      z      = a -< ls ◀ all-rs >-
+   in begin
+      ⟦ z ⟧ₜ c
+    ≡⟨⟩
+      Artifactᵥ a
+        (   map (flip ⟦_⟧₂ c) ls
+         ++ ⟦ toList all-rs ⟧ₒ-recurse c
+        )
+    ≡⟨⟩
+      Artifactᵥ a
+        (   map (flip ⟦_⟧₂ c) ls
+         ++ Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ ⟦ toList rs ⟧ₒ-recurse c
+        )
+    ≡⟨ Eq.cong (Artifactᵥ a) (helper (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩
+      Artifactᵥ a
+        (   map (flip ⟦_⟧₂ c) (ls ++ e₁ ∷ [])
+         ++ ⟦ toList rs ⟧ₒ-recurse c
+        )
+    ≡⟨⟩
+      ⟦ a -< ls ∷ʳ e₁ ◀ rs >- ⟧ₜ c
+    ≡⟨ preservesₒ refl ⟶b ⟩
+      ⟦ e₂ ⟧₂ c
+    ∎
+preservesₒ refl (T-option ⟶e ⟶b) = {!!}
+
+preserves :
+  ∀ {i} {A}
+    {b : BCC ∞ A}
+    {v : Variant A}
+    {c : Confₒ}
+    {e : WFOC i A}
+  → v ≡ ⟦ e ⟧ c
+  → e ⟶ b
+    ------------
+  → v ≡ ⟦ b ⟧₂ c
+preserves {_} {_} {b} {.(⟦ Root a es ⟧ c)} {c} {Root a es} refl (T-root z⟶b) =
+  let z = a -< [] ◀ (fromList es) >-
+   in begin
+        ⟦ Root a es ⟧ c
+      ≡⟨⟩
+        Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
+      ≡⟨ {!!} ⟩
+        Artifactᵥ a (⟦ toList (fromList es) ⟧ₒ-recurse c)
+      ≡⟨⟩
+        ⟦ z ⟧ₜ c
+      ≡⟨ preservesₒ refl z⟶b ⟩
+        ⟦ b ⟧₂ c
+      ∎
+```
+
+
+## Translation Implementation
+
+```agda
+translate : ∀ {i : Size} {A : Domain} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
+translate oc =
+  --let j , bcc = OCtoBCC oc in
+  let bcc , trace = ⟶-is-total oc in
+  record
+  { size = ∞ --j
+  ; expr = bcc
+  ; conf = id
+  ; fnoc = id
+  }
+
+OC→BCC : Translation WFOC BCC Confₒ Conf₂
+OC→BCC = record
+  { sem₁ = ⟦_⟧
+  ; sem₂ = ⟦_⟧₂
+  ; translate = translate
+  }
+```
+
+
 ## Proofs
 
-```text
+```agda
 WFOC→BCC-left : ∀ {i : Size} {A : Domain}
   → (e : WFOC i A)
     --------------
@@ -332,6 +437,16 @@ BCC-is-as-expressive-as-OC : BCC , ⟦_⟧₂ is-as-expressive-as WFOC , ⟦_⟧
 BCC-is-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
 ```
 
+## via relation
+
+```agda
+WFOC→BCC-left e c =
+  let trans      = ⟶-is-total e
+      derivation = proj₂ trans
+   in preserves refl derivation
+```
+
+## via function
 ```text
 open import Data.Vec using (Vec; cast; fromList)
 open Data.Nat using (_∸_)
