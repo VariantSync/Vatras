@@ -140,7 +140,7 @@ OCtoBCC (Root a es) =
 ```
 
 ```agda
-record Zip (i : Size) (work : ℕ) (A : Domain) : Set where
+record Zip (work : ℕ) (i : Size) (A : Domain) : Set where
   constructor _-<_◀_>- --\T
   field
     --{i j} : Size
@@ -150,12 +150,13 @@ record Zip (i : Size) (work : ℕ) (A : Domain) : Set where
 open Zip public
 infix 4 _-<_◀_>-
 
-Zip-is-VarLang : ℕ → Definitions.VarLang
-Zip-is-VarLang w = λ i → Zip i w
+-- Proof that Zip is a variability language.
+Zip-is-VarLang : ℕ → VarLang
+Zip-is-VarLang w = Zip w
 
 -- semantics of zippers (i.e., the intermediate translation state)
 -- In fact, Zippers are also variability languages parameterized in amount of work to do.
-⟦_⟧ₜ : ∀ {w : ℕ} → Semantics (Zip-is-VarLang w) Confₒ
+⟦_⟧ₜ : ∀ {w : ℕ} → Semantics (Zip w) Confₒ
 ⟦ a -< ls ◀ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
@@ -163,8 +164,8 @@ Zip-is-VarLang w = λ i → Zip i w
 
 data _⊢_⟶ₒ_ :
   ∀ {n : ℕ} {A : Domain}
-  → (i : Size)
-  → Zip i n A
+  → (i : Size) -- We have to make sizes explicit here because otherwise, Agda sometimes infers ∞ which makes termination checking fail.
+  → Zip n i A
   → BCC ∞ A
   → Set
 infix 3 _⊢_⟶ₒ_
@@ -230,7 +231,7 @@ data _⟶_ where
 
 Function: Every OC expression is in relation to at most one BCC expression.
 ```agda
-⟶ₒ-is-deterministic : ∀ {i} {n} {A} {z : Zip i n A} {b b' : BCC ∞ A}
+⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : BCC ∞ A}
   → i ⊢ z ⟶ₒ b
   → i ⊢ z ⟶ₒ b'
     ----------
@@ -257,11 +258,11 @@ Function: Every OC expression is in relation to at most one BCC expression.
 
 Totality: Every OC expression is in relation to at least one BCC expression (Progress).
 ```agda
-Totalₒ : ∀ {i} {n} {A} → (e : Zip i n A) → Set
-Totalₒ {i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
+Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set
+Totalₒ {i = i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
 
 -- smart constructor for Totalₒ
-totalₒ : ∀ {i} {n} {A} {e : Zip i n A} {b}
+totalₒ : ∀ {n} {i} {A} {e : Zip n i A} {b}
   → (i ⊢ e ⟶ₒ b)
     -------------
   → Totalₒ e
@@ -306,24 +307,24 @@ Total {i} e = ∃[ b ] (e ⟶ b)
 open import Data.List.Properties using (++-identityʳ)
 
 -- zipper preservation theorem for artifacts
-helper : ∀ {A} {c} {i}
-           {b : A}
-           {ls : List (BCC ∞ A)}
-           {es : List (OC i A)}
-           {e  : BCC ∞ A}
-           (rs : List (Variant A))
+preservesₒ-artifact :
+         ∀ {A} {c} {i}
+           {b   : A}
+           {ls  : List (BCC ∞ A)}
+           {es  : List (OC i A)}
+           {e   : BCC ∞ A}
+           (rs  : List (Variant A))
            (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
          →   (map (flip ⟦_⟧₂ c) ls)             ++ (Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ rs)
            ≡ (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
-helper {A} {c} {i} {n} {b} {ls} {es} rs ⟶e = {!!}
-
+preservesₒ-artifact {A} {c} {i} {n} {b} {ls} {es} rs ⟶e = {!!}
 
 preservesₒ :
-  ∀ {i} {n} {A}
+  ∀ {n} {i} {A}
     {b : BCC ∞ A}
     {v : Variant A}
     {c : Confₒ}
-    {z : Zip i n A}
+    {z : Zip n i A}
   → v ≡ ⟦ z ⟧ₜ c
   → i ⊢ z ⟶ₒ b
     ------------
@@ -356,7 +357,7 @@ preservesₒ {c = c} refl (T-artifact {a = a} {b = b} {ls = ls} {es = es}
         (   map (flip ⟦_⟧₂ c) ls
          ++ Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ ⟦ toList rs ⟧ₒ-recurse c
         )
-    ≡⟨ Eq.cong (Artifactᵥ a) (helper (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩
+    ≡⟨ Eq.cong (Artifactᵥ a) (preservesₒ-artifact (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩
       Artifactᵥ a
         (   map (flip ⟦_⟧₂ c) (ls ++ e₁ ∷ [])
          ++ ⟦ toList rs ⟧ₒ-recurse c
