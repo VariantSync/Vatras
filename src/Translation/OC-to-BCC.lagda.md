@@ -39,8 +39,8 @@ open import Lang.BCC
            ; Configuration to Conf₂
            )
 open import Lang.Annotation.Name using (Option; Dimension; _==_)
-open import Definitions using (Domain; sequence-sized-artifact)
-open import SemanticDomain using (Artifactᵥ)
+open import Definitions using (VarLang; Domain; Semantics; sequence-sized-artifact)
+open import SemanticDomain using (Variant; Artifactᵥ)
 open import Translation.Translation using
   (Translation; TranslationResult;
    expr;
@@ -166,6 +166,17 @@ record Zip (i : Size) (work : ℕ) (A : Domain) : Set where
     siblingsR : Vec (OC i A) work -- i
 open Zip public
 infix 4 _-<_◀_>-
+
+Zip-is-VarLang : ℕ → Definitions.VarLang
+Zip-is-VarLang w = λ i → Zip i w
+
+-- semantics of zippers (i.e., the intermediate translation state)
+-- In fact, Zippers are also variability languages parameterized in amount of work to do.
+⟦_⟧ₜ : ∀ {w : ℕ} → Semantics (Zip-is-VarLang w) Confₒ
+⟦ a -< ls ◀ rs >- ⟧ₜ c =
+  let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
+      ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
+   in Artifactᵥ a (⟦ls⟧ ++ ⟦rs⟧)
 
 data _⊢_⟶ₒ_ :
   ∀ {n : ℕ} {A : Domain}
