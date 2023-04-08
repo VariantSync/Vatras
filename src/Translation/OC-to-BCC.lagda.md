@@ -48,7 +48,7 @@ open import Translation.Translation using
    _is-variant-preserving; translation-proves-variant-preservation)
 open import Relations.Semantic using (_,_is-as-expressive-as_,_)
 
-open import Util.AuxProofs using (m≤n⇒m<1+n; vec-n∸n)
+open import Util.AuxProofs using (m≤n⇒m<1+n; vec-n∸n; id≗toList∘fromList)
 open import Util.Existence using (∃-Size; ∃-syntax-with-type; _,_; proj₁; proj₂; ,-injectiveʳ)
 
 open import Util.SizeJuggle using (to-max; sym-max)
@@ -385,7 +385,7 @@ preserves {_} {_} {b} {.(⟦ Root a es ⟧ c)} {c} {Root a es} refl (T-root z⟶
         ⟦ Root a es ⟧ c
       ≡⟨⟩
         Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
-      ≡⟨ {!!} ⟩
+      ≡⟨ Eq.cong (λ eq → Artifactᵥ a (⟦ eq ⟧ₒ-recurse c)) (id≗toList∘fromList es) ⟩
         Artifactᵥ a (⟦ toList (fromList es) ⟧ₒ-recurse c)
       ≡⟨⟩
         ⟦ z ⟧ₜ c
