@@ -66,15 +66,15 @@ It keeps track of which children have already been translated and which have not
 The idea is that the zipper wanders through the children from left to right, translating one child at a time.
 In the beginning, no child of the parent artifact has been translated:
 
-  [] ◀ e₁ ∷ e₂ ∷ e₃ ∷ ... ∷ eₙ
+    [] ◀ e₁ ∷ e₂ ∷ e₃ ∷ ... ∷ eₙ
 
 then, step by step, each child get's translated:
 
-  b₁ ∷ [] ◀ e₂ ∷ e₃ ∷ ... ∷ eₙ
-  b₁ ∷ b₂ ∷ [] ◀ e₃ ∷ ... ∷ eₙ
-  b₁ ∷ b₂ ∷ b₃ ∷ [] ◀ ... ∷ eₙ
-  ...
-  b₁ ∷ b₂ ∷ b₃ ∷ ... ∷ bₙ ◀ []
+    b₁ ∷ [] ◀ e₂ ∷ e₃ ∷ ... ∷ eₙ
+    b₁ ∷ b₂ ∷ [] ◀ e₃ ∷ ... ∷ eₙ
+    b₁ ∷ b₂ ∷ b₃ ∷ [] ◀ ... ∷ eₙ
+    ...
+    b₁ ∷ b₂ ∷ b₃ ∷ ... ∷ bₙ ◀ []
 
 The zipper is parameterized in a natural number that is the amount of children yet to translate.
 
