@@ -14,6 +14,8 @@ open import Size using (Size)
 open import Data.Product   using (_,_; ∃-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size; ∃-syntax-with-type)
 
+open import Relation.Nullary.Negation using (¬_)
+
 open import Definitions
 ```
 
@@ -288,17 +290,29 @@ In the following the prove the same properties as for the relations within a sin
 
 We say that a language `L₁` is as expressive as another language `L₂` **iff** for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same set of variants. This means that there exists a translation from `L₂` to `L₁`, and thus `L₁` can model `L₂`:
 ```agda
-_,_is-as-expressive-as_,_ : {C₁ C₂ : ConfLang}
+-- L₁ ⊇ L₂
+_,_is-at-least-as-expressive-as_,_ : {C₁ C₂ : ConfLang}
   → (L₁ : VarLang)
   → Semantics L₁ C₁
   → (L₂ : VarLang)
   → Semantics L₂ C₂
   → Set₁
-L₁ , S₁ is-as-expressive-as L₂ , S₂ =
+L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂ =
   ∀ {j : Size} {A : Domain} (e₂ : L₂ j A) →
     ∃-Size[ i ]
-      (∃[ e₁ ∈ (L₁ i A)]
+      (∃[ e₁ ∈ (L₁ i A) ]
         (L₂ , S₂ and L₁ , S₁ ⊢ e₂ ≚ e₁))
+
+-- L₁ ⊃ L₂ ⇔ L₁ ⊇ L₂ ∧ ¬ (L₂ ⊇ L₁)
+_,_is-more-expressive-than_,_ : {C₁ C₂ : ConfLang}
+  → (L₁ : VarLang)
+  → Semantics L₁ C₁
+  → (L₂ : VarLang)
+  → Semantics L₂ C₂
+  → Set₁
+L₁ , S₁ is-more-expressive-than L₂ , S₂ =
+       L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂
+  × ¬ (L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁)
 ```
 
 A language `L₁` is variant equivalent to another language `L₂` **iff** they are equally expressive. This means that we can translate between both languages. (We cannot prove the existence of a translation though because we cannot find a translation automatically. We use the inverse route, concluding propositions about languages from building translations later.)
@@ -310,17 +324,17 @@ _,_is-variant-equivalent-to_,_ : {C₁ C₂ : ConfLang}
   → Semantics L₂ C₂
   → Set₁
 L₁ , S₁ is-variant-equivalent-to L₂ , S₂ =
-    (L₁ , S₁ is-as-expressive-as L₂ , S₂)
-  × (L₂ , S₂ is-as-expressive-as L₁ , S₁)
+    (L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂)
+  × (L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁)
 ```
 
 Expressiveness is transitive:
 ```agda
 trans-expressiveness : ∀ {L₁ L₂ L₃ : VarLang} {C₁ C₂ C₃ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {S₃ : Semantics L₃ C₃}
-  → L₁ , S₁ is-as-expressive-as L₂ , S₂
-  → L₂ , S₂ is-as-expressive-as L₃ , S₃
+  → L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂
+  → L₂ , S₂ is-at-least-as-expressive-as L₃ , S₃
     -----------------------------------
-  → L₁ , S₁ is-as-expressive-as L₃ , S₃
+  → L₁ , S₁ is-at-least-as-expressive-as L₃ , S₃
 trans-expressiveness
   {L₁} {L₂} {L₃}
   {C₁} {C₂} {C₃}

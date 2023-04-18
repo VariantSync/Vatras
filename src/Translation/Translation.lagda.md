@@ -158,7 +158,7 @@ translation-proves-variant-preservation : ∀ {L₁ L₂ : VarLang} {C₁ C₂ :
   → (t : Translation L₁ L₂ C₁ C₂)
   → t is-variant-preserving
     -------------------------------------------
-  → L₂ , sem₂ t is-as-expressive-as L₁ , sem₁ t
+  → L₂ , sem₂ t is-at-least-as-expressive-as L₁ , sem₁ t
 translation-proves-variant-preservation trans preservation e₁ =
   let r = translate trans e₁ in
     size r

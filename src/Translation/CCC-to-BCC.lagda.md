@@ -64,7 +64,7 @@ open import SemanticDomain using (Variant; Artifactᵥ)
 open import Definitions using (Domain; VarLang; ConfLang; Semantics; sequence-sized-artifact)
 open import Relations.Semantic
   -- Relations between variability languages
-  using (_,_is-as-expressive-as_,_)
+  using (_,_is-at-least-as-expressive-as_,_)
 open import Translation.Translation
   -- Translations
   using (Translation; TranslationResult; expr; conf; fnoc)
@@ -341,7 +341,7 @@ CCC→BCC-right : ∀ {i : Size} {A : Domain}
 CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
 CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
 
-BCC-is-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-as-expressive-as CCC , ⟦_⟧ₙ
+BCC-is-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as CCC , ⟦_⟧ₙ
 BCC-is-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
 ```
 

@@ -37,7 +37,7 @@ open import Lang.BCC
            ; Artifact to Artifact₂
            ; Configuration to Conf₂
            )
-open import Relations.Semantic using (_,_is-as-expressive-as_,_)
+open import Relations.Semantic using (_,_is-at-least-as-expressive-as_,_)
 open import SemanticDomain using (Variant; Artifactᵥ)
 open import Translation.Translation using
   (Translation; TranslationResult;
@@ -404,7 +404,7 @@ OC→BCC-is-variant-preserving e = ⊆-via-OC→BCC e , ⊆-via-OC→BCC e
 OC→BCC-is-semantics-preserving : OC→BCC is-semantics-preserving
 OC→BCC-is-semantics-preserving = OC→BCC-is-variant-preserving , λ e c → refl
 
-BCC-is-as-expressive-as-OC : BCC , ⟦_⟧₂ is-as-expressive-as WFOC , ⟦_⟧
+BCC-is-as-expressive-as-OC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as WFOC , ⟦_⟧
 BCC-is-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
 ```
 

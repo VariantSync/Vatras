@@ -197,7 +197,7 @@ subst-vs-contains-all-e vs e₁ e₂ e₁≚e₂ vs-contains-e₁  =
 
 completeness-by-expressiveness : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂}
   → Complete L₁ C₁ S₁
-  → L₂ , S₂ is-as-expressive-as L₁ , S₁
+  → L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁
     -----------------------------------
   → Complete L₂ C₂ S₂
 completeness-by-expressiveness {L₁} {L₂} {_} {_} {S₁} {S₂} encode-in-L₁ L₁-to-L₂ vs =
@@ -252,11 +252,12 @@ Assuming `L₋` is as expressive as `L₊`, and knowing that `L₊` is complete,
 Yet, we already know that L₋ is incomplete.
 This yields a contradiction.
 ```agda
+-- TODO: Conclude (L₊ , S₊ is-more-expressive-than L₋ , S₋) instead.
 less-expressive : ∀ {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
   →   Complete L₊ C₊ S₊
   → Incomplete L₋ C₋ S₋
     --------------------------------------
-  → ¬ (L₋ , S₋ is-as-expressive-as L₊ , S₊)
+  → ¬ (L₋ , S₋ is-at-least-as-expressive-as L₊ , S₊)
 less-expressive L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
     L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
 ```
