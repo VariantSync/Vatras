@@ -55,11 +55,14 @@ The semantics of a language `VarLang` and its corresponding configuration langua
 
 We model variants as a generic tree structure. To this end, we assume that the domain is not more complex than a tree, which is reasonable since most languages are trees:
 ```agda
-data SizedVariant : VarLang where
-  Artifactᵥ : Artifactˡ SizedVariant
+-- data SizedVariant : VarLang where
+  -- Artifactᵥ : Artifactˡ SizedVariant
 
-Variant : Domain → Set
-Variant = SizedVariant ∞
+--Variant : Domain → Set
+--Variant = SizedVariant ∞
+
+data Variant (A : Set) : Set where
+  Artifactᵥ : A → List (Variant A) → Variant A
 ```
 
 Having variants defined, we can now finally formulate the semantics of a variability language:
@@ -95,12 +98,12 @@ We can now formalize our assumption that it must be legal to split the domain in
 -- Todo: Reuse generic isomorphism definition
 open import Util.SizeJuggle
 
-record ObjectLanguage (A : Bounded) (L : Label) : Set where
-  field
-    embed   : ∀ {i : Size} → A i → SizedVariant i L
-    restore : ∀ {i : Size} → SizedVariant i L → A i
-    iso-l   : embed ∘ restore ≗ id
-    iso-r   : restore ∘ embed ≗ id
+-- record ObjectLanguage (A : Bounded) (L : Label) : Set where
+--   field
+--     embed   : ∀ {i : Size} → A i → SizedVariant i L
+--     restore : ∀ {i : Size} → SizedVariant i L → A i
+--     iso-l   : embed ∘ restore ≗ id
+--     iso-r   : restore ∘ embed ≗ id
 ```
 
 ## Variant is a Functor
@@ -115,11 +118,11 @@ root-equality : ∀ {A : Set} {a b : A} {as bs : List (Variant A)}
    → a ≡ b
 root-equality refl = refl
 
-subtree-equality : ∀ {A : Set} {a b : A} {as bs : List (Variant A)}
-   → Artifactᵥ a as ≡ Artifactᵥ b bs
-     ------------------------------
-   → as ≡ bs
-subtree-equality refl = refl
+-- subtree-equality : ∀ {A : Set} {a b : A} {as bs : List (Variant A)}
+--    → Artifactᵥ a as ≡ Artifactᵥ b bs
+--      ------------------------------
+--    → as ≡ bs
+-- subtree-equality refl = refl
 
 -- {-# TERMINATING #-}
 -- ≡-dec : ∀ {A : Set} → DecidableEquality A → DecidableEquality (Variant A)
