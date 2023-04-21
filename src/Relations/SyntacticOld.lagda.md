@@ -1,7 +1,7 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 
-module Relations.Syntactic where
+module Relations.SyntacticOld where
 ```
 
 # Syntactic Relations of Variability Languages
