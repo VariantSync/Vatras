@@ -16,7 +16,7 @@ module Translation.OC-to-BCC where
 ## Imports
 
 ```agda
-open import Data.Bool using (if_then_else_)
+open import Data.Bool using (if_then_else_; true; false)
 open import Data.List using (List; _∷_; []; _∷ʳ_; _++_; length; map; catMaybes)
 open import Data.Nat using (ℕ)
 open import Data.Product using (∃; ∃-syntax; _,_; proj₁; proj₂)
@@ -238,7 +238,7 @@ totalₒ {b = b} r = b , r
   → Totalₒ e
 ⟶ₒ-is-total (a -< ls ◀ [] >-) = totalₒ T-done
 ⟶ₒ-is-total (a -< ls ◀ Artifactₒ b es ∷ rs >-) =
-  -- We must use "let" here and are should not use "with".
+  -- We must use "let" here and should not use "with".
   -- "with" forgets some information (I don't know what exactly) that
   -- makes the termination checker fail.
   let recursion-on-children-is-total = ⟶ₒ-is-total (b -< [] ◀ fromList es >-)
@@ -262,8 +262,68 @@ totalₒ {b = b} r = b , r
 
 ## Preservation
 
+Theorems:
 ```agda
-open import Data.List.Properties using (++-identityʳ)
+preservesₒ :
+  ∀ {n} {i} {A}
+    {b : BCC ∞ A}
+    {z : Zip n i A}
+  → (c : Confₒ)
+  → i ⊢ z ⟶ₒ b
+    -------------------
+  → ⟦ z ⟧ₜ c ≡ ⟦ b ⟧₂ c
+
+preserves :
+  ∀ {i} {A}
+    {b : BCC ∞ A}
+    {e : WFOC i A}
+  → (c : Confₒ)
+  → e ⟶ b
+    ------------------
+  → ⟦ e ⟧ c ≡ ⟦ b ⟧₂ c
+```
+
+Proofs
+```agda
+open Data.Nat using (suc)
+open Data.List using (catMaybes)
+open import Data.List.Properties using (++-identityʳ; ++-assoc; map-++)
+
+{-|
+Auxiliary function that we need to assist the termination checker.
+
+The proof is actually just: preserves c (T-root ⟶e).
+The implementation of this function (i.e., the proof of this theorem) is copy and paste from "preserves".
+
+Why?
+Because when invoking "preserves", termination checking fails.
+The problem is that we have to wrap ⟶e in T-root, which is a growing constructor,
+not a shrinking one. Agda fails to see that "preserves" directly unpacks this constructor again
+and consequently, call is harmless for termination.
+Since Agda fails here, we have to avoid the re- and unpacking below T-root and thus introduce
+this auxiliary function.
+-}
+preserves-without-T-root :
+       ∀ {i} {A}
+         {b : A}
+         {es : List (OC i A)}
+         {e : BCC ∞ A}
+         (c : Confₒ)
+         (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
+       → ⟦ Root b es ⟧ c ≡ ⟦ e ⟧₂ c
+preserves-without-T-root {b = b} {es = es} {e = e} c ⟶e =
+  let z = b -< [] ◀ (fromList es) >-
+  in begin
+       ⟦ Root b es ⟧ c
+     ≡⟨⟩
+       Artifactᵥ b (⟦ es ⟧ₒ-recurse c)
+     ≡⟨ Eq.cong (λ eq → Artifactᵥ b (⟦ eq ⟧ₒ-recurse c)) (id≗toList∘fromList es) ⟩
+       Artifactᵥ b (⟦ toList (fromList es) ⟧ₒ-recurse c)
+     ≡⟨⟩
+       ⟦ z ⟧ₜ c
+     ≡⟨ preservesₒ c ⟶e ⟩
+       ⟦ e ⟧₂ c
+     ∎
 
 -- zipper preservation theorem for artifacts
 preservesₒ-artifact :
@@ -274,19 +334,88 @@ preservesₒ-artifact :
            {e   : BCC ∞ A}
            (rs  : List (Variant A))
            (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
-         →   (map (flip ⟦_⟧₂ c) ls)             ++ (Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ rs)
+         →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
            ≡ (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
-preservesₒ-artifact {A} {c} {i} {n} {b} {ls} {es} rs ⟶e = {!!}
+preservesₒ-artifact {i} {A} {c} {b} {ls} {es} {e} rs ⟶e =
+  let term1L = map (flip ⟦_⟧₂ c) ls
+      term1RL = (⟦ Root b es ⟧ c) ∷ []
+      term1RR = rs
+      term1R = term1RL ++ term1RR
+   in
+  begin
+    (map (flip ⟦_⟧₂ c) ls) ++ ((⟦ Root b es ⟧ c) ∷ rs)
+  ≡⟨⟩
+    term1L ++ term1R
+  ≡⟨⟩
+    term1L ++ (term1RL ++ term1RR)
+  ≡⟨ Eq.sym (++-assoc term1L term1RL term1RR) ⟩
+    (term1L ++ term1RL) ++ term1RR
+  ≡⟨ Eq.cong (_++ term1RR)
+      (Eq.cong (term1L ++_)
+        (Eq.cong (_∷ [])
+          (preserves-without-T-root c ⟶e)))
+   ⟩
+    (term1L ++ (map (flip ⟦_⟧₂ c) (e ∷ []))) ++ term1RR
+  ≡⟨ Eq.cong (_++ rs) (Eq.sym (map-++ (flip ⟦_⟧₂ c) ls (e ∷ []))) ⟩
+    (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
+  ∎
 
-preservesₒ :
-  ∀ {n} {i} {A}
-    {b : BCC ∞ A}
-    {c : Confₒ}
-    {z : Zip n i A}
-  → i ⊢ z ⟶ₒ b
-    -------------------
-  → ⟦ z ⟧ₜ c ≡ ⟦ b ⟧₂ c
-preservesₒ {c = c} (T-done {a = a} {ls = ls}) =
+flubi : ∀ {c} {n} {i} {A} {a : A}
+          {e : OC i A}
+          {ls : List (BCC ∞ A)}
+          {rs : Vec (OC (↑ i) A) n}
+          {ey en : BCC ∞ A}
+        → (⟶ey : (↑ i) ⊢ a -< ls ◀ e ∷ rs >- ⟶ₒ ey)
+        → (⟶en : (↑ i) ⊢ a -< ls ◀     rs >- ⟶ₒ en)
+        →   catMaybes (⟦ e ⟧ₒ c ∷ map (λ x → ⟦ x ⟧ₒ c) (toList rs))
+          ≡ catMaybes (⟦ e ⟧ₒ c ∷ map (λ x → ⟦ x ⟧ₒ c) (toList rs))
+flubi = λ ⟶ey ⟶en → refl
+
+-- helper theorem for preservation on options
+preservesₒ-option : ∀ {n} {i} {A}
+                      {c : Confₒ}
+                      {a : A}
+                      {O : Option}
+                      {e : OC i A}
+                      {ls : List (BCC ∞ A)}
+                      {rs : Vec (OC (↑ i) A) n}
+                      {ey : BCC ∞ A}
+                      {en : BCC ∞ A}
+                      (⟶ey : (↑ i) ⊢ a -< ls ◀ e ∷ rs >- ⟶ₒ ey)
+                      (⟶en : (↑ i) ⊢ a -< ls ◀     rs >- ⟶ₒ en)
+                    →   ⟦ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟧ₜ c
+                        --Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ ⟦ toList (O ❲ e ❳ ∷ rs) ⟧ₒ-recurse c)
+                      ≡ ⟦ if c O then ey else en ⟧₂ c
+preservesₒ-option {n} {i} {A} {c} {a} {O} {e} {ls} {rs} {ey} {en} ⟶ey ⟶en with c O
+... | true = let map₂ = map (flip ⟦_⟧₂ c)
+                 mapₒ = map (flip ⟦_⟧ₒ c)
+
+                 z : Zip (suc n) (↑ i) A
+                 z = a -< ls ◀ e ∷ rs >-
+             in
+             begin
+               Artifactᵥ a (map₂ ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ mapₒ (toList rs))))
+             -- We have to prove some weird thing about sizes here. Why? For false it just works.
+             -- Maybe it's from using "with" that again forgot something important?
+             -- I have no idea. :(
+             -- Extracting this proof to a helper theorem does not work at all.
+             -- I did so above with "flubi" but the sizes that do not match here
+             -- are still hidden and so the helper theorem is trivial to prove, and
+             -- cannot be applied here.
+             ≡⟨ Eq.cong (Artifactᵥ a) (Eq.cong (map₂ ls ++_) {!!}) ⟩
+               Artifactᵥ a (map₂ ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ mapₒ (toList rs))))
+             ≡⟨⟩
+               Artifactᵥ a (map₂ ls ++ ⟦ toList (e ∷ rs) ⟧ₒ-recurse c)
+             ≡⟨⟩
+               ⟦ a -< ls ◀ e ∷ rs >- ⟧ₜ c
+             ≡⟨⟩
+               ⟦ z ⟧ₜ c
+             ≡⟨ preservesₒ {i = ↑ i} c ⟶ey ⟩
+               ⟦ ey ⟧₂ c
+             ∎
+... | false = preservesₒ c ⟶en
+
+preservesₒ c (T-done {a = a} {ls = ls}) =
   begin
     ⟦ a -< ls ◀ [] >- ⟧ₜ c
   ≡⟨⟩
@@ -298,7 +427,7 @@ preservesₒ {c = c} (T-done {a = a} {ls = ls}) =
    ⟩
     Artifactᵥ a (map (flip ⟦_⟧₂ c) ls)
   ∎
-preservesₒ {c = c} (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ = e₁}{e₂ = e₂} ⟶e ⟶b) =
+preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ = e₁} {e₂ = e₂} ⟶e ⟶b) =
   let all-rs = Artifactₒ b es ∷ rs
       z      = a -< ls ◀ all-rs >-
   in
@@ -321,34 +450,22 @@ preservesₒ {c = c} (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {
       )
   ≡⟨⟩
     ⟦ a -< ls ∷ʳ e₁ ◀ rs >- ⟧ₜ c
-  ≡⟨ preservesₒ ⟶b ⟩
+  ≡⟨ preservesₒ c ⟶b ⟩
     ⟦ e₂ ⟧₂ c
   ∎
-preservesₒ {c = c} (T-option {_} {_} {_} {a} {O} {e} {ls} {rs} {ey} {en} ⟶ey ⟶en) =
+preservesₒ c (T-option {_} {_} {_} {a} {O} {e} {ls} {rs} {ey} {en} ⟶ey ⟶en) =
   let all-rs = O ❲ e ❳ ∷ rs
       z = a -< ls ◀ all-rs >-
   in
   begin
     ⟦ z ⟧ₜ c
-  ≡⟨⟩
-    Artifactᵥ a
-      (   (map (flip ⟦_⟧₂ c) ls)
-       ++ (⟦ toList all-rs ⟧ₒ-recurse c))
-  ≡⟨ {!!} ⟩ -- Do case analysis on (c O) here.
+  ≡⟨ preservesₒ-option ⟶ey ⟶en ⟩ -- Do case analysis on (c O) here.
     ⟦ if c O then ey else en ⟧₂ c
   ≡⟨⟩
     ⟦ O ⟨ ey , en ⟩ ⟧₂ c
   ∎
 
-preserves :
-  ∀ {i} {A}
-    {b : BCC ∞ A}
-    {c : Confₒ}
-    {e : WFOC i A}
-  → e ⟶ b
-    ------------------
-  → ⟦ e ⟧ c ≡ ⟦ b ⟧₂ c
-preserves {_} {_} {b} {c} {Root a es} (T-root z⟶b) =
+preserves {b = b} {e = Root a es} c (T-root z⟶b) =
   let z = a -< [] ◀ (fromList es) >-
    in begin
         ⟦ Root a es ⟧ c
@@ -358,7 +475,7 @@ preserves {_} {_} {b} {c} {Root a es} (T-root z⟶b) =
         Artifactᵥ a (⟦ toList (fromList es) ⟧ₒ-recurse c)
       ≡⟨⟩
         ⟦ z ⟧ₜ c
-      ≡⟨ preservesₒ z⟶b ⟩
+      ≡⟨ preservesₒ c z⟶b ⟩
         ⟦ b ⟧₂ c
       ∎
 ```
@@ -394,7 +511,7 @@ OC→BCC = record
 ⊆-via-OC→BCC e c =
   let trans      = ⟶-is-total e
       derivation = proj₂ trans
-   in preserves derivation
+   in preserves c derivation
 
 -- When the translation of configurations is id, then the theorems for both sides become equivalent.
 -- TODO: Maybe we want to gerneralize this observation to the framework?
