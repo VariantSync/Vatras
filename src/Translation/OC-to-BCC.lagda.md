@@ -283,34 +283,27 @@ preserves :
   → ⟦ e ⟧ c ≡ ⟦ b ⟧₂ c
 ```
 
-Proofs
+First, some auxiliary theorems that we need for the actual proofs of the preservation theorems.
 ```agda
 open Data.Nat using (suc)
 open Data.List using (catMaybes)
+open import Data.Maybe using (Maybe; just; nothing)
 open import Data.List.Properties using (++-identityʳ; ++-assoc; map-++)
 
 {-|
-Auxiliary function that we need to assist the termination checker.
-
+The same as "preserves" (i.e., this functions implementation is copy and paste from "preserves").
 The proof is actually just: preserves c (T-root ⟶e).
-The implementation of this function (i.e., the proof of this theorem) is copy and paste from "preserves".
-
-Why?
-Because when invoking "preserves", termination checking fails.
-The problem is that we have to wrap ⟶e in T-root, which is a growing constructor,
-not a shrinking one. Agda fails to see that "preserves" directly unpacks this constructor again
-and consequently, call is harmless for termination.
-Since Agda fails here, we have to avoid the re- and unpacking below T-root and thus introduce
-this auxiliary function.
+We need this auxiliary function to assist the termination checker because directly invoking "preserves" makes termination checking fail.
+The problem is that we have to wrap ⟶e in T-root, which is a growing constructor, not a shrinking one.
+Agda fails to see that "preserves" directly unpacks this constructor again and consequently, that the call is harmless.
+Since Agda fails here, we have to avoid the re- and unpacking below T-root and thus introduce this auxiliary function.
 -}
 preserves-without-T-root :
-       ∀ {i} {A}
-         {b : A}
-         {es : List (OC i A)}
-         {e : BCC ∞ A}
-         (c : Confₒ)
-         (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
-       → ⟦ Root b es ⟧ c ≡ ⟦ e ⟧₂ c
+  ∀ {i} {A} {b : A} {es : List (OC i A)} {e : BCC ∞ A}
+  → (c : Confₒ)
+  → (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
+    ------------------------------------------
+  → ⟦ Root b es ⟧ c ≡ ⟦ e ⟧₂ c
 preserves-without-T-root {b = b} {es = es} {e = e} c ⟶e =
   let z = b -< [] ◀ (fromList es) >-
   in begin
@@ -325,145 +318,105 @@ preserves-without-T-root {b = b} {es = es} {e = e} c ⟶e =
        ⟦ e ⟧₂ c
      ∎
 
--- zipper preservation theorem for artifacts
+{-|
+This theorem ensures that making a step in the zipper (i.e., translating the next sub-expression)
+preserves semantics.
+The concrete formulas are a bit convoluted here because they are partially normalised.
+-}
 preservesₒ-artifact :
-         ∀ {i} {A} {c}
-           {b   : A}
-           {ls  : List (BCC ∞ A)}
-           {es  : List (OC i A)}
-           {e   : BCC ∞ A}
-           (rs  : List (Variant A))
-           (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
-         →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
-           ≡ (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
+  ∀ {i} {A} {c}
+    {b   : A}
+    {ls  : List (BCC ∞ A)}
+    {es  : List (OC i A)}
+    {e   : BCC ∞ A}
+  → (rs  : List (Variant A))
+  → (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
+    ----------------------------------------------------------------
+  →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
+    ≡ (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
 preservesₒ-artifact {i} {A} {c} {b} {ls} {es} {e} rs ⟶e =
-  let term1L = map (flip ⟦_⟧₂ c) ls
-      term1RL = (⟦ Root b es ⟧ c) ∷ []
-      term1RR = rs
-      term1R = term1RL ++ term1RR
-   in
-  begin
-    (map (flip ⟦_⟧₂ c) ls) ++ ((⟦ Root b es ⟧ c) ∷ rs)
-  ≡⟨⟩
-    term1L ++ term1R
-  ≡⟨⟩
-    term1L ++ (term1RL ++ term1RR)
-  ≡⟨ Eq.sym (++-assoc term1L term1RL term1RR) ⟩
-    (term1L ++ term1RL) ++ term1RR
-  ≡⟨ Eq.cong (_++ term1RR)
-      (Eq.cong (term1L ++_)
-        (Eq.cong (_∷ [])
-          (preserves-without-T-root c ⟶e)))
-   ⟩
-    (term1L ++ (map (flip ⟦_⟧₂ c) (e ∷ []))) ++ term1RR
-  ≡⟨ Eq.cong (_++ rs) (Eq.sym (map-++ (flip ⟦_⟧₂ c) ls (e ∷ []))) ⟩
-    (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
-  ∎
+  let map₂     = map (flip ⟦_⟧₂ c)
+      root-sem = ⟦ Root b es ⟧ c
+   in begin
+        map₂ ls ++ (root-sem ∷ rs)
+      ≡⟨⟩
+        map₂ ls ++ (root-sem ∷ [] ++ rs)
+      ≡⟨ Eq.sym (++-assoc (map₂ ls) (root-sem ∷ []) rs) ⟩
+        (map₂ ls ++ (root-sem ∷ [])) ++ rs
+      -- apply induction hypothesis (root-sem preserves semantics)
+      ≡⟨ Eq.cong (_++ rs)
+          (Eq.cong (map₂ ls ++_)
+            (Eq.cong (_∷ [])
+              (preserves-without-T-root c ⟶e)))
+      ⟩
+        (map₂ ls ++ (map₂ (e ∷ []))) ++ rs
+      ≡⟨ Eq.cong (_++ rs) (Eq.sym (map-++ (flip ⟦_⟧₂ c) ls (e ∷ []))) ⟩
+        (map₂ (ls ++ e ∷ [])) ++ rs
+      ∎
 
-flubi : ∀ {c} {n} {i} {A} {a : A}
-          {e : OC i A}
-          {ls : List (BCC ∞ A)}
-          {rs : Vec (OC (↑ i) A) n}
-          {ey en : BCC ∞ A}
-        → (⟶ey : (↑ i) ⊢ a -< ls ◀ e ∷ rs >- ⟶ₒ ey)
-        → (⟶en : (↑ i) ⊢ a -< ls ◀     rs >- ⟶ₒ en)
-        →   catMaybes (⟦ e ⟧ₒ c ∷ map (λ x → ⟦ x ⟧ₒ c) (toList rs))
-          ≡ catMaybes (⟦ e ⟧ₒ c ∷ map (λ x → ⟦ x ⟧ₒ c) (toList rs))
-flubi = λ ⟶ey ⟶en → refl
+{-|
+Auxiliary helper theorem for preservation of semantics for options, when an option is picked.
+This helper theorem only proves that applying the semantics ⟦_⟧ₒ deep within the zipper semantics ⟦_⟧ₜ (normalised here)
+does not care for the size of the expression.
 
--- helper theorem for preservation on options
-preservesₒ-option : ∀ {n} {i} {A}
-                      {c : Confₒ}
-                      {a : A}
-                      {O : Option}
-                      {e : OC i A}
-                      {ls : List (BCC ∞ A)}
-                      {rs : Vec (OC (↑ i) A) n}
-                      {ey : BCC ∞ A}
-                      {en : BCC ∞ A}
-                      (⟶ey : (↑ i) ⊢ a -< ls ◀ e ∷ rs >- ⟶ₒ ey)
-                      (⟶en : (↑ i) ⊢ a -< ls ◀     rs >- ⟶ₒ en)
-                    →   ⟦ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟧ₜ c
-                        --Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ ⟦ toList (O ❲ e ❳ ∷ rs) ⟧ₒ-recurse c)
-                      ≡ ⟦ if c O then ey else en ⟧₂ c
-preservesₒ-option {n} {i} {A} {c} {a} {O} {e} {ls} {rs} {ey} {en} ⟶ey ⟶en with c O
-... | true = let map₂ = map (flip ⟦_⟧₂ c)
-                 mapₒ = map (flip ⟦_⟧ₒ c)
+We have to pattern match on e here so that Agda can observe that in any case ⟦_⟧ₒ yields the same value
+irrespective of the size constraint of e.
+We have to do this because ⟦_⟧ₒ could pattern on the size of e (in theory although this is not possible in practice).
+So we show Agda that ⟦_⟧ₒ never does so.
 
-                 z : Zip (suc n) (↑ i) A
-                 z = a -< ls ◀ e ∷ rs >-
-             in
-             begin
-               Artifactᵥ a (map₂ ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ mapₒ (toList rs))))
-             -- We have to prove some weird thing about sizes here. Why? For false it just works.
-             -- Maybe it's from using "with" that again forgot something important?
-             -- I have no idea. :(
-             -- Extracting this proof to a helper theorem does not work at all.
-             -- I did so above with "flubi" but the sizes that do not match here
-             -- are still hidden and so the helper theorem is trivial to prove, and
-             -- cannot be applied here.
-             ≡⟨ Eq.cong (Artifactᵥ a) (Eq.cong (map₂ ls ++_) {!!}) ⟩
-               Artifactᵥ a (map₂ ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ mapₒ (toList rs))))
-             ≡⟨⟩
-               Artifactᵥ a (map₂ ls ++ ⟦ toList (e ∷ rs) ⟧ₒ-recurse c)
-             ≡⟨⟩
-               ⟦ a -< ls ◀ e ∷ rs >- ⟧ₜ c
-             ≡⟨⟩
-               ⟦ z ⟧ₜ c
-             ≡⟨ preservesₒ {i = ↑ i} c ⟶ey ⟩
-               ⟦ ey ⟧₂ c
-             ∎
-... | false = preservesₒ c ⟶en
+This theorem has no real meaning and is rather a technical necessity.
+-}
+preservesₒ-option-size :
+  ∀ {n} {i} {A} {c} {a : A} {ls : List (BCC ∞ A)} {rs : Vec (OC (↑ i) A) n}
+  → (e : OC i A)
+    -----------------------------------------------------------------------------------------------------
+  →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } {A} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+    ≡ Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {↑ i} {A} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+preservesₒ-option-size (Artifactₒ _ _) = refl
+preservesₒ-option-size (_ ❲ _ ❳)       = refl
+```
 
+Actual proofs:
+```agda
 preservesₒ c (T-done {a = a} {ls = ls}) =
-  begin
-    ⟦ a -< ls ◀ [] >- ⟧ₜ c
-  ≡⟨⟩
-    Artifactᵥ a ((map (flip ⟦_⟧₂ c) ls) ++ [])
-  ≡⟨ Eq.cong
-       (Artifactᵥ a)
-       (++-identityʳ
-         (map (flip ⟦_⟧₂ c) ls))
-   ⟩
-    Artifactᵥ a (map (flip ⟦_⟧₂ c) ls)
-  ∎
+  let m = map (flip ⟦_⟧₂ c) ls
+   in begin
+        ⟦ a -< ls ◀ [] >- ⟧ₜ c
+      ≡⟨⟩
+        Artifactᵥ a (m ++ [])
+      ≡⟨ Eq.cong (Artifactᵥ a) (++-identityʳ m) ⟩
+        Artifactᵥ a m
+      ∎
 preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ = e₁} {e₂ = e₂} ⟶e ⟶b) =
   let all-rs = Artifactₒ b es ∷ rs
       z      = a -< ls ◀ all-rs >-
-  in
-  begin
-    ⟦ z ⟧ₜ c
-  ≡⟨⟩
-    Artifactᵥ a
-      (   map (flip ⟦_⟧₂ c) ls
-       ++ ⟦ toList all-rs ⟧ₒ-recurse c
-      )
-  ≡⟨⟩
-    Artifactᵥ a
-      (   map (flip ⟦_⟧₂ c) ls
-       ++ Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ ⟦ toList rs ⟧ₒ-recurse c
-      )
-  ≡⟨ Eq.cong (Artifactᵥ a) (preservesₒ-artifact (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩
-    Artifactᵥ a
-      (   map (flip ⟦_⟧₂ c) (ls ++ e₁ ∷ [])
-       ++ ⟦ toList rs ⟧ₒ-recurse c
-      )
-  ≡⟨⟩
-    ⟦ a -< ls ∷ʳ e₁ ◀ rs >- ⟧ₜ c
-  ≡⟨ preservesₒ c ⟶b ⟩
-    ⟦ e₂ ⟧₂ c
-  ∎
-preservesₒ c (T-option {_} {_} {_} {a} {O} {e} {ls} {rs} {ey} {en} ⟶ey ⟶en) =
-  let all-rs = O ❲ e ❳ ∷ rs
-      z = a -< ls ◀ all-rs >-
-  in
-  begin
-    ⟦ z ⟧ₜ c
-  ≡⟨ preservesₒ-option ⟶ey ⟶en ⟩ -- Do case analysis on (c O) here.
-    ⟦ if c O then ey else en ⟧₂ c
-  ≡⟨⟩
-    ⟦ O ⟨ ey , en ⟩ ⟧₂ c
-  ∎
+      map₂   = map (flip ⟦_⟧₂ c)
+   in begin
+        ⟦ z ⟧ₜ c
+      ≡⟨⟩
+        Artifactᵥ a (map₂ ls ++ ⟦ toList all-rs ⟧ₒ-recurse c)
+      ≡⟨⟩
+        Artifactᵥ a (map₂ ls ++ Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ ⟦ toList rs ⟧ₒ-recurse c)
+      ≡⟨ Eq.cong (Artifactᵥ a) (preservesₒ-artifact (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩ -- prove that we can make a step
+        Artifactᵥ a (map₂ (ls ++ e₁ ∷ []) ++ ⟦ toList rs ⟧ₒ-recurse c)
+      ≡⟨⟩
+        ⟦ a -< ls ∷ʳ e₁ ◀ rs >- ⟧ₜ c
+      ≡⟨ preservesₒ c ⟶b ⟩ -- apply induction hypothesis
+        ⟦ e₂ ⟧₂ c
+      ∎
+preservesₒ c (T-option {a = a} {O = O} {e = e} {ls = ls} {rs = rs} {eᵒ⁻ʸ = ey} {eᵒ⁻ⁿ = en} ⟶ey ⟶en) with c O
+... | true  = begin
+                Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ map (flip ⟦_⟧ₒ c) (toList rs))))
+              ≡⟨ preservesₒ-option-size e ⟩ -- prove that size constraint on e does not matter for ⟦_⟧ₒ
+                ⟦ a -< ls ◀ e ∷ rs >- ⟧ₜ c
+              ≡⟨ preservesₒ c ⟶ey ⟩ -- apply induction hypothesis
+                ⟦ ey ⟧₂ c
+              ∎
+... | false = begin
+                ⟦ a -< ls ◀ rs >- ⟧ₜ c
+              ≡⟨ preservesₒ c ⟶en ⟩ -- apply induction hypothesis
+                ⟦ en ⟧₂ c
+              ∎
 
 preserves {b = b} {e = Root a es} c (T-root z⟶b) =
   let z = a -< [] ◀ (fromList es) >-
@@ -475,7 +428,7 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
         Artifactᵥ a (⟦ toList (fromList es) ⟧ₒ-recurse c)
       ≡⟨⟩
         ⟦ z ⟧ₜ c
-      ≡⟨ preservesₒ c z⟶b ⟩
+      ≡⟨ preservesₒ c z⟶b ⟩ -- apply induction hypothesis
         ⟦ b ⟧₂ c
       ∎
 ```
@@ -521,7 +474,7 @@ OC→BCC-is-variant-preserving e = ⊆-via-OC→BCC e , ⊆-via-OC→BCC e
 OC→BCC-is-semantics-preserving : OC→BCC is-semantics-preserving
 OC→BCC-is-semantics-preserving = OC→BCC-is-variant-preserving , λ e c → refl
 
-BCC-is-as-expressive-as-OC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as WFOC , ⟦_⟧
-BCC-is-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
+BCC-is-at-least-as-expressive-as-OC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as WFOC , ⟦_⟧
+BCC-is-at-least-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
 ```
 
