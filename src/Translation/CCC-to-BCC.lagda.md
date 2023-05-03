@@ -341,8 +341,8 @@ CCC→BCC-right : ∀ {i : Size} {A : Domain}
 CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
 CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
 
-BCC-is-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as CCC , ⟦_⟧ₙ
-BCC-is-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
+BCC-is-at-least-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as CCC , ⟦_⟧ₙ
+BCC-is-at-least-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
 ```
 
 Comments by Jeff:

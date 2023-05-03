@@ -60,7 +60,7 @@ open import Lang.BCC
             ⟦_⟧ to ⟦_⟧₂)
 
 open import Definitions using (VarLang; ConfLang; Domain; Semantics)
-open import Relations.Semantic using (_,_is-as-expressive-as_,_)
+open import Relations.Semantic using (_,_is-at-least-as-expressive-as_,_)
 open import SemanticDomain using (Variant; Artifactᵥ)
 open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 
@@ -159,8 +159,8 @@ BCC→CCC-is-variant-preserving e = BCC→CCC-left e , BCC→CCC-right e
 BCC→CCC-is-semantics-preserving : BCC→CCC is-semantics-preserving
 BCC→CCC-is-semantics-preserving = BCC→CCC-is-variant-preserving , λ _ → extensionality ∘ conf-remains-same
 
-CCC-is-as-expressive-as-BCC : CCC , ⟦_⟧ₙ is-as-expressive-as BCC , ⟦_⟧₂
-CCC-is-as-expressive-as-BCC = translation-proves-variant-preservation BCC→CCC BCC→CCC-is-variant-preserving
+CCC-is-at-least-as-expressive-as-BCC : CCC , ⟦_⟧ₙ is-at-least-as-expressive-as BCC , ⟦_⟧₂
+CCC-is-at-least-as-expressive-as-BCC = translation-proves-variant-preservation BCC→CCC BCC→CCC-is-variant-preserving
 ```
 
 ## Proofs
