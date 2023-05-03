@@ -230,19 +230,29 @@ completeness-by-expressiveness {L₁} {L₂} {_} {_} {S₁} {S₂} encode-in-L�
       , subst-vs-contains-all-e  {L₁ = L₁} {L₂ = L₂} {S₁ = S₁} {S₂ = S₂} vs e₁ e₂ e₂-describes-what-e₁-describes vs-contains-e₁
 ```
 
-Conversely, we can conclude that two languages must be equally expressive when they are both complete.
+Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
+
+**Proof sketch:**
+Given an arbitrary expression e of our target language L, we have to show that there exists an expression e₊ in our complete language L₊ that is variant-equivalent to e.
+Given the semantics S of the complete language L of e, we compute the set of all variants described by e, as a list (THIS IS STILL LEFT TODO).
+Since L₊ is complete, we can encode this list of variants in L₊, giving us an expression in e₊ in L₊ and a proof that this expression exactly describes the variants of e₋.
+Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 ```agda
--- expressiveness-by-completeness : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂}
---   → Complete L₁ C₁ S₁
---   → Complete L₂ C₂ S₂
---     -----------------------------------
---   → L₂ , S₂ is-as-expressive-as L₁ , S₁
--- expressiveness-by-completeness encode-in-L₁ encode-in-L₂ = λ e₁ →
---   let vs = 
---       e₂ = encode-in-L₂ vs
---     {!!}
---   , {!!}
---   , {!!}
+expressiveness-by-completeness : ∀ {L₊ : VarLang} {C₊ : ConfLang} {S₊ : Semantics L₊ C₊}
+  → Complete L₊ C₊ S₊
+  → (L : VarLang)
+  → (C : ConfLang)
+  → (S : Semantics L C)
+    ------------------------------------------
+  → L₊ , S₊ is-at-least-as-expressive-as L , S
+expressiveness-by-completeness L₊-comp L C S {j} {A} e = size-e₊ , e₊ , {!!}
+  where all-variants : ∀ {L : VarLang} {i : Size} {A : Domain} → (e : L i A) → List (Variant A)
+        all-variants = {!!}
+
+        ∃e₊ = L₊-comp (all-variants {L} {j} {A} e)
+        size-e₊ = Util.Existence.proj₁ ∃e₊
+        e₊ = Data.Product.proj₁ (Util.Existence.proj₂ ∃e₊)
+        e₊-describes-exactly-all-variants-of-e₋ = Data.Product.proj₂ (Util.Existence.proj₂ ∃e₊)
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
@@ -252,14 +262,25 @@ Assuming `L₋` is as expressive as `L₊`, and knowing that `L₊` is complete,
 Yet, we already know that L₋ is incomplete.
 This yields a contradiction.
 ```agda
--- TODO: Conclude (L₊ , S₊ is-more-expressive-than L₋ , S₋) instead.
-less-expressive : ∀ {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
+less-expressive-from-completeness : ∀ {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
   →   Complete L₊ C₊ S₊
   → Incomplete L₋ C₋ S₋
     --------------------------------------
-  → ¬ (L₋ , S₋ is-at-least-as-expressive-as L₊ , S₊)
-less-expressive L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
+  → L₋ , S₋ is-less-expressive-than L₊ , S₊
+less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
     L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
+```
+
+Combined with `expressiveness-by-completeness` we can even further conclude that L₊ is more expressive than L₋:
+```agda
+more-expressive-from-completeness : ∀ {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
+  →   Complete L₊ C₊ S₊
+  → Incomplete L₋ C₋ S₋
+    --------------------------------------
+  → L₊ , S₊ is-more-expressive-than L₋ , S₋
+more-expressive-from-completeness {L₊} {L₋} {C₊} {C₋} {S₊} {S₋} L₊-comp L₋-incomp =
+    expressiveness-by-completeness L₊-comp L₋ C₋ S₋
+  , less-expressive-from-completeness L₊-comp L₋-incomp
 ```
 
 Hence, there cannot be a variant-preserving translation `L₊ → L₋`.
