@@ -198,7 +198,7 @@ subst-vs-contains-all-e vs e₁ e₂ e₁≚e₂ vs-contains-e₁  =
 completeness-by-expressiveness : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂}
   → Complete L₁ C₁ S₁
   → L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁
-    -----------------------------------
+    --------------------------------------------
   → Complete L₂ C₂ S₂
 completeness-by-expressiveness {L₁} {L₂} {_} {_} {S₁} {S₂} encode-in-L₁ L₁-to-L₂ vs =
   let {-

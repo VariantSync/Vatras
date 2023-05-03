@@ -194,7 +194,7 @@ Every OC expression is translated to at most one BCC expression.
 ⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : BCC ∞ A}
   → i ⊢ z ⟶ₒ b
   → i ⊢ z ⟶ₒ b'
-    ----------
+    ------------
   → b ≡ b'
 ⟶ₒ-is-deterministic T-done T-done = refl
 ⟶ₒ-is-deterministic (T-artifact ⟶e₁ ⟶b)
@@ -386,6 +386,8 @@ preservesₒ c (T-done {a = a} {ls = ls}) =
         Artifactᵥ a (m ++ [])
       ≡⟨ Eq.cong (Artifactᵥ a) (++-identityʳ m) ⟩
         Artifactᵥ a m
+      ≡⟨⟩
+        ⟦ Artifact₂ a ls ⟧₂ c
       ∎
 preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ = e₁} {e₂ = e₂} ⟶e ⟶b) =
   let all-rs = Artifactₒ b es ∷ rs

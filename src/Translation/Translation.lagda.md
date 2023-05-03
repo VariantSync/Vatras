@@ -157,7 +157,7 @@ This is our major theorem that allows us to prove relations about languages from
 translation-proves-variant-preservation : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang}
   → (t : Translation L₁ L₂ C₁ C₂)
   → t is-variant-preserving
-    -------------------------------------------
+    ----------------------------------------------------
   → L₂ , sem₂ t is-at-least-as-expressive-as L₁ , sem₁ t
 translation-proves-variant-preservation trans preservation e₁ =
   let r = translate trans e₁ in
