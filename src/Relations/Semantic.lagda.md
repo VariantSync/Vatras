@@ -303,6 +303,15 @@ L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂ =
       (∃[ e₁ ∈ (L₁ i A) ]
         (L₂ , S₂ and L₁ , S₁ ⊢ e₂ ≚ e₁))
 
+_,_is-less-expressive-than_,_ : {C₁ C₂ : ConfLang}
+  → (L₁ : VarLang)
+  → Semantics L₁ C₁
+  → (L₂ : VarLang)
+  → Semantics L₂ C₂
+  → Set₁
+L₁ , S₁ is-less-expressive-than L₂ , S₂ =
+  ¬ (L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂)
+
 -- L₁ ⊃ L₂ ⇔ L₁ ⊇ L₂ ∧ ¬ (L₂ ⊇ L₁)
 _,_is-more-expressive-than_,_ : {C₁ C₂ : ConfLang}
   → (L₁ : VarLang)
@@ -311,8 +320,8 @@ _,_is-more-expressive-than_,_ : {C₁ C₂ : ConfLang}
   → Semantics L₂ C₂
   → Set₁
 L₁ , S₁ is-more-expressive-than L₂ , S₂ =
-       L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂
-  × ¬ (L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁)
+    L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂
+  × L₂ , S₂ is-less-expressive-than L₁ , S₁
 ```
 
 A language `L₁` is variant equivalent to another language `L₂` **iff** they are equally expressive. This means that we can translate between both languages. (We cannot prove the existence of a translation though because we cannot find a translation automatically. We use the inverse route, concluding propositions about languages from building translations later.)
