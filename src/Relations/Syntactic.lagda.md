@@ -143,7 +143,7 @@ bcc-disassemble (D ⟨ l , r ⟩)    = Artifactᵥ (ChoiceNode D) (bcc-disassemb
 
 -- We need sized variants there to prove termination. :(((
 bcc-assemble : ∀ {A : Domain} → Variant (BCCNode A) → BCC ∞ A ⊎ String
-bcc-assemble (Artifactᵥ (ArtifactNode a) es) with map bcc-assemble es
+bcc-assemble (Artifactᵥ (ArtifactNode a) es) with map bcc-assemble es --mapM
 ... | x = {!!} --TODO: fold such that errors are concatenated or success is returned in case no error happened
 bcc-assemble (Artifactᵥ (ChoiceNode D) (vl ∷ vr ∷ [])) with (bcc-assemble vl) | (bcc-assemble vr)
 ... | inj₁ l      | inj₁ r      = inj₁ (D ⟨ l , r ⟩)
