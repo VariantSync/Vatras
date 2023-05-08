@@ -48,7 +48,7 @@ In the following we formalize the binary normal forms for choice calculus. We ex
 ```agda
 data BCC : VarLang where
   Artifact : Artifactˡ BCC
-  _⟨_,_⟩ : {i : Size} {A : Domain} →
+  _⟨_,_⟩ : ∀ {i : Size} {A : Domain} →
     Dimension → BCC i A → BCC i A → BCC (↑ i) A
 ```
 
