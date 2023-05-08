@@ -11,7 +11,15 @@ As an editor, I am using spacemacs with agda-mode. Setting emacs up for Agda is 
 
 ## Project Structure
 
-The semantic domain of all languages is defined in [src/SemanticDomain.agda](src/SemanticDomain.agda). Variability languages, configuration languages, semantics, as well as relations between languages and translations are formalized in [src/Translation/Translation.lagda.md](src/Translation/Translation.lagda.md) (I plan to later modularize this later into _definitions of language kinds_, _definitions of language relations_, and _definitions of translations and their properties_). All languages are planned to be formalized in the [src/Lang](src/Lang) subdirectory in a custom file each. So far, [core choice calculus](src/Lang/CCC.lagda.md), [binary choice calculus](src/Lang/BCC.lagda.md), [option calculus](src/Lang/OC.lagda.md), and [algebraic decision diagrams](src/Lang/ADD.lagda.md) are formalized. Translations and theorems on relations between two such concrete languages are defined in the [src/Translation](src/Translation) directory. The only finished translation so far is [from binary to core choice calculus](src/Translation/BCC-to-CCC.lagda.md). Completeness and incompleteness are formalized in [src/Lang/Properties/Completeness.lagda.md](src/Lang/Properties/Completeness.lagda.md).
+Variants are defined in [src/SemanticDomain.agda](src/SemanticDomain.agda).
+Core definitions are in [src/Definitions.lagda.md](/src/Definitions.lagda.md).
+Languages are defined in [src/Lang](/src/Lang).
+Language properties including completeness are defined in [src/Lang/Properties](src/Lang/Properties).
+Translations are formalized in [src/Translation/Translation.lagda.md](src/Translation/Translation.lagda.md).
+Translations between specific languages are defined in the [src/Translation](src/Translation) directory.
+A comprehensive list of the progress on language translations and relations can be found the [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md).
+
+We also have a main function which runs experiments and tests.
 
 ## Roadmap
 
@@ -27,24 +35,14 @@ The semantic domain of all languages is defined in [src/SemanticDomain.agda](src
 - [x] Binary Decision Diagrams (BDD)
 - [x] Option Calculus (OC)
 - [ ] Variation Trees (VT)
+- [ ] Lists of Variants (VList)?
 
 For some of those language, showing the existence of some transforation rules might be handy. We did this for some few rules of CCC and BCC so far.
 
-Languages we might also want to include are
+### Language Properties
 
-- [ ] Formula Choice Calculus
-- [ ] Artifact Trees (i.e., Option Calculus with Formulas + formulas stored within artifact nodes)
-- [ ] Variability-Aware ASTs
-- [ ] ...?
-
-## Language Properties
-
-### In general
-
-- [x] Completeness
-- [x] Incompleteness
-
-### In concrete
+- [x] Define Completeness
+- [x] Define Incompleteness
 
 - [ ] Completeness of ADD
 - [ ] Completeness of CCC (begun; might be smarter to conclude from completeness of ADDs)
@@ -52,9 +50,7 @@ Languages we might also want to include are
 - [ ] Completeness of BCC
 - [ ] Completeness of VT
 
-We can derive some completeness proofs by transitivity with translations.
-
-## Language Relations
+### Language Relations
 
 Comparing expression within a single language:
 
@@ -65,7 +61,6 @@ Comparing expression within a single language:
 
 Comparing expression from two different languages:
 
-- [ ] syntactic equivalence does not exist
 - [x] variant subset
 - [x] variant preserving equivalence
 - [x] semantic equivalence
@@ -75,36 +70,33 @@ Comparing two languages
 - [x] expressiveness
 - [x] variant equivalence
 
-## Translations
+### Translations
 
-### General Definitions
+#### General Definitions
 
 - [x] Translation
 - [x] variant-preserving translations
 - [x] semantics-preserving translations: Defined but is it useful?
 - [x] conclude that a language is as expressive as another from a variant-preserving translation
 
-### Across Languages
+#### Across Languages
 
 planed proofs are:
 
-- [ ] CCC to BCC (begun; stuck in state monad)
+- [/] CCC to BCC (begun; stuck in state monad)
 - [x] BCC to CCC
 
 - [ ] BCC to ADD
 - [ ] ADD to BCC
 
-- [ ] OC to BCC
-- [ ] BCC cannot be encoded in OC
+- [x] OC to BCC
+- [/] BCC cannot be encoded in OC
 
 - [ ] OC to VT
 - [ ] VT cannot be encoded in OC
 
 - [ ] BCC to VT
 - [ ] VT to BCC
-
-- [ ] BDD to ADD
-- [ ] ADD cannot be encoded in BDD
 
 ## Annotation Languages
 
