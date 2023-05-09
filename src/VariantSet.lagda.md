@@ -60,6 +60,8 @@ So the actual task here boils down to finding "the simplest" variablity language
 
 My bet is currently on Fin. On the other hand, we already have to proves done on lists (to prove completeness-by-expressiveness) and we can use the Agda stl definitions for `ANy` and `All` that are basically _OR_ and _AND_ over lists.
 
+Moreover, the have to ensure that variant subsets are non-empty in our definition of completeness (which currently allows for empty subsets). A variability language should not be able to encode 0 variants in an expression. This would require an empty expression which does not make sense.
+
 
 ## Definitions
 
