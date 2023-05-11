@@ -32,7 +32,7 @@ open import Lang.CCC using (CCC; Artifact; _⟨_⟩)
 
 Regarding the definition of completness in Agda we looked at yesterday, I could need some advice. In particular, regarding you expertise in Coq: _How would you model subsets in (dependent) type theory_?
 
-The idea of completeness was to say: Given any set of variants (e.g., three concrete variants such as `{1, 2, 3}`), then we can build an expression that describes exactly this set (e.g., `D ⟨1, 2, 3 ⟩` in choice calculus). Thus in Agda, we need a way to describe such a "set of variants".
+The idea of completeness was to say: Given any set of variants (e.g., three concrete variants such as `{1, 2, 3}`), then we can build an expression that describes exactly this set (e.g., `D ⟨ 1 , 2 , 3 ⟩` in choice calculus). Thus in Agda, we need a way to describe such a "set of variants".
 
 Following the idea of propositions as types, we model sets as types. But the type `Variant A` models the set of _all_ variants in a domain `A`, despite us being interested in just a subset, such as `{1, 2, 3}`. So far I used a list of variants to represent such a subset:
 ```agda
@@ -56,18 +56,82 @@ set-as-choice = "Foo" ⟨ (Artifact 1 []) ∷ (Artifact 2 []) ∷ (Artifact 3 []
 ```
 which is the whole point behind choice calculus apart from sharing.
 
-So the actual task here boils down to finding "the simplest" variablity language that we can agree on as a canonical and basic definitions and that makes the proofs simple and theorems believable. I guess the simplest way would be "a set of variants" itself but, yeah, how to say that in type theory?
+So the actual task here boils down to finding "the simplest" variability language that we can agree on as a canonical and basic definitions and that makes the proofs simple and theorems believable. I guess the simplest way would be "a set of variants" itself but, yeah, how to say that in type theory?
 
 My bet is currently on Fin. On the other hand, we already have to proves done on lists (to prove completeness-by-expressiveness) and we can use the Agda stl definitions for `ANy` and `All` that are basically _OR_ and _AND_ over lists.
 
 Moreover, the have to ensure that variant subsets are non-empty in our definition of completeness (which currently allows for empty subsets). A variability language should not be able to encode 0 variants in an expression. This would require an empty expression which does not make sense.
 
+Below, I generalized the Fin idea to allow for any indices apart from only Fin.
+I ended up with a category of subsets.
+An object represents a set as a function `I → S` where `I` indexes another set `S`.
+A morphism denotes subset.
+Empty sets are initial objects.
 
 ## Definitions
 
 as selector function
 ```agda
-VariantSet : Domain → ℕ → Set
-VariantSet A n = Fin n → Variant A
-```
+open import Data.Empty using (⊥)
+open import Data.Unit using (⊤; tt)
 
+open import Data.Product using (∃; _×_; _,_; ∃-syntax)
+open import Relation.Nullary using (¬_)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
+
+Index : Set₁
+Index = Set
+
+Source : Set₁
+Source = Set
+
+Subset : Index → Source → Set
+Subset I S = I → S
+
+∅ : ∀ {S} → Subset ⊥ S
+∅ = λ ()
+
+𝟙 : Source → Set
+𝟙 S = Subset ⊤ S
+
+-- an element is within a subset, if there is an index pointing at that element
+_∈_ : ∀ {I} {S} → S → Subset I S → Set
+a ∈ A = ∃[ i ] (A i ≡ a)
+
+-- morphisms
+_⊆_ : ∀ {I J : Index} {S : Source} → Subset I S → Subset J S → Set
+_⊆_ {I} A B = ∀ (i : I) → (A i ∈ B)
+
+_≅_ : ∀ {I J : Index} {S : Source} → Subset I S → Subset J S → Set
+A ≅ B = (A ⊆ B) × (B ⊆ A)
+
+nonempty : ∀ {I} {S} → Subset I S → Set
+nonempty A = ∃[ a ] (a ∈ A)
+
+empty : ∀ {I} {S} → Subset I S → Set
+empty A = ¬ (nonempty A)
+
+∅-is-empty : ∀ {S} → empty (∅ {S})
+∅-is-empty ()
+
+∅⊆A : ∀ {I S} {A : Subset I S}
+  → ∅ ⊆ A
+∅⊆A = λ ()
+
+empty-set⊆∅ : ∀ {I S} {A : Subset I S}
+  → empty A
+    -------
+  → A ⊆ ∅
+empty-set⊆∅ {A = A} A-empty i with A-empty (A i , i , refl)
+...| ()
+
+all-empty-sets-are-equal : ∀ {I S}
+  → (A : Subset I S)
+  → empty A
+  → A ≅ ∅
+all-empty-sets-are-equal A A-empty = empty-set⊆∅ A-empty , ∅⊆A
+
+singleton-set-is-nonempty : ∀ {S} → (A : 𝟙 S) → nonempty A
+singleton-set-is-nonempty A = A tt , tt , refl
+```
