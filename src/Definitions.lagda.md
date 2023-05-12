@@ -9,7 +9,7 @@ module Definitions where
 ```agda
 open import Data.List using (List)
 open import Size using (Size; ↑_)
-open import SemanticDomain using (Variant)
+open import SemanticDomain using (Variant; VSet)
 ```
 
 We model variability languages as embedded domain specific languages. That is, each variability language is described by a type which in turn is described by the kind `VarLang`. (`Set` denotes the set of all types and `Set₁` denotes the set of all kinds, i.e., the set of all sets of types).

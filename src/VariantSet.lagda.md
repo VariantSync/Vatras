@@ -20,12 +20,12 @@ open import Size using (∞)
 open import Data.Nat using (ℕ)
 open import Data.Fin using (Fin; suc; zero)
 open import Data.List using (List; _∷_; [])
-open import Data.List.NonEmpty using (_∷_)
+-- open import Data.List.NonEmpty using (_∷_)
 
-open import Definitions using (Domain; ConfLang)
+-- open import Definitions using (Domain; ConfLang)
 open import SemanticDomain using (Variant; Artifactᵥ)
 
-open import Lang.CCC using (CCC; Artifact; _⟨_⟩)
+--open import Lang.CCC using (CCC; Artifact; _⟨_⟩)
 ```
 
 ## Question to Parisa
@@ -35,7 +35,7 @@ Regarding the definition of completness in Agda we looked at yesterday, I could 
 The idea of completeness was to say: Given any set of variants (e.g., three concrete variants such as `{1, 2, 3}`), then we can build an expression that describes exactly this set (e.g., `D ⟨ 1 , 2 , 3 ⟩` in choice calculus). Thus in Agda, we need a way to describe such a "set of variants".
 
 Following the idea of propositions as types, we model sets as types. But the type `Variant A` models the set of _all_ variants in a domain `A`, despite us being interested in just a subset, such as `{1, 2, 3}`. So far I used a list of variants to represent such a subset:
-```agda
+```text
 set-as-list : List (Variant ℕ)
 set-as-list = (Artifactᵥ 1 []) ∷ (Artifactᵥ 2 []) ∷ (Artifactᵥ 3 []) ∷ []
 ```
@@ -50,7 +50,7 @@ set-as-function (suc (suc zero)) = Artifactᵥ 3 []
 ```
 
 In fact, the denotational semantics of any variability language is a set of variants. So any description for a set of variants in Agda we choose will itself again be a variability language. For instance, a list of variants (as we currently use for the definition of completeness) is also a variability langage: The expressions are lists, the configurations are natural numbers, configuring a list is selecting an element. And indeed, we could also use choice calculus as a description for sets of variants that way:
-```agda
+```text
 set-as-choice : CCC ∞ ℕ
 set-as-choice = "Foo" ⟨ (Artifact 1 []) ∷ (Artifact 2 []) ∷ (Artifact 3 []) ∷ [] ⟩
 ```
@@ -75,7 +75,7 @@ as selector function
 open import Data.Empty using (⊥)
 open import Data.Unit using (⊤; tt)
 
-open import Data.Product using (∃; _×_; _,_; ∃-syntax)
+open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
@@ -134,4 +134,29 @@ all-empty-sets-are-equal A A-empty = empty-set⊆∅ A-empty , ∅⊆A
 
 singleton-set-is-nonempty : ∀ {S} → (A : 𝟙 S) → nonempty A
 singleton-set-is-nonempty A = A tt , tt , refl
+
+-- example time
+ex12 : Subset (Fin 2) ℕ
+ex12 zero = 1
+ex12 (suc zero) = 2
+
+ex21 : Subset (Fin 2) ℕ
+ex21 zero = 2
+ex21 (suc zero) = 1
+
+12≅21 : ex12 ≅ ex21
+proj₁ 12≅21 zero = suc zero , refl
+proj₁ 12≅21 (suc zero) = zero , refl
+proj₂ 12≅21 zero = suc zero , refl
+proj₂ 12≅21 (suc zero) = zero , refl
+```
+
+```agda
+--open import Relation.Nullary.Decidable
+open import Relation.Binary.Definitions using (Decidable)
+
+-- ≅-dec : ∀ {I J S} → Decidable (_⊆_ {I} {J} {S})
+-- Relation.Nullary.does (≅-dec x y) = {!!}
+-- Relation.Nullary.proof (≅-dec x y) = {!!}
+
 ```

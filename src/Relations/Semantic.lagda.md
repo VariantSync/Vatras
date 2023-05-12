@@ -11,8 +11,9 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 open import Size using (Size)
 
-open import Data.Product   using (_,_; ∃-syntax; _×_)
-open import Util.Existence using (_,_; ∃-Size; ∃-syntax-with-type)
+open import Data.Multiset
+open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
+open import Util.Existence using (_,_; ∃-Size)
 
 open import Relation.Nullary.Negation using (¬_)
 
@@ -44,138 +45,96 @@ Semantic equivalence `≈` inherits all properties from structural equality `≡
 
 Obviously, syntactic equality (or rather structural equality) implies semantic equality, independent of the semantics:
 ```agda
-≡→≈ : ∀ {i : Size} {L : VarLang} {C : ConfLang} {A : Domain} {a b : L i A}
-  → ∀ (sem : Semantics L C)
+≡→≈ : ∀ {i : Size} {L : VarLang} {C : ConfLang} {A : Domain} {S : Semantics L C} {a b : L i A}
   → a ≡ b
-    ----------------
-  → L , sem ⊢ a ≈ b
-≡→≈ sem eq rewrite eq = refl
+    --------------
+  → L , S ⊢ a ≈ b
+≡→≈ eq rewrite eq = refl
 ```
 
 For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence. Each variant that can be derived from the first expression, can also be derived from the second expression and vice versa. We thus first describe the variant-subset relation `⊆` and then define variant-equality as a bi-directional subset.
 ```agda
-_,_⊢_⊆_ : ∀ {i j : Size} {C : ConfLang} {A : Domain}
+_,_⊢_⊆ᵥ_ : ∀ {i j : Size} {C : ConfLang} {A : Domain}
   → (L : VarLang)
   → Semantics L C
   → L i A
   → L j A
   → Set
-_,_⊢_⊆_ {_} {_} {C} {_} _ ⟦_⟧ e₁ e₂ = ∀ (c₁ : C) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
-infix 5 _,_⊢_⊆_
-```
-A proposition `L , ⟦_⟧ ⊢ e₁ ⊆ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expression `e₁` describes a subset of the variants described by `e₂`.
+L , ⟦_⟧ ⊢ e₁ ⊆ᵥ e₂ = ⟦ e₁ ⟧ ⊆ ⟦ e₂ ⟧ --∀ (c₁ : C) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
+infix 5 _,_⊢_⊆ᵥ_
 
-Variant subset is not symmetric, but reflexive and transitive:
-```agda
-
--- _⊆_within_ is not symmetric.
--- _⊆_within_ is not antisymmetric because two syntactically different expression can describe the same set of variants. For example, in choice calculus `D ⟨ e , e ⟩` and `e` are different but describe the same set of variants.
--- _⊆_within_ is antisymmentric in the sense that the described set of variants is equal though which is formalized as _≚_within_ below.
-
-⊆-refl :
-  ∀ {i : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {S : Semantics L C}
-    {e : L i A}
-    --------------
-  → L , S ⊢ e ⊆ e
-⊆-refl c = c , refl
-
-⊆-trans :
-  ∀ {i j k : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {S : Semantics L C}
-    {e₁ : L i A} {e₂ : L j A} {e₃ : L k A}
-  → _,_⊢_⊆_ {i = i} {j = j} L S e₁ e₂
-  → _,_⊢_⊆_ {i = j} {j = k} L S e₂ e₃
-    ---------------------------------
-  → _,_⊢_⊆_ {i = i} {j = k} L S e₁ e₃
-⊆-trans x y c₁ =
-  -- this somehow resembles the implementation of bind >>= of state monad
-  let (c₂ , eq₁₂) = x c₁
-      (c₃ , eq₂₃) = y c₂
-  in c₃ , Eq.trans eq₁₂ eq₂₃
-```
-
-Variant-preserving equality:
-```agda
 _,_⊢_≚_ : ∀ {i j : Size} {C : ConfLang} {A : Domain}
   → (L : VarLang)
   → Semantics L C
   → L i A
   → L j A
   → Set
-_,_⊢_≚_      {i}     {j}    {_} {_} L s e₁ e₂ =
-    (_,_⊢_⊆_ {i = i} {j = j}        L s e₁ e₂)
-  × (_,_⊢_⊆_ {i = j} {j = i}        L s e₂ e₁)
+L , s ⊢ e₁ ≚ e₂ =
+    (L , s ⊢ e₁ ⊆ᵥ e₂)
+  × (L , s ⊢ e₂ ⊆ᵥ e₁)
 infix 5 _,_⊢_≚_
 ```
+A proposition `L , ⟦_⟧ ⊢ e₁ ⊆ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expression `e₁` describes a subset of the variants described by `e₂`.
 
-Variant-preserving equality is an equivalence relation:
 ```agda
-≚-refl :
-  ∀ {i : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {S : Semantics L C}
-    {e : L i A}
+⊆ᵥ-refl : ∀ {i : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e : L i A}
+    ---------------
+  → L , S ⊢ e ⊆ᵥ e
+⊆ᵥ-refl = ⊆-refl
+
+⊆ᵥ-antisym : ∀ {i j : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e₁ : L i A} {e₂ : L j A}
+  → L , S ⊢ e₁ ⊆ᵥ e₂
+  → L , S ⊢ e₂ ⊆ᵥ e₁
+    -----------------
+  → L , S ⊢ e₁ ≚ e₂
+⊆ᵥ-antisym = ⊆-antisym
+
+⊆ᵥ-trans : ∀ {i j k : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e₁ : L i A} {e₂ : L j A} {e₃ : L k A}
+  → L , S ⊢ e₁ ⊆ᵥ e₂
+  → L , S ⊢ e₂ ⊆ᵥ e₃
+    -----------------
+  → L , S ⊢ e₁ ⊆ᵥ e₃
+⊆ᵥ-trans = ⊆-trans
+
+≚-refl : ∀ {i : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e : L i A}
     --------------
   → L , S ⊢ e ≚ e
-≚-refl {i} {A} {L} {C} {e} {s} =
-    ⊆-refl {i} {A} {L} {C} {e} {s}
-  , ⊆-refl {i} {A} {L} {C} {e} {s}
+≚-refl {i} {A} {L} {C} {S} {e} =
+    ⊆ᵥ-refl {i} {A} {L} {C} {S} {e}
+  , ⊆ᵥ-refl {i} {A} {L} {C} {S} {e}
 
-≚-sym :
-  ∀ {i j : Size} {A : Domain}
-    {L : VarLang} {C : ConfLang}
-    {e₁ : L i A} {e₂ : L j A}
-    {S : Semantics L C}
-  → _,_⊢_≚_ {i = i} {j = j} L S e₁ e₂
-    ---------------------------------
-  → _,_⊢_≚_ {i = j} {j = i} L S e₂ e₁
+≚-sym : ∀ {i j : Size} {A : Domain} {L : VarLang} {C : ConfLang} {e₁ : L i A} {e₂ : L j A} {S : Semantics L C}
+  → L , S ⊢ e₁ ≚ e₂
+    ----------------
+  → L , S ⊢ e₂ ≚ e₁
 ≚-sym (e₁⊆e₂ , e₂⊆e₁) = e₂⊆e₁ , e₁⊆e₂
 
-≚-trans :
-  ∀ {i j k : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {s : Semantics L C}
-    {e₁ : L i A} {e₂ : L j A} {e₃ : L k A}
-  → _,_⊢_≚_ {i = i} {j = j} L s e₁ e₂
-  → _,_⊢_≚_ {i = j} {j = k} L s e₂ e₃
-    ---------------------------------
-  → _,_⊢_≚_ {i = i} {j = k} L s e₁ e₃
+≚-trans : ∀ {i j k : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e₁ : L i A} {e₂ : L j A} {e₃ : L k A}
+  → L , S ⊢ e₁ ≚ e₂
+  → L , S ⊢ e₂ ≚ e₃
+    ----------------
+  → L , S ⊢ e₁ ≚ e₃
 ≚-trans     {i} {j} {k} {A} {L} {C} {S} {e₁} {e₂} {e₃} (e₁⊆e₂ , e₂⊆e₁) (e₂⊆e₃ , e₃⊆e₂) =
-    ⊆-trans {i} {j} {k} {A} {L} {C} {S} {e₁} {e₂} {e₃} e₁⊆e₂ e₂⊆e₃
-  , ⊆-trans {k} {j} {i} {A} {L} {C} {S} {e₃} {e₂} {e₁} e₃⊆e₂ e₂⊆e₁
+    ⊆ᵥ-trans {i} {j} {k} {A} {L} {C} {S} {e₁} {e₂} {e₃} e₁⊆e₂ e₂⊆e₃
+  , ⊆ᵥ-trans {k} {j} {i} {A} {L} {C} {S} {e₃} {e₂} {e₁} e₃⊆e₂ e₂⊆e₁
 ```
 
 Semantic equality implies variant equality:
 ```agda
-≈→⊆ :
-  ∀ {i j : Size} {A : Domain}
-    {L : VarLang} {C : ConfLang} {S : Semantics L C}
-    {a : L i A} {b : L j A}
+≈→⊆ᵥ : ∀ {i j : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {a : L i A} {b : L j A}
   → L , S ⊢ a ≈ b
-    -------------
-  → L , S ⊢ a ⊆ b
+    ---------------
+  → L , S ⊢ a ⊆ᵥ b
 -- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
-≈→⊆ a≈b config = config , Eq.cong (λ s → s config) a≈b
+≈→⊆ᵥ a≈b c rewrite a≈b = c , refl
 
-≈→≚ :
-  ∀ {i j : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {S : Semantics L C}
-    {a : L i A} {b : L j A}
+≈→≚ : ∀ {i j : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {a : L i A} {b : L j A}
   → L , S ⊢ a ≈ b
     -------------
   → L , S ⊢ a ≚ b
 ≈→≚     {i} {j} {A} {L} {C} {S} {a} {b} a≈b =
-    ≈→⊆ {i} {j} {A} {L} {C} {S} {a} {b} a≈b
-  , ≈→⊆ {j} {i} {A} {L} {C} {S} {b} {a} (Eq.sym a≈b)
+    ≈→⊆ᵥ {i} {j} {A} {L} {C} {S} {a} {b} a≈b
+  , ≈→⊆ᵥ {j} {i} {A} {L} {C} {S} {b} {a} (Eq.sym a≈b)
 ```
 
 ## Semantic Relations of Different Languages
@@ -190,7 +149,7 @@ First we generalize `_,_⊢_⊆_` and `_,_⊢_≚_` from single languages to two
 This step is straighforward as it just requires us to introduce additional parameters for the second language and reformulating the right-hand side of relations to refer to the second language.
 The main insight here is that we can compare expressions across languages because they share the same semantic domain: variants.
 ```agda
-_,_and_,_⊢_⊆_ : ∀ {i j : Size} {C₁ C₂ : ConfLang} {A : Domain}
+_,_and_,_⊢_⊆ᵥ_ : ∀ {i j : Size} {C₁ C₂ : ConfLang} {A : Domain}
   → (L₁ : VarLang)
   → Semantics L₁ C₁
   → (L₂ : VarLang)
@@ -198,8 +157,7 @@ _,_and_,_⊢_⊆_ : ∀ {i j : Size} {C₁ C₂ : ConfLang} {A : Domain}
   → (e₁ : L₁ i A)
   → (e₂ : L₂ j A)
   → Set
-_,_and_,_⊢_⊆_ {_} {_} {C₁} {_} {_} _  ⟦_⟧₁ _ ⟦_⟧₂ e₁ e₂ =
-  ∀ (c₁ : C₁) → ∃[ c₂ ] (⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ c₂)
+_ , ⟦_⟧₁ and _ , ⟦_⟧₂ ⊢ e₁ ⊆ᵥ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
 
 _,_and_,_⊢_≚_ : ∀ {i j : Size} {C₁ C₂ : ConfLang} {A : Domain}
   → (L₁ : VarLang)
@@ -210,70 +168,49 @@ _,_and_,_⊢_≚_ : ∀ {i j : Size} {C₁ C₂ : ConfLang} {A : Domain}
   → (e₂ : L₂ j A)
   → Set
 _,_and_,_⊢_≚_      {i} {j} {C₁} {C₂} {A} L₁ s₁ L₂ s₂ e₁ e₂ =
-    (_,_and_,_⊢_⊆_ {i} {j} {C₁} {C₂} {A} L₁ s₁ L₂ s₂ e₁ e₂)
-  × (_,_and_,_⊢_⊆_ {j} {i} {C₂} {C₁} {A} L₂ s₂ L₁ s₁ e₂ e₁)
+    (_,_and_,_⊢_⊆ᵥ_ {i} {j} {C₁} {C₂} {A} L₁ s₁ L₂ s₂ e₁ e₂)
+  × (_,_and_,_⊢_⊆ᵥ_ {j} {i} {C₂} {C₁} {A} L₂ s₂ L₁ s₁ e₂ e₁)
 ```
 
 In the following the prove the same properties as for the relations within a single language. The proofs are identical:
 ```agda
-⊆-refl' :
-  ∀ {i : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {S : Semantics L C}
-    {e : L i A}
-    -----------------------
-  → L , S and L , S ⊢ e ⊆ e
-⊆-refl' c = c , refl
+⊆ᵥ-refl' : ∀ {i : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e : L i A}
+    -------------------------
+  → L , S and L , S ⊢ e ⊆ᵥ e
+⊆ᵥ-refl' = ⊆-refl
 
-⊆-trans' :
-  ∀ {i j k : Size} {A : Domain}
-    {L₁ L₂ L₃ : VarLang}
-    {C₁ C₂ C₃ : ConfLang}
-    {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {S₃ : Semantics L₃ C₃}
-    {e₁ : L₁ i A} {e₂ : L₂ j A} {e₃ : L₃ k A}
-  → _,_and_,_⊢_⊆_ {i = i} {j = j} L₁ S₁ L₂ S₂ e₁ e₂
-  → _,_and_,_⊢_⊆_ {i = j} {j = k} L₂ S₂ L₃ S₃ e₂ e₃
-    -----------------------------------------------
-  → _,_and_,_⊢_⊆_ {i = i} {j = k} L₁ S₁ L₃ S₃ e₁ e₃
-⊆-trans' x y c₁ =
-  let (c₂ , eq₁₂) = x c₁
-      (c₃ , eq₂₃) = y c₂
-  in c₃ , Eq.trans eq₁₂ eq₂₃
+⊆ᵥ-antisym' : ∀ {i j : Size} {A : Domain} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {e₁ : L₁ i A} {e₂ : L₂ j A}
+  → L₁ , S₁ and L₂ , S₂ ⊢ e₁ ⊆ᵥ e₂
+  → L₂ , S₂ and L₁ , S₁ ⊢ e₂ ⊆ᵥ e₁
+    ------------------------------
+  → L₁ , S₁ and L₂ , S₂ ⊢ e₁ ≚ e₂
+⊆ᵥ-antisym' = ⊆-antisym
 
-≚-refl' :
-  ∀ {i : Size} {A : Domain}
-    {L : VarLang}
-    {C : ConfLang}
-    {S : Semantics L C}
-    {e : L i A}
-    -----------------------
+⊆-trans' : ∀ {i j k : Size} {A : Domain} {L₁ L₂ L₃ : VarLang} {C₁ C₂ C₃ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {S₃ : Semantics L₃ C₃} {e₁ : L₁ i A} {e₂ : L₂ j A} {e₃ : L₃ k A}
+  → L₁ , S₁ and L₂ , S₂ ⊢ e₁ ⊆ᵥ e₂
+  → L₂ , S₂ and L₃ , S₃ ⊢ e₂ ⊆ᵥ e₃
+    -------------------------------
+  → L₁ , S₁ and L₃ , S₃ ⊢ e₁ ⊆ᵥ e₃
+⊆-trans' = ⊆-trans
+
+≚-refl' : ∀ {i : Size} {A : Domain} {L : VarLang} {C : ConfLang} {S : Semantics L C} {e : L i A}
+    -------------------------
   → L , S and L , S ⊢ e ≚ e
 ≚-refl' {i} {A} {L} {C} {e} {s} =
-    ⊆-refl' {i} {A} {L} {C} {e} {s}
-  , ⊆-refl' {i} {A} {L} {C} {e} {s}
+    ⊆ᵥ-refl' {i} {A} {L} {C} {e} {s}
+  , ⊆ᵥ-refl' {i} {A} {L} {C} {e} {s}
 
-≚-sym' :
-  ∀ {i j : Size} {A : Domain}
-    {L₁ L₂ : VarLang}
-    {C₁ C₂ : ConfLang}
-    {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂}
-    {e₁ : L₁ i A} {e₂ : L₂ j A}
-  → _,_and_,_⊢_≚_ {i = i} {j = j} L₁ S₁ L₂ S₂ e₁ e₂
-    -----------------------------------------------
-  → _,_and_,_⊢_≚_ {i = j} {j = i} L₂ S₂ L₁ S₁ e₂ e₁
+≚-sym' : ∀ {i j : Size} {A : Domain} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {e₁ : L₁ i A} {e₂ : L₂ j A}
+  → L₁ , S₁ and L₂ , S₂ ⊢ e₁ ≚ e₂
+    --------------------------------
+  → L₂ , S₂ and L₁ , S₁ ⊢ e₂ ≚ e₁
 ≚-sym' (e₁⊆e₂ , e₂⊆e₁) = e₂⊆e₁ , e₁⊆e₂
 
-≚-trans' :
-  ∀ {i j k : Size} {A : Domain}
-    {L₁ L₂ L₃ : VarLang}
-    {C₁ C₂ C₃ : ConfLang}
-    {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {S₃ : Semantics L₃ C₃}
-    {e₁ : L₁ i A} {e₂ : L₂ j A} {e₃ : L₃ k A}
-  → _,_and_,_⊢_≚_ {i = i} {j = j} L₁ S₁ L₂ S₂ e₁ e₂
-  → _,_and_,_⊢_≚_ {i = j} {j = k} L₂ S₂ L₃ S₃ e₂ e₃
-    -----------------------------------------------
-  → _,_and_,_⊢_≚_ {i = i} {j = k} L₁ S₁ L₃ S₃ e₁ e₃
+≚-trans' : ∀ {i j k : Size} {A : Domain} {L₁ L₂ L₃ : VarLang} {C₁ C₂ C₃ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂} {S₃ : Semantics L₃ C₃} {e₁ : L₁ i A} {e₂ : L₂ j A} {e₃ : L₃ k A}
+  → L₁ , S₁ and L₂ , S₂ ⊢ e₁ ≚ e₂
+  → L₂ , S₂ and L₃ , S₃ ⊢ e₂ ≚ e₃
+    ------------------------------
+  → L₁ , S₁ and L₃ , S₃ ⊢ e₁ ≚ e₃
 ≚-trans'
     {i} {j} {k} {A} {L₁} {L₂} {L₃} {C₁} {C₂} {C₃} {S₁} {S₂} {S₃} {e₁} {e₂} {e₃}
     (e₁⊆e₂ , e₂⊆e₁) (e₂⊆e₃ , e₃⊆e₂)
@@ -284,6 +221,12 @@ In the following the prove the same properties as for the relations within a sin
   , ⊆-trans'
       {k} {j} {i} {A} {L₃} {L₂} {L₁} {C₃} {C₂} {C₁} {S₃} {S₂} {S₁} {e₃} {e₂} {e₁}
       e₃⊆e₂ e₂⊆e₁
+
+≚→≅ : ∀ {i j : Size} {A : Domain} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {⟦_⟧₁ : Semantics L₁ C₁} {⟦_⟧₂ : Semantics L₂ C₂} {e₁ : L₁ i A} {e₂ : L₂ j A}
+  → L₁ , ⟦_⟧₁ and L₂ , ⟦_⟧₂ ⊢ e₁ ≚ e₂
+    ----------------------------------
+  → ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
+≚→≅ (fst , snd) = fst , snd
 ```
 
 ### Relating Languages
@@ -300,7 +243,7 @@ _,_is-at-least-as-expressive-as_,_ : {C₁ C₂ : ConfLang}
 L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂ =
   ∀ {j : Size} {A : Domain} (e₂ : L₂ j A) →
     ∃-Size[ i ]
-      (∃[ e₁ ∈ (L₁ i A) ]
+      (Σ[ e₁ ∈ L₁ i A ]
         (L₂ , S₂ and L₁ , S₁ ⊢ e₂ ≚ e₁))
 
 _,_is-less-expressive-than_,_ : {C₁ C₂ : ConfLang}

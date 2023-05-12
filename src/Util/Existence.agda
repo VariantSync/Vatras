@@ -21,13 +21,6 @@ infixr 4 _,_ -- 4 is the same as for Σ in the standard library
 
 syntax ∃-Size (λ i → B) = ∃-Size[ i ] B
 
--- Existence syntax that also explicitly lists the type of the existing value
-
-∃-syntax-with-type : ∀ {a b : Level} (A : Set a) (B : A → Set b) → Set (a ⊔ b)
-∃-syntax-with-type = Σ
-
-syntax ∃-syntax-with-type A (λ x → B) = ∃[ x ∈ A ] B
-
 -- Properties (Todo: Move to own file to follow agda stdlib)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)

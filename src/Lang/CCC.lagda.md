@@ -40,7 +40,7 @@ open Eq
 -- Imports of own modules
 open import Lang.Annotation.Name using (Dimension)
 open import Definitions using (Domain; VarLang; ConfLang; Semantics; Artifactˡ)
-open import Relations.Semantic using (_,_⊢_≈_; _,_⊢_⊆_; _,_⊢_≚_; ≈→≚)
+open import Relations.Semantic using (_,_⊢_≈_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≈→≚)
 ```
 
 ## Syntax
@@ -140,12 +140,12 @@ D⟨e⟩≈e = refl
 
 D⟨e⟩⊆e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
-  → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ⊆ e
+  → CCC , ⟦_⟧ ⊢ D ⟨ e ∷ [] ⟩ ⊆ᵥ e
 D⟨e⟩⊆e config = ( config , refl )
 
 e⊆D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
-  → CCC , ⟦_⟧ ⊢ e ⊆ D ⟨ e ∷ [] ⟩
+  → CCC , ⟦_⟧ ⊢ e ⊆ᵥ D ⟨ e ∷ [] ⟩
 e⊆D⟨e⟩ config = ( config , refl )
 
 D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
@@ -191,9 +191,9 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
 
 ```agda
 open import Data.List.Relation.Unary.All using (All; []; _∷_; construct; fromList)
-open import Lang.Properties.Completeness using (Incomplete; Complete; _,_,_⊢_describes-all_)
+open import Lang.Properties.Completeness using (Incomplete; Complete)
 open Data.Product using (proj₁; proj₂)
-open import Util.Existence using (_,_; ∃-syntax-with-type)
+open import Util.Existence using (_,_)
 open Size using (∞)
 open Data.Product using (_×_)
 
@@ -224,8 +224,36 @@ variant-choice vs = "D" ⟨ mapl⁺ describe-variant vs ⟩
 -- describe-variants _ (v ∷ vs) = variant-choice (v ∷ vs) , variant-choice-describes-all (v ∷ vs)
 
 -- -- todo use proper size
--- CCC-is-complete : (empty : (A : Set) → A) → Complete CCC Configuration ⟦_⟧
--- CCC-is-complete empty {A} variants = ∞ , describe-variants (empty A) variants
+open import Data.Nat using (ℕ; suc; zero)
+open import Data.Fin using (zero; fromℕ)
+open import SemanticDomain using (Variant; VSet; forget-last)
+open import Data.Multiset using (Multiset; _∈_; _≅_)
+
+data _⟶_ : ∀ {A : Domain} {n : ℕ} → VSet n A → List⁺ (CCC ∞ A) → Set
+infix 3 _⟶_
+data _⟶_ where
+  E-single : ∀ {A : Domain} {vs : VSet zero A}
+      -------------------------------------
+    → vs ⟶ describe-variant (vs zero) ∷ []
+
+  E-many : ∀ {A : Domain} {n : ℕ} {vs : VSet (suc n) A} {others : List⁺ (CCC ∞ A)}
+    → forget-last vs ⟶ others
+      ------------------------------------------------------------
+    → vs ⟶ describe-variant (vs (fromℕ (suc n))) ∷ toList others
+
+foo : ∀ {A : Domain} {n : ℕ} → VSet n A → List⁺ (CCC ∞ A)
+foo {n =  zero} vs = describe-variant (vs zero) ∷ []
+foo {n = suc n} vs = describe-variant (vs (fromℕ (suc n))) ∷ toList (foo (forget-last vs))
+
+foonice : ∀ {A} {n} {vs : VSet n A}
+  → vs ≅ ⟦ "D" ⟨ foo vs ⟩ ⟧
+proj₁ (foonice {A} {zero} {vs}) i = (λ x → zero) , {!!}
+proj₁ (foonice {A} {suc n} {vs}) = {!!}
+proj₂ (foonice {A} {n} {vs}) = {!!}
+
+
+CCC-is-complete : Complete CCC Configuration ⟦_⟧
+CCC-is-complete vs = ∞ , "D" ⟨ foo vs ⟩ , {!!}
 ```
 
 
