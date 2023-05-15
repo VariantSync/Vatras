@@ -100,8 +100,43 @@ expressiveness-by-completeness : ∀ {L₊ : VarLang} {C₊ : ConfLang} {S₊ : 
   → (S : Semantics L C)
     ------------------------------------------
   → L₊ , S₊ is-at-least-as-expressive-as L , S
-expressiveness-by-completeness L₊-comp L C ⟦_⟧ {j = j} e with fooo {L} {C} {⟦_⟧} {j} e
-... | n , C→Fin = ?
+expressiveness-by-completeness {L₊} {_} {⟦_⟧₊} L₊-comp L C ⟦_⟧
+                               {_} {A} e =
+  let ⟦e⟧ : C → Variant A
+      ⟦e⟧ = ⟦ e ⟧
+
+      -- variantsₑ is finite
+      ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet n A ] (vsetₑ ≅ ⟦e⟧))
+      ⟦e⟧-fin = {!!}
+
+      n : ℕ
+      n = proj₁ ⟦e⟧-fin
+
+      vsetₑ : VSet n A
+      vsetₑ = proj₁ (proj₂ ⟦e⟧-fin)
+
+      vsetₑ≅⟦e⟧ : vsetₑ ≅ ⟦e⟧
+      vsetₑ≅⟦e⟧ = proj₂ (proj₂ ⟦e⟧-fin)
+
+      -- encode in L₊
+      as-e₊ : ∃-Size[ i ] (Σ[ e₊ ∈ L₊ i A ] (vsetₑ ≅ ⟦ e₊ ⟧₊))
+      as-e₊ = L₊-comp vsetₑ
+
+      i : Size
+      i = proj₁ as-e₊
+
+      e₊ : L₊ i A
+      e₊ = proj₁ (proj₂ as-e₊)
+
+      vsetₑ≅⟦e₊⟧₊ : vsetₑ ≅ ⟦ e₊ ⟧₊
+      vsetₑ≅⟦e₊⟧₊ = proj₂ (proj₂ as-e₊)
+
+      -- compose proofs
+
+      ⟦e⟧≅⟦e₊⟧₊ : ⟦ e ⟧ ≅ ⟦ e₊ ⟧₊
+      ⟦e⟧≅⟦e₊⟧₊ = ≅-trans (≅-sym vsetₑ≅⟦e⟧) vsetₑ≅⟦e₊⟧₊
+
+   in i , e₊ , ⟦e⟧≅⟦e₊⟧₊
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
