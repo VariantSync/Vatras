@@ -26,7 +26,7 @@ open Eq using (_≡_; refl)
 open import Size using (Size)
 
 open import Data.Product   using (_,_; ∃-syntax; _×_)
-open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂; ∃-syntax-with-type)
+open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂)
 
 open import Definitions
 open import Relations.Semantic
@@ -86,7 +86,7 @@ From our reformulation for translations, we can indeed conclude that an expressi
   → (t : Translation L₁ L₂ C₁ C₂)
   → _⊆-via_ {_} {L₁} {L₂} {_} {_} {_} e₁ t
     --------------------------------------------
-  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ expr (translate t e₁)
+  → L₁ , sem₁ t and L₂ , sem₂ t ⊢ e₁ ⊆ᵥ expr (translate t e₁)
 ⊆-via→⊆-within {e₁ = e₁} t ⊆-via = λ c₁ → conf (translate t e₁) c₁ , ⊆-via c₁
 ```
 
@@ -110,7 +110,7 @@ _⊇-via_ {_} {_} {_} {_} {C₂} {_} e₁ translation =
   → (t : Translation L₁ L₂ C₁ C₂)
   → e₁ ⊇-via t
     --------------------------------------------
-  → L₂ , sem₂ t and L₁ , sem₁ t ⊢ expr (translate t e₁) ⊆ e₁
+  → L₂ , sem₂ t and L₁ , sem₁ t ⊢ expr (translate t e₁) ⊆ᵥ e₁
 ⊇-via→⊆-within {e₁ = e₁} t ⊇-via = λ c₂ → fnoc (translate t e₁) c₂ , Eq.sym (⊇-via c₂)
 ```
 
