@@ -70,7 +70,7 @@ As `Maybe` is not in the semantic domain of our variability language, we cannot 
 
 Note: The following functions could also be implemented solely using lists but `Maybe` makes our intents more explicit and thus more readable (in particular the use of `catMaybes`).
 ```agda
-open import SemanticDomain using (Variant; Artifactᵥ)
+open import SemanticDomain using (Variant; Artifactᵥ; VSet)
 open import Data.Maybe using (Maybe; just; nothing)
 open Data.List using (catMaybes; map)
 open import Function using (flip)
@@ -109,6 +109,7 @@ Idea:
 First, we need some imports.
 ```agda
 open import Lang.Properties.Completeness using (Incomplete)
+open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product   using (_,_; ∃-syntax)
 open import Util.Existence using (_,_)
@@ -124,8 +125,9 @@ As our counter example, we use the set `{0, 1}` as our variants:
 variant-0 = SemanticDomain.leaf 0
 variant-1 = SemanticDomain.leaf 1
 
-variants-0-and-1 : List (Variant ℕ)
-variants-0-and-1 = (variant-0 ∷ variant-1 ∷ [])
+variants-0-and-1 : VSet 1 ℕ
+variants-0-and-1 zero = variant-0
+variants-0-and-1 (suc zero) = variant-1
 ```
 We stick to this concrete counter example instead of formulating the set of unrepresentable variants here to make the proof not more complicated than necessary.
 
@@ -135,12 +137,12 @@ So we show that given an expression `e`, a proof that `e` can be configured to `
 does-not-describe-variants-0-and-1 :
   ∀ {i : Size}
   → (e : WFOC i ℕ)
-  → ∃[ c ] (⟦ e ⟧ c ≡ variant-0)
-  → ∃[ c ] (⟦ e ⟧ c ≡ variant-1)
+  → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
+  → ∃[ c ] (variant-1 ≡ ⟦ e ⟧ c)
     ----------------------------
   → ⊥
 -- If e has 0 as root, it may be configured to 0 but never to 1.
-does-not-describe-variants-0-and-1 (Root 0       es) ∃c→⟦e⟧c≡0 ()
+does-not-describe-variants-0-and-1 (Root 0       es) ∃c→v0≡⟦e⟧c ()
 -- if e has a number larger than 1 at the top, it cannot be configured to yield 0.
 does-not-describe-variants-0-and-1 (Root (suc n) es) ()
 ```
@@ -150,7 +152,7 @@ We pattern match on the assumed completeness evidence to unveil the expression `
 ```agda
 OC-is-incomplete : Incomplete WFOC Configuration ⟦_⟧
 OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
-... | _ , e , (∃c→⟦e⟧c≡0 ∷ ∃c→⟦e⟧c≡1 ∷ []) , _ = does-not-describe-variants-0-and-1 e ∃c→⟦e⟧c≡0 ∃c→⟦e⟧c≡1
+... | _ , e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 e (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
 ```
 
 **This is an important result!**
