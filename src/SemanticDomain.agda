@@ -18,17 +18,13 @@ open Eq using (_≡_; refl)
 data Variant (A : Set) : Set where
   Artifactᵥ : A → List (Variant A) → Variant A
 
-VSet : ℕ → Set → Set
-VSet size-1 A = Multiset (Fin (suc size-1)) (Variant A)
+-- the index should be configurations!!!
 -- record VSet (A : Set) : Set where
 --   constructor _/_
 --   field
 --     size-1 : ℕ
 --     pick : Multiset (Fin (suc size-1)) (Variant A)
 -- open VSet public
-
-forget-last : ∀ {n : ℕ} {A : Set} → VSet (suc n) A → VSet n A
-forget-last set x = set (inject₁ x)
 
 leaf : ∀ {A : Set} → A → Variant A
 leaf a = Artifactᵥ a []
@@ -62,14 +58,14 @@ subtree-equality refl = refl
 equals : ∀ {A : Set} → DecidableEquality A → Variant A → Variant A → Bool
 equals ≡-dec-A V W = isYes (≡-dec ≡-dec-A V W)
 
-module Examples where
-  open import Data.Fin using (Fin; suc; zero)
-  open import Data.Nat using (ℕ)
+-- module Examples where
+--   open import Data.Fin using (Fin; suc; zero)
+--   open import Data.Nat using (ℕ)
 
-  vset-example : VSet 2 ℕ
-  vset-example zero = leaf 1
-  vset-example (suc zero) = leaf 2
-  vset-example (suc (suc zero)) = leaf 2 -- multiset possible because injectivity is not required
+--   vset-example : VSet 2 ℕ
+--   vset-example zero = leaf 1
+--   vset-example (suc zero) = leaf 2
+--   vset-example (suc (suc zero)) = leaf 2 -- multiset possible because injectivity is not required
 
 --## Show
 

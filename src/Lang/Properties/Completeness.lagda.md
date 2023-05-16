@@ -10,14 +10,12 @@
 ## Module
 
 ```agda
-module Lang.Properties.Completeness where
+module Lang.Properties.Completeness (A : Set) where
 ```
 
 ## Imports
 
 ```agda
-open import Data.Multiset using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans)
-
 open import Data.Nat using (ℕ)
 open import Data.List    using (List)
 open import Data.Product using (∃-syntax; Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -27,35 +25,37 @@ open import Relation.Nullary.Negation             using (¬_)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; trans; sym)
 open import Util.Existence                        using (∃-Size; _,_; proj₁; proj₂)
 
-open import Definitions    using (Domain; VarLang; ConfLang; Semantics)
-open import SemanticDomain using (Variant; VSet)
+open import Definitions    using (Domain; FeatureLang; SelectionLang; VarLang; VSet; Semantics; VariabilityLanguage; Expression; semantics; get; fromExpression)
+open import SemanticDomain using (Variant)
 
-open import Relations.Semantic
+open import Relations.Semantic A
+
+import Relation.Binary.PropositionalEquality as Eq
+
+import Data.Multiset as MSet
+--open import Data.Multiset using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
+
+open MSet (Variant A) (Eq.isEquivalence) using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
 ```
 
 ## Definitions
 
-A property of a language is predicate over the variability language, its corresponding configuration language, and the semantics:
-```agda
-LanguageProperty : Set₂
-LanguageProperty = ∀ (L : VarLang) → (C : ConfLang) → Semantics L C → Set₁
-```
-
 Completess is given iff for any set of variants `vs` (modelled as a list for convenience in Agda), there exists an expression `e` in the language `L` that describes all variants in `v`.
 In particular, for every variant `v` in `vs`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
-Complete : LanguageProperty
-Complete L C ⟦_⟧ = ∀ {A : Domain} {n : ℕ}
-  → (vs : VSet n A)
+Complete : VariabilityLanguage → Set₁
+Complete L = ∀ {F : FeatureLang} {S : SelectionLang}
+  → (vs : VSet F S A)
     ------------------------------------------
-  → ∃-Size[ i ] (Σ[ e ∈ L i A ] (vs ≅ ⟦ e ⟧))
+  → (Σ[ e ∈ Expression A L ] (vs ≅ ⟦ get e ⟧))
+    where ⟦_⟧ = semantics L
 ```
 
 We define incompleteness as then negation of completeness.
 This means assuming completeness for a language yields a contradiction.
 ```agda
-Incomplete : LanguageProperty
-Incomplete L C S = ¬ (Complete L C S)
+Incomplete : VariabilityLanguage → Set₁
+Incomplete L = ¬ (Complete L)
 ```
 
 ## Conclusions
@@ -72,14 +72,14 @@ Thus, there exists an expression e₂ ∈ L₂ that also describes V.
 Since V was picked arbitrarily, L₂ can encode any set of variants.
 Thus, L₂ is complete.
 ```agda
-completeness-by-expressiveness : ∀ {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {S₁ : Semantics L₁ C₁} {S₂ : Semantics L₂ C₂}
-  → Complete L₁ C₁ S₁
-  → L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁
+completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
+  → Complete L₁
+  → L₂ is-at-least-as-expressive-as L₁
     --------------------------------------------
-  → Complete L₂ C₂ S₂
+  → Complete L₂
 completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
-... | i , e₁ , vs≅e₁ with L₁-to-L₂ e₁
-...   | j , e₂ , e₁≅e₂ = j , e₂ , ≅-trans vs≅e₁ e₁≅e₂
+... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
+...   | e₂ , e₁≅e₂ = e₂ , ≅-trans vs≅e₁ e₁≅e₂
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -90,53 +90,48 @@ Given the semantics S of the complete language L of e, we compute the set of all
 Since L₊ is complete, we can encode this list of variants in L₊, giving us an expression in e₊ in L₊ and a proof that this expression exactly describes the variants of e₋.
 Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 ```agda
-open import Data.Fin using (Fin)
-postulate fooo : ∀ {L : VarLang} {C : ConfLang} {S : Semantics L C} {i : Size} {A : Domain} → (e : L i A) → ∃[ n ] (C → Fin n)
+expressiveness-by-completeness : ∀ {L₊ : VariabilityLanguage}
+  → Complete L₊
+  → (L : VariabilityLanguage)
+    ---------------------------------
+  → L₊ is-at-least-as-expressive-as L
+expressiveness-by-completeness L₊-comp L e = L₊-comp ⟦ get e ⟧
+                               where ⟦_⟧ = semantics L 
+  -- let ⟦e⟧ : Configuration C → Variant A
+  --     ⟦e⟧ = ⟦ e ⟧
 
-expressiveness-by-completeness : ∀ {L₊ : VarLang} {C₊ : ConfLang} {S₊ : Semantics L₊ C₊}
-  → Complete L₊ C₊ S₊
-  → (L : VarLang)
-  → (C : ConfLang)
-  → (S : Semantics L C)
-    ------------------------------------------
-  → L₊ , S₊ is-at-least-as-expressive-as L , S
-expressiveness-by-completeness {L₊} {_} {⟦_⟧₊} L₊-comp L C ⟦_⟧
-                               {_} {A} e =
-  let ⟦e⟧ : C → Variant A
-      ⟦e⟧ = ⟦ e ⟧
+  --     -- variantsₑ is finite
+  --     ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet n A ] (vsetₑ ≅ ⟦e⟧))
+  --     ⟦e⟧-fin = {!!}
 
-      -- variantsₑ is finite
-      ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet n A ] (vsetₑ ≅ ⟦e⟧))
-      ⟦e⟧-fin = {!!}
+  --     n : ℕ
+  --     n = proj₁ ⟦e⟧-fin
 
-      n : ℕ
-      n = proj₁ ⟦e⟧-fin
+  --     vsetₑ : VSet n A
+  --     vsetₑ = proj₁ (proj₂ ⟦e⟧-fin)
 
-      vsetₑ : VSet n A
-      vsetₑ = proj₁ (proj₂ ⟦e⟧-fin)
+  --     vsetₑ≅⟦e⟧ : vsetₑ ≅ ⟦e⟧
+  --     vsetₑ≅⟦e⟧ = proj₂ (proj₂ ⟦e⟧-fin)
 
-      vsetₑ≅⟦e⟧ : vsetₑ ≅ ⟦e⟧
-      vsetₑ≅⟦e⟧ = proj₂ (proj₂ ⟦e⟧-fin)
+  --     -- encode in L₊
+  --     as-e₊ : ∃-Size[ i ] (Σ[ e₊ ∈ L₊ i A ] (vsetₑ ≅ ⟦ e₊ ⟧₊))
+  --     as-e₊ = L₊-comp 
 
-      -- encode in L₊
-      as-e₊ : ∃-Size[ i ] (Σ[ e₊ ∈ L₊ i A ] (vsetₑ ≅ ⟦ e₊ ⟧₊))
-      as-e₊ = L₊-comp vsetₑ
+  --     i : Size
+  --     i = proj₁ as-e₊
 
-      i : Size
-      i = proj₁ as-e₊
+  --     e₊ : L₊ i A
+  --     e₊ = proj₁ (proj₂ as-e₊)
 
-      e₊ : L₊ i A
-      e₊ = proj₁ (proj₂ as-e₊)
+  --     vsetₑ≅⟦e₊⟧₊ : vsetₑ ≅ ⟦ e₊ ⟧₊
+  --     vsetₑ≅⟦e₊⟧₊ = proj₂ (proj₂ as-e₊)
 
-      vsetₑ≅⟦e₊⟧₊ : vsetₑ ≅ ⟦ e₊ ⟧₊
-      vsetₑ≅⟦e₊⟧₊ = proj₂ (proj₂ as-e₊)
+  --     -- compose proofs
 
-      -- compose proofs
+  --     ⟦e⟧≅⟦e₊⟧₊ : ⟦ e ⟧ ≅ ⟦ e₊ ⟧₊
+  --     ⟦e⟧≅⟦e₊⟧₊ = ≅-trans (≅-sym vsetₑ≅⟦e⟧) vsetₑ≅⟦e₊⟧₊
 
-      ⟦e⟧≅⟦e₊⟧₊ : ⟦ e ⟧ ≅ ⟦ e₊ ⟧₊
-      ⟦e⟧≅⟦e₊⟧₊ = ≅-trans (≅-sym vsetₑ≅⟦e⟧) vsetₑ≅⟦e₊⟧₊
-
-   in i , e₊ , ⟦e⟧≅⟦e₊⟧₊
+  --  in i , e₊ , ⟦e⟧≅⟦e₊⟧₊
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
@@ -146,24 +141,24 @@ Assuming `L₋` is as expressive as `L₊`, and knowing that `L₊` is complete,
 Yet, we already know that L₋ is incomplete.
 This yields a contradiction.
 ```agda
-less-expressive-from-completeness : ∀ {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
-  →   Complete L₊ C₊ S₊
-  → Incomplete L₋ C₋ S₋
+less-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
+  →   Complete L₊
+  → Incomplete L₋
     --------------------------------------
-  → L₋ , S₋ is-less-expressive-than L₊ , S₊
+  → L₋ is-less-expressive-than L₊
 less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
     L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
 ```
 
 Combined with `expressiveness-by-completeness` we can even further conclude that L₊ is more expressive than L₋:
 ```agda
-more-expressive-from-completeness : ∀ {L₊ L₋ : VarLang} {C₊ C₋ : ConfLang} {S₊ : Semantics L₊ C₊} {S₋ : Semantics L₋ C₋}
-  →   Complete L₊ C₊ S₊
-  → Incomplete L₋ C₋ S₋
+more-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
+  →   Complete L₊
+  → Incomplete L₋
     --------------------------------------
-  → L₊ , S₊ is-more-expressive-than L₋ , S₋
-more-expressive-from-completeness {L₊} {L₋} {C₊} {C₋} {S₊} {S₋} L₊-comp L₋-incomp =
-    expressiveness-by-completeness L₊-comp L₋ C₋ S₋
+  → L₊ is-more-expressive-than L₋
+more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-incomp =
+    expressiveness-by-completeness L₊-comp L₋
   , less-expressive-from-completeness L₊-comp L₋-incomp
 ```
 
@@ -173,15 +168,15 @@ more-expressive-from-completeness {L₊} {L₋} {C₊} {C₋} {S₊} {S₋} L₊
 open import Util.Existence using (∃-Size; proj₁; proj₂)
 open import Data.Product using (∃-syntax; proj₁; proj₂)
 
-VariantTheorem : (C : ConfLang) → Set₁
-VariantTheorem C = ∀ {A} → (C → Variant A) → Set
+-- VariantTheorem : (C : ConfLang) → Set₁
+-- VariantTheorem C = ∀ {A} → (C → Variant A) → Set
 
-bridge : ∀ {L₁ L₂ : VarLang} {C : ConfLang} {S₁ : Semantics L₁ C} {S₂ : Semantics L₂ C} {i} {A}
-  → (expr : L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁)
-  → (thm : VariantTheorem C)
-  → (e : L₁ i A)
-  → thm (S₁ e)
-    -----------------------------------
-  → (thm (S₂ (proj₁ (proj₂ (expr e)))))
-bridge L₂⊇L₁ thm e thm-e = {!!}
+-- bridge : ∀ {L₁ L₂ : VarLang} {C : ConfLang} {S₁ : Semantics L₁ C} {S₂ : Semantics L₂ C} {i} {A}
+--   → (expr : L₂ , S₂ is-at-least-as-expressive-as L₁ , S₁)
+--   → (thm : VariantTheorem C)
+--   → (e : L₁ i A)
+--   → thm (S₁ e)
+--     -----------------------------------
+--   → (thm (S₂ (proj₁ (proj₂ (expr e)))))
+-- bridge L₂⊇L₁ thm e thm-e = {!!}
 ```
