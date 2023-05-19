@@ -3,7 +3,7 @@
 
 open import Definitions
 
-module Relations.Semantic (A : Domain) where
+module Relations.Semantic where
 ```
 
 # Relations of Variability Languages
@@ -16,7 +16,15 @@ open import Size using (Size)
 open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size)
 
+open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
+open import Relation.Binary using (Rel; IsEquivalence)
+open import Level using (0ℓ; suc)
+
+open import Relations.GeneralizedEquivalence using (iseq)
+
 open import Relation.Nullary.Negation using (¬_)
+
+import Data.Multiset as MSet
 ```
 
 ## Semantic Relations of Expressions Within a Single Language
@@ -29,13 +37,14 @@ We consider three kinds of semantic relations between two expressions `a` and `b
 We start with semantic equivalence because it is the easiest to define.
 Any two expressions `a` and `b` in a variability language `L` are equivalent if their semantics `⟦_⟧` are equivalent:
 ```agda
-_≣_ : ∀ {L : VariabilityLanguage}
-  → Expression A L
-  → Expression A L
+_⊢_≣_ : ∀ {i j : Size} {A : Domain}
+  → (L : VariabilityLanguage)
+  → expression L i A
+  → expression L j A
   → Set
-_≣_ {L} e₁ e₂ = ⟦ get e₁ ⟧ ≡ ⟦ get e₂ ⟧
+L ⊢ e₁ ≣ e₂ = ⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧
   where ⟦_⟧ = semantics L
-infix 5 _≣_
+infix 5 _⊢_≣_
 ```
 A proposition `L , ⟦_⟧ ⊢ e₁ ≈ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expressions `e₁` and `e₂` are semantically equivalent, i.e., `⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧`.
 
@@ -43,10 +52,10 @@ Semantic equivalence `≈` inherits all properties from structural equality `≡
 
 Obviously, syntactic equality (or rather structural equality) implies semantic equality, independent of the semantics:
 ```agda
-≡→≣ : ∀ {L : VariabilityLanguage} {a b : Expression A L}
+≡→≣ : ∀ {i : Size} {A : Domain} {L : VariabilityLanguage} {a b : expression L i A}
   → a ≡ b
     --------------
-  → a ≣ b
+  → L ⊢ a ≣ b
 ≡→≣ eq rewrite eq = refl
 ```
 
@@ -147,33 +156,28 @@ First we generalize `_,_⊢_⊆_` and `_,_⊢_≚_` from single languages to two
 This step is straighforward as it just requires us to introduce additional parameters for the second language and reformulating the right-hand side of relations to refer to the second language.
 The main insight here is that we can compare expressions across languages because they share the same semantic domain: variants.
 ```agda
-import Data.Multiset as MSet
-open import SemanticDomain using (Variant)
-open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
-open import Relation.Binary using (Rel; IsEquivalence)
-open import Level using (0ℓ; suc)
 
-open import Relations.GeneralizedEquivalence using (iseq)
-
-_⊆ᵥ_ : IRel (Expression A) 0ℓ
-_⊆ᵥ_ {L₁} {L₂} e₁ e₂ = ⟦ get e₁ ⟧₁ ⊆ ⟦ get e₂ ⟧₂
+_⊆ᵥ_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
+_⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ get e₁ ⟧₁ ⊆ ⟦ get e₂ ⟧₂
   where
     ⟦_⟧₁ = semantics L₁
     ⟦_⟧₂ = semantics L₂
-    open MSet (Variant A) (Eq.isEquivalence) using (_⊆_)
+    open MSet (VariantSetoid A) using (_⊆_)
+infix 5 _⊆ᵥ_
 
-_≚_ : IRel (Expression A) 0ℓ
+_≚_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
 e₁ ≚ e₂ = e₁ ⊆ᵥ e₂ × e₂ ⊆ᵥ e₁
+infix 5 _≚_
 
-≚-isIndexedEquivalence : IsIndexedEquivalence (Expression A) _≚_
+≚-isIndexedEquivalence : ∀ {A : Domain} → IsIndexedEquivalence (Expression A) _≚_
 ≚-isIndexedEquivalence = record
   { refl  = ≅-refl
   ; sym   = ≅-sym
   ; trans = ≅-trans
   }
-  where open MSet (Variant A) (Eq.isEquivalence) using (≅-refl; ≅-sym; ≅-trans)
+  where open MSet (VariantSetoid _) using (≅-refl; ≅-sym; ≅-trans)
 
-≚-isEquivalence : ∀ {L : VariabilityLanguage} → IsEquivalence {suc 0ℓ} (_≚_ {L})
+≚-isEquivalence : ∀ {A : Domain} {L : VariabilityLanguage} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
 ```
 
@@ -193,7 +197,7 @@ We say that a language `L₁` is as expressive as another language `L₂` **iff*
 -- L₁ ⊇ L₂
 _is-at-least-as-expressive-as_ : VariabilityLanguage → VariabilityLanguage → Set₁
 L₁ is-at-least-as-expressive-as L₂ =
-  ∀ (e₂ : Expression A L₂) →
+  ∀ {A : Domain} (e₂ : Expression A L₂) →
       (Σ[ e₁ ∈ (Expression A L₁) ]
         (e₂ ≚ e₁))
   -- TODO: Somehow rephrase it like this:

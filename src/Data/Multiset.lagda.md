@@ -5,9 +5,9 @@
 ```agda
 {-# OPTIONS --allow-unsolved-metas #-}
 
-open import Level using (Level) renaming (suc to lsuc)
+open import Level using (Level; suc; _⊔_)
 open import Relation.Binary using (
-  Rel;
+  Setoid;
   Antisym;
   IsEquivalence)
 open import Relation.Binary.Indexed.Heterogeneous using (
@@ -17,10 +17,8 @@ open import Relation.Binary.Indexed.Heterogeneous using (
   Transitive;
   IsIndexedEquivalence)
 module Data.Multiset
-  {ℓ : Level}
-  (S : Set ℓ)
-  {_≈_ : Rel S ℓ}
-  (≈-equiv : IsEquivalence _≈_)
+  {c ℓ : Level}
+  (S : Setoid c ℓ)
   where
 ```
 
@@ -33,36 +31,30 @@ open import Data.Unit.Polymorphic using (⊤; tt)
 open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 
-module Eq = IsEquivalence ≈-equiv
+open Setoid S
+module Eq = IsEquivalence isEquivalence
 ```
 
 ## Definitions
 
 ```agda
-Index : Set (lsuc ℓ)
-Index = Set ℓ
+Index : Set (suc c)
+Index = Set c
 
-Source : Set (lsuc ℓ)
-Source = Set ℓ
-
--- private
---   variable
---     ℓ : Level
-
-Multiset : Index → Set ℓ
-Multiset I = I → S
+Multiset : Index → Set c
+Multiset I = I → Carrier
 
 -- an element is within a subset, if there is an index pointing at that element
 -- Later we could employ setoids to parameterize our set formulation in the equivalence relation instead of always relying on propositional equality.
-_∈_ : ∀ {I} → S → Multiset I → Set ℓ
+_∈_ : ∀ {I} → Carrier → Multiset I → Set (c ⊔ ℓ)
 a ∈ A = ∃[ i ] (a ≈ A i)
 
 -- morphisms
 -- _⊆_ : ∀ {I J} → Multiset I → Multiset J → Set ℓ
-_⊆_ : IRel Multiset ℓ
+_⊆_ : IRel Multiset (c ⊔ ℓ)
 _⊆_ {I} A B = ∀ (i : I) → A i ∈ B
 
-_≅_ : IRel Multiset ℓ
+_≅_ : IRel Multiset (c ⊔ ℓ)
 A ≅ B = (A ⊆ B) × (B ⊆ A)
 ```
 
@@ -77,9 +69,9 @@ A ≅ B = (A ⊆ B) × (B ⊆ A)
 
 ⊆-trans : Transitive Multiset _⊆_
 ⊆-trans A⊆B B⊆C i =
-  let (j , ai∈B) = A⊆B i
-      (k , bj∈C) = B⊆C j
-   in k , Eq.trans ai∈B bj∈C
+  let (j , Ai≈Bj) = A⊆B i
+      (k , Bj≈Ck) = B⊆C j
+   in k , Eq.trans Ai≈Bj Bj≈Ck
 
 ≅-refl : Reflexive Multiset _≅_
 ≅-refl = ⊆-refl , ⊆-refl
@@ -112,15 +104,15 @@ The empty set
 {-|
 The type of singleton sets over a source.
 -}
-𝟙 : Set ℓ
+𝟙 : Set c
 𝟙 = Multiset ⊤
 
 -- predicate that checks whether a subset is nonempty
-nonempty : ∀ {I} → Multiset I → Set ℓ
+nonempty : ∀ {I} → Multiset I → Set (c ⊔ ℓ)
 nonempty A = ∃[ a ] (a ∈ A)
 
 -- predicate that checks whether a subset is empty
-empty : ∀ {I} → Multiset I → Set ℓ
+empty : ∀ {I} → Multiset I → Set (c ⊔ ℓ)
 empty A = ¬ (nonempty A)
 
 𝟘-is-empty : empty 𝟘
@@ -138,11 +130,10 @@ empty-set⊆𝟘 : ∀ {I} {A : Multiset I}
 empty-set⊆𝟘 {A = A} A-empty i with A-empty (A i , i , Eq.refl)
 ...| ()
 
-all-empty-sets-are-equal : ∀ {I}
-  → (A : Multiset I)
+all-empty-sets-are-equal : ∀ {I} {A : Multiset I}
   → empty A
   → A ≅ 𝟘
-all-empty-sets-are-equal A A-empty = empty-set⊆𝟘 A-empty , 𝟘⊆A
+all-empty-sets-are-equal A-empty = empty-set⊆𝟘 A-empty , 𝟘⊆A
 
 singleton-set-is-nonempty : (A : 𝟙) → nonempty A
 singleton-set-is-nonempty A = A tt , tt , Eq.refl

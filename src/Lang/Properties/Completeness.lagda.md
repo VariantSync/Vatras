@@ -10,7 +10,7 @@
 ## Module
 
 ```agda
-module Lang.Properties.Completeness (A : Set) where
+module Lang.Properties.Completeness where
 ```
 
 ## Imports
@@ -25,17 +25,17 @@ open import Relation.Nullary.Negation             using (¬_)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; trans; sym)
 open import Util.Existence                        using (∃-Size; _,_; proj₁; proj₂)
 
-open import Definitions    using (Domain; FeatureLang; SelectionLang; VarLang; VSet; Semantics; VariabilityLanguage; Expression; semantics; get; fromExpression)
-open import SemanticDomain using (Variant)
+open import Definitions   -- using (Domain; FeatureLang; SelectionLang; VarLang; VSet; Semantics; VariabilityLanguage; Expression; semantics; get; fromExpression)
+-- open import SemanticDomain using (Variant)
 
-open import Relations.Semantic A
+open import Relations.Semantic
 
 import Relation.Binary.PropositionalEquality as Eq
 
 import Data.Multiset as MSet
 --open import Data.Multiset using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
 
-open MSet (Variant A) (Eq.isEquivalence) using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
+--open MSet (VariantSetoid A) using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
 ```
 
 ## Definitions
@@ -44,11 +44,13 @@ Completess is given iff for any set of variants `vs` (modelled as a list for con
 In particular, for every variant `v` in `vs`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
 Complete : VariabilityLanguage → Set₁
-Complete L = ∀ {F : FeatureLang} {S : SelectionLang}
+Complete L = ∀ {A : Domain} {F : FeatureLang} {S : SelectionLang}
   → (vs : VSet F S A)
-    ------------------------------------------
-  → (Σ[ e ∈ Expression A L ] (vs ≅ ⟦ get e ⟧))
-    where ⟦_⟧ = semantics L
+    ----------------------------------
+  → Σ[ e ∈ Expression A L ]
+      (let open MSet (VariantSetoid A)
+           ⟦_⟧ = semantics L
+        in vs ≅ ⟦ get e ⟧)
 ```
 
 We define incompleteness as then negation of completeness.
@@ -80,6 +82,7 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
 completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
 ... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
 ...   | e₂ , e₁≅e₂ = e₂ , ≅-trans vs≅e₁ e₁≅e₂
+  where open MSet (VariantSetoid _) using (≅-trans)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -96,7 +99,7 @@ expressiveness-by-completeness : ∀ {L₊ : VariabilityLanguage}
     ---------------------------------
   → L₊ is-at-least-as-expressive-as L
 expressiveness-by-completeness L₊-comp L e = L₊-comp ⟦ get e ⟧
-                               where ⟦_⟧ = semantics L 
+                               where ⟦_⟧ = semantics L
   -- let ⟦e⟧ : Configuration C → Variant A
   --     ⟦e⟧ = ⟦ e ⟧
 
