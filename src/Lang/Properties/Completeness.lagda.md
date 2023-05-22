@@ -17,25 +17,19 @@ module Lang.Properties.Completeness where
 
 ```agda
 open import Data.Nat using (ℕ)
-open import Data.List    using (List)
+open import Data.List using (List)
 open import Data.Product using (∃-syntax; Σ-syntax; _×_; _,_; proj₁; proj₂)
-open import Size         using (Size)
 
-open import Relation.Nullary.Negation             using (¬_)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; trans; sym)
-open import Util.Existence                        using (∃-Size; _,_; proj₁; proj₂)
+open import Size using (Size; ∞)
 
-open import Definitions   -- using (Domain; FeatureLang; SelectionLang; VarLang; VSet; Semantics; VariabilityLanguage; Expression; semantics; get; fromExpression)
--- open import SemanticDomain using (Variant)
-
-open import Relations.Semantic
-
-import Relation.Binary.PropositionalEquality as Eq
+open import Relation.Nullary.Negation  using (¬_)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; trans; sym)
 
 import Data.Multiset as MSet
---open import Data.Multiset using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
+open import Definitions
+open import Relations.Semantic
 
---open MSet (VariantSetoid A) using (Multiset; _⊆_; _≅_; ⊆-trans; ≅-trans; ≅-sym)
+open import Util.Existence using (∃-Size; _,_; proj₁; proj₂)
 ```
 
 ## Definitions
@@ -44,11 +38,11 @@ Completess is given iff for any set of variants `vs` (modelled as a list for con
 In particular, for every variant `v` in `vs`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
 Complete : VariabilityLanguage → Set₁
-Complete L = ∀ {A : Domain} {F : FeatureLang} {S : SelectionLang}
-  → (vs : VSet F S A)
+Complete L = ∀ {A n}
+  → (vs : VSet A n)
     ----------------------------------
   → Σ[ e ∈ Expression A L ]
-      (let open MSet (VariantSetoid A)
+      (let open MSet (VariantSetoid ∞ A)
            ⟦_⟧ = semantics L
         in vs ≅ ⟦ get e ⟧)
 ```
@@ -82,7 +76,7 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
 completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
 ... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
 ...   | e₂ , e₁≅e₂ = e₂ , ≅-trans vs≅e₁ e₁≅e₂
-  where open MSet (VariantSetoid _) using (≅-trans)
+  where open MSet (VariantSetoid _ _) using (≅-trans)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -98,43 +92,42 @@ expressiveness-by-completeness : ∀ {L₊ : VariabilityLanguage}
   → (L : VariabilityLanguage)
     ---------------------------------
   → L₊ is-at-least-as-expressive-as L
-expressiveness-by-completeness L₊-comp L e = L₊-comp ⟦ get e ⟧
-                               where ⟦_⟧ = semantics L
-  -- let ⟦e⟧ : Configuration C → Variant A
-  --     ⟦e⟧ = ⟦ e ⟧
+expressiveness-by-completeness {L₊} L₊-comp L {A = A} e =
+  let open MSet (VariantSetoid _ A) using (_≅_; ≅-sym; ≅-trans)
 
-  --     -- variantsₑ is finite
-  --     ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet n A ] (vsetₑ ≅ ⟦e⟧))
-  --     ⟦e⟧-fin = {!!}
+      C    = confLang L
+      ⟦_⟧  = semantics L
+      ⟦_⟧₊ = semantics L₊
 
-  --     n : ℕ
-  --     n = proj₁ ⟦e⟧-fin
+      -- variantsₑ is finite
+      ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ get e ⟧))
+      ⟦e⟧-fin = {!!}
 
-  --     vsetₑ : VSet n A
-  --     vsetₑ = proj₁ (proj₂ ⟦e⟧-fin)
+      n : ℕ
+      n = proj₁ ⟦e⟧-fin
 
-  --     vsetₑ≅⟦e⟧ : vsetₑ ≅ ⟦e⟧
-  --     vsetₑ≅⟦e⟧ = proj₂ (proj₂ ⟦e⟧-fin)
+      vsetₑ : VSet A n
+      vsetₑ = proj₁ (proj₂ ⟦e⟧-fin)
 
-  --     -- encode in L₊
-  --     as-e₊ : ∃-Size[ i ] (Σ[ e₊ ∈ L₊ i A ] (vsetₑ ≅ ⟦ e₊ ⟧₊))
-  --     as-e₊ = L₊-comp 
+      vsetₑ≅⟦e⟧ : vsetₑ ≅ ⟦ get e ⟧
+      vsetₑ≅⟦e⟧ = proj₂ (proj₂ ⟦e⟧-fin)
 
-  --     i : Size
-  --     i = proj₁ as-e₊
+      -- encode in L₊
+      as-e₊ : Σ[ e₊ ∈ Expression A L₊ ] (vsetₑ ≅ ⟦ get e₊ ⟧₊)
+      as-e₊ = L₊-comp vsetₑ
 
-  --     e₊ : L₊ i A
-  --     e₊ = proj₁ (proj₂ as-e₊)
+      e₊ : Expression A L₊
+      e₊ = proj₁ as-e₊
 
-  --     vsetₑ≅⟦e₊⟧₊ : vsetₑ ≅ ⟦ e₊ ⟧₊
-  --     vsetₑ≅⟦e₊⟧₊ = proj₂ (proj₂ as-e₊)
+      vsetₑ≅⟦e₊⟧₊ : vsetₑ ≅ ⟦ get e₊ ⟧₊
+      vsetₑ≅⟦e₊⟧₊ = proj₂ as-e₊
 
-  --     -- compose proofs
+      -- compose proofs
 
-  --     ⟦e⟧≅⟦e₊⟧₊ : ⟦ e ⟧ ≅ ⟦ e₊ ⟧₊
-  --     ⟦e⟧≅⟦e₊⟧₊ = ≅-trans (≅-sym vsetₑ≅⟦e⟧) vsetₑ≅⟦e₊⟧₊
+      ⟦e⟧≅⟦e₊⟧₊ : ⟦ get e ⟧ ≅ ⟦ get e₊ ⟧₊
+      ⟦e⟧≅⟦e₊⟧₊ = ≅-trans (≅-sym vsetₑ≅⟦e⟧) vsetₑ≅⟦e₊⟧₊
 
-  --  in i , e₊ , ⟦e⟧≅⟦e₊⟧₊
+   in e₊ , ⟦e⟧≅⟦e₊⟧₊
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.

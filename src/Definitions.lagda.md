@@ -8,20 +8,22 @@ module Definitions where
 
 ```agda
 open import Data.Bool using (Bool)
+open import Data.Fin using (Fin)
 open import Data.List using (List; []; _∷_; map)
 open import Data.List.Properties renaming (≡-dec to ≡-dec-l)
+open import Data.Nat using (ℕ; suc)
 open import Data.String using (String; _++_; intersperse)
-open import Data.Product using (_×_; _,_)
-open import Size using (Size; ↑_; ∞)
--- open import SemanticDomain using (Variant; leaf)
-
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; _≢_; refl)
-
-open import Relation.Binary.Definitions using (DecidableEquality)
-open import Relation.Nullary.Decidable using (Dec; yes; no; isYes; False; toWitnessFalse)
+open import Data.Product using (_×_; ∃-syntax; _,_)
 
 open import Function using (_∘_)
+open import Level using (0ℓ) renaming (suc to ℓ-suc)
+open import Size using (Size; ↑_; _⊔ˢ_; ∞)
+
+open import Relation.Nullary.Decidable using (Dec; yes; no; isYes; False; toWitnessFalse)
+open import Relation.Binary using (Setoid; DecidableEquality)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
+
+import Data.Multiset as MSet
 ```
 
 We model variability languages as embedded domain specific languages. That is, each variability language is described by a type which in turn is described by the kind `VarLang`. (`Set` denotes the set of all types and `Set₁` denotes the set of all kinds, i.e., the set of all sets of types).
@@ -45,47 +47,8 @@ Artifactˡ L = ∀ {i : Size} {A : Domain} → A → List (L i A) → L (↑ i) 
 
 We also model configurations as types but they do not have parameters.
 ```agda
-FeatureLang : Set₁
-FeatureLang = Set
-
-SelectionLang : Set₁
-SelectionLang = Set
-
-Assignment : FeatureLang → SelectionLang → Set
-Assignment = _×_
-
-Configuration : FeatureLang → SelectionLang → Set
-Configuration A S = List (Assignment A S)
-
-infix 4 _∈_
-data _∈_ {F : FeatureLang} {S : SelectionLang} : Assignment F S → Configuration F S → Set where
-   here : ∀ {f : F} {s : S} {as}
-       ----------------------
-     → (f , s) ∈ (f , s) ∷ as
-
-   there : ∀ {f f' : F} {s s' : S} {as}
-     → f ≢ f'
-     → (f , s) ∈ as
-       ------------------------
-     → (f , s) ∈ (f' , s') ∷ as
-
--- -- Smart constructor for there that will make Agda
--- -- figure out the proof. This is still magic to me.
--- there' : ∀ {A S : Set} {a a' : A} {s s' : S} {as}
---   → {a≢a' : False (a ≟ a')}
---   → (a , s) ∈ as
---     ---------------------
---   → (a , s) ∈ (a' , s') ∷ as
--- there' {a≢a' = a≢a'} = there (toWitnessFalse a≢a')
-```
-
-```agda
--- data Variant (A : Set) : Set where
---   Artifactᵥ : A → List (Variant A) → Variant A
-
-open import Relation.Binary using (Setoid)
-open import Level using (0ℓ; suc)
-import Relation.Binary.PropositionalEquality as Eq
+ConfLang : Set₁
+ConfLang = Set
 
 -- Variants are given by a variability language in which nothing can be configured.
 -- Every expressions describes a singleton set of variants.
@@ -95,42 +58,30 @@ data Variant : VarLang where
 
 data 𝟘-Lang : VarLang where
 
-VariantSetoid : Domain → Setoid 0ℓ 0ℓ
-VariantSetoid A = Eq.setoid (Variant ∞ A)
+VariantSetoid : Size → Domain → Setoid 0ℓ 0ℓ
+VariantSetoid i A = Eq.setoid (Variant i A)
 
-VSet : FeatureLang → SelectionLang → Domain → Set
-VSet F S A = Multiset (Configuration F S)
-  where open import Data.Multiset (VariantSetoid A) using (Multiset)
+VSet : Domain → ℕ → Set
+VSet A n = Multiset (Fin (suc n))
+  where open MSet (VariantSetoid ∞ A) using (Multiset)
 
--- open import Data.List.Relation.Unary.All using (All; reduce; []; _∷_)
-
--- We cannot use this predicate because there is no guarantee that mkArtifact indeed produces variants.
--- We cannot constrain mkArtifact to be a constructor, and thus it could be a function that creates
--- non-artifact expressions.
--- data IsVariant {A : Domain} {L : VarLang} : ∀ {i : Size} → L i A → Set₁ where
---   V-Leaf : ∀ {a : A} {mkArtifact : Artifactˡ L}
---       ---------------------------
---     → IsVariant (mkArtifact a [])
-
---   V-Node : ∀ {i : Size} {a : A} {mkArtifact : Artifactˡ L} {as : List (L i A)}
---     → All (λ e → IsVariant {A} {L} e) as
---       ----------------------------------
---     → IsVariant (mkArtifact a as)
+forget-last : ∀ {n : ℕ} {A : Set} → VSet A (suc n) → VSet A n
+forget-last set x = set (Data.Fin.inject₁ x)
 ```
 
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
 ```agda
-Semantics : VarLang → FeatureLang → SelectionLang → Set₁
-Semantics L F S = ∀ {i : Size} {A : Domain} → L i A → VSet F S A
+Semantics : VarLang → ConfLang → Set₁
+Semantics L C = ∀ {i j : Size} {A : Domain} → L i A →
+  (let open MSet (VariantSetoid (i ⊔ˢ j) A) in Multiset C)
 ```
 
 ```agda
 record VariabilityLanguage : Set₁ where
   field
     expression : VarLang
-    fLang : FeatureLang
-    sLang : SelectionLang
-    semantics : Semantics expression fLang sLang
+    confLang   : ConfLang
+    semantics  : Semantics expression confLang
 open VariabilityLanguage public
 
 record Expression (A : Domain) (V : VariabilityLanguage) : Set₁ where
@@ -144,45 +95,6 @@ fromExpression : ∀ {i : Size} {A : Domain}
   → expression L i A
   → Expression A L
 fromExpression _ e = record { get = e }
-
-open import Function.Inverse using (Inverse; _↔_)
-open import Data.Product using (Σ-syntax)
-
-
---VSet F S A
--- FullyConfigured : ∀ {A : Domain} {L : VariabilityLanguage}
---   → (e : Expression A L)
---   → Set
--- FullyConfigured {A} {L} e = Σ[ v ∈ Variant A ] (e ↔ v)
---   where F = fLang L
---         S = sLang L
-
-
--- the index should be configurations!!!
--- record VSet (A : Set) : Set where
---   constructor _/_
---   field
---     size-1 : ℕ
---     pick : Multiset (Fin (suc size-1)) (Variant A)
--- open VSet public
-
-
-
--- We did not equip variants with bounds yet so we just assume the following functions to terminate.
-
--- ## Equality
-
-
-
--- module Examples where
---   open import Data.Fin using (Fin; suc; zero)
---   open import Data.Nat using (ℕ)
-
---   vset-example : VSet 2 ℕ
---   vset-example zero = leaf 1
---   vset-example (suc zero) = leaf 2
---   vset-example (suc (suc zero)) = leaf 2 -- multiset possible because injectivity is not required
-
 ```
 
 ## Helper Functions and Theorems
@@ -241,6 +153,9 @@ open import Util.SizeJuggle
 flip-VarLang : VarLang → Domain → Bounded
 flip-VarLang L A i = L i A
 
+forget-variant-size : ∀ {i : Size} {A : Domain} → Variant i A → Variant ∞ A
+forget-variant-size v = v
+
 {-
 Creates an Artifact from a list of expressions of a certain size.
 The size of the resulting expression is larger by 1.
@@ -265,13 +180,11 @@ sequence-sized-artifact {A} {L} w Artifact a cs =
 
 ```agda
 module Examples where
-  open import Data.Bool using (Bool; true; false)
-  open import Data.Nat using (ℕ)
   open import Data.String using (String)
-  open Data.List using ([]; _∷_)
+  open Data.Fin using (zero; suc)
 
-  vset-example : ∀ {F : FeatureLang} {S : SelectionLang} → VSet F S ℕ
-  vset-example [] = leaf 1
-  vset-example (a ∷ []) = leaf 2
-  vset-example (a ∷ b ∷ as) = leaf 3
+  vset-example : VSet ℕ 2
+  vset-example zero = leaf 1
+  vset-example (suc zero) = leaf 2
+  vset-example (suc (suc zero)) = leaf 3
 ```

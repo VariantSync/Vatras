@@ -37,13 +37,20 @@ We consider three kinds of semantic relations between two expressions `a` and `b
 We start with semantic equivalence because it is the easiest to define.
 Any two expressions `a` and `b` in a variability language `L` are equivalent if their semantics `⟦_⟧` are equivalent:
 ```agda
+_≣_ : ∀ {A : Domain} {L : VariabilityLanguage}
+  → (e₁ e₂ : Expression A L)
+  → Set
+_≣_ {L = L} e₁ e₂ = ⟦ get e₁ ⟧ ≡ ⟦ get e₂ ⟧
+  where ⟦_⟧ = semantics L
+infix 5 _≣_
+
+-- for syntax
 _⊢_≣_ : ∀ {i j : Size} {A : Domain}
   → (L : VariabilityLanguage)
   → expression L i A
   → expression L j A
   → Set
-L ⊢ e₁ ≣ e₂ = ⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧
-  where ⟦_⟧ = semantics L
+L ⊢ e₁ ≣ e₂ = fromExpression L e₁ ≣ fromExpression L e₂
 infix 5 _⊢_≣_
 ```
 A proposition `L , ⟦_⟧ ⊢ e₁ ≈ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expressions `e₁` and `e₂` are semantically equivalent, i.e., `⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧`.
@@ -126,24 +133,6 @@ A proposition `L , ⟦_⟧ ⊢ e₁ ⊆ e₂` reads as, in a language `L` with s
 --   , ⊆ᵥ-trans {k} {j} {i} {A} {L} {C} {S} {e₃} {e₂} {e₁} e₃⊆e₂ e₂⊆e₁
 ```
 
-Semantic equality implies variant equality:
-```agda
--- ≈→⊆ᵥ : ∀ {i j : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {a : L i A} {b : L j A}
---   → L , S ⊢ a ≈ b
---     ---------------
---   → L , S ⊢ a ⊆ᵥ b
--- -- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
--- ≈→⊆ᵥ a≈b c rewrite a≈b = c , refl
-
--- ≈→≚ : ∀ {i j : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {a : L i A} {b : L j A}
---   → L , S ⊢ a ≈ b
---     -------------
---   → L , S ⊢ a ≚ b
--- ≈→≚     {i} {j} {A} {L} {C} {S} {a} {b} a≈b =
---     ≈→⊆ᵥ {i} {j} {A} {L} {C} {S} {a} {b} a≈b
---   , ≈→⊆ᵥ {j} {i} {A} {L} {C} {S} {b} {a} (Eq.sym a≈b)
-```
-
 ## Semantic Relations of Different Languages
 
 To compare languages, we first define relations for comparing expressions between different languages.
@@ -156,13 +145,12 @@ First we generalize `_,_⊢_⊆_` and `_,_⊢_≚_` from single languages to two
 This step is straighforward as it just requires us to introduce additional parameters for the second language and reformulating the right-hand side of relations to refer to the second language.
 The main insight here is that we can compare expressions across languages because they share the same semantic domain: variants.
 ```agda
-
 _⊆ᵥ_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
 _⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ get e₁ ⟧₁ ⊆ ⟦ get e₂ ⟧₂
   where
     ⟦_⟧₁ = semantics L₁
     ⟦_⟧₂ = semantics L₂
-    open MSet (VariantSetoid A) using (_⊆_)
+    open MSet (VariantSetoid _ A) using (_⊆_)
 infix 5 _⊆ᵥ_
 
 _≚_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
@@ -175,19 +163,51 @@ infix 5 _≚_
   ; sym   = ≅-sym
   ; trans = ≅-trans
   }
-  where open MSet (VariantSetoid _) using (≅-refl; ≅-sym; ≅-trans)
+  where open MSet (VariantSetoid _ _) using (≅-refl; ≅-sym; ≅-trans)
 
 ≚-isEquivalence : ∀ {A : Domain} {L : VariabilityLanguage} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
 ```
 
+We introduce some aliases for the above relations that have a more readable syntax when used with concrete expressions:
+```agda
+_,_⊢_⊆ᵥ_ : ∀ {A : Domain} {i j : Size} → (L₁ L₂ : VariabilityLanguage) → expression L₁ i A → expression L₂ j A → Set
+L₁ , L₂ ⊢ e₁ ⊆ᵥ e₂ = fromExpression L₁ e₁ ⊆ᵥ fromExpression L₂ e₂
+infix 5 _,_⊢_⊆ᵥ_
+
+_,_⊢_≚_ : ∀ {A : Domain} {i j : Size} → (L₁ L₂ : VariabilityLanguage) → expression L₁ i A → expression L₂ j A → Set
+L₁ , L₂ ⊢ e₁ ≚ e₂ = fromExpression L₁ e₁ ≚ fromExpression L₂ e₂
+infix 5 _,_⊢_≚_
+```
+
 In the following the prove the same properties as for the relations within a single language. The proofs are identical:
 ```agda
--- ≚→≅ : ∀ {i j : Size} {A : Domain} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang} {⟦_⟧₁ : Semantics L₁ C₁} {⟦_⟧₂ : Semantics L₂ C₂} {e₁ : L₁ i A} {e₂ : L₂ j A}
---   → L₁ , ⟦_⟧₁ and L₂ , ⟦_⟧₂ ⊢ e₁ ≚ e₂
---     ----------------------------------
---   → ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
--- ≚→≅ (fst , snd) = fst , snd
+≚→≅ : ∀ {A : Domain} {L₁ L₂ : VariabilityLanguage} {e₁ : Expression A L₁} {e₂ : Expression A L₂}
+  → e₁ ≚ e₂
+    ---------------------------------------------------
+  → (let open MSet (VariantSetoid _ A) using (_≅_)
+         ⟦_⟧₁ = semantics L₁
+         ⟦_⟧₂ = semantics L₂
+      in ⟦ get e₁ ⟧₁ ≅ ⟦ get e₂ ⟧₂)
+≚→≅ (fst , snd) = fst , snd
+```
+
+Semantic equality implies variant equality:
+```agda
+≣→⊆ᵥ : ∀ {A : Domain} {L : VariabilityLanguage} {a b : Expression A L}
+  → a ≣ b
+    -------
+  → a ⊆ᵥ b
+-- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
+≣→⊆ᵥ a≈b c rewrite a≈b = c , refl
+
+≣→≚ : ∀ {A : Domain} {L : VariabilityLanguage} {a b : Expression A L}
+  → a ≣ b
+    -------
+  → a ≚ b
+≣→≚     {A} {L} {a} {b} a≣b =
+    ≣→⊆ᵥ {A} {L} {a} {b} a≣b
+  , ≣→⊆ᵥ {A} {L} {b} {a} (Eq.sym a≣b)
 ```
 
 ### Relating Languages
@@ -198,7 +218,7 @@ We say that a language `L₁` is as expressive as another language `L₂` **iff*
 _is-at-least-as-expressive-as_ : VariabilityLanguage → VariabilityLanguage → Set₁
 L₁ is-at-least-as-expressive-as L₂ =
   ∀ {A : Domain} (e₂ : Expression A L₂) →
-      (Σ[ e₁ ∈ (Expression A L₁) ]
+      (Σ[ e₁ ∈ Expression A L₁ ]
         (e₂ ≚ e₁))
   -- TODO: Somehow rephrase it like this:
   -- (semantics L₂) ⊆ (semantics L₁)
@@ -226,15 +246,13 @@ L₁ is-variant-equivalent-to L₂ =
 
 Expressiveness is transitive:
 ```agda
--- trans-expressiveness : ∀ {L₁ L₂ L₃ : VarLang} {F₁ F₂ F₃ : FeatureLang} {SL₁ SL₂ SL₃ : SelectionLang} {S₁ : Semantics L₁ F₁ SL₁} {S₂ : Semantics L₂ F₂ SL₂} {S₃ : Semantics L₃ F₃ SL₃}
---   → L₁ , S₁ is-at-least-as-expressive-as L₂ , S₂
---   → L₂ , S₂ is-at-least-as-expressive-as L₃ , S₃
---     -----------------------------------
---   → L₁ , S₁ is-at-least-as-expressive-as L₃ , S₃
+-- trans-expressiveness : ∀ {L₁ L₂ L₃ : VariabilityLanguage}
+--   → L₁ is-at-least-as-expressive-as L₂
+--   → L₂ is-at-least-as-expressive-as L₃
+--     ----------------------------------
+--   → L₁ is-at-least-as-expressive-as L₃
 -- trans-expressiveness
 --   {L₁} {L₂} {L₃}
---   {C₁} {C₂} {C₃}
---   {S₁} {S₂} {S₃}
 --   L₂→L₁ L₃→L₂ {i₃} {A} e₃
 --   =
 --   let i₂ , e₂ , e₃≚e₂ = L₃→L₂ e₃

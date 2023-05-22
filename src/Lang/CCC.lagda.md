@@ -41,12 +41,12 @@ open Eq
 open import Lang.Annotation.Name using (Dimension)
 open import Definitions using (
   Domain;
-  Variant; Artifactᵥ;
-  VarLang; FeatureLang; SelectionLang; VariabilityLanguage;
-  Configuration; _∈_;
+  Variant; Artifactᵥ; VSet; forget-last;
+  VarLang; ConfLang; VariabilityLanguage;
   Semantics;
-  fromExpression; Artifactˡ)
-open import Relations.Semantic using (_⊢_≣_; _⊆ᵥ_; _≚_)
+  fromExpression; Artifactˡ;
+  forget-variant-size)
+open import Relations.Semantic using (_⊢_≣_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≣→≚)
 ```
 
 ## Syntax
@@ -85,10 +85,7 @@ Choice calculus has denotational semantics, introduced by Eric in the TOSEM pape
 Semantics for choice calculus can be defined in different ways.
 In his phd thesis, Eric defined the semantics to be the set of all variants described by the expression.
 So the semantic domain was a set of choice calculus expressions without any choices.
-We can encode a choice calculus expression without choices at the type level:
-```agda
--- open import SemanticDomain using (Variant; Artifactᵥ)
-```
+We can encode a choice calculus expression without choices at the type level as Variants.
 
 An equivalent definition of semantics produces a configuration function `Config → Variant` that generates variants from configurations.
 This definition separates the concerns of (1) generating a variant, and (2) enumerating all possible variants.
@@ -97,11 +94,8 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 
 First, we define configurations as functions that evaluate dimensions by tags, according to Eric's phd thesis:
 ```agda
-CCC-FeatureLang : FeatureLang
-CCC-FeatureLang = Dimension
-
--- CCC-ConfLang : ConfLang
--- CCC-ConfLang = Dimension , Tag
+Configuration : ConfLang
+Configuration = Dimension → Tag
 ```
 
 We can now define the semantics.
@@ -126,53 +120,19 @@ clampTagWithin {suc n} {nz} = minFinFromLimit n
 choice-elimination : {A : Domain} → Tag → List⁺ A → A
 choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 
-open import Data.List.Relation.Unary.All using (All; reduce; []; _∷_)
-infix 5 _⊢_⟶_
-data _⊢_⟶_ : ∀ {i : Size} {A : Domain}
-  → Configuration Dimension Tag
-  → (e : CCC i A)
-  → Variant ∞ A
-  → Set
-  where
-
-  S-Artifact : ∀ {A c j a} {es : List (CCC j A)}
-    → (esᵥ : All (λ e → ∃[ v ] (c ⊢ e ⟶ v)) es)
-      ---------------------------------------------------
-    → c ⊢ Artifact a es ⟶ Artifactᵥ a (reduce proj₁ esᵥ)
-
-  S-Choice : ∀ {A c j D} {n : ℕ} {es : List⁺ (CCC j A)} {v : Variant ∞ A}
-    → (D , n) ∈ c
-    → c ⊢ choice-elimination n es ⟶ v
-      ---------------------------------
-    → c ⊢ D ⟨ es ⟩ ⟶ v
-
-deterministic : ∀ {A c i} {e : CCC i A} {v₁ v₂ : Variant ∞ A}
-  → c ⊢ e ⟶ v₁
-  → c ⊢ e ⟶ v₂
-    ------------
-  → v₁ ≡ v₂
-deterministic (S-Artifact ls) (S-Artifact rs)  = {!!}
--- is not deterministic because configuration can currently map a Dimension to multiple values and we could pick any!
--- Could we?
-deterministic (S-Choice {n = n} Dn∈c Dn⟶v₁) (S-Choice {n = m} Dm∈c Dm⟶v₂) = {!!}
-
-
 {-|
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-⟦_⟧ : Semantics CCC Dimension Tag --
+⟦_⟧ : Semantics CCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
-⟦ D ⟨ alternatives ⟩ ⟧ c = {!!} --⟦ choice-elimination (c D) alternatives ⟧ c
-
--- data ⟦_⟧ : ∀ {A : Domain} {i : Size} → CCC i A → CCC i A → Set where
+⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 
 CCCL : VariabilityLanguage
 CCCL = record
   { expression = CCC
-  ; fLang = Dimension
-  ; sLang = Tag
-  ; semantics = ⟦_⟧
+  ; confLang   = Configuration
+  ; semantics  = ⟦_⟧
   }
 ```
 
@@ -181,36 +141,35 @@ CCCL = record
 Some transformation rules
 ```agda
 -- -- unary choices are mandatory
--- D⟨e⟩≈e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
---     --------------------------
---   → CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣ e
--- D⟨e⟩≈e = {!!}
+D⟨e⟩≣e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
+    --------------------------
+  → CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣ e
+D⟨e⟩≣e = refl
 
 -- -- other way to prove the above via variant-equivalence
 
--- D⟨e⟩⊆e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
---     --------------------------
---   → fromExpression CCCL (D ⟨ e ∷ [] ⟩) ⊆ᵥ fromExpression CCCL e
--- D⟨e⟩⊆e config = ( config , refl )
+D⟨e⟩⊆e : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+    -------------------------------
+  → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ⊆ᵥ e
+D⟨e⟩⊆e config = ( config , refl )
 
--- e⊆D⟨e⟩ : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
---     --------------------------
---   → fromExpression e ⊆ᵥ fromExpression (D ⟨ e ∷ [] ⟩)
--- e⊆D⟨e⟩ config = ( config , refl )
+e⊆D⟨e⟩ : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+    -------------------------------
+  → CCCL , CCCL ⊢ e ⊆ᵥ D ⟨ e ∷ [] ⟩
+e⊆D⟨e⟩ config = ( config , refl )
 
--- D⟨e⟩≚e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
---     --------------------------
---   → fromExpression (D ⟨ e ∷ [] ⟩) ≚ fromExpression e
--- D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊆e {i} {A} {e} {D} , e⊆D⟨e⟩ {i} {A} {e} {D}
+D⟨e⟩≚e : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+    ------------------------------
+  → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≚ e
+D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊆e {i} {A} {e} {D} , e⊆D⟨e⟩ {i} {A} {e} {D}
 
--- D⟨e⟩≚e' : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
---     ---------------
---   → D ⟨ e ∷ [] ⟩ ≚ e
--- D⟨e⟩≚e' {i} {A} {e} {D} =
---   ≣→≚ {↑ i} {i} {A}
---       {CCC} {Configuration} {⟦_⟧}
---       {D ⟨ e ∷ [] ⟩} {e}
---       (D⟨e⟩≈e {i} {A} {e} {D})
+D⟨e⟩≚e' : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+    ------------------------------
+  → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≚ e
+D⟨e⟩≚e' {i} {A} {e} {D} =
+  ≣→≚ {A} {CCCL}
+      {fromExpression CCCL (D ⟨ e ∷ [] ⟩)} {fromExpression CCCL e}
+      (D⟨e⟩≣e {i} {A} {e} {D})
 ```
 
 Finally, let's build an example over strings. For this example, option calculus would be better because the subtrees aren't alternative but could be chosen in any combination. We know this from real-life experiments.
@@ -218,18 +177,18 @@ Finally, let's build an example over strings. For this example, option calculus 
 open import Data.String using (String)
 
 -- Any upper bound is fine but we are at least 2 deep.
--- cc_example_walk : ∀ {i : Size} → CCC (↑ ↑ i) String
--- cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
+cc_example_walk : ∀ {i : Size} → CCC (↑ ↑ i) String
+cc_example_walk = "Ekko" ⟨ leaf "zoom" ∷ leaf "pee" ∷ leaf "poo" ∷ leaf "lick" ∷ [] ⟩
 
--- cc_example_walk_zoom : Variant String
--- cc_example_walk_zoom = ⟦ cc_example_walk ⟧ (λ {"Ekko" → 0; _ → 0})
+cc_example_walk_zoom : Variant ∞ String
+cc_example_walk_zoom = ⟦ cc_example_walk ⟧ (λ {"Ekko" → 0; _ → 0})
 ```
 
 Running this program shows that `cc_example_walk_zoom` indeed evaluates to the String `zoom`.
 But we can also prove it:
 ```agda
--- _ : cc_example_walk_zoom ≡ Artifactᵥ "zoom" []
--- _ = refl
+_ : cc_example_walk_zoom ≡ Artifactᵥ "zoom" []
+_ = refl
 ```
 
 ## Completeness
@@ -255,23 +214,23 @@ open Function using (_∘_; id)
 
 open import Axioms.Extensionality using (extensionality; ≗→≡)
 
--- describe-variant : ∀ {i : Size} {A : Domain} → Variant i A → CCC ∞ A
--- describe-variant (Artifactᵥ a vs) = Artifact a (mapl describe-variant vs)
+describe-variant : ∀ {i : Size} {A : Domain} → Variant i A → CCC i A
+describe-variant (Artifactᵥ a vs) = Artifact a (mapl describe-variant vs)
 
--- describe-variant-preserves : ∀ {i : Size} {A : Domain} {c : Configuration Dimension Tag}
---   → (v : Variant i A)
---   → v ≡ (⟦_⟧ {i} {A} (describe-variant {i} {A} v) c)
--- describe-variant-preserves (Artifactᵥ _ []) = refl
--- describe-variant-preserves {A} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
---   begin
---     e ∷ es
---   ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
---     mapl id (e ∷ es)
---   ≡⟨ map-cong (describe-variant-preserves) (e ∷ es) ⟩
---     mapl ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
---   ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
---     mapl (flip ⟦_⟧ c) (mapl describe-variant (e ∷ es))
---   ∎)
+describe-variant-preserves : ∀ {i : Size} {A : Domain} {c : Configuration}
+  → (v : Variant i A)
+  → v ≡ ⟦ describe-variant v ⟧ c
+describe-variant-preserves (Artifactᵥ _ []) = refl
+describe-variant-preserves {_} {A} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
+  begin
+    e ∷ es
+  ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
+    mapl id (e ∷ es)
+  ≡⟨ map-cong (describe-variant-preserves) (e ∷ es) ⟩
+    mapl ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
+  ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
+    mapl (flip ⟦_⟧ c) (mapl describe-variant (e ∷ es))
+  ∎)
 
 -- indexed : ∀ {A : Set} → ℕ → List A → List (ℕ × A)
 -- indexed _     [] = []
@@ -288,37 +247,30 @@ open import Axioms.Extensionality using (extensionality; ≗→≡)
 --     → CCC , Configuration , ⟦_⟧ ⊢ (variant-choice vs) describes-all (toList vs)
 
 -- describe-variants : ∀ {A : Domain}
---   → (empty : A)
 --   → (variants : List (Variant A))
 --   → ∃[ e ∈ (CCC ∞ A)] (CCC , Configuration , ⟦_⟧ ⊢ e describes-all variants)
 -- describe-variants z []       = Artifact z [] , []
 -- describe-variants _ (v ∷ vs) = variant-choice (v ∷ vs) , variant-choice-describes-all (v ∷ vs)
 
 -- -- todo use proper size
--- open import Data.Nat using (ℕ; suc; zero)
--- open import Data.Fin using (zero; toℕ; fromℕ)
--- open import SemanticDomain using (Variant)
-open Definitions using (VSet)
-open import Data.Multiset using (Multiset; _∈_; _≅_)
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
-open Eq.≡-Reasoning
+open import Data.Nat using (ℕ; suc; zero)
+open import Data.Fin using (zero; toℕ; fromℕ)
 
--- data _⟶_ : ∀ {A : Domain} {n : ℕ} → VSet n A → List⁺ (CCC ∞ A) → Set
--- infix 3 _⟶_
--- data _⟶_ where
---   E-single : ∀ {A : Domain} {vs : VSet zero A}
---       ----------------------------------------
---     → vs ⟶ describe-variant (vs zero) ∷ []
+data _⟶_ : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A) → Set
+infix 3 _⟶_
+data _⟶_ where
+  E-single : ∀ {A : Domain} {vs : VSet A zero}
+      ----------------------------------------
+    → vs ⟶ describe-variant (vs zero) ∷ []
 
---   E-many : ∀ {A : Domain} {n : ℕ} {vs : VSet (suc n) A} {others : List⁺ (CCC ∞ A)}
---     → forget-last vs ⟶ others
---       ------------------------------------------------------------
---     → vs ⟶ describe-variant (vs (fromℕ (suc n))) ∷ toList others
+  E-many : ∀ {A : Domain} {n : ℕ} {vs : VSet A (suc n)} {others : List⁺ (CCC ∞ A)}
+    → forget-last vs ⟶ others
+      ------------------------------------------------------------
+    → vs ⟶ describe-variant (vs (fromℕ (suc n))) ∷ toList others
 
--- naive-encoding : ∀ {A : Domain} {n : ℕ} → VSet n A → List⁺ (CCC ∞ A)
--- naive-encoding {n =  zero} vs = describe-variant (vs zero) ∷ []
--- naive-encoding {n = suc n} vs = describe-variant (vs (fromℕ (suc n))) ∷ toList (naive-encoding (forget-last vs))
+naive-encoding : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A)
+naive-encoding {n =  zero} vs = describe-variant (vs zero) ∷ []
+naive-encoding {n = suc n} vs = describe-variant (vs (fromℕ (suc n))) ∷ toList (naive-encoding (forget-last vs))
 
 -- naive-encoding-is-correct : ∀ {A} {n} {vs : VSet n A}
 --   → vs ≅ ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧
@@ -349,7 +301,7 @@ open Eq.≡-Reasoning
 -- proj₂ (naive-encoding-is-correct {A} {n} {vs})     = {!!}
 
 CCC-is-complete : Complete CCCL
-CCC-is-complete vs = {!!} , {!!}
+CCC-is-complete {n = n} vs = fromExpression CCCL ("D" ⟨ naive-encoding vs ⟩) , ?
 
 -- semfin : ∀ {i : Size} {A : Domain} → (e : CCC i A) → ∃[ n ] (Σ[ vs ∈ VSet n A ] (vs ≅ ⟦ e ⟧))
 -- semfin e = {!!}
