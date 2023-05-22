@@ -41,7 +41,7 @@ open Eq
 open import Lang.Annotation.Name using (Dimension)
 open import Definitions using (
   Domain;
-  Variant; Artifactᵥ; VSet; forget-last;
+  Variant; Artifactᵥ; VSet; forget-last; VariantSetoid;
   VarLang; ConfLang; VariabilityLanguage;
   Semantics;
   fromExpression; Artifactˡ;
@@ -124,15 +124,15 @@ choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-⟦_⟧ : Semantics CCC Configuration
+⟦_⟧ : ∀ {i : Size} {A : Domain} → CCC i A → Configuration → Variant i A
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
-⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
+⟦ (D ⟨ alternatives ⟩) ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 
 CCCL : VariabilityLanguage
 CCCL = record
-  { expression = CCC
-  ; confLang   = Configuration
-  ; semantics  = ⟦_⟧
+  { expression    = CCC
+  ; configuration = Configuration
+  ; semantics     = ⟦_⟧
   }
 ```
 
@@ -140,7 +140,7 @@ CCCL = record
 
 Some transformation rules
 ```agda
--- -- unary choices are mandatory
+-- unary choices are mandatory
 D⟨e⟩≣e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
     --------------------------
   → CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣ e
@@ -214,6 +214,9 @@ open Function using (_∘_; id)
 
 open import Axioms.Extensionality using (extensionality; ≗→≡)
 
+import Data.Multiset
+open import Lang.Properties.NonEmpty
+
 describe-variant : ∀ {i : Size} {A : Domain} → Variant i A → CCC i A
 describe-variant (Artifactᵥ a vs) = Artifact a (mapl describe-variant vs)
 
@@ -221,7 +224,7 @@ describe-variant-preserves : ∀ {i : Size} {A : Domain} {c : Configuration}
   → (v : Variant i A)
   → v ≡ ⟦ describe-variant v ⟧ c
 describe-variant-preserves (Artifactᵥ _ []) = refl
-describe-variant-preserves {_} {A} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
+describe-variant-preserves {_} {_} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
   begin
     e ∷ es
   ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
@@ -231,6 +234,12 @@ describe-variant-preserves {_} {A} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Art
   ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
     mapl (flip ⟦_⟧ c) (mapl describe-variant (e ∷ es))
   ∎)
+
+CCCL-is-NonEmpty : NonEmpty CCCL
+CCCL-is-NonEmpty = record
+  { describe = describe-variant
+  ; describe-preserves = λ v → any-conf , {!!} --describe-variant-preserves {c = any-conf} v
+  } where any-conf = λ _ → 0
 
 -- indexed : ∀ {A : Set} → ℕ → List A → List (ℕ × A)
 -- indexed _     [] = []
@@ -256,58 +265,57 @@ describe-variant-preserves {_} {A} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Art
 open import Data.Nat using (ℕ; suc; zero)
 open import Data.Fin using (zero; toℕ; fromℕ)
 
-data _⟶_ : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A) → Set
-infix 3 _⟶_
-data _⟶_ where
-  E-single : ∀ {A : Domain} {vs : VSet A zero}
-      ----------------------------------------
-    → vs ⟶ describe-variant (vs zero) ∷ []
+-- data _⟶_ : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A) → Set
+-- infix 3 _⟶_
+-- data _⟶_ where
+--   E-single : ∀ {A : Domain} {vs : VSet A zero}
+--       ----------------------------------------
+--     → vs ⟶ describe-variant (vs zero) ∷ []
 
-  E-many : ∀ {A : Domain} {n : ℕ} {vs : VSet A (suc n)} {others : List⁺ (CCC ∞ A)}
-    → forget-last vs ⟶ others
-      ------------------------------------------------------------
-    → vs ⟶ describe-variant (vs (fromℕ (suc n))) ∷ toList others
+--   E-many : ∀ {A : Domain} {n : ℕ} {vs : VSet A (suc n)} {others : List⁺ (CCC ∞ A)}
+--     → forget-last vs ⟶ others
+--       ------------------------------------------------------------
+--     → vs ⟶ describe-variant (vs (fromℕ (suc n))) ∷ toList others
 
 naive-encoding : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A)
 naive-encoding {n =  zero} vs = describe-variant (vs zero) ∷ []
 naive-encoding {n = suc n} vs = describe-variant (vs (fromℕ (suc n))) ∷ toList (naive-encoding (forget-last vs))
 
--- naive-encoding-is-correct : ∀ {A} {n} {vs : VSet n A}
---   → vs ≅ ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧
--- proj₁ (naive-encoding-is-correct {A} {zero} {vs}) zero with vs zero
--- ... | v =
---   let c = λ _ → zero
---    in c , (
---       begin
---         v
---       ≡⟨ describe-variant-preserves v ⟩
---         ⟦ describe-variant v ⟧ c
---       ≡⟨⟩
---         ⟦ choice-elimination zero (describe-variant v ∷ []) ⟧ c
---       ∎)
--- proj₁ (naive-encoding-is-correct {A} {suc n} {vs}) i with vs i
--- ... | v =
---   let n = toℕ i
---       c : String → ℕ
---       c = λ _ → n
---    in c , (
---       begin
---         v
---       ≡⟨ {!!} ⟩
---         ⟦ choice-elimination n (naive-encoding vs) ⟧ c
---       ≡⟨⟩
---         ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧ c
---       ∎)
--- proj₂ (naive-encoding-is-correct {A} {n} {vs})     = {!!}
+module Completeness {A : Domain} where
+  open Data.Multiset (VariantSetoid ∞ A) using (_≅_; _∈_)
+
+  naive-encoding-is-correct : ∀ {n} {vs : VSet A n}
+    → vs ≅ ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧
+  proj₁ (naive-encoding-is-correct {zero} {vs}) zero with vs zero
+  ... | v =
+    let c = λ _ → zero
+    in c , (
+        begin
+          v
+        ≡⟨ describe-variant-preserves v ⟩
+          ⟦ describe-variant v ⟧ c
+        ≡⟨⟩
+          ⟦ choice-elimination zero (describe-variant v ∷ []) ⟧ c
+        ∎)
+  proj₁ (naive-encoding-is-correct {suc n} {vs}) i with vs i
+  ... | v =
+    let n = toℕ i
+        c : String → ℕ
+        c = λ _ → n
+    in c , (
+        begin
+          v
+        ≡⟨ {!!} ⟩
+          ⟦ choice-elimination n (naive-encoding vs) ⟧ c
+        ≡⟨⟩
+          ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧ c
+        ∎)
+  proj₂ (naive-encoding-is-correct {zero} {vs}) = {!!}
+  proj₂ (naive-encoding-is-correct {suc n} {vs}) c = {!!}
+
 
 CCC-is-complete : Complete CCCL
-CCC-is-complete {n = n} vs = fromExpression CCCL ("D" ⟨ naive-encoding vs ⟩) , ?
-
--- semfin : ∀ {i : Size} {A : Domain} → (e : CCC i A) → ∃[ n ] (Σ[ vs ∈ VSet n A ] (vs ≅ ⟦ e ⟧))
--- semfin e = {!!}
-
-
--- somehow combine semfin and naive-encoding-is-correct?
+CCC-is-complete {n = n} vs = fromExpression CCCL ("D" ⟨ naive-encoding vs ⟩) , {!!}
 ```
 
 

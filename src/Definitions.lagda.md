@@ -24,6 +24,7 @@ open import Relation.Binary using (Setoid; DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 
 import Data.Multiset as MSet
+open import Util.Existence using (∃-Size)
 ```
 
 We model variability languages as embedded domain specific languages. That is, each variability language is described by a type which in turn is described by the kind `VarLang`. (`Set` denotes the set of all types and `Set₁` denotes the set of all kinds, i.e., the set of all sets of types).
@@ -61,9 +62,12 @@ data 𝟘-Lang : VarLang where
 VariantSetoid : Size → Domain → Setoid 0ℓ 0ℓ
 VariantSetoid i A = Eq.setoid (Variant i A)
 
+IndexedVSet : Size → Domain → Set → Set
+IndexedVSet i A I = Multiset I
+  where open MSet (VariantSetoid i A) using (Multiset)
+
 VSet : Domain → ℕ → Set
-VSet A n = Multiset (Fin (suc n))
-  where open MSet (VariantSetoid ∞ A) using (Multiset)
+VSet A n = IndexedVSet ∞ A (Fin (suc n))
 
 forget-last : ∀ {n : ℕ} {A : Set} → VSet A (suc n) → VSet A n
 forget-last set x = set (Data.Fin.inject₁ x)
@@ -72,16 +76,15 @@ forget-last set x = set (Data.Fin.inject₁ x)
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
 ```agda
 Semantics : VarLang → ConfLang → Set₁
-Semantics L C = ∀ {i j : Size} {A : Domain} → L i A →
-  (let open MSet (VariantSetoid (i ⊔ˢ j) A) in Multiset C)
+Semantics L C = ∀ {i j : Size} {A : Domain} → L i A → IndexedVSet (i ⊔ˢ j) A C
 ```
 
 ```agda
 record VariabilityLanguage : Set₁ where
   field
-    expression : VarLang
-    confLang   : ConfLang
-    semantics  : Semantics expression confLang
+    expression    : VarLang
+    configuration : ConfLang
+    semantics     : Semantics expression configuration
 open VariabilityLanguage public
 
 record Expression (A : Domain) (V : VariabilityLanguage) : Set₁ where
@@ -153,8 +156,8 @@ open import Util.SizeJuggle
 flip-VarLang : VarLang → Domain → Bounded
 flip-VarLang L A i = L i A
 
-forget-variant-size : ∀ {i : Size} {A : Domain} → Variant i A → Variant ∞ A
-forget-variant-size v = v
+forget-variant-size : ∀ {A : Domain} → ∃-Size[ i ] (Variant i A) → Variant ∞ A
+forget-variant-size (i , v) = v
 
 {-
 Creates an Artifact from a list of expressions of a certain size.

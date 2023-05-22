@@ -25,7 +25,7 @@ open import Data.List
 open import Function
   using (flip; id)
 open import Size
-  using (Size; ↑_)
+  using (Size; ∞; ↑_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq
@@ -36,9 +36,8 @@ open Eq.≡-Reasoning
 -- own modules
 open import Axioms.Extensionality using (extensionality)
 open import Lang.Annotation.Name using (Dimension)
-open import Definitions using (Domain; VarLang; ConfLang; Semantics; Artifactˡ)
-open import Relations.Semantic using (_,_⊢_≈_)
-open import SemanticDomain using (Variant; Artifactᵥ)
+open import Definitions
+open import Relations.Semantic using (_⊢_≣_)
 ```
 
 ## Syntax
@@ -80,9 +79,16 @@ This is the semantics for choice calculus as defined in
 "Projectional Editing of Variational Software, Walkingshaw and Ostermann, GPCE'14"
 with the minor simplification of using booleans instead of selectors for dimensions.
 -}
-⟦_⟧ : Semantics BCC Configuration
+⟦_⟧ : ∀ {i : Size} {A : Domain} → BCC i A → Configuration → Variant i A
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ l , r ⟩ ⟧ c = ⟦ if (c D) then l else r ⟧ c
+
+BCCL : VariabilityLanguage
+BCCL = record
+  { expression    = BCC
+  ; configuration = Configuration
+  ; semantics     = ⟦_⟧
+  }
 ```
 
 ## Properties
@@ -97,10 +103,10 @@ open import Data.Vec using (Vec; toList; zipWith)
 -- This is a special case of ast-factoring where artifacts have only one child.
 -- As soon as 'ast-factoring' is proven, we can reformulate the proof for this theorem
 -- to just apply ast-factoring.
-ast-factoring-1 : ∀ {i : Size} {A : Domain} {D : Dimension} {a : A} {x y : BCC i A}
+ast-factoring-1 : ∀ {A D} {a : A} {x y : BCC ∞ A} -- do not use ∞ here?
     ---------------------------------------------------------------------------------
-  → BCC , ⟦_⟧ ⊢ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ≈ Artifact a [ D ⟨ x , y ⟩ ]
-ast-factoring-1 {_} {_} {D} {a} {x} {y} = extensionality (λ c →
+  → BCCL ⊢ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ≣ Artifact a [ D ⟨ x , y ⟩ ]
+ast-factoring-1  {_} {D} {a} {x} {y} = extensionality (λ c →
   begin
     ⟦ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ⟧ c
   ≡⟨⟩
@@ -111,18 +117,18 @@ ast-factoring-1 {_} {_} {D} {a} {x} {y} = extensionality (λ c →
     ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
   ∎)
 
-ast-factoring : ∀ {i : Size} {A : Set} {D : Dimension} {a : A} {n : ℕ}
+ast-factoring : ∀ {i : Size} {A : Domain} {D : Dimension} {a : A} {n : ℕ}
   → (xs ys : Vec (BCC i A) n)
     -------------------------------------------------------------------------------------
-  → BCC , ⟦_⟧ ⊢
+  → BCCL ⊢
         D ⟨ Artifact a (toList xs) , Artifact a (toList ys) ⟩
-      ≈ Artifact a (toList (zipWith (D ⟨_,_⟩) xs ys))
+      ≣ Artifact a (toList (zipWith (D ⟨_,_⟩) xs ys))
 ast-factoring = {!!}
 
-choice-idempotency : ∀ {i : Size} {A : Domain} {D : Dimension} {e : BCC i A}
+choice-idempotency : ∀ {A D} {e : BCC ∞ A}  -- do not use ∞ here?
     ---------------------------
-  → BCC , ⟦_⟧ ⊢ D ⟨ e , e ⟩ ≈ e
-choice-idempotency {i} {A} {D} {e} = extensionality (λ c →
+  → BCCL ⊢ D ⟨ e , e ⟩ ≣ e
+choice-idempotency {A} {D} {e} = extensionality (λ c →
   ⟦ D ⟨ e , e ⟩ ⟧ c             ≡⟨⟩
   ⟦ if (c D) then e else e ⟧ c  ≡⟨ Eq.cong (flip ⟦_⟧ c) (if-idemp (c D)) ⟩
   ⟦ e ⟧ c                       ∎)
@@ -151,15 +157,15 @@ for e and e′, we know it per assumption.
 -}
 
 choice-l-congruence : ∀ {i j k : Size} {A : Domain} {D : Dimension} {eₗ eₗ′ eᵣ : BCC i A}
-  → BCC , ⟦_⟧ ⊢ eₗ ≈ eₗ′
+  → BCCL ⊢ eₗ ≣ eₗ′
     ---------------------------------------
-  → BCC , ⟦_⟧ ⊢ D ⟨ eₗ , eᵣ ⟩ ≈ D ⟨ eₗ′ , eᵣ ⟩
+  → BCCL ⊢ D ⟨ eₗ , eᵣ ⟩ ≣ D ⟨ eₗ′ , eᵣ ⟩
 choice-l-congruence eₗ≡eₗ′ = {!!}
 
 choice-r-congruence : ∀ {i j k : Size} {A : Domain} {D : Dimension} {eₗ eᵣ eᵣ′ : BCC i A}
-  → BCC , ⟦_⟧ ⊢ eᵣ ≈ eᵣ′
+  → BCCL ⊢ eᵣ ≣ eᵣ′
     ---------------------------------------
-  → BCC , ⟦_⟧ ⊢ D ⟨ eₗ , eᵣ ⟩ ≈ D ⟨ eₗ , eᵣ′ ⟩
+  → BCCL ⊢ D ⟨ eₗ , eᵣ ⟩ ≣ D ⟨ eₗ , eᵣ′ ⟩
 choice-r-congruence eₗ≡eₗ′ = {!!}
 ```
 
@@ -190,15 +196,11 @@ eliminate-redundancy-in scope (D ⟨ l , r ⟩) with scope D
 eliminate-redundancy : ∀ {i : Size} {A : Domain} → BCC i A → BCC i A
 eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
-Redundancy-Elimination : EndoTranslation BCC Configuration
-Redundancy-Elimination = record
-  { sem₁ = ⟦_⟧
-  ; sem₂ = ⟦_⟧
-  ; translate = λ e → record
-                      { expr = eliminate-redundancy e
-                      ; conf = id
-                      ; fnoc = id
-                      }
+Redundancy-Elimination : EndoTranslation BCCL
+Redundancy-Elimination e = record
+  { expr = fromExpression BCCL (eliminate-redundancy e)
+  ; conf = id
+  ; fnoc = id
   }
 ```
 

@@ -9,21 +9,20 @@ module Relations.Semantic where
 # Relations of Variability Languages
 
 ```agda
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
-open import Size using (Size)
 
 open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size)
 
-open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
 open import Relation.Binary using (Rel; IsEquivalence)
-open import Level using (0ℓ; suc)
-
-open import Relations.GeneralizedEquivalence using (iseq)
-
+open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Relation.Nullary.Negation using (¬_)
 
+open import Function using (_∘_)
+open import Level using (0ℓ; suc)
+open import Size using (Size)
+
+open import Relations.GeneralizedEquivalence using (iseq)
 import Data.Multiset as MSet
 ```
 
@@ -40,8 +39,8 @@ Any two expressions `a` and `b` in a variability language `L` are equivalent if 
 _≣_ : ∀ {A : Domain} {L : VariabilityLanguage}
   → (e₁ e₂ : Expression A L)
   → Set
-_≣_ {L = L} e₁ e₂ = ⟦ get e₁ ⟧ ≡ ⟦ get e₂ ⟧
-  where ⟦_⟧ = semantics L
+_≣_ {L = L} e₁ e₂ = ⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧
+  where ⟦_⟧ = semantics L ∘ get
 infix 5 _≣_
 
 -- for syntax
@@ -66,73 +65,6 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
 ≡→≣ eq rewrite eq = refl
 ```
 
-For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence. Each variant that can be derived from the first expression, can also be derived from the second expression and vice versa. We thus first describe the variant-subset relation `⊆` and then define variant-equality as a bi-directional subset.
-```agda
--- _,_⊢_⊆ᵥ_ : ∀ {i j : Size} {F : FeatureLang} {S : SelectionLang} {A : Domain}
---   → (L : VarLang)
---   → Semantics L F S
---   → L i A
---   → L j A
---   → Set
--- L , ⟦_⟧ ⊢ e₁ ⊆ᵥ e₂ = ⟦ e₁ ⟧ ⊆ ⟦ e₂ ⟧ --∀ (c₁ : C) → ∃[ c₂ ] (⟦ e₁ ⟧ c₁ ≡ ⟦ e₂ ⟧ c₂)
--- infix 5 _,_⊢_⊆ᵥ_
-
--- _,_⊢_≚_ : ∀ {i j : Size} {F : FeatureLang} {S : SelectionLang} {A : Domain}
---   → (L : VarLang)
---   → Semantics L F S
---   → L i A
---   → L j A
---   → Set
--- L , s ⊢ e₁ ≚ e₂ =
---     (L , s ⊢ e₁ ⊆ᵥ e₂)
---   × (L , s ⊢ e₂ ⊆ᵥ e₁)
--- infix 5 _,_⊢_≚_
-```
-A proposition `L , ⟦_⟧ ⊢ e₁ ⊆ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expression `e₁` describes a subset of the variants described by `e₂`.
-
-```agda
--- ⊆ᵥ-refl : ∀ {i : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {e : L i A}
---     ---------------
---   → L , S ⊢ e ⊆ᵥ e
--- ⊆ᵥ-refl = ⊆-refl
-
--- ⊆ᵥ-antisym : ∀ {i j : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {e₁ : L i A} {e₂ : L j A}
---   → L , S ⊢ e₁ ⊆ᵥ e₂
---   → L , S ⊢ e₂ ⊆ᵥ e₁
---     -----------------
---   → L , S ⊢ e₁ ≚ e₂
--- ⊆ᵥ-antisym = ⊆-antisym
-
--- ⊆ᵥ-trans : ∀ {i j k : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {e₁ : L i A} {e₂ : L j A} {e₃ : L k A}
---   → L , S ⊢ e₁ ⊆ᵥ e₂
---   → L , S ⊢ e₂ ⊆ᵥ e₃
---     -----------------
---   → L , S ⊢ e₁ ⊆ᵥ e₃
--- ⊆ᵥ-trans = ⊆-trans
-
--- ≚-refl : ∀ {i : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {e : L i A}
---     --------------
---   → L , S ⊢ e ≚ e
--- ≚-refl {i} {A} {L} {C} {S} {e} =
---     ⊆ᵥ-refl {i} {A} {L} {C} {S} {e}
---   , ⊆ᵥ-refl {i} {A} {L} {C} {S} {e}
-
--- ≚-sym : ∀ {i j : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {e₁ : L i A} {e₂ : L j A} {S : Semantics L F S}
---   → L , S ⊢ e₁ ≚ e₂
---     ----------------
---   → L , S ⊢ e₂ ≚ e₁
--- ≚-sym (e₁⊆e₂ , e₂⊆e₁) = e₂⊆e₁ , e₁⊆e₂
-
--- ≚-trans : ∀ {i j k : Size} {A : Domain} {L : VarLang} {F : FeatureLang} {S : SelectionLang} {S : Semantics L F S} {e₁ : L i A} {e₂ : L j A} {e₃ : L k A}
---   → L , S ⊢ e₁ ≚ e₂
---   → L , S ⊢ e₂ ≚ e₃
---     ----------------
---   → L , S ⊢ e₁ ≚ e₃
--- ≚-trans     {i} {j} {k} {A} {L} {C} {S} {e₁} {e₂} {e₃} (e₁⊆e₂ , e₂⊆e₁) (e₂⊆e₃ , e₃⊆e₂) =
---     ⊆ᵥ-trans {i} {j} {k} {A} {L} {C} {S} {e₁} {e₂} {e₃} e₁⊆e₂ e₂⊆e₃
---   , ⊆ᵥ-trans {k} {j} {i} {A} {L} {C} {S} {e₃} {e₂} {e₁} e₃⊆e₂ e₂⊆e₁
-```
-
 ## Semantic Relations of Different Languages
 
 To compare languages, we first define relations for comparing expressions between different languages.
@@ -141,15 +73,14 @@ Finally, we formalize translations between languages and show that creating tran
 
 ### Relating Expressions
 
-First we generalize `_,_⊢_⊆_` and `_,_⊢_≚_` from single languages to two different languages.
-This step is straighforward as it just requires us to introduce additional parameters for the second language and reformulating the right-hand side of relations to refer to the second language.
+For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence. Each variant that can be derived from the first expression, can also be derived from the second expression and vice versa. We thus first describe the variant-subset relation `⊆ᵥ` and then define variant-equality `≚` as a bi-directional subset.
 The main insight here is that we can compare expressions across languages because they share the same semantic domain: variants.
 ```agda
 _⊆ᵥ_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
-_⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ get e₁ ⟧₁ ⊆ ⟦ get e₂ ⟧₂
+_⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
   where
-    ⟦_⟧₁ = semantics L₁
-    ⟦_⟧₂ = semantics L₂
+    ⟦_⟧₁ = semantics L₁ ∘ get
+    ⟦_⟧₂ = semantics L₂ ∘ get
     open MSet (VariantSetoid _ A) using (_⊆_)
 infix 5 _⊆ᵥ_
 
@@ -167,6 +98,22 @@ infix 5 _≚_
 
 ≚-isEquivalence : ∀ {A : Domain} {L : VariabilityLanguage} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
+
+open import Relation.Binary using (Setoid)
+
+≚-setoid : Domain → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
+≚-setoid A L = record
+  { Carrier = Expression A L
+  ; _≈_ = _≚_
+  ; isEquivalence = ≚-isEquivalence
+  }
+
+-- ≚-setoid2 : Domain → VariabilityLanguage → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
+-- ≚-setoid2 A L₁ L₂ = record
+--   { Carrier = Expression A L₁ × Expression A L₂
+--   ; _≈_ = _≚_
+--   ; isEquivalence = ≚-isEquivalence
+--   }
 ```
 
 We introduce some aliases for the above relations that have a more readable syntax when used with concrete expressions:
@@ -186,9 +133,9 @@ In the following the prove the same properties as for the relations within a sin
   → e₁ ≚ e₂
     ---------------------------------------------------
   → (let open MSet (VariantSetoid _ A) using (_≅_)
-         ⟦_⟧₁ = semantics L₁
-         ⟦_⟧₂ = semantics L₂
-      in ⟦ get e₁ ⟧₁ ≅ ⟦ get e₂ ⟧₂)
+         ⟦_⟧₁ = semantics L₁ ∘ get
+         ⟦_⟧₂ = semantics L₂ ∘ get
+      in ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂)
 ≚→≅ (fst , snd) = fst , snd
 ```
 
@@ -222,8 +169,9 @@ L₁ is-at-least-as-expressive-as L₂ =
         (e₂ ≚ e₁))
   -- TODO: Somehow rephrase it like this:
   -- (semantics L₂) ⊆ (semantics L₁)
-  -- where open MSet (Variant A) ≚-isEquivalence using (_⊆_)
-  --where open MSet (Expression A) ≚-isEquivalence using (_⊆_)
+-- L₁ is-at-least-as-expressive-as L₂ = ∀ {A : Domain} →
+--   let open MSet (≚-setoid A L₂) using (_⊆_) in
+--     (semantics L₂) ⊆ (semantics L₁)
 
 -- ¬ (L₂ ⊇ L₁)
 _is-less-expressive-than_ : VariabilityLanguage → VariabilityLanguage → Set₁
@@ -246,25 +194,15 @@ L₁ is-variant-equivalent-to L₂ =
 
 Expressiveness is transitive:
 ```agda
--- trans-expressiveness : ∀ {L₁ L₂ L₃ : VariabilityLanguage}
---   → L₁ is-at-least-as-expressive-as L₂
---   → L₂ is-at-least-as-expressive-as L₃
---     ----------------------------------
---   → L₁ is-at-least-as-expressive-as L₃
--- trans-expressiveness
---   {L₁} {L₂} {L₃}
---   L₂→L₁ L₃→L₂ {i₃} {A} e₃
---   =
---   let i₂ , e₂ , e₃≚e₂ = L₃→L₂ e₃
---       i₁ , e₁ , e₂≚e₁ = L₂→L₁ e₂
---    in
---       i₁ , e₁ ,
---         ≚-trans'
---           {i₃} {i₂} {i₁}
---           {A}
---           {L₃} {L₂} {L₁}
---           {C₃} {C₂} {C₁}
---           {S₃} {S₂} {S₁}
---           e₃≚e₂ e₂≚e₁
+trans-expressiveness : ∀ {L₁ L₂ L₃ : VariabilityLanguage}
+  → L₁ is-at-least-as-expressive-as L₂
+  → L₂ is-at-least-as-expressive-as L₃
+    ----------------------------------
+  → L₁ is-at-least-as-expressive-as L₃
+trans-expressiveness L₂→L₁ L₃→L₂ {A} e₃ =
+  let open MSet (VariantSetoid _ A)
+      e₂ , e₃≚e₂ = L₃→L₂ e₃
+      e₁ , e₂≚e₁ = L₂→L₁ e₂
+   in e₁ , ≅-trans e₃≚e₂ e₂≚e₁ -- This proof is highly similar to ≅-trans itself. Maybe we could indeed reuse here.
 ```
 

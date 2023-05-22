@@ -20,9 +20,8 @@ open import Data.List using ([])
 open import Data.String using (String)
 open import Size using (Size; ↑_)
 
-open import Definitions using (VarLang; Domain)
+open import Definitions using (VarLang; Domain; Variant; VariabilityLanguage)
 open import Lang.Annotation.Name using (Variable)
-open import SemanticDomain using (Variant; Artifactᵥ)
 ```
 
 ## Syntax
@@ -34,7 +33,7 @@ In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 A
 ```agda
 data ADD : VarLang where
   Terminal : ∀ {i : Size} {A : Domain}
-    → Variant A → ADD i A -- ModelBase in FFSPL
+    → Variant i A → ADD (↑ i) A -- ModelBase in FFSPL
   Choice : ∀ {i : Size} {A : Domain} →
     Variable → ADD i A → ADD i A → ADD (↑ i) A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 ```
@@ -48,9 +47,16 @@ Configurations denote a path in the tree by making a decision at each variable t
 Configuration : Set
 Configuration = Variable → Bool
 
-⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant A
+⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant i A
 ⟦ Terminal a ⟧ _   = a
 ⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
+
+ADDL : VariabilityLanguage
+ADDL = record
+  { expression = ADD
+  ; configuration = Configuration
+  ; semantics = ⟦_⟧
+  }
 ```
 
 ## Sized Helper Functions

@@ -16,20 +16,23 @@ module Lang.Properties.Completeness where
 ## Imports
 
 ```agda
-open import Data.Nat using (ℕ)
+open import Data.Fin using (Fin)
 open import Data.List using (List)
+open import Data.Nat using (ℕ; suc)
 open import Data.Product using (∃-syntax; Σ-syntax; _×_; _,_; proj₁; proj₂)
 
+open import Function using (_∘_)
 open import Size using (Size; ∞)
 
 open import Relation.Nullary.Negation  using (¬_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; trans; sym)
 
-import Data.Multiset as MSet
 open import Definitions
 open import Relations.Semantic
+open import Lang.Properties.EnumerableSemantics
 
-open import Util.Existence using (∃-Size; _,_; proj₁; proj₂)
+import Data.Multiset
+private module Iso A = Data.Multiset (VariantSetoid ∞ A)
 ```
 
 ## Definitions
@@ -42,7 +45,7 @@ Complete L = ∀ {A n}
   → (vs : VSet A n)
     ----------------------------------
   → Σ[ e ∈ Expression A L ]
-      (let open MSet (VariantSetoid ∞ A)
+      (let open Iso A using (_≅_)
            ⟦_⟧ = semantics L
         in vs ≅ ⟦ get e ⟧)
 ```
@@ -76,7 +79,7 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
 completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
 ... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
 ...   | e₂ , e₁≅e₂ = e₂ , ≅-trans vs≅e₁ e₁≅e₂
-  where open MSet (VariantSetoid _ _) using (≅-trans)
+  where open Iso _ using (≅-trans)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -90,18 +93,18 @@ Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 expressiveness-by-completeness : ∀ {L₊ : VariabilityLanguage}
   → Complete L₊
   → (L : VariabilityLanguage)
+  → EnumerableSemantics L
     ---------------------------------
   → L₊ is-at-least-as-expressive-as L
-expressiveness-by-completeness {L₊} L₊-comp L {A = A} e =
-  let open MSet (VariantSetoid _ A) using (_≅_; ≅-sym; ≅-trans)
+expressiveness-by-completeness {L₊} L₊-comp L L-enum {A = A} e =
+  let open Iso A using (_⊆_; _≅_; ≅-sym; ≅-trans)
 
-      C    = confLang L
       ⟦_⟧  = semantics L
       ⟦_⟧₊ = semantics L₊
 
-      -- variantsₑ is finite
+      -- enumerate all variants in the semantics of our expression e
       ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ get e ⟧))
-      ⟦e⟧-fin = {!!}
+      ⟦e⟧-fin = enumerate (within L-enum) e
 
       n : ℕ
       n = proj₁ ⟦e⟧-fin
@@ -112,7 +115,7 @@ expressiveness-by-completeness {L₊} L₊-comp L {A = A} e =
       vsetₑ≅⟦e⟧ : vsetₑ ≅ ⟦ get e ⟧
       vsetₑ≅⟦e⟧ = proj₂ (proj₂ ⟦e⟧-fin)
 
-      -- encode in L₊
+      -- encode that set of variants in L₊
       as-e₊ : Σ[ e₊ ∈ Expression A L₊ ] (vsetₑ ≅ ⟦ get e₊ ⟧₊)
       as-e₊ = L₊-comp vsetₑ
 
@@ -123,7 +126,6 @@ expressiveness-by-completeness {L₊} L₊-comp L {A = A} e =
       vsetₑ≅⟦e₊⟧₊ = proj₂ as-e₊
 
       -- compose proofs
-
       ⟦e⟧≅⟦e₊⟧₊ : ⟦ get e ⟧ ≅ ⟦ get e₊ ⟧₊
       ⟦e⟧≅⟦e₊⟧₊ = ≅-trans (≅-sym vsetₑ≅⟦e⟧) vsetₑ≅⟦e₊⟧₊
 
@@ -149,12 +151,13 @@ less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L�
 Combined with `expressiveness-by-completeness` we can even further conclude that L₊ is more expressive than L₋:
 ```agda
 more-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
-  →   Complete L₊
+  → Complete L₊
+  → EnumerableSemantics L₋
   → Incomplete L₋
     --------------------------------------
   → L₊ is-more-expressive-than L₋
-more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-incomp =
-    expressiveness-by-completeness L₊-comp L₋
+more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-enum L₋-incomp =
+    expressiveness-by-completeness L₊-comp L₋ L₋-enum
   , less-expressive-from-completeness L₊-comp L₋-incomp
 ```
 

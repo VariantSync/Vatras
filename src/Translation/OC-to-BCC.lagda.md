@@ -21,10 +21,10 @@ open import Data.List using (List; _∷_; []; _∷ʳ_; _++_; length; map; catMay
 open import Data.Nat using (ℕ)
 open import Data.Product using (∃; ∃-syntax; _,_; proj₁; proj₂)
 open import Data.Vec using (Vec; []; _∷_; toList; fromList)
-open import Size using (Size; ↑_; ∞)
+open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 open import Function using (id; flip)
 
-open import Definitions using (VarLang; Domain; Semantics)
+open import Definitions
 open import Lang.Annotation.Name using (Option)
 open import Lang.OC
      using ( OC; WFOC; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
@@ -37,8 +37,7 @@ open import Lang.BCC
            ; Artifact to Artifact₂
            ; Configuration to Conf₂
            )
-open import Relations.Semantic using (_,_is-at-least-as-expressive-as_,_)
-open import SemanticDomain using (Variant; Artifactᵥ)
+open import Relations.Semantic using (_is-at-least-as-expressive-as_)
 open import Translation.Translation using
   (Translation; TranslationResult;
    _⊆-via_;

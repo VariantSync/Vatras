@@ -20,7 +20,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; ↑_)
-open import Definitions using (Domain; VarLang; Semantics; Artifactˡ)
+open import Definitions
 open import Lang.Annotation.Name using (Option)
 ```
 
@@ -70,15 +70,14 @@ As `Maybe` is not in the semantic domain of our variability language, we cannot 
 
 Note: The following functions could also be implemented solely using lists but `Maybe` makes our intents more explicit and thus more readable (in particular the use of `catMaybes`).
 ```agda
-open import SemanticDomain using (Variant; Artifactᵥ; VSet)
 open import Data.Maybe using (Maybe; just; nothing)
 open Data.List using (catMaybes; map)
 open import Function using (flip)
 
-⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant A)
+⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant i A)
 
 -- recursive application of the semantics to all children of an artifact
-⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant A)
+⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant i A)
 ⟦ es ⟧ₒ-recurse c =
   catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
   (map (flip ⟦_⟧ₒ c) es)
@@ -91,8 +90,15 @@ open import Function using (flip)
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
-⟦_⟧ : Semantics WFOC Configuration
+⟦_⟧ : ∀ {i : Size} {A : Domain} → WFOC i A → Configuration → Variant i A
 ⟦ Root a es ⟧ c = Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
+
+WFOCL : VariabilityLanguage
+WFOCL = record
+  { expression = WFOC
+  ; configuration = Configuration
+  ; semantics = ⟦_⟧
+  }
 ```
 
 ## Translations
@@ -122,10 +128,10 @@ We prove incompleteness by showing that there exists at least one set of variant
 In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
-variant-0 = SemanticDomain.leaf 0
-variant-1 = SemanticDomain.leaf 1
+variant-0 = leaf 0
+variant-1 = leaf 1
 
-variants-0-and-1 : VSet 1 ℕ
+variants-0-and-1 : VSet ℕ 1
 variants-0-and-1 zero = variant-0
 variants-0-and-1 (suc zero) = variant-1
 ```
@@ -150,9 +156,9 @@ does-not-describe-variants-0-and-1 (Root (suc n) es) ()
 Finally, we can conclude incompleteness by showing that assuming completeness yields a contradiction using our definition above.
 We pattern match on the assumed completeness evidence to unveil the expression `e` and the proofs that it can be configured to `0` and `1`.
 ```agda
-OC-is-incomplete : Incomplete WFOC Configuration ⟦_⟧
+OC-is-incomplete : Incomplete WFOCL
 OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
-... | _ , e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 e (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
+... | e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 (get e) (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
 ```
 
 **This is an important result!**
@@ -163,8 +169,8 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Utility
 
 ```agda
-leaf : ∀ {i : Size} {A : Set} → A → OC (↑ i) A
-leaf a = Artifact a []
+oc-leaf : ∀ {i : Size} {A : Set} → A → OC (↑ i) A
+oc-leaf a = Artifact a []
 
 -- alternative name that does not require writing tortoise shell braces
 opt : ∀ {i : Size} {A : Set} → Option → OC i A → OC (↑ i) A
