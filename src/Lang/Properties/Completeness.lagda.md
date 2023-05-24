@@ -29,7 +29,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; ref
 
 open import Definitions
 open import Relations.Semantic
-open import Lang.Properties.EnumerableSemantics
+open import Lang.Properties.FiniteSemantics
 
 import Data.Multiset
 private module Iso A = Data.Multiset (VariantSetoid ∞ A)
@@ -93,7 +93,7 @@ Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 expressiveness-by-completeness : ∀ {L₊ : VariabilityLanguage}
   → Complete L₊
   → (L : VariabilityLanguage)
-  → EnumerableSemantics L
+  → FiniteSemantics L
     ---------------------------------
   → L₊ is-at-least-as-expressive-as L
 expressiveness-by-completeness {L₊} L₊-comp L L-enum {A = A} e =
@@ -152,7 +152,7 @@ Combined with `expressiveness-by-completeness` we can even further conclude that
 ```agda
 more-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
   → Complete L₊
-  → EnumerableSemantics L₋
+  → FiniteSemantics L₋
   → Incomplete L₋
     --------------------------------------
   → L₊ is-more-expressive-than L₋

@@ -10,7 +10,7 @@
 ## Module
 
 ```agda
-module Lang.Properties.EnumerableSemantics where
+module Lang.Properties.FiniteSemantics where
 ```
 
 ## Imports
@@ -36,7 +36,7 @@ private module Iso A = Data.Multiset (VariantSetoid ∞ A)
 ## Definitions
 
 ```agda
-record EnumerableSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
+record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
   open Iso A using (_≅_; re-index)
   private ⟦_⟧ = semantics L
 
@@ -46,9 +46,30 @@ record EnumerableSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ whe
     The expression should thus describe at least the returned amount of variants.
     -}
     variant-count-1 : Expression A L → ℕ
-    pick            : (e : Expression A L) → Fin (suc (variant-count-1 e)) → configuration L
+
+    {-|
+    Identifies each configuration of a given expression by a natural number.
+    This is the first step of proving that there exist only a finite amount of
+    configurations, and thus variants described by the expression.
+    -}
+    pick : (e : Expression A L) → Fin (suc (variant-count-1 e)) → configuration L
+
+    {-|
+    Identification of configurations has to be surjective:
+    Every configuration is indexed.
+    While there might be infinitely many configurations, there must be a finite subset
+    of configurations that describes all variants.
+    This means that surjectivity actually means:
+    For every configuration, there exists a configuration that is picked by pick and
+    is semantically equivalent (w.r.t., e ⊢_≣ᶜ_).
+    Thus, pick must be be surjective on the subset of unique configurations within a
+    given expression e.
+    -}
     pick-surjective : ∀ {e} → Surjective _≡_ (e ⊢_≣ᶜ_) (pick e)
 
+  {-|
+  Computes the set of variants described by a given expression e.
+  -}
   enumerate : (e : Expression A L) → ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ get e ⟧))
   enumerate e =
       variant-count-1 e
@@ -66,12 +87,12 @@ record EnumerableSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ whe
 
             con : Congruent (e ⊢_≣ᶜ_) _≡_ (⟦ get e ⟧)
             con = ≣ᶜ-congruent e
-open EnumerableSemanticsIn public
+open FiniteSemanticsIn public
 
-record EnumerableSemantics (L : VariabilityLanguage) : Set₁ where
+record FiniteSemantics (L : VariabilityLanguage) : Set₁ where
   field
-    within : ∀ {A} → EnumerableSemanticsIn L A
-open EnumerableSemantics public
+    within : ∀ {A} → FiniteSemanticsIn L A
+open FiniteSemantics public
 ```
 
 
