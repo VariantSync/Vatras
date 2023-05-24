@@ -1,5 +1,6 @@
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 
 open import Definitions
 
@@ -13,12 +14,12 @@ module Relations.Semantic where
 open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size)
 
-open import Relation.Binary using (Rel; IsEquivalence)
+open import Relation.Binary using (Rel; Symmetric; IsEquivalence)
 open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Relation.Nullary.Negation using (¬_)
 
-open import Function using (_∘_)
+open import Function using (_∘_; Congruent)
 open import Level using (0ℓ; suc)
 open import Size using (Size)
 
@@ -63,6 +64,29 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
     --------------
   → L ⊢ a ≣ b
 ≡→≣ eq rewrite eq = refl
+```
+
+## Equivalence of Configurations
+
+Two configurations are equivalent for an expressionwhen they produce the same variants for all expressions.
+```agda
+_⊢_≣ᶜ_ : ∀ {A : Domain} {L : VariabilityLanguage}
+  → Expression A L
+  → (c₁ c₂ : configuration L)
+  → Set
+_⊢_≣ᶜ_ {L = L} e c₁ c₂ = ⟦ e ⟧ c₁ ≡ ⟦ e ⟧ c₂
+  where ⟦_⟧ = semantics L ∘ get
+infix 5 _⊢_≣ᶜ_
+
+≣ᶜ-IsEquivalence : ∀ {A L} → (e : Expression A L) → IsEquivalence ( e ⊢_≣ᶜ_)
+≣ᶜ-IsEquivalence _ = record
+  { refl  = Eq.refl
+  ; sym   = Eq.sym
+  ; trans = Eq.trans
+  }
+
+≣ᶜ-congruent : ∀ {A L} → (e : Expression A L) → Congruent (e ⊢_≣ᶜ_) _≡_ (semantics L (get e))
+≣ᶜ-congruent _ e⊢x≣ᶜy = e⊢x≣ᶜy
 ```
 
 ## Semantic Relations of Different Languages
