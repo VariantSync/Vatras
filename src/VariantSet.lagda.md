@@ -20,11 +20,11 @@ open import Size using (∞)
 open import Data.Nat using (ℕ)
 open import Data.Fin using (Fin; suc; zero)
 open import Data.List using (List; _∷_; [])
--- open import Data.List.NonEmpty using (_∷_)
+open import Data.List.NonEmpty using (_∷_)
 
 open import Definitions using (Domain; Variant; Artifactᵥ; ConfLang)
 
---open import Lang.CCC using (CCC; Artifact; _⟨_⟩)
+open import Lang.CCC using (CCC; Artifact; _⟨_⟩)
 ```
 
 ## Question to Parisa
@@ -34,8 +34,8 @@ Regarding the definition of completness in Agda we looked at yesterday, I could 
 The idea of completeness was to say: Given any set of variants (e.g., three concrete variants such as `{1, 2, 3}`), then we can build an expression that describes exactly this set (e.g., `D ⟨ 1 , 2 , 3 ⟩` in choice calculus). Thus in Agda, we need a way to describe such a "set of variants".
 
 Following the idea of propositions as types, we model sets as types. But the type `Variant A` models the set of _all_ variants in a domain `A`, despite us being interested in just a subset, such as `{1, 2, 3}`. So far I used a list of variants to represent such a subset:
-```text
-set-as-list : List (Variant ℕ)
+```agda
+set-as-list : List (Variant ∞ ℕ)
 set-as-list = (Artifactᵥ 1 []) ∷ (Artifactᵥ 2 []) ∷ (Artifactᵥ 3 []) ∷ []
 ```
 This is a bit fiddly in proofs but works.
@@ -49,113 +49,19 @@ set-as-function (suc (suc zero)) = Artifactᵥ 3 []
 ```
 
 In fact, the denotational semantics of any variability language is a set of variants. So any description for a set of variants in Agda we choose will itself again be a variability language. For instance, a list of variants (as we currently use for the definition of completeness) is also a variability langage: The expressions are lists, the configurations are natural numbers, configuring a list is selecting an element. And indeed, we could also use choice calculus as a description for sets of variants that way:
-```text
+```agda
 set-as-choice : CCC ∞ ℕ
 set-as-choice = "Foo" ⟨ (Artifact 1 []) ∷ (Artifact 2 []) ∷ (Artifact 3 []) ∷ [] ⟩
 ```
 which is the whole point behind choice calculus apart from sharing.
 
-So the actual task here boils down to finding "the simplest" variability language that we can agree on as a canonical and basic definitions and that makes the proofs simple and theorems believable. I guess the simplest way would be "a set of variants" itself but, yeah, how to say that in type theory?
+So the actual task here boils down to finding "the simplest" or "most believable" variability language that we can agree on as a canonical and basic definitions and that makes the proofs simple and theorems believable. I guess the simplest way would be "a set of variants" itself but, yeah, how to say that in type theory?
 
-My bet is currently on Fin. On the other hand, we already have to proves done on lists (to prove completeness-by-expressiveness) and we can use the Agda stl definitions for `ANy` and `All` that are basically _OR_ and _AND_ over lists.
+By now, I tried the fin idea, by creating a new type `Multiset` that describes subsets as functions.
+A multiset is a function `I → S` from indices `I` to the whole set we want to get a subset from `S`.
+This idea is by now formalized [here](Data/Multiset.lagda.md).
 
-Moreover, the have to ensure that variant subsets are non-empty in our definition of completeness (which currently allows for empty subsets). A variability language should not be able to encode 0 variants in an expression. This would require an empty expression which does not make sense.
+I tried both now, the new Multisubset and the lists and I think the Multiset definition delivers more elegant and simpler proof but it is a bit harder to wrap your head around it. In fact, Multiset is a category whose objects are sets and morphism denote subset.
 
-Below, I generalized the Fin idea to allow for any indices apart from only Fin.
-I ended up with a category of subsets.
-An object represents a set as a function `I → S` where `I` indexes another set `S`.
-A morphism denotes subset.
-Empty sets are initial objects.
+I also asked the Agda community [here](https://agda.zulipchat.com/#narrow/stream/259644-newcomers/topic/Describing.20Subsets). They pointed out that there is an alternative, more common approach to model subsets, as functions from our initial set S to booleans that decide for each element whether it is in the subset or not. This also is quite elegant, and allows for decidability and boolean constraints as we use in set theory. I think though, that for our use case, the Multiset way leads to much more straightforward proofs due to its similarity with the language semantics. In the chat, someone also said, that the Multiset way does not look uncommon and could work. Nobody really said "dont do that".
 
-## Definitions
-
-as selector function
-```agda
-open import Data.Empty using (⊥)
-open import Data.Unit using (⊤; tt)
-
-open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
-open import Relation.Nullary using (¬_)
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
-
-Index : Set₁
-Index = Set
-
-Source : Set₁
-Source = Set
-
-Subset : Index → Source → Set
-Subset I S = I → S
-
-∅ : ∀ {S} → Subset ⊥ S
-∅ = λ ()
-
-𝟙 : Source → Set
-𝟙 S = Subset ⊤ S
-
--- an element is within a subset, if there is an index pointing at that element
-_∈_ : ∀ {I} {S} → S → Subset I S → Set
-a ∈ A = ∃[ i ] (A i ≡ a)
-
--- morphisms
-_⊆_ : ∀ {I J : Index} {S : Source} → Subset I S → Subset J S → Set
-_⊆_ {I} A B = ∀ (i : I) → (A i ∈ B)
-
-_≅_ : ∀ {I J : Index} {S : Source} → Subset I S → Subset J S → Set
-A ≅ B = (A ⊆ B) × (B ⊆ A)
-
-nonempty : ∀ {I} {S} → Subset I S → Set
-nonempty A = ∃[ a ] (a ∈ A)
-
-empty : ∀ {I} {S} → Subset I S → Set
-empty A = ¬ (nonempty A)
-
-∅-is-empty : ∀ {S} → empty (∅ {S})
-∅-is-empty ()
-
-∅⊆A : ∀ {I S} {A : Subset I S}
-  → ∅ ⊆ A
-∅⊆A = λ ()
-
-empty-set⊆∅ : ∀ {I S} {A : Subset I S}
-  → empty A
-    -------
-  → A ⊆ ∅
-empty-set⊆∅ {A = A} A-empty i with A-empty (A i , i , refl)
-...| ()
-
-all-empty-sets-are-equal : ∀ {I S}
-  → (A : Subset I S)
-  → empty A
-  → A ≅ ∅
-all-empty-sets-are-equal A A-empty = empty-set⊆∅ A-empty , ∅⊆A
-
-singleton-set-is-nonempty : ∀ {S} → (A : 𝟙 S) → nonempty A
-singleton-set-is-nonempty A = A tt , tt , refl
-
--- example time
-ex12 : Subset (Fin 2) ℕ
-ex12 zero = 1
-ex12 (suc zero) = 2
-
-ex21 : Subset (Fin 2) ℕ
-ex21 zero = 2
-ex21 (suc zero) = 1
-
-12≅21 : ex12 ≅ ex21
-proj₁ 12≅21 zero = suc zero , refl
-proj₁ 12≅21 (suc zero) = zero , refl
-proj₂ 12≅21 zero = suc zero , refl
-proj₂ 12≅21 (suc zero) = zero , refl
-```
-
-```agda
---open import Relation.Nullary.Decidable
-open import Relation.Binary.Definitions using (Decidable)
-
--- ≅-dec : ∀ {I J S} → Decidable (_⊆_ {I} {J} {S})
--- Relation.Nullary.does (≅-dec x y) = {!!}
--- Relation.Nullary.proof (≅-dec x y) = {!!}
-
-```
