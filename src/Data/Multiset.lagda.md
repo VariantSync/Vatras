@@ -6,7 +6,8 @@
 {-# OPTIONS --allow-unsolved-metas #-}
 
 open import Level using (Level; suc; _⊔_)
-open import Relation.Binary using (
+open import Relation.Binary as RB using (
+  Rel;
   Setoid;
   Antisym;
   IsEquivalence)
@@ -28,8 +29,10 @@ module Data.Multiset
 open import Data.Empty.Polymorphic using (⊥)
 open import Data.Unit.Polymorphic using (⊤; tt)
 
-open import Data.Product using (_×_; _,_; ∃-syntax; proj₁; proj₂)
+open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
+
+open import Function using (_∘_; Congruent; Surjective) --IsSurjection)
 
 open Setoid S
 module Eq = IsEquivalence isEquivalence
@@ -137,7 +140,70 @@ all-empty-sets-are-equal A-empty = empty-set⊆𝟘 A-empty , 𝟘⊆A
 
 singleton-set-is-nonempty : (A : 𝟙) → nonempty A
 singleton-set-is-nonempty A = A tt , tt , Eq.refl
+```
 
+## Further Properties
+
+### Reindexing
+
+We can rename the indices of a multiset M to obtain a subset of M.
+```agda
+open import Relation.Binary.PropositionalEquality as Peq using (_≡_)
+
+re-indexˡ : ∀ {A B : Set c}
+  → (rename : A → B)
+  → (M : Multiset B)
+    ---------------------
+  → (M ∘ rename) ⊆ M
+re-indexˡ rename _ a = rename a , Eq.refl
+```
+
+If the renaming renames every index (i.e., the renaming is surjective), the renamed multiset
+is isomorphic to the original set M.
+Surjectivity can be given over any two equality relations `_≈ᵃ_` (equality of renamed indices) and `_≈ᵇ_` (equality of original indices).
+We do not require that both relations are indeed equivalence relations but only list those properties we actually need.
+  - `Symmetric _≈ᵇ_`: symmetry over original indices
+  - `Congruent _≈ᵇ_ _≈_ M`: The multiset M has to map equal keys to equal values.
+```agda
+re-indexʳ : ∀ {A B : Set c}
+    {_≈ᵃ_ : Rel A c}
+    {_≈ᵇ_ : Rel B c}
+  → (rename : A → B)
+  → (M : Multiset B)
+  → Surjective _≈ᵃ_ _≈ᵇ_ rename
+  → RB.Symmetric _≈ᵇ_
+  → Congruent _≈ᵇ_ _≈_ M
+    ---------------------
+  → M ⊆ (M ∘ rename)
+re-indexʳ {A} {B} {_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵇ-sym M-is-congruent b =
+  a , same-picks
+  where suitable-a : Σ[ a ∈ A ] (rename a ≈ᵇ b)
+        suitable-a = rename-is-surjective b
+
+        a : A
+        a = proj₁ suitable-a
+
+        same-picks : M b ≈ M (rename a)
+        same-picks = M-is-congruent (≈ᵇ-sym (proj₂ suitable-a))
+
+re-index : ∀ {A B : Set c}
+    {_≈ᵃ_ : Rel A c}
+    {_≈ᵇ_ : Rel B c}
+  → (rename : A → B)
+  → (M : Multiset B)
+  → Surjective _≈ᵃ_ _≈ᵇ_ rename
+  → RB.Symmetric _≈ᵇ_
+  → Congruent _≈ᵇ_ _≈_ M
+    ---------------------------
+  → (M ∘ rename) ≅ M
+re-index {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵇ-sym M-is-congruent =
+    re-indexˡ rename M
+  , re-indexʳ {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵇ-sym M-is-congruent
+```
+
+## Examples
+
+```
 -- module Examples where
 --   open import Data.Nat using (ℕ)
 --   open import Data.Fin using (Fin; suc; zero)
