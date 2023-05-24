@@ -7,6 +7,9 @@ open import Relation.Binary.Indexed.Heterogeneous using (
 
 module Relations.GeneralizedEquivalence where
 
+{-|
+Unwraps an indexed equivalence.
+-}
 iseq : ∀ {i a ℓ : Level} {I : Set i} {A : I → Set a} {_≈_ : IRel A ℓ}
   → IsIndexedEquivalence A _≈_
   → ∀ {x : I} → IsEquivalence (_≈_ {x})

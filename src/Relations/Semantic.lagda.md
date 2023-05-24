@@ -44,7 +44,7 @@ _≣_ {L = L} e₁ e₂ = ⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧
   where ⟦_⟧ = semantics L ∘ get
 infix 5 _≣_
 
--- for syntax
+-- alias for syntax
 _⊢_≣_ : ∀ {i j : Size} {A : Domain}
   → (L : VariabilityLanguage)
   → expression L i A
@@ -53,9 +53,19 @@ _⊢_≣_ : ∀ {i j : Size} {A : Domain}
 L ⊢ e₁ ≣ e₂ = fromExpression L e₁ ≣ fromExpression L e₂
 infix 5 _⊢_≣_
 ```
-A proposition `L , ⟦_⟧ ⊢ e₁ ≈ e₂` reads as, in a language `L` with semantics `⟦_⟧` the expressions `e₁` and `e₂` are semantically equivalent, i.e., `⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧`.
 
-Semantic equivalence `≈` inherits all properties from structural equality `≡` because it is just an alias. In particular, these properties include reflexivity (by definition), symmetry, transitivity, and congruence (e.g., as stated in the choice calculus TOSEM paper).
+Semantic equivalence `≣` inherits all properties from structural equality `≡` because it is just an alias. In particular, these properties include reflexivity (by definition), symmetry, transitivity, and congruence (e.g., as stated in the choice calculus TOSEM paper).
+```agda
+≣-IsEquivalence : ∀ {A L} → IsEquivalence (_≣_ {A} {L})
+≣-IsEquivalence = record
+  { refl  = Eq.refl
+  ; sym   = Eq.sym
+  ; trans = Eq.trans
+  }
+
+≣-congruent : ∀ {A L} → Congruent (_≣_ {A} {L}) _≡_ (semantics L ∘ get)
+≣-congruent eq rewrite eq = refl
+```
 
 Obviously, syntactic equality (or rather structural equality) implies semantic equality, independent of the semantics:
 ```agda
@@ -120,15 +130,15 @@ infix 5 _≚_
   }
   where open MSet (VariantSetoid _ _) using (≅-refl; ≅-sym; ≅-trans)
 
-≚-isEquivalence : ∀ {A : Domain} {L : VariabilityLanguage} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
+≚-isEquivalence : ∀ {A} {L} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
 
 open import Relation.Binary using (Setoid)
 
 ≚-setoid : Domain → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
 ≚-setoid A L = record
-  { Carrier = Expression A L
-  ; _≈_ = _≚_
+  { Carrier       = Expression A L
+  ; _≈_           = _≚_
   ; isEquivalence = ≚-isEquivalence
   }
 
@@ -151,7 +161,7 @@ L₁ , L₂ ⊢ e₁ ≚ e₂ = fromExpression L₁ e₁ ≚ fromExpression L₂
 infix 5 _,_⊢_≚_
 ```
 
-In the following the prove the same properties as for the relations within a single language. The proofs are identical:
+Given two variant-equivalent expressions from different languages, we can conclude that their semantics are isomorphic.
 ```agda
 ≚→≅ : ∀ {A : Domain} {L₁ L₂ : VariabilityLanguage} {e₁ : Expression A L₁} {e₂ : Expression A L₂}
   → e₁ ≚ e₂
@@ -169,12 +179,11 @@ Semantic equality implies variant equality:
   → a ≣ b
     -------
   → a ⊆ᵥ b
--- From a≈b, we know that ⟦ a ⟧ ≡ ⟦ b ⟧. To prove subset, we have to show that both sides produce the same variant for a given configuration. We do so by applying the configuration to both sides of the equation of a≈b.
-≣→⊆ᵥ a≈b c rewrite a≈b = c , refl
+≣→⊆ᵥ a≣b c rewrite a≣b = c , refl
 
 ≣→≚ : ∀ {A : Domain} {L : VariabilityLanguage} {a b : Expression A L}
   → a ≣ b
-    -------
+    ------
   → a ≚ b
 ≣→≚     {A} {L} {a} {b} a≣b =
     ≣→⊆ᵥ {A} {L} {a} {b} a≣b
@@ -229,4 +238,6 @@ trans-expressiveness L₂→L₁ L₃→L₂ {A} e₃ =
       e₁ , e₂≚e₁ = L₂→L₁ e₂
    in e₁ , ≅-trans e₃≚e₂ e₂≚e₁ -- This proof is highly similar to ≅-trans itself. Maybe we could indeed reuse here.
 ```
+
+TODO: Prove that `_is-variant-equivalent-to` is an equivalence relation.
 

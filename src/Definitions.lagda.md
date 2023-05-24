@@ -50,18 +50,29 @@ We also model configurations as types but they do not have parameters.
 ```agda
 ConfLang : Set₁
 ConfLang = Set
+```
 
--- Variants are given by a variability language in which nothing can be configured.
--- Every expressions describes a singleton set of variants.
+Variants are the semantic domain of variability languages.
+In fact though, variants constitute a variability language in which nothing can be configured.
+Every expressions describes a singleton set of variants.
+```agda
 -- 𝟙-Lang
 data Variant : VarLang where
   Artifactᵥ : Artifactˡ Variant
 
+-- Empty variability language
 data 𝟘-Lang : VarLang where
+```
 
+Because we will frequently have to compare variants based on propositional equivalence, we create an alias.
+```agda
 VariantSetoid : Size → Domain → Setoid 0ℓ 0ℓ
 VariantSetoid i A = Eq.setoid (Variant i A)
+```
 
+The semantics of variability languages is given by a multiset of variants.
+It is a multiset because two different configurations might yield the same variant (e.g., if there is an unused feature, or toggling a certain feature has no effect because all of its artifacts already dead based on another selection).
+```agda
 IndexedVSet : Size → Domain → Set → Set
 IndexedVSet i A I = Multiset I
   where open MSet (VariantSetoid i A) using (Multiset)
@@ -69,6 +80,7 @@ IndexedVSet i A I = Multiset I
 VSet : Domain → ℕ → Set
 VSet A n = IndexedVSet ∞ A (Fin (suc n))
 
+-- Utility function to downcast the Fin in a VSet.
 forget-last : ∀ {n : ℕ} {A : Set} → VSet A (suc n) → VSet A n
 forget-last set x = set (Data.Fin.inject₁ x)
 ```
@@ -80,10 +92,11 @@ Semantics L C = ∀ {i : Size} {A : Domain} → L i A → IndexedVSet ∞ A C
 -- Semantics L C = ∀ {i j : Size} {A : Domain} → L i A → IndexedVSet (i ⊔ˢ j) A C
 ```
 
+We further introduce convenience records that gather all relevant informaton to characterize a single language.
 ```agda
 record VariabilityLanguage : Set₁ where
   field
-    expression    : VarLang
+    expression    : VarLang -- unfortunately, "syntax" is a keyword in Agda so we cannot use that as field name
     configuration : ConfLang
     semantics     : Semantics expression configuration
 open VariabilityLanguage public
