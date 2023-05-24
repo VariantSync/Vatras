@@ -46,25 +46,24 @@ open Eq.≡-Reasoning
 
 open import Lang.Annotation.Name using (Dimension; _==_)
 open import Lang.CCC
-  using (CCC; choice-elimination)
+  using (CCC; CCCL; choice-elimination)
   renaming (Artifact to Artifactₙ;
             _⟨_⟩ to _⟨_⟩ₙ;
             Tag to Tagₙ;
             Configuration to Configurationₙ;
             ⟦_⟧ to ⟦_⟧ₙ)
 open import Lang.BCC
-  using (BCC; BCC-is-weakenable)
+  using (BCC; BCCL; BCC-is-weakenable)
   renaming (Artifact to Artifact₂;
             _⟨_,_⟩ to _⟨_,_⟩₂;
             Tag to Tag₂;
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import SemanticDomain using (Variant; Artifactᵥ)
-open import Definitions using (Domain; VarLang; ConfLang; Semantics; sequence-sized-artifact)
+open import Definitions hiding (get)
 open import Relations.Semantic
   -- Relations between variability languages
-  using (_,_is-at-least-as-expressive-as_,_)
+  using (_is-at-least-as-expressive-as_)
 open import Translation.Translation
   -- Translations
   using (Translation; TranslationResult; expr; conf; fnoc)
@@ -306,8 +305,8 @@ Finally, we can use `toBCC` to produce a `Translation`:
 {-
 Translates a given n-ary expression to a (1) a binary expression of a certain size, (2) two conversion functions to translate configurations for the input and output expressions.
 -}
-translate : ∀ {i : Size} {A : Domain} → CCC i A → TranslationResult A BCC Configurationₙ Configuration₂
-translate {i} {_} ccc =
+CCC→BCC : Translation CCCL BCCL
+CCC→BCC {i} {_} ccc =
   let (configConverter , (i , bcc)) = runState (toBCC ccc) unknownConfigurationConverter
   in
   record
@@ -315,14 +314,6 @@ translate {i} {_} ccc =
   ; expr = bcc
   ; conf = nary→binary configConverter
   ; fnoc = binary→nary configConverter
-  }
-
-CCC→BCC : Translation CCC BCC Configurationₙ Configuration₂
-CCC→BCC =
-  record
-  { sem₁ = ⟦_⟧ₙ
-  ; sem₂ = ⟦_⟧₂
-  ; translate = translate
   }
 ```
 
@@ -339,9 +330,9 @@ CCC→BCC-right : ∀ {i : Size} {A : Domain}
   → e ⊇-via CCC→BCC
 
 CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
-CCC→BCC-is-variant-preserving e = CCC→BCC-left e , CCC→BCC-right e
+CCC→BCC-is-variant-preserving e = CCC→BCC-left (Definitions.get e) , CCC→BCC-right (Definitions.get e)
 
-BCC-is-at-least-as-expressive-as-CCC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as CCC , ⟦_⟧ₙ
+BCC-is-at-least-as-expressive-as-CCC : BCCL is-at-least-as-expressive-as CCCL
 BCC-is-at-least-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
 ```
 
@@ -357,7 +348,7 @@ Comments by Jeff:
 CCC→BCC-left (Artifactₙ a []) c₂ = refl
 CCC→BCC-left e@(Artifactₙ a es@(_ ∷ _)) cₙ =
   let -- open RawFunctor state-functor
-      c₂ = conf (translate e) cₙ
+      c₂ = conf (CCC→BCC e) cₙ
   in
   begin
     ⟦ e ⟧ₙ cₙ
@@ -365,17 +356,17 @@ CCC→BCC-left e@(Artifactₙ a es@(_ ∷ _)) cₙ =
     Artifactᵥ a (mapl (flip ⟦_⟧ₙ cₙ) es)
   -- TODO: Somehow apply the induction hypothesis below the sequenceA below the runState below the mapl below the Artifactᵥ
   ≡⟨ {!!}  ⟩
-    ⟦ expr (translate e) ⟧₂ c₂
+    ⟦ expr (CCC→BCC e) ⟧₂ c₂
   ∎
 CCC→BCC-left (D ⟨ e ∷ [] ⟩ₙ) cₙ =
-  let c₂ = conf (translate (D ⟨ e ∷ [] ⟩ₙ)) cₙ in
+  let c₂ = conf (CCC→BCC (D ⟨ e ∷ [] ⟩ₙ)) cₙ in
   ⟦ D ⟨ e ∷ [] ⟩ₙ ⟧ₙ cₙ                   ≡⟨⟩
   ⟦ e           ⟧ₙ cₙ                    ≡⟨ CCC→BCC-left e cₙ ⟩
-  ⟦ expr (translate e)              ⟧₂ c₂ ≡⟨⟩
-  ⟦ expr (translate (D ⟨ e ∷ [] ⟩ₙ)) ⟧₂ c₂ ∎
+  ⟦ expr (CCC→BCC e)              ⟧₂ c₂ ≡⟨⟩
+  ⟦ expr (CCC→BCC (D ⟨ e ∷ [] ⟩ₙ)) ⟧₂ c₂ ∎
 CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
-  let c₂ = conf (translate e) cₙ
-      e₂ = translate e
+  let c₂ = conf (CCC→BCC e) cₙ
+      e₂ = CCC→BCC e
   in
   begin
     ⟦ e ⟧ₙ cₙ
@@ -384,7 +375,7 @@ CCC→BCC-left e@(D ⟨ es@(_ ∷ _ ∷ _) ⟩ₙ) cₙ =
   --≡⟨ {!!} ⟩
   --  ⟦ if (c₂ D) then {!!} else {!!} ⟧₂ c₂
   ≡⟨ {!!} ⟩
-    ⟦ expr (translate e) ⟧₂ c₂
+    ⟦ expr (CCC→BCC e) ⟧₂ c₂
   ∎
 ```
 

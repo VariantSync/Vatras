@@ -15,7 +15,6 @@ module Lang.VariationTree where
 ## Imports
 
 ```agda
-import Translation.Translation using (VarLang; ConfLang)
 ```
 
 ## Syntax

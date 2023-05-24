@@ -4,7 +4,7 @@ open import Level using (Level)
 open import Function using (id; _∘_)
 
 open import Data.Bool using (Bool; false; true; if_then_else_)
-open import Data.Nat using (ℕ; _⊓_; zero; suc; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
+open import Data.Nat using (ℕ; zero; suc; NonZero; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Fin.Base using (Fin; fromℕ<)
 
 open import Data.Nat.Properties using (m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
@@ -56,6 +56,13 @@ minFinFromLimit n-1 t =
   let min = n-1 ⊓ t
       x = m⊓n≤m n-1 t
    in fromℕ< (m≤n⇒m<1+n min n-1 x)
+
+{-|
+Clamps a non-negative natural number at the given limit.
+In case the given number is smaller than the given length, the number is returned, otherwise the length - 1.
+-}
+clamp : (n : ℕ) → {NonZero n} → ℕ → Fin n
+clamp (suc n) = minFinFromLimit n
 
 if-idemp : ∀ {A : Set} {a : A}
   → (c : Bool)

@@ -27,12 +27,12 @@ open import Function using (id; flip)
 open import Definitions
 open import Lang.Annotation.Name using (Option)
 open import Lang.OC
-     using ( OC; WFOC; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
+     using ( OC; WFOC; WFOCL; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
   renaming ( Artifact to Artifactₒ
            ; Configuration to Confₒ
            )
 open import Lang.BCC
-     using ( BCC; _⟨_,_⟩)
+     using ( BCC; BCCL; _⟨_,_⟩)
   renaming ( ⟦_⟧ to ⟦_⟧₂
            ; Artifact to Artifact₂
            ; Configuration to Conf₂
@@ -53,21 +53,21 @@ open Eq.≡-Reasoning
 
 ## Zipper
 
-For the translation of options, we have to remember translated children within the subtree we are currently translating.
+For the translation of options, we have to remember OC→BCCd children within the subtree we are currently translating.
 Therefore, we introduce a (partial) zipper.
-The zipper remembers the last artefact above our currently translated subtree.
+The zipper remembers the last artefact above our currently OC→BCCd subtree.
 This artifact always exists in a well-formed option calculus expression.
 The current parent will always be an artifact because it will never be an option because whenever we visit an option, we swap it with the artifact above.
-Said artifact will then be the parent of the translated children again.
+Said artifact will then be the parent of the OC→BCCd children again.
 
-The zipper stores the children of the currently translated subtree.
-It keeps track of which children have already been translated and which have not.
+The zipper stores the children of the currently OC→BCCd subtree.
+It keeps track of which children have already been OC→BCCd and which have not.
 The idea is that the zipper wanders through the children from left to right, translating one child at a time.
-In the beginning, no child of the parent artifact has been translated:
+In the beginning, no child of the parent artifact has been OC→BCCd:
 
     [] ◀ e₁ ∷ e₂ ∷ e₃ ∷ ... ∷ eₙ
 
-then, step by step, each child get's translated:
+then, step by step, each child get's OC→BCCd:
 
     b₁ ∷ [] ◀ e₂ ∷ e₃ ∷ ... ∷ eₙ
     b₁ ∷ b₂ ∷ [] ◀ e₃ ∷ ... ∷ eₙ
@@ -75,9 +75,9 @@ then, step by step, each child get's translated:
     ...
     b₁ ∷ b₂ ∷ b₃ ∷ ... ∷ bₙ ◀ []
 
-The zipper is parameterized in a natural number that is the amount of children yet to translate.
+The zipper is parameterized in a natural number that is the amount of children yet to OC→BCC.
 
-This is in fact working just like "map" does on lists but we need the zipper to remember the already translated siblings to translate options.
+This is in fact working just like "map" does on lists but we need the zipper to remember the already OC→BCCd siblings to OC→BCC options.
 
 The zipper does not store enough information to fully restore a tree from the current focus.
 This limitation is intended to keep the structure as simple as possible and only as complex as necessary.
@@ -115,7 +115,7 @@ infix 3 _⊢_⟶ₒ_
 data _⊢_⟶ₒ_ where
   {-|
   We finished translating a subtree. All work is done.
-  We thus wrap up the zipper to the translated subtree it represents.
+  We thus wrap up the zipper to the OC→BCCd subtree it represents.
   -}
   T-done :
     ∀ {i  : Size}
@@ -126,7 +126,7 @@ data _⊢_⟶ₒ_ where
     → i ⊢ a -< ls ◀ [] >- ⟶ₒ Artifact₂ a ls
 
   {-|
-  If the next expression to translate is an artifact,
+  If the next expression to OC→BCC is an artifact,
   we recursively proceed all its children (obtaining e₁)
   an then proceed with the remaining expressions (obtaining e₂).
   -}
@@ -146,8 +146,8 @@ data _⊢_⟶ₒ_ where
     → ↑ i ⊢ a -< ls ◀ Artifactₒ b es ∷ rs >- ⟶ₒ e₂
 
   {-|
-  If the next expression to translate is an option,
-  we translate the current subtree once with the option picked (obtaining eᵒ⁻ʸ)
+  If the next expression to OC→BCC is an option,
+  we OC→BCC the current subtree once with the option picked (obtaining eᵒ⁻ʸ)
   and once without the option picked (obtaining eᵒ⁻ʸ).
   We can then put both results into a binary choice, where going left
   means picking the option, and going right means not picking the option.
@@ -188,7 +188,7 @@ data _⟶_ where
 
 ## Determinism
 
-Every OC expression is translated to at most one BCC expression.
+Every OC expression is OC→BCCd to at most one BCC expression.
 ```agda
 ⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : BCC ∞ A}
   → i ⊢ z ⟶ₒ b
@@ -215,7 +215,7 @@ Every OC expression is translated to at most one BCC expression.
 
 ## Totality (i.e., Progress)
 
-Every OC expression is translated to at least one BCC expression.
+Every OC expression is OC→BCCd to at least one BCC expression.
 Since we have already proven determinism, the proof for totality and thus a translation is unique.
 ```agda
 Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set
@@ -328,7 +328,7 @@ preservesₒ-artifact :
     {ls  : List (BCC ∞ A)}
     {es  : List (OC i A)}
     {e   : BCC ∞ A}
-  → (rs  : List (Variant A))
+  → (rs  : List (Variant ∞ A))
   → (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
     ----------------------------------------------------------------
   →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
@@ -437,21 +437,14 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
 ## Translation Implementation
 
 ```agda
-translate : ∀ {i} {A} → WFOC i A → TranslationResult A BCC Confₒ Conf₂
-translate oc =
+OC→BCC : Translation WFOCL BCCL
+OC→BCC oc =
   let bcc , trace = ⟶-is-total oc in
   record
   { size = ∞
   ; expr = bcc
   ; conf = id
   ; fnoc = id
-  }
-
-OC→BCC : Translation WFOC BCC Confₒ Conf₂
-OC→BCC = record
-  { sem₁ = ⟦_⟧
-  ; sem₂ = ⟦_⟧₂
-  ; translate = translate
   }
 ```
 
@@ -470,12 +463,12 @@ OC→BCC = record
 -- When the translation of configurations is id, then the theorems for both sides become equivalent.
 -- TODO: Maybe we want to gerneralize this observation to the framework?
 OC→BCC-is-variant-preserving : OC→BCC is-variant-preserving
-OC→BCC-is-variant-preserving e = ⊆-via-OC→BCC e , ⊆-via-OC→BCC e
+OC→BCC-is-variant-preserving e = ⊆-via-OC→BCC (get e) , ⊆-via-OC→BCC (get e)
 
 OC→BCC-is-semantics-preserving : OC→BCC is-semantics-preserving
 OC→BCC-is-semantics-preserving = OC→BCC-is-variant-preserving , λ e c → refl
 
-BCC-is-at-least-as-expressive-as-OC : BCC , ⟦_⟧₂ is-at-least-as-expressive-as WFOC , ⟦_⟧
+BCC-is-at-least-as-expressive-as-OC : BCCL is-at-least-as-expressive-as WFOCL
 BCC-is-at-least-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
 ```
 

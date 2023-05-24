@@ -30,9 +30,8 @@ open import Lang.BCC
             ⟦_⟧ to ⟦_⟧₂)
 
 open import Definitions using (ConfLang)
-open import SemanticDomain using (show-variant)
 open import Translation.CCC-to-BCC  using (CCC→BCC)
-open import Translation.Translation using (translate; expr; conf; fnoc)
+open import Translation.Translation using (expr; conf; fnoc)
 
 open import Util.ShowHelpers
 
@@ -83,7 +82,7 @@ get     exp-to-binary-and-back ex@(cc called name) =
     conf-vals : List ℕ
     conf-vals = 0 ∷ 1 ∷ 2 ∷ []
 
-    translation-result = translate CCC→BCC cc
+    translation-result = CCC→BCC cc
 
     expr-named : Named (BCC ∞ String)
     expr-named = expr translation-result called "toCC₂ " ++ name

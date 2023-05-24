@@ -19,7 +19,7 @@ module Lang.OC where
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
-open import Size using (Size; ↑_)
+open import Size using (Size; ∞; ↑_)
 open import Definitions
 open import Lang.Annotation.Name using (Option)
 ```
@@ -74,10 +74,12 @@ open import Data.Maybe using (Maybe; just; nothing)
 open Data.List using (catMaybes; map)
 open import Function using (flip)
 
-⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant i A)
+-- ⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant i A)
+⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant ∞ A)
 
 -- recursive application of the semantics to all children of an artifact
-⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant i A)
+-- ⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant i A)
+⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant ∞ A)
 ⟦ es ⟧ₒ-recurse c =
   catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
   (map (flip ⟦_⟧ₒ c) es)
@@ -90,7 +92,8 @@ open import Function using (flip)
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
-⟦_⟧ : ∀ {i : Size} {A : Domain} → WFOC i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : Domain} → WFOC i A → Configuration → Variant i A
+⟦_⟧ : Semantics WFOC Configuration
 ⟦ Root a es ⟧ c = Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
 
 WFOCL : VariabilityLanguage

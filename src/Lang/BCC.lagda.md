@@ -79,7 +79,8 @@ This is the semantics for choice calculus as defined in
 "Projectional Editing of Variational Software, Walkingshaw and Ostermann, GPCE'14"
 with the minor simplification of using booleans instead of selectors for dimensions.
 -}
-⟦_⟧ : ∀ {i : Size} {A : Domain} → BCC i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : Domain} → BCC i A → Configuration → Variant i A
+⟦_⟧ : Semantics BCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ l , r ⟩ ⟧ c = ⟦ if (c D) then l else r ⟧ c
 
@@ -198,7 +199,7 @@ eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
 Redundancy-Elimination : EndoTranslation BCCL
 Redundancy-Elimination e = record
-  { expr = fromExpression BCCL (eliminate-redundancy e)
+  { expr = eliminate-redundancy e
   ; conf = id
   ; fnoc = id
   }

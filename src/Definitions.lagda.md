@@ -76,7 +76,8 @@ forget-last set x = set (Data.Fin.inject₁ x)
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
 ```agda
 Semantics : VarLang → ConfLang → Set₁
-Semantics L C = ∀ {i j : Size} {A : Domain} → L i A → IndexedVSet (i ⊔ˢ j) A C
+Semantics L C = ∀ {i : Size} {A : Domain} → L i A → IndexedVSet ∞ A C
+-- Semantics L C = ∀ {i j : Size} {A : Domain} → L i A → IndexedVSet (i ⊔ˢ j) A C
 ```
 
 ```agda
@@ -97,7 +98,10 @@ fromExpression : ∀ {i : Size} {A : Domain}
   → (L : VariabilityLanguage)
   → expression L i A
   → Expression A L
-fromExpression _ e = record { get = e }
+fromExpression {i} _ e = record
+  { size = i
+  ; get  = e
+  }
 ```
 
 ## Helper Functions and Theorems

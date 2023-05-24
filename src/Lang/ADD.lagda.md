@@ -20,7 +20,7 @@ open import Data.List using ([])
 open import Data.String using (String)
 open import Size using (Size; ↑_)
 
-open import Definitions using (VarLang; Domain; Variant; VariabilityLanguage)
+open import Definitions using (VarLang; Domain; Variant; Semantics; VariabilityLanguage)
 open import Lang.Annotation.Name using (Variable)
 ```
 
@@ -47,7 +47,8 @@ Configurations denote a path in the tree by making a decision at each variable t
 Configuration : Set
 Configuration = Variable → Bool
 
-⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant i A
+⟦_⟧ : Semantics ADD Configuration
 ⟦ Terminal a ⟧ _   = a
 ⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
 

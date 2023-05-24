@@ -2,15 +2,18 @@
 
 module Test.UnitTest where
 
-open import Size using (Size)
-open import Function using (_∘_)
+
 open import Data.List using (List)
 open import Data.List.Relation.Unary.All using (All)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_)
 
-open import Definitions using (Domain; VarLang; ConfLang; Semantics)
+open import Function using (_∘_)
+open import Level using (0ℓ; _⊔_; suc)
+open import Size using (Size)
+
+open import Definitions
 open import Translation.Translation
 
 open import Test.Example using (Example; _called_)
@@ -22,8 +25,8 @@ open Eq using (refl) public
 Unit tests are theorems on concrete examples
 that the Agda type checker can figure out by itself.
 -}
-UnitTest : ∀ (Data : Set) → Set₁
-UnitTest Data = Data → Set
+UnitTest : ∀ {ℓ₁} (Data : Set ℓ₁) → Set (suc 0ℓ ⊔ ℓ₁)
+UnitTest {ℓ₁} Data = Data → Set
 
 ExamplesTest : ∀ (Data : Set) → Set₁
 ExamplesTest Data = UnitTest (List (Example Data))
@@ -56,21 +59,26 @@ ForAllExamplesIn : ∀ {Data : Set}
   → Set
 ForAllExamplesIn ex utest = ForAllExamples utest ex
 
-test-translation : {i : Size} {A : Domain} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang}
-  → (Translation L₁ L₂ C₁ C₂)
-  → C₁
-  → UnitTest (L₁ i A)
-test-translation t c₁ e₁ =
+test-translation : ∀ {L₁ L₂ : VariabilityLanguage} {A i}
+  → (Translation L₁ L₂)
+  → configuration L₁
+  → UnitTest (expression L₁ i A)
+test-translation {L₁} {L₂} {A} translate c₁ e₁ =
   -- TODO: Can we somehow reuse our definition of _⊆-via_ here?
-  let tr = translate t e₁
+  let tr : TranslationResult A L₁ L₂
+      tr = translate e₁
+      e₂ = expr tr
+      ⟦_⟧₁ = semantics L₁
+      ⟦_⟧₂ = semantics L₂
    in
-      sem₁ t e₁ c₁ ≡ sem₂ t (expr tr) (conf tr c₁)
+      ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ (conf tr c₁)
 
-test-translation-fnoc∘conf≡id : {i : Size} {A : Domain} {L₁ L₂ : VarLang} {C₁ C₂ : ConfLang}
-  → (Translation L₁ L₂ C₁ C₂)
-  → C₁
-  → UnitTest (L₁ i A)
-test-translation-fnoc∘conf≡id t c₁ e₁ =
-  let tr = translate t e₁
+test-translation-fnoc∘conf≡id : ∀ {L₁ L₂ : VariabilityLanguage} {A i}
+  → (Translation L₁ L₂)
+  → configuration L₁
+  → UnitTest (expression L₁ i A)
+test-translation-fnoc∘conf≡id {L₁} {_} t c₁ e₁ =
+  let tr = t e₁
+      ⟦_⟧₁ = semantics L₁
    in
-      sem₁ t e₁ c₁ ≡ sem₁ t e₁ (fnoc tr (conf tr c₁))
+      ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₁ ⟧₁ (fnoc tr (conf tr c₁))

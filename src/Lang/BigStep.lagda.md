@@ -25,9 +25,9 @@ open Eq
   using (_≡_; _≢_; refl)
 
 -- Imports of own modules
+open import Definitions using (Variant; Artifactᵥ)
 open import Lang.Annotation.Name using (Dimension; _≟_)
 open import Lang.BCC using (Tag; BCC; Artifact; _⟨_,_⟩; left; right)
-open import SemanticDomain using (Variant; Artifactᵥ)
 open import Axioms.Extensionality
   using (extensionality)
 
@@ -77,19 +77,19 @@ Configuration = Assignment Dimension Tag
 Denotational semantics of binary choice calculus as big-step semantics:
 ```agda
 infix 4 _⊢_⟶_
-data _⊢_⟶_ : ∀ {i A} → Configuration → BCC i A → Variant A → Set where
+data _⊢_⟶_ : ∀ {i A} → Configuration → BCC i A → Variant ∞ A → Set where
   ξ-A₂ : ∀ {A c j a} {es : List (BCC j A)}
     → (esᵥ : All (λ e → ∃[ v ] (c ⊢ e ⟶ v)) es)
       -------------------------------------------------------
     → c ⊢ (Artifact a es) ⟶ (Artifactᵥ a (reduce proj₁ esᵥ))
 
-  C-l : ∀ {A c j D} {l r : BCC j A} {v : Variant A}
+  C-l : ∀ {A c j D} {l r : BCC j A} {v : Variant ∞ A}
     → c ∋ D ↦ left -- formulate this as evidence predicate ⊤?
     → c ⊢ l ⟶ v
       --------------------
     → c ⊢ D ⟨ l , r ⟩ ⟶ v
 
-  C-r : ∀ {A c j D} {l r : BCC j A} {v : Variant A}
+  C-r : ∀ {A c j D} {l r : BCC j A} {v : Variant ∞ A}
     → c ∋ D ↦ right
     → c ⊢ r ⟶ v
       --------------------
@@ -106,7 +106,7 @@ Example:
 leaf : ∀ {i A} → A → BCC (↑ i) A
 leaf a = Artifact a []
 
-leafᵥ : ∀ {A} → A → Variant A
+leafᵥ : ∀ {A} → A → Variant ∞ A
 leafᵥ a = Artifactᵥ a []
 ```
 
@@ -128,7 +128,7 @@ burger = Artifact "Sandwich" (
     ∷ "Patty" ⟨ leaf "Soy" , leaf "Halloumi" ⟩
     ∷ [])
 
-burger-stabil : Variant String
+burger-stabil : Variant ∞ String
 burger-stabil = Artifactᵥ "Sandwich" (
     leafᵥ "Salad"
   ∷ leafᵥ "Ketchup"

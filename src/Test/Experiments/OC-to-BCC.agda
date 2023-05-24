@@ -23,7 +23,7 @@ open Lang.BCC renaming (⟦_⟧ to ⟦_⟧-bcc; Configuration to Conf-bcc)
 
 open import Definitions using (ConfLang)
 open import Translation.Translation using (expr)
-open import Translation.OC-to-BCC using (translate; OC→BCC; ⟶-is-total)
+open import Translation.OC-to-BCC using (OC→BCC; ⟶-is-total)
 
 open import Show.Lines
 open import Util.Named

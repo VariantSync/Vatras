@@ -18,10 +18,10 @@ module Translation.LanguageMap where
 
 ```agda
 open import Lang.OC
-     using (OC; WFOC; ⟦_⟧; ⟦_⟧ₒ; OC-is-incomplete)
+     using (OC; WFOC; WFOCL; ⟦_⟧; ⟦_⟧ₒ; OC-is-incomplete)
   renaming (Configuration to Confₒ)
 open import Lang.BCC
-     using (BCC)
+     using (BCC; BCCL)
   renaming ( ⟦_⟧ to ⟦_⟧₂
            ; Configuration to Conf₂
            )
@@ -71,7 +71,7 @@ open Translation.BCC-to-CCC using (
 
 ```agda
 {- TODO: Substitute completeness proof of BCC here. -}
-OC-is-less-expressive-than-BCC : WFOC , ⟦_⟧ is-less-expressive-than BCC , ⟦_⟧₂
+OC-is-less-expressive-than-BCC : WFOCL is-less-expressive-than BCCL
 OC-is-less-expressive-than-BCC = less-expressive-from-completeness {!!} OC-is-incomplete
 
 open Translation.OC-to-BCC using (

@@ -45,23 +45,22 @@ open Eq.≡-Reasoning
 
 open import Lang.Annotation.Name using (Dimension)
 open import Lang.CCC
-  using (CCC; choice-elimination)
+  using (CCC; CCCL; choice-elimination)
   renaming (Artifact to Artifactₙ;
             _⟨_⟩ to _⟨_⟩ₙ;
             Tag to Tagₙ;
             Configuration to Configurationₙ;
             ⟦_⟧ to ⟦_⟧ₙ)
 open import Lang.BCC
-  using (BCC)
+  using (BCC; BCCL)
   renaming (Artifact to Artifact₂;
             _⟨_,_⟩ to _⟨_,_⟩₂;
             Tag to Tag₂;
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import Definitions using (VarLang; ConfLang; Domain; Semantics)
-open import Relations.Semantic using (_,_is-at-least-as-expressive-as_,_)
-open import SemanticDomain using (Variant; Artifactᵥ)
+open import Definitions
+open import Relations.Semantic using (_is-at-least-as-expressive-as_)
 open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
 
 open import Axioms.Extensionality
@@ -72,7 +71,6 @@ open import Axioms.Extensionality
 ## Translation
 
 Our goal is to convert a choice calculus expression of which we know at the type level that it is in binary normal form, back to n-ary choice calculus. It will still be an expression in binary normal form but we will lose that guarantee at the type level.
-
 
 ```agda
 {- |
@@ -115,33 +113,25 @@ Only valid for our translation from BCC to CCC.
 toBinaryConfig : Configurationₙ → Configuration₂
 toBinaryConfig c = asTag₂ ∘ c
 
-translate : ∀ {i : Size} {D : Domain} → BCC i D → Translation.Translation.TranslationResult D CCC Configuration₂ Configurationₙ
-translate {i} {D} e = record
-  { size = i
-  ; expr = toCCC e
+BCC→CCC : Translation BCCL CCCL
+BCC→CCC e = record
+  { expr = toCCC e
   ; conf = toNaryConfig
   ; fnoc = toBinaryConfig
-  }
-
-BCC→CCC : Translation BCC CCC Configuration₂ Configurationₙ
-BCC→CCC = record
-  { sem₁ = ⟦_⟧₂
-  ; sem₂ = ⟦_⟧ₙ
-  ; translate = translate
   }
 ```
 
 ## Properties
 
 ```agda
-BCC→CCC-left : ∀ {i : Size} {A : Domain}
+BCC→CCC-left : ∀ {i A}
   → (e : BCC i A)
-    ---------------------
+    ----------------
   → e ⊆-via BCC→CCC
 
-BCC→CCC-right : ∀ {i : Size} {A : Domain}
+BCC→CCC-right : ∀ {i A}
   → (e : BCC i A)
-    ---------------------
+    ----------------
   → e ⊇-via BCC→CCC
 
 conf-remains-same :
@@ -154,12 +144,12 @@ conf-remains-same c₂ d with c₂ d
 ... | false = refl
 
 BCC→CCC-is-variant-preserving : BCC→CCC is-variant-preserving
-BCC→CCC-is-variant-preserving e = BCC→CCC-left e , BCC→CCC-right e
+BCC→CCC-is-variant-preserving e = BCC→CCC-left (get e) , BCC→CCC-right (get e)
 
 BCC→CCC-is-semantics-preserving : BCC→CCC is-semantics-preserving
 BCC→CCC-is-semantics-preserving = BCC→CCC-is-variant-preserving , λ _ → extensionality ∘ conf-remains-same
 
-CCC-is-at-least-as-expressive-as-BCC : CCC , ⟦_⟧ₙ is-at-least-as-expressive-as BCC , ⟦_⟧₂
+CCC-is-at-least-as-expressive-as-BCC : CCCL is-at-least-as-expressive-as BCCL
 CCC-is-at-least-as-expressive-as-BCC = translation-proves-variant-preservation BCC→CCC BCC→CCC-is-variant-preserving
 ```
 
@@ -174,7 +164,7 @@ BCC→CCC-left-choice-case-analyses : ∀ {i : Size} {A : Set} {D : Dimension} {
     ------------------------------------------------------------------------------------------
   →   ⟦ (if c₂ D then l else r) ⟧₂ c₂
     ≡ ⟦ (choice-elimination (toNaryConfig c₂ D) (toCCC l ∷ toCCC r ∷ [])) ⟧ₙ (toNaryConfig c₂)
-BCC→CCC-left-choice-case-analyses {i} {A} {D} {l} {r} c₂ with c₂ D
+BCC→CCC-left-choice-case-analyses {_} {_} {D} {l} {r} c₂ with c₂ D
 ... | true  = ⟦ if true then l else r ⟧₂ c₂                                         ≡⟨⟩
               ⟦ l ⟧₂ c₂                                                             ≡⟨ BCC→CCC-left l c₂ ⟩
               ⟦ toCCC l ⟧ₙ (toNaryConfig c₂)                                         ≡⟨⟩
@@ -220,7 +210,7 @@ BCC→CCC-right-choice-case-analysis : ∀ {i : Size} {A : Set} {D : Dimension} 
     -------------------------------------------------------
   →   ⟦ if asTag₂ (c D) then l else r ⟧₂ (toBinaryConfig c)
     ≡ ⟦ choice-elimination (c D) (toCCC l ∷ toCCC r ∷ []) ⟧ₙ c
-BCC→CCC-right-choice-case-analysis {i} {A} {D} {l} {r} c with c D
+BCC→CCC-right-choice-case-analysis {_} {_} {D} {l} {r} c with c D
 ... | zero  = BCC→CCC-right l c
 ... | suc n = BCC→CCC-right r c
 

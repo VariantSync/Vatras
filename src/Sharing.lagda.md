@@ -15,15 +15,13 @@ module Sharing where
 ## Imports
 
 ```agda
+open import Data.Product using (Σ-syntax)
 open import Data.List using (List)
 open import Data.List.Relation.Unary.All using (All)
-
 open import Relation.Binary.PropositionalEquality using (_≡_)
+open import Size using (Size)
 
-open import SemanticDomain using (Variant; Artifactᵥ)
-open import Translation.Translation using (Domain)
-
-open import Util.Existence using (∃-syntax-with-type)
+open import Definitions using (Domain; Variant; Artifactᵥ)
 ```
 
 ## Formalizing the Sharing Assumption
@@ -33,11 +31,11 @@ To formalize the sharing assumption to use it in our proofs, we have to define w
 
 As a first, more strict definition, we observe that variants have sharing if all variants have the same root element:
 ```agda
-has-root : ∀ {A : Domain} → A → Variant A → Set
+has-root : ∀ {i : Size} {A : Domain} → A → Variant i A → Set
 has-root a (Artifactᵥ b es) = a ≡ b
 
-root-sharing : ∀ {A : Domain} → List (Variant A) → Set
-root-sharing {A} vs = ∃[ a ∈ A ] (All (has-root a) vs)
+root-sharing : ∀ {i : Size} {A : Domain} → List (Variant i A) → Set
+root-sharing {A = A} vs = Σ[ a ∈ A ] (All (has-root a) vs)
 ```
 
 Todo: Prove that OC is complete when assuming `root-sharing`.

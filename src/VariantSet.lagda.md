@@ -22,8 +22,7 @@ open import Data.Fin using (Fin; suc; zero)
 open import Data.List using (List; _∷_; [])
 -- open import Data.List.NonEmpty using (_∷_)
 
--- open import Definitions using (Domain; ConfLang)
-open import SemanticDomain using (Variant; Artifactᵥ)
+open import Definitions using (Domain; Variant; Artifactᵥ; ConfLang)
 
 --open import Lang.CCC using (CCC; Artifact; _⟨_⟩)
 ```
@@ -43,7 +42,7 @@ This is a bit fiddly in proofs but works.
 
 Another idea I had, was abstracting that list and using a function that indexes variants. This follows the idea of how we actually define sets of variants in the semantics `Expression → Configuration → Variant` of variability languages. The idea is to take a set that is exactly the size as the set of variants we want to describe (`3` in our example here). In Agda, and I think also in Coq, that data type is `Fin n` where `n ∈ ℕ`. Then, define a subset of variants as a function `Fin n → Variant A` that basically _selects_ the variants we want to have from the overall set of variants `Variant A`:
 ```agda
-set-as-function : Fin 3 → Variant ℕ
+set-as-function : Fin 3 → Variant ∞ ℕ
 set-as-function           zero   = Artifactᵥ 1 []
 set-as-function      (suc zero)  = Artifactᵥ 2 []
 set-as-function (suc (suc zero)) = Artifactᵥ 3 []

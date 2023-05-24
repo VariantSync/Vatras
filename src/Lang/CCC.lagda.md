@@ -47,6 +47,8 @@ open import Definitions using (
   fromExpression; Artifactˡ;
   forget-variant-size)
 open import Relations.Semantic using (_⊢_≣_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≣→≚)
+
+open import Util.List using (lookup-clamped)
 ```
 
 ## Syntax
@@ -103,28 +105,17 @@ In case a configuration picks an undefined tag for a dimension (i.e., the number
 This allows us to introduce complex error handling and we cannot easily define a configuration to only produce tags within ranges.
 
 ```agda
-open import Data.Fin.Base using (Fin)
-open import Util.AuxProofs using (minFinFromLimit)
-
-{-|
-Clamps a tag at the given length.
-Takes a length n as implicit first argument and a proof that this length is positive as second argument.
-In case the given tag is smaller than the given length, the tag is returned, otherwise the length - 1.
-Returns an index which is proven to be smaller than the given length.
--}
-clampTagWithin : {n : ℕ} → {NonZero n} → Tag → Fin n
-clampTagWithin {suc n} {nz} = minFinFromLimit n
-
 -- Selects the alternative at the given tag.
 -- Agda can implicitly prove that the length of the list is positive, because it is a non-empty list, and by type inference, it supplies the list length to clampWithin.
 choice-elimination : {A : Domain} → Tag → List⁺ A → A
-choice-elimination t alts⁺ = lookup (toList alts⁺) (clampTagWithin t)
+choice-elimination = lookup-clamped
 
 {-|
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
-⟦_⟧ : ∀ {i : Size} {A : Domain} → CCC i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : Domain} → CCC i A → Configuration → Variant i A
+⟦_⟧ : Semantics CCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ (D ⟨ alternatives ⟩) ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 
@@ -220,26 +211,26 @@ open import Lang.Properties.NonEmpty
 describe-variant : ∀ {i : Size} {A : Domain} → Variant i A → CCC i A
 describe-variant (Artifactᵥ a vs) = Artifact a (mapl describe-variant vs)
 
-describe-variant-preserves : ∀ {i : Size} {A : Domain} {c : Configuration}
-  → (v : Variant i A)
-  → v ≡ ⟦ describe-variant v ⟧ c
-describe-variant-preserves (Artifactᵥ _ []) = refl
-describe-variant-preserves {_} {_} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
-  begin
-    e ∷ es
-  ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
-    mapl id (e ∷ es)
-  ≡⟨ map-cong (describe-variant-preserves) (e ∷ es) ⟩
-    mapl ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
-  ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
-    mapl (flip ⟦_⟧ c) (mapl describe-variant (e ∷ es))
-  ∎)
+-- describe-variant-preserves : ∀ {i : Size} {A : Domain} {c : Configuration}
+--   → (v : Variant i A)
+--   → v ≡ ⟦ describe-variant v ⟧ c
+-- describe-variant-preserves (Artifactᵥ _ []) = refl
+-- describe-variant-preserves {_} {_} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
+--   begin
+--     e ∷ es
+--   ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
+--     mapl id (e ∷ es)
+--   ≡⟨ map-cong (describe-variant-preserves) (e ∷ es) ⟩
+--     mapl ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
+--   ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
+--     mapl (flip ⟦_⟧ c) (mapl describe-variant (e ∷ es))
+--   ∎)
 
-CCCL-is-NonEmpty : NonEmpty CCCL
-CCCL-is-NonEmpty = record
-  { describe = describe-variant
-  ; describe-preserves = λ v → any-conf , {!!} --describe-variant-preserves {c = any-conf} v
-  } where any-conf = λ _ → 0
+-- CCCL-is-NonEmpty : NonEmpty CCCL
+-- CCCL-is-NonEmpty = record
+--   { describe = describe-variant
+--   ; describe-preserves = λ v → any-conf , {!!} --describe-variant-preserves {c = any-conf} v
+--   } where any-conf = λ _ → 0
 
 -- indexed : ∀ {A : Set} → ℕ → List A → List (ℕ × A)
 -- indexed _     [] = []
@@ -281,37 +272,37 @@ naive-encoding : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A)
 naive-encoding {n =  zero} vs = describe-variant (vs zero) ∷ []
 naive-encoding {n = suc n} vs = describe-variant (vs (fromℕ (suc n))) ∷ toList (naive-encoding (forget-last vs))
 
-module Completeness {A : Domain} where
-  open Data.Multiset (VariantSetoid ∞ A) using (_≅_; _∈_)
+-- module Completeness {A : Domain} where
+--   open Data.Multiset (VariantSetoid ∞ A) using (_≅_; _∈_)
 
-  naive-encoding-is-correct : ∀ {n} {vs : VSet A n}
-    → vs ≅ ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧
-  proj₁ (naive-encoding-is-correct {zero} {vs}) zero with vs zero
-  ... | v =
-    let c = λ _ → zero
-    in c , (
-        begin
-          v
-        ≡⟨ describe-variant-preserves v ⟩
-          ⟦ describe-variant v ⟧ c
-        ≡⟨⟩
-          ⟦ choice-elimination zero (describe-variant v ∷ []) ⟧ c
-        ∎)
-  proj₁ (naive-encoding-is-correct {suc n} {vs}) i with vs i
-  ... | v =
-    let n = toℕ i
-        c : String → ℕ
-        c = λ _ → n
-    in c , (
-        begin
-          v
-        ≡⟨ {!!} ⟩
-          ⟦ choice-elimination n (naive-encoding vs) ⟧ c
-        ≡⟨⟩
-          ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧ c
-        ∎)
-  proj₂ (naive-encoding-is-correct {zero} {vs}) = {!!}
-  proj₂ (naive-encoding-is-correct {suc n} {vs}) c = {!!}
+--   naive-encoding-is-correct : ∀ {n} {vs : VSet A n}
+--     → vs ≅ ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧
+--   proj₁ (naive-encoding-is-correct {zero} {vs}) zero with vs zero
+--   ... | v =
+--     let c = λ _ → zero
+--     in c , (
+--         begin
+--           v
+--         ≡⟨ describe-variant-preserves v ⟩
+--           ⟦ describe-variant v ⟧ c
+--         ≡⟨⟩
+--           ⟦ choice-elimination zero (describe-variant v ∷ []) ⟧ c
+--         ∎)
+--   proj₁ (naive-encoding-is-correct {suc n} {vs}) i with vs i
+--   ... | v =
+--     let n = toℕ i
+--         c : String → ℕ
+--         c = λ _ → n
+--     in c , (
+--         begin
+--           v
+--         ≡⟨ {!!} ⟩
+--           ⟦ choice-elimination n (naive-encoding vs) ⟧ c
+--         ≡⟨⟩
+--           ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧ c
+--         ∎)
+--   proj₂ (naive-encoding-is-correct {zero} {vs}) = {!!}
+--   proj₂ (naive-encoding-is-correct {suc n} {vs}) c = {!!}
 
 
 CCC-is-complete : Complete CCCL
