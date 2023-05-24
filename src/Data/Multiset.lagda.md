@@ -158,16 +158,20 @@ re-indexˡ : ∀ {A B : Set c}
 re-indexˡ rename _ a = rename a , Eq.refl
 ```
 
-If the renaming renames every index (i.e., the renaming is surjective), the renamed multiset
-is isomorphic to the original set M.
+If the renaming renames every index (i.e., the renaming is surjective), the
+renamed multiset is isomorphic to the original set M.
 Surjectivity can be given over any two equality relations `_≈ᵃ_` (equality of renamed indices) and `_≈ᵇ_` (equality of original indices).
-We do not require that both relations are indeed equivalence relations but only list those properties we actually need.
-  - `Symmetric _≈ᵇ_`: symmetry over original indices
-  - `Congruent _≈ᵇ_ _≈_ M`: The multiset M has to map equal keys to equal values.
+We do not require that both relations are indeed equivalence relations but only list those properties we actually need:
+  - All indices are renamed. This means that the renaming has to be surjective with respect to
+    - equivalence of renamed indices `_≈ᵃ_`
+    - equivalence of original indices `_≈ᵇ_`
+  - Equal original indices index equal source elements. This means that the equality of original indices `_≈ᵇ_` has to be congruent with
+    respect to equivalence `_≈_` of the source elements.
+  - `Symmetric _≈ᵇ_`: symmetry over original indices is required for a detail in the proof.
 ```agda
-re-indexʳ : ∀ {A B : Set c}
-    {_≈ᵃ_ : Rel A c}
-    {_≈ᵇ_ : Rel B c}
+re-indexʳ : ∀ {A B : Index}
+    {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
+    {_≈ᵇ_ : Rel B c} -- Equality of original indices
   → (rename : A → B)
   → (M : Multiset B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
@@ -186,9 +190,9 @@ re-indexʳ {A} {B} {_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵇ-sym M-is-
         same-picks : M b ≈ M (rename a)
         same-picks = M-is-congruent (≈ᵇ-sym (proj₂ suitable-a))
 
-re-index : ∀ {A B : Set c}
-    {_≈ᵃ_ : Rel A c}
-    {_≈ᵇ_ : Rel B c}
+re-index : ∀ {A B : Index}
+    {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
+    {_≈ᵇ_ : Rel B c} -- Equality of original indices
   → (rename : A → B)
   → (M : Multiset B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
