@@ -11,7 +11,7 @@ open import Data.Bool using (Bool)
 open import Data.Fin using (Fin)
 open import Data.List using (List; []; _∷_; map)
 open import Data.List.Properties renaming (≡-dec to ≡-dec-l)
-open import Data.Nat using (ℕ; suc)
+open import Data.Nat using (ℕ; zero; suc)
 open import Data.String using (String; _++_; intersperse)
 open import Data.Product using (_×_; ∃-syntax; _,_)
 
@@ -82,7 +82,11 @@ VSet A n = IndexedVSet ∞ A (Fin (suc n))
 
 -- Utility function to downcast the Fin in a VSet.
 forget-last : ∀ {n : ℕ} {A : Set} → VSet A (suc n) → VSet A n
-forget-last set x = set (Data.Fin.inject₁ x)
+forget-last set i = set (Data.Fin.inject₁ i)
+
+forget-all : ∀ {n : ℕ} {A : Set} → VSet A n → VSet A zero
+forget-all {zero}  set = set
+forget-all {suc _} set = forget-all (forget-last set)
 ```
 
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
