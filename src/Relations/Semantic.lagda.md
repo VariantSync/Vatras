@@ -200,11 +200,7 @@ L₁ is-at-least-as-expressive-as L₂ =
   ∀ {A : Domain} (e₂ : Expression A L₂) →
       (Σ[ e₁ ∈ Expression A L₁ ]
         (e₂ ≚ e₁))
-  -- TODO: Somehow rephrase it like this:
-  -- (semantics L₂) ⊆ (semantics L₁)
--- L₁ is-at-least-as-expressive-as L₂ = ∀ {A : Domain} →
---   let open MSet (≚-setoid A L₂) using (_⊆_) in
---     (semantics L₂) ⊆ (semantics L₁)
+  -- It would be nice if we could rephrase expressiveness to (semantics L₂) ⊆ (semantics L₁) but I we have to generalize our multisets somehow first to allow keys in the source set.
 
 -- ¬ (L₂ ⊇ L₁)
 _is-less-expressive-than_ : VariabilityLanguage → VariabilityLanguage → Set₁
@@ -225,8 +221,19 @@ L₁ is-variant-equivalent-to L₂ =
   × (L₂ is-at-least-as-expressive-as L₁)
 ```
 
-Expressiveness is transitive:
+Expressiveness forms a partial order:
 ```agda
+refl-expressiveness' : ∀ {L₁ L₂ : VariabilityLanguage}
+  → L₁ ≡ L₂
+    ----------------------------------
+  → L₁ is-at-least-as-expressive-as L₂
+refl-expressiveness' {L₁} L₁≡L₂ e rewrite L₁≡L₂ = e , (λ i → i , refl) , (λ i → i , refl) -- TODO: Reuse other refl-proofs here
+
+refl-expressiveness : ∀ {L : VariabilityLanguage}
+    --------------------------------
+  → L is-at-least-as-expressive-as L
+refl-expressiveness = refl-expressiveness' refl
+
 trans-expressiveness : ∀ {L₁ L₂ L₃ : VariabilityLanguage}
   → L₁ is-at-least-as-expressive-as L₂
   → L₂ is-at-least-as-expressive-as L₃
@@ -237,7 +244,37 @@ trans-expressiveness L₂→L₁ L₃→L₂ {A} e₃ =
       e₂ , e₃≚e₂ = L₃→L₂ e₃
       e₁ , e₂≚e₁ = L₂→L₁ e₂
    in e₁ , ≅-trans e₃≚e₂ e₂≚e₁ -- This proof is highly similar to ≅-trans itself. Maybe we could indeed reuse here.
+
+antisym-expressiveness : ∀ {L₁ L₂}
+  → L₁ is-at-least-as-expressive-as L₂
+  → L₂ is-at-least-as-expressive-as L₁
+    ----------------------------------
+  → L₁ is-variant-equivalent-to L₂
+antisym-expressiveness L₁≻L₂ L₂≻L₁ = L₁≻L₂ , L₂≻L₁
 ```
 
-TODO: Prove that `_is-variant-equivalent-to` is an equivalence relation.
+Variant-Equivalence is an equivalence relations:
+```agda
+sym-variant-equivalence : ∀ {L₁ L₂ : VariabilityLanguage}
+  → L₁ is-variant-equivalent-to L₂
+    ------------------------------
+  → L₂ is-variant-equivalent-to L₁
+sym-variant-equivalence (L₁≻L₂ , L₂≻L₁) = L₂≻L₁ , L₁≻L₂
+
+trans-variant-equivalence : ∀ {L₁ L₂ L₃}
+  → L₁ is-variant-equivalent-to L₂
+  → L₂ is-variant-equivalent-to L₃
+    ------------------------------
+  → L₁ is-variant-equivalent-to L₃
+trans-variant-equivalence (L₁≻L₂ , L₂≻L₁) (L₂≻L₃ , L₃≻L₂) =
+    trans-expressiveness L₁≻L₂ L₂≻L₃
+  , trans-expressiveness L₃≻L₂ L₂≻L₁
+
+ve-IsEquivalence : IsEquivalence _is-variant-equivalent-to_
+ve-IsEquivalence = record
+  { refl  = refl-expressiveness , refl-expressiveness
+  ; sym   = sym-variant-equivalence
+  ; trans = trans-variant-equivalence
+  }
+```
 
