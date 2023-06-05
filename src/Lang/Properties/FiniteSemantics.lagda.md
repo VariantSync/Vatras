@@ -38,7 +38,7 @@ private module Iso A = Data.Multiset (VariantSetoid ∞ A)
 ```agda
 record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
   open Iso A using (_≅_; re-index)
-  private ⟦_⟧ = semantics L
+  private ⟦_⟧ = semantics L ∘ (get {A} {L})
 
   field
     {-|
@@ -70,14 +70,14 @@ record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
   {-|
   Computes the set of variants described by a given expression e.
   -}
-  enumerate : (e : Expression A L) → ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ get e ⟧))
+  enumerate : (e : Expression A L) → ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ e ⟧))
   enumerate e =
       variant-count-1 e
-    , ⟦ get e ⟧ ∘ pick e
+    , ⟦ e ⟧ ∘ pick e
     , re-index
         {_≈ᵃ_ = _≡_}
         (pick e)
-        ⟦ get e ⟧
+        ⟦ e ⟧
         sur sym con
       where sur : Surjective _≡_ (e ⊢_≣ᶜ_) (pick e)
             sur = pick-surjective {e}
@@ -85,7 +85,7 @@ record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
             sym : Symmetric (e ⊢_≣ᶜ_)
             sym = IsEquivalence.sym (≣ᶜ-IsEquivalence e)
 
-            con : Congruent (e ⊢_≣ᶜ_) _≡_ (⟦ get e ⟧)
+            con : Congruent (e ⊢_≣ᶜ_) _≡_ (⟦ e ⟧)
             con = ≣ᶜ-congruent e
 open FiniteSemanticsIn public
 

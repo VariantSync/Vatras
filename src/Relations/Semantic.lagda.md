@@ -213,10 +213,10 @@ L₁ is-more-expressive-than L₂ =
   × L₂ is-less-expressive-than L₁
 ```
 
-A language `L₁` is variant equivalent to another language `L₂` **iff** they are equally expressive. This means that we can translate between both languages. (We cannot prove the existence of a translation though because we cannot find a translation automatically. We use the inverse route, concluding propositions about languages from building translations later.)
+A language `L₁` is equally expressive as another language `L₂` **iff** they are at least as expressive as each other.
 ```agda
-_is-variant-equivalent-to_ : VariabilityLanguage → VariabilityLanguage → Set₁
-L₁ is-variant-equivalent-to L₂ =
+_is-equally-expressive-as_ : VariabilityLanguage → VariabilityLanguage → Set₁
+L₁ is-equally-expressive-as L₂ =
     (L₁ is-at-least-as-expressive-as L₂)
   × (L₂ is-at-least-as-expressive-as L₁)
 ```
@@ -249,28 +249,28 @@ antisym-expressiveness : ∀ {L₁ L₂}
   → L₁ is-at-least-as-expressive-as L₂
   → L₂ is-at-least-as-expressive-as L₁
     ----------------------------------
-  → L₁ is-variant-equivalent-to L₂
+  → L₁ is-equally-expressive-as L₂
 antisym-expressiveness L₁≻L₂ L₂≻L₁ = L₁≻L₂ , L₂≻L₁
 ```
 
 Variant-Equivalence is an equivalence relations:
 ```agda
 sym-variant-equivalence : ∀ {L₁ L₂ : VariabilityLanguage}
-  → L₁ is-variant-equivalent-to L₂
+  → L₁ is-equally-expressive-as L₂
     ------------------------------
-  → L₂ is-variant-equivalent-to L₁
+  → L₂ is-equally-expressive-as L₁
 sym-variant-equivalence (L₁≻L₂ , L₂≻L₁) = L₂≻L₁ , L₁≻L₂
 
 trans-variant-equivalence : ∀ {L₁ L₂ L₃}
-  → L₁ is-variant-equivalent-to L₂
-  → L₂ is-variant-equivalent-to L₃
+  → L₁ is-equally-expressive-as L₂
+  → L₂ is-equally-expressive-as L₃
     ------------------------------
-  → L₁ is-variant-equivalent-to L₃
+  → L₁ is-equally-expressive-as L₃
 trans-variant-equivalence (L₁≻L₂ , L₂≻L₁) (L₂≻L₃ , L₃≻L₂) =
     trans-expressiveness L₁≻L₂ L₂≻L₃
   , trans-expressiveness L₃≻L₂ L₂≻L₁
 
-ve-IsEquivalence : IsEquivalence _is-variant-equivalent-to_
+ve-IsEquivalence : IsEquivalence _is-equally-expressive-as_
 ve-IsEquivalence = record
   { refl  = refl-expressiveness , refl-expressiveness
   ; sym   = sym-variant-equivalence

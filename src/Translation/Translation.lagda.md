@@ -70,17 +70,17 @@ _⊆-via_ {L₁} {L₂} {i} e₁ translate =
   let ⟦_⟧₁ = semantics L₁
       ⟦_⟧₂ = semantics L₂
   in
-      ∀ (c₁ : configuration L₁) → (semantics L₁ {i} e₁ c₁ ≡ ⟦ expr (translate e₁) ⟧₂ (conf (translate e₁) c₁))
+      ∀ (c₁ : configuration L₁) → ⟦ e₁ ⟧₁ c₁ ≡ ⟦ expr (translate e₁) ⟧₂ (conf (translate e₁) c₁)
 ```
 
 From our reformulation for translations, we can indeed conclude that an expression describes a subset of the variants of its translated expression.
 ```agda
-⊆-via→⊆-within : ∀ {L₁ L₂ : VariabilityLanguage} {i A} {e₁ : expression L₁ i A}
+⊆-via→⊆ᵥ : ∀ {L₁ L₂ : VariabilityLanguage} {i A} {e₁ : expression L₁ i A}
   → (translate : Translation L₁ L₂)
   → e₁ ⊆-via translate
-    -------------------------------
+    -----------------------------------
   → L₁ , L₂ ⊢ e₁ ⊆ᵥ expr (translate e₁)
-⊆-via→⊆-within {e₁ = e₁} translate ⊆-via = λ c₁ → conf (translate e₁) c₁ , ⊆-via c₁
+⊆-via→⊆ᵥ {e₁ = e₁} translate ⊆-via = λ c₁ → conf (translate e₁) c₁ , ⊆-via c₁
 ```
 
 Analogously, we proceed for the inverse direction.
@@ -99,12 +99,12 @@ _⊇-via_ {L₁} {L₂} e₁ translate =
     ∀ (c₂ : configuration L₂) → ⟦ e₁ ⟧₁ (fnoc (translate e₁) c₂) ≡ ⟦ expr (translate e₁) ⟧₂ c₂
 
 -- Proof that our definition of translation is sufficient to conclude variant-subset of an expression and its translation.
-⊇-via→⊆-within : ∀ {L₁ L₂ : VariabilityLanguage} {i A} {e₁ : expression L₁ i A}
+⊇-via→⊆ᵥ : ∀ {L₁ L₂ : VariabilityLanguage} {i A} {e₁ : expression L₁ i A}
   → (translate : Translation L₁ L₂)
   → e₁ ⊇-via translate
     --------------------------------------------
   → L₂ , L₁ ⊢ expr (translate e₁) ⊆ᵥ e₁
-⊇-via→⊆-within {e₁ = e₁} translate ⊇-via = λ c₂ → fnoc (translate e₁) c₂ , Eq.sym (⊇-via c₂)
+⊇-via→⊆ᵥ {e₁ = e₁} translate ⊇-via = λ c₂ → fnoc (translate e₁) c₂ , Eq.sym (⊇-via c₂)
 ```
 
 As earlier, we can compose the above definitions to say that an expression `e₁` describes the same set of variants as its translated expression.
@@ -115,14 +115,14 @@ _≚-via_ : ∀ {L₁ L₂ : VariabilityLanguage} {i A}
   → Set
 e₁ ≚-via t = e₁ ⊆-via t × e₁ ⊇-via t
 
-≚-via→≚-within : ∀ {L₁ L₂ : VariabilityLanguage} {i A} {e₁ : expression L₁ i A}
+≚-via→≚ : ∀ {L₁ L₂ : VariabilityLanguage} {i A} {e₁ : expression L₁ i A}
   → (translate : Translation L₁ L₂)
   → e₁ ≚-via translate
     --------------------------------------------
   → L₁ , L₂ ⊢ e₁ ≚ expr (translate e₁)
-≚-via→≚-within t (⊆-via , ⊇-via) =
-    ⊆-via→⊆-within t ⊆-via
-  , ⊇-via→⊆-within t ⊇-via
+≚-via→≚ t (⊆-via , ⊇-via) =
+    ⊆-via→⊆ᵥ t ⊆-via
+  , ⊇-via→⊆ᵥ t ⊇-via
 ```
 
 Finally, we can establish whether a translation is variant- or semantics-preserving.
@@ -147,12 +147,12 @@ _is-semantics-preserving {L₁ = L₁} translate =
 We can conclude that a language is as expressive as another language if there exists a variant preserving translation.
 This is our major theorem that allows us to prove relations about languages from writing translations.
 ```agda
-translation-proves-variant-preservation : ∀ {L₁ L₂ : VariabilityLanguage}
+expressiveness-by-translation : ∀ {L₁ L₂ : VariabilityLanguage}
   → (translate : Translation L₁ L₂)
   → translate is-variant-preserving
     ----------------------------------
   → L₂ is-at-least-as-expressive-as L₁
-translation-proves-variant-preservation {_} {L₂} translate preservation e₁ =
+expressiveness-by-translation {_} {L₂} translate preservation e₁ =
   let r = translate (get e₁) in
-  fromExpression L₂ (expr r) , ≚-via→≚-within translate (preservation e₁)
+  fromExpression L₂ (expr r) , ≚-via→≚ translate (preservation e₁)
 ```

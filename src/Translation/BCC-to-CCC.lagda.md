@@ -61,7 +61,7 @@ open import Lang.BCC
 
 open import Definitions
 open import Relations.Semantic using (_is-at-least-as-expressive-as_)
-open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
+open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
 
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
@@ -150,7 +150,7 @@ BCC→CCC-is-semantics-preserving : BCC→CCC is-semantics-preserving
 BCC→CCC-is-semantics-preserving = BCC→CCC-is-variant-preserving , λ _ → extensionality ∘ conf-remains-same
 
 CCC-is-at-least-as-expressive-as-BCC : CCCL is-at-least-as-expressive-as BCCL
-CCC-is-at-least-as-expressive-as-BCC = translation-proves-variant-preservation BCC→CCC BCC→CCC-is-variant-preserving
+CCC-is-at-least-as-expressive-as-BCC = expressiveness-by-translation BCC→CCC BCC→CCC-is-variant-preserving
 ```
 
 ## Proofs

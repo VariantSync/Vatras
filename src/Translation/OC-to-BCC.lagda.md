@@ -42,7 +42,7 @@ open import Translation.Translation using
   (Translation; TranslationResult;
    _⊆-via_;
    _is-variant-preserving; _is-semantics-preserving;
-   translation-proves-variant-preservation)
+   expressiveness-by-translation)
 
 open import Util.AuxProofs using (id≗toList∘fromList)
 
@@ -469,6 +469,6 @@ OC→BCC-is-semantics-preserving : OC→BCC is-semantics-preserving
 OC→BCC-is-semantics-preserving = OC→BCC-is-variant-preserving , λ e c → refl
 
 BCC-is-at-least-as-expressive-as-OC : BCCL is-at-least-as-expressive-as WFOCL
-BCC-is-at-least-as-expressive-as-OC = translation-proves-variant-preservation OC→BCC OC→BCC-is-variant-preserving
+BCC-is-at-least-as-expressive-as-OC = expressiveness-by-translation OC→BCC OC→BCC-is-variant-preserving
 ```
 

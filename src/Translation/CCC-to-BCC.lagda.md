@@ -68,7 +68,7 @@ open import Translation.Translation
   -- Translations
   using (Translation; TranslationResult; expr; conf; fnoc)
   -- Translation properties
-  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; translation-proves-variant-preservation)
+  using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
 
 open import Axioms.Extensionality
   using (extensionality; _embeds-via_)
@@ -333,7 +333,7 @@ CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
 CCC→BCC-is-variant-preserving e = CCC→BCC-left (Definitions.get e) , CCC→BCC-right (Definitions.get e)
 
 BCC-is-at-least-as-expressive-as-CCC : BCCL is-at-least-as-expressive-as CCCL
-BCC-is-at-least-as-expressive-as-CCC = translation-proves-variant-preservation CCC→BCC CCC→BCC-is-variant-preserving
+BCC-is-at-least-as-expressive-as-CCC = expressiveness-by-translation CCC→BCC CCC→BCC-is-variant-preserving
 ```
 
 Comments by Jeff:
