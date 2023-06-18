@@ -17,6 +17,9 @@ maprl : ∀ {A B : Set} → (f : A → B) → ReversedList A → ReversedList B
 maprl f []       = []
 maprl f (xs ∷ x) = maprl f xs ∷ f x
 
+forgetNonEmpty : ∀ {A : Set} → ReversedList⁺ A → ReversedList A
+forgetNonEmpty (xs ∷ x) = xs ∷ x
+
 toReversedList : ∀ {A : Set} → ReversedList A → List A
 toReversedList [] = []
 toReversedList (xs ∷ x) = x ∷ toReversedList xs
