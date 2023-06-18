@@ -16,18 +16,15 @@ module Lang.VariantList where
 ## Imports
 
 ```agda
-open import Data.Nat using (ℕ; zero; suc; _<_; _≤_; s≤s; z≤n)
-open import Data.List using ([]; _∷_; _++_; [_])
-open import Data.List.NonEmpty using (List⁺; _∷_; toList; length; _⁺∷ʳ_; _∷ʳ_)
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.List using ([]; _∷_)
+open import Data.List.NonEmpty using (List⁺; _∷_; toList)
 open import Size using (Size; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
 open import Definitions
-
-open import Util.AuxProofs using (clamp)
-open import Util.List using (lookup-clamped)
 ```
 
 ## Definitions
@@ -65,14 +62,16 @@ VariantListL = record
 
 ## Properties
 
+### Completeness
+
 ```agda
-open import Data.Product using (∃-syntax; _,_; proj₁; proj₂; map₂)
+open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
 open import Lang.Properties.Completeness
-open import Data.Fin using (Fin; zero; suc; toℕ; fromℕ; fromℕ<; fromℕ<″; inject₁; inject≤) renaming (_≟_ to _≟ᶠ_)
-open import Function using (_∘_)
 
 -- prove completeness via inference rules
 module Complete (A : Domain) where
+  open import Data.Fin using (Fin; zero; suc; toℕ)
+  open import Function using (_∘_)
   open import Data.Multiset (VariantSetoid ∞ A) using (_≅_; ⊆-by-index-translation)
 
   private
@@ -194,7 +193,13 @@ VariantList-is-Complete : Complete VariantListL
 VariantList-is-Complete {A} vs =
   let open Complete A
       e , derivation = total vs
-   in (record { get = e }) , preserves derivation
+   in fromExpression VariantListL e , preserves derivation
+```
+
+### Finity
+
+```agda
+
 ```
 
 
