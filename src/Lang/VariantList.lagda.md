@@ -16,9 +16,12 @@ module Lang.VariantList where
 ## Imports
 
 ```agda
-open import Data.Nat using (ℕ; zero; suc)
+open import Data.Fin using (Fin; zero; suc; toℕ)
 open import Data.List using ([]; _∷_)
 open import Data.List.NonEmpty using (List⁺; _∷_; toList)
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
+open import Function using (_∘_)
 open import Size using (Size; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -32,6 +35,9 @@ open import Definitions
 ```agda
 VariantList : VarLang
 VariantList i A = List⁺ (Variant i A)
+
+VList : ∀ (A : Domain) → Set
+VList = VariantList ∞
 
 -- it would be nice if the confLang would be parameterized in expressions
 Configuration : ConfLang
@@ -65,24 +71,21 @@ VariantListL = record
 ### Completeness
 
 ```agda
-open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
 open import Lang.Properties.Completeness
 
 -- prove completeness via inference rules
 module Complete (A : Domain) where
-  open import Data.Fin using (Fin; zero; suc; toℕ)
-  open import Function using (_∘_)
   open import Data.Multiset (VariantSetoid ∞ A) using (_≅_; ⊆-by-index-translation)
 
   private
     variable
       n : ℕ
       V : VSet A n
-      e : VariantList ∞ A
+      e : VList A
 
   -- rules for translating a set of variants to a list of variants
   infix 3 _⊢_⟶_
-  data _⊢_⟶_ : (n : ℕ) → VSet A n → VariantList ∞ A → Set where
+  data _⊢_⟶_ : (n : ℕ) → VSet A n → VList A → Set where
     -- a singleton set is translated to a singleton list
     E-zero :
         ------------------------
@@ -100,7 +103,7 @@ module Complete (A : Domain) where
       → suc n ⊢ V ⟶ V zero ∷ toList e
 
   {-| Proof that the encoding is deterministic -}
-  determinism : ∀ {e₁ e₂ : VariantList ∞ A}
+  determinism : ∀ {e₁ e₂ : VList A}
     → n ⊢ V ⟶ e₁
     → n ⊢ V ⟶ e₂
       -----------------
@@ -125,7 +128,7 @@ module Complete (A : Domain) where
   total {n = suc n} vs = return (E-suc (proj₂ (total (forget-first vs))))
 
   {-| Encodes a set of variants into a list of variants. -}
-  encode : ∀ (V : VSet A n) → VariantList ∞ A
+  encode : ∀ (V : VSet A n) → VList A
   encode = proj₁ ∘ total
 
   -- translate configs
@@ -199,7 +202,37 @@ VariantList-is-Complete {A} vs =
 ### Finity
 
 ```agda
+open import Lang.Properties.FiniteSemantics
 
+module Finity (A : Domain) where
+  open Data.List.NonEmpty using (length)
+  open import Function using (Surjective)
+
+  open import Relations.Semantic using (_⊢_≣ᶜ_)
+  open Complete A using (conf; fnoc)
+
+  # : VList A → ℕ
+  # = length
+
+  pick-conf : (e : VList A) → Fin (suc (# e)) → Configuration
+  pick-conf _ = conf
+
+  pick-conf-surjective : ∀ {e : Expression A VariantListL} → Surjective _≡_ (e ⊢_≣ᶜ_) (pick-conf (get e))
+  pick-conf-surjective zero = zero , refl
+  pick-conf-surjective {e = record { size = size₁ ; get = e ∷ [] }} (suc y) = fnoc (suc y) , refl
+  pick-conf-surjective {e = record { size = size₁ ; get = e ∷ f ∷ es }} (suc y) with pick-conf-surjective {e = record {get = f ∷ es }} y
+  ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
+
+VariantList-is-Finite : FiniteSemantics VariantListL
+VariantList-is-Finite = record
+  { within = λ {A} →
+      let open Finity A in
+      record
+        { variant-count-1 = # ∘ get
+        ; pick = pick-conf ∘ get
+        ; pick-surjective = pick-conf-surjective
+        }
+  }
 ```
 
 
