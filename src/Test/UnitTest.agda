@@ -25,19 +25,19 @@ open Eq using (refl) public
 Unit tests are theorems on concrete examples
 that the Agda type checker can figure out by itself.
 -}
-UnitTest : ∀ {ℓ₁} (Data : Set ℓ₁) → Set (suc 0ℓ ⊔ ℓ₁)
-UnitTest {ℓ₁} Data = Data → Set
+UnitTest : ∀ {ℓ} (Data : Set ℓ) → Set (suc 0ℓ ⊔ ℓ)
+UnitTest Data = Data → Set
 
-ExamplesTest : ∀ (Data : Set) → Set₁
+ExamplesTest : ∀ {ℓ} (Data : Set ℓ) → Set (suc 0ℓ ⊔ ℓ)
 ExamplesTest Data = UnitTest (List (Example Data))
 
-RunTest : ∀ {Data : Set}
+RunTest : ∀ {ℓ} {Data : Set ℓ}
   → UnitTest Data
   → Data
   → Set
 RunTest utest dataset = utest dataset
 
-ForExample : ∀ {Data : Set}
+ForExample : ∀ {ℓ} {Data : Set ℓ}
   → UnitTest Data
   → UnitTest (Example Data)
 ForExample utest (e called _) = utest e
