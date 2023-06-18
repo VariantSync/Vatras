@@ -80,8 +80,11 @@ IndexedVSet i A I = Multiset I
 VSet : Domain → ℕ → Set
 VSet A n = IndexedVSet ∞ A (Fin (suc n))
 
--- Utility function to downcast the Fin in a VSet.
-forget-last : ∀ {n : ℕ} {A : Set} → VSet A (suc n) → VSet A n
+-- Utility functions to downcast the Fin in a VSet.
+forget-first : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
+forget-first set i = set (Data.Fin.suc i)
+
+forget-last : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
 forget-last set i = set (Data.Fin.inject₁ i)
 
 forget-all : ∀ {n : ℕ} {A : Set} → VSet A n → VSet A zero
