@@ -4,6 +4,7 @@
 
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module
@@ -68,9 +69,12 @@ VariantListL = record
 open import Data.Product using (∃-syntax; _,_; proj₁; proj₂; map₂)
 open import Lang.Properties.Completeness
 open import Data.Fin using (Fin; zero; suc; toℕ; fromℕ; fromℕ<; fromℕ<″; inject₁; inject≤) renaming (_≟_ to _≟ᶠ_)
+open import Function using (_∘_)
 
 -- prove completeness via inference rules
 module CI (A : Domain) where
+  open import Data.Nat.Properties using (m∸n≤m)
+
   private
     variable
       n : ℕ
@@ -140,6 +144,9 @@ module CI (A : Domain) where
   total {n = zero}  vs = return E-zero
   total {n = suc n} vs = return (E-suc (proj₂ (total (forget-last vs))))
 
+  encode : ∀ (V : VSet A n) → VariantList ∞ A
+  encode = proj₁ ∘ total
+
   -- translate configs
   open Data.Nat using (_∸_)
 
@@ -147,42 +154,88 @@ module CI (A : Domain) where
   conf {n = n} i = n ∸ toℕ i
 
   fnoc : Configuration → Fin (suc n)
-  fnoc {n = n} i = {!!} -- actually the same as conf but fin juggling introduces much boilerplate
+  fnoc {n = n} c =
+    -- actually the same as conf but fin juggling introduces much boilerplate
+    -- In particular, we have to prove that n ∸ i is smaller than suc n by showing that it is a Fin (suc n)
+    let i : ℕ
+        i = n ∸ c
 
-  open import Data.Multiset (VariantSetoid ∞ A) as Iso using (_∈_; _⊆_; _≅_)
+        i≤n : i ≤ n
+        i≤n = m∸n≤m n c
+     in inject≤ (fromℕ i) (s≤s i≤n)
+
+  open import Data.Multiset (VariantSetoid ∞ A) as Iso using (_∈_; _⊆_; _≅_; ⊆-by-index-translation)
+
+  module Aux where
+    fnoc-n-zero : (n : ℕ) → suc (fromℕ n) ≡ fnoc {suc n} zero
+    fnoc-n-zero  zero   = refl
+    fnoc-n-zero (suc n) = Eq.cong suc (fnoc-n-zero n)
 
   preserves-∈ :
-    ∀ (c : Configuration)
-    → n ⊢ V ⟶ e
-      --------------------
-    → ⟦ e ⟧ c ≡ V (fnoc c)
-  preserves-∈ c ⟶e = {!!}
-
-  preserves-∋ :
-    ∀ (i : Fin (suc n))
-    → n ⊢ V ⟶ e
+      n ⊢ V ⟶ e
+    → (i : Fin (suc n))
       --------------------
     → V i ≡ ⟦ e ⟧ (conf i)
-  preserves-∋ {n = zero} zero E-zero = refl
-  preserves-∋ {n = suc n} i (E-suc ⟶e) = {!!}
+  preserves-∈ E-zero zero = refl
+  preserves-∈ {V = V} (E-suc {n = n} {e = e} ⟶e) zero =
+    begin
+      V zero
+    ≡⟨ preserves-∈ ⟶e zero ⟩
+      ⟦ e ⟧ (conf {n = n} zero)
+    ≡⟨⟩
+      ⟦ e ⟧ n
+    ≡⟨⟩
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (suc n)
+    ≡⟨⟩
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (conf {n = suc n} zero)
+    ∎
+  preserves-∈ {V = V} (E-suc {n = n} {e = e} ⟶e) (suc i) =
+    begin
+      V (suc i)
+    ≡⟨ {!!} ⟩
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (n ∸ toℕ i)
+    ≡⟨⟩
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (suc n ∸ suc (toℕ i))
+    ≡⟨⟩
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (suc n ∸ toℕ (suc i))
+    ≡⟨⟩
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (conf (suc i))
+    ∎
 
-  preserves-⊆ :
+  preserves-∋ :
       n ⊢ V ⟶ e
-      -----------
-    → ⟦ e ⟧ ⊆ V
-  preserves-⊆ ⟶e c = fnoc c , preserves-∈ c ⟶e
+    → (c : Configuration)
+      --------------------
+    → ⟦ e ⟧ c ≡ V (fnoc c)
+  preserves-∋ E-zero zero = refl
+  preserves-∋ E-zero (suc _) = refl
+  preserves-∋ {V = V} {e = e} (E-suc {n = n} _) zero =
+    begin
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ zero
+    ≡⟨⟩
+      V (suc (fromℕ n))
+    ≡⟨ Eq.cong V (Aux.fnoc-n-zero n) ⟩
+      V (fnoc {suc n} zero)
+    ∎
+  preserves-∋ {V = V} (E-suc {n = n} {e = e} ⟶e) (suc c) =
+    begin
+      ⟦ V (suc (fromℕ n)) ∷ toList e ⟧ (suc c)
+    ≡⟨⟩
+      ⟦ e ⟧ c
+    ≡⟨ preserves-∋ ⟶e c ⟩
+      (forget-last V) (fnoc c)
+    ≡⟨ {!!} ⟩
+      V (fnoc (suc c))
+    ∎
 
-  preserves-⊇ :
-      n ⊢ V ⟶ e
-      -----------
-    → V ⊆ ⟦ e ⟧
-  preserves-⊇ ⟶e i = conf i , preserves-∋ i ⟶e
 
   preserves :
       n ⊢ V ⟶ e
       -----------
     → V ≅ ⟦ e ⟧
-  preserves encoding = preserves-⊇ encoding , preserves-⊆ encoding
+  preserves encoding =
+      ⊆-by-index-translation conf (preserves-∈ encoding)
+    , ⊆-by-index-translation fnoc (preserves-∋ encoding)
 
 VariantList-is-complete-CI : Complete VariantListL
 VariantList-is-complete-CI {A} vs =
