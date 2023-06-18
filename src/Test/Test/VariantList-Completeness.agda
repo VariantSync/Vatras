@@ -20,12 +20,12 @@ open import Lang.VariantList as VL using (Configuration; ⟦_⟧)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VSet A n)
 test-encode-conf {A} i 𝕍 =
-  let open VL.CI A using (encode; conf)
+  let open VL.Complete A using (encode; conf)
    in ⟦ encode 𝕍 ⟧ (conf i) ≡ 𝕍 i
 
 test-encode-fnoc : ∀ {A n} → Configuration → UnitTest (VSet A n)
 test-encode-fnoc {A} c 𝕍 =
-  let open VL.CI A using (encode; fnoc)
+  let open VL.Complete A using (encode; fnoc)
    in ⟦ encode 𝕍 ⟧ c ≡ 𝕍 (fnoc c)
 
 -- is there a better way to write these shortcuts?
