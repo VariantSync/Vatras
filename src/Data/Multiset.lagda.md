@@ -144,6 +144,17 @@ singleton-set-is-nonempty A = A tt , tt , Eq.refl
 
 ## Further Properties
 
+### Helper Functions for Proving Subset
+
+```agda
+⊆-by-index-translation : {I J : Set c} {A : Multiset I} {B : Multiset J}
+  → (t : I → J)
+  → (∀ (i : I) → A i ≈ B (t i))
+    ---------------------------
+  → A ⊆ B
+⊆-by-index-translation t t-preserves i = t i , t-preserves i
+```
+
 ### Reindexing
 
 We can rename the indices of a multiset M to obtain a subset of M.
