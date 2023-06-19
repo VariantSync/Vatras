@@ -10,7 +10,7 @@
 ## Module
 
 ```agda
-module Lang.Properties.FiniteSemantics where
+module Lang.Properties.Soundness where
 ```
 
 ## Imports
@@ -43,16 +43,16 @@ record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
   field
     {-|
     Computes a lower bound of the number of variants described by a given expression.
-    The expression should thus describe at least the returned amount of variants.
+    The expression should thus describe at least the returned amount of variants - 1.
     -}
-    variant-count-1 : Expression A L → ℕ
+    # : Expression A L → ℕ
 
     {-|
     Identifies each configuration of a given expression by a natural number.
     This is the first step of proving that there exist only a finite amount of
     configurations, and thus variants described by the expression.
     -}
-    pick : (e : Expression A L) → Fin (suc (variant-count-1 e)) → configuration L
+    pick : (e : Expression A L) → Fin (suc (# e)) → configuration L
 
     {-|
     Identification of configurations has to be surjective:
@@ -72,7 +72,7 @@ record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
   -}
   enumerate : (e : Expression A L) → ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ e ⟧))
   enumerate e =
-      variant-count-1 e
+      # e
     , ⟦ e ⟧ ∘ pick e
     , re-index
         {_≈ᵃ_ = _≡_}
@@ -89,10 +89,8 @@ record FiniteSemanticsIn (L : VariabilityLanguage) (A : Domain) : Set₁ where
             con = ≣ᶜ-congruent e
 open FiniteSemanticsIn public
 
-record FiniteSemantics (L : VariabilityLanguage) : Set₁ where
-  field
-    within : ∀ {A} → FiniteSemanticsIn L A
-open FiniteSemantics public
+Sound : (L : VariabilityLanguage) → Set₁
+Sound L = ∀ (A : Domain) → FiniteSemanticsIn L A
 ```
 
 

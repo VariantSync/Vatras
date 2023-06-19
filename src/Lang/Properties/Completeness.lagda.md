@@ -29,7 +29,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; ref
 
 open import Definitions
 open import Relations.Semantic
-open import Lang.Properties.FiniteSemantics
+open import Lang.Properties.Soundness
 
 import Data.Multiset
 private module Iso A = Data.Multiset (VariantSetoid ∞ A)
@@ -93,18 +93,18 @@ Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 expressiveness-by-completeness : ∀ {L₊ : VariabilityLanguage}
   → Complete L₊
   → (L : VariabilityLanguage)
-  → FiniteSemantics L
+  → Sound L
     ---------------------------------
   → L₊ is-at-least-as-expressive-as L
-expressiveness-by-completeness {L₊} L₊-comp L L-enum {A = A} e =
+expressiveness-by-completeness {L₊} L₊-comp L L-sound {A = A} e =
   let open Iso A using (_⊆_; _≅_; ≅-sym; ≅-trans)
 
       ⟦_⟧  = semantics L
       ⟦_⟧₊ = semantics L₊
 
-      -- enumerate all variants in the semantics of our expression e
+      -- sounderate all variants in the semantics of our expression e
       ⟦e⟧-fin : ∃[ n ] (Σ[ vsetₑ ∈ VSet A n ] (vsetₑ ≅ ⟦ get e ⟧))
-      ⟦e⟧-fin = enumerate (within L-enum) e
+      ⟦e⟧-fin = enumerate (L-sound A) e
 
       n : ℕ
       n = proj₁ ⟦e⟧-fin
@@ -152,12 +152,12 @@ Combined with `expressiveness-by-completeness` we can even further conclude that
 ```agda
 more-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
   → Complete L₊
-  → FiniteSemantics L₋
+  → Sound L₋
   → Incomplete L₋
     --------------------------------------
   → L₊ is-more-expressive-than L₋
-more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-enum L₋-incomp =
-    expressiveness-by-completeness L₊-comp L₋ L₋-enum
+more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-sound L₋-incomp =
+    expressiveness-by-completeness L₊-comp L₋ L₋-sound
   , less-expressive-from-completeness L₊-comp L₋-incomp
 ```
 

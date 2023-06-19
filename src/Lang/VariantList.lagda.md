@@ -199,10 +199,10 @@ VariantList-is-Complete {A} vs =
    in fromExpression VariantListL e , preserves derivation
 ```
 
-### Finity
+### Soundness
 
 ```agda
-open import Lang.Properties.FiniteSemantics
+open import Lang.Properties.Soundness
 
 module Finity (A : Domain) where
   open Data.List.NonEmpty using (length)
@@ -211,10 +211,10 @@ module Finity (A : Domain) where
   open import Relations.Semantic using (_⊢_≣ᶜ_)
   open Complete A using (conf; fnoc)
 
-  # : VList A → ℕ
-  # = length
+  #' : VList A → ℕ
+  #' = length
 
-  pick-conf : (e : VList A) → Fin (suc (# e)) → Configuration
+  pick-conf : (e : VList A) → Fin (suc (#' e)) → Configuration
   pick-conf _ = conf
 
   pick-conf-surjective : ∀ {e : Expression A VariantListL} → Surjective _≡_ (e ⊢_≣ᶜ_) (pick-conf (get e))
@@ -223,15 +223,13 @@ module Finity (A : Domain) where
   pick-conf-surjective {e = record { size = size₁ ; get = e ∷ f ∷ es }} (suc y) with pick-conf-surjective {e = record {get = f ∷ es }} y
   ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
 
-VariantList-is-Finite : FiniteSemantics VariantListL
-VariantList-is-Finite = record
-  { within = λ {A} →
-      let open Finity A in
-      record
-        { variant-count-1 = # ∘ get
-        ; pick = pick-conf ∘ get
-        ; pick-surjective = pick-conf-surjective
-        }
+VariantList-is-Sound : Sound VariantListL
+VariantList-is-Sound A =
+  let open Finity A in
+  record
+  { # = #' ∘ get
+  ; pick = pick-conf ∘ get
+  ; pick-surjective = pick-conf-surjective
   }
 ```
 
