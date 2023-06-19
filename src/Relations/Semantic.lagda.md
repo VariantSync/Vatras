@@ -119,7 +119,11 @@ _⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
 infix 5 _⊆ᵥ_
 
 _≚_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
-e₁ ≚ e₂ = e₁ ⊆ᵥ e₂ × e₂ ⊆ᵥ e₁
+_≚_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
+  where
+    ⟦_⟧₁ = semantics L₁ ∘ get
+    ⟦_⟧₂ = semantics L₂ ∘ get
+    open MSet (VariantSetoid _ A) using (_≅_)
 infix 5 _≚_
 
 ≚-isIndexedEquivalence : ∀ {A : Domain} → IsIndexedEquivalence (Expression A) _≚_
