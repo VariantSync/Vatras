@@ -203,6 +203,7 @@ VariantList-is-Complete {A} vs =
 
 ```agda
 open import Lang.Properties.Soundness
+open import Lang.Properties.Conclude.Soundness using (soundness-by-finite-semantics)
 
 module Finity (A : Domain) where
   open Data.List.NonEmpty using (length)
@@ -224,14 +225,13 @@ module Finity (A : Domain) where
   ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
 
 VariantList-is-Sound : Sound VariantListL
-VariantList-is-Sound A =
-  let open Finity A in
-  record
-  { # = #' ∘ get
-  ; pick = pick-conf ∘ get
-  ; pick-surjective = pick-conf-surjective
-  }
+VariantList-is-Sound =
+    soundness-by-finite-semantics (λ {A} →
+      let open Finity A in
+      record
+      { # = #' ∘ get
+      ; pick = pick-conf ∘ get
+      ; pick-surjective = pick-conf-surjective
+      })
 ```
-
-
 
