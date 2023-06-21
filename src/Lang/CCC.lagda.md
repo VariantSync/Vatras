@@ -19,13 +19,12 @@ module Lang.CCC where
 ```agda
 -- Imports from Standard Library
 open import Data.List
-  using (List; []; _∷_; lookup)
-  renaming (map to mapl)
+  using (List; []; _∷_; lookup; map)
 open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
-  renaming (map to mapl⁺)
+  renaming (map to map⁺)
 open import Data.Nat
-  using (ℕ; suc; NonZero)
+  using (ℕ; zero; suc; NonZero)
 open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
 open import Function
@@ -45,10 +44,10 @@ open import Definitions using (
   VarLang; ConfLang; VariabilityLanguage;
   Semantics;
   fromExpression; Artifactˡ;
-  forget-variant-size)
+  forget-variant-size; sequence-forget-size)
 open import Relations.Semantic using (_⊢_≣_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≣→≚)
 
-open import Util.List using (lookup-clamped)
+open import Util.List using (find-or-last) --lookup-clamped)
 ```
 
 ## Syntax
@@ -75,7 +74,7 @@ leaf : ∀ {i : Size} {A : Domain} → A → CCC (↑ i) A
 leaf a = Artifact a []
 
 leaves : ∀ {i : Size} {A : Domain} → List⁺ A → List⁺ (CCC (↑ i) A)
-leaves = mapl⁺ leaf
+leaves = map⁺ leaf
 
 -- upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CCC j A → CCC i A
 -- upcast e = e
@@ -106,17 +105,15 @@ This allows us to introduce complex error handling and we cannot easily define a
 
 ```agda
 -- Selects the alternative at the given tag.
--- Agda can implicitly prove that the length of the list is positive, because it is a non-empty list, and by type inference, it supplies the list length to clampWithin.
-choice-elimination : {A : Domain} → Tag → List⁺ A → A
-choice-elimination = lookup-clamped
+choice-elimination : ∀ {A : Domain} → Tag → List⁺ A → A
+choice-elimination = find-or-last
 
 {-|
 Semantics of core choice calculus.
 The semantic domain is a function that generates variants given configurations.
 -}
--- ⟦_⟧ : ∀ {i : Size} {A : Domain} → CCC i A → Configuration → Variant i A
 ⟦_⟧ : Semantics CCC Configuration
-⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
+⟦ Artifact a es ⟧ c = Artifactᵥ a (map (flip ⟦_⟧ c) es)
 ⟦ (D ⟨ alternatives ⟩) ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 
 CCCL : VariabilityLanguage
@@ -133,21 +130,21 @@ Some transformation rules
 ```agda
 -- unary choices are mandatory
 D⟨e⟩≣e : ∀ {i : Size} {A : Set} {e : CCC i A} {D : Dimension}
-    --------------------------
+    ------------------------
   → CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣ e
-D⟨e⟩≣e = refl
+D⟨e⟩≣e _ = refl
 
 -- -- other way to prove the above via variant-equivalence
 
 D⟨e⟩⊆e : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
     -------------------------------
   → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ⊆ᵥ e
-D⟨e⟩⊆e config = ( config , refl )
+D⟨e⟩⊆e c = c , refl
 
 e⊆D⟨e⟩ : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
     -------------------------------
   → CCCL , CCCL ⊢ e ⊆ᵥ D ⟨ e ∷ [] ⟩
-e⊆D⟨e⟩ config = ( config , refl )
+e⊆D⟨e⟩ c = c , refl
 
 D⟨e⟩≚e : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
     ------------------------------
@@ -190,123 +187,114 @@ Idea: Show that we can embed any list of variants into a big choice.
 Maybe its smarter to do this for ADDs and then to conclude by transitivity of translations that CCC is also complete.
 
 ```agda
-open import Data.List.Relation.Unary.All using (All; []; _∷_; construct; fromList)
-open import Lang.Properties.Completeness using (Incomplete; Complete)
-open Data.Product using (proj₁; proj₂)
-open import Util.Existence using (_,_)
-open Size using (∞)
-open Data.Product using (_×_)
-open import Data.List.Properties using (map-id; map-cong; map-∘)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; _≗_; refl)
+open Eq using (_≗_)
 open Eq.≡-Reasoning
-
-open Function using (_∘_; id)
-
-open import Axioms.Extensionality using (extensionality; ≗→≡)
-
-import Data.Multiset
-open import Lang.Properties.NonEmpty
+open import Function using (id; _∘_)
+open import Data.List.Properties using (map-∘; map-id; map-cong)
 
 describe-variant : ∀ {i : Size} {A : Domain} → Variant i A → CCC i A
-describe-variant (Artifactᵥ a vs) = Artifact a (mapl describe-variant vs)
+describe-variant (Artifactᵥ a vs) = Artifact a (map describe-variant vs)
 
--- describe-variant-preserves : ∀ {i : Size} {A : Domain} {c : Configuration}
---   → (v : Variant i A)
---   → v ≡ ⟦ describe-variant v ⟧ c
--- describe-variant-preserves (Artifactᵥ _ []) = refl
--- describe-variant-preserves {_} {_} {c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
+---- Proof for preservation of describe-variant
+
+{-|
+Unfortunately, I had to surrender and just flag this function as terminating.
+One solution to prove its termination is to use a sized variant (instead of using ∞).
+The problem is that the semantics ⟦_⟧ forgets the size and sets it to ∞ and hence,
+the types of v and ⟦ describe-variant v ⟧ c are different and hence their values can never be equivalent regarding ≡.
+Below you find some tries of trying to circumvent these problems but so far I was not successfull.
+-}
+{-# TERMINATING #-}
+describe-variant-preserves : ∀ {A} {c : Configuration}
+  → (v : Variant ∞ A)
+  → v ≡ ⟦ describe-variant v ⟧ c
+describe-variant-preserves (Artifactᵥ _ []) = refl
+describe-variant-preserves {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
+  begin
+    e ∷ es
+  ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
+    map id (e ∷ es)
+  ≡⟨ map-cong describe-variant-preserves (e ∷ es) ⟩
+    map ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
+  ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
+    map (flip ⟦_⟧ c) (map describe-variant (e ∷ es))
+  ∎)
+
+{-|
+Alternative definition of the semantics.
+The function does exactly the same as ⟦_⟧ but remembers that 
+-}
+⟦_⟧-i : ∀ {i : Size} {A : Domain} → CCC i A → Configuration → Variant i A
+⟦ Artifact a es ⟧-i c = Artifactᵥ a (map (flip ⟦_⟧-i c) es)
+⟦ (D ⟨ alternatives ⟩) ⟧-i c = ⟦ choice-elimination (c D) alternatives ⟧-i c
+
+describe-variant-preserves-i : ∀ {i} {A} {c : Configuration}
+  → (v : Variant i A)
+  → v ≡ ⟦ describe-variant v ⟧-i c
+describe-variant-preserves-i (Artifactᵥ _ []) = refl
+describe-variant-preserves-i {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
+  begin
+    e ∷ es
+  ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
+    map id (e ∷ es)
+  ≡⟨ map-cong describe-variant-preserves-i (e ∷ es) ⟩
+    map ((flip ⟦_⟧-i c) ∘ describe-variant) (e ∷ es)
+  ≡⟨ map-∘ {g = flip ⟦_⟧-i c} {f = describe-variant} (e ∷ es) ⟩
+    map (flip ⟦_⟧-i c) (map describe-variant (e ∷ es))
+  ∎)
+
+semeq-choice : ∀ {i A} (e : CCC (↑ i) A) → (c : Configuration) → ⟦ e ⟧ c ≡ forget-variant-size (⟦ e ⟧-i c)
+semeq-choice e c =
+  begin
+    ⟦ e ⟧ c
+  ≡⟨ {!!} ⟩
+    forget-variant-size (⟦ e ⟧-i c)
+  ∎
+
+sizeof : ∀ {i A} → CCC i A → Size
+sizeof {i} _ = i
+
+open Eq using (inspect; [_])
+
+semeq : ∀ {i} {A}
+  → (c : Configuration)
+  → (e : CCC i A)
+  → ⟦_⟧ {i} e c ≡ forget-variant-size {i} (⟦ e ⟧-i c)
+semeq {i} {A} c (Artifact a es) =
+  begin
+    ⟦ Artifact a es ⟧ c
+  ≡⟨⟩
+    Artifactᵥ a (map (flip ⟦_⟧   c) es)
+  ≡⟨ Eq.cong (Artifactᵥ a) (map-cong (semeq c) es) ⟩
+    Artifactᵥ a (map (forget-variant-size ∘ (flip ⟦_⟧-i c)) es)
+  ≡⟨ Eq.cong (Artifactᵥ a) (map-∘ es) ⟩
+    Artifactᵥ a (map forget-variant-size (map (flip ⟦_⟧-i c) es))
+  ≡⟨ sequence-forget-size (map (flip ⟦_⟧-i c) es) ⟩
+    forget-variant-size (Artifactᵥ a (map (flip ⟦_⟧-i c) es))
+  ≡⟨⟩
+    forget-variant-size (⟦ Artifact a es ⟧-i c)
+  ∎
+  where mkArtifact : ∀ {j} → List (Variant j A) → Variant (↑ j) A
+        mkArtifact = Artifactᵥ a
+semeq {i} c (D ⟨ es ⟩)= {!!} --with choice-elimination (c D) es
+--semeq-choice {i} (choice-elimination (c D) es) c
+-- with choice-elimination (c D) es
+-- ... | e | [ j ] =
 --   begin
---     e ∷ es
---   ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
---     mapl id (e ∷ es)
---   ≡⟨ map-cong (describe-variant-preserves) (e ∷ es) ⟩
---     mapl ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
---   ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
---     mapl (flip ⟦_⟧ c) (mapl describe-variant (e ∷ es))
---   ∎)
-
--- CCCL-is-NonEmpty : NonEmpty CCCL
--- CCCL-is-NonEmpty = record
---   { describe = describe-variant
---   ; describe-preserves = λ v → any-conf , {!!} --describe-variant-preserves {c = any-conf} v
---   } where any-conf = λ _ → 0
-
--- indexed : ∀ {A : Set} → ℕ → List A → List (ℕ × A)
--- indexed _     [] = []
--- indexed start (x ∷ xs) = (start , x) ∷ indexed (suc start) xs
-
--- variant-choice : ∀ {A : Set} → List⁺ (Variant A) → CCC ∞ A
--- variant-choice vs = "D" ⟨ mapl⁺ describe-variant vs ⟩
-
--- -- TODO: Prove this instead of postulating it
--- postulate
---   variant-choice-describes-all : ∀ {A : Set}
---     → (vs : List⁺ (Variant A))
---       -------------------------------------------------------------------------
---     → CCC , Configuration , ⟦_⟧ ⊢ (variant-choice vs) describes-all (toList vs)
-
--- describe-variants : ∀ {A : Domain}
---   → (variants : List (Variant A))
---   → ∃[ e ∈ (CCC ∞ A)] (CCC , Configuration , ⟦_⟧ ⊢ e describes-all variants)
--- describe-variants z []       = Artifact z [] , []
--- describe-variants _ (v ∷ vs) = variant-choice (v ∷ vs) , variant-choice-describes-all (v ∷ vs)
-
--- -- todo use proper size
-open import Data.Nat using (ℕ; suc; zero)
-open import Data.Fin using (zero; toℕ; fromℕ)
-
--- data _⟶_ : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A) → Set
--- infix 3 _⟶_
--- data _⟶_ where
---   E-single : ∀ {A : Domain} {vs : VSet A zero}
---       ----------------------------------------
---     → vs ⟶ describe-variant (vs zero) ∷ []
-
---   E-many : ∀ {A : Domain} {n : ℕ} {vs : VSet A (suc n)} {others : List⁺ (CCC ∞ A)}
---     → forget-last vs ⟶ others
---       ------------------------------------------------------------
---     → vs ⟶ describe-variant (vs (fromℕ (suc n))) ∷ toList others
-
-naive-encoding : ∀ {A : Domain} {n : ℕ} → VSet A n → List⁺ (CCC ∞ A)
-naive-encoding {n =  zero} vs = describe-variant (vs zero) ∷ []
-naive-encoding {n = suc n} vs = describe-variant (vs (fromℕ (suc n))) ∷ toList (naive-encoding (forget-last vs))
-
--- module Completeness {A : Domain} where
---   open Data.Multiset (VariantSetoid ∞ A) using (_≅_; _∈_)
-
---   naive-encoding-is-correct : ∀ {n} {vs : VSet A n}
---     → vs ≅ ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧
---   proj₁ (naive-encoding-is-correct {zero} {vs}) zero with vs zero
---   ... | v =
---     let c = λ _ → zero
---     in c , (
---         begin
---           v
---         ≡⟨ describe-variant-preserves v ⟩
---           ⟦ describe-variant v ⟧ c
---         ≡⟨⟩
---           ⟦ choice-elimination zero (describe-variant v ∷ []) ⟧ c
---         ∎)
---   proj₁ (naive-encoding-is-correct {suc n} {vs}) i with vs i
---   ... | v =
---     let n = toℕ i
---         c : String → ℕ
---         c = λ _ → n
---     in c , (
---         begin
---           v
---         ≡⟨ {!!} ⟩
---           ⟦ choice-elimination n (naive-encoding vs) ⟧ c
---         ≡⟨⟩
---           ⟦ "D" ⟨ naive-encoding vs ⟩ ⟧ c
---         ∎)
---   proj₂ (naive-encoding-is-correct {zero} {vs}) = {!!}
---   proj₂ (naive-encoding-is-correct {suc n} {vs}) c = {!!}
+--     (⟦_⟧ e c)
+--   ≡⟨ {!!} ⟩
+--     (forget-variant-size (⟦_⟧-i e c))
+--   ∎
 
 
-CCC-is-complete : Complete CCCL
-CCC-is-complete {n = n} vs = fromExpression CCCL ("D" ⟨ naive-encoding vs ⟩) , {!!}
+
+-- describe-variant-preserves : ∀ {A} {c : Configuration}
+--   → (v : Variant ∞ A)
+--   → v ≡ ⟦ describe-variant v ⟧ c
+-- describe-variant-preserves v = Eq.trans (describe-variant-preserves-i v) (Eq.sym (semeq _ (describe-variant v)))
+
+
 ```
 
 
@@ -328,6 +316,6 @@ open Data.String using (_++_)
 
 show : ∀ {i : Size} → CCC i String → String
 show (Artifact a []) = a
-show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (mapl show es)) ++ ">-"
-show (D ⟨ es ⟩) = D ++ "⟨" ++ (Data.String.intersperse ", " (toList (mapl⁺ show es))) ++ "⟩"
+show (Artifact a es@(_ ∷ _)) = a ++ "-<" ++ (Data.List.foldl _++_ "" (map show es)) ++ ">-"
+show (D ⟨ es ⟩) = D ++ "⟨" ++ (Data.String.intersperse ", " (toList (map⁺ show es))) ++ "⟩"
 ```

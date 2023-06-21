@@ -34,9 +34,8 @@ open Eq.≡-Reasoning
   using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- own modules
-open import Axioms.Extensionality using (extensionality)
 open import Lang.Annotation.Name using (Dimension)
-open import Definitions
+open import Definitions hiding ([_])
 open import Relations.Semantic using (_⊢_≣_)
 ```
 
@@ -107,7 +106,7 @@ open import Data.Vec using (Vec; toList; zipWith)
 ast-factoring-1 : ∀ {A D} {a : A} {x y : BCC ∞ A} -- do not use ∞ here?
     ---------------------------------------------------------------------------------
   → BCCL ⊢ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ≣ Artifact a [ D ⟨ x , y ⟩ ]
-ast-factoring-1  {_} {D} {a} {x} {y} = extensionality (λ c →
+ast-factoring-1  {_} {D} {a} {x} {y} c =
   begin
     ⟦ D ⟨ Artifact a [ x ] , Artifact a [ y ] ⟩ ⟧ c
   ≡⟨⟩
@@ -116,7 +115,7 @@ ast-factoring-1  {_} {D} {a} {x} {y} = extensionality (λ c →
     ⟦ Artifact a [ if (c D) then x else y ] ⟧ c
   ≡⟨⟩
     ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
-  ∎)
+  ∎
 
 ast-factoring : ∀ {i : Size} {A : Domain} {D : Dimension} {a : A} {n : ℕ}
   → (xs ys : Vec (BCC i A) n)
@@ -129,10 +128,10 @@ ast-factoring = {!!}
 choice-idempotency : ∀ {A D} {e : BCC ∞ A}  -- do not use ∞ here?
     ---------------------------
   → BCCL ⊢ D ⟨ e , e ⟩ ≣ e
-choice-idempotency {A} {D} {e} = extensionality (λ c →
+choice-idempotency {A} {D} {e} c =
   ⟦ D ⟨ e , e ⟩ ⟧ c             ≡⟨⟩
   ⟦ if (c D) then e else e ⟧ c  ≡⟨ Eq.cong (flip ⟦_⟧ c) (if-idemp (c D)) ⟩
-  ⟦ e ⟧ c                       ∎)
+  ⟦ e ⟧ c                       ∎
 
 {-
 TODO: Formulate choice-domination.

@@ -10,13 +10,14 @@ module Relations.Semantic where
 # Relations of Variability Languages
 
 ```agda
+open import Axioms.Extensionality using (extensionality)
 
 open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size)
 
 open import Relation.Binary using (Rel; Symmetric; IsEquivalence)
 open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
 
 open import Function using (_∘_; Congruent)
@@ -40,8 +41,9 @@ Any two expressions `a` and `b` in a variability language `L` are equivalent if 
 _≣_ : ∀ {A : Domain} {L : VariabilityLanguage}
   → (e₁ e₂ : Expression A L)
   → Set
-_≣_ {L = L} e₁ e₂ = ⟦ e₁ ⟧ ≡ ⟦ e₂ ⟧
-  where ⟦_⟧ = semantics L ∘ get
+_≣_ {L = L} e₁ e₂ =
+  let ⟦_⟧ = semantics L ∘ get
+   in ⟦ e₁ ⟧ ≗ ⟦ e₂ ⟧
 infix 5 _≣_
 
 -- alias for syntax
@@ -58,13 +60,13 @@ Semantic equivalence `≣` inherits all properties from structural equality `≡
 ```agda
 ≣-IsEquivalence : ∀ {A L} → IsEquivalence (_≣_ {A} {L})
 ≣-IsEquivalence = record
-  { refl  = Eq.refl
-  ; sym   = Eq.sym
-  ; trans = Eq.trans
+  { refl  = λ _ → Eq.refl
+  ; sym   = λ x≣y c → Eq.sym (x≣y c)
+  ; trans = λ i≣j j≣k c → Eq.trans (i≣j c) (j≣k c)
   }
 
 ≣-congruent : ∀ {A L} → Congruent (_≣_ {A} {L}) _≡_ (semantics L ∘ get)
-≣-congruent eq rewrite eq = refl
+≣-congruent = extensionality
 ```
 
 Obviously, syntactic equality (or rather structural equality) implies semantic equality, independent of the semantics:
@@ -73,7 +75,7 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
   → a ≡ b
     --------------
   → L ⊢ a ≣ b
-≡→≣ eq rewrite eq = refl
+≡→≣ eq c rewrite eq = refl
 ```
 
 ## Equivalence of Configurations
@@ -84,8 +86,8 @@ _⊢_≣ᶜ_ : ∀ {A : Domain} {L : VariabilityLanguage}
   → Expression A L
   → (c₁ c₂ : configuration L)
   → Set
-_⊢_≣ᶜ_ {L = L} e c₁ c₂ = ⟦ e ⟧ c₁ ≡ ⟦ e ⟧ c₂
-  where ⟦_⟧ = semantics L ∘ get
+_⊢_≣ᶜ_ {L = L} e c₁ c₂ = ⟦e⟧ c₁ ≡ ⟦e⟧ c₂
+  where ⟦e⟧ = semantics L {size e} (get e)
 infix 5 _⊢_≣ᶜ_
 
 ≣ᶜ-IsEquivalence : ∀ {A L} → (e : Expression A L) → IsEquivalence ( e ⊢_≣ᶜ_)
@@ -169,7 +171,7 @@ Given two variant-equivalent expressions from different languages, we can conclu
 ```agda
 ≚→≅ : ∀ {A : Domain} {L₁ L₂ : VariabilityLanguage} {e₁ : Expression A L₁} {e₂ : Expression A L₂}
   → e₁ ≚ e₂
-    ---------------------------------------------------
+    -----------------------------------------------
   → (let open MSet (VariantSetoid _ A) using (_≅_)
          ⟦_⟧₁ = semantics L₁ ∘ get
          ⟦_⟧₂ = semantics L₂ ∘ get
@@ -183,7 +185,7 @@ Semantic equality implies variant equality:
   → a ≣ b
     -------
   → a ⊆ᵥ b
-≣→⊆ᵥ a≣b c rewrite a≣b = c , refl
+≣→⊆ᵥ a≣b c rewrite a≣b c = c , refl
 
 ≣→≚ : ∀ {A : Domain} {L : VariabilityLanguage} {a b : Expression A L}
   → a ≣ b
@@ -191,7 +193,9 @@ Semantic equality implies variant equality:
   → a ≚ b
 ≣→≚     {A} {L} {a} {b} a≣b =
     ≣→⊆ᵥ {A} {L} {a} {b} a≣b
-  , ≣→⊆ᵥ {A} {L} {b} {a} (Eq.sym a≣b)
+  , ≣→⊆ᵥ {A} {L} {b} {a} b≣a
+  where b≣a : b ≣ a
+        b≣a = IsEquivalence.sym (≣-IsEquivalence {A} {L}) a≣b
 ```
 
 ### Relating Languages

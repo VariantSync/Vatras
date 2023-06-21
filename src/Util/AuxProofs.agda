@@ -5,7 +5,7 @@ open import Function using (id; _∘_)
 
 open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
-open import Data.Fin.Base using (Fin; fromℕ<)
+open import Data.Fin using (Fin; zero; suc; fromℕ<)
 
 open import Data.Nat.Properties using (m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
 
@@ -63,6 +63,12 @@ In case the given number is smaller than the given length, the number is returne
 -}
 clamp : (n : ℕ) → {NonZero n} → ℕ → Fin n
 clamp (suc n) = minFinFromLimit n
+
+
+clampAt : (n : ℕ) → ℕ → Fin (suc n)
+clampAt _ zero = zero
+clampAt zero (suc _) = zero
+clampAt (suc n) (suc c) = suc (clampAt n c)
 
 if-idemp : ∀ {A : Set} {a : A}
   → (c : Bool)
