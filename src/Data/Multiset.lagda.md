@@ -159,7 +159,6 @@ singleton-set-is-nonempty A = A tt , tt , Eq.refl
 
 We can rename the indices of a multiset M to obtain a subset of M.
 ```agda
-open import Relation.Binary.PropositionalEquality as Peq using (_≡_)
 
 re-indexˡ : ∀ {A B : Set c}
   → (rename : A → B)
