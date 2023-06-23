@@ -11,46 +11,63 @@ open import Data.Product using (_,_)
 open import Function using (_∘_; Surjective; Congruent)
 open import Size using (∞)
 
-open import Relation.Binary using (IsEquivalence; Symmetric)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
+open import Relation.Binary using (IsEquivalence; Symmetric; Decidable)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
+open import Relation.Nullary.Decidable using (Dec; yes; no)
 
 open import Definitions
 open import Relations.Semantic using (_⊢_≣ᶜ_; ≣ᶜ-IsEquivalence; ≣ᶜ-congruent; _is-at-least-as-expressive-as_)
 
 import Data.Multiset
 private module MSet A = Data.Multiset (VariantSetoid ∞ A)
+open import Data.Multiset.Properties --using (enumerate)
 
 open import Lang.Properties.Soundness
+open import Lang.Properties.NonEmpty
 ```
 
 ## Conclusions
 
 ```agda
+open import Data.Nat using (ℕ; suc)
+
 soundness-by-finite-semantics : ∀ {L : VariabilityLanguage}
-  → (∀ {A} → FiniteSemantics A L)
+  → FiniteSemantics L
     -----------------------------
   → Sound L
-soundness-by-finite-semantics {L} fin {A} e =
-    let open MSet A using (re-index)
-     in
-      # fin e
-    , ⟦ e ⟧ ∘ re-indexation
+soundness-by-finite-semantics {L} L-has-finite-semantics {A} e =
+      size fin
+    , ⟦ e ⟧ ∘ enumerate-configuration
     , re-index
         {_≈ᵃ_ = _≡_}
-        re-indexation
+        enumerate-configuration
         ⟦ e ⟧
-        sur sym con
-      where ⟦_⟧ = semantics L ∘ get
-            re-indexation = pick fin e
+        (enumerate-is-surjective fin)
+        (IsEquivalence.sym (≣ᶜ-IsEquivalence e))
+        (≣ᶜ-congruent e)
+      where open MSet A using (re-index)
 
-            sur : Surjective _≡_ (e ⊢_≣ᶜ_) re-indexation
-            sur = pick-surjective fin
+            fin = L-has-finite-semantics e
+            enumerate-configuration = enumerate fin
 
-            sym : Symmetric (e ⊢_≣ᶜ_)
-            sym = IsEquivalence.sym (≣ᶜ-IsEquivalence e)
+            ⟦_⟧ : Expression A L → configuration L → Variant ∞ A
+            ⟦_⟧ = semantics L ∘ get
 
-            con : Congruent (e ⊢_≣ᶜ_) _≡_ ⟦ e ⟧
-            con = ≣ᶜ-congruent e
+            -- ∃c : NonEmpty L
+            -- edec : (∀ {A} (e : Expression A L) → Decidable (e ⊢_≣ᶜ_)) -- this assumption is ugly :(
+
+            -- _≟ᶜ_ : Decidable (e ⊢_≣ᶜ_)
+            -- _≟ᶜ_ = edec e
+
+            -- re-indexation : Fin (suc (size fin)) → configuration L
+            -- re-indexation zero = ∃c e
+            -- re-indexation (suc n) = enumerate fin n
+
+            -- sur : Surjective _≡_ (e ⊢_≣ᶜ_) re-indexation
+            -- sur config with config ≟ᶜ ∃c e
+            -- ...        | yes e⊢config≣ᶜ∃ce = zero , Eq.sym e⊢config≣ᶜ∃ce
+            -- ...        | no _ with enumerate-is-surjective fin config
+            -- ...               | fst , snd = suc fst , snd
 
 soundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
   → Sound L₁

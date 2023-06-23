@@ -19,6 +19,7 @@ module Lang.Properties.Completeness where
 open import Data.Product using (Σ-syntax)
 open import Relation.Nullary.Negation  using (¬_)
 open import Size using (∞)
+open import Function using (_∘_)
 
 open import Definitions
 
@@ -37,8 +38,8 @@ Complete L = ∀ {A n}
     ----------------------------------
   → Σ[ e ∈ Expression A L ]
       (let open Iso A using (_≅_)
-           ⟦_⟧ = semantics L
-        in vs ≅ ⟦ get e ⟧)
+           ⟦_⟧ = semantics L ∘ get
+        in vs ≅ ⟦ e ⟧)
 ```
 
 We define incompleteness as then negation of completeness.

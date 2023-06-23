@@ -212,13 +212,12 @@ module Finity (A : Domain) where
   ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
 
 VariantList-is-Sound : Sound VariantListL
-VariantList-is-Sound =
-    soundness-by-finite-semantics (λ {A} →
+VariantList-is-Sound = soundness-by-finite-semantics (λ {A} e →
       let open Finity A in
       record
-      { # = #'
-      ; pick = pick-conf
-      ; pick-surjective = λ {e} → pick-conf-surjective e
+      { size = #' e
+      ; enumerate = pick-conf e
+      ; enumerate-is-surjective = pick-conf-surjective e
       })
 ```
 
