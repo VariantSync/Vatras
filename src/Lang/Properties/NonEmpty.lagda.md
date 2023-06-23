@@ -24,14 +24,9 @@ open import Definitions
 
 ## Definitions
 
+A variability language is not empty if there exists at least one configuration for each expression.
 ```agda
--- record NonEmpty (L : VariabilityLanguage) : Set₁ where
---   private ⟦_⟧ = semantics L
---   field
---     describe : ∀ {i A} → Variant i A → expression L i A
---     describe-preserves : ∀ {i A}
---       → (v : Variant i A)
---         -----------------------------
---       → ∃[ c ] (v ≡ ⟦ describe v ⟧ c)
+NonEmpty : (L : VariabilityLanguage) → Set₁
+NonEmpty L = ∀ {A} → Expression A L → configuration L
 ```
 
