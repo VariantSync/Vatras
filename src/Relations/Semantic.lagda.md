@@ -15,7 +15,7 @@ open import Axioms.Extensionality using (extensionality)
 open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size)
 
-open import Relation.Binary using (Rel; Symmetric; IsEquivalence)
+open import Relation.Binary using (Rel; Symmetric; IsEquivalence; Setoid)
 open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
@@ -73,7 +73,7 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
 ```agda
 ≡→≣ : ∀ {i : Size} {A : Domain} {L : VariabilityLanguage} {a b : expression L i A}
   → a ≡ b
-    --------------
+    ----------
   → L ⊢ a ≣ b
 ≡→≣ eq c rewrite eq = refl
 ```
@@ -99,6 +99,15 @@ infix 5 _⊢_≣ᶜ_
 
 ≣ᶜ-congruent : ∀ {A L} → (e : Expression A L) → Congruent (e ⊢_≣ᶜ_) _≡_ (semantics L (get e))
 ≣ᶜ-congruent _ e⊢x≣ᶜy = e⊢x≣ᶜy
+
+≣ᶜ-setoid : ∀ {A} {L : VariabilityLanguage}
+  → Expression A L
+  → Setoid 0ℓ 0ℓ
+≣ᶜ-setoid {A} {L} e = record
+  { Carrier       = configuration L
+  ; _≈_           = e ⊢_≣ᶜ_
+  ; isEquivalence = ≣ᶜ-IsEquivalence e
+  }
 ```
 
 ## Semantic Relations of Different Languages
@@ -138,8 +147,6 @@ infix 5 _≚_
 
 ≚-isEquivalence : ∀ {A} {L} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
-
-open import Relation.Binary using (Setoid)
 
 ≚-setoid : Domain → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
 ≚-setoid A L = record
