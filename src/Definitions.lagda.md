@@ -78,19 +78,19 @@ IndexedVSet : Size → Domain → Set → Set
 IndexedVSet i A I = Multiset I
   where open MSet (VariantSetoid i A) using (Multiset)
 
-VSet : Domain → ℕ → Set
-VSet A n = IndexedVSet ∞ A (Fin (suc n))
+VSet : Domain → Set → Set
+VSet A I = IndexedVSet ∞ A I
 
 -- Utility functions to downcast the Fin in a VSet.
-forget-first : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
-forget-first set i = set (Data.Fin.suc i)
+-- forget-first : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
+-- forget-first set i = set (Data.Fin.suc i)
 
-forget-last : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
-forget-last set i = set (Data.Fin.inject₁ i)
+-- forget-last : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
+-- forget-last set i = set (Data.Fin.inject₁ i)
 
-forget-all : ∀ {n : ℕ} {A : Set} → VSet A n → VSet A zero
-forget-all {zero}  set = set
-forget-all {suc _} set = forget-all (forget-last set)
+-- forget-all : ∀ {n : ℕ} {A : Set} → VSet A n → VSet A zero
+-- forget-all {zero}  set = set
+-- forget-all {suc _} set = forget-all (forget-last set)
 ```
 
 The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
@@ -228,7 +228,7 @@ module Examples where
   open import Data.String using (String)
   open Data.Fin using (zero; suc)
 
-  vset-example : VSet ℕ 2
+  vset-example : VSet ℕ (Fin 3)
   vset-example zero = leaf 1
   vset-example (suc zero) = leaf 2
   vset-example (suc (suc zero)) = leaf 3

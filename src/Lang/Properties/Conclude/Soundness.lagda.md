@@ -6,6 +6,8 @@
 
 module Lang.Properties.Conclude.Soundness where
 
+open import Data.Fin using (Fin)
+open import Data.Nat using (suc)
 open import Data.Product using (_,_)
 
 open import Function using (_∘_; Surjective; Congruent)
@@ -26,6 +28,13 @@ open import Lang.Properties.Soundness
 ## Conclusions
 
 ```agda
+soundness-by-design :
+  ∀ (L : VariabilityLanguage)
+    --------------------------
+  → Sound L
+soundness-by-design record { expression = expression ; configuration = C; semantics = ⟦_⟧ } {A} [ e ] = C , ⟦ e ⟧ , ≅-refl
+  where open MSet A using (≅-refl)
+
 soundness-by-finite-semantics : ∀ {L : VariabilityLanguage}
   → (∀ {A} → FiniteSemantics A L)
     -----------------------------
@@ -33,7 +42,7 @@ soundness-by-finite-semantics : ∀ {L : VariabilityLanguage}
 soundness-by-finite-semantics {L} fin {A} e =
     let open MSet A using (re-index)
      in
-      # fin e
+      Fin (suc (# fin e))
     , ⟦ e ⟧ ∘ re-indexation
     , re-index
         {_≈ᵃ_ = _≡_}

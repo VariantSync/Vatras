@@ -40,7 +40,7 @@ open Eq
 open import Lang.Annotation.Name using (Dimension)
 open import Definitions using (
   Domain;
-  Variant; Artifactᵥ; VSet; forget-last; VariantSetoid;
+  Variant; Artifactᵥ; VSet; VariantSetoid;
   VarLang; ConfLang; VariabilityLanguage;
   Semantics;
   fromExpression; Artifactˡ;

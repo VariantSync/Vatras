@@ -39,7 +39,7 @@ Sound : VariabilityLanguage → Set₁
 Sound L = ∀ {A}
   → (e : Expression A L)
     ------------------------------
-  → ∃[ n ] (Σ[ vs ∈ VSet A n ]
+  → ∃[ I ] (Σ[ vs ∈ VSet A I ]
       (let open MSet A using (_≅_)
            ⟦_⟧ = semantics L
         in vs ≅ ⟦ get e ⟧))

@@ -32,8 +32,8 @@ Completess is given iff for any set of variants `vs` (modelled as a list for con
 In particular, for every variant `v` in `vs`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
 Complete : VariabilityLanguage → Set₁
-Complete L = ∀ {A n}
-  → (vs : VSet A n)
+Complete L = ∀ {A I}
+  → (vs : VSet A I)
     ----------------------------------
   → Σ[ e ∈ Expression A L ]
       (let open Iso A using (_≅_)
