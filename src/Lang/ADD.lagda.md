@@ -18,7 +18,7 @@ module Lang.ADD where
 open import Data.Bool using (Bool; if_then_else_)
 open import Data.List using ([])
 open import Data.String using (String)
-open import Size using (Size; ↑_)
+open import Size using (Size; ↑_; ∞)
 
 open import Definitions using (VarLang; Domain; Variant; Semantics; VariabilityLanguage)
 open import Lang.Annotation.Name using (Variable)
@@ -31,11 +31,21 @@ We refer to a choice calculus expression whose abstract syntax is an ADD, as bei
 In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 ADD paper, ADDs are defined to be binary.
 
 ```agda
+{-|
+General algebraic decision diagrams that consists of choices that yield a value of type A.
+-}
 data ADD : VarLang where
   Terminal : ∀ {i : Size} {A : Domain}
-    → Variant i A → ADD (↑ i) A -- ModelBase in FFSPL
+    → A → ADD (↑ i) A -- ModelBase in FFSPL
   Choice : ∀ {i : Size} {A : Domain} →
     Variable → ADD i A → ADD i A → ADD (↑ i) A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
+
+{-|
+Type of algebraic decision diagrams that describe variants.
+When employing an ADD as a variability language, then it has to yield a variant.
+-}
+VADD : VarLang
+VADD i A = ADD i (Variant ∞ A)
 ```
 
 ## Semantics
@@ -48,13 +58,13 @@ Configuration : Set
 Configuration = Variable → Bool
 
 -- ⟦_⟧ : ∀ {i : Size} {A : Set} → ADD i A → Configuration → Variant i A
-⟦_⟧ : Semantics ADD Configuration
+⟦_⟧ : Semantics VADD Configuration
 ⟦ Terminal a ⟧ _   = a
 ⟦ Choice V l r ⟧ c = ⟦ if (c V) then l else r ⟧ c
 
-ADDL : VariabilityLanguage
-ADDL = record
-  { expression = ADD
+VADDL : VariabilityLanguage
+VADDL = record
+  { expression = VADD
   ; configuration = Configuration
   ; semantics = ⟦_⟧
   }
