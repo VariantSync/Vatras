@@ -31,6 +31,7 @@ open import Lang.BCC
 
 ```agda
 open import Lang.Properties.Completeness
+open import Lang.Properties.Conclude.Completeness
 open import Relations.Semantic
 ```
 

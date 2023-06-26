@@ -36,7 +36,7 @@ Thus, L₂ is complete.
 completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
   → Complete L₁
   → L₂ is-at-least-as-expressive-as L₁
-    --------------------------------------------
+    -----------------------------------
   → Complete L₂
 completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
 ... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
@@ -73,7 +73,7 @@ This yields a contradiction.
 less-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
   →   Complete L₊
   → Incomplete L₋
-    --------------------------------------
+    ------------------------------
   → L₋ is-less-expressive-than L₊
 less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
     L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
@@ -85,7 +85,7 @@ more-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
   → Complete L₊
   → Sound L₋
   → Incomplete L₋
-    --------------------------------------
+    ------------------------------
   → L₊ is-more-expressive-than L₋
 more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-sound L₋-incomp =
     expressiveness-by-completeness-and-soundness L₊-comp L₋-sound

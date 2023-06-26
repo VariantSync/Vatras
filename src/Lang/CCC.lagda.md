@@ -114,7 +114,7 @@ The semantic domain is a function that generates variants given configurations.
 -}
 ⟦_⟧ : Semantics CCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (map (flip ⟦_⟧ c) es)
-⟦ (D ⟨ alternatives ⟩) ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
+⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
 
 CCCL : VariabilityLanguage
 CCCL = record
@@ -277,7 +277,7 @@ semeq {i} {A} c (Artifact a es) =
   ∎
   where mkArtifact : ∀ {j} → List (Variant j A) → Variant (↑ j) A
         mkArtifact = Artifactᵥ a
-semeq {i} c (D ⟨ es ⟩)= {!!} --with choice-elimination (c D) es
+semeq {i} c (D ⟨ es ⟩) = {!!} --with choice-elimination (c D) es
 --semeq-choice {i} (choice-elimination (c D) es) c
 -- with choice-elimination (c D) es
 -- ... | e | [ j ] =
