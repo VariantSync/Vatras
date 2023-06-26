@@ -111,11 +111,22 @@ The type of singleton sets over a source.
 𝟙 = Multiset ⊤
 
 -- predicate that checks whether a subset is nonempty
-nonempty : ∀ {I} → Multiset I → Set (c ⊔ ℓ)
-nonempty A = ∃[ a ] (a ∈ A)
+-- A set is non-empty when there exists at least one index.
+nonempty : ∀ {I} → Multiset I → Set c
+nonempty {I = I} _ = I --∃[ a ] (a ∈ A)
+
+-- We can retrieve an element from a non-empty set.
+-- This proves that our definition of nonempty indeed
+-- implies that there is an element in each non-empty set.
+get-from-nonempty : ∀ {I}
+  → (A : Multiset I)
+  → nonempty A
+    ----------------
+  → Carrier
+get-from-nonempty A i = A i
 
 -- predicate that checks whether a subset is empty
-empty : ∀ {I} → Multiset I → Set (c ⊔ ℓ)
+empty : ∀ {I} → Multiset I → Set c
 empty A = ¬ (nonempty A)
 
 𝟘-is-empty : empty 𝟘
@@ -130,16 +141,17 @@ empty-set⊆𝟘 : ∀ {I} {A : Multiset I}
   → empty A
     -------
   → A ⊆ 𝟘
-empty-set⊆𝟘 {A = A} A-empty i with A-empty (A i , i , Eq.refl)
+empty-set⊆𝟘 A-empty i with A-empty i
 ...| ()
 
 all-empty-sets-are-equal : ∀ {I} {A : Multiset I}
   → empty A
+    -------
   → A ≅ 𝟘
 all-empty-sets-are-equal A-empty = empty-set⊆𝟘 A-empty , 𝟘⊆A
 
 singleton-set-is-nonempty : (A : 𝟙) → nonempty A
-singleton-set-is-nonempty A = A tt , tt , Eq.refl
+singleton-set-is-nonempty _ = tt
 ```
 
 ## Further Properties
