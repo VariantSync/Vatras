@@ -63,7 +63,7 @@ open import Lang.Properties.Completeness
 
 -- prove completeness via inference rules
 module Complete (A : Domain) where
-  open import Data.Multiset (VariantSetoid ∞ A) using (_≅_; ⊆-by-index-translation)
+  open import Data.IndexedSet (VariantSetoid ∞ A) using (_≅_; ⊆-by-index-translation)
   open import Util.AuxProofs using (clampAt)
 
   private

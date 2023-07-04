@@ -18,8 +18,8 @@ open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Definitions
 open import Relations.Semantic using (_⊢_≣ᶜ_; ≣ᶜ-IsEquivalence; ≣ᶜ-congruent; _is-at-least-as-expressive-as_)
 
-import Data.Multiset
-private module MSet A = Data.Multiset (VariantSetoid ∞ A)
+import Data.IndexedSet
+private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 open import Util.Finity
 
 open import Lang.Properties.Soundness
@@ -45,7 +45,7 @@ soundness-by-finite-semantics {L} L-has-finite-semantics {A} e =
         (enumerate-is-surjective fin)
         (IsEquivalence.sym (≣ᶜ-IsEquivalence e))
         (≣ᶜ-congruent e)
-      where open MSet A using (re-index)
+      where open ISet A using (re-index)
             fin = L-has-finite-semantics e
             enumerate-configuration = enumerate fin
 
@@ -76,7 +76,7 @@ soundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
 soundness-by-expressiveness {L₁} {L₂} L₁-sound L₂-to-L₁ {A} e₂ with L₂-to-L₁ e₂
 ... | e₁ , e₂≅e₁ with L₁-sound e₁
 ...   | n , vs , vs≅e₁ = n , vs , ≅-trans vs≅e₁ (≅-sym e₂≅e₁)
-  where open MSet A using (_≅_; ≅-trans; ≅-sym)
+  where open ISet A using (_≅_; ≅-trans; ≅-sym)
 
 -- re-export the theorem that we can conclude expressiveness for a complete and a sound language
 open import Lang.Properties.Conclude.Completeness using (

@@ -24,7 +24,7 @@ open import Relation.Nullary.Decidable using (Dec; yes; no; isYes; False; toWitn
 open import Relation.Binary using (Setoid; DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 
-import Data.Multiset as MSet
+import Data.IndexedSet as ISet
 open import Util.Existence using (∃-Size)
 ```
 
@@ -75,8 +75,8 @@ The semantics of variability languages is given by a multiset of variants.
 It is a multiset because two different configurations might yield the same variant (e.g., if there is an unused feature, or toggling a certain feature has no effect because all of its artifacts already dead based on another selection).
 ```agda
 IndexedVSet : Size → Domain → Set → Set
-IndexedVSet i A I = Multiset I
-  where open MSet (VariantSetoid i A) using (Multiset)
+IndexedVSet i A I = IndexedSet I
+  where open ISet (VariantSetoid i A) using (IndexedSet)
 
 VSet : Domain → ℕ → Set
 VSet A n = IndexedVSet ∞ A (Fin (suc n))

@@ -15,8 +15,8 @@ open import Relations.Semantic
 open import Lang.Properties.Completeness
 open import Lang.Properties.Soundness
 
-import Data.Multiset
-private module Iso A = Data.Multiset (VariantSetoid ∞ A)
+import Data.IndexedSet
+private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 ```
 
 ## Conclusions
@@ -41,7 +41,7 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
 completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
 ... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
 ...   | e₂ , e₁≅e₂ = e₂ , ≅-trans vs≅e₁ e₁≅e₂
-  where open Iso _ using (≅-trans)
+  where open ISet _ using (≅-trans)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -60,7 +60,7 @@ expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLangua
 expressiveness-by-completeness-and-soundness {L₊} L₊-comp L-sound {A = A} eˢ with L-sound eˢ
 ... | n , vsetₑ , vsetₑ≅⟦eˢ⟧ with L₊-comp vsetₑ
 ...   | eᶜ , vsetₑ≅⟦eᶜ⟧ᶜ = eᶜ , ≅-trans (≅-sym vsetₑ≅⟦eˢ⟧) vsetₑ≅⟦eᶜ⟧ᶜ
-  where open Iso A using (≅-sym; ≅-trans)
+  where open ISet A using (≅-sym; ≅-trans)
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.

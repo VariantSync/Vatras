@@ -29,8 +29,8 @@ open import Relation.Nullary.Negation using (¬_)
 open import Definitions
 open import Relations.Semantic using (≣ᶜ-setoid)
 
-import Data.Multiset
-private module MSet A = Data.Multiset (VariantSetoid ∞ A)
+import Data.IndexedSet
+private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 open import Util.Finity using (FiniteAndNonEmpty)
 ```
 
@@ -42,7 +42,7 @@ Sound L = ∀ {A}
   → (e : Expression A L)
     ------------------------------
   → ∃[ n ] (Σ[ vs ∈ VSet A n ]
-      (let open MSet A using (_≅_)
+      (let open ISet A using (_≅_)
            ⟦_⟧ = semantics L ∘ get
         in vs ≅ ⟦ e ⟧))
 

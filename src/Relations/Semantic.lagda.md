@@ -25,7 +25,7 @@ open import Level using (0ℓ; suc)
 open import Size using (Size)
 
 open import Relations.GeneralizedEquivalence using (iseq)
-import Data.Multiset as MSet
+import Data.IndexedSet as ISet
 ```
 
 ## Semantic Relations of Expressions Within a Single Language
@@ -126,7 +126,7 @@ _⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = semantics L₁ ∘ get
     ⟦_⟧₂ = semantics L₂ ∘ get
-    open MSet (VariantSetoid _ A) using (_⊆_)
+    open ISet (VariantSetoid _ A) using (_⊆_)
 infix 5 _⊆ᵥ_
 
 _≚_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
@@ -134,7 +134,7 @@ _≚_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = semantics L₁ ∘ get
     ⟦_⟧₂ = semantics L₂ ∘ get
-    open MSet (VariantSetoid _ A) using (_≅_)
+    open ISet (VariantSetoid _ A) using (_≅_)
 infix 5 _≚_
 
 ≚-isIndexedEquivalence : ∀ {A : Domain} → IsIndexedEquivalence (Expression A) _≚_
@@ -143,7 +143,7 @@ infix 5 _≚_
   ; sym   = ≅-sym
   ; trans = ≅-trans
   }
-  where open MSet (VariantSetoid _ _) using (≅-refl; ≅-sym; ≅-trans)
+  where open ISet (VariantSetoid _ _) using (≅-refl; ≅-sym; ≅-trans)
 
 ≚-isEquivalence : ∀ {A} {L} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
@@ -179,7 +179,7 @@ Given two variant-equivalent expressions from different languages, we can conclu
 ≚→≅ : ∀ {A : Domain} {L₁ L₂ : VariabilityLanguage} {e₁ : Expression A L₁} {e₂ : Expression A L₂}
   → e₁ ≚ e₂
     -----------------------------------------------
-  → (let open MSet (VariantSetoid _ A) using (_≅_)
+  → (let open ISet (VariantSetoid _ A) using (_≅_)
          ⟦_⟧₁ = semantics L₁ ∘ get
          ⟦_⟧₂ = semantics L₂ ∘ get
       in ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂)
@@ -255,7 +255,7 @@ trans-expressiveness : ∀ {L₁ L₂ L₃ : VariabilityLanguage}
     ----------------------------------
   → L₁ is-at-least-as-expressive-as L₃
 trans-expressiveness L₂→L₁ L₃→L₂ {A} e₃ =
-  let open MSet (VariantSetoid _ A)
+  let open ISet (VariantSetoid _ A)
       e₂ , e₃≚e₂ = L₃→L₂ e₃
       e₁ , e₂≚e₁ = L₂→L₁ e₂
    in e₁ , ≅-trans e₃≚e₂ e₂≚e₁ -- This proof is highly similar to ≅-trans itself. Maybe we could indeed reuse here.

@@ -1,4 +1,4 @@
-# Multisubsets of Types
+# Indexed Sets of Types
 
 ## Module
 
@@ -17,7 +17,7 @@ open import Relation.Binary.Indexed.Heterogeneous using (
   Symmetric;
   Transitive;
   IsIndexedEquivalence)
-module Data.Multiset
+module Data.IndexedSet
   {c ℓ : Level}
   (S : Setoid c ℓ)
   where
@@ -44,33 +44,33 @@ module Eq = IsEquivalence isEquivalence
 Index : Set (suc c)
 Index = Set c
 
-Multiset : Index → Set c
-Multiset I = I → Carrier
+IndexedSet : Index → Set c
+IndexedSet I = I → Carrier
 
 -- an element is within a subset, if there is an index pointing at that element
 -- Later we could employ setoids to parameterize our set formulation in the equivalence relation instead of always relying on propositional equality.
-_∈_ : ∀ {I} → Carrier → Multiset I → Set (c ⊔ ℓ)
+_∈_ : ∀ {I} → Carrier → IndexedSet I → Set (c ⊔ ℓ)
 a ∈ A = ∃[ i ] (a ≈ A i)
 
 -- morphisms
--- _⊆_ : ∀ {I J} → Multiset I → Multiset J → Set ℓ
-_⊆_ : IRel Multiset (c ⊔ ℓ)
+-- _⊆_ : ∀ {I J} → IndexedSet I → IndexedSet J → Set ℓ
+_⊆_ : IRel IndexedSet (c ⊔ ℓ)
 _⊆_ {I} A B = ∀ (i : I) → A i ∈ B
 
-_≅_ : IRel Multiset (c ⊔ ℓ)
+_≅_ : IRel IndexedSet (c ⊔ ℓ)
 A ≅ B = (A ⊆ B) × (B ⊆ A)
 ```
 
 ## Properties
 ```agda
-⊆-refl : Reflexive Multiset _⊆_
+⊆-refl : Reflexive IndexedSet _⊆_
 ⊆-refl i = i , Eq.refl
 
 -- Todo: There is no antsymmetry definition in Relation.Binary.Indexed.Heterogeneous.Definition. Adding that to the standard library would be good and a low hanging fruit.
 ⊆-antisym : ∀ {I J} → Antisym (_⊆_ {I} {J}) (_⊆_ {J} {I}) (_≅_ {I} {J})
 ⊆-antisym l r = l , r
 
-⊆-trans : Transitive Multiset _⊆_
+⊆-trans : Transitive IndexedSet _⊆_
 ⊆-trans A⊆B B⊆C i =
   -- This proof looks resembles state monad bind >>=.
   -- interesting... :thinking_face:
@@ -78,18 +78,18 @@ A ≅ B = (A ⊆ B) × (B ⊆ A)
       (k , Bj≈Ck) = B⊆C j
    in k , Eq.trans Ai≈Bj Bj≈Ck
 
-≅-refl : Reflexive Multiset _≅_
+≅-refl : Reflexive IndexedSet _≅_
 ≅-refl = ⊆-refl , ⊆-refl
 
-≅-sym : Symmetric Multiset _≅_
+≅-sym : Symmetric IndexedSet _≅_
 ≅-sym (l , r) = r , l
 
-≅-trans : Transitive Multiset _≅_
+≅-trans : Transitive IndexedSet _≅_
 ≅-trans (A⊆B , B⊆A) (B⊆C , C⊆B) =
     ⊆-trans A⊆B B⊆C
   , ⊆-trans C⊆B B⊆A
 
-≅-IsIndexedEquivalence : IsIndexedEquivalence Multiset _≅_
+≅-IsIndexedEquivalence : IsIndexedEquivalence IndexedSet _≅_
 ≅-IsIndexedEquivalence = record
   { refl  = ≅-refl
   ; sym   = ≅-sym
@@ -103,50 +103,50 @@ A ≅ B = (A ⊆ B) × (B ⊆ A)
 {-|
 The empty set
 -}
-𝟘 : Multiset ⊥
+𝟘 : IndexedSet ⊥
 𝟘 = λ ()
 
 {-|
 The type of singleton sets over a source.
 -}
 𝟙 : Set c
-𝟙 = Multiset ⊤
+𝟙 = IndexedSet ⊤
 
 -- predicate that checks whether a subset is nonempty
 -- A set is non-empty when there exists at least one index.
-nonempty : ∀ {I} → Multiset I → Set c
+nonempty : ∀ {I} → IndexedSet I → Set c
 nonempty {I = I} _ = I --∃[ a ] (a ∈ A)
 
 -- We can retrieve an element from a non-empty set.
 -- This proves that our definition of nonempty indeed
 -- implies that there is an element in each non-empty set.
 get-from-nonempty : ∀ {I}
-  → (A : Multiset I)
+  → (A : IndexedSet I)
   → nonempty A
     ----------------
   → Carrier
 get-from-nonempty A i = A i
 
 -- predicate that checks whether a subset is empty
-empty : ∀ {I} → Multiset I → Set c
+empty : ∀ {I} → IndexedSet I → Set c
 empty A = ¬ (nonempty A)
 
 𝟘-is-empty : empty 𝟘
 𝟘-is-empty ()
 
-𝟘⊆A : ∀ {I} {A : Multiset I}
+𝟘⊆A : ∀ {I} {A : IndexedSet I}
     -----
   → 𝟘 ⊆ A
 𝟘⊆A = λ ()
 
-empty-set⊆𝟘 : ∀ {I} {A : Multiset I}
+empty-set⊆𝟘 : ∀ {I} {A : IndexedSet I}
   → empty A
     -------
   → A ⊆ 𝟘
 empty-set⊆𝟘 A-empty i with A-empty i
 ...| ()
 
-all-empty-sets-are-equal : ∀ {I} {A : Multiset I}
+all-empty-sets-are-equal : ∀ {I} {A : IndexedSet I}
   → empty A
     -------
   → A ≅ 𝟘
@@ -161,7 +161,7 @@ singleton-set-is-nonempty _ = tt
 ### Helper Functions for Proving Subset
 
 ```agda
-⊆-by-index-translation : {I J : Set c} {A : Multiset I} {B : Multiset J}
+⊆-by-index-translation : {I J : Set c} {A : IndexedSet I} {B : IndexedSet J}
   → (t : I → J)
   → (∀ (i : I) → A i ≈ B (t i))
     ---------------------------
@@ -176,7 +176,7 @@ We can rename the indices of a multiset M to obtain a subset of M.
 
 re-indexˡ : ∀ {A B : Set c}
   → (rename : A → B)
-  → (M : Multiset B)
+  → (M : IndexedSet B)
     ---------------------
   → (M ∘ rename) ⊆ M
 re-indexˡ rename _ a = rename a , Eq.refl
@@ -197,7 +197,7 @@ re-indexʳ : ∀ {A B : Index}
     {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
     {_≈ᵇ_ : Rel B c} -- Equality of original indices
   → (rename : A → B)
-  → (M : Multiset B)
+  → (M : IndexedSet B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
   → RB.Symmetric _≈ᵇ_
   → Congruent _≈ᵇ_ _≈_ M
@@ -218,7 +218,7 @@ re-index : ∀ {A B : Index}
     {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
     {_≈ᵇ_ : Rel B c} -- Equality of original indices
   → (rename : A → B)
-  → (M : Multiset B)
+  → (M : IndexedSet B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
   → RB.Symmetric _≈ᵇ_
   → Congruent _≈ᵇ_ _≈_ M
@@ -238,11 +238,11 @@ re-index {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵇ-sym M-is-con
 --   open import Relation.Binary.PropositionalEquality as Peq
 --   open Level using (0ℓ)
 
---   ex12 : Multiset ℕ Peq.isEquivalence (Fin 2)
+--   ex12 : IndexedSet ℕ Peq.isEquivalence (Fin 2)
 --   ex12 zero = 1
 --   ex12 (suc zero) = 2
 
---   ex21 : Multiset (Fin 2) ℕ
+--   ex21 : IndexedSet (Fin 2) ℕ
 --   ex21 zero = 2
 --   ex21 (suc zero) = 1
 
@@ -253,6 +253,6 @@ re-index {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵇ-sym M-is-con
 --   proj₂ 12≅21 (suc zero) = zero , Eq.refl
 
 --   -- When the source is smaller than the index, then we have a multi set.
---   exshrink : Multiset (Fin 2) ⊤
+--   exshrink : IndexedSet (Fin 2) ⊤
 --   exshrink x = tt
 ```

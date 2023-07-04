@@ -23,8 +23,8 @@ open import Function using (_∘_)
 
 open import Definitions
 
-import Data.Multiset
-private module Iso A = Data.Multiset (VariantSetoid ∞ A)
+import Data.IndexedSet
+private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 ```
 
 ## Definitions
@@ -37,7 +37,7 @@ Complete L = ∀ {A n}
   → (vs : VSet A n)
     ----------------------------------
   → Σ[ e ∈ Expression A L ]
-      (let open Iso A using (_≅_)
+      (let open ISet A using (_≅_)
            ⟦_⟧ = semantics L ∘ get
         in vs ≅ ⟦ e ⟧)
 ```
