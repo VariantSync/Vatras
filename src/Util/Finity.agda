@@ -1,20 +1,18 @@
-module Data.Multiset.Properties where
-
-import Data.Multiset as MSet
+module Util.Finity where
 
 open import Data.Nat using (ℕ; suc)
 open import Data.Fin using (Fin)
 open import Relation.Binary.PropositionalEquality as Peq using (_≡_)
 
 open import Relation.Binary using (Setoid)
-open import Function using (id; _∘_; Surjective)
+open import Function using (id; Surjective)
 
 open import Level using (_⊔_)
 
 {-|
-A multiset is finite if its set if indices is finite
+A set (i.e., a type) is finite if all of its instances can be enumerated.
 params:
-mod - A modification function on the size of the index that can be used to simultaneously encode that the multiset must be non-empty
+mod - A modification function on the size of the index that can be used to simultaneously encode that the set must be non-empty
 IndexSet - A set of indices that should be proven finite. Given as a setoid because we need an equivalence relation to ensure that every index is enumerated.
 -}
 record FiniteAnd (mod : ℕ → ℕ) {ℓ} {c} (IndexSet : Setoid c ℓ) : Set (c ⊔ ℓ) where

@@ -20,7 +20,7 @@ open import Relations.Semantic using (_⊢_≣ᶜ_; ≣ᶜ-IsEquivalence; ≣ᶜ
 
 import Data.Multiset
 private module MSet A = Data.Multiset (VariantSetoid ∞ A)
-open import Data.Multiset.Properties --using (enumerate)
+open import Util.Finity
 
 open import Lang.Properties.Soundness
 open import Lang.Properties.NonEmpty
@@ -46,7 +46,6 @@ soundness-by-finite-semantics {L} L-has-finite-semantics {A} e =
         (IsEquivalence.sym (≣ᶜ-IsEquivalence e))
         (≣ᶜ-congruent e)
       where open MSet A using (re-index)
-
             fin = L-has-finite-semantics e
             enumerate-configuration = enumerate fin
 

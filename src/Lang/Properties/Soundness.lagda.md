@@ -24,13 +24,14 @@ open import Function using (_∘_; Surjective)
 open import Size using (∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
+open import Relation.Nullary.Negation using (¬_)
 
 open import Definitions
 open import Relations.Semantic using (≣ᶜ-setoid)
 
 import Data.Multiset
 private module MSet A = Data.Multiset (VariantSetoid ∞ A)
-open import Data.Multiset.Properties using (FiniteAndNonEmpty)
+open import Util.Finity using (FiniteAndNonEmpty)
 ```
 
 ## Definitions
