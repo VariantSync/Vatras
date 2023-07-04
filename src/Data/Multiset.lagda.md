@@ -72,6 +72,8 @@ A ≅ B = (A ⊆ B) × (B ⊆ A)
 
 ⊆-trans : Transitive Multiset _⊆_
 ⊆-trans A⊆B B⊆C i =
+  -- This proof looks resembles state monad bind >>=.
+  -- interesting... :thinking_face:
   let (j , Ai≈Bj) = A⊆B i
       (k , Bj≈Ck) = B⊆C j
    in k , Eq.trans Ai≈Bj Bj≈Ck
