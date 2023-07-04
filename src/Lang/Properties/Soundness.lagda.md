@@ -46,6 +46,9 @@ Sound L = ∀ {A}
            ⟦_⟧ = semantics L ∘ get
         in vs ≅ ⟦ e ⟧))
 
+Unsound : VariabilityLanguage → Set₁
+Unsound L = ¬ (Sound L)
+
 FiniteSemantics : (L : VariabilityLanguage) → Set₁
 FiniteSemantics L = ∀ {A} (e : Expression A L) → FiniteAndNonEmpty (≣ᶜ-setoid e)
 
