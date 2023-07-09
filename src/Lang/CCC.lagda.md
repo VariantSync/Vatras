@@ -75,25 +75,20 @@ leaf a = Artifact a []
 
 leaves : ∀ {i : Size} {A : 𝔸} → List⁺ A → List⁺ (CCC (↑ i) A)
 leaves = map⁺ leaf
-
--- upcast : ∀ {i : Size} {j : Size< i} {A : 𝔸} → CCC j A → CCC i A
--- upcast e = e
 ```
 
 ## Semantics
 
-Choice calculus has denotational semantics, introduced by Eric in the TOSEM paper and his PhD thesis.
+Choice calculus has denotational semantics.
 Semantics for choice calculus can be defined in different ways.
-In his phd thesis, Eric defined the semantics to be the set of all variants described by the expression.
-So the semantic domain was a set of choice calculus expressions without any choices.
-We can encode a choice calculus expression without choices at the type level as Variants.
+- As a set of pairs `Configuration × Variant`
+- As a configuration function `Configuration → Variant` that generates variants from configurations.
 
-An equivalent definition of semantics produces a configuration function `Config → Variant` that generates variants from configurations.
-This definition separates the concerns of (1) generating a variant, and (2) enumerating all possible variants.
+The second definition separates the concerns of (1) generating a variant, and (2) enumerating all possible variants.
 Enumeration of variants is still possible by generating all possible configurations first.
 Thus, and for much simpler proofs, we choose the functional semantics.
 
-First, we define configurations as functions that evaluate dimensions by tags, according to Eric's phd thesis:
+First, we define configurations as functions that evaluate dimensions by tags:
 ```agda
 Configuration : ℂ
 Configuration = Dimension → Tag
@@ -101,8 +96,7 @@ Configuration = Dimension → Tag
 
 We can now define the semantics.
 In case a configuration picks an undefined tag for a dimension (i.e., the number of alternatives within a choice), we chose the last alternative as a fallback.
-This allows us to introduce complex error handling and we cannot easily define a configuration to only produce tags within ranges.
-
+This allows us to avoid complex error handling and we cannot easily define a configuration to only produce tags within ranges.
 ```agda
 -- Selects the alternative at the given tag.
 choice-elimination : ∀ {A : 𝔸} → Tag → List⁺ A → A
@@ -199,11 +193,14 @@ describe-variant (Artifactᵥ a vs) = Artifact a (map describe-variant vs)
 ---- Proof for preservation of describe-variant
 
 {-|
-Unfortunately, I had to surrender and just flag this function as terminating.
+Unfortunately, I had to flag this function as terminating.
 One solution to prove its termination is to use a sized variant (instead of using ∞).
 The problem is that the semantics ⟦_⟧ forgets the size and sets it to ∞ and hence,
 the types of v and ⟦ describe-variant v ⟧ c are different and hence their values can never be equivalent regarding ≡.
-Below you find some tries of trying to circumvent these problems but so far I was not successfull.
+
+Below there is an exact copy of this function (describe-variant-preserves-i) that is proven to terminate and that relies on an exact copy of the choice calculus semantics that produces a Variant i.
+
+So the function below indeed terminates but proving it within our framework became a _technical_ challenge (not a mathematical one) for which I found no solution yet.
 -}
 {-# TERMINATING #-}
 describe-variant-preserves : ∀ {A} {c : Configuration}
@@ -223,7 +220,7 @@ describe-variant-preserves {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifac
 
 {-|
 Alternative definition of the semantics.
-The function does exactly the same as ⟦_⟧ but remembers that 
+The function does exactly the same as ⟦_⟧ but remembers that the produced variant does not grow in size.
 -}
 ⟦_⟧-i : ∀ {i : Size} {A : 𝔸} → CCC i A → Configuration → Variant i A
 ⟦ Artifact a es ⟧-i c = Artifactᵥ a (map (flip ⟦_⟧-i c) es)
@@ -244,57 +241,8 @@ describe-variant-preserves-i {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artif
     map (flip ⟦_⟧-i c) (map describe-variant (e ∷ es))
   ∎)
 
-semeq-choice : ∀ {i A} (e : CCC (↑ i) A) → (c : Configuration) → ⟦ e ⟧ c ≡ forget-variant-size (⟦ e ⟧-i c)
-semeq-choice e c =
-  begin
-    ⟦ e ⟧ c
-  ≡⟨ {!!} ⟩
-    forget-variant-size (⟦ e ⟧-i c)
-  ∎
-
 sizeof : ∀ {i A} → CCC i A → Size
 sizeof {i} _ = i
-
-open Eq using (inspect; [_])
-
-semeq : ∀ {i} {A}
-  → (c : Configuration)
-  → (e : CCC i A)
-  → ⟦_⟧ {i} e c ≡ forget-variant-size {i} (⟦ e ⟧-i c)
-semeq {i} {A} c (Artifact a es) =
-  begin
-    ⟦ Artifact a es ⟧ c
-  ≡⟨⟩
-    Artifactᵥ a (map (flip ⟦_⟧   c) es)
-  ≡⟨ Eq.cong (Artifactᵥ a) (map-cong (semeq c) es) ⟩
-    Artifactᵥ a (map (forget-variant-size ∘ (flip ⟦_⟧-i c)) es)
-  ≡⟨ Eq.cong (Artifactᵥ a) (map-∘ es) ⟩
-    Artifactᵥ a (map forget-variant-size (map (flip ⟦_⟧-i c) es))
-  ≡⟨ sequence-forget-size (map (flip ⟦_⟧-i c) es) ⟩
-    forget-variant-size (Artifactᵥ a (map (flip ⟦_⟧-i c) es))
-  ≡⟨⟩
-    forget-variant-size (⟦ Artifact a es ⟧-i c)
-  ∎
-  where mkArtifact : ∀ {j} → List (Variant j A) → Variant (↑ j) A
-        mkArtifact = Artifactᵥ a
-semeq {i} c (D ⟨ es ⟩) = {!!} --with choice-elimination (c D) es
---semeq-choice {i} (choice-elimination (c D) es) c
--- with choice-elimination (c D) es
--- ... | e | [ j ] =
---   begin
---     (⟦_⟧ e c)
---   ≡⟨ {!!} ⟩
---     (forget-variant-size (⟦_⟧-i e c))
---   ∎
-
-
-
--- describe-variant-preserves : ∀ {A} {c : Configuration}
---   → (v : Variant ∞ A)
---   → v ≡ ⟦ describe-variant v ⟧ c
--- describe-variant-preserves v = Eq.trans (describe-variant-preserves-i v) (Eq.sym (semeq _ (describe-variant v)))
-
-
 ```
 
 

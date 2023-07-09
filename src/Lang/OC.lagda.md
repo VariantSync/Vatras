@@ -104,27 +104,24 @@ WFOCL = record
   }
 ```
 
-## Translations
-
-Idea:
-
-1. Prove completeness of core choice calculus as written on my note slides. Use n-ary choice calculus or ADDs for that to put all vairants into one big choice.
-2. Prove incompleteness of option calculus. This is done below.
-3. By (1) and transitivity of our translation we conclude that binary choice calculus is complete.
-4. Prove that there can be no translation from binary choice calculus to option calculus because option calculus is incomplete. Assuming there would be a translation, we could translate a binary cc expression describing our counterexample from (2) which violates (2).
-
-## Soundness
-
 ### Option calculus is unsound
 
-```agda
-
+Option calculus is unsound by construction because the following does not type check.
+The reason is that `⟦_⟧ₒ` produces a `Maybe (Variant ∞ A)` and not a `Variant ∞ A` as required by
+the framework.
+```text
+OCL : VariabilityLanguage
+OCL = record
+  { expression = OC
+  ; configuration = Configuration
+  ; semantics = ⟦_⟧ₒ
+  }
 ```
 
 ### Well-formed option calculus is sound
 
 ```agda
-
+-- TODO (Probably prove via soundness-by-expressiveness (done) and soundness of BCC (todo))
 ```
 
 
