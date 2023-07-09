@@ -5,15 +5,15 @@ open import Relation.Binary.Indexed.Heterogeneous using (
   IRel;
   IsIndexedEquivalence)
 
-module Relations.GeneralizedEquivalence where
+module Util.UnwrapIndexedEquivalence where
 
 {-|
 Unwraps an indexed equivalence.
 -}
-iseq : ∀ {i a ℓ : Level} {I : Set i} {A : I → Set a} {_≈_ : IRel A ℓ}
+unwrap-IndexedEquivalence : ∀ {i a ℓ : Level} {I : Set i} {A : I → Set a} {_≈_ : IRel A ℓ}
   → IsIndexedEquivalence A _≈_
   → ∀ {x : I} → IsEquivalence (_≈_ {x})
-iseq ieq = record
+unwrap-IndexedEquivalence ieq = record
   { refl  = IsIndexedEquivalence.refl  ieq
   ; sym   = IsIndexedEquivalence.sym   ieq
   ; trans = IsIndexedEquivalence.trans ieq

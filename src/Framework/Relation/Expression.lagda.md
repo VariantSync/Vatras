@@ -15,7 +15,7 @@ open import Level using (0ℓ; suc)
 open import Size using (Size)
 
 open import Framework.Definitions
-open import Relations.GeneralizedEquivalence using (iseq)
+open import Util.UnwrapIndexedEquivalence using (unwrap-IndexedEquivalence)
 import Data.IndexedSet as ISet
 ```
 
@@ -107,7 +107,7 @@ infix 5 _≚_
   where open ISet (VariantSetoid _ _) using (≅-refl; ≅-sym; ≅-trans)
 
 ≚-isEquivalence : ∀ {A} {L} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
-≚-isEquivalence = iseq ≚-isIndexedEquivalence
+≚-isEquivalence = unwrap-IndexedEquivalence ≚-isIndexedEquivalence
 
 ≚-setoid : 𝔸 → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
 ≚-setoid A L = record
