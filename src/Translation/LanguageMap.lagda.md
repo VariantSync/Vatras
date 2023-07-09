@@ -43,15 +43,6 @@ import Translation.BCC-to-CCC
 
 -- IN PROGRESS
 import Translation.CCC-to-BCC
-
--- TODO
-import Translation.ADD-to-BCC
-import Translation.BCC-to-ADD
-
--- import Translation.VT-to-BCC
--- import Translation.BCC-to-VT
--- import Translation.VT-to-OC -- impossible
--- import Translation.OC-to-VT
 ```
 
 ## Core Choice Calculus vs Binary Choice Calculus
@@ -80,29 +71,3 @@ open Translation.OC-to-BCC using (
   OC→BCC-is-semantics-preserving
   ) public
 ```
-
-## Algebraic Decision Diagrams vs Binary Choice Calculus
-
-```agda
-open Translation.BCC-to-ADD using (
-  -- ADD-is-at-least-as-expressive-as-BCC
-  ) public
-
-open Translation.ADD-to-BCC using (
-  -- BCC-is-at-least-as-expressive-as-ADD
-  -- ADD→BCC-is-semantics-preserving
-  ) public
-```
-
-## Variation Trees vs Binary Choice Calculus
-
-```agda
--- TODO
-```
-
-## Variation Trees vs Option Calculus
-
-```agda
--- TODO
-```
-
