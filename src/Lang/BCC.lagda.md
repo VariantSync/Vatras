@@ -93,7 +93,7 @@ BCCL = record
 
 ## Properties
 
-Some transformation rules from the GPCE'14 paper:
+Some transformation rules:
 ```agda
 open import Util.AuxProofs using (if-idemp; if-cong)
 open Data.List using ([_])
