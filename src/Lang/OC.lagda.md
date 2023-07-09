@@ -113,6 +113,21 @@ Idea:
 3. By (1) and transitivity of our translation we conclude that binary choice calculus is complete.
 4. Prove that there can be no translation from binary choice calculus to option calculus because option calculus is incomplete. Assuming there would be a translation, we could translate a binary cc expression describing our counterexample from (2) which violates (2).
 
+## Soundness
+
+### Option calculus is unsound
+
+```agda
+
+```
+
+### Well-formed option calculus is sound
+
+```agda
+
+```
+
+
 ## Incompleteness
 
 First, we need some imports.

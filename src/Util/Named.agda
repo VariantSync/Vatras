@@ -2,6 +2,9 @@ module Util.Named where
 
 open import Data.String using (String; _++_)
 
+{-|
+Record to hold a value with a name.
+-}
 record Named {ℓ} (A : Set ℓ) : Set ℓ where
   constructor _called_
   field

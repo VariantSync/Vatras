@@ -3,7 +3,7 @@
 {-
 Module with functions for assisting Agda's type checker
 when it comes to checking sized types.
-Sometimes we need to help a lit with explicit type annotations
+Sometimes we need to help a little with explicit type annotations
 and safe casts.
 
 This module is called juggling because sometimes Agda can magically convert between the two independent types Size and Size< which we can never do manually.

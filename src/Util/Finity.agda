@@ -1,3 +1,9 @@
+{-|
+This module contains definitions for proving
+that a type has a finite amount of instances
+(or might have infinite instances but only a finite
+subset of _unique_ instances w.r.t. to an equivalence relation).
+-}
 module Util.Finity where
 
 open import Data.Nat using (ℕ; suc)

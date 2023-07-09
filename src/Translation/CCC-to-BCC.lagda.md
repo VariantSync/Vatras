@@ -71,8 +71,9 @@ open import Translation.Translation
   using (_⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
 
 open import Axioms.Extensionality
-  using (extensionality; _embeds-via_)
+  using (extensionality)
   renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
+open import Util.Embedding using (_embeds-via_)
 
 open import Util.Existence using (_,_; proj₁; proj₂)
 ```
@@ -233,7 +234,7 @@ toBCC (Artifactₙ a (e ∷ es)) =
 toBCC (D ⟨ es ⟩ₙ) = toBCC-choice-unroll D zero es
 
 open import Data.Nat renaming (_≡ᵇ_ to _nat-≡ᵇ_)
-open import Util.Util using (empty?)
+open import Util.List using (empty?)
 
 update-configuration-converter :
     ConfigurationConverter

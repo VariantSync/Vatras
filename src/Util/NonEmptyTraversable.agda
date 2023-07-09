@@ -1,3 +1,6 @@
+{-|
+Traversable instance on non-empty lists.
+-}
 module Util.NonEmptyTraversable where
 
 open import Function using (_∘_)

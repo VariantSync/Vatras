@@ -84,11 +84,6 @@ to-larger ADD-is-weakenable _ _ e = e
 to-max    ADD-is-weakenable _ _ e = e
 ```
 
-### Translation to Binary Choice Calculus
-
-TODO: Import CC once it has no more holes in it.
-TODO: Prove variant-preserving equivalence.
-
 ## Binary Decision Diagrams
 
 Binary Decision Diagrams (BDDs) are ADDs in which we can only end at true or false.
@@ -97,9 +92,4 @@ Binary Decision Diagrams (BDDs) are ADDs in which we can only end at true or fal
 BDD : Size → Set
 BDD i = ADD i Bool
 ```
-
-Thus, a translation from BDDs to ADDs exists trivially.
-Yet, the inverse does not apply:
-Not every ADD can be translated to a BDD.
-This is proven by the fact that not every data type (e.g., natural numbers `ℕ`) is isomorphic to `Bool` and thus an ADD can describe a set of variants that cannot be described by any BDD.
 

@@ -1,21 +1,18 @@
 module Axioms.Extensionality where
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
-open Eq using (_≗_)
+-- We use extensionality because
+-- the semantic domain of variability languages is a function
+-- and we want to prove these functions equivalent.
 
+open import Axiom.Extensionality.Propositional using (Extensionality)
+
+open import Data.List using (map)
+open import Data.List.Properties using (map-cong)
 open import Function using (_∘_; id)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≗_; refl)
 
 postulate
-  extensionality : ∀ {A B : Set} {f g : A → B}
-    → (∀ (x : A) → f x ≡ g x)
-      -----------------------
-    → f ≡ g
-
-η-equivalence : ∀ {A B : Set} {f : A → B}
-    ---------------
-  → f ≡ λ {x → f x}
-η-equivalence = refl
+  extensionality : ∀ {a b} → Extensionality a b
 
 ≗→≡ : ∀ {A B : Set} {f g : A → B} → f ≗ g → f ≡ g
 ≗→≡ = extensionality
@@ -23,20 +20,9 @@ postulate
 ≡→≗ : ∀ {A B : Set} {f g : A → B} → f ≡ g → f ≗ g
 ≡→≗ f≡g rewrite f≡g = λ x → refl
 
-open import Function.Base using (_∘_)
-open import Data.List using (map)
-open import Data.List.Properties using (map-cong)
-
 map-cong-≗-≡ : ∀ {A B : Set} {f g : A → B} → f ≗ g → map f ≡ map g
-map-cong-≗-≡ f≗g = ≗→≡ (map-cong f≗g)
+map-cong-≗-≡ = ≗→≡ ∘ map-cong
 
 map-cong-≡ : ∀ {A B : Set} {f g : A → B} → f ≡ g → map f ≡ map g
 map-cong-≡ = map-cong-≗-≡ ∘ ≡→≗
 
--- TODO: Put in extra file.
-_embeds-via_ : ∀ {A B : Set}
-  → (to   : A → B)
-  → (from : B → A)
-    --------------
-  → Set
-to embeds-via from = from ∘ to ≗ id

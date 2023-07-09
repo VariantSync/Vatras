@@ -31,7 +31,7 @@ open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂)
 
 open import Definitions
 open import Relations.Semantic
-open import Axioms.Extensionality using (_embeds-via_)
+open import Util.Embedding using (_embeds-via_)
 ```
 
 ## Translations

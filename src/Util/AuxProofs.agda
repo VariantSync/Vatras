@@ -13,11 +13,12 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning
 
+----- Some aritmetic properties
+
 m≤n⇒m<1+n : ∀ (m n : ℕ)
   → m ≤ n
     ---------
   → m < suc n -- suc m ≤ suc n
-
 m≤n⇒m<1+n zero n m≤n = s≤s z≤n
 m≤n⇒m<1+n (suc m) (suc n) sm≤sn = s≤s sm≤sn
 
@@ -47,6 +48,8 @@ m≤n⇒m<1+n (suc m) (suc n) sm≤sn = s≤s sm≤sn
     suc m-1 ∸ n
   ∎
 
+----- Implementations of the min function.
+
 {-|
 Takes the minium of the two given numbers and proves that the result is smaller than 1 + the first number.
 To prove that the result is smaller than 1 + the second number, use flip to sap the arguments of this function.
@@ -64,11 +67,13 @@ In case the given number is smaller than the given length, the number is returne
 clamp : (n : ℕ) → {NonZero n} → ℕ → Fin n
 clamp (suc n) = minFinFromLimit n
 
-
 clampAt : (n : ℕ) → ℕ → Fin (suc n)
 clampAt _ zero = zero
 clampAt zero (suc _) = zero
 clampAt (suc n) (suc c) = suc (clampAt n c)
+
+
+----- Properties of if_then_else
 
 if-idemp : ∀ {A : Set} {a : A}
   → (c : Bool)
@@ -84,6 +89,8 @@ if-cong : ∀ {A B : Set} {a b : A}
   → (if c then P a else P b) ≡ P (if c then a else b)
 if-cong false _ = refl
 if-cong true  _ = refl
+
+----- Properties of Vectors
 
 module Vec where
   open import Data.List using ([]; _∷_)

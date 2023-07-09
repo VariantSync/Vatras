@@ -1,8 +1,12 @@
+{-|
+Utilities for lists.
+-}
 module Util.List where
 
+open import Data.Bool using (Bool; true; false)
 open import Data.Fin using (Fin)
-open import Data.Nat using (ℕ; suc; zero; NonZero)
-open import Data.List using (List; []; _∷_; lookup; length)
+open import Data.Nat using (ℕ; suc; zero; NonZero; _⊔_)
+open import Data.List using (List; []; _∷_; lookup; length; foldr)
 open import Data.List.Properties using (map-id)
 open import Data.List.NonEmpty using (List⁺; _∷_; toList) renaming (map to map⁺)
 open import Util.AuxProofs using (minFinFromLimit; clamp)
@@ -10,6 +14,15 @@ open import Function using (id; _∘_; flip)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning
+
+-- true iff the given list is empty
+empty? : ∀ {A : Set} → List A → Bool
+empty? [] = true
+empty? (_ ∷ _) = false
+
+max : List ℕ → ℕ
+max = foldr _⊔_ zero
+
 
 -- Selects the alternative at the given tag.
 lookup-clamped : {A : Set} → ℕ → List⁺ A → A
