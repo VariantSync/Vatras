@@ -51,52 +51,54 @@ open Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 ```
 
-## Zipper
+## Intermediate Language
 
-For the translation of options, we have to remember OC→BCCd children within the subtree we are currently translating.
-Therefore, we introduce a (partial) zipper.
-The zipper remembers the last artefact above our currently OC→BCCd subtree.
+For the translation of options, we have to remember translated children within the subtree we are currently translating.
+Therefore, we introduce an intermediate language Zip (because it loosely resembles zippers from function programming).
+The zipper remembers the last artifact above our currently translated subtree.
 This artifact always exists in a well-formed option calculus expression.
 The current parent will always be an artifact because it will never be an option because whenever we visit an option, we swap it with the artifact above.
-Said artifact will then be the parent of the OC→BCCd children again.
+Said artifact will then be the parent of the translated children again.
 
-The zipper stores the children of the currently OC→BCCd subtree.
-It keeps track of which children have already been OC→BCCd and which have not.
+The zipper stores the children of the currently translated subtree.
+It keeps track of which children have already been translated and which have not.
 The idea is that the zipper wanders through the children from left to right, translating one child at a time.
-In the beginning, no child of the parent artifact has been OC→BCCd:
+In the beginning, no child of the parent artifact has been translatedd:
 
-    [] ◀ e₁ ∷ e₂ ∷ e₃ ∷ ... ∷ eₙ
+    [] ≪ e₁ ∷ e₂ ∷ e₃ ∷ ... ∷ eₙ
 
-then, step by step, each child get's OC→BCCd:
+then, step by step, each child get's translated:
 
-    b₁ ∷ [] ◀ e₂ ∷ e₃ ∷ ... ∷ eₙ
-    b₁ ∷ b₂ ∷ [] ◀ e₃ ∷ ... ∷ eₙ
-    b₁ ∷ b₂ ∷ b₃ ∷ [] ◀ ... ∷ eₙ
+    b₁ ∷ [] ≪ e₂ ∷ e₃ ∷ ... ∷ eₙ
+    b₁ ∷ b₂ ∷ [] ≪ e₃ ∷ ... ∷ eₙ
+    b₁ ∷ b₂ ∷ b₃ ∷ [] ≪ ... ∷ eₙ
     ...
-    b₁ ∷ b₂ ∷ b₃ ∷ ... ∷ bₙ ◀ []
+    b₁ ∷ b₂ ∷ b₃ ∷ ... ∷ bₙ ≪ []
 
-The zipper is parameterized in a natural number that is the amount of children yet to OC→BCC.
+The zipper is parameterized in a natural number that is the amount of children yet to translate.
 
-This is in fact working just like "map" does on lists but we need the zipper to remember the already OC→BCCd siblings to OC→BCC options.
+This is in fact working just like "map" does on lists but we need the zipper to remember the already translated siblings to translate options.
 
 The zipper does not store enough information to fully restore a tree from the current focus.
 This limitation is intended to keep the structure as simple as possible and only as complex as necessary.
 ```agda
 record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
-  constructor _-<_◀_>- --\T
+  -- In the paper, we write _⦇_≪_⦈ for this constructor.
+  -- However, in Agda, using ⦇ and ⦈ is forbidden.
+  constructor _-<_≪_>- --\T
   field
     parent    : A
     siblingsL : List (BCC ∞ A)
     siblingsR : Vec (OC i A) work
 open Zip public
-infix 4 _-<_◀_>-
+infix 4 _-<_≪_>-
 
 -- Curiously, Zip is itself a variability language (parameterized in the remaining work to do).
 Zip-is-𝕃 : ℕ → 𝕃
 Zip-is-𝕃 = Zip
 
 ⟦_⟧ₜ : ∀ {w : ℕ} → Semantics (Zip w) Confₒ
-⟦ a -< ls ◀ rs >- ⟧ₜ c =
+⟦ a -< ls ≪ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
    in Artifactᵥ a (⟦ls⟧ ++ ⟦rs⟧)
@@ -123,7 +125,7 @@ data _⊢_⟶ₒ_ where
       {a  : A}
       {ls : List (BCC ∞ A)}
       --------------------------------------
-    → i ⊢ a -< ls ◀ [] >- ⟶ₒ Artifact₂ a ls
+    → i ⊢ a -< ls ≪ [] >- ⟶ₒ Artifact₂ a ls
 
   {-|
   If the next expression to OC→BCC is an artifact,
@@ -140,10 +142,10 @@ data _⊢_⟶ₒ_ where
       {rs  : Vec  (OC (↑ i) A) n}
       {e₁  : BCC ∞ A}
       {e₂  : BCC ∞ A}
-    →   i ⊢ b -< [] ◀ (fromList es) >-       ⟶ₒ e₁
-    → ↑ i ⊢ a -< ls ∷ʳ e₁ ◀ rs >-            ⟶ₒ e₂
+    →   i ⊢ b -< [] ≪ (fromList es) >-       ⟶ₒ e₁
+    → ↑ i ⊢ a -< ls ∷ʳ e₁ ≪ rs >-            ⟶ₒ e₂
       ---------------------------------------------
-    → ↑ i ⊢ a -< ls ◀ Artifactₒ b es ∷ rs >- ⟶ₒ e₂
+    → ↑ i ⊢ a -< ls ≪ Artifactₒ b es ∷ rs >- ⟶ₒ e₂
 
   {-|
   If the next expression to OC→BCC is an option,
@@ -163,10 +165,10 @@ data _⊢_⟶ₒ_ where
       {rs  : Vec (OC (↑ i) A) n}
       {eᵒ⁻ʸ : BCC ∞ A}
       {eᵒ⁻ⁿ : BCC ∞ A}
-    → ↑ i ⊢ a -< ls ◀ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ
-    → ↑ i ⊢ a -< ls ◀     rs >-       ⟶ₒ eᵒ⁻ⁿ
+    → ↑ i ⊢ a -< ls ≪ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ
+    → ↑ i ⊢ a -< ls ≪     rs >-       ⟶ₒ eᵒ⁻ⁿ
       ----------------------------------------------------
-    → ↑ i ⊢ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟶ₒ O ⟨ eᵒ⁻ʸ , eᵒ⁻ⁿ ⟩
+    → ↑ i ⊢ a -< ls ≪ O ❲ e ❳ ∷ rs >- ⟶ₒ O ⟨ eᵒ⁻ʸ , eᵒ⁻ⁿ ⟩
 
 data _⟶_  :
   ∀ {i : Size} {A : 𝔸}
@@ -181,7 +183,7 @@ data _⟶_ where
       {a  : A}
       {es : List (OC i A)}
       {e  : BCC ∞ A}
-    → i ⊢ a -< [] ◀ (fromList es) >- ⟶ₒ e
+    → i ⊢ a -< [] ≪ (fromList es) >- ⟶ₒ e
       ------------------------------------
     → Root a es ⟶ e
 ```
@@ -200,7 +202,7 @@ Every OC expression is OC→BCCd to at most one BCC expression.
                      (T-artifact ⟶e₂ ⟶b')
                      rewrite (⟶ₒ-is-deterministic ⟶e₁ ⟶e₂)
                      = ⟶ₒ-is-deterministic ⟶b ⟶b'
-⟶ₒ-is-deterministic {z = a -< ls ◀ O ❲ _ ❳ ∷ _ >- } (T-option ⟶l₁ ⟶r₁) (T-option ⟶l₂ ⟶r₂) =
+⟶ₒ-is-deterministic {z = a -< ls ≪ O ❲ _ ❳ ∷ _ >- } (T-option ⟶l₁ ⟶r₁) (T-option ⟶l₂ ⟶r₂) =
   let l₁≡l₂ = ⟶ₒ-is-deterministic ⟶l₁ ⟶l₂
       r₁≡r₂ = ⟶ₒ-is-deterministic ⟶r₁ ⟶r₂
    in Eq.cong₂ (O ⟨_,_⟩) l₁≡l₂ r₁≡r₂
@@ -235,19 +237,19 @@ totalₒ {b = b} r = b , r
   → (e : Zip n i A)
     ---------------
   → Totalₒ e
-⟶ₒ-is-total (a -< ls ◀ [] >-) = totalₒ T-done
-⟶ₒ-is-total (a -< ls ◀ Artifactₒ b es ∷ rs >-) =
+⟶ₒ-is-total (a -< ls ≪ [] >-) = totalₒ T-done
+⟶ₒ-is-total (a -< ls ≪ Artifactₒ b es ∷ rs >-) =
   -- We must use "let" here and should not use "with".
   -- "with" forgets some information (I don't know what exactly) that
   -- makes the termination checker fail.
-  let recursion-on-children-is-total = ⟶ₒ-is-total (b -< [] ◀ fromList es >-)
+  let recursion-on-children-is-total = ⟶ₒ-is-total (b -< [] ≪ fromList es >-)
       e₁   = proj₁ recursion-on-children-is-total
       ⟶e₁ = proj₂ recursion-on-children-is-total
-      ⟶e₂ = proj₂ (⟶ₒ-is-total (a -< ls ∷ʳ e₁ ◀ rs >-))
+      ⟶e₂ = proj₂ (⟶ₒ-is-total (a -< ls ∷ʳ e₁ ≪ rs >-))
    in totalₒ (T-artifact ⟶e₁ ⟶e₂)
-⟶ₒ-is-total (a -< ls ◀ O ❲ e ❳ ∷ rs >-)
-  with ⟶ₒ-is-total (a -< ls ◀ e ∷ rs >-)
-     | ⟶ₒ-is-total (a -< ls ◀     rs >-)
+⟶ₒ-is-total (a -< ls ≪ O ❲ e ❳ ∷ rs >-)
+  with ⟶ₒ-is-total (a -< ls ≪ e ∷ rs >-)
+     | ⟶ₒ-is-total (a -< ls ≪     rs >-)
 ...  | _ , ⟶eᵒ⁻ʸ | _ , ⟶eᵒ⁻ⁿ = totalₒ (T-option ⟶eᵒ⁻ʸ ⟶eᵒ⁻ⁿ)
 
 ⟶-is-total : ∀ {i} {A}
@@ -255,7 +257,7 @@ totalₒ {b = b} r = b , r
     --------------
   → Total e
 ⟶-is-total (Root a es) =
-  let rec = ⟶ₒ-is-total (a -< [] ◀ fromList es >-)
+  let rec = ⟶ₒ-is-total (a -< [] ≪ fromList es >-)
    in proj₁ rec , T-root (proj₂ rec)
 ```
 
@@ -300,11 +302,11 @@ Since Agda fails here, we have to avoid the re- and unpacking below T-root and t
 preserves-without-T-root :
   ∀ {i} {A} {b : A} {es : List (OC i A)} {e : BCC ∞ A}
   → (c : Confₒ)
-  → (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
+  → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ------------------------------------------
   → ⟦ Root b es ⟧ c ≡ ⟦ e ⟧₂ c
 preserves-without-T-root {b = b} {es = es} {e = e} c ⟶e =
-  let z = b -< [] ◀ (fromList es) >-
+  let z = b -< [] ≪ (fromList es) >-
   in begin
        ⟦ Root b es ⟧ c
      ≡⟨⟩
@@ -329,7 +331,7 @@ preservesₒ-artifact :
     {es  : List (OC i A)}
     {e   : BCC ∞ A}
   → (rs  : List (Variant ∞ A))
-  → (⟶e : i ⊢ b -< [] ◀ fromList es >- ⟶ₒ e)
+  → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ----------------------------------------------------------------
   →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
     ≡ (map (flip ⟦_⟧₂ c) (ls ++ e ∷ [])) ++ rs
@@ -380,7 +382,7 @@ Actual proofs:
 preservesₒ c (T-done {a = a} {ls = ls}) =
   let m = map (flip ⟦_⟧₂ c) ls
    in begin
-        ⟦ a -< ls ◀ [] >- ⟧ₜ c
+        ⟦ a -< ls ≪ [] >- ⟧ₜ c
       ≡⟨⟩
         Artifactᵥ a (m ++ [])
       ≡⟨ Eq.cong (Artifactᵥ a) (++-identityʳ m) ⟩
@@ -390,7 +392,7 @@ preservesₒ c (T-done {a = a} {ls = ls}) =
       ∎
 preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ = e₁} {e₂ = e₂} ⟶e ⟶b) =
   let all-rs = Artifactₒ b es ∷ rs
-      z      = a -< ls ◀ all-rs >-
+      z      = a -< ls ≪ all-rs >-
       map₂   = map (flip ⟦_⟧₂ c)
    in begin
         ⟦ z ⟧ₜ c
@@ -401,7 +403,7 @@ preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ =
       ≡⟨ Eq.cong (Artifactᵥ a) (preservesₒ-artifact (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩ -- prove that we can make a step
         Artifactᵥ a (map₂ (ls ++ e₁ ∷ []) ++ ⟦ toList rs ⟧ₒ-recurse c)
       ≡⟨⟩
-        ⟦ a -< ls ∷ʳ e₁ ◀ rs >- ⟧ₜ c
+        ⟦ a -< ls ∷ʳ e₁ ≪ rs >- ⟧ₜ c
       ≡⟨ preservesₒ c ⟶b ⟩ -- apply induction hypothesis
         ⟦ e₂ ⟧₂ c
       ∎
@@ -409,18 +411,18 @@ preservesₒ c (T-option {a = a} {O = O} {e = e} {ls = ls} {rs = rs} {eᵒ⁻ʸ 
 ... | true  = begin
                 Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ map (flip ⟦_⟧ₒ c) (toList rs))))
               ≡⟨ preservesₒ-option-size e ⟩ -- prove that size constraint on e does not matter for ⟦_⟧ₒ
-                ⟦ a -< ls ◀ e ∷ rs >- ⟧ₜ c
+                ⟦ a -< ls ≪ e ∷ rs >- ⟧ₜ c
               ≡⟨ preservesₒ c ⟶ey ⟩ -- apply induction hypothesis
                 ⟦ ey ⟧₂ c
               ∎
 ... | false = begin
-                ⟦ a -< ls ◀ rs >- ⟧ₜ c
+                ⟦ a -< ls ≪ rs >- ⟧ₜ c
               ≡⟨ preservesₒ c ⟶en ⟩ -- apply induction hypothesis
                 ⟦ en ⟧₂ c
               ∎
 
 preserves {b = b} {e = Root a es} c (T-root z⟶b) =
-  let z = a -< [] ◀ (fromList es) >-
+  let z = a -< [] ≪ (fromList es) >-
    in begin
         ⟦ Root a es ⟧ c
       ≡⟨⟩
