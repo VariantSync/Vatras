@@ -52,11 +52,6 @@ open import Util.List using (find-or-last) --lookup-clamped)
 
 ## Syntax
 
-Let's define core choices calculus as defined in Eric's phd thesis.
-To prove that our functions terminate and thus prove that our proofs are not self-referential and sound inductions, we extend the definition of the core choice calculus by a size parameter.
-The size parameter is an upper bound for nesting depth of a choice calculus expression.
-In the constructors, j denotes an upper bound for the nesting depth of children.
-(Martin and Eric established a similar bound for termination checking in their TOSEM paper (p.17).)
 ```agda
 Tag : Set
 Tag = ℕ

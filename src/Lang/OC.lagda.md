@@ -36,7 +36,6 @@ infixl 6 _❲_❳
 
 An expression is well-formed if there is an artifact at the root.
 Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbole for the empty variant in the semantic domain (which most languages do not require).
-This is issue is more deeply discussed in Paul's slides on option calculus.
 ```agda
 data WFOC : 𝕃 where
   Root : ∀ {i : Size} {A : Set} →

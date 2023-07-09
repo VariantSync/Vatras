@@ -108,7 +108,7 @@ For example, when generating names by appending tick marks, we may get `toBCC (D
 We identified two possible ways to ensure that new generated names do not collide with existing dimension names:
 
 1. Bake uniqueness into the type-level by using a different type for dimension in the output expression: Values of the new type would ensure that these values were never part of the original input expression. However, this is very intrusive into the language design and introduces complexity for all matters other than conversion to binary normal form. It also obfuscates the language design for an easier solution to this particular problem. That is why we choose the second alternative below.
-2. Ensure that any new dimension name does not collide (as shown in the example above). Collision can either occur with names from the input formula or in the output formula. When generating a new name, we can only guarantee that it does not collide with another name in the input formula by comparing it to every name in the input formula. This is an intricate process, vastly complicating proofs. Another strategy would be to ensure that any generated name in the output formula collides exactly with those names in the output formula for which both respective dimensions in the input formula collided. For example, when transforming `D⟨D⟨x, y, z⟩, A⟨u, v, w⟩, n⟩`, we have to introduce new dimensions for `D` and `A` because these have arity greater 2. For both occurences of `D`, the generated dimension has to have the same name to ensure choice synchronization (see Erics PhD thesis). And these two names must collide in the output but must not collide with any other name. For example, `D⟨D⟨x, D'⟨y, z⟩⟩, D'⟨A⟨u, A'⟨v, w⟩⟩, n⟩⟩` would be valid but the generated name `D'` can still collide with names for the input formula.
+2. Ensure that any new dimension name does not collide (as shown in the example above). Collision can either occur with names from the input formula or in the output formula. When generating a new name, we can only guarantee that it does not collide with another name in the input formula by comparing it to every name in the input formula. This is an intricate process, vastly complicating proofs. Another strategy would be to ensure that any generated name in the output formula collides exactly with those names in the output formula for which both respective dimensions in the input formula collided. For example, when transforming `D⟨D⟨x, y, z⟩, A⟨u, v, w⟩, n⟩`, we have to introduce new dimensions for `D` and `A` because these have arity greater 2. For both occurences of `D`, the generated dimension has to have the same name to ensure choice synchronization. And these two names must collide in the output but must not collide with any other name. For example, `D⟨D⟨x, D'⟨y, z⟩⟩, D'⟨A⟨u, A'⟨v, w⟩⟩, n⟩⟩` would be valid but the generated name `D'` can still collide with names for the input formula.
 
 To prevent collisions of names, we (1) rename every dimension in the input in a consistent way and (2) also generate new names following this way. This allows us to ensure that generated names do not collide with other existing names.
 The idea is to append an index to every dimension that indicates the tag that had to be chosen in the input formula to pick that choice's left alternative.
@@ -142,7 +142,7 @@ Here is an informal proof that using `indexedDim` to rename every dimension does
       Thus, both A and G originate from the same dimension in the input formula.
       This contradicts our assumption that G collided.
 
-To prove that a translation from choice calculus to binary normal form is semantics-preserving, we have to show that both, the input as well as the output expression, describe the same set of variants (just as we did earlier for the inverse translation).
+Ti prove that a translation from choice calculus to binary normal form is semantics-preserving, we have to show that both, the input as well as the output expression, describe the same set of variants (just as we did earlier for the inverse translation).
 As we will see later, this requires us to not only translate an expression from n-ary to binary form, but also configurations.
 Our implementation of the translation thus takes an n-ary choice calculus expression as input and yields two results: (1) a converter that can translate configurations for the input formula to configurations for the output formula and vice versa, and (2) the expression in binary normal form.
 To define the configuration converter, we use the state monad that keeps track of our current progress of translating configurations.
@@ -334,12 +334,6 @@ CCC→BCC-is-variant-preserving e = CCC→BCC-left (Framework.Definitions.get e)
 BCC-is-at-least-as-expressive-as-CCC : BCCL ≽ CCCL
 BCC-is-at-least-as-expressive-as-CCC = expressiveness-by-translation CCC→BCC CCC→BCC-is-variant-preserving
 ```
-
-Comments by Jeff:
-
-    I would think the state monad would need to keep track of proofs on the state for each bind.
-    I had something like this in mind: https://idris2.readthedocs.io/en/latest/tutorial/interp.html
-    which keeps a state of proofs for each term in the interpreter state. Then each proof is that the term is well typed
 
 #### Proof of the left side
 
