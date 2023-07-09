@@ -37,11 +37,11 @@ open Eq
   using (_≡_; refl)
 
 -- Imports of own modules
-open import Lang.Annotation.Name using (Dimension)
-open import Definitions using (
-  Domain;
-  Variant; Artifactᵥ; VSet; forget-last; VariantSetoid;
-  VarLang; ConfLang; VariabilityLanguage;
+open import Framework.Annotation.Name using (Dimension)
+open import Framework.Definitions using (
+  𝔸;
+  Variant; Artifactᵥ; VMap; forget-last; VariantSetoid;
+  𝕃; ℂ; VariabilityLanguage;
   Semantics;
   fromExpression; Artifactˡ;
   forget-variant-size; sequence-forget-size)
@@ -61,22 +61,22 @@ In the constructors, j denotes an upper bound for the nesting depth of children.
 Tag : Set
 Tag = ℕ
 
-data CCC : VarLang where
+data CCC : 𝕃 where
   Artifact : Artifactˡ CCC
-  _⟨_⟩ : ∀ {i : Size} {A : Domain} →
+  _⟨_⟩ : ∀ {i : Size} {A : 𝔸} →
     Dimension → List⁺ (CCC i A) → CCC (↑ i) A
 ```
 
 Smart constructors for plain artifacts.
 Any upper bound is fine but we are at least 1 deep.
 ```agda
-leaf : ∀ {i : Size} {A : Domain} → A → CCC (↑ i) A
+leaf : ∀ {i : Size} {A : 𝔸} → A → CCC (↑ i) A
 leaf a = Artifact a []
 
-leaves : ∀ {i : Size} {A : Domain} → List⁺ A → List⁺ (CCC (↑ i) A)
+leaves : ∀ {i : Size} {A : 𝔸} → List⁺ A → List⁺ (CCC (↑ i) A)
 leaves = map⁺ leaf
 
--- upcast : ∀ {i : Size} {j : Size< i} {A : Domain} → CCC j A → CCC i A
+-- upcast : ∀ {i : Size} {j : Size< i} {A : 𝔸} → CCC j A → CCC i A
 -- upcast e = e
 ```
 
@@ -95,7 +95,7 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 
 First, we define configurations as functions that evaluate dimensions by tags, according to Eric's phd thesis:
 ```agda
-Configuration : ConfLang
+Configuration : ℂ
 Configuration = Dimension → Tag
 ```
 
@@ -105,7 +105,7 @@ This allows us to introduce complex error handling and we cannot easily define a
 
 ```agda
 -- Selects the alternative at the given tag.
-choice-elimination : ∀ {A : Domain} → Tag → List⁺ A → A
+choice-elimination : ∀ {A : 𝔸} → Tag → List⁺ A → A
 choice-elimination = find-or-last
 
 {-|
@@ -136,22 +136,22 @@ D⟨e⟩≣e _ = refl
 
 -- -- other way to prove the above via variant-equivalence
 
-D⟨e⟩⊆e : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+D⟨e⟩⊆e : ∀ {i : Size} {A : 𝔸} {e : CCC i A} {D : Dimension}
     -------------------------------
   → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ⊆ᵥ e
 D⟨e⟩⊆e c = c , refl
 
-e⊆D⟨e⟩ : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+e⊆D⟨e⟩ : ∀ {i : Size} {A : 𝔸} {e : CCC i A} {D : Dimension}
     -------------------------------
   → CCCL , CCCL ⊢ e ⊆ᵥ D ⟨ e ∷ [] ⟩
 e⊆D⟨e⟩ c = c , refl
 
-D⟨e⟩≚e : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+D⟨e⟩≚e : ∀ {i : Size} {A : 𝔸} {e : CCC i A} {D : Dimension}
     ------------------------------
   → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e {i} {A} {e} {D} = D⟨e⟩⊆e {i} {A} {e} {D} , e⊆D⟨e⟩ {i} {A} {e} {D}
 
-D⟨e⟩≚e' : ∀ {i : Size} {A : Domain} {e : CCC i A} {D : Dimension}
+D⟨e⟩≚e' : ∀ {i : Size} {A : 𝔸} {e : CCC i A} {D : Dimension}
     ------------------------------
   → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≚ e
 D⟨e⟩≚e' {i} {A} {e} {D} =
@@ -193,7 +193,7 @@ open Eq.≡-Reasoning
 open import Function using (id; _∘_)
 open import Data.List.Properties using (map-∘; map-id; map-cong)
 
-describe-variant : ∀ {i : Size} {A : Domain} → Variant i A → CCC i A
+describe-variant : ∀ {i : Size} {A : 𝔸} → Variant i A → CCC i A
 describe-variant (Artifactᵥ a vs) = Artifact a (map describe-variant vs)
 
 ---- Proof for preservation of describe-variant
@@ -225,7 +225,7 @@ describe-variant-preserves {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifac
 Alternative definition of the semantics.
 The function does exactly the same as ⟦_⟧ but remembers that 
 -}
-⟦_⟧-i : ∀ {i : Size} {A : Domain} → CCC i A → Configuration → Variant i A
+⟦_⟧-i : ∀ {i : Size} {A : 𝔸} → CCC i A → Configuration → Variant i A
 ⟦ Artifact a es ⟧-i c = Artifactᵥ a (map (flip ⟦_⟧-i c) es)
 ⟦ (D ⟨ alternatives ⟩) ⟧-i c = ⟦ choice-elimination (c D) alternatives ⟧-i c
 

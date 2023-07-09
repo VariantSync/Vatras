@@ -15,15 +15,15 @@ open import Test.Example using (_example:_)
 open import Test.Examples.Variants
 open import Test.UnitTest
 
-open import Definitions using (VSet)
+open import Framework.Definitions using (VMap)
 open import Lang.VariantList as VL using (Configuration; ⟦_⟧)
 
-test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VSet A n)
+test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VMap A n)
 test-encode-conf {A} i 𝕍 =
   let open VL.Complete A using (encode; conf)
    in ⟦ encode 𝕍 ⟧ (conf i) ≡ 𝕍 i
 
-test-encode-fnoc : ∀ {A n} → Configuration → UnitTest (VSet A n)
+test-encode-fnoc : ∀ {A n} → Configuration → UnitTest (VMap A n)
 test-encode-fnoc {A} c 𝕍 =
   let open VL.Complete A using (encode; fnoc)
    in ⟦ encode 𝕍 ⟧ c ≡ 𝕍 (fnoc c)

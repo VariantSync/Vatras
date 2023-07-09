@@ -34,8 +34,8 @@ open Eq.≡-Reasoning
   using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 -- own modules
-open import Lang.Annotation.Name using (Dimension)
-open import Definitions hiding ([_])
+open import Framework.Annotation.Name using (Dimension)
+open import Framework.Definitions hiding ([_])
 open import Relations.Semantic using (_⊢_≣_)
 ```
 
@@ -44,9 +44,9 @@ open import Relations.Semantic using (_⊢_≣_)
 In the following we formalize the binary normal forms for choice calculus. We express a normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system. Our goal is to prove that every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
 
 ```agda
-data BCC : VarLang where
+data BCC : 𝕃 where
   Artifact : Artifactˡ BCC
-  _⟨_,_⟩ : ∀ {i : Size} {A : Domain} →
+  _⟨_,_⟩ : ∀ {i : Size} {A : 𝔸} →
     Dimension → BCC i A → BCC i A → BCC (↑ i) A
 ```
 
@@ -70,7 +70,7 @@ Tag = Bool
 left  = true
 right = false
 
-Configuration : ConfLang
+Configuration : ℂ
 Configuration = Dimension → Tag
 
 {-
@@ -78,7 +78,7 @@ This is the semantics for choice calculus as defined in
 "Projectional Editing of Variational Software, Walkingshaw and Ostermann, GPCE'14"
 with the minor simplification of using booleans instead of selectors for dimensions.
 -}
--- ⟦_⟧ : ∀ {i : Size} {A : Domain} → BCC i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → BCC i A → Configuration → Variant i A
 ⟦_⟧ : Semantics BCC Configuration
 ⟦ Artifact a es ⟧ c = Artifactᵥ a (mapl (flip ⟦_⟧ c) es)
 ⟦ D ⟨ l , r ⟩ ⟧ c = ⟦ if (c D) then l else r ⟧ c
@@ -117,7 +117,7 @@ ast-factoring-1  {_} {D} {a} {x} {y} c =
     ⟦ Artifact a [ D ⟨ x , y ⟩ ] ⟧ c
   ∎
 
-ast-factoring : ∀ {i : Size} {A : Domain} {D : Dimension} {a : A} {n : ℕ}
+ast-factoring : ∀ {i : Size} {A : 𝔸} {D : Dimension} {a : A} {n : ℕ}
   → (xs ys : Vec (BCC i A) n)
     -------------------------------------------------------------------------------------
   → BCCL ⊢
@@ -156,13 +156,13 @@ We know this by identity for all children in p and t.
 for e and e′, we know it per assumption.
 -}
 
-choice-l-congruence : ∀ {i j k : Size} {A : Domain} {D : Dimension} {eₗ eₗ′ eᵣ : BCC i A}
+choice-l-congruence : ∀ {i j k : Size} {A : 𝔸} {D : Dimension} {eₗ eₗ′ eᵣ : BCC i A}
   → BCCL ⊢ eₗ ≣ eₗ′
     ---------------------------------------
   → BCCL ⊢ D ⟨ eₗ , eᵣ ⟩ ≣ D ⟨ eₗ′ , eᵣ ⟩
 choice-l-congruence eₗ≡eₗ′ = {!!}
 
-choice-r-congruence : ∀ {i j k : Size} {A : Domain} {D : Dimension} {eₗ eᵣ eᵣ′ : BCC i A}
+choice-r-congruence : ∀ {i j k : Size} {A : 𝔸} {D : Dimension} {eₗ eᵣ eᵣ′ : BCC i A}
   → BCCL ⊢ eᵣ ≣ eᵣ′
     ---------------------------------------
   → BCCL ⊢ D ⟨ eₗ , eᵣ ⟩ ≣ D ⟨ eₗ , eᵣ′ ⟩
@@ -172,7 +172,7 @@ choice-r-congruence eₗ≡eₗ′ = {!!}
 ## Semantic Preserving Transformations
 
 ```agda
-open Lang.Annotation.Name using (_==_)
+open Framework.Annotation.Name using (_==_)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Translation.Translation using (EndoTranslation)
 
@@ -184,7 +184,7 @@ refine scope D b D' = if D == D'
                       then just b
                       else scope D'
 
-eliminate-redundancy-in : ∀ {i : Size} {A : Domain} → Scope → BCC i A → BCC i A
+eliminate-redundancy-in : ∀ {i : Size} {A : 𝔸} → Scope → BCC i A → BCC i A
 eliminate-redundancy-in scope (Artifact a es) = Artifact a (mapl (eliminate-redundancy-in scope) es)
 eliminate-redundancy-in scope (D ⟨ l , r ⟩) with scope D
 ... | just true  = eliminate-redundancy-in scope l
@@ -193,7 +193,7 @@ eliminate-redundancy-in scope (D ⟨ l , r ⟩) with scope D
                      , eliminate-redundancy-in (refine scope D false) r
                      ⟩
 
-eliminate-redundancy : ∀ {i : Size} {A : Domain} → BCC i A → BCC i A
+eliminate-redundancy : ∀ {i : Size} {A : 𝔸} → BCC i A → BCC i A
 eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
 Redundancy-Elimination : EndoTranslation BCCL
@@ -210,10 +210,10 @@ Redundancy-Elimination e = record
 open import Util.SizeJuggle using (Bounded; Weaken; to-larger; to-max)
 
 -- todo: move these boundes definition to BCC file
-BCC-is-bounded : ∀ Domain → Bounded
+BCC-is-bounded : ∀ 𝔸 → Bounded
 BCC-is-bounded A i = BCC i A
 
-BCC-is-weakenable : ∀ {A : Domain} → Weaken (BCC-is-bounded A)
+BCC-is-weakenable : ∀ {A : 𝔸} → Weaken (BCC-is-bounded A)
 to-larger BCC-is-weakenable _ _ e = e
 to-max    BCC-is-weakenable _ _ e = e
 ```

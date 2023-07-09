@@ -4,7 +4,7 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 
-module Lang.Properties.Conclude.Soundness where
+module Framework.Properties.Conclude.Soundness where
 
 open import Data.Product using (_,_)
 
@@ -15,15 +15,15 @@ open import Relation.Binary using (IsEquivalence; Symmetric; Decidable)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 
-open import Definitions
+open import Framework.Definitions
 open import Relations.Semantic using (_⊢_≣ᶜ_; ≣ᶜ-IsEquivalence; ≣ᶜ-congruent; _is-at-least-as-expressive-as_)
 
 import Data.IndexedSet
 private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 open import Util.Finity
 
-open import Lang.Properties.Soundness
-open import Lang.Properties.NonEmpty
+open import Framework.Properties.Soundness
+open import Framework.Properties.NonEmpty
 ```
 
 ## Conclusions
@@ -79,7 +79,7 @@ soundness-by-expressiveness {L₁} {L₂} L₁-sound L₂-to-L₁ {A} e₂ with 
   where open ISet A using (_≅_; ≅-trans; ≅-sym)
 
 -- re-export the theorem that we can conclude expressiveness for a complete and a sound language
-open import Lang.Properties.Conclude.Completeness using (
+open import Framework.Properties.Conclude.Completeness using (
   expressiveness-by-completeness-and-soundness
   ) public
 ```

@@ -2,7 +2,7 @@
 {-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 
-open import Definitions
+open import Framework.Definitions
 
 module Relations.Semantic where
 ```
@@ -38,7 +38,7 @@ We consider three kinds of semantic relations between two expressions `a` and `b
 We start with semantic equivalence because it is the easiest to define.
 Any two expressions `a` and `b` in a variability language `L` are equivalent if their semantics `⟦_⟧` are equivalent:
 ```agda
-_≣_ : ∀ {A : Domain} {L : VariabilityLanguage}
+_≣_ : ∀ {A : 𝔸} {L : VariabilityLanguage}
   → (e₁ e₂ : Expression A L)
   → Set
 _≣_ {L = L} e₁ e₂ =
@@ -47,7 +47,7 @@ _≣_ {L = L} e₁ e₂ =
 infix 5 _≣_
 
 -- alias for syntax
-_⊢_≣_ : ∀ {i j : Size} {A : Domain}
+_⊢_≣_ : ∀ {i j : Size} {A : 𝔸}
   → (L : VariabilityLanguage)
   → expression L i A
   → expression L j A
@@ -71,7 +71,7 @@ Semantic equivalence `≣` inherits all properties from structural equality `≡
 
 Obviously, syntactic equality (or rather structural equality) implies semantic equality, independent of the semantics:
 ```agda
-≡→≣ : ∀ {i : Size} {A : Domain} {L : VariabilityLanguage} {a b : expression L i A}
+≡→≣ : ∀ {i : Size} {A : 𝔸} {L : VariabilityLanguage} {a b : expression L i A}
   → a ≡ b
     ----------
   → L ⊢ a ≣ b
@@ -82,7 +82,7 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
 
 Two configurations are equivalent for an expressionwhen they produce the same variants for all expressions.
 ```agda
-_⊢_≣ᶜ_ : ∀ {A : Domain} {L : VariabilityLanguage}
+_⊢_≣ᶜ_ : ∀ {A : 𝔸} {L : VariabilityLanguage}
   → Expression A L
   → (c₁ c₂ : configuration L)
   → Set
@@ -121,7 +121,7 @@ Finally, we formalize translations between languages and show that creating tran
 For most transformations, we are interested in a weaker form of semantic equivalence: Variant-Preserving Equivalence. Each variant that can be derived from the first expression, can also be derived from the second expression and vice versa. We thus first describe the variant-subset relation `⊆ᵥ` and then define variant-equality `≚` as a bi-directional subset.
 The main insight here is that we can compare expressions across languages because they share the same semantic domain: variants.
 ```agda
-_⊆ᵥ_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
+_⊆ᵥ_ : ∀ {A : 𝔸} → IRel (Expression A) 0ℓ
 _⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = semantics L₁ ∘ get
@@ -129,7 +129,7 @@ _⊆ᵥ_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
     open ISet (VariantSetoid _ A) using (_⊆_)
 infix 5 _⊆ᵥ_
 
-_≚_ : ∀ {A : Domain} → IRel (Expression A) 0ℓ
+_≚_ : ∀ {A : 𝔸} → IRel (Expression A) 0ℓ
 _≚_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = semantics L₁ ∘ get
@@ -137,7 +137,7 @@ _≚_ {A} {L₁} {L₂} e₁ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
     open ISet (VariantSetoid _ A) using (_≅_)
 infix 5 _≚_
 
-≚-isIndexedEquivalence : ∀ {A : Domain} → IsIndexedEquivalence (Expression A) _≚_
+≚-isIndexedEquivalence : ∀ {A : 𝔸} → IsIndexedEquivalence (Expression A) _≚_
 ≚-isIndexedEquivalence = record
   { refl  = ≅-refl
   ; sym   = ≅-sym
@@ -148,14 +148,14 @@ infix 5 _≚_
 ≚-isEquivalence : ∀ {A} {L} → IsEquivalence {suc 0ℓ} (_≚_ {A} {L})
 ≚-isEquivalence = iseq ≚-isIndexedEquivalence
 
-≚-setoid : Domain → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
+≚-setoid : 𝔸 → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
 ≚-setoid A L = record
   { Carrier       = Expression A L
   ; _≈_           = _≚_
   ; isEquivalence = ≚-isEquivalence
   }
 
--- ≚-setoid2 : Domain → VariabilityLanguage → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
+-- ≚-setoid2 : 𝔸 → VariabilityLanguage → VariabilityLanguage → Setoid (suc 0ℓ) 0ℓ
 -- ≚-setoid2 A L₁ L₂ = record
 --   { Carrier = Expression A L₁ × Expression A L₂
 --   ; _≈_ = _≚_
@@ -165,18 +165,18 @@ infix 5 _≚_
 
 We introduce some aliases for the above relations that have a more readable syntax when used with concrete expressions:
 ```agda
-_,_⊢_⊆ᵥ_ : ∀ {A : Domain} {i j : Size} → (L₁ L₂ : VariabilityLanguage) → expression L₁ i A → expression L₂ j A → Set
+_,_⊢_⊆ᵥ_ : ∀ {A : 𝔸} {i j : Size} → (L₁ L₂ : VariabilityLanguage) → expression L₁ i A → expression L₂ j A → Set
 L₁ , L₂ ⊢ e₁ ⊆ᵥ e₂ = fromExpression L₁ e₁ ⊆ᵥ fromExpression L₂ e₂
 infix 5 _,_⊢_⊆ᵥ_
 
-_,_⊢_≚_ : ∀ {A : Domain} {i j : Size} → (L₁ L₂ : VariabilityLanguage) → expression L₁ i A → expression L₂ j A → Set
+_,_⊢_≚_ : ∀ {A : 𝔸} {i j : Size} → (L₁ L₂ : VariabilityLanguage) → expression L₁ i A → expression L₂ j A → Set
 L₁ , L₂ ⊢ e₁ ≚ e₂ = fromExpression L₁ e₁ ≚ fromExpression L₂ e₂
 infix 5 _,_⊢_≚_
 ```
 
 Given two variant-equivalent expressions from different languages, we can conclude that their semantics are isomorphic.
 ```agda
-≚→≅ : ∀ {A : Domain} {L₁ L₂ : VariabilityLanguage} {e₁ : Expression A L₁} {e₂ : Expression A L₂}
+≚→≅ : ∀ {A : 𝔸} {L₁ L₂ : VariabilityLanguage} {e₁ : Expression A L₁} {e₂ : Expression A L₂}
   → e₁ ≚ e₂
     -----------------------------------------------
   → (let open ISet (VariantSetoid _ A) using (_≅_)
@@ -188,13 +188,13 @@ Given two variant-equivalent expressions from different languages, we can conclu
 
 Semantic equality implies variant equality:
 ```agda
-≣→⊆ᵥ : ∀ {A : Domain} {L : VariabilityLanguage} {a b : Expression A L}
+≣→⊆ᵥ : ∀ {A : 𝔸} {L : VariabilityLanguage} {a b : Expression A L}
   → a ≣ b
     -------
   → a ⊆ᵥ b
 ≣→⊆ᵥ a≣b c rewrite a≣b c = c , refl
 
-≣→≚ : ∀ {A : Domain} {L : VariabilityLanguage} {a b : Expression A L}
+≣→≚ : ∀ {A : 𝔸} {L : VariabilityLanguage} {a b : Expression A L}
   → a ≣ b
     ------
   → a ≚ b
@@ -212,7 +212,7 @@ We say that a language `L₁` is as expressive as another language `L₂` **iff*
 -- L₁ ⊇ L₂
 _is-at-least-as-expressive-as_ : VariabilityLanguage → VariabilityLanguage → Set₁
 L₁ is-at-least-as-expressive-as L₂ =
-  ∀ {A : Domain} (e₂ : Expression A L₂) →
+  ∀ {A : 𝔸} (e₂ : Expression A L₂) →
       (Σ[ e₁ ∈ Expression A L₁ ]
         (e₂ ≚ e₁))
   -- It would be nice if we could rephrase expressiveness to (semantics L₂) ⊆ (semantics L₁) but I we have to generalize our multisets somehow first to allow keys in the source set.

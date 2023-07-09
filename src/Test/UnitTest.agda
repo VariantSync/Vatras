@@ -13,7 +13,7 @@ open import Function using (_∘_)
 open import Level using (0ℓ; _⊔_; suc)
 open import Size using (Size)
 
-open import Definitions
+open import Framework.Definitions
 open import Translation.Translation
 
 open import Test.Example using (Example; _called_)

@@ -43,7 +43,7 @@ open Eq.≡-Reasoning
 
 -- own modules
 
-open import Lang.Annotation.Name using (Dimension)
+open import Framework.Annotation.Name using (Dimension)
 open import Lang.CCC
   using (CCC; CCCL; choice-elimination)
   renaming (Artifact to Artifactₙ;
@@ -59,13 +59,11 @@ open import Lang.BCC
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import Definitions
+open import Framework.Definitions
 open import Relations.Semantic using (_is-at-least-as-expressive-as_)
 open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
 
-open import Axioms.Extensionality
-  using (extensionality; _embeds-via_)
-  renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
+open import Axioms.Extensionality renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```
 
 ## Translation

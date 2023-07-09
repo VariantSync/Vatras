@@ -29,20 +29,20 @@ open Eq.≡-Reasoning
 
 open import Util.List using (find-or-last)
 
-open import Definitions
+open import Framework.Definitions
 ```
 
 ## Definitions
 
 ```agda
-VariantList : VarLang
+VariantList : 𝕃
 VariantList i A = List⁺ (Variant ∞ A)
 
 -- it would be nice if the confLang would be parameterized in expressions
-Configuration : ConfLang
+Configuration : ℂ
 Configuration = ℕ
 
--- ⟦_⟧ : ∀ {i : Size} {A : Domain} → VariantList i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → VariantList i A → Configuration → Variant i A
 ⟦_⟧ : Semantics VariantList Configuration
 ⟦_⟧ e c = find-or-last c e
 
@@ -59,22 +59,22 @@ VariantListL = record
 ### Completeness
 
 ```agda
-open import Lang.Properties.Completeness
+open import Framework.Properties.Completeness
 
 -- prove completeness via inference rules
-module Complete (A : Domain) where
+module Complete (A : 𝔸) where
   open import Data.IndexedSet (VariantSetoid ∞ A) using (_≅_; ⊆-by-index-translation)
   open import Util.AuxProofs using (clampAt)
 
   private
     variable
       n : ℕ
-      V : VSet A n
+      V : VMap A n
       e : VariantList ∞ A
 
   -- rules for translating a set of variants to a list of variants
   infix 3 _⊢_⟶_
-  data _⊢_⟶_ : (n : ℕ) → VSet A n → VariantList ∞ A → Set where
+  data _⊢_⟶_ : (n : ℕ) → VMap A n → VariantList ∞ A → Set where
     -- a singleton set is translated to a singleton list
     E-zero :
         ------------------------
@@ -86,7 +86,7 @@ module Complete (A : Domain) where
     - remove that first variant from our set of variants
     - translate the rest recursively.
     -}
-    E-suc : ∀ {V : VSet A (suc n)}
+    E-suc : ∀ {V : VMap A (suc n)}
       → n ⊢ (forget-first V) ⟶ e
         -------------------------------
       → suc n ⊢ V ⟶ V zero ∷ toList e
@@ -110,14 +110,14 @@ module Complete (A : Domain) where
 
   {-| Proof that the encoding is total and thus can be computed. -}
   total :
-    ∀ (V : VSet A n)
+    ∀ (V : VMap A n)
       --------------------
     → ∃[ e ] (n ⊢ V ⟶ e)
   total {n = zero}  vs = return E-zero
   total {n = suc n} vs = return (E-suc (proj₂ (total (forget-first vs))))
 
   {-| Encodes a set of variants into a list of variants. -}
-  encode : ∀ (V : VSet A n) → VariantList ∞ A
+  encode : ∀ (V : VMap A n) → VariantList ∞ A
   encode = proj₁ ∘ total
 
   -- translate configs
@@ -189,11 +189,11 @@ VariantList-is-Complete {A} vs =
 ### Soundness
 
 ```agda
-open import Lang.Properties.Soundness
-open import Lang.Properties.Conclude.Soundness using (soundness-by-finite-semantics)
+open import Framework.Properties.Soundness
+open import Framework.Properties.Conclude.Soundness using (soundness-by-finite-semantics)
 open import Relations.Semantic using (_⊢_≣ᶜ_)
 
-module Finity (A : Domain) where
+module Finity (A : 𝔸) where
   open Data.List.NonEmpty using (length)
   open import Function using (Surjective)
 

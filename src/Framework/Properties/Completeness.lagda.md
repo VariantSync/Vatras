@@ -10,7 +10,7 @@
 ## Module
 
 ```agda
-module Lang.Properties.Completeness where
+module Framework.Properties.Completeness where
 ```
 
 ## Imports
@@ -21,7 +21,7 @@ open import Relation.Nullary.Negation  using (¬_)
 open import Size using (∞)
 open import Function using (_∘_)
 
-open import Definitions
+open import Framework.Definitions
 
 import Data.IndexedSet
 private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
@@ -34,7 +34,7 @@ In particular, for every variant `v` in `vs`, there exists a configuration `c` t
 ```agda
 Complete : VariabilityLanguage → Set₁
 Complete L = ∀ {A n}
-  → (vs : VSet A n)
+  → (vs : VMap A n)
     ----------------------------------
   → Σ[ e ∈ Expression A L ]
       (let open ISet A using (_≅_)

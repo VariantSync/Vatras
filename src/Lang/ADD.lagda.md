@@ -20,8 +20,8 @@ open import Data.List using ([])
 open import Data.String using (String)
 open import Size using (Size; ↑_; ∞)
 
-open import Definitions using (VarLang; Domain; Variant; Semantics; VariabilityLanguage)
-open import Lang.Annotation.Name using (Variable)
+open import Framework.Definitions using (𝕃; 𝔸; Variant; Semantics; VariabilityLanguage)
+open import Framework.Annotation.Name using (Variable)
 ```
 
 ## Syntax
@@ -34,17 +34,17 @@ In _A Formal Framework on Software Product Line Analyses_ (FFSPL) and the 1997 A
 {-|
 General algebraic decision diagrams that consists of choices that yield a value of type A.
 -}
-data ADD : VarLang where
-  Terminal : ∀ {i : Size} {A : Domain}
+data ADD : 𝕃 where
+  Terminal : ∀ {i : Size} {A : 𝔸}
     → A → ADD (↑ i) A -- ModelBase in FFSPL
-  Choice : ∀ {i : Size} {A : Domain} →
+  Choice : ∀ {i : Size} {A : 𝔸} →
     Variable → ADD i A → ADD i A → ADD (↑ i) A -- ModelChoice in FFSPL (has a presence condition here instead of a dimension)
 
 {-|
 Type of algebraic decision diagrams that describe variants.
 When employing an ADD as a variability language, then it has to yield a variant.
 -}
-VADD : VarLang
+VADD : 𝕃
 VADD i A = ADD i (Variant ∞ A)
 ```
 
@@ -76,10 +76,10 @@ VADDL = record
 open import Util.SizeJuggle using (Bounded; Weaken; to-larger; to-max)
 
 -- todo: move these boundes definition to BCC file
-ADD-is-bounded : ∀ Domain → Bounded
+ADD-is-bounded : ∀ 𝔸 → Bounded
 ADD-is-bounded A i = ADD i A
 
-ADD-is-weakenable : ∀ {A : Domain} → Weaken (ADD-is-bounded A)
+ADD-is-weakenable : ∀ {A : 𝔸} → Weaken (ADD-is-bounded A)
 to-larger ADD-is-weakenable _ _ e = e
 to-max    ADD-is-weakenable _ _ e = e
 ```

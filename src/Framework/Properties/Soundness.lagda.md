@@ -10,7 +10,7 @@
 ## Module
 
 ```agda
-module Lang.Properties.Soundness where
+module Framework.Properties.Soundness where
 ```
 
 ## Imports
@@ -26,7 +26,7 @@ open import Size using (∞)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
 open import Relation.Nullary.Negation using (¬_)
 
-open import Definitions
+open import Framework.Definitions
 open import Relations.Semantic using (≣ᶜ-setoid)
 
 import Data.IndexedSet
@@ -41,7 +41,7 @@ Sound : VariabilityLanguage → Set₁
 Sound L = ∀ {A}
   → (e : Expression A L)
     ------------------------------
-  → ∃[ n ] (Σ[ vs ∈ VSet A n ]
+  → ∃[ n ] (Σ[ vs ∈ VMap A n ]
       (let open ISet A using (_≅_)
            ⟦_⟧ = semantics L ∘ get
         in vs ≅ ⟦ e ⟧))
@@ -52,7 +52,7 @@ Unsound L = ¬ (Sound L)
 FiniteSemantics : (L : VariabilityLanguage) → Set₁
 FiniteSemantics L = ∀ {A} (e : Expression A L) → FiniteAndNonEmpty (≣ᶜ-setoid e)
 
--- record FiniteSemantics (A : Domain) (L : VariabilityLanguage) : Set₁ where
+-- record FiniteSemantics (A : 𝔸) (L : VariabilityLanguage) : Set₁ where
 --   field
 --     {-|
 --     Computes a lower bound of the number of variants described by a given expression.

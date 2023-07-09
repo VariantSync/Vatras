@@ -20,16 +20,16 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; ∞; ↑_)
-open import Definitions
-open import Lang.Annotation.Name using (Option)
+open import Framework.Definitions
+open import Framework.Annotation.Name using (Option)
 ```
 
 ## Syntax
 
 ```agda
-data OC : VarLang where
+data OC : 𝕃 where
   Artifact : Artifactˡ OC
-  _❲_❳ : ∀ {i : Size} {A : Domain} →
+  _❲_❳ : ∀ {i : Size} {A : 𝔸} →
     Option → OC i A → OC (↑ i) A
 infixl 6 _❲_❳
 ```
@@ -38,7 +38,7 @@ An expression is well-formed if there is an artifact at the root.
 Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbole for the empty variant in the semantic domain (which most languages do not require).
 This is issue is more deeply discussed in Paul's slides on option calculus.
 ```agda
-data WFOC : VarLang where
+data WFOC : 𝕃 where
   Root : ∀ {i : Size} {A : Set} →
     A → List (OC i A) → WFOC (↑ i) A
 ```
@@ -46,10 +46,10 @@ data WFOC : VarLang where
 Well-formedness can be forgotten, meaning that we lose the knowledge that an expression is well-formed in the type-system.
 This knowledge is useful for simplifying function definitions where well-formedness does not matter, such as `show`.
 ```agda
-forgetWF : ∀ {i : Size} {A : Domain} → WFOC i A → OC i A
+forgetWF : ∀ {i : Size} {A : 𝔸} → WFOC i A → OC i A
 forgetWF (Root a es) = Artifact a es
 
-children-wf : ∀ {i : Size} {A : Domain} → WFOC (Size.↑_ i) A → List (OC i A)
+children-wf : ∀ {i : Size} {A : 𝔸} → WFOC (Size.↑_ i) A → List (OC i A)
 children-wf (Root _ es) = es
 ```
 
@@ -92,7 +92,7 @@ open import Function using (flip)
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
--- ⟦_⟧ : ∀ {i : Size} {A : Domain} → WFOC i A → Configuration → Variant i A
+-- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → WFOC i A → Configuration → Variant i A
 ⟦_⟧ : Semantics WFOC Configuration
 ⟦ Root a es ⟧ c = Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
 
@@ -132,7 +132,7 @@ Idea:
 
 First, we need some imports.
 ```agda
-open import Lang.Properties.Completeness using (Incomplete)
+open import Framework.Properties.Completeness using (Incomplete)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product   using (_,_; ∃-syntax)
@@ -149,7 +149,7 @@ As our counter example, we use the set `{0, 1}` as our variants:
 variant-0 = leaf 0
 variant-1 = leaf 1
 
-variants-0-and-1 : VSet ℕ 1
+variants-0-and-1 : VMap ℕ 1
 variants-0-and-1 zero = variant-0
 variants-0-and-1 (suc zero) = variant-1
 ```

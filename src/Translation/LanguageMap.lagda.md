@@ -30,8 +30,8 @@ open import Lang.BCC
 ### Properties and Relations
 
 ```agda
-open import Lang.Properties.Completeness
-open import Lang.Properties.Conclude.Completeness
+open import Framework.Properties.Completeness
+open import Framework.Properties.Conclude.Completeness
 open import Relations.Semantic
 ```
 

@@ -27,8 +27,8 @@ open import Size
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
-open import Definitions
-open import Lang.Annotation.Name using (Dimension)
+open import Framework.Definitions
+open import Framework.Annotation.Name using (Dimension)
 open import Lang.VariantList
   using (VariantList; VariantListL; VariantList-is-Complete)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Cₗ)

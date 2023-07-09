@@ -1,4 +1,4 @@
-module Lang.Annotation.Name where
+module Framework.Annotation.Name where
 
 open import Data.Bool using (Bool)
 open import Data.String using (String)

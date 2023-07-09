@@ -12,7 +12,7 @@ open import Data.String using (String)
 
 open import Size
 
-open import Definitions
+open import Framework.Definitions
 open import Util.Named
 ```
 
@@ -26,21 +26,21 @@ It is a tree associated to a feature.
 FSTName = String
 Feature = String
 
-data FSTNode (T : Set) : Size → Domain → Set where
+data FSTNode (T : Set) : Size → 𝔸 → Set where
   terminal : ∀ {i A}
     → FSTName → T → A → FSTNode T i A -- also has a name usually but we do not need it for the algebra
   inner : ∀ {i} {A}
     → FSTName → T → List⁺ (FSTNode T i A) → FSTNode T (↑ i) A
 
-FST : (T : Set) → VarLang
+FST : (T : Set) → 𝕃
 FST T i A = Named (FSTNode T i A)
 
-record Composer (T : Set) (A : Domain) : Set where
+record Composer (T : Set) (A : 𝔸) : Set where
   constructor composing-via
   field
     compose : ∀ {i j} → FSTNode T i A → FSTNode T j A → FSTNode T ∞ A
 
-record FOP (T : Set) (i : Size) (A : Domain) : Set where
+record FOP (T : Set) (i : Size) (A : 𝔸) : Set where
   constructor [_+_]
   field
     base     : FST T i A

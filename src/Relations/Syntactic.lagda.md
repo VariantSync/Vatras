@@ -10,8 +10,8 @@ module Relations.Syntactic where
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≗_)
 open import Size using (Size)
-open import Axioms.Extensionality using (_embeds-via_)
-open import Definitions
+open import Util.Embedding using (_embeds-via_)
+open import Framework.Definitions
 ```
 
 So far, we covered relations between languages on a semantic level: Can we translate languages such that the translation describes the same set of variants as the original expression.
@@ -26,10 +26,10 @@ So what we want to say is: For every expression `e ∈ L₁`, having some constr
 
 How can we formalized this in Agda though? One idea is to again treat constructors as their own types. A constructor for a variability language `L` is a function that takes some parameter `P` to produce an instance of that type.
 ```agda
-VarLangConstructor : VarLang → Set₁
-VarLangConstructor L = ∀ {i : Size} {A : Domain} {P : Set} → P → L i A
+𝕃Constructor : 𝕃 → Set₁
+𝕃Constructor L = ∀ {i : Size} {A : 𝔸} {P : Set} → P → L i A
 ```
-The set of constructors described by `VarLangConstructor L` for a language `L` is larger though than the actual set of `L`'s constructors as any function producing an `L`-expression would be a `VarLangConstructor L`. The constructors we seek are the "atomic" ones. Any `c : VarLangConstructor L` either is such an atomic constructor or composes an expression by applying atomic constructors one or more times. How can we identify the atomic constructors? This sounds like a job for category theory where we want to find some terminal/initial object.
+The set of constructors described by `𝕃Constructor L` for a language `L` is larger though than the actual set of `L`'s constructors as any function producing an `L`-expression would be a `𝕃Constructor L`. The constructors we seek are the "atomic" ones. Any `c : 𝕃Constructor L` either is such an atomic constructor or composes an expression by applying atomic constructors one or more times. How can we identify the atomic constructors? This sounds like a job for category theory where we want to find some terminal/initial object.
 
 TODO: More thinking. Can we properly express this in Agda? We could also comare constructors by looking at the translations outside of Agda.
 
@@ -38,26 +38,26 @@ TODO: More thinking. Can we properly express this in Agda? We could also comare 
 One observation is that, iff any term `e ∈ L₁` is also a term in `L₂`, then we it can be translated to L₂ and back to L₁ yielding the same term `e`.
 Formalizing this constraint, would not guarantee that a translated term `e₂` is really syntactically equivalent to the original term `e₁` but it would depict that `e₂` contains enough information to recover `e₁` uniquely (but `e₂` might contain more information). This is a one-way isomorphism, also know as an embedding:
 ```agda
-record LanguageEmbedding (L₁ L₂ : VarLang) : Set₁ where
+record LanguageEmbedding (L₁ L₂ : 𝕃) : Set₁ where
   field
-    to   : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ i D
-    from : ∀ {i : Size} {D : Domain} → L₂ i D → L₁ i D
-    from∘to : ∀ {i : Size} {D : Domain} → _embeds-via_ {L₁ i D} {L₂ i D} to from
+    to   : ∀ {i : Size} {D : 𝔸} → L₁ i D → L₂ i D
+    from : ∀ {i : Size} {D : 𝔸} → L₂ i D → L₁ i D
+    from∘to : ∀ {i : Size} {D : 𝔸} → _embeds-via_ {L₁ i D} {L₂ i D} to from
 open LanguageEmbedding public
 
-record LanguageIsomorphism (L₁ L₂ : VarLang) : Set₁ where
+record LanguageIsomorphism (L₁ L₂ : 𝕃) : Set₁ where
   field
-    to   : ∀ {i : Size} {D : Domain} → L₁ i D → L₂ i D
-    from : ∀ {i : Size} {D : Domain} → L₂ i D → L₁ i D
-    from∘to : ∀ {i : Size} {D : Domain} → _embeds-via_ {L₁ i D} {L₂ i D} to from
-    to∘from : ∀ {i : Size} {D : Domain} → _embeds-via_ {L₂ i D} {L₁ i D} from to
+    to   : ∀ {i : Size} {D : 𝔸} → L₁ i D → L₂ i D
+    from : ∀ {i : Size} {D : 𝔸} → L₂ i D → L₁ i D
+    from∘to : ∀ {i : Size} {D : 𝔸} → _embeds-via_ {L₁ i D} {L₂ i D} to from
+    to∘from : ∀ {i : Size} {D : 𝔸} → _embeds-via_ {L₂ i D} {L₁ i D} from to
 open LanguageIsomorphism public
 
-embedding→isomorphism : ∀ {L₁ L₂ : VarLang}
+embedding→isomorphism : ∀ {L₁ L₂ : 𝕃}
   → (1→2 : LanguageEmbedding L₁ L₂)
   → (2→1 : LanguageEmbedding L₂ L₁)
-  → (∀ {i : Size} {D : Domain} → from 1→2 {i} {D} ≗   to 2→1 {i} {D})
-  → (∀ {i : Size} {D : Domain} →   to 2→1 {i} {D} ≗ from 1→2 {i} {D})
+  → (∀ {i : Size} {D : 𝔸} → from 1→2 {i} {D} ≗   to 2→1 {i} {D})
+  → (∀ {i : Size} {D : 𝔸} →   to 2→1 {i} {D} ≗ from 1→2 {i} {D})
     -------------------------
   → LanguageIsomorphism L₁ L₂
 embedding→isomorphism 1→2 2→1 f≡t t≡f = record

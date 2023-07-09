@@ -21,7 +21,7 @@ open import Data.List.Relation.Unary.All using (All)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Size using (Size)
 
-open import Definitions using (Domain; Variant; Artifactᵥ)
+open import Framework.Definitions using (𝔸; Variant; Artifactᵥ)
 ```
 
 ## Formalizing the Sharing Assumption
@@ -31,10 +31,10 @@ To formalize the sharing assumption to use it in our proofs, we have to define w
 
 As a first, more strict definition, we observe that variants have sharing if all variants have the same root element:
 ```agda
-has-root : ∀ {i : Size} {A : Domain} → A → Variant i A → Set
+has-root : ∀ {i : Size} {A : 𝔸} → A → Variant i A → Set
 has-root a (Artifactᵥ b es) = a ≡ b
 
-root-sharing : ∀ {i : Size} {A : Domain} → List (Variant i A) → Set
+root-sharing : ∀ {i : Size} {A : 𝔸} → List (Variant i A) → Set
 root-sharing {A = A} vs = Σ[ a ∈ A ] (All (has-root a) vs)
 ```
 

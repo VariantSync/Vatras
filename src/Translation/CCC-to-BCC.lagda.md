@@ -44,7 +44,7 @@ open Eq.≡-Reasoning
 
 -- own modules
 
-open import Lang.Annotation.Name using (Dimension; _==_)
+open import Framework.Annotation.Name using (Dimension; _==_)
 open import Lang.CCC
   using (CCC; CCCL; choice-elimination)
   renaming (Artifact to Artifactₙ;
@@ -60,7 +60,7 @@ open import Lang.BCC
             Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import Definitions hiding (get)
+open import Framework.Definitions hiding (get)
 open import Relations.Semantic
   -- Relations between variability languages
   using (_is-at-least-as-expressive-as_)
@@ -193,7 +193,7 @@ unknownConfigurationConverter = record
 -- The state we are going to use during the translation from n-ary to binary choice calculus.
 -- We keep track of the current configuration converter and update it when necessary.
 -- During the translation, we keep track of the intermediate translated expression as well as its size.
-TranslationState : Domain → Set
+TranslationState : 𝔸 → Set
 TranslationState D = State ConfigurationConverter (∃-Size[ i ] (BCC i D))
 ```
 
@@ -320,18 +320,18 @@ CCC→BCC {i} {_} ccc =
 
 Now we prove that conversion to binary normal form is variant-preserving (i.e., the set of described variants is the same).
 ```
-CCC→BCC-left : ∀ {i : Size} {A : Domain}
+CCC→BCC-left : ∀ {i : Size} {A : 𝔸}
   → (e : CCC i A)
     ---------------------
   → e ⊆-via CCC→BCC
 
-CCC→BCC-right : ∀ {i : Size} {A : Domain}
+CCC→BCC-right : ∀ {i : Size} {A : 𝔸}
   → (e : CCC i A)
     ---------------------
   → e ⊇-via CCC→BCC
 
 CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
-CCC→BCC-is-variant-preserving e = CCC→BCC-left (Definitions.get e) , CCC→BCC-right (Definitions.get e)
+CCC→BCC-is-variant-preserving e = CCC→BCC-left (Framework.Definitions.get e) , CCC→BCC-right (Framework.Definitions.get e)
 
 BCC-is-at-least-as-expressive-as-CCC : BCCL is-at-least-as-expressive-as CCCL
 BCC-is-at-least-as-expressive-as-CCC = expressiveness-by-translation CCC→BCC CCC→BCC-is-variant-preserving

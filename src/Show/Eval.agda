@@ -8,7 +8,7 @@ open import Data.String using (String; _++_)
 open import Size using (Size)
 open import Function using (id)
 
-open import Definitions using (Domain; VarLang; ConfLang; Semantics; show-variant)
+open import Framework.Definitions using (𝔸; 𝕃; ℂ; Semantics; show-variant)
 
 open import Show.Lines
 open import Util.Named
@@ -16,7 +16,7 @@ open import Util.Named
 show-in-semantics : String → String
 show-in-semantics s = "⟦ " ++ s ++ " ⟧"
 
-show-eval : ∀ {i : Size} {A : Domain} {L : VarLang} {C : ConfLang}
+show-eval : ∀ {i : Size} {A : 𝔸} {L : 𝕃} {C : ℂ}
   → (A → String)
   → Semantics L C
   → Named C
@@ -25,7 +25,7 @@ show-eval : ∀ {i : Size} {A : Domain} {L : VarLang} {C : ConfLang}
 show-eval show-val ⟦_⟧ (c called cname) (e called ename) =
   > show-in-semantics ename ++ " " ++ cname ++ " = " ++ (show-variant show-val (⟦ e ⟧ c))
 
-show-eval-str : ∀ {i : Size} {L : VarLang} {C : ConfLang}
+show-eval-str : ∀ {i : Size} {L : 𝕃} {C : ℂ}
   → Semantics L C
   → Named C
   → Named (L i String)

@@ -2,7 +2,7 @@
 {-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 
-module Definitions where
+module Framework.Definitions where
 ```
 
 # Definitions of Central Abstractions for Variability Languages
@@ -28,95 +28,100 @@ import Data.IndexedSet as ISet
 open import Util.Existence using (∃-Size)
 ```
 
-We model variability languages as embedded domain specific languages. That is, each variability language is described by a type which in turn is described by the kind `VarLang`. (`Set` denotes the set of all types and `Set₁` denotes the set of all kinds, i.e., the set of all sets of types).
-Each language is parameterized in its domain (called _object language_ in choice calculus), such as text, source code, files, whatever.
-We model domains, also as types, such as `String`, `ℕ`, or some AST of a programming language.
-Each variability language `VarLang` is also parameterized in a size which is irrelevant for studying variation but we need it to ensure that our proofs terminate.
-```agda
-Domain : Set₁ -- Object Language
-Domain = Set
+This module contains the central definitions of our framework (Section 4).
 
-VarLang : Set₁
-VarLang = Size → Domain → Set
+We model variability languages as embedded domain specific languages. That is, each variability language is described by a type `L i A : 𝕃`, where `i` is a size used for termination checking, and `A : 𝔸` is a set of atoms that represents the domain we are making variational.
+A set of atoms can represent for example text or source code implemented by the type `String` pr some AST of a programming language.
+Each variability language `𝕃` is also parameterized in a size which is irrelevant for studying variation but we need it to ensure that our proofs terminate.
+```agda
+{-| Type of atom sets -}
+𝔸 : Set₁
+𝔸 = Set
+
+{-| Type of variability languages -}
+𝕃 : Set₁
+𝕃 = Size → 𝔸 → Set
+
+{-| Type of configuration languages -}
+ℂ : Set₁
+ℂ = Set
 ```
 
 Most languages feature Artifacts as arbitrary elements of the domain language.
 The constructor usually takes an element of the domain and a list of child expressions.
 ```agda
-Artifactˡ : VarLang → Set₁
-Artifactˡ L = ∀ {i : Size} {A : Domain} → A → List (L i A) → L (↑ i) A
+Artifactˡ : 𝕃 → Set₁
+Artifactˡ L = ∀ {i : Size} {A : 𝔸} → A → List (L i A) → L (↑ i) A
 ```
 
-We also model configurations as types but they do not have parameters.
-```agda
-ConfLang : Set₁
-ConfLang = Set
-```
-
-Variants are the semantic domain of variability languages.
-In fact though, variants constitute a variability language in which nothing can be configured.
+Variability languages denote sets of variants.
+Interestingly, variants can be modelled as a variability language in which nothing can be configured.
 Every expressions describes a singleton set of variants.
 ```agda
 -- 𝟙-Lang
-data Variant : VarLang where
+data Variant : 𝕃 where
   Artifactᵥ : Artifactˡ Variant
 
 -- Empty variability language
-data 𝟘-Lang : VarLang where
+data 𝟘-Lang : 𝕃 where
 ```
 
 Because we will frequently have to compare variants based on propositional equivalence, we create an alias.
 ```agda
-VariantSetoid : Size → Domain → Setoid 0ℓ 0ℓ
+VariantSetoid : Size → 𝔸 → Setoid 0ℓ 0ℓ
 VariantSetoid i A = Eq.setoid (Variant i A)
 ```
 
-The semantics of variability languages is given by a multiset of variants.
-It is a multiset because two different configurations might yield the same variant (e.g., if there is an unused feature, or toggling a certain feature has no effect because all of its artifacts already dead based on another selection).
+The semantic domain of variability languages is given by a finite, non-empty indexed set of variants.
+It is an indexed because two different configurations might yield the same variant (e.g., if there is an unused feature, or toggling a certain feature has no effect because all of its atoms already dead based on another selection).
 ```agda
-IndexedVSet : Size → Domain → Set → Set
-IndexedVSet i A I = IndexedSet I
+IndexedVMap : Size → 𝔸 → Set → Set
+IndexedVMap i A I = IndexedSet I
   where open ISet (VariantSetoid i A) using (IndexedSet)
 
-VSet : Domain → ℕ → Set
-VSet A n = IndexedVSet ∞ A (Fin (suc n))
+{-|
+Variant maps constitute the semantic domain of variability languages.
+While we defined variant maps to be indexed sets with an arbitrary finite and non-empty index set, we directly reflect these properties
+via Fin (suc n) here for convenience.
+-}
+VMap : 𝔸 → ℕ → Set
+VMap A n = IndexedVMap ∞ A (Fin (suc n))
 
--- Utility functions to downcast the Fin in a VSet.
-forget-first : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
+-- Utility functions for manipulating variant maps.
+forget-first : ∀ {n : ℕ} {A : 𝔸} → VMap A (suc n) → VMap A n
 forget-first set i = set (Data.Fin.suc i)
 
-forget-last : ∀ {n : ℕ} {A : Domain} → VSet A (suc n) → VSet A n
+forget-last : ∀ {n : ℕ} {A : 𝔸} → VMap A (suc n) → VMap A n
 forget-last set i = set (Data.Fin.inject₁ i)
 
-forget-all : ∀ {n : ℕ} {A : Set} → VSet A n → VSet A zero
+forget-all : ∀ {n : ℕ} {A : Set} → VMap A n → VMap A zero
 forget-all {zero}  set = set
 forget-all {suc _} set = forget-all (forget-last set)
 ```
 
-The semantics of a language `VarLang` and its corresponding configuration language `ConfLang` is a function that configures a given expression to a variant:
+The semantics of a language `L i A : 𝕃` and its corresponding configuration language `C : ℂ` is a function that configures an expression to a variant:
 ```agda
-Semantics : VarLang → ConfLang → Set₁
-Semantics L C = ∀ {i : Size} {A : Domain} → L i A → IndexedVSet ∞ A C
--- Semantics L C = ∀ {i j : Size} {A : Domain} → L i A → IndexedVSet (i ⊔ˢ j) A C
+Semantics : 𝕃 → ℂ → Set₁
+Semantics L C = ∀ {i : Size} {A : 𝔸} → L i A → IndexedVMap ∞ A C
 ```
 
-We further introduce convenience records that gather all relevant informaton to characterize a single language.
+We further introduce convenience records that gather all relevant informatoin to characterize a single language.
 ```agda
 record VariabilityLanguage : Set₁ where
   field
-    expression    : VarLang -- unfortunately, "syntax" is a keyword in Agda so we cannot use that as field name
-    configuration : ConfLang
+    expression    : 𝕃 -- unfortunately, "syntax" is a keyword in Agda so we cannot use that as field name
+    configuration : ℂ
     semantics     : Semantics expression configuration
 open VariabilityLanguage public
 
-record Expression (A : Domain) (V : VariabilityLanguage) : Set₁ where
+record Expression (A : 𝔸) (V : VariabilityLanguage) : Set₁ where
   constructor [_]
   field
     {size} : Size
     get : expression V size A
 open Expression public
 
-fromExpression : ∀ {i : Size} {A : Domain}
+fromExpression : ∀ {i : Size} {A : 𝔸}
   → (L : VariabilityLanguage)
   → expression L i A
   → Expression A L
@@ -179,8 +184,8 @@ open import Size using (↑_)
 open import Util.Existence using (∃-Size; _,_)
 open import Util.SizeJuggle
 
-flip-VarLang : VarLang → Domain → Bounded
-flip-VarLang L A i = L i A
+flip-𝕃 : 𝕃 → 𝔸 → Bounded
+flip-𝕃 L A i = L i A
 
 suc-variant-size : ∀ {i} {A} → Variant i A → Variant i A
 suc-variant-size v = v
@@ -207,9 +212,9 @@ The size of the resulting expression is larger by 1.
 TODO: REMOVE WEAKENABLE.
 -}
 sequence-sized-artifact :
-  ∀ {A : Domain}
-    {L : VarLang}
-  → Weaken (flip-VarLang L A)
+  ∀ {A : 𝔸}
+    {L : 𝕃}
+  → Weaken (flip-𝕃 L A)
   → Artifactˡ L
   → A
   → List⁺ (∃-Size[ i ] (L i A))
@@ -228,8 +233,8 @@ module Examples where
   open import Data.String using (String)
   open Data.Fin using (zero; suc)
 
-  vset-example : VSet ℕ 2
-  vset-example zero = leaf 1
-  vset-example (suc zero) = leaf 2
-  vset-example (suc (suc zero)) = leaf 3
+  vmap-example : VMap ℕ 2
+  vmap-example zero = leaf 1
+  vmap-example (suc zero) = leaf 2
+  vmap-example (suc (suc zero)) = leaf 3
 ```

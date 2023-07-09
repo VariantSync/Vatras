@@ -3,17 +3,17 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 
-module Lang.Properties.Conclude.Completeness where
+module Framework.Properties.Conclude.Completeness where
 
 open import Data.Product using (_,_)
 
 open import Function using (_∘_)
 open import Size using (∞)
 
-open import Definitions
+open import Framework.Definitions
 open import Relations.Semantic
-open import Lang.Properties.Completeness
-open import Lang.Properties.Soundness
+open import Framework.Properties.Completeness
+open import Framework.Properties.Soundness
 
 import Data.IndexedSet
 private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)

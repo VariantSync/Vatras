@@ -29,7 +29,7 @@ open import Size using (Size)
 open import Data.Product   using (_,_; ∃-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂)
 
-open import Definitions
+open import Framework.Definitions
 open import Relations.Semantic
 open import Util.Embedding using (_embeds-via_)
 ```
@@ -43,7 +43,7 @@ While this asymmetry (compared to the translation of the variability language) s
 For convenience, a translation also carries the semantics of the language it intends to preserve. This might not really be necessary but it purifies the below definitions.
 Moreover, a translation also has to translate the size constraints over languages so that we can express that a translated expression does not become infinitely large.
 ```agda
-record TranslationResult (A : Domain) (L₁ L₂ : VariabilityLanguage) : Set₁ where
+record TranslationResult (A : 𝔸) (L₁ L₂ : VariabilityLanguage) : Set₁ where
   field
     {size} : Size
     expr   : expression L₂ size A
@@ -52,7 +52,7 @@ record TranslationResult (A : Domain) (L₁ L₂ : VariabilityLanguage) : Set₁
 open TranslationResult public
 
 Translation : (L₁ L₂ : VariabilityLanguage) → Set₁
-Translation L₁ L₂ = ∀ {i : Size} {D : Domain} → expression L₁ i D → TranslationResult D L₁ L₂
+Translation L₁ L₂ = ∀ {i : Size} {D : 𝔸} → expression L₁ i D → TranslationResult D L₁ L₂
 
 -- translation from a language to itself
 EndoTranslation : VariabilityLanguage → Set₁
@@ -88,7 +88,7 @@ We cannot reuse our above definitions as we did for `_⊆-_within_and_` because 
 To check if a variant described by translated expression `lang translation e₁` is also described by the original expression `e₁`, we have to inspect whether any possible configuration of the translated expression can also be made to `e₁`.
 That is the reason why we require translations to also provide backwards translations for configurations: We are not directly dealing with sets of variants but with the semantics as a function describing this set indirectly via its configuration parameter.
 ```agda
-_⊇-via_ : ∀ {L₁ L₂ : VariabilityLanguage} {i : Size} {A : Domain}
+_⊇-via_ : ∀ {L₁ L₂ : VariabilityLanguage} {i : Size} {A : 𝔸}
   → (e₁ : expression L₁ i A)
   → Translation L₁ L₂
   → Set
@@ -130,7 +130,7 @@ A translation is variability-preserving if it translates every expression ot a v
 This is one of the major theorems we ought to show for translation between variability languages.
 ```agda
 _is-variant-preserving : ∀ {L₁ L₂ : VariabilityLanguage} → Translation L₁ L₂ → Set₁
-_is-variant-preserving {L₁} t = ∀ {A : Domain} → (e₁ : Expression A L₁) → (get e₁) ≚-via t
+_is-variant-preserving {L₁} t = ∀ {A : 𝔸} → (e₁ : Expression A L₁) → (get e₁) ≚-via t
 ```
 
 A translation is semantics preserving iff its semantics preserving and the same configuration yields the same variants.
@@ -141,7 +141,7 @@ For example, the set of features in `C₂` could be bigger (e.g., when going fro
 _is-semantics-preserving : ∀ {L₁ L₂ : VariabilityLanguage} → Translation L₁ L₂ → Set₁
 _is-semantics-preserving {L₁ = L₁} translate =
     translate is-variant-preserving
-  × (∀ {A : Domain} (e₁ : Expression A L₁) → (conf (translate (get e₁))) embeds-via (fnoc (translate (get e₁))))
+  × (∀ {A : 𝔸} (e₁ : Expression A L₁) → (conf (translate (get e₁))) embeds-via (fnoc (translate (get e₁))))
 ```
 
 We can conclude that a language is as expressive as another language if there exists a variant preserving translation.

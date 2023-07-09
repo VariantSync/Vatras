@@ -24,8 +24,8 @@ open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 open import Function using (id; flip)
 
-open import Definitions
-open import Lang.Annotation.Name using (Option)
+open import Framework.Definitions
+open import Framework.Annotation.Name using (Option)
 open import Lang.OC
      using ( OC; WFOC; WFOCL; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
   renaming ( Artifact to Artifactₒ
@@ -82,7 +82,7 @@ This is in fact working just like "map" does on lists but we need the zipper to 
 The zipper does not store enough information to fully restore a tree from the current focus.
 This limitation is intended to keep the structure as simple as possible and only as complex as necessary.
 ```agda
-record Zip (work : ℕ) (i : Size) (A : Domain) : Set where
+record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
   constructor _-<_◀_>- --\T
   field
     parent    : A
@@ -92,8 +92,8 @@ open Zip public
 infix 4 _-<_◀_>-
 
 -- Curiously, Zip is itself a variability language (parameterized in the remaining work to do).
-Zip-is-VarLang : ℕ → VarLang
-Zip-is-VarLang = Zip
+Zip-is-𝕃 : ℕ → 𝕃
+Zip-is-𝕃 = Zip
 
 ⟦_⟧ₜ : ∀ {w : ℕ} → Semantics (Zip w) Confₒ
 ⟦ a -< ls ◀ rs >- ⟧ₜ c =
@@ -106,7 +106,7 @@ Zip-is-VarLang = Zip
 
 ```agda
 data _⊢_⟶ₒ_ :
-  ∀ {n : ℕ} {A : Domain}
+  ∀ {n : ℕ} {A : 𝔸}
   → (i : Size) -- We have to make sizes explicit here because otherwise, Agda sometimes infers ∞ which makes termination checking fail.
   → Zip n i A
   → BCC ∞ A
@@ -119,7 +119,7 @@ data _⊢_⟶ₒ_ where
   -}
   T-done :
     ∀ {i  : Size}
-      {A  : Domain}
+      {A  : 𝔸}
       {a  : A}
       {ls : List (BCC ∞ A)}
       --------------------------------------
@@ -133,7 +133,7 @@ data _⊢_⟶ₒ_ where
   T-artifact :
     ∀ {i   : Size  }
       {n   : ℕ    }
-      {A   : Domain}
+      {A   : 𝔸}
       {a b : A     }
       {ls  : List (BCC ∞    A)  }
       {es  : List (OC    i  A)  }
@@ -155,7 +155,7 @@ data _⊢_⟶ₒ_ where
   T-option :
     ∀ {i   : Size  }
       {n   : ℕ     }
-      {A   : Domain}
+      {A   : 𝔸}
       {a   : A     }
       {O   : Option}
       {e   : OC i A}
@@ -169,7 +169,7 @@ data _⊢_⟶ₒ_ where
     → ↑ i ⊢ a -< ls ◀ O ❲ e ❳ ∷ rs >- ⟶ₒ O ⟨ eᵒ⁻ʸ , eᵒ⁻ⁿ ⟩
 
 data _⟶_  :
-  ∀ {i : Size} {A : Domain}
+  ∀ {i : Size} {A : 𝔸}
   → WFOC i A
   → BCC ∞ A
   → Set
@@ -177,7 +177,7 @@ infix 4 _⟶_
 data _⟶_ where
   T-root :
     ∀ {i  : Size}
-      {A  : Domain}
+      {A  : 𝔸}
       {a  : A}
       {es : List (OC i A)}
       {e  : BCC ∞ A}
@@ -451,7 +451,7 @@ OC→BCC oc =
 ## Conclusions
 
 ```agda
-⊆-via-OC→BCC : ∀ {i : Size} {A : Domain}
+⊆-via-OC→BCC : ∀ {i : Size} {A : 𝔸}
   → (e : WFOC i A)
     --------------
   → e ⊆-via OC→BCC

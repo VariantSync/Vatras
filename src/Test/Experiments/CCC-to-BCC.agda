@@ -21,7 +21,7 @@ open import Size using (∞)
 
 open import Show.Lines
 
-open import Lang.Annotation.Name using (Dimension)
+open import Framework.Annotation.Name using (Dimension)
 open import Lang.CCC
   renaming (Configuration to Configurationₙ;
             ⟦_⟧ to ⟦_⟧ₙ)
@@ -29,7 +29,7 @@ open import Lang.BCC
   renaming (Configuration to Configuration₂;
             ⟦_⟧ to ⟦_⟧₂)
 
-open import Definitions using (ConfLang)
+open import Framework.Definitions using (ℂ)
 open import Translation.CCC-to-BCC  using (CCC→BCC)
 open import Translation.Translation using (expr; conf; fnoc)
 
