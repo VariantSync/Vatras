@@ -61,7 +61,7 @@ open import Lang.BCC
 
 open import Framework.Definitions
 open import Framework.Relation.Expressiveness using (_≽_)
-open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
+open import Framework.Proof.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
 
 open import Axioms.Extensionality renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
 ```
