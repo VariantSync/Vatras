@@ -36,7 +36,7 @@ open Eq.≡-Reasoning
 -- own modules
 open import Framework.Annotation.Name using (Dimension)
 open import Framework.Definitions hiding ([_])
-open import Relations.Semantic using (_⊢_≣_)
+open import Framework.Relation.Expression using (_⊢_≣_)
 ```
 
 ## Syntax
@@ -174,7 +174,7 @@ choice-r-congruence eₗ≡eₗ′ = {!!}
 ```agda
 open Framework.Annotation.Name using (_==_)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Translation.Translation using (EndoTranslation)
+open import Framework.Proof.Translation using (EndoTranslation)
 
 Scope : Set
 Scope = Dimension → Maybe Bool

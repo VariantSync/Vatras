@@ -36,10 +36,10 @@ open import Lang.CCC
   using (CCC; CCCL; Artifact; _⟨_⟩; ⟦_⟧; describe-variant; describe-variant-preserves)
   renaming (Configuration to Cᶜ)
 
-open import Translation.Translation using (Translation; TranslationResult; expr; conf; fnoc; _is-variant-preserving; expressiveness-by-translation)
-open import Relations.Semantic using (_is-at-least-as-expressive-as_)
-open import Lang.Properties.Completeness using (Complete)
-open import Lang.Properties.Conclude.Completeness using (completeness-by-expressiveness)
+open import Framework.Proof.Translation using (Translation; TranslationResult; expr; conf; fnoc; _is-variant-preserving; expressiveness-by-translation)
+open import Framework.Relation.Expressiveness using (_≽_)
+open import Framework.Properties.Completeness using (Complete)
+open import Framework.Properties.Conclude.Completeness using (completeness-by-expressiveness)
 
 open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
@@ -133,10 +133,10 @@ preserves-⊇ (v ∷ w ∷ zs) c with c 𝔻
     ⟦ find-or-last i tail-in-ccc ⟧ c
   ∎
 
-VariantList→CCC-is-variant-preserving : VariantList→CCC is-variant-preservingi-map-cong
+VariantList→CCC-is-variant-preserving : VariantList→CCC is-variant-preserving
 VariantList→CCC-is-variant-preserving [ e ] = preserves-⊆ e , preserves-⊇ e
 
-CCCL-is-at-least-as-expressive-as-VariantListL : CCCL is-at-least-as-expressive-as VariantListL
+CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
 CCCL-is-at-least-as-expressive-as-VariantListL = expressiveness-by-translation VariantList→CCC VariantList→CCC-is-variant-preserving
 
 CCCL-is-complete : Complete CCCL

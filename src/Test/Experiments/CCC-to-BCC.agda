@@ -31,7 +31,7 @@ open import Lang.BCC
 
 open import Framework.Definitions using (ℂ)
 open import Translation.CCC-to-BCC  using (CCC→BCC)
-open import Translation.Translation using (expr; conf; fnoc)
+open import Framework.Proof.Translation using (expr; conf; fnoc)
 
 open import Util.ShowHelpers
 

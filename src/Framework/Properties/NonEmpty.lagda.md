@@ -15,11 +15,7 @@ module Framework.Properties.NonEmpty where
 ## Imports
 
 ```agda
-open import Data.Product using (∃-syntax)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
-open import Size using (∞)
-
-open import Framework.Definitions
+open import Framework.Definitions using (VariabilityLanguage; Expression; configuration)
 ```
 
 ## Definitions

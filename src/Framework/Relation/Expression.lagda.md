@@ -1,32 +1,25 @@
 ```agda
 {-# OPTIONS --sized-types #-}
-{-# OPTIONS --allow-unsolved-metas #-}
 
-open import Framework.Definitions
+module Framework.Relation.Expression where
 
-module Relations.Semantic where
-```
-
-# Relations of Variability Languages
-
-```agda
 open import Axioms.Extensionality using (extensionality)
 
-open import Data.Product   using (_,_; ∃-syntax; Σ-syntax; _×_)
-open import Util.Existence using (_,_; ∃-Size)
-
+open import Data.Product using (_,_; ∃-syntax; Σ-syntax; _×_)
 open import Relation.Binary using (Rel; Symmetric; IsEquivalence; Setoid)
 open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
-open import Relation.Nullary.Negation using (¬_)
 
 open import Function using (_∘_; Congruent)
 open import Level using (0ℓ; suc)
 open import Size using (Size)
 
+open import Framework.Definitions
 open import Relations.GeneralizedEquivalence using (iseq)
 import Data.IndexedSet as ISet
 ```
+
+# Relating Expressions of Variability Languages
 
 ## Semantic Relations of Expressions Within a Single Language
 
@@ -76,38 +69,6 @@ Obviously, syntactic equality (or rather structural equality) implies semantic e
     ----------
   → L ⊢ a ≣ b
 ≡→≣ eq c rewrite eq = refl
-```
-
-## Equivalence of Configurations
-
-Two configurations are equivalent for an expressionwhen they produce the same variants for all expressions.
-```agda
-_⊢_≣ᶜ_ : ∀ {A : 𝔸} {L : VariabilityLanguage}
-  → Expression A L
-  → (c₁ c₂ : configuration L)
-  → Set
-_⊢_≣ᶜ_ {L = L} e c₁ c₂ = ⟦e⟧ c₁ ≡ ⟦e⟧ c₂
-  where ⟦e⟧ = semantics L {size e} (get e)
-infix 5 _⊢_≣ᶜ_
-
-≣ᶜ-IsEquivalence : ∀ {A L} → (e : Expression A L) → IsEquivalence ( e ⊢_≣ᶜ_)
-≣ᶜ-IsEquivalence _ = record
-  { refl  = Eq.refl
-  ; sym   = Eq.sym
-  ; trans = Eq.trans
-  }
-
-≣ᶜ-congruent : ∀ {A L} → (e : Expression A L) → Congruent (e ⊢_≣ᶜ_) _≡_ (semantics L (get e))
-≣ᶜ-congruent _ e⊢x≣ᶜy = e⊢x≣ᶜy
-
-≣ᶜ-setoid : ∀ {A} {L : VariabilityLanguage}
-  → Expression A L
-  → Setoid 0ℓ 0ℓ
-≣ᶜ-setoid {A} {L} e = record
-  { Carrier       = configuration L
-  ; _≈_           = e ⊢_≣ᶜ_
-  ; isEquivalence = ≣ᶜ-IsEquivalence e
-  }
 ```
 
 ## Semantic Relations of Different Languages
@@ -204,92 +165,3 @@ Semantic equality implies variant equality:
   where b≣a : b ≣ a
         b≣a = IsEquivalence.sym (≣-IsEquivalence {A} {L}) a≣b
 ```
-
-### Relating Languages
-
-We say that a language `L₁` is as expressive as another language `L₂` **iff** for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same set of variants. This means that there exists a translation from `L₂` to `L₁`, and thus `L₁` can model `L₂`:
-```agda
--- L₁ ⊇ L₂
-_is-at-least-as-expressive-as_ : VariabilityLanguage → VariabilityLanguage → Set₁
-L₁ is-at-least-as-expressive-as L₂ =
-  ∀ {A : 𝔸} (e₂ : Expression A L₂) →
-      (Σ[ e₁ ∈ Expression A L₁ ]
-        (e₂ ≚ e₁))
-  -- It would be nice if we could rephrase expressiveness to (semantics L₂) ⊆ (semantics L₁) but I we have to generalize our multisets somehow first to allow keys in the source set.
-
--- ¬ (L₂ ⊇ L₁)
-_is-less-expressive-than_ : VariabilityLanguage → VariabilityLanguage → Set₁
-L₁ is-less-expressive-than L₂ = ¬ (L₁ is-at-least-as-expressive-as L₂)
-
--- L₁ ⊃ L₂ ⇔ L₁ ⊇ L₂ ∧ ¬ (L₂ ⊇ L₁)
-_is-more-expressive-than_ : VariabilityLanguage → VariabilityLanguage → Set₁
-L₁ is-more-expressive-than L₂ =
-    L₁ is-at-least-as-expressive-as L₂
-  × L₂ is-less-expressive-than L₁
-```
-
-A language `L₁` is equally expressive as another language `L₂` **iff** they are at least as expressive as each other.
-```agda
-_is-equally-expressive-as_ : VariabilityLanguage → VariabilityLanguage → Set₁
-L₁ is-equally-expressive-as L₂ =
-    (L₁ is-at-least-as-expressive-as L₂)
-  × (L₂ is-at-least-as-expressive-as L₁)
-```
-
-Expressiveness forms a partial order:
-```agda
-refl-expressiveness' : ∀ {L₁ L₂ : VariabilityLanguage}
-  → L₁ ≡ L₂
-    ----------------------------------
-  → L₁ is-at-least-as-expressive-as L₂
-refl-expressiveness' {L₁} L₁≡L₂ e rewrite L₁≡L₂ = e , (λ i → i , refl) , (λ i → i , refl) -- TODO: Reuse other refl-proofs here
-
-refl-expressiveness : ∀ {L : VariabilityLanguage}
-    --------------------------------
-  → L is-at-least-as-expressive-as L
-refl-expressiveness = refl-expressiveness' refl
-
-trans-expressiveness : ∀ {L₁ L₂ L₃ : VariabilityLanguage}
-  → L₁ is-at-least-as-expressive-as L₂
-  → L₂ is-at-least-as-expressive-as L₃
-    ----------------------------------
-  → L₁ is-at-least-as-expressive-as L₃
-trans-expressiveness L₂→L₁ L₃→L₂ {A} e₃ =
-  let open ISet (VariantSetoid _ A)
-      e₂ , e₃≚e₂ = L₃→L₂ e₃
-      e₁ , e₂≚e₁ = L₂→L₁ e₂
-   in e₁ , ≅-trans e₃≚e₂ e₂≚e₁ -- This proof is highly similar to ≅-trans itself. Maybe we could indeed reuse here.
-
-antisym-expressiveness : ∀ {L₁ L₂}
-  → L₁ is-at-least-as-expressive-as L₂
-  → L₂ is-at-least-as-expressive-as L₁
-    ----------------------------------
-  → L₁ is-equally-expressive-as L₂
-antisym-expressiveness L₁≻L₂ L₂≻L₁ = L₁≻L₂ , L₂≻L₁
-```
-
-Variant-Equivalence is an equivalence relations:
-```agda
-sym-variant-equivalence : ∀ {L₁ L₂ : VariabilityLanguage}
-  → L₁ is-equally-expressive-as L₂
-    ------------------------------
-  → L₂ is-equally-expressive-as L₁
-sym-variant-equivalence (L₁≻L₂ , L₂≻L₁) = L₂≻L₁ , L₁≻L₂
-
-trans-variant-equivalence : ∀ {L₁ L₂ L₃}
-  → L₁ is-equally-expressive-as L₂
-  → L₂ is-equally-expressive-as L₃
-    ------------------------------
-  → L₁ is-equally-expressive-as L₃
-trans-variant-equivalence (L₁≻L₂ , L₂≻L₁) (L₂≻L₃ , L₃≻L₂) =
-    trans-expressiveness L₁≻L₂ L₂≻L₃
-  , trans-expressiveness L₃≻L₂ L₂≻L₁
-
-ve-IsEquivalence : IsEquivalence _is-equally-expressive-as_
-ve-IsEquivalence = record
-  { refl  = refl-expressiveness , refl-expressiveness
-  ; sym   = sym-variant-equivalence
-  ; trans = trans-variant-equivalence
-  }
-```
-

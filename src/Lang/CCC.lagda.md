@@ -45,7 +45,7 @@ open import Framework.Definitions using (
   Semantics;
   fromExpression; Artifactˡ;
   forget-variant-size; sequence-forget-size)
-open import Relations.Semantic using (_⊢_≣_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≣→≚)
+open import Framework.Relation.Expression using (_⊢_≣_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≣→≚)
 
 open import Util.List using (find-or-last) --lookup-clamped)
 ```

@@ -60,7 +60,7 @@ open import Lang.BCC
             ⟦_⟧ to ⟦_⟧₂)
 
 open import Framework.Definitions
-open import Relations.Semantic using (_is-at-least-as-expressive-as_)
+open import Framework.Relation.Expressiveness using (_≽_)
 open import Translation.Translation using (Translation; _⊆-via_; _⊇-via_; _is-variant-preserving; _is-semantics-preserving; expressiveness-by-translation)
 
 open import Axioms.Extensionality renaming (map-cong-≡ to mapl-cong-≡; map-cong-≗-≡ to mapl-cong-≗-≡)
@@ -147,7 +147,7 @@ BCC→CCC-is-variant-preserving e = BCC→CCC-left (get e) , BCC→CCC-right (ge
 BCC→CCC-is-semantics-preserving : BCC→CCC is-semantics-preserving
 BCC→CCC-is-semantics-preserving = BCC→CCC-is-variant-preserving , λ _ → extensionality ∘ conf-remains-same
 
-CCC-is-at-least-as-expressive-as-BCC : CCCL is-at-least-as-expressive-as BCCL
+CCC-is-at-least-as-expressive-as-BCC : CCCL ≽ BCCL
 CCC-is-at-least-as-expressive-as-BCC = expressiveness-by-translation BCC→CCC BCC→CCC-is-variant-preserving
 ```
 

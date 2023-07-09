@@ -22,7 +22,7 @@ open Lang.OC renaming (⟦_⟧ to ⟦_⟧-oc; Configuration to Conf-oc)
 open Lang.BCC renaming (⟦_⟧ to ⟦_⟧-bcc; Configuration to Conf-bcc)
 
 open import Framework.Definitions using (ℂ)
-open import Translation.Translation using (expr)
+open import Framework.Proof.Translation using (expr)
 open import Translation.OC-to-BCC using (OC→BCC; ⟶-is-total)
 
 open import Show.Lines

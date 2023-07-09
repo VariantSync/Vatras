@@ -4,7 +4,7 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 
-module Framework.Properties.Conclude.Soundness where
+module Framework.Proof.Soundness where
 
 open import Data.Product using (_,_)
 
@@ -16,7 +16,8 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 
 open import Framework.Definitions
-open import Relations.Semantic using (_⊢_≣ᶜ_; ≣ᶜ-IsEquivalence; ≣ᶜ-congruent; _is-at-least-as-expressive-as_)
+open import Framework.Relation.Configuration using (_⊢_≣ᶜ_; ≣ᶜ-IsEquivalence; ≣ᶜ-congruent)
+open import Framework.Relation.Expressiveness using (_≽_)
 
 import Data.IndexedSet
 private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
@@ -70,8 +71,8 @@ soundness-by-finite-semantics {L} L-has-finite-semantics {A} e =
 
 soundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
   → Sound L₁
-  → L₁ is-at-least-as-expressive-as L₂
-    ----------------------------------
+  → L₁ ≽ L₂
+    --------
   → Sound L₂
 soundness-by-expressiveness {L₁} {L₂} L₁-sound L₂-to-L₁ {A} e₂ with L₂-to-L₁ e₂
 ... | e₁ , e₂≅e₁ with L₁-sound e₁
@@ -79,7 +80,7 @@ soundness-by-expressiveness {L₁} {L₂} L₁-sound L₂-to-L₁ {A} e₂ with 
   where open ISet A using (_≅_; ≅-trans; ≅-sym)
 
 -- re-export the theorem that we can conclude expressiveness for a complete and a sound language
-open import Framework.Properties.Conclude.Completeness using (
+open import Framework.Proof.Completeness using (
   expressiveness-by-completeness-and-soundness
   ) public
 ```

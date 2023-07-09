@@ -190,8 +190,8 @@ VariantList-is-Complete {A} vs =
 
 ```agda
 open import Framework.Properties.Soundness
-open import Framework.Properties.Conclude.Soundness using (soundness-by-finite-semantics)
-open import Relations.Semantic using (_⊢_≣ᶜ_)
+open import Framework.Proof.Soundness using (soundness-by-finite-semantics)
+open import Framework.Relation.Configuration using (_⊢_≣ᶜ_)
 
 module Finity (A : 𝔸) where
   open Data.List.NonEmpty using (length)

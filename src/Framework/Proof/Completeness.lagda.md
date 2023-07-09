@@ -3,7 +3,7 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 
-module Framework.Properties.Conclude.Completeness where
+module Framework.Proof.Completeness where
 
 open import Data.Product using (_,_)
 
@@ -11,7 +11,7 @@ open import Function using (_∘_)
 open import Size using (∞)
 
 open import Framework.Definitions
-open import Relations.Semantic
+open import Framework.Relation.Expressiveness
 open import Framework.Properties.Completeness
 open import Framework.Properties.Soundness
 
@@ -34,13 +34,13 @@ Since V was picked arbitrarily, L₂ can encode any set of variants.
 Thus, L₂ is complete.
 ```agda
 completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
-  → Complete L₁
-  → L₂ is-at-least-as-expressive-as L₁
-    -----------------------------------
   → Complete L₂
-completeness-by-expressiveness encode-in-L₁ L₁-to-L₂ vs with encode-in-L₁ vs
-... | e₁ , vs≅e₁ with L₁-to-L₂ e₁
-...   | e₂ , e₁≅e₂ = e₂ , ≅-trans vs≅e₁ e₁≅e₂
+  → L₁ ≽ L₂
+    -----------------------------------
+  → Complete L₁
+completeness-by-expressiveness encode-in-L₂ L₂-to-L₁ vs with encode-in-L₂ vs
+... | e₂ , vs≅e₂ with L₂-to-L₁ e₂
+...   | e₁ , e₂≅e₁ = e₁ , ≅-trans vs≅e₂ e₂≅e₁
   where open ISet _ using (≅-trans)
 ```
 
@@ -56,7 +56,7 @@ expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLangua
   → Complete Lᶜ
   → Sound Lˢ
     ----------------------------------
-  → Lᶜ is-at-least-as-expressive-as Lˢ
+  → Lᶜ ≽ Lˢ
 expressiveness-by-completeness-and-soundness {L₊} L₊-comp L-sound {A = A} eˢ with L-sound eˢ
 ... | n , vsetₑ , vsetₑ≅⟦eˢ⟧ with L₊-comp vsetₑ
 ...   | eᶜ , vsetₑ≅⟦eᶜ⟧ᶜ = eᶜ , ≅-trans (≅-sym vsetₑ≅⟦eˢ⟧) vsetₑ≅⟦eᶜ⟧ᶜ

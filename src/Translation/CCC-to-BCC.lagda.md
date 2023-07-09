@@ -61,10 +61,8 @@ open import Lang.BCC
             ⟦_⟧ to ⟦_⟧₂)
 
 open import Framework.Definitions hiding (get)
-open import Relations.Semantic
-  -- Relations between variability languages
-  using (_is-at-least-as-expressive-as_)
-open import Translation.Translation
+open import Framework.Relation.Expressiveness using (_≽_)
+open import Framework.Proof.Translation
   -- Translations
   using (Translation; TranslationResult; expr; conf; fnoc)
   -- Translation properties
@@ -333,7 +331,7 @@ CCC→BCC-right : ∀ {i : Size} {A : 𝔸}
 CCC→BCC-is-variant-preserving : CCC→BCC is-variant-preserving
 CCC→BCC-is-variant-preserving e = CCC→BCC-left (Framework.Definitions.get e) , CCC→BCC-right (Framework.Definitions.get e)
 
-BCC-is-at-least-as-expressive-as-CCC : BCCL is-at-least-as-expressive-as CCCL
+BCC-is-at-least-as-expressive-as-CCC : BCCL ≽ CCCL
 BCC-is-at-least-as-expressive-as-CCC = expressiveness-by-translation CCC→BCC CCC→BCC-is-variant-preserving
 ```
 

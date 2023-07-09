@@ -37,8 +37,8 @@ open import Lang.BCC
            ; Artifact to Artifact₂
            ; Configuration to Conf₂
            )
-open import Relations.Semantic using (_is-at-least-as-expressive-as_)
-open import Translation.Translation using
+open import Framework.Relation.Expressiveness using (_≽_)
+open import Framework.Proof.Translation using
   (Translation; TranslationResult;
    _⊆-via_;
    _is-variant-preserving; _is-semantics-preserving;
@@ -468,7 +468,7 @@ OC→BCC-is-variant-preserving e = ⊆-via-OC→BCC (get e) , ⊆-via-OC→BCC (
 OC→BCC-is-semantics-preserving : OC→BCC is-semantics-preserving
 OC→BCC-is-semantics-preserving = OC→BCC-is-variant-preserving , λ e c → refl
 
-BCC-is-at-least-as-expressive-as-OC : BCCL is-at-least-as-expressive-as WFOCL
+BCC-is-at-least-as-expressive-as-OC : BCCL ≽ WFOCL
 BCC-is-at-least-as-expressive-as-OC = expressiveness-by-translation OC→BCC OC→BCC-is-variant-preserving
 ```
 

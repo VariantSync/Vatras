@@ -14,7 +14,7 @@
 ## Module
 
 ```agda
-module Translation.Translation where
+module Framework.Proof.Translation where
 ```
 
 ## Imports
@@ -30,7 +30,8 @@ open import Data.Product   using (_,_; ∃-syntax; _×_)
 open import Util.Existence using (_,_; ∃-Size; proj₁; proj₂)
 
 open import Framework.Definitions
-open import Relations.Semantic
+open import Framework.Relation.Expression
+open import Framework.Relation.Expressiveness
 open import Util.Embedding using (_embeds-via_)
 ```
 
@@ -150,8 +151,8 @@ This is our major theorem that allows us to prove relations about languages from
 expressiveness-by-translation : ∀ {L₁ L₂ : VariabilityLanguage}
   → (translate : Translation L₁ L₂)
   → translate is-variant-preserving
-    ----------------------------------
-  → L₂ is-at-least-as-expressive-as L₁
+    -------------------------------
+  → L₂ ≽ L₁
 expressiveness-by-translation {_} {L₂} translate preservation e₁ =
   let r = translate (get e₁) in
   fromExpression L₂ (expr r) , ≚-via→≚ translate (preservation e₁)
