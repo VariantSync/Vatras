@@ -1,127 +1,42 @@
 ﻿
 # On the Expressive Power of Variability Languages
 
+This is the supplementary Agda library for our paper _On the Expressive Power of Variability Languages_ submitted to 51st ACM SIGPLAN Symposium on Principles of Programming Languages (POPL 2024).
+
 ## Setup
 
-The only dependency of the project is the agda standard library. I do not know the version I am using though (as I don't know yet how to know that).
-I am using Agda version 2.6.2.2 but newer version should be fine too and I guess also some older versions, I did not do any testing on that.
-To setup Agda and the standard library, I followed the guide from the _Programming Language Foundations in Agda_ (PLFA) book. You can finde the instructions [here](https://plfa.github.io/GettingStarted/). If everything works (hehe) then it should not take too long to setup Agda and the standard library.
+We tested our setup on ubuntu (inside windows subsystem for linux (WSL 2)).
 
-As an editor, I am using spacemacs with agda-mode. Setting emacs up for Agda is also explained in the PFLA setup instructions linked above.
+To compile the library and run its small demo, you need to have Agda and it's standard-library installed.
+We recommend following the installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book.
+It gives you step-by-step instructions for installing the GHC compiler (if you have not installed it already), Agda, and the standard library (together with the book's source code).
+
+We tested our library with Agda 2.6.2.2 and Agda 2.6.3.
+We use standard library version installed manually at commit 625a5775 but also newer versions should work when following the instructions from the book.
+
+To test whether you setup agda correctly, and to run this libraries demo, run make:
+```shell
+make
+```
+which will run the following commands to build the library and run it's demo:
+```shell
+agda --compile src/Main.agda
+./src/Main
+```
+
+Building for the first time will take a while because Agda has to build the required dependencies from the standard library, too.
+Running the demo will print some translations of core to binary choice calculus, and translations from option calculus to binary choice calculus.
+When running the demo, make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
 
 ## Project Structure
 
-Variants are defined in [src/SemanticDomain.agda](src/SemanticDomain.agda).
-Core definitions are in [src/Definitions.lagda.md](/src/Definitions.lagda.md).
-Languages are defined in [src/Lang](/src/Lang).
-Language properties including completeness are defined in [src/Lang/Properties](src/Lang/Properties).
-Translations are formalized in [src/Translation/Translation.lagda.md](src/Translation/Translation.lagda.md).
-Translations between specific languages are defined in the [src/Translation](src/Translation) directory.
-A comprehensive list of the progress on language translations and relations can be found the [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md).
+The library is organized as follows:
 
-We also have a main function which runs experiments and tests.
-
-## Roadmap
-
-![](res/taxonomy.jpg)
-
-## Implementation Progress
-
-### Language Formalizations
-
-- [x] Core Choice Calculus (CCC)
-- [x] Binary Choice Calculus (BCC)
-- [x] Algebraic Decision Diagrams (ADD)
-- [x] Binary Decision Diagrams (BDD)
-- [x] Option Calculus (OC)
-- [ ] Variation Trees (VT)
-- [ ] Lists of Variants (VList)?
-
-For some of those language, showing the existence of some transforation rules might be handy. We did this for some few rules of CCC and BCC so far.
-
-### Language Properties
-
-- [x] Define Completeness
-- [x] Define Incompleteness
-
-- [ ] Completeness of ADD
-- [ ] Completeness of CCC (begun; might be smarter to conclude from completeness of ADDs)
-- [x] Incompleteness of OC
-- [ ] Completeness of BCC
-- [ ] Completeness of VT
-
-### Language Relations
-
-Comparing expression within a single language:
-
-- [x] syntactic equivalence (defined in Agda STL)
-- [x] variant subset
-- [x] variant preserving equivalence
-- [x] semantic equivalence
-
-Comparing expression from two different languages:
-
-- [x] variant subset
-- [x] variant preserving equivalence
-- [x] semantic equivalence
-
-Comparing two languages
-
-- [x] expressiveness
-- [x] variant equivalence
-
-### Translations
-
-#### General Definitions
-
-- [x] Translation
-- [x] variant-preserving translations
-- [x] semantics-preserving translations: Defined but is it useful?
-- [x] conclude that a language is as expressive as another from a variant-preserving translation
-
-#### Across Languages
-
-planed proofs are:
-
-- [/] CCC to BCC (begun; stuck in state monad)
-- [x] BCC to CCC
-
-- [ ] BCC to ADD
-- [ ] ADD to BCC
-
-- [x] OC to BCC
-- [/] BCC cannot be encoded in OC
-
-- [ ] OC to VT
-- [ ] VT cannot be encoded in OC
-
-- [ ] BCC to VT
-- [ ] VT to BCC
-
-## Annotation Languages
-
-Do we want to also abstract on the annotation language (i.e., dimensions vs. formulas vs. literals vs. ... any expression that describes a predicate (or an indexing `X \to N` for CCC))? This might be a good future work. This would require to generalize all the languages to tak the annotation langauge as a type parameter, thus yielding a family of variation language for every current language. I'd love to do this in the future but I think that might be too much for this paper.
-
-## Some other notes and thoughts
-
-- Eric used the core choice calculus + local dimension declarations in his phd thesis. I wrote a bidirectional translation from choice calculus to choice calculus with local dimension declarations in Haskell [here](https://github.com/VariantSync/ProofsCC/blob/main/src/CC/CCL.hs). The idea is that when not having local dimension declarations, one can identify the deepest spot in the choice calculus tree at which the declaration must be introduced. We could also add that to our map.
-- on the search for nice brackets for option calculus I found these in Agda
-  ```
-  〔  U+3014  LEFT TORTOISE SHELL BRACKET (\( option 9 on page 2)
-  〕  U+3015  RIGHT TORTOISE SHELL BRACKET (\) option 9 on page 2)
-  ```
-- We somehow would like to prove that there is nothing more in variation trees than option calculus and choice calculus (follows actually from syntax): This is essentially a proof that "option calculus + else = choice calculus".
-
-### Sharing
-- [ ] Investigate sharing.
-  - [ ] prove for which set of problems, OC is better?
-  - [ ] In case, `option calculus + else = choice calculus`, we get `variation trees = choice calculus` but with better sharing!
-
-## Future Work
-### Evolution
-- [ ] implement variation diffs
-  - [ ] syntax as Variation Tree subset with meta-variation nodes
-  - [ ] semantics
-  - [ ] semantics for free from CC/VT. Prove that it is equivalent to the self-defined semantics (commuting square)
-  - [ ] derivation
-  - [ ] integration
+- [src/Framework](src/Framework) contains the definitions of our formal framework, defined in Section 4 in our paper.
+  You can find the core data types in [Definitions.lagda.md](src/Framework/Definitions.lagda.md).
+  Soundness and completeness are defined in the [Properties](src/Framework/Properties) sub-directory.
+  Definitions for expressiveness and other relations are in the [Relation](src/Framework/Relation) sub-directory.
+  Theorems for proving completeness, soundness, and expressiveness based on their relationships (Section 4.5) are within the [Proof](src/Framework/Proof) sub-directory.
+- [src/Lang](src/Lang) contains instantiations of particular variability languages.
+- [src/Translation](src/Translation) contains translations between variability languages, such as the translation of option calculus to binary choice calculus in [OC-to-BCC.lagda.md](src/Translation/OC-to-BCC.lagda.md) (Section 5.3 in our paper).
+- [src/Test](src/Test) contains definitions of unit tests for translations and some experiments that are run, when running the library.
