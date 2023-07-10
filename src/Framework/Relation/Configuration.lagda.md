@@ -13,7 +13,7 @@ open import Framework.Definitions
 
 ## Equivalence of Configurations
 
-Two configurations are equivalent for an expressionwhen they produce the same variants for all expressions.
+Two configurations are equivalent for an expression when they produce the same variants for all expressions.
 ```agda
 _⊢_≣ᶜ_ : ∀ {A : 𝔸} {L : VariabilityLanguage}
   → Expression A L

@@ -31,7 +31,7 @@ open import Util.Existence using (∃-Size)
 This module contains the central definitions of our framework (Section 4).
 
 We model variability languages as embedded domain specific languages. That is, each variability language is described by a type `L i A : 𝕃`, where `i` is a size used for termination checking, and `A : 𝔸` is a set of atoms that represents the domain we are making variational.
-A set of atoms can represent for example text or source code implemented by the type `String` pr some AST of a programming language.
+A set of atoms can represent for example text or source code implemented by the type `String` or some AST of a programming language.
 Each variability language `𝕃` is also parameterized in a size which is irrelevant for studying variation but we need it to ensure that our proofs terminate.
 ```agda
 {-| Type of atom sets -}
@@ -73,7 +73,7 @@ VariantSetoid i A = Eq.setoid (Variant i A)
 ```
 
 The semantic domain of variability languages is given by a finite, non-empty indexed set of variants.
-It is an indexed because two different configurations might yield the same variant (e.g., if there is an unused feature, or toggling a certain feature has no effect because all of its atoms already dead based on another selection).
+It is an indexed set because two different configurations might yield the same variant (e.g., if there is an unused feature, or toggling a certain feature has no effect because all of its atoms already dead based on another selection).
 ```agda
 IndexedVMap : Size → 𝔸 → Set → Set
 IndexedVMap i A I = IndexedSet I
@@ -105,7 +105,7 @@ Semantics : 𝕃 → ℂ → Set₁
 Semantics L C = ∀ {i : Size} {A : 𝔸} → L i A → IndexedVMap ∞ A C
 ```
 
-We further introduce convenience records that gather all relevant informatoin to characterize a single language.
+We further introduce convenience records that gather all relevant information to characterize a single language.
 ```agda
 record VariabilityLanguage : Set₁ where
   field

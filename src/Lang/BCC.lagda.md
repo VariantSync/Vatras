@@ -61,7 +61,7 @@ We define the semantics explicitly though because of two reasons:
 To define the semantics of the binary normal form, we also introduce new binary tags because configurations now have to choose from two alternatives.
 Doing so is isomorphic to choosing a boolean value (i.e., being a predicate).
 We define `true` to mean choosing the left alternative and `false` to choose the right alternative.
-Defining it the other way around is also ok but we have to pick one definition and stay consistent.
+Defining it the other way around is also possible but we have to pick one definition and stay consistent.
 We choose this order to follow the known _if c then a else b_ pattern where the evaluation of a condition _c_ to true means choosing the then-branch, which is the left one.
 ```agda
 Tag : Set

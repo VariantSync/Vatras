@@ -35,7 +35,7 @@ infixl 6 _❲_❳
 ```
 
 An expression is well-formed if there is an artifact at the root.
-Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbole for the empty variant in the semantic domain (which most languages do not require).
+Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbol for the empty variant in the semantic domain (which most languages do not require).
 ```agda
 data WFOC : 𝕃 where
   Root : ∀ {i : Size} {A : Set} →
@@ -177,7 +177,7 @@ OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
 
 **This is an important result!**
 It shows that we need at least some constraints to be complete.
-This is a justification for choice calculus definiting variability annotations with constraints (being alternative) instead of being pure annotations.
+This is a justification for choice calculus defining variability annotations with constraints (being alternative) instead of being pure annotations.
 Another way is to enrich the annotation language, for example using propositional logic.
 
 ## Utility

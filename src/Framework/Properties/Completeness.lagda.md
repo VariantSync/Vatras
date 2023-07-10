@@ -29,7 +29,7 @@ private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 
 ## Definitions
 
-Completess is given iff for any set of variants `vs` (modelled as a list for convenience in Agda), there exists an expression `e` in the language `L` that describes all variants in `v`.
+Completeness is given iff for any set of variants `vs` (modelled as a list for convenience in Agda), there exists an expression `e` in the language `L` that describes all variants in `v`.
 In particular, for every variant `v` in `vs`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
 Complete : VariabilityLanguage → Set₁

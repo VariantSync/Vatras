@@ -5,7 +5,7 @@ This is the supplementary Agda library for our paper _On the Expressive Power of
 
 ## Setup
 
-We tested our setup on ubuntu (inside windows subsystem for linux (WSL 2)).
+We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)) and Manjaro.
 
 To compile the library and run its small demo, you need to have Agda and it's standard-library installed.
 We recommend following the installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book.
@@ -14,7 +14,7 @@ It gives you step-by-step instructions for installing the GHC compiler (if you h
 We tested our library with Agda 2.6.2.2 and Agda 2.6.3.
 We use standard library version installed manually at commit 625a5775 but also newer versions should work when following the instructions from the book.
 
-To test whether you setup agda correctly, and to run this libraries demo, run make:
+To test whether you setup Agda correctly, and to run this libraries demo, run make:
 ```shell
 make
 ```
@@ -33,7 +33,7 @@ When running the demo, make sure your terminal is in full-screen because the dem
 The library is organized as follows:
 
 - [src/Framework](src/Framework) contains the definitions of our formal framework, defined in Section 4 in our paper.
-  You can find the core data types in [Definitions.lagda.md](src/Framework/Definitions.lagda.md).
+  Here, you can find the core data types in [Definitions.lagda.md](src/Framework/Definitions.lagda.md).
   Soundness and completeness are defined in the [Properties](src/Framework/Properties) sub-directory.
   Definitions for expressiveness and other relations are in the [Relation](src/Framework/Relation) sub-directory.
   Theorems for proving completeness, soundness, and expressiveness based on their relationships (Section 4.5) are within the [Proof](src/Framework/Proof) sub-directory.

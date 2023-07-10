@@ -63,7 +63,7 @@ Said artifact will then be the parent of the translated children again.
 The zipper stores the children of the currently translated subtree.
 It keeps track of which children have already been translated and which have not.
 The idea is that the zipper wanders through the children from left to right, translating one child at a time.
-In the beginning, no child of the parent artifact has been translatedd:
+In the beginning, no child of the parent artifact has been translated:
 
     [] ≪ e₁ ∷ e₂ ∷ e₃ ∷ ... ∷ eₙ
 

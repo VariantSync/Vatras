@@ -127,7 +127,7 @@ e₁ ≚-via t = e₁ ⊆-via t × e₁ ⊇-via t
 ```
 
 Finally, we can establish whether a translation is variant- or semantics-preserving.
-A translation is variability-preserving if it translates every expression ot a variant-equivalent expression.
+A translation is variability-preserving if it translates every expression to a variant-equivalent expression.
 This is one of the major theorems we ought to show for translation between variability languages.
 ```agda
 _is-variant-preserving : ∀ {L₁ L₂ : VariabilityLanguage} → Translation L₁ L₂ → Set₁
