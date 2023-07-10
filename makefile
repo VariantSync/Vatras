@@ -5,3 +5,7 @@ build:
 
 run:
 	./src/Main
+
+clean:
+	rm -rf _build
+	rm -rf src/MAlonzo
