@@ -6,6 +6,7 @@ do
   grep -r -n -I \
     --exclude-dir=_build \
     --exclude-dir=.git \
+    --exclude-dir=agda-stdlib \
     --exclude=check-anonymity.sh \
     $name
 done
