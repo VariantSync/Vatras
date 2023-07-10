@@ -12,7 +12,7 @@ The library needs Agda version 2.6.3 (newer version should also work but we did 
 ### Installation
 
 To compile the library and run its small demo, you need to have Agda installed.
-We recommend following the installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book to install Agda.
+We recommend following the installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book to install GHC, Cabal, and Agda (no need to install the book and the standard-library, which is shipped in the right version in the subdirectory `agda-stdlib` here).
 
 TL;DR: In summary, when following the book, you have to do:
 
