@@ -180,7 +180,9 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≗_)
 open Eq.≡-Reasoning
 open import Function using (id; _∘_)
-open import Data.List.Properties using (map-∘; map-id; map-cong)
+-- open import Data.List.Properties using (map-∘; map-id; map-cong)
+open import Data.List.Properties using (map-id; map-cong)
+open import Util.List using (map-∘)
 
 describe-variant : ∀ {i : Size} {A : 𝔸} → Variant i A → CCC i A
 describe-variant (Artifactᵥ a vs) = Artifact a (map describe-variant vs)

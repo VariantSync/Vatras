@@ -92,27 +92,27 @@ if-cong true  _ = refl
 
 ----- Properties of Vectors
 
-module Vec where
-  open import Data.List using ([]; _∷_)
-  open import Data.Vec using (Vec; []; cast; fromList; toList)
+-- module Vec where
+--   open import Data.List using ([]; _∷_)
+--   open import Data.Vec using (Vec; []; cast; fromList; toList)
 
-  vec0 : ∀ {A : Set} → Vec A zero
-  vec0 = []
+--   vec0 : ∀ {A : Set} → Vec A zero
+--   vec0 = []
 
-  {-|
-  Zero vector but cast to have size n∸n.
-  -}
-  vec-n∸n : ∀ {A : Set} → (n : ℕ) → Vec A (n ∸ n)
-  vec-n∸n l = cast (Eq.sym (n∸n≡0 l)) vec0
+--   {-|
+--   Zero vector but cast to have size n∸n.
+--   -}
+--   vec-n∸n : ∀ {A : Set} → (n : ℕ) → Vec A (n ∸ n)
+--   vec-n∸n l = cast (Eq.sym (n∸n≡0 l)) vec0
 
-  id≗toList∘fromList : ∀ {ℓ : Level} {A : Set ℓ} → id ≗ (Data.Vec.toList {A = A}) ∘ Data.Vec.fromList
-  id≗toList∘fromList [] = refl
-  id≗toList∘fromList (x ∷ xs) =
-    begin
-      x ∷ xs
-    ≡⟨ Eq.cong (x ∷_) (id≗toList∘fromList xs) ⟩
-      x ∷ toList (fromList xs)
-    ≡⟨⟩
-      toList (fromList (x ∷ xs))
-    ∎
-open Vec public
+--   id≗toList∘fromList : ∀ {ℓ : Level} {A : Set ℓ} → id ≗ (Data.Vec.toList {A = A}) ∘ Data.Vec.fromList
+--   id≗toList∘fromList [] = refl
+--   id≗toList∘fromList (x ∷ xs) =
+--     begin
+--       x ∷ xs
+--     ≡⟨ Eq.cong (x ∷_) (id≗toList∘fromList xs) ⟩
+--       x ∷ toList (fromList xs)
+--     ≡⟨⟩
+--       toList (fromList (x ∷ xs))
+--     ∎
+-- open Vec public

@@ -6,7 +6,7 @@ module Util.List where
 open import Data.Bool using (Bool; true; false)
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc; zero; NonZero; _⊔_)
-open import Data.List using (List; []; _∷_; lookup; length; foldr)
+open import Data.List using (List; []; _∷_; lookup; length; foldr; map)
 open import Data.List.Properties using (map-id)
 open import Data.List.NonEmpty using (List⁺; _∷_; toList) renaming (map to map⁺)
 open import Util.AuxProofs using (minFinFromLimit; clamp)
@@ -14,6 +14,11 @@ open import Function using (id; _∘_; flip)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning
+
+-- This is part of the STL of newer versions. TODO: use that later on.
+map-∘ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} {g : B → C} {f : A → B} → map (g ∘ f) ≗ map g ∘ map f
+map-∘ []       = refl
+map-∘ (x ∷ xs) = Eq.cong (_ ∷_) (map-∘ xs)
 
 -- true iff the given list is empty
 empty? : ∀ {A : Set} → List A → Bool

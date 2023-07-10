@@ -20,7 +20,9 @@ open import Function using (_∘_)
 open import Level using (0ℓ) renaming (suc to ℓ-suc)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 
-open import Relation.Nullary.Decidable using (Dec; yes; no; isYes; False; toWitnessFalse)
+--open import Relation.Nullary.Decidable using (Dec; yes; no; isYes; False; toWitnessFalse)
+open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary.Decidable using (isYes; False; toWitnessFalse)
 open import Relation.Binary using (Setoid; DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 

@@ -7,10 +7,13 @@ open import Data.String using (String; _++_; _==_; replicate; fromChar; toList; 
 open import Data.Product as Prod using (_,_)
 open import Function using (id; _∘_)
 
-open import Effect.Applicative using (RawApplicative)
-open import Effect.Monad using (RawMonad)
+--open import Effect.Applicative using (RawApplicative)
+--open import Effect.Monad using (RawMonad)
+open import Category.Applicative using (RawApplicative)
+open import Category.Monad using (RawMonad)
 open RawApplicative using (pure)
-open import Data.List.Effectful renaming (applicative to list-applicative; monad to list-monad)
+--open import Data.List.Effectful renaming (applicative to list-applicative; monad to list-monad)
+open import Data.List.Categorical renaming (applicative to list-applicative; monad to list-monad)
 open import Level using (0ℓ)
 
 open import Util.List using (max)
