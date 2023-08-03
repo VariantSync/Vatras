@@ -35,6 +35,14 @@ TL;DR: In summary, when following the book, you have to do:
 
 Detailed installation instructions can also be found [in the official documentation](https://agda.readthedocs.io/en/v2.6.3/getting-started/installation.html), too.
 
+3. Finding the standard library: Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided makefile sets this environment variable during the build process to the `.libs` directory within this repository. If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
+
+    ```shell
+    export AGDA_DIR="path/to/this/repository/libs"
+    ```
+
+    Beware that setting the variable will overwrite any previously set directory. In that case you might want to overwrite the variable only temporarily while working on this project.
+
 ### Compiling the Library and Running the Demo
 
 To test whether you setup Agda correctly, and to run this libraries demo, run make:
