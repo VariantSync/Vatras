@@ -20,6 +20,7 @@ pkgs.agdaPackages.mkDerivation {
           repo = "agda-stdlib";
           owner = "agda";
           rev = "177dc9e";
+          hash = "sha256-ovnhL5otoaACpqHZnk/ucivwtEfBQtGRu4/xw4+Ws+c=";
         };
       }))
   ];
