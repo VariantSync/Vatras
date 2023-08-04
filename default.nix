@@ -26,7 +26,11 @@ pkgs.agdaPackages.mkDerivation {
   ];
 
   buildPhase = ''
-    make
+    make build
+  '';
+
+  installPhase = ''
+    install -D src/Main "$out/bin/$pname"
   '';
 
   meta = { description = "On the Expressive Power of Programming Languages"; };
