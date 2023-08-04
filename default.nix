@@ -12,17 +12,17 @@ pkgs.agdaPackages.mkDerivation {
   pname = "EPVL.agda-lib";
   src = ./.;
 
-  # buildInputs = [
-  #   pkgs.agdaPackages.standard-library.overrideAttrs
-  #   (oldAttrs: {
-  #     version = "1.5";
-  #     src = pkgs.fetchFromGitHub {
-  #       repo = "agda-stdlib";
-  #       owner = "agda";
-  #       rev = "177dc9e";
-  #     };
-  #   })
-  # ];
+  buildInputs = [
+    (pkgs.agdaPackages.standard-library.overrideAttrs
+      (oldAttrs: {
+        version = "1.5";
+        src = pkgs.fetchFromGitHub {
+          repo = "agda-stdlib";
+          owner = "agda";
+          rev = "177dc9e";
+        };
+      }))
+  ];
 
   buildPhase = ''
     make
