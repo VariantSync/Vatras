@@ -7,6 +7,7 @@ open import Data.Product using (_×_; Σ-syntax)
 open import Data.List using (List; _∷_; []; map)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 
+
 open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -118,6 +119,31 @@ binary-to-nary-choice :
   → BinaryChoice L₁ A
   → Choice L₂ A
 binary-to-nary-choice t (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
+
+module _ {A : 𝔸} where
+  open Data.IndexedSet (VariantSetoid A) using (_≅_)
+
+  binary-to-nary-choice-preserves :
+    ∀ {L₁ L₂ : 𝕃}
+    → {C₁ C₂ : ℂ}
+    → {⟦_⟧₁ : Semantics C₁ L₁}
+    → {⟦_⟧₂ : Semantics C₂ L₂}
+    → (mkChoice₁ : Constructor BinaryChoice L₁)
+    → (mkChoice₂ : Constructor Choice L₂)
+    → (t : L₁ A → L₂ A)
+    → (D : Name)
+    → (l r : L₁ A)
+    → ⟦ l ⟧₁ ≅ ⟦ t l ⟧₂
+    → ⟦ r ⟧₁ ≅ ⟦ t r ⟧₂
+    → ⟦ mkChoice₁ (D ⟨ l , r ⟩) ⟧₁ ≅ ⟦ mkChoice₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)) ⟧₂
+  binary-to-nary-choice-preserves mkChoice₁ mkChoice₂ t D l r t-pres-l t-pres-r =
+    (λ c₁ → {!!} Data.Product., {!!}) Data.Product., {!!}
+    -- This is unprovable yet.
+    -- We have no assumptions on semantics and configurations, so we can neither
+    -- translate configurations nor show that this translation indeed preserves
+    -- the semantics, which in turn could do anything as a black box function.
+    -- We need a way to manipulate the configuration to specify what to do for the new dimensions.
+    -- We need a way to perform lookups in configurations to evaluate the semantics.
 
 artifact-translation :
   ∀ {L₁ L₂ A}
