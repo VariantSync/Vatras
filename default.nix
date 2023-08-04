@@ -9,7 +9,7 @@
 { pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/refs/tags/23.05.tar.gz") {} }:
 pkgs.agdaPackages.mkDerivation {
   version = "1.0";
-  pname = "EPVL.agda-lib";
+  pname = "EPVL";
   src = ./.;
 
   buildInputs = [
