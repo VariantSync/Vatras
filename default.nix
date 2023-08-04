@@ -6,7 +6,7 @@
 # environment variable to point to the "libs" directory in this repository
 # export AGDA_DIR="path/to/this/repository/libs"
 # I have documented more details on the setup in the README.md
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/refs/tags/23.05.tar.gz") }:
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/refs/tags/23.05.tar.gz") {} }:
 pkgs.agdaPackages.mkDerivation {
   version = "1.0";
   pname = "EPVL.agda-lib";
