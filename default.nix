@@ -15,7 +15,7 @@ pkgs.agdaPackages.mkDerivation {
   buildInputs = [
     (pkgs.agdaPackages.standard-library.overrideAttrs
       (oldAttrs: {
-        version = "1.5";
+        version = "1.7.2";
         src = pkgs.fetchFromGitHub {
           repo = "agda-stdlib";
           owner = "agda";
