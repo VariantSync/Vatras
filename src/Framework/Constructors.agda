@@ -15,7 +15,7 @@ open import Relation.Binary using (Setoid)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
 
-open import Framework.Annotation.Name using (Name)
+open import Util.List using (find-or-last) --lookup-clamped)
 
 import Data.IndexedSet
 
@@ -59,6 +59,7 @@ open Config public
 
 -- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
 record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+  constructor _+_
   field
     expressions : 𝕃
     semantics   : 𝕃-Semantics V F S expressions A
@@ -110,6 +111,13 @@ record BinaryChoice (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set where
     l : L A
     r : L A
 
+record Choice (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set where
+  constructor _⟨_⟩
+  field
+    D : F
+    alternatives : List⁺ (L A)
+
+
 ---- SEMANTICS ----
 
 Leaf-Semantics : ∀ {F : 𝔽} {S : 𝕊} {A : 𝔸}
@@ -121,9 +129,14 @@ ParallelComposition-Semantics : ∀ {F : 𝔽} {S : 𝕊} {A : 𝔸}
 ParallelComposition-Semantics L (l ∥ r) c = ⟦ l ⟧ᵢ c ∥ ⟦ r ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
-Binary-Choice-Semantics : ∀ {V : 𝕍} {F : 𝔽} {A : 𝔸}
+BinaryChoice-Semantics : ∀ {V : 𝕍} {F : 𝔽} {A : 𝔸}
   → ℂ-Semantics V F Bool (BinaryChoice F) A
-Binary-Choice-Semantics L (D ⟨ l , r ⟩) c = ⟦ if lookup c D then l else r ⟧ᵢ c
+BinaryChoice-Semantics L (D ⟨ l , r ⟩) c = ⟦ if lookup c D then l else r ⟧ᵢ c
+  where ⟦_⟧ᵢ = semantics L
+
+Choice-Semantics : ∀ {V : 𝕍} {F : 𝔽} {A : 𝔸}
+  → ℂ-Semantics V F ℕ (Choice F) A
+Choice-Semantics L (D ⟨ alternatives ⟩) c = ⟦ find-or-last (lookup c D) alternatives ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
 ---- EXAMPLE : Gruler's language -----
@@ -145,7 +158,7 @@ GrulerVL = record
 
 ⟦ GAsset A  ⟧ᵍ = Leaf-Semantics GrulerVL A
 ⟦ GPComp PC ⟧ᵍ = ParallelComposition-Semantics GrulerVL PC
-⟦ GChoice C ⟧ᵍ = Binary-Choice-Semantics GrulerVL C
+⟦ GChoice C ⟧ᵍ = BinaryChoice-Semantics GrulerVL C
 
 gruler-has-leaf : Leaf ∈ Gruler
 gruler-has-leaf = record
@@ -186,53 +199,30 @@ make-gruler-leaf = make-leaf Gruler gruler-has-leaf
 make-gruler-choice : ℕ → Gruler A → Gruler A → Gruler A
 make-gruler-choice = make-choice Gruler gruler-has-choice
 
--- record Choice (L : 𝕃) (A : 𝔸) : Set where
---   constructor _⟨_⟩
---   field
---     name : Name
---     alternatives : List⁺ (L A)
+----- NOW MAKE USE OF THE NEW DEFINITIONS -----
 
--- record Option (L : 𝕃) (A : 𝔸) : Set where
---   constructor _〔_〕
---   field
---     name : Name
---     child : L A
+VariantSetoid : 𝕍 → 𝔸 → Setoid 0ℓ 0ℓ
+VariantSetoid V A = Eq.setoid (V A)
 
--- data Variant : 𝕃 where
---   Artifactᵥ : ∀ {A : 𝔸} → Artifact Variant A → Variant A
--- data CCₙ : 𝕃 where
---   Artifactₙ : ∀ {A : 𝔸} → Artifact CCₙ A → CCₙ A
---   Choiceₙ : ∀ {A : 𝔸} → Choice CCₙ A → CCₙ A
+IndexedVMap : 𝕍 → 𝔸 → Set → Set
+IndexedVMap V A I = IndexedSet I
+  where open Data.IndexedSet (VariantSetoid V A) using (IndexedSet)
 
--- data OC : 𝕃 where
---   Artifactₒ : ∀ {A : 𝔸} → Artifact OC A → OC A
---   Optionₒ : ∀ {A : 𝔸} → Option OC A → OC A
+{-|
+Variant maps constitute the semantic domain of variability languages.
+While we defined variant maps to be indexed sets with an arbitrary finite and non-empty index set, we directly reflect these properties
+via Fin (suc n) here for convenience.
+-}
+VMap : 𝕍 → 𝔸 → ℕ → Set
+VMap V A n = IndexedVMap V A (Fin (suc n))
 
--- Semantics : ℂ → 𝕃 → Set₁
--- Semantics C L = ∀ {A : 𝔸} → L A → C → Variant A
-
--- VariantSetoid : 𝔸 → Setoid 0ℓ 0ℓ
--- VariantSetoid A = Eq.setoid (Variant A)
-
--- IndexedVMap : 𝔸 → Set → Set
--- IndexedVMap A I = IndexedSet I
---   where open Data.IndexedSet (VariantSetoid A) using (IndexedSet)
-
--- {-|
--- Variant maps constitute the semantic domain of variability languages.
--- While we defined variant maps to be indexed sets with an arbitrary finite and non-empty index set, we directly reflect these properties
--- via Fin (suc n) here for convenience.
--- -}
--- VMap : 𝔸 → ℕ → Set
--- VMap A n = IndexedVMap A (Fin (suc n))
-
--- Complete : (C : ℂ) → (L : 𝕃) → Semantics C L → Set₁
--- Complete C L ⟦_⟧ = ∀ {A n}
---   → (vs : VMap A n)
---     ----------------------------------
---   → Σ[ e ∈ L A ]
---       (let open Data.IndexedSet (VariantSetoid A) using (_≅_)
---         in vs ≅ ⟦ e ⟧)
+Complete : ∀ {V F S} → VariabilityLanguage V F S → Set₁
+Complete {V} (L + ⟦_⟧) = ∀ {A n}
+  → (vs : VMap V A n)
+    ----------------------------------
+  → Σ[ e ∈ L A ]
+      (let open Data.IndexedSet (VariantSetoid V A) renaming (_≅_ to _≋_)
+        in vs ≋ ⟦ e ⟧)
 
 -- -- any language with artifacts and choices is complete
 -- choices-make-complete :
@@ -245,37 +235,72 @@ make-gruler-choice = make-choice Gruler gruler-has-choice
 -- --       as expressive as a variant list.
 -- choices-make-complete C L ⟦_⟧ mkArtifact mkChoice vs = {!!}
 
--- binary-to-nary-choice :
---   ∀ {L₁ L₂ A}
---   → (translation : L₁ A → L₂ A)
---   → BinaryChoice L₁ A
---   → Choice L₂ A
--- binary-to-nary-choice t (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
+binary-to-nary-choice :
+  ∀ {L₁ L₂ F A}
+  → (translation : L₁ A → L₂ A)
+  → BinaryChoice F L₁ A
+  → Choice F L₂ A
+binary-to-nary-choice t (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
 
--- module _ {A : 𝔸} where
-  -- open Data.IndexedSet (VariantSetoid A) using (_≅_)
+binary-to-nary-choice-conf : ∀ {F : 𝔽}
+  → Config F Bool
+  → Config F ℕ
+lookup (binary-to-nary-choice-conf cb) f with lookup cb f
+... | false = 1
+... | true  = 0
 
-  -- binary-to-nary-choice-preserves :
-  --   ∀ {L₁ L₂ : 𝕃}
-  --   → {C₁ C₂ : ℂ}
-  --   → {⟦_⟧₁ : Semantics C₁ L₁}
-  --   → {⟦_⟧₂ : Semantics C₂ L₂}
-  --   → (mkChoice₁ : Constructor BinaryChoice L₁)
-  --   → (mkChoice₂ : Constructor Choice L₂)
-  --   → (t : L₁ A → L₂ A)
-  --   → (D : Name)
-  --   → (l r : L₁ A)
-  --   → ⟦ l ⟧₁ ≅ ⟦ t l ⟧₂
-  --   → ⟦ r ⟧₁ ≅ ⟦ t r ⟧₂
-  --   → ⟦ mkChoice₁ (D ⟨ l , r ⟩) ⟧₁ ≅ ⟦ mkChoice₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)) ⟧₂
-  -- binary-to-nary-choice-preserves mkChoice₁ mkChoice₂ t D l r t-pres-l t-pres-r =
-  --   (λ c₁ → {!!} Data.Product., {!!}) Data.Product., {!!}
-  --   -- This is unprovable yet.
-  --   -- We have no assumptions on semantics and configurations, so we can neither
-  --   -- translate configurations nor show that this translation indeed preserves
-  --   -- the semantics, which in turn could do anything as a black box function.
-  --   -- We need a way to manipulate the configuration to specify what to do for the new dimensions.
-  --   -- We need a way to perform lookups in configurations to evaluate the semantics.
+binary-to-nary-choice-fnoc : ∀ {F : 𝔽}
+  → Config F ℕ
+  → Config F Bool
+lookup (binary-to-nary-choice-fnoc cn) f with lookup cn f
+... | 0 = true
+... | _ = false
+
+module _ {V F A} (VL₁ : VariabilityLanguage V F Bool) (VL₂ : VariabilityLanguage V F ℕ) where
+  open Data.IndexedSet (VariantSetoid V A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+  open Data.Product using () renaming (_,_ to _and_)
+
+  private
+    L₁   = expressions VL₁
+    L₂   = expressions VL₂
+    ⟦_⟧₁ = semantics VL₁
+    ⟦_⟧₂ = semantics VL₂
+
+  preserves-conf :
+    ∀ (t : L₁ A → L₂ A)
+      (D : F)
+      (l r : L₁ A)
+    → ⟦ l ⟧₁ ≋ ⟦ t l ⟧₂
+    → ⟦ r ⟧₁ ≋ ⟦ t r ⟧₂
+    → (c : Config F Bool)
+    →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) c
+      ≡ Choice-Semantics VL₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)) (binary-to-nary-choice-conf c)
+  preserves-conf t D l r t-l t-r c with lookup c D
+  ... | false = {!!}
+  ... | true = {!!}
+
+  preserves-fnoc :
+    ∀ (t : L₁ A → L₂ A)
+      (D : F)
+      (l r : L₁ A)
+    → ⟦ l ⟧₁ ≋ ⟦ t l ⟧₂
+    → ⟦ r ⟧₁ ≋ ⟦ t r ⟧₂
+    → (c : Config F ℕ)
+    →   Choice-Semantics VL₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)) c
+      ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (binary-to-nary-choice-fnoc c)
+  preserves-fnoc = {!!}
+
+  binary-to-nary-choice-preserves :
+    ∀ (t : L₁ A → L₂ A)
+    → (D : F)
+    → (l r : L₁ A)
+    → ⟦ l ⟧₁ ≋ ⟦ t l ⟧₂
+    → ⟦ r ⟧₁ ≋ ⟦ t r ⟧₂
+    →   (BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩))
+      ≋ (Choice-Semantics VL₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)))
+  binary-to-nary-choice-preserves t D l r t-pres-l t-pres-r =
+        ⊆-by-index-translation binary-to-nary-choice-conf (preserves-conf t D l r t-pres-l t-pres-r)
+    and ⊆-by-index-translation binary-to-nary-choice-fnoc (preserves-fnoc t D l r t-pres-l t-pres-r)
 
 -- artifact-translation :
 --   ∀ {L₁ L₂ A}
@@ -308,20 +333,3 @@ make-gruler-choice = make-choice Gruler gruler-has-choice
 --   -- Would it really avoid duplication and would it help us for proofs of expressiveness?
 --   -- Also proving the preservation of binary-to-nary-choice might be easier.
 
--- {-# TERMINATING #-}
--- CC₂→CCₙ : ∀ {A} → CC₂ A → CCₙ A
--- CC₂→CCₙ (Artifact₂ a) = Artifactₙ (artifact-translation CC₂→CCₙ a)
--- CC₂→CCₙ (Choice₂ c) = Choiceₙ (binary-to-nary-choice CC₂→CCₙ c)
-
--- Examples on how to use constructors to make functions that abstract over languages.
--- leaf :
-  -- ∀ {L : 𝕃} → Constructor Artifact L
-  -- → {A : 𝔸} → (a : A)
-  -- → L A
--- leaf mkArtifact a = mkArtifact (a -< [] >-)
-
--- variant-leaf : ∀ {A : 𝔸} (a : A) → Variant A
--- variant-leaf = leaf Artifactᵥ
-
--- cc₂-leaf : ∀ {A : 𝔸} (a : A) → CC₂ A
--- cc₂-leaf = leaf Artifact₂
