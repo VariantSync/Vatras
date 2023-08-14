@@ -11,6 +11,7 @@ open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Nullary.Negation using (¬_)
 
 open import Framework.Annotation.Name using (Name)
 
@@ -105,17 +106,25 @@ record Rule (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
 Specialized-Syntax : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → (L : Language V F S) → Syntax → Set₁
 Specialized-Syntax {_} {F} {S} L Syn = (A : 𝔸) → Syn F S (constructor-set L) A
 
-Specialized-Rule : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Language V F S → Set₁
-Specialized-Rule {V} {F} {S} _ = Rule V F S
-
 -- Actually, we do not need a whole rule as input here because we are using only its syntax.
 -- But it is nice to use because currently, it is the creation of a rule at which point is decided
 -- which arguments of the syntax are optional and which not (from (constructor-set L), F, and S).
-Cons : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → (L : Language V F S) → Specialized-Rule L → Set₁
-Cons {_} {F} {S} L R = ∀ {A : 𝔸} → Rule.syn R F S (constructor-set L) A → constructor-set L A
-
+-- Also: This definition does not enforce that the produced expression is indeed the given constructor.
+_∈_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Rule V F S → Language V F S → Set₁
+_∈_ {_} {F} {S} R L = ∀ {A : 𝔸} → Rule.syn R F S (constructor-set L) A → constructor-set L A
+-- syntax Cons L R = R ∈ L
 -- Cons : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → (L : Language V F S) → Specialized-Syntax L → Set₁
 -- Cons {_} {F} {S} L R = ∀ {A : 𝔸} → Rule.syn R F S (constructor-set L) A → constructor-set L A
+
+_∉_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Rule V F S → Language V F S → Set₁
+R ∉ L = ¬ (R ∈ L)
+
+_⊆_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Language V F S → Language V F S → Set₁
+_⊆_ {V} {F} {S} L₁ L₂ = ∀ (R : Rule V F S) → R ∈ L₁ → R ∈ L₂
+
+_≅_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Language V F S → Language V F S → Set₁
+L₁ ≅ L₂ = L₁ ⊆ L₂ × L₂ ⊆ L₁
+
 
 data GrulerVariant : 𝕍 where
   asset : ∀ {A : 𝔸} → A → GrulerVariant A
@@ -208,14 +217,14 @@ Gruler-Language = record
 ⟦ GChoice C    ⟧ᵍ = Binary-Choice-Semantics Gruler-Language C
 
 make-leaf : ∀ {F : 𝔽} {S : 𝕊}
-  → (L : Language GrulerVariant F S) → Cons L (Leaf-Rule F S)
-  → {A : 𝔸} → A → (constructor-set L A)
+  → (L : Language GrulerVariant F S) → Leaf-Rule F S ∈ L
+  → {A : 𝔸} → A
+  → (constructor-set L A)
 make-leaf _ cons-leaf a = cons-leaf (leaf a)
 
 make-choice : ∀ {V : 𝕍} {F : 𝔽}
-  → (L : Language V F Bool) → Cons L (BinaryChoice-Rule V F)
-  → F
-  → {A : 𝔸} → (constructor-set L A) → (constructor-set L A)
+  → (L : Language V F Bool) → BinaryChoice-Rule V F ∈ L
+  → {A : 𝔸} → F → (constructor-set L A) → (constructor-set L A)
   → (constructor-set L A)
 make-choice L cons-choice D l r = cons-choice (D ⟨ l , r ⟩)
 
@@ -225,6 +234,14 @@ make-gruler-leaf = make-leaf Gruler-Language GAsset
 make-gruler-choice : ∀ {A : 𝔸} → ℕ → Gruler A → Gruler A → Gruler A
 make-gruler-choice n = make-choice Gruler-Language GChoice n
 
+data Fake : 𝕃 where
+  fake : ∀ {A} → Fake A
+Fake-Language : ∀ {F S} → Language Fake F S
+constructor-set Fake-Language = Fake
+semantics Fake-Language _ _ = fake
+
+fake-has-choices : ∀ {F} → BinaryChoice-Rule Fake F ∈ Fake-Language
+fake-has-choices _ = fake
 -- record Choice (L : 𝕃) (A : 𝔸) : Set where
 --   constructor _⟨_⟩
 --   field
