@@ -3,14 +3,16 @@ module Framework.Constructors where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Fin using (Fin)
+open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (_×_; Σ-syntax)
 open import Data.List using (List; _∷_; []; map)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 
+open import Function using (_∘_)
 open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
 
 open import Framework.Annotation.Name using (Name)
@@ -21,13 +23,9 @@ import Data.IndexedSet
 𝔸 : Set₁
 𝔸 = Set
 
--- Annotation Language
-𝔽 : Set₁
-𝔽 = Set
-
--- Selections language (the semantic domain of a feature language 𝔽)
-𝕊 : Set₁
-𝕊 = Set
+private
+  variable
+    A : 𝔸
 
 -- Variability Language
 𝕃 : Set₁
@@ -37,102 +35,63 @@ import Data.IndexedSet
 𝕍 : Set₁
 𝕍 = 𝔸 → Set
 
--- configurations: A configuration is anything that allows us to do a lookup
+-- Constructor Type
+ℂ : Set₁
+ℂ = 𝔸 → Set
+
+-- Annotation Language
+𝔽 : Set₁
+𝔽 = Set
+
+-- Selections Language (the semantic domain of an annotation language 𝔽)
+𝕊 : Set₁
+𝕊 = Set
+
+-- Configurations: A configuration is anything that allows us to do a lookup.
 record Config (F : 𝔽) (S : 𝕊) : Set where
   field
     lookup : F → S
 open Config public
 
-Syntax : Set₁
-Syntax = 𝔽 → 𝕊 → 𝕃 → 𝔸 → Set
+-- Semantics of variability languages
+𝕃-Semantics : 𝕍 → 𝔽 → 𝕊 → 𝕃 → 𝔸 → Set
+𝕃-Semantics V F S L A = L A → Config F S → V A
 
-Semantics : 𝕍 → 𝔽 → 𝕊 → 𝕃 → 𝔸 → Set
-Semantics V F S L A = L A → Config F S → V A
-
--- constructor arguments
--- CArg : Set₁
--- CArg = 𝕃 → 𝔸 → Set
-
--- constructors (or grammar rules) for annotation langauges
--- Constructor : CArg → 𝕃 → Set₁
--- Constructor P L = ∀ {A : 𝔸} → P L A → L A
-
--- record Cons (L : 𝕃) (A : 𝔸) : Set₁ where
---   inductive
---   field
---     val : L A
---     sem : ∀ {A : 𝔸} → syn A → Variant A
--- open Cons public
-
--- record Arti (A : 𝔸) : Set₁ where
---   field
---     val : A
---     child : Σ[ syn ∈ Syntax ] (Cons syn A)
-
--- ArtiCons : ∀ {A : 𝔸} → Cons Arti A
--- ArtiCons = record
---   { syn = {!!}
---   ; sem = {!!} }
-
--- record Artifact (S : 𝕊) (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set₁ where
-  -- inductive
-  -- constructor _-<_>-
-  -- field
-    -- value : A
-    -- children : List (Cons S F L A)
-
--- ArtifactCons : (S : 𝕊) (F : 𝔽) (L : 𝕃) (A : 𝔸) → Cons S F L A
--- ArtifactCons S F L A = record
---   { syn = Artifact
---   ; sem = {!!}
---   }
-
-record Language (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+-- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
+record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   field
-    constructor-set : 𝕃
-    semantics : ∀ {A : 𝔸} → Semantics V F S constructor-set A
-open Language public
+    expressions : 𝕃
+    semantics   : 𝕃-Semantics V F S expressions A
+open VariabilityLanguage public
 
-record Rule (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+-- Semantics of constructors
+ℂ-Semantics : 𝕍 → 𝔽 → 𝕊 → (𝕃 → ℂ) → 𝔸 → Set₁
+ℂ-Semantics V F S C A = (L : VariabilityLanguage V F S) → C (expressions L) A → Config F S → V A
+
+record _∈_ (Constructor : ℂ) (Expression : 𝕃) : Set₁ where
   field
-    syn : Syntax
-    sem :
-      ∀ {A : 𝔸}
-      → (L : Language V F S)
-      → syn F S (constructor-set L) A
-      → Config F S
-      → V A
+    cons : Constructor A → Expression A
+    snoc : Expression  A → Maybe (Constructor A)
+    id-l : snoc {A} ∘ cons {A} ≗ just
+open _∈_ public
 
-Specialized-Syntax : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → (L : Language V F S) → Syntax → Set₁
-Specialized-Syntax {_} {F} {S} L Syn = (A : 𝔸) → Syn F S (constructor-set L) A
+_∉_ : ℂ → 𝕃 → Set₁
+C ∉ L = ¬ (C ∈ L)
 
--- Actually, we do not need a whole rule as input here because we are using only its syntax.
--- But it is nice to use because currently, it is the creation of a rule at which point is decided
--- which arguments of the syntax are optional and which not (from (constructor-set L), F, and S).
--- Also: This definition does not enforce that the produced expression is indeed the given constructor.
-_∈_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Rule V F S → Language V F S → Set₁
-_∈_ {_} {F} {S} R L = ∀ {A : 𝔸} → Rule.syn R F S (constructor-set L) A → constructor-set L A
--- syntax Cons L R = R ∈ L
--- Cons : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → (L : Language V F S) → Specialized-Syntax L → Set₁
--- Cons {_} {F} {S} L R = ∀ {A : 𝔸} → Rule.syn R F S (constructor-set L) A → constructor-set L A
+_⊆_ : 𝕃 → 𝕃 → Set₁
+L₁ ⊆ L₂ = ∀ (C : ℂ) → C ∈ L₁ → C ∈ L₂
 
-_∉_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Rule V F S → Language V F S → Set₁
-R ∉ L = ¬ (R ∈ L)
-
-_⊆_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Language V F S → Language V F S → Set₁
-_⊆_ {V} {F} {S} L₁ L₂ = ∀ (R : Rule V F S) → R ∈ L₁ → R ∈ L₂
-
-_≅_ : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Language V F S → Language V F S → Set₁
+_≅_ : 𝕃 → 𝕃 → Set₁
 L₁ ≅ L₂ = L₁ ⊆ L₂ × L₂ ⊆ L₁
 
+----- EXAMPLES FOR VARIANT TYPES -----
 
 data GrulerVariant : 𝕍 where
-  asset : ∀ {A : 𝔸} → A → GrulerVariant A
-  _∥_   : ∀ {A : 𝔸} → GrulerVariant A → GrulerVariant A → GrulerVariant A
+  asset : A → GrulerVariant A
+  _∥_   : GrulerVariant A → GrulerVariant A → GrulerVariant A
 
----- SYNTAX ----
+---- EXAMPLES FOR CONSTRUCTORS ----
 
--- record Leaf : Syntax where
 record Leaf (A : 𝔸) : Set where
   constructor leaf
   field
@@ -153,95 +112,80 @@ record BinaryChoice (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set where
 
 ---- SEMANTICS ----
 
-Leaf-Semantics : ∀ {A : 𝔸} {F : 𝔽} {S : 𝕊}
-  → (L : Language GrulerVariant F S)
-  → Leaf A
-  → Config F S -- irrelevant argument
-  → GrulerVariant A
+Leaf-Semantics : ∀ {F : 𝔽} {S : 𝕊} {A : 𝔸}
+  → ℂ-Semantics GrulerVariant F S (λ _ → Leaf) A
 Leaf-Semantics _ (leaf a) _ = asset a
 
-ParallelComposition-Semantics : ∀ {A : 𝔸} {F : 𝔽} {S : 𝕊}
-  → (L : Language GrulerVariant F S)
-  → ParallelComposition (constructor-set L) A
-  → Config F S
-  → GrulerVariant A
+ParallelComposition-Semantics : ∀ {F : 𝔽} {S : 𝕊} {A : 𝔸}
+  → ℂ-Semantics GrulerVariant F S ParallelComposition A
 ParallelComposition-Semantics L (l ∥ r) c = ⟦ l ⟧ᵢ c ∥ ⟦ r ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
-Binary-Choice-Semantics : ∀ {V : 𝕍} {A : 𝔸} {F : 𝔽}
-  → (L : Language V F Bool)
-  → BinaryChoice F (constructor-set L) A
-  → Config F Bool
-  → V A
+Binary-Choice-Semantics : ∀ {V : 𝕍} {F : 𝔽} {A : 𝔸}
+  → ℂ-Semantics V F Bool (BinaryChoice F) A
 Binary-Choice-Semantics L (D ⟨ l , r ⟩) c = ⟦ if lookup c D then l else r ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
----- RULES ----
-
-Leaf-Rule : ∀ (F : 𝔽) (S : 𝕊) → Rule GrulerVariant F S
-Leaf-Rule _ _ = record
-  { syn = λ _ _ _ → Leaf
-  ; sem = Leaf-Semantics
-  }
-
-ParallelComposition-Rule : ∀ (F : 𝔽) (S : 𝕊) → Rule GrulerVariant F S
-ParallelComposition-Rule _ _ = record
-  { syn = λ _ _ → ParallelComposition
-  ; sem = ParallelComposition-Semantics
-  }
-
-BinaryChoice-Rule : ∀ (V : 𝕍) (F : 𝔽) → Rule V F Bool
-BinaryChoice-Rule _ _ = record
-  { syn = λ F _ → BinaryChoice F
-  ; sem = Binary-Choice-Semantics
-  }
-
+---- EXAMPLE : Gruler's language -----
+-- All these language implementations are super straighforward and could in fact be generated if Agda would have macros!
 data Gruler : 𝕃 where
-  GAsset    : ∀ {A : 𝔸} → Leaf A                       → Gruler A
-  GArtifact : ∀ {A : 𝔸} → ParallelComposition Gruler A → Gruler A
-  GChoice   : ∀ {A : 𝔸} → BinaryChoice ℕ Gruler A      → Gruler A
+  GAsset  : Leaf A                       → Gruler A
+  GPComp  : ParallelComposition Gruler A → Gruler A
+  GChoice : BinaryChoice ℕ Gruler A      → Gruler A
 
--- This functions can be computed from the semantics of all languages above.
--- I have no idea whether this is feasible within Agda though.
+-- I have no idea how we could prove this terminating but let's just avoid that headache.
 {-# TERMINATING #-}
-⟦_⟧ᵍ : ∀ {A : 𝔸} → Semantics GrulerVariant ℕ Bool Gruler A
+⟦_⟧ᵍ : 𝕃-Semantics GrulerVariant ℕ Bool Gruler A
 
-Gruler-Language : Language GrulerVariant ℕ Bool
-Gruler-Language = record
-  { constructor-set = Gruler
-  ; semantics       = ⟦_⟧ᵍ
+GrulerVL : VariabilityLanguage GrulerVariant ℕ Bool
+GrulerVL = record
+  { expressions = Gruler
+  ; semantics   = ⟦_⟧ᵍ
   }
 
-⟦ GAsset A     ⟧ᵍ = Leaf-Semantics Gruler-Language A
-⟦ GArtifact PC ⟧ᵍ = ParallelComposition-Semantics Gruler-Language PC
-⟦ GChoice C    ⟧ᵍ = Binary-Choice-Semantics Gruler-Language C
+⟦ GAsset A  ⟧ᵍ = Leaf-Semantics GrulerVL A
+⟦ GPComp PC ⟧ᵍ = ParallelComposition-Semantics GrulerVL PC
+⟦ GChoice C ⟧ᵍ = Binary-Choice-Semantics GrulerVL C
 
-make-leaf : ∀ {F : 𝔽} {S : 𝕊}
-  → (L : Language GrulerVariant F S) → Leaf-Rule F S ∈ L
+gruler-has-leaf : Leaf ∈ Gruler
+gruler-has-leaf = record
+  { cons = GAsset
+  ; snoc = snoc'
+  ; id-l = λ _ → refl
+  }
+  where snoc' : Gruler A → Maybe (Leaf A)
+        snoc' (GAsset A)  = just A
+        snoc' _ = nothing
+
+gruler-has-choice : BinaryChoice ℕ Gruler ∈ Gruler
+gruler-has-choice = record
+  { cons = GChoice
+  ; snoc = snoc'
+  ; id-l = λ _ → refl
+  }
+  where snoc' : Gruler A → Maybe (BinaryChoice ℕ Gruler A)
+        snoc' (GChoice C) = just C
+        snoc' _ = nothing
+
+----- EXAMPLE USAGES OF CONSTRUCTORS -----
+
+make-leaf :
+  ∀ (L : 𝕃) → Leaf ∈ L
   → {A : 𝔸} → A
-  → (constructor-set L A)
-make-leaf _ cons-leaf a = cons-leaf (leaf a)
+  → L A
+make-leaf _ mkLeaf a = cons mkLeaf (leaf a)
 
-make-choice : ∀ {V : 𝕍} {F : 𝔽}
-  → (L : Language V F Bool) → BinaryChoice-Rule V F ∈ L
-  → {A : 𝔸} → F → (constructor-set L A) → (constructor-set L A)
-  → (constructor-set L A)
-make-choice L cons-choice D l r = cons-choice (D ⟨ l , r ⟩)
+make-choice : ∀ {F : 𝔽}
+  → (L : 𝕃) → BinaryChoice F L ∈ L
+  → {A : 𝔸} → F → L A → L A → L A
+make-choice L mkChoice D l r = cons mkChoice (D ⟨ l , r ⟩)
 
-make-gruler-leaf : ∀ {A : 𝔸} → A → Gruler A
-make-gruler-leaf = make-leaf Gruler-Language GAsset
+make-gruler-leaf : A → Gruler A
+make-gruler-leaf = make-leaf Gruler gruler-has-leaf
 
-make-gruler-choice : ∀ {A : 𝔸} → ℕ → Gruler A → Gruler A → Gruler A
-make-gruler-choice n = make-choice Gruler-Language GChoice n
+make-gruler-choice : ℕ → Gruler A → Gruler A → Gruler A
+make-gruler-choice = make-choice Gruler gruler-has-choice
 
-data Fake : 𝕃 where
-  fake : ∀ {A} → Fake A
-Fake-Language : ∀ {F S} → Language Fake F S
-constructor-set Fake-Language = Fake
-semantics Fake-Language _ _ = fake
-
-fake-has-choices : ∀ {F} → BinaryChoice-Rule Fake F ∈ Fake-Language
-fake-has-choices _ = fake
 -- record Choice (L : 𝕃) (A : 𝔸) : Set where
 --   constructor _⟨_⟩
 --   field
