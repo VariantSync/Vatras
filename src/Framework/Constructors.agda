@@ -235,72 +235,82 @@ Complete {V} (L + ⟦_⟧) = ∀ {A n}
 -- --       as expressive as a variant list.
 -- choices-make-complete C L ⟦_⟧ mkArtifact mkChoice vs = {!!}
 
-binary-to-nary-choice :
-  ∀ {L₁ L₂ F A}
-  → (translation : L₁ A → L₂ A)
-  → BinaryChoice F L₁ A
-  → Choice F L₂ A
-binary-to-nary-choice t (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
+module BinaryToNaryChoice {F : 𝔽} where
+  convert :
+    ∀ (L₁ L₂ : 𝕃)
+    → (translation : L₁ A → L₂ A)
+    → BinaryChoice F L₁ A
+    → Choice F L₂ A
+  convert _ _ t (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
 
-binary-to-nary-choice-conf : ∀ {F : 𝔽}
-  → Config F Bool
-  → Config F ℕ
-lookup (binary-to-nary-choice-conf cb) f with lookup cb f
-... | false = 1
-... | true  = 0
+  record ConfSpec (f : F) : Set where
+    field
+      conf : Config F Bool → Config F ℕ
+      false≡1 : ∀ (c : Config F Bool)
+        → lookup c f ≡ false
+        → lookup (conf c) f ≡ 1
+      true≡0 : ∀ (c : Config F Bool)
+        → lookup c f ≡ true
+        → lookup (conf c) f ≡ 0
 
-binary-to-nary-choice-fnoc : ∀ {F : 𝔽}
-  → Config F ℕ
-  → Config F Bool
-lookup (binary-to-nary-choice-fnoc cn) f with lookup cn f
-... | 0 = true
-... | _ = false
+  conf : Config F Bool → Config F ℕ
+  lookup (conf cb) f with lookup cb f
+  ... | false = 1
+  ... | true  = 0
 
-module _ {V F A} (VL₁ : VariabilityLanguage V F Bool) (VL₂ : VariabilityLanguage V F ℕ) where
-  open Data.IndexedSet (VariantSetoid V A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
-  open Data.Product using () renaming (_,_ to _and_)
+  fnoc : Config F ℕ → Config F Bool
+  lookup (fnoc cn) f with lookup cn f
+  ... | zero    = true
+  ... | (suc _) = false
 
-  private
-    L₁   = expressions VL₁
-    L₂   = expressions VL₂
-    ⟦_⟧₁ = semantics VL₁
-    ⟦_⟧₂ = semantics VL₂
+  module Preservation {V A}
+    (VL₁ : VariabilityLanguage V F Bool)
+    (VL₂ : VariabilityLanguage V F ℕ)
+    (t : expressions VL₁ A → expressions VL₂ A)
+    (D : F)
+    (l r : expressions VL₁ A)
+    where
+    open Data.IndexedSet (VariantSetoid V A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+    open Data.Product using () renaming (_,_ to _and_)
 
-  preserves-conf :
-    ∀ (t : L₁ A → L₂ A)
-      (D : F)
-      (l r : L₁ A)
-    → ⟦ l ⟧₁ ≋ ⟦ t l ⟧₂
-    → ⟦ r ⟧₁ ≋ ⟦ t r ⟧₂
-    → (c : Config F Bool)
-    →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) c
-      ≡ Choice-Semantics VL₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)) (binary-to-nary-choice-conf c)
-  preserves-conf t D l r t-l t-r c with lookup c D
-  ... | false = {!!}
-  ... | true = {!!}
+    private
+      L₁   = expressions VL₁
+      L₂   = expressions VL₂
+      ⟦_⟧₁ = semantics VL₁
+      ⟦_⟧₂ = semantics VL₂
 
-  preserves-fnoc :
-    ∀ (t : L₁ A → L₂ A)
-      (D : F)
-      (l r : L₁ A)
-    → ⟦ l ⟧₁ ≋ ⟦ t l ⟧₂
-    → ⟦ r ⟧₁ ≋ ⟦ t r ⟧₂
-    → (c : Config F ℕ)
-    →   Choice-Semantics VL₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)) c
-      ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (binary-to-nary-choice-fnoc c)
-  preserves-fnoc = {!!}
+    preserves-conf :
+      ∀ (c : Config F Bool)
+      → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (conf c)
+      → ⟦ r ⟧₁ c ≡ ⟦ t r ⟧₂ (conf c)
+      →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) c
+        ≡ Choice-Semantics VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)) (conf c)
+    preserves-conf c t-l t-r with lookup c D
+    ... | false = t-r
+    ... | true  = t-l
 
-  binary-to-nary-choice-preserves :
-    ∀ (t : L₁ A → L₂ A)
-    → (D : F)
-    → (l r : L₁ A)
-    → ⟦ l ⟧₁ ≋ ⟦ t l ⟧₂
-    → ⟦ r ⟧₁ ≋ ⟦ t r ⟧₂
-    →   (BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩))
-      ≋ (Choice-Semantics VL₂ (binary-to-nary-choice {L₁} {L₂} t (D ⟨ l , r ⟩)))
-  binary-to-nary-choice-preserves t D l r t-pres-l t-pres-r =
-        ⊆-by-index-translation binary-to-nary-choice-conf (preserves-conf t D l r t-pres-l t-pres-r)
-    and ⊆-by-index-translation binary-to-nary-choice-fnoc (preserves-fnoc t D l r t-pres-l t-pres-r)
+    preserves-fnoc :
+      ∀ (c : Config F ℕ)
+      → ⟦ l ⟧₁ (fnoc c) ≡ ⟦ t l ⟧₂ c
+      → ⟦ r ⟧₁ (fnoc c) ≡ ⟦ t r ⟧₂ c
+      →   Choice-Semantics VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)) c
+        ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (fnoc c)
+    preserves-fnoc c t-l t-r with lookup c D
+    ... | zero    = Eq.sym t-l
+    ... | (suc _) = Eq.sym t-r
+
+    -- TODO: conf and fnoc do not have to be indeed conf or fnoc.
+    --       It just have to be functions that behave nicely. :)
+    convert-preserves :
+        (∀ (c : Config F Bool) → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (conf c))
+      → (∀ (c : Config F Bool) → ⟦ r ⟧₁ c ≡ ⟦ t r ⟧₂ (conf c))
+      → (∀ (c : Config F ℕ)    → ⟦ l ⟧₁ (fnoc c) ≡ ⟦ t l ⟧₂ c)
+      → (∀ (c : Config F ℕ)    → ⟦ r ⟧₁ (fnoc c) ≡ ⟦ t r ⟧₂ c)
+      →   (BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩))
+        ≋ (Choice-Semantics VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)))
+    convert-preserves conf-l conf-r fnoc-l fnoc-r =
+          ⊆-by-index-translation conf (λ c → preserves-conf c (conf-l c) (conf-r c))
+      and ⊆-by-index-translation fnoc (λ c → preserves-fnoc c (fnoc-l c) (fnoc-r c))
 
 -- artifact-translation :
 --   ∀ {L₁ L₂ A}
@@ -331,5 +341,4 @@ module _ {V F A} (VL₁ : VariabilityLanguage V F Bool) (VL₂ : VariabilityLang
 --   -- Instead of continuing to prove this, we should try to use it:
 --   -- What would be the benfit of having this proof?
 --   -- Would it really avoid duplication and would it help us for proofs of expressiveness?
---   -- Also proving the preservation of binary-to-nary-choice might be easier.
-
+--   -- Also proving the preservation of convert might be easier.
