@@ -260,7 +260,7 @@ Fnoc-Preserves :  ∀ {V F S₁ S₂}
   → (Config F S₂ → Config F S₁)
   → Set
 Fnoc-Preserves {F = F} {S₂ = S₂} L₁ L₂ e₁ e₂ fnoc =
-  ∀ (c₂ : Config F S₂) → ⟦ e₁ ⟧₁ (fnoc c₂) ≡ ⟦ e₂ ⟧₂ c₂
+  ∀ (c₂ : Config F S₂) → ⟦ e₂ ⟧₂ c₂ ≡ ⟦ e₁ ⟧₁ (fnoc c₂)
   where ⟦_⟧₁ = semantics L₁
         ⟦_⟧₂ = semantics L₂
 
@@ -297,7 +297,7 @@ choices-make-complete : ∀ {V F S}
 --       as expressive as a variant list.
 choices-make-complete VL mkArtifact mkChoice vs = {!!}
 
-module BinaryToNaryChoice {F : 𝔽} where
+module 2→N-Choice {F : 𝔽} where
   {-|
   ConfSpec and FnocSpec define the requirements we have on translated configurations
   to prove preservation of the conversion from binary to n-ary choices.
@@ -343,7 +343,7 @@ module BinaryToNaryChoice {F : 𝔽} where
   module Translate {V}
     (VL₁ : VariabilityLanguage V F Bool)
     (VL₂ : VariabilityLanguage V F ℕ)
-    (t : ∀ {A : 𝔸} → expressions VL₁ A → expressions VL₂ A)
+    (t : expressions VL₁ A → expressions VL₂ A)
     where
     private
       L₁   = expressions VL₁
@@ -367,24 +367,24 @@ module BinaryToNaryChoice {F : 𝔽} where
         NConfig = Config F ℕ
 
       preserves-conf :
-        ∀ (c : 2Config)
-        → ConfSpec D confi
+          ConfSpec D confi
         → Conf-Preserves VL₁ VL₂ l (t l) confi
         → Conf-Preserves VL₁ VL₂ r (t r) confi
+        → (c : 2Config)
         →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) c
           ≡ Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩)) (confi c)
-      preserves-conf c conv t-l t-r with lookup c D in eq
+      preserves-conf conv t-l t-r c with lookup c D in eq
       ... | false rewrite false→1 conv c eq = t-r c
       ... | true  rewrite true→0  conv c eq = t-l c
 
       preserves-fnoc :
-        ∀ (c : NConfig)
-        → FnocSpec D fnoci
+          FnocSpec D fnoci
         → Fnoc-Preserves VL₁ VL₂ l (t l) fnoci
         → Fnoc-Preserves VL₁ VL₂ r (t r) fnoci
-        →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (fnoci c)
-          ≡ Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩)) c
-      preserves-fnoc c vnoc t-l t-r with lookup c D in eq
+        → (c : NConfig)
+        →   Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩)) c
+          ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (fnoci c)
+      preserves-fnoc vnoc t-l t-r c with lookup c D in eq
       ... | zero  rewrite zero→true vnoc c eq = t-l c
       ... | suc _ rewrite suc→false vnoc c eq = t-r c
 
@@ -399,8 +399,168 @@ module BinaryToNaryChoice {F : 𝔽} where
         →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩)
           ≋ Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩))
       convert-preserves conv vnoc conf-l fnoc-l conf-r fnoc-r =
-            ⊆-by-index-translation confi (λ c → preserves-conf c conv conf-l conf-r)
-        and ⊆-by-index-translation fnoci (λ c → Eq.sym (preserves-fnoc c vnoc fnoc-l fnoc-r))
+            ⊆-by-index-translation confi (preserves-conf conv conf-l conf-r)
+        and ⊆-by-index-translation fnoci (preserves-fnoc vnoc fnoc-l fnoc-r)
+
+record IndexedDimension (F : 𝔽) : Set where
+  constructor _∙_
+  field
+    dim : F
+    index : ℕ
+
+module N→2-Choice {V F}
+  (VL₁ : VariabilityLanguage V F ℕ)
+  (VL₂ : VariabilityLanguage V (IndexedDimension F) Bool)
+  (L₂-has-choices : BinaryChoice (IndexedDimension F) (expressions VL₂) ∈ (expressions VL₂))
+  (t : expressions VL₁ A → expressions VL₂ A)
+  where
+  open import Data.Nat.Show using (show)
+
+  private
+    I = IndexedDimension F
+    NConfig = Config F ℕ
+    2Config = Config I Bool
+    L₁   = expressions VL₁
+    L₂   = expressions VL₂
+    ⟦_⟧₁ = semantics VL₁
+    ⟦_⟧₂ = semantics VL₂
+    mkChoice = cons L₂-has-choices
+
+  -- TODO Prove termination. I have no idea why Agda thinks this to be non-terminating.
+  {-# TERMINATING #-}
+  choice-unroll :
+      F      -- initial dimension in input formula that we translate (D in the example above).
+    → List⁺ (L₁ A) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
+    → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
+    → BinaryChoice I L₂ A
+  choice-unroll D (e ∷ [])     n = (D ∙ n) ⟨ t e , t e ⟩
+  choice-unroll D (l ∷ r ∷ es) n = (D ∙ n) ⟨ t l , mkChoice (choice-unroll D (r ∷ es) (suc n)) ⟩
+
+  convert : Choice F L₁ A → BinaryChoice I L₂ A
+  convert (D ⟨ alternatives ⟩) = choice-unroll D alternatives zero
+
+  record ConfSpec (D : F) (conf : NConfig → 2Config) : Set where
+    open Data.Nat using (_<_)
+    field
+      {-|
+      A translated, binary configuration (conf c)
+      has to pick the same alternative as the original configuration c.
+      This alternative is nested in the binary term.
+      The nesting depth is exactly equal to the alternative index:
+      - the first alternative (0) is the left alternative of the root choice at level 0
+      - the second alternative (1) is the left alternative of the choice (1) in the right alternative of the root choice 0
+      - and so on.
+      Hence the translated, binary configuration (conf c)
+      has to pick the left alternative (true)
+      in the choice at nesting level (lookup c D).
+      -}
+      select-n : ∀ (c : NConfig)
+        → (i : ℕ)
+        → i ≡ lookup c D
+        → lookup (conf c) (D ∙ i) ≡ true
+
+      {-|
+      All alternatives before the desired alternative must be deselected so
+      that we go right until we find the correct alternative to pick.
+      -}
+      deselect-<n : ∀ (c : NConfig)
+        → (i : ℕ)
+        → i < lookup c D
+        → lookup (conf c) (D ∙ i) ≡ false
+
+      {-|
+      There is no third requirement because we do not care
+      for the values of the translated configuration for dimensions
+      deeper than (lookup c D).
+      These alternatives will never be reached upon configuration.
+      -}
+  open ConfSpec
+
+  record FnocSpec (fnoc : 2Config → NConfig) : Set where
+    open Data.Nat using (_<_)
+    field
+      {-|
+      The nary config must chose index i iff
+      - the alternative at nesting depth i is chosen in the binary expression
+      - and no other alternative at a higher nesting depth was chosen.
+      -}
+      correct : ∀ (c : 2Config) (D : F) (i : ℕ)
+        → lookup c (D ∙ i) ≡ true
+        → (∀ (j : ℕ) → j < i → lookup c (D ∙ j) ≡ false)
+        → lookup (fnoc c) D ≡ i
+  open FnocSpec
+
+  module Preservation
+    (D : F)
+    (confi : NConfig → 2Config)
+    (fnoci : 2Config → NConfig)
+    where
+    open Data.IndexedSet (VariantSetoid V A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+    open import Util.AuxProofs using (if-idemp)
+    open Eq.≡-Reasoning
+
+    convert-preserves-l :
+        ConfSpec D confi
+      → (alts : List⁺ (L₁ A))
+      → (c : NConfig)
+      →   Choice-Semantics       VL₁ (D ⟨ alts ⟩) c
+        ≡ BinaryChoice-Semantics VL₂ (convert (D ⟨ alts ⟩)) (confi c)
+    convert-preserves-l conv (e ∷ []) c =
+      begin
+        Choice-Semantics VL₁ (D ⟨ e ∷ [] ⟩) c
+      ≡⟨⟩
+        ⟦ e ⟧₁ c
+      ≡⟨ {!!} ⟩ -- TODO: Formulate and use induction hypothesis
+        ⟦ t e ⟧₂ (confi c)
+      ≡⟨ Eq.cong
+           (λ eq → ⟦ eq ⟧₂ (confi c))
+           (Eq.sym
+             (if-idemp (lookup (confi c) (D ∙ 0)))) ⟩
+        ⟦ if (lookup (confi c) (D ∙ 0)) then (t e) else (t e) ⟧₂ (confi c)
+      ≡⟨⟩
+        BinaryChoice-Semantics VL₂ (convert (D ⟨ e ∷ [] ⟩)) (confi c)
+      ∎
+    convert-preserves-l conv (l ∷ r ∷ es) c with lookup c D in eq
+    ... | zero  =
+      begin
+        ⟦ l ⟧₁ c
+      ≡⟨ {!!} ⟩ -- TODO: Formulate and use induction hypothesis
+        ⟦ t l ⟧₂ (confi c)
+      ≡⟨⟩
+        ⟦ if true then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c)
+      ≡⟨ Eq.cong
+           (λ x → ⟦ if x then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c))
+           (Eq.sym (select-n conv c 0 (Eq.sym eq))) ⟩
+        ⟦ if lookup (confi c) (D ∙ 0) then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c)
+      ≡⟨⟩
+        BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+      ∎
+    ... | suc n =
+      begin
+        ⟦ find-or-last n (r ∷ es) ⟧₁ c
+      ≡⟨ {!!} ⟩
+        ⟦ mkChoice (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c)
+      ≡⟨⟩
+        ⟦ if false then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c)
+      ≡⟨ Eq.cong
+           (λ x → ⟦ if x then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c))
+           (Eq.sym (deselect-<n conv c 0 {!!})) ⟩
+        ⟦ if lookup (confi c) (D ∙ 0) then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c)
+      ≡⟨⟩
+        BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+      ∎
+      -- begin
+      --   Choice-Semantics VL₁ (D ⟨ l ∷ r ∷ es ⟩) c
+      -- ≡⟨ {!!} ⟩
+      --   ⟦ if lookup (confi c) (D ∙ 0) then t l else cons L₂-has-choices (choice-unroll D (r ∷ es) 1) ⟧₂ (confi c)
+      -- ≡⟨⟩
+      --   BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+      -- ∎
+
+    convert-preserves : ∀ (alts : List⁺ (L₁ A)) →
+          Choice-Semantics       VL₁ (D ⟨ alts ⟩)
+        ≋ BinaryChoice-Semantics VL₂ (convert (D ⟨ alts ⟩))
+    convert-preserves = {!!}
 
 artifact-translation :
   ∀ {L₁ L₂ A}
@@ -437,23 +597,23 @@ semantics NADTVL   = ⟦_⟧-nadt
 ⟦ NADTAsset A  ⟧-nadt = Leaf-Semantics NADTVL A
 ⟦ NADTChoice C ⟧-nadt = Choice-Semantics NADTVL C
 
-module 2ADTVL→NADTVL where
+module 2ADTVL→NADTVL {A : 𝔸} where
   {-# TERMINATING #-}
   compile : 2ADT A → NADT A
 
-  open BinaryToNaryChoice {ℕ} using (default-conf; default-fnoc; default-conf-satisfies-spec; default-fnoc-satisfies-spec)
-  open BinaryToNaryChoice.Translate {ℕ} 2ADTVL NADTVL compile using (convert)
+  open 2→N-Choice {ℕ} using (default-conf; default-fnoc; default-conf-satisfies-spec; default-fnoc-satisfies-spec)
+  open 2→N-Choice.Translate {ℕ} 2ADTVL NADTVL compile using (convert)
   conf' = default-conf
   fnoc' = default-fnoc
 
   compile (2ADTAsset  a) = NADTAsset a
   compile (2ADTChoice c) = NADTChoice (convert c)
 
-  module Preservation {A : 𝔸} where
+  module Preservation where
     open Eq.≡-Reasoning
     open Data.IndexedSet (VariantSetoid GrulerVariant A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+    open 2→N-Choice.Translate.Preservation {ℕ} 2ADTVL NADTVL compile conf' fnoc' using (preserves-conf; preserves-fnoc)
 
-    -- preserves-l : ∀ (e : 2ADT A) (c : Config ℕ Bool) → ⟦ e ⟧-2adt c ≡ ⟦ compile e ⟧-nadt (conf' c)
     preserves-l : ∀ (e : 2ADT A) → Conf-Preserves 2ADTVL NADTVL e (compile e) conf'
     preserves-l (2ADTAsset _) _ = refl
     preserves-l (2ADTChoice (D ⟨ l , r ⟩)) c =
@@ -461,23 +621,16 @@ module 2ADTVL→NADTVL where
         ⟦ 2ADTChoice (D ⟨ l , r ⟩) ⟧-2adt c
       ≡⟨⟩
         BinaryChoice-Semantics 2ADTVL (D ⟨ l , r ⟩) c
-      ≡⟨ preserves-conf c (default-conf-satisfies-spec D) (preserves-l l) (preserves-l r) ⟩
+      ≡⟨ preserves-conf D l r (default-conf-satisfies-spec D) (preserves-l l) (preserves-l r) c ⟩
         Choice-Semantics NADTVL (convert (D ⟨ l , r ⟩)) (conf' c)
       ≡⟨⟩
         ⟦ compile (2ADTChoice (D ⟨ l , r ⟩)) ⟧-nadt (conf' c)
       ∎
-      where
-        open BinaryToNaryChoice.Translate.Preservation {ℕ} 2ADTVL NADTVL compile conf' fnoc' D l r using (preserves-conf)
 
-    -- preserves-r : ∀ (e : 2ADT A) (c : Config ℕ ℕ) → ⟦ e ⟧-2adt (fnoc' c) ≡ ⟦ compile e ⟧-nadt c
     preserves-r : ∀ (e : 2ADT A) → Fnoc-Preserves 2ADTVL NADTVL e (compile e) fnoc'
     preserves-r (2ADTAsset _) _ = refl
-    preserves-r (2ADTChoice (D ⟨ l , r ⟩)) c =
-      preserves-fnoc c (default-fnoc-satisfies-spec D) (preserves-r l) (preserves-r r)
-      where
-        open BinaryToNaryChoice.Translate.Preservation {ℕ} 2ADTVL NADTVL compile conf' fnoc' D l r using (preserves-fnoc)
+    preserves-r (2ADTChoice (D ⟨ l , r ⟩)) c = preserves-fnoc D l r (default-fnoc-satisfies-spec D) (preserves-r l) (preserves-r r) c
 
     preserves : ∀ (e : 2ADT A) → ⟦ e ⟧-2adt ≋ ⟦ compile e ⟧-nadt
-    preserves e =
-            ⊆-by-index-translation conf' (preserves-l e)
-        and ⊆-by-index-translation fnoc' (λ c → Eq.sym (preserves-r e c))
+    preserves e = ⊆-by-index-translation conf' (preserves-l e)
+              and ⊆-by-index-translation fnoc' (preserves-r e)
