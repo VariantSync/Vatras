@@ -12,7 +12,7 @@ open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Function using (_∘_)
 open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl; inspect; [_])
 open import Relation.Nullary.Negation using (¬_)
 
 open import Util.List using (find-or-last) --lookup-clamped)
@@ -224,7 +224,46 @@ Complete {V} (L + ⟦_⟧) = ∀ {A n}
       (let open Data.IndexedSet (VariantSetoid V A) renaming (_≅_ to _≋_)
         in vs ≋ ⟦ e ⟧)
 
--- -- any language with artifacts and choices is complete
+record TranslationResult {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) : Set₁ where
+  field
+    expr : expressions L₂ A
+    conf : Config F S₁ → Config F S₂
+    fnoc : Config F S₂ → Config F S₁
+open TranslationResult public
+
+Translation : ∀ {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) → Set₁
+Translation L₁ L₂ = ∀ {A : 𝔸} → expressions L₁ A → TranslationResult L₁ L₂
+
+_⊆-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
+  → (e : expressions L₁ A)
+  → Translation L₁ L₂
+  → Set
+_⊆-via_ {F = F} {S₁ = S₁} {L₁ = L₁} {L₂ = L₂} e₁ translate =
+  let ⟦_⟧₁ = semantics L₁
+      ⟦_⟧₂ = semantics L₂
+  in
+      ∀ (c₁ : Config F S₁) → ⟦ e₁ ⟧₁ c₁ ≡ ⟦ expr (translate e₁) ⟧₂ (conf (translate e₁) c₁)
+
+_⊇-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
+  → (e : expressions L₁ A)
+  → Translation L₁ L₂
+  → Set
+_⊇-via_ {F = F} {S₂ = S₂} {L₁ = L₁} {L₂ = L₂} e₁ translate =
+  let ⟦_⟧₁ = semantics L₁
+      ⟦_⟧₂ = semantics L₂
+  in
+    ∀ (c₂ : Config F S₂) → ⟦ e₁ ⟧₁ (fnoc (translate e₁) c₂) ≡ ⟦ expr (translate e₁) ⟧₂ c₂
+
+_≚-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
+  → (e : expressions L₁ A)
+  → Translation L₁ L₂
+  → Set
+e ≚-via t = e ⊆-via t × e ⊇-via t
+
+_is-variant-preserving :  ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂} → Translation L₁ L₂ → Set₁
+_is-variant-preserving {L₁ = L₁} t = ∀ {A : 𝔸} → (e₁ : expressions L₁ A) → e₁ ≚-via t
+
+-- any language with artifacts and choices is complete
 -- choices-make-complete :
 --   ∀ (C : ℂ) (L : 𝕃) (S : Semantics C L)
 --   → Constructor Artifact L
@@ -246,20 +285,32 @@ module BinaryToNaryChoice {F : 𝔽} where
   record ConfSpec (f : F) : Set where
     field
       conf : Config F Bool → Config F ℕ
-      false≡1 : ∀ (c : Config F Bool)
+      false→1 : ∀ (c : Config F Bool)
         → lookup c f ≡ false
         → lookup (conf c) f ≡ 1
-      true≡0 : ∀ (c : Config F Bool)
+      true→0 : ∀ (c : Config F Bool)
         → lookup c f ≡ true
         → lookup (conf c) f ≡ 0
+  open ConfSpec
 
-  conf : Config F Bool → Config F ℕ
-  lookup (conf cb) f with lookup cb f
+  record FnocSpec (f : F) : Set where
+    field
+      fnoc : Config F ℕ → Config F Bool
+      suc→false : ∀ {n} (c : Config F ℕ)
+        → lookup c f ≡ suc n
+        → lookup (fnoc c) f ≡ false
+      zero→true : ∀ (c : Config F ℕ)
+        → lookup c f ≡ zero
+        → lookup (fnoc c) f ≡ true
+  open FnocSpec
+
+  default-conf : Config F Bool → Config F ℕ
+  lookup (default-conf cb) f with lookup cb f
   ... | false = 1
   ... | true  = 0
 
-  fnoc : Config F ℕ → Config F Bool
-  lookup (fnoc cn) f with lookup cn f
+  default-fnoc : Config F ℕ → Config F Bool
+  lookup (default-fnoc cn) f with lookup cn f
   ... | zero    = true
   ... | (suc _) = false
 
@@ -278,39 +329,43 @@ module BinaryToNaryChoice {F : 𝔽} where
       L₂   = expressions VL₂
       ⟦_⟧₁ = semantics VL₁
       ⟦_⟧₂ = semantics VL₂
+      2Config = Config F Bool
+      NConfig = Config F ℕ
 
     preserves-conf :
-      ∀ (c : Config F Bool)
-      → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (conf c)
-      → ⟦ r ⟧₁ c ≡ ⟦ t r ⟧₂ (conf c)
-      →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) c
-        ≡ Choice-Semantics VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)) (conf c)
-    preserves-conf c t-l t-r with lookup c D
-    ... | false = t-r
-    ... | true  = t-l
+      ∀ (c : 2Config)
+      → (conv : ConfSpec D)
+      → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (conf conv c)
+      → ⟦ r ⟧₁ c ≡ ⟦ t r ⟧₂ (conf conv c)
+      →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩)                   c
+        ≡ Choice-Semantics       VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)) (conf conv c)
+    preserves-conf c conv t-l t-r with lookup c D in eq
+    ... | false rewrite false→1 conv c eq = t-r
+    ... | true  rewrite true→0  conv c eq = t-l
 
     preserves-fnoc :
-      ∀ (c : Config F ℕ)
-      → ⟦ l ⟧₁ (fnoc c) ≡ ⟦ t l ⟧₂ c
-      → ⟦ r ⟧₁ (fnoc c) ≡ ⟦ t r ⟧₂ c
-      →   Choice-Semantics VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)) c
-        ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (fnoc c)
-    preserves-fnoc c t-l t-r with lookup c D
-    ... | zero    = Eq.sym t-l
-    ... | (suc _) = Eq.sym t-r
+      ∀ (c : NConfig)
+      → (vnoc : FnocSpec D)
+      → ⟦ l ⟧₁ (fnoc vnoc c) ≡ ⟦ t l ⟧₂ c
+      → ⟦ r ⟧₁ (fnoc vnoc c) ≡ ⟦ t r ⟧₂ c
+      →   Choice-Semantics       VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)) c
+        ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩)                   (fnoc vnoc c)
+    preserves-fnoc c vnoc t-l t-r with lookup c D in eq
+    ... | zero  rewrite zero→true vnoc c eq = Eq.sym t-l
+    ... | suc _ rewrite suc→false vnoc c eq = Eq.sym t-r
 
-    -- TODO: conf and fnoc do not have to be indeed conf or fnoc.
-    --       It just have to be functions that behave nicely. :)
     convert-preserves :
-        (∀ (c : Config F Bool) → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (conf c))
-      → (∀ (c : Config F Bool) → ⟦ r ⟧₁ c ≡ ⟦ t r ⟧₂ (conf c))
-      → (∀ (c : Config F ℕ)    → ⟦ l ⟧₁ (fnoc c) ≡ ⟦ t l ⟧₂ c)
-      → (∀ (c : Config F ℕ)    → ⟦ r ⟧₁ (fnoc c) ≡ ⟦ t r ⟧₂ c)
-      →   (BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩))
-        ≋ (Choice-Semantics VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩)))
-    convert-preserves conf-l conf-r fnoc-l fnoc-r =
-          ⊆-by-index-translation conf (λ c → preserves-conf c (conf-l c) (conf-r c))
-      and ⊆-by-index-translation fnoc (λ c → preserves-fnoc c (fnoc-l c) (fnoc-r c))
+      ∀ (conv : ConfSpec D) (vnoc : FnocSpec D)
+      -- boilerplaty induction hypothesis
+      → (∀ (c : 2Config) → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (conf conv c))
+      → (∀ (c : 2Config) → ⟦ r ⟧₁ c ≡ ⟦ t r ⟧₂ (conf conv c))
+      → (∀ (c : NConfig) → ⟦ l ⟧₁ (fnoc vnoc c) ≡ ⟦ t l ⟧₂ c)
+      → (∀ (c : NConfig) → ⟦ r ⟧₁ (fnoc vnoc c) ≡ ⟦ t r ⟧₂ c)
+      →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩)
+        ≋ Choice-Semantics       VL₂ (convert L₁ L₂ t (D ⟨ l , r ⟩))
+    convert-preserves conv vnoc conf-l conf-r fnoc-l fnoc-r =
+          ⊆-by-index-translation (conf conv) (λ c → preserves-conf c conv (conf-l c) (conf-r c))
+      and ⊆-by-index-translation (fnoc vnoc) (λ c → preserves-fnoc c vnoc (fnoc-l c) (fnoc-r c))
 
 -- artifact-translation :
 --   ∀ {L₁ L₂ A}
