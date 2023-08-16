@@ -40,6 +40,11 @@ find-or-last (suc i) (x ∷ y ∷ zs) = find-or-last i (y ∷ zs)
 -- find-or-last (x ∷ y ∷ zs) zero = x
 -- find-or-last (x ∷ y ∷ zs) (suc i) = find-or-last (y ∷ zs) i
 
+find-or-last-zero : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List A)
+  → find-or-last zero (x ∷ xs) ≡ x
+find-or-last-zero _ [] = refl
+find-or-last-zero _ (_ ∷ _) = refl
+
 map-find-or-last : ∀ {a b} {A : Set a} {B : Set b}
   → (f : A → B)
   → (i : ℕ)
