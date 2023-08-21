@@ -456,6 +456,7 @@ module N→2-Choice {V F}
   (L₂-has-choices : BinaryChoice-Rule V (IndexedDimension F) ⟦∈⟧ VL₂)
   (t : expressions VL₁ A → expressions VL₂ A)
   where
+  open Data.Nat using (_∸_)
   open import Data.Nat.Show using (show)
 
   private
@@ -477,26 +478,26 @@ module N→2-Choice {V F}
     mkChoice-preserves = preservation L₂-has-choices
 
 
-  -- TODO Prove termination. I have no idea why Agda thinks this to be non-terminating.
-  {-# TERMINATING #-}
-  unroll :
-      F      -- initial dimension in input formula that we translate (D in the example above).
-    → List⁺ (L₁ A) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
-    → ℕ             -- Current alternative of the given dimension we are translating. zero is left-most alternative (pointing to u in the example above).
+  open import Data.Vec using (Vec; []; _∷_; fromList)
+
+  unroll : ∀ {n}
+    → F      -- initial dimension in input formula that we translate (D in the example above).
+    → Vec (L₁ A) (suc n) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
     → BinaryChoice I L₂ A
-  unroll D (e ∷ [])     n = (D ∙ n) ⟨ t e , t e ⟩
-  unroll D (l ∷ r ∷ es) n = (D ∙ n) ⟨ t l , mkChoice (unroll D (r ∷ es) (suc n)) ⟩
+  unroll {n} D (e ∷ [])     = (D ∙ n) ⟨ t e , t e ⟩
+  unroll {n} D (l ∷ r ∷ es) = (D ∙ n) ⟨ t l , mkChoice (unroll D (r ∷ es)) ⟩
+  -- an unrolled choice D ∙ i gives you i effective choices
 
   convert : Choice F L₁ A → BinaryChoice I L₂ A
-  convert (D ⟨ alternatives ⟩) = unroll D alternatives zero
+  convert (D ⟨ e ∷ es ⟩) = unroll D (e ∷ fromList es)
 
-  unroll-name : ∀ (D : F) (e : L₁ A) (es : List (L₁ A)) (n : ℕ)
-    → Σ[ x ∈ L₂ A ] (unroll D (e ∷ es) n ≡ (D ∙ n) ⟨ t e , x ⟩)
-  unroll-name D e [] n = t e and refl
-  unroll-name D e (r ∷ rs) n = mkChoice (unroll D (r ∷ rs) (suc n)) and refl
+  -- unroll-name : ∀ (D : F) (e : L₁ A) (es : List (L₁ A)) (n : ℕ)
+    -- → Σ[ x ∈ L₂ A ] (unroll D (e ∷ es) n ≡ (D ∙ n) ⟨ t e , x ⟩)
+  -- unroll-name D e [] n = t e and refl
+  -- unroll-name D e (r ∷ rs) n = mkChoice (unroll D (r ∷ rs) (suc n)) and refl
 
-  record ConfSpec (D : F) (conf : NConfig → 2Config) : Set where
-    open Data.Nat using (_<_)
+  open Data.Nat using (_<_; _≤_; s≤s; z≤n)
+  record ConfSpec (D : F) (n : ℕ) (conf : NConfig → 2Config) : Set where
     field
       {-|
       A translated, binary configuration (conf c)
@@ -512,7 +513,7 @@ module N→2-Choice {V F}
       -}
       select-n : ∀ (c : NConfig)
         → (i : ℕ)
-        → i ≡ lookup c D
+        → n ∸ lookup c D ≡ i
         → lookup (conf c) (D ∙ i) ≡ true
 
       {-|
@@ -521,7 +522,7 @@ module N→2-Choice {V F}
       -}
       deselect-<n : ∀ (c : NConfig)
         → (i : ℕ)
-        → i < lookup c D
+        → n ∸ lookup c D < i
         → lookup (conf c) (D ∙ i) ≡ false
 
       {-|
@@ -532,7 +533,24 @@ module N→2-Choice {V F}
       -}
   open ConfSpec
 
-  record FnocSpec (fnoc : 2Config → NConfig) : Set where
+  -- relax-ConfSpec : ∀ {D n conf}
+    -- → ConfSpec D (suc n) conf
+    -- → lookup c D
+    -- → ConfSpec D n conf
+  -- select-n (relax-ConfSpec x) c i n∸cD≡i = {!!}
+    -- where asdf : ∀ {m n} → m ∸ n ≡ i
+                         -- → suc (m ∸ n) ≡ suc i
+          -- asdf refl = refl
+
+          -- asdf2 : ∀ {m n} → suc (m ∸ n) ≡ suc m ∸ n
+          -- asdf2 {zero} {zero} = refl
+          -- asdf2 {zero} {suc n} = {!!}
+          -- asdf2 {suc m} {n} = {!!}
+
+          -- f = select-n x c (suc i) {!!}
+  -- deselect-<n (relax-ConfSpec x) = {!!}
+
+  record FnocSpec (n : ℕ) (fnoc : 2Config → NConfig) : Set where
     open Data.Nat using (_<_)
     field
       {-|
@@ -542,8 +560,8 @@ module N→2-Choice {V F}
       -}
       correct : ∀ (c : 2Config) (D : F) (i : ℕ)
         → lookup c (D ∙ i) ≡ true
-        → (∀ (j : ℕ) → j < i → lookup c (D ∙ j) ≡ false)
-        → lookup (fnoc c) D ≡ i
+        → (∀ (j : ℕ) → i < j → lookup c (D ∙ j) ≡ false)
+        → n ∸ lookup (fnoc c) D ≡ i
   open FnocSpec
 
   module Preservation
@@ -551,81 +569,31 @@ module N→2-Choice {V F}
     (confi : NConfig → 2Config)
     (fnoci : 2Config → NConfig)
     where
+    open Data.List using (length)
     open import Data.List.Relation.Unary.All using (All; []; _∷_)
     open import Data.List.NonEmpty.Relation.Unary.All using (_∷_) renaming (All to All⁺)
     open Data.IndexedSet (VariantSetoid V A) using () renaming (_≅_ to _≋_)
     open import Util.AuxProofs using (if-idemp)
     open Eq.≡-Reasoning
+    open import Data.Nat.Properties using (≤-refl; m∸n≤m; m∸n≢0⇒n<m)
 
-    -- I think this is a really crucial proof that allows us to dive below the mkChoice!
-    foofoo : ∀ (n : ℕ) (e : L₁ A) (c : 2Config)
-      → ⟦ mkChoice (unroll D (e ∷ []) n ) ⟧₂ c ≡ BinaryChoice-Semantics VL₂ ((D ∙ n) ⟨ t e , t e ⟩) c
-    foofoo n e c with lookup c (D ∙ n) in eq
-    ... | false = {!!}
-    ... | true  = {!!}
+    convert-preserves-l : ∀ (e : L₁ A) (es : List (L₁ A)) (c : NConfig)
+      -- → ConfSpec D confi
+      → ConfSpec D (length es) confi
+      → All⁺ (λ e → ⟦ e ⟧₁ c ≡ ⟦ t e ⟧₂ (confi c)) (e ∷ es)
+      →   Choice-Semantics       VL₁ (D ⟨ e ∷ es ⟩) c
+        ≡ BinaryChoice-Semantics VL₂ (unroll D (e ∷ fromList es)) (confi c)
 
-
-    -- unroll-preserves-l :
-      -- ∀ (n : ℕ)
-      -- → ⟦ D ⟨ es ⟩ ⟧ c ≡ ⟦ unroll D es n ⟧₂ (confi c)
-    -- unroll-preserves-l : ∀ (l r : L₁ A) (es : List (L₁ A)) (c : NConfig) (i : ℕ)
-    --   → ⟦ l ⟧₁ c ≡ ⟦ t l ⟧₂ (confi c)
-    --   → Choice-Semantics VL₁ (D ⟨ r ∷ es ⟩) c ≡ ⟦ mkChoice (unroll D (r ∷ es) i) ⟧₂ (confi c)
-    --   →   Choice-Semantics VL₁ (D ⟨ l ∷ r ∷ es ⟩) c
-    --     ≡ BinaryChoice-Semantics VL₂ ((D ∙ i) ⟨ t l , mkChoice (unroll D (r ∷ es) (suc i)) ⟩) (confi c)
-    -- unroll-preserves-l = {!!}
-    open Data.Nat using (_+_)
-    unroll-preserves-l : ∀
-        (i : ℕ)
-        (n : ℕ)
-        (c : NConfig)
-        (conv : ConfSpec D confi)
-        (eq : lookup c D ≡ suc n)
-        (l : expressions VL₁ A)
-        (r : expressions VL₁ A)
-        (es : List (expressions VL₁ A))
-        (l≡tl : semantics VL₁ l c ≡ semantics VL₂ (t l) (confi c))
-        (r≡tr : semantics VL₁ r c ≡ semantics VL₂ (t r) (confi c))
-        (hypot-es : All (λ e → semantics VL₁ e c ≡ semantics VL₂ (t e) (confi c)) es)
-      → ⟦ find-or-last (i + n) (r ∷ es) ⟧₁ c ≡ ⟦ mkChoice (unroll D (r ∷ es) (suc i)) ⟧₂ (confi c)
-    unroll-preserves-l i n c conv cD≡1+n l r es l≡tl r≡tr hypot-es with (unroll D (r ∷ es) (suc i)) in eq2
-    ... | D ⟨ l₁ , r₁ ⟩ = {!!}
-
-    unroll-preserves : ∀
-        (n : ℕ)
-        (c : NConfig)
-        (conv : ConfSpec D confi)
-        (eq : lookup c D ≡ suc n)
-        (l : expressions VL₁ A)
-        (r : expressions VL₁ A)
-        (es : List (expressions VL₁ A))
-        (l≡tl : semantics VL₁ l c ≡ semantics VL₂ (t l) (confi c))
-        (r≡tr : semantics VL₁ r c ≡ semantics VL₂ (t r) (confi c))
-        (hypot-es : All (λ e → semantics VL₁ e c ≡ semantics VL₂ (t e) (confi c)) es)
-      → ⟦ find-or-last n (r ∷ es) ⟧₁ c ≡ ⟦ mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
-    unroll-preserves n c conv cD≡1+n l r es l≡tl r≡tr hypot-es = {!!}
-    --   begin
-    --     ⟦ find-or-last zero (r ∷ es) ⟧₁ c
-    --   ≡⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) (find-or-last-zero r es) ⟩
-    --     ⟦ r ⟧₁ c
-    --   ≡⟨ {!!} ⟩
-    --     ⟦ mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
-    --   ∎
-    -- unroll-preserves (suc n) c conv eq l r cD≡n+1 l≡tl r≡tr hypot-es = {!!}
-
-    convert-preserves-l :
-        ConfSpec D confi
-      → (alts : List⁺ (L₁ A))
-      → (c : NConfig)
-      → All⁺ (λ e → ⟦ e ⟧₁ c ≡ ⟦ t e ⟧₂ (confi c)) alts
-      →   Choice-Semantics       VL₁ (D ⟨ alts ⟩) c
-        ≡ BinaryChoice-Semantics VL₂ (unroll D alts zero) (confi c)
-    convert-preserves-l conv (e ∷ []) c (e≡tx ∷ []) =
+    convert-preserves-l-base : ∀ (e : L₁ A) (c : NConfig)
+      → ⟦ e ⟧₁ c ≡ ⟦ t e ⟧₂ (confi c)
+      →   Choice-Semantics VL₁ (D ⟨ e ∷ [] ⟩) c
+        ≡ BinaryChoice-Semantics VL₂ (unroll D (e ∷ [])) (confi c)
+    convert-preserves-l-base e c e≡te =
       begin
         Choice-Semantics VL₁ (D ⟨ e ∷ [] ⟩) c
       ≡⟨⟩
         ⟦ e ⟧₁ c
-      ≡⟨ e≡tx ⟩
+      ≡⟨ e≡te ⟩
         ⟦ t e ⟧₂ (confi c)
       ≡⟨ Eq.cong
            (λ eq → ⟦ eq ⟧₂ (confi c))
@@ -633,46 +601,116 @@ module N→2-Choice {V F}
              (if-idemp (lookup (confi c) (D ∙ 0)))) ⟩
         ⟦ if (lookup (confi c) (D ∙ 0)) then (t e) else (t e) ⟧₂ (confi c)
       ≡⟨⟩
-        BinaryChoice-Semantics VL₂ (convert (D ⟨ e ∷ [] ⟩)) (confi c)
+        BinaryChoice-Semantics VL₂ (unroll D (e ∷ [])) (confi c)
       ∎
-    convert-preserves-l conv (l ∷ r ∷ es) c (l≡tl ∷ r≡tr ∷ hypot-es) with lookup c D in eq
-    ... | zero  =
+
+    convert-preserves-l-step : ∀ (l r : L₁ A) (es : List (L₁ A)) (c : NConfig)
+       -- → ConfSpec D confi
+       → ConfSpec D (suc (length es)) confi
+       → All⁺ (λ e → ⟦ e ⟧₁ c ≡ ⟦ t e ⟧₂ (confi c)) (l ∷ r ∷ es)
+       → (i : ℕ)
+       → (lookup c D) ≡ i
+       →   Choice-Semantics VL₁ (D ⟨ l ∷ r ∷ es ⟩) c
+         ≡ BinaryChoice-Semantics VL₂ (unroll D (l ∷ r ∷ fromList es)) (confi c)
+    convert-preserves-l-step l r es c conv (l≡tl ∷ r≡tr ∷ hypot-es) zero cD≡i rewrite cD≡i | l≡tl =
       begin
-        ⟦ l ⟧₁ c
-      ≡⟨ l≡tl ⟩
         ⟦ t l ⟧₂ (confi c)
-      ≡⟨⟩
-        ⟦ if true then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
       ≡⟨ Eq.cong
-           (λ x → ⟦ if x then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c))
-           (Eq.sym (select-n conv c 0 (Eq.sym eq))) ⟩
-        ⟦ if lookup (confi c) (D ∙ 0) then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
-      ≡⟨⟩
-        BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+           (λ x → ⟦ if x then t l else tail ⟧₂ (confi c))
+           (Eq.sym (select-n conv c (suc n) pick)) ⟩
+        ⟦ if lookup (confi c) (D ∙ suc n) then t l else tail ⟧₂ (confi c)
       ∎
-    ... | suc n =
+      where tail = mkChoice (unroll D (r ∷ fromList es))
+            n = length es
+            pick : suc n ∸ lookup c D ≡ suc n
+            pick rewrite cD≡i = refl
+    convert-preserves-l-step l r es c conv (l≡tl ∷ r≡tr ∷ hypot-es) (suc i) cD≡i rewrite cD≡i | r≡tr =
       begin
-        ⟦ find-or-last n (r ∷ es) ⟧₁ c
-      -- ≡⟨ unroll-preserves-l zero n c conv eq l r es l≡tl r≡tr hypot-es ⟩
-      -- ≡⟨ {!!} ⟩
-        -- ⟦ ⟧₂
-      -- ≡⟨⟩
-        -- BinaryChoice-Semantics VL₂ (unroll D (r ∷ es) zero) (confi c)
+        ⟦ find-or-last i (r ∷ es) ⟧₁ c
       ≡⟨ {!!} ⟩
-        BinaryChoice-Semantics VL₂ (unroll D (r ∷ es) 1) (confi c)
-      ≡⟨ Eq.sym (mkChoice-preserves (unroll D (r ∷ es) 1) (confi c)) ⟩
-        ⟦ mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
-      ≡⟨⟩
-        ⟦ if false then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+        Choice-Semantics       VL₁ (D ⟨ r ∷ es ⟩) c -- suc ∘ lookup c
+      ≡⟨ convert-preserves-l r es c {!!} {!!} ⟩
+        BinaryChoice-Semantics VL₂ tail (confi c)
+      ≡⟨ Eq.sym (mkChoice-preserves tail (confi c)) ⟩
+        ⟦ mkChoice tail ⟧₂ (confi c)
       ≡⟨ Eq.cong
-           (λ x → ⟦ if x then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c))
-           (Eq.sym (deselect-<n conv c 0 {!!})) ⟩
-        ⟦ if lookup (confi c) (D ∙ 0) then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
-      ≡⟨⟩
-        BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+           (λ x → ⟦ if x then t l else mkChoice tail ⟧₂ (confi c))
+           (Eq.sym (deselect-<n conv c (suc n) pick)) ⟩
+        ⟦ if lookup (confi c) (D ∙ suc n) then t l else mkChoice tail ⟧₂ (confi c)
       ∎
-      where foo : Σ[ x ∈ L₂ A ] (unroll D (r ∷ es) 1 ≡ (D ∙ 1) ⟨ t r , x ⟩)
-            foo = unroll-name (D) (r) (es) 1
+      where tail = unroll D (r ∷ fromList es)
+            n    = length es
+
+            -- TODO: Move to aux proofs
+            asdf : ∀ {n m} → suc (n ∸ m) ≤ suc n
+            asdf {zero} {zero} = s≤s z≤n
+            asdf {zero} {suc _} = s≤s z≤n
+            asdf {suc n} {zero} = ≤-refl
+            asdf {suc n} {suc m} = s≤s (m∸n≤m (suc n) (suc m))
+
+            pick : suc n ∸ lookup c D < suc n
+            pick rewrite cD≡i = asdf {n} {i}
+
+    convert-preserves-l e [] c _ (e≡te ∷ []) = convert-preserves-l-base e c e≡te
+    convert-preserves-l l (r ∷ es) c conv hypot = convert-preserves-l-step l r es c conv hypot (lookup c D) refl
+
+    -- convert-preserves-l :
+    --     ConfSpec D confi
+    --   → (alts : List⁺ (L₁ A))
+    --   → (c : NConfig)
+    --   → All⁺ (λ e → ⟦ e ⟧₁ c ≡ ⟦ t e ⟧₂ (confi c)) alts
+    --   →   Choice-Semantics       VL₁ (D ⟨ alts ⟩) c
+    --     ≡ BinaryChoice-Semantics VL₂ (unroll D alts zero) (confi c)
+    -- convert-preserves-l conv (e ∷ []) c (e≡tx ∷ []) =
+    --   begin
+    --     Choice-Semantics VL₁ (D ⟨ e ∷ [] ⟩) c
+    --   ≡⟨⟩
+    --     ⟦ e ⟧₁ c
+    --   ≡⟨ e≡tx ⟩
+    --     ⟦ t e ⟧₂ (confi c)
+    --   ≡⟨ Eq.cong
+    --        (λ eq → ⟦ eq ⟧₂ (confi c))
+    --        (Eq.sym
+    --          (if-idemp (lookup (confi c) (D ∙ 0)))) ⟩
+    --     ⟦ if (lookup (confi c) (D ∙ 0)) then (t e) else (t e) ⟧₂ (confi c)
+    --   ≡⟨⟩
+    --     BinaryChoice-Semantics VL₂ (convert (D ⟨ e ∷ [] ⟩)) (confi c)
+    --   ∎
+    -- convert-preserves-l conv (l ∷ r ∷ es) c (l≡tl ∷ r≡tr ∷ hypot-es) with lookup c D in eq
+    -- ... | zero  =
+    --   begin
+    --     ⟦ l ⟧₁ c
+    --   ≡⟨ l≡tl ⟩
+    --     ⟦ t l ⟧₂ (confi c)
+    --   ≡⟨⟩
+    --     ⟦ if true then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+    --   ≡⟨ Eq.cong
+    --        (λ x → ⟦ if x then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c))
+    --        (Eq.sym (select-n conv c 0 (Eq.sym eq))) ⟩
+    --     ⟦ if lookup (confi c) (D ∙ 0) then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+    --   ≡⟨⟩
+    --     BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+    --   ∎
+    -- ... | suc n =
+    --   begin
+    --     ⟦ find-or-last n (r ∷ es) ⟧₁ c
+    --   -- ≡⟨ {!!} ⟩
+    --     -- ⟦ ⟧₂
+    --   -- ≡⟨⟩
+    --     -- BinaryChoice-Semantics VL₂ (unroll D (r ∷ es) zero) (confi c)
+    --   ≡⟨ {!!} ⟩
+    --     BinaryChoice-Semantics VL₂ (unroll D (r ∷ es) 1) (confi c)
+    --   ≡⟨ Eq.sym (mkChoice-preserves (unroll D (r ∷ es) 1) (confi c)) ⟩
+    --     ⟦ mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+    --   ≡⟨⟩
+    --     ⟦ if false then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+    --   ≡⟨ Eq.cong
+    --        (λ x → ⟦ if x then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c))
+    --        (Eq.sym (deselect-<n conv c 0 {!!})) ⟩
+    --     ⟦ if lookup (confi c) (D ∙ 0) then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+    --   ≡⟨⟩
+    --     BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
+    --   ∎
 
     convert-preserves : ∀ (alts : List⁺ (L₁ A)) →
           Choice-Semantics       VL₁ (D ⟨ alts ⟩)
