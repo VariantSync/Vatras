@@ -27,17 +27,9 @@ private
   variable
     A : 𝔸
 
--- Variability Language
-𝕃 : Set₁
-𝕃 = 𝔸 → Set
-
 -- Variant Language
 𝕍 : Set₁
 𝕍 = 𝔸 → Set
-
--- Constructor Type
-ℂ : Set₁
-ℂ = 𝔸 → Set
 
 -- Annotation Language
 𝔽 : Set₁
@@ -47,6 +39,14 @@ private
 𝕊 : Set₁
 𝕊 = Set
 
+-- Variability Language
+Syntax : Set₁
+Syntax = 𝔸 → Set
+
+-- Constructor Type
+Rule : Set₁
+Rule = 𝔸 → Set
+
 -- Configurations: A configuration is anything that allows us to do a lookup.
 record Config (F : 𝔽) (S : 𝕊) : Set where
   field
@@ -54,36 +54,65 @@ record Config (F : 𝔽) (S : 𝕊) : Set where
 open Config public
 
 -- Semantics of variability languages
-𝕃-Semantics : 𝕍 → 𝔽 → 𝕊 → 𝕃 → 𝔸 → Set
-𝕃-Semantics V F S L A = L A → Config F S → V A
+Language-Semantics : 𝕍 → 𝔽 → 𝕊 → Syntax → 𝔸 → Set
+Language-Semantics V F S L A = L A → Config F S → V A
 
 -- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
 record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
-  constructor _with-semantics_
+  constructor expressions_with-semantics_
   field
-    expressions : 𝕃
-    semantics   : 𝕃-Semantics V F S expressions A
+    -- A syntax denotes a set of expressions.
+    expressions : Syntax
+    semantics   : ∀ {A : 𝔸} → Language-Semantics V F S expressions A
 open VariabilityLanguage public
 
 -- Semantics of constructors
-ℂ-Semantics : 𝕍 → 𝔽 → 𝕊 → (𝕃 → ℂ) → 𝔸 → Set₁
-ℂ-Semantics V F S C A = (L : VariabilityLanguage V F S) → C (expressions L) A → Config F S → V A
+Rule-Semantics : 𝕍 → 𝔽 → 𝕊 → (Syntax → Rule) → 𝔸 → Set₁
+Rule-Semantics V F S C A = (L : VariabilityLanguage V F S) → C (expressions L) A → Config F S → V A
 
-record _∈_ (Constructor : ℂ) (Expression : 𝕃) : Set₁ where
+record VariabilityRule (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+  constructor rule_with-semantics_
+  field
+    rule : Syntax → Rule
+    semantics : Rule-Semantics V F S rule A
+open VariabilityRule public
+
+-- Syntactic Containment
+record _∈ₛ_ (Constructor : Rule) (Expression : Syntax) : Set₁ where
   field
     cons : Constructor A → Expression A
     snoc : Expression  A → Maybe (Constructor A)
     id-l : snoc {A} ∘ cons {A} ≗ just
-open _∈_ public
+open _∈ₛ_ public
 
-_∉_ : ℂ → 𝕃 → Set₁
-C ∉ L = ¬ (C ∈ L)
+_∉ₛ_ : Rule → Syntax → Set₁
+C ∉ₛ L = ¬ (C ∈ₛ L)
 
-_⊆_ : 𝕃 → 𝕃 → Set₁
-L₁ ⊆ L₂ = ∀ (C : ℂ) → C ∈ L₁ → C ∈ L₂
+_⊆ₛ_ : Syntax → Syntax → Set₁
+L₁ ⊆ₛ L₂ = ∀ (C : Rule) → C ∈ₛ L₁ → C ∈ₛ L₂
 
-_≅_ : 𝕃 → 𝕃 → Set₁
-L₁ ≅ L₂ = L₁ ⊆ L₂ × L₂ ⊆ L₁
+_≅ₛ_ : Syntax → Syntax → Set₁
+L₁ ≅ₛ L₂ = L₁ ⊆ₛ L₂ × L₂ ⊆ₛ L₁
+
+-- Semantic Containment
+record _⟦∈⟧_ {V F S} (R : VariabilityRule V F S) (L : VariabilityLanguage V F S) : Set₁ where
+  private
+    Expression = expressions L
+    Constructor = rule R Expression
+
+  field
+    make : Constructor ∈ₛ Expression
+    preservation : ∀ (c : Constructor A) → semantics L (cons make c) ≗ semantics R L c
+open _⟦∈⟧_ public
+
+_⟦∉⟧_ : ∀ {V F S} → VariabilityRule V F S → VariabilityLanguage V F S → Set₁
+C ⟦∉⟧ L = ¬ (C ⟦∈⟧ L)
+
+_⟦⊆⟧_ :  ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
+_⟦⊆⟧_ {V} {F} {S} L₁ L₂ = ∀ (C : VariabilityRule V F S) → C ⟦∈⟧ L₁ → C ⟦∈⟧ L₂
+
+_⟦≅⟧_ : ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
+L₁ ⟦≅⟧ L₂ = L₁ ⟦⊆⟧ L₂ × L₂ ⟦⊆⟧ L₁
 
 ----- EXAMPLES FOR VARIANT TYPES -----
 
@@ -98,26 +127,26 @@ record Leaf (A : 𝔸) : Set where
   field
     val : A
 
-record Artifact (L : 𝕃) (A : 𝔸) : Set where
+record Artifact (L : Syntax) (A : 𝔸) : Set where
   constructor _-<_>-
   field
     val : A
     children : List (L A)
 
-record ParallelComposition (L : 𝕃) (A : 𝔸) : Set where
+record ParallelComposition (L : Syntax) (A : 𝔸) : Set where
   constructor _∥_
   field
     l : L A
     r : L A
 
-record BinaryChoice (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set where
+record BinaryChoice (F : 𝔽) (L : Syntax) (A : 𝔸) : Set where
   constructor _⟨_,_⟩
   field
     D : F
     l : L A
     r : L A
 
-record Choice (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set where
+record Choice (F : 𝔽) (L : Syntax) (A : 𝔸) : Set where
   constructor _⟨_⟩
   field
     D : F
@@ -127,34 +156,39 @@ record Choice (F : 𝔽) (L : 𝕃) (A : 𝔸) : Set where
 ---- SEMANTICS ----
 
 Leaf-Semantics : ∀ {F : 𝔽} {S : 𝕊} {A : 𝔸}
-  → ℂ-Semantics GrulerVariant F S (λ _ → Leaf) A
+  → Rule-Semantics GrulerVariant F S (λ _ → Leaf) A
 Leaf-Semantics _ (leaf a) _ = asset a
 
 ParallelComposition-Semantics : ∀ {F : 𝔽} {S : 𝕊} {A : 𝔸}
-  → ℂ-Semantics GrulerVariant F S ParallelComposition A
+  → Rule-Semantics GrulerVariant F S ParallelComposition A
 ParallelComposition-Semantics L (l ∥ r) c = ⟦ l ⟧ᵢ c ∥ ⟦ r ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
 BinaryChoice-Semantics : ∀ {V : 𝕍} {F : 𝔽} {A : 𝔸}
-  → ℂ-Semantics V F Bool (BinaryChoice F) A
+  → Rule-Semantics V F Bool (BinaryChoice F) A
 BinaryChoice-Semantics L (D ⟨ l , r ⟩) c = ⟦ if lookup c D then l else r ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
 Choice-Semantics : ∀ {V : 𝕍} {F : 𝔽} {A : 𝔸}
-  → ℂ-Semantics V F ℕ (Choice F) A
+  → Rule-Semantics V F ℕ (Choice F) A
 Choice-Semantics L (D ⟨ alternatives ⟩) c = ⟦ find-or-last (lookup c D) alternatives ⟧ᵢ c
   where ⟦_⟧ᵢ = semantics L
 
+---- RULES ----
+
+BinaryChoice-Rule : ∀ (V : 𝕍) (F : 𝔽) → VariabilityRule V F Bool
+BinaryChoice-Rule _ F = rule BinaryChoice F with-semantics BinaryChoice-Semantics
+
 ---- EXAMPLE : Gruler's language -----
 -- All these language implementations are super straighforward and could in fact be generated if Agda would have macros!
-data Gruler : 𝕃 where
+data Gruler : Syntax where
   GAsset  : Leaf A                       → Gruler A
   GPComp  : ParallelComposition Gruler A → Gruler A
   GChoice : BinaryChoice ℕ Gruler A      → Gruler A
 
 -- I have no idea how we could prove this terminating but let's just avoid that headache.
 {-# TERMINATING #-}
-⟦_⟧ᵍ : 𝕃-Semantics GrulerVariant ℕ Bool Gruler A
+⟦_⟧ᵍ : Language-Semantics GrulerVariant ℕ Bool Gruler A
 
 GrulerVL : VariabilityLanguage GrulerVariant ℕ Bool
 GrulerVL = record
@@ -166,7 +200,7 @@ GrulerVL = record
 ⟦ GPComp PC ⟧ᵍ = ParallelComposition-Semantics GrulerVL PC
 ⟦ GChoice C ⟧ᵍ = BinaryChoice-Semantics GrulerVL C
 
-gruler-has-leaf : Leaf ∈ Gruler
+gruler-has-leaf : Leaf ∈ₛ Gruler
 gruler-has-leaf = record
   { cons = GAsset
   ; snoc = snoc'
@@ -176,7 +210,7 @@ gruler-has-leaf = record
         snoc' (GAsset A)  = just A
         snoc' _ = nothing
 
-gruler-has-choice : BinaryChoice ℕ Gruler ∈ Gruler
+gruler-has-choice : BinaryChoice ℕ Gruler ∈ₛ Gruler
 gruler-has-choice = record
   { cons = GChoice
   ; snoc = snoc'
@@ -186,16 +220,24 @@ gruler-has-choice = record
         snoc' (GChoice C) = just C
         snoc' _ = nothing
 
+gruler-models-choice : BinaryChoice-Rule GrulerVariant ℕ ⟦∈⟧ GrulerVL
+make gruler-models-choice = gruler-has-choice
+preservation gruler-models-choice _ _ = refl
+
+gruler-choice-preserves : ∀ {D l r c}
+  → ⟦ GChoice {A} (D ⟨ l , r ⟩) ⟧ᵍ c ≡ BinaryChoice-Semantics GrulerVL (D ⟨ l , r ⟩) c
+gruler-choice-preserves = refl
+
 ----- EXAMPLE USAGES OF CONSTRUCTORS -----
 
 make-leaf :
-  ∀ (L : 𝕃) → Leaf ∈ L
+  ∀ (L : Syntax) → Leaf ∈ₛ L
   → {A : 𝔸} → A
   → L A
 make-leaf _ mkLeaf a = cons mkLeaf (leaf a)
 
 make-choice : ∀ {F : 𝔽}
-  → (L : 𝕃) → BinaryChoice F L ∈ L
+  → (L : Syntax) → BinaryChoice F L ∈ₛ L
   → {A : 𝔸} → F → L A → L A → L A
 make-choice L mkChoice D l r = cons mkChoice (D ⟨ l , r ⟩)
 
@@ -223,7 +265,7 @@ VMap : 𝕍 → 𝔸 → ℕ → Set
 VMap V A n = IndexedVMap V A (Fin (suc n))
 
 Complete : ∀ {V F S} → VariabilityLanguage V F S → Set₁
-Complete {V} (L with-semantics ⟦_⟧) = ∀ {A n}
+Complete {V} (expressions L with-semantics ⟦_⟧) = ∀ {A n}
   → (vs : VMap V A n)
     ----------------------------------
   → Σ[ e ∈ L A ]
@@ -264,11 +306,11 @@ Fnoc-Preserves {F = F} {S₂ = S₂} L₁ L₂ e₁ e₂ fnoc =
   where ⟦_⟧₁ = semantics L₁
         ⟦_⟧₂ = semantics L₂
 
-_⊆-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
+_⊆ₛ-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
   → (e : expressions L₁ A)
   → Translation L₁ L₂
   → Set
-_⊆-via_ {L₁ = L₁} {L₂ = L₂} e₁ translate = Conf-Preserves L₁ L₂ e₁ (expr (translate e₁)) (conf (translate e₁))
+_⊆ₛ-via_ {L₁ = L₁} {L₂ = L₂} e₁ translate = Conf-Preserves L₁ L₂ e₁ (expr (translate e₁)) (conf (translate e₁))
 
 _⊇-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
   → (e : expressions L₁ A)
@@ -280,7 +322,7 @@ _≚-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : Va
   → (e : expressions L₁ A)
   → Translation L₁ L₂
   → Set
-e ≚-via t = e ⊆-via t × e ⊇-via t
+e ≚-via t = e ⊆ₛ-via t × e ⊇-via t
 
 _is-variant-preserving :  ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂} → Translation L₁ L₂ → Set₁
 _is-variant-preserving {L₁ = L₁} t = ∀ {A : 𝔸} → (e₁ : expressions L₁ A) → e₁ ≚-via t
@@ -289,8 +331,8 @@ _is-variant-preserving {L₁ = L₁} t = ∀ {A : 𝔸} → (e₁ : expressions 
 choices-make-complete : ∀ {V F S}
   → (VL : VariabilityLanguage V F S)
   → (let L = expressions VL in
-      Artifact L ∈ L
-    → Choice F L ∈ L
+      Artifact L ∈ₛ L
+    → Choice F L ∈ₛ L
     → Complete VL)
 -- TODO: Reuse the proof that variant lists are complete. Then show that
 --       every language with at least artifacts and choices is at least
@@ -348,8 +390,8 @@ module 2→N-Choice {F : 𝔽} where
     private
       L₁   = expressions VL₁
       L₂   = expressions VL₂
-      ⟦_⟧₁ = semantics VL₁
-      ⟦_⟧₂ = semantics VL₂
+      ⟦_⟧₁ = semantics VL₁ {A}
+      ⟦_⟧₂ = semantics VL₂ {A}
 
     convert : BinaryChoice F L₁ A → Choice F L₂ A
     convert (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
@@ -411,7 +453,7 @@ record IndexedDimension (F : 𝔽) : Set where
 module N→2-Choice {V F}
   (VL₁ : VariabilityLanguage V F ℕ)
   (VL₂ : VariabilityLanguage V (IndexedDimension F) Bool)
-  (L₂-has-choices : BinaryChoice (IndexedDimension F) (expressions VL₂) ∈ (expressions VL₂))
+  (L₂-has-choices : BinaryChoice-Rule V (IndexedDimension F) ⟦∈⟧ VL₂)
   (t : expressions VL₁ A → expressions VL₂ A)
   where
   open import Data.Nat.Show using (show)
@@ -422,9 +464,18 @@ module N→2-Choice {V F}
     2Config = Config I Bool
     L₁   = expressions VL₁
     L₂   = expressions VL₂
-    ⟦_⟧₁ = semantics VL₁
-    ⟦_⟧₂ = semantics VL₂
-    mkChoice = cons L₂-has-choices
+    ⟦_⟧₁ = semantics VL₁ {A}
+    ⟦_⟧₂ = semantics VL₂ {A}
+
+    L₂-has-choices-syntactically : BinaryChoice I L₂ ∈ₛ L₂
+    L₂-has-choices-syntactically = make L₂-has-choices
+
+    mkChoice : BinaryChoice I L₂ A → L₂ A
+    mkChoice = cons L₂-has-choices-syntactically
+
+    mkChoice-preserves : ∀ (c : BinaryChoice I L₂ A) → ⟦ mkChoice c ⟧₂ ≗ BinaryChoice-Semantics VL₂ c
+    mkChoice-preserves = preservation L₂-has-choices
+
 
   -- TODO Prove termination. I have no idea why Agda thinks this to be non-terminating.
   {-# TERMINATING #-}
@@ -502,7 +553,7 @@ module N→2-Choice {V F}
     where
     open import Data.List.Relation.Unary.All using (All; []; _∷_)
     open import Data.List.NonEmpty.Relation.Unary.All using (_∷_) renaming (All to All⁺)
-    open Data.IndexedSet (VariantSetoid V A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+    open Data.IndexedSet (VariantSetoid V A) using () renaming (_≅_ to _≋_)
     open import Util.AuxProofs using (if-idemp)
     open Eq.≡-Reasoning
 
@@ -568,7 +619,7 @@ module N→2-Choice {V F}
       → (c : NConfig)
       → All⁺ (λ e → ⟦ e ⟧₁ c ≡ ⟦ t e ⟧₂ (confi c)) alts
       →   Choice-Semantics       VL₁ (D ⟨ alts ⟩) c
-        ≡ BinaryChoice-Semantics VL₂ (convert (D ⟨ alts ⟩)) (confi c)
+        ≡ BinaryChoice-Semantics VL₂ (unroll D alts zero) (confi c)
     convert-preserves-l conv (e ∷ []) c (e≡tx ∷ []) =
       begin
         Choice-Semantics VL₁ (D ⟨ e ∷ [] ⟩) c
@@ -591,30 +642,32 @@ module N→2-Choice {V F}
       ≡⟨ l≡tl ⟩
         ⟦ t l ⟧₂ (confi c)
       ≡⟨⟩
-        ⟦ if true then t l else cons L₂-has-choices (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+        ⟦ if true then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
       ≡⟨ Eq.cong
-           (λ x → ⟦ if x then t l else cons L₂-has-choices (unroll D (r ∷ es) 1) ⟧₂ (confi c))
+           (λ x → ⟦ if x then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c))
            (Eq.sym (select-n conv c 0 (Eq.sym eq))) ⟩
-        ⟦ if lookup (confi c) (D ∙ 0) then t l else cons L₂-has-choices (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+        ⟦ if lookup (confi c) (D ∙ 0) then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
       ≡⟨⟩
         BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
       ∎
     ... | suc n =
       begin
         ⟦ find-or-last n (r ∷ es) ⟧₁ c
-      ≡⟨ unroll-preserves-l zero n c conv eq l r es l≡tl r≡tr hypot-es ⟩
-        -- ⟦ mkChoice ((D ∙ 1) ⟨ t r , proj₁ foo ⟩) ⟧₂ (confi c)
-      -- ≡⟨ Eq.cong (λ x → ⟦ mkChoice x ⟧₂ (confi c)) (Eq.sym (proj₂ foo)) ⟩
-        -- Choice-Semantics VL₁ (D ⟨ r ∷ es ⟩) c
-        -- ?
-      -- ≡⟨ convert-preserves-l conv (r ∷ es) c ⟩
+      -- ≡⟨ unroll-preserves-l zero n c conv eq l r es l≡tl r≡tr hypot-es ⟩
+      -- ≡⟨ {!!} ⟩
+        -- ⟦ ⟧₂
+      -- ≡⟨⟩
+        -- BinaryChoice-Semantics VL₂ (unroll D (r ∷ es) zero) (confi c)
+      ≡⟨ {!!} ⟩
+        BinaryChoice-Semantics VL₂ (unroll D (r ∷ es) 1) (confi c)
+      ≡⟨ Eq.sym (mkChoice-preserves (unroll D (r ∷ es) 1) (confi c)) ⟩
         ⟦ mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
       ≡⟨⟩
-        ⟦ if false then t l else cons L₂-has-choices (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+        ⟦ if false then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
       ≡⟨ Eq.cong
-           (λ x → ⟦ if x then t l else cons L₂-has-choices (unroll D (r ∷ es) 1) ⟧₂ (confi c))
+           (λ x → ⟦ if x then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c))
            (Eq.sym (deselect-<n conv c 0 {!!})) ⟩
-        ⟦ if lookup (confi c) (D ∙ 0) then t l else cons L₂-has-choices (unroll D (r ∷ es) 1) ⟧₂ (confi c)
+        ⟦ if lookup (confi c) (D ∙ 0) then t l else mkChoice (unroll D (r ∷ es) 1) ⟧₂ (confi c)
       ≡⟨⟩
         BinaryChoice-Semantics VL₂ (convert (D ⟨ l ∷ r ∷ es ⟩)) (confi c)
       ∎
@@ -633,12 +686,12 @@ artifact-translation :
   → Artifact L₂ A
 artifact-translation t (a -< es >-) = a -< map t es >-
 
-data 2ADT : 𝕃 where
+data 2ADT : Syntax where
   2ADTAsset  : Leaf A                → 2ADT A
   2ADTChoice : BinaryChoice ℕ 2ADT A → 2ADT A
 
 {-# TERMINATING #-}
-⟦_⟧-2adt : 𝕃-Semantics GrulerVariant ℕ Bool 2ADT A
+⟦_⟧-2adt : Language-Semantics GrulerVariant ℕ Bool 2ADT A
 
 2ADTVL : VariabilityLanguage GrulerVariant ℕ Bool
 expressions 2ADTVL = 2ADT
@@ -647,12 +700,12 @@ semantics 2ADTVL   = ⟦_⟧-2adt
 ⟦ 2ADTAsset A  ⟧-2adt = Leaf-Semantics 2ADTVL A
 ⟦ 2ADTChoice C ⟧-2adt = BinaryChoice-Semantics 2ADTVL C
 
-data NADT : 𝕃 where
+data NADT : Syntax where
   NADTAsset  : Leaf A          → NADT A
   NADTChoice : Choice ℕ NADT A → NADT A
 
 {-# TERMINATING #-}
-⟦_⟧-nadt : 𝕃-Semantics GrulerVariant ℕ ℕ NADT A
+⟦_⟧-nadt : Language-Semantics GrulerVariant ℕ ℕ NADT A
 
 NADTVL : VariabilityLanguage GrulerVariant ℕ ℕ
 expressions NADTVL = NADT
