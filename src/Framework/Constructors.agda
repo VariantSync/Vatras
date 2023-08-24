@@ -658,7 +658,100 @@ module N→2-Choice {V F}
 
             max∸n≡cD : max ∸ n ≡ lookup c D
             max∸n≡cD = Eq.trans max∸n≡0 (Eq.sym cD≡i)
-    convert-preserves-l-step l r es c conv (px ∷ px₁ ∷ pxs) (suc max) (suc i) (s≤s n≤max) (s≤s max≤i+n) cD≡i = {!!}
+    convert-preserves-l-step l r es c conv (l≡tl ∷ r≡tr ∷ es≡tes) (suc max) (suc i) (s≤s n≤max) (s≤s max≤i+n) cD≡i with max ∸ (length es) in eq
+    ... | zero =
+      begin
+        ⟦ find-or-last i (r ∷ es) ⟧₁ c
+      ≡⟨ Eq.cong
+           (λ x → ⟦ find-or-last x (r ∷ es) ⟧₁ c)
+           lh ⟩
+        -- ⟦ find-or-last (i ∸ (max ∸ length es)) (r ∷ es) ⟧₁ c
+        ⟦ find-or-last (suc i ∸ (suc max ∸ n)) (r ∷ es) ⟧₁ c
+      -- ≡⟨ {!!} ⟩
+      ≡⟨ convert-preserves-l r es c conv (r≡tr ∷ es≡tes) (suc max) (suc i) n≤1+m 1+m≤1+i+n cD≡i ⟩
+      -- ≡⟨ convert-preserves-l r es c conv (r≡tr ∷ es≡tes) (suc max) (suc i) ? cD≡i ⟩
+        BinaryChoice-Semantics VL₂ (unroll (suc max) D (r ∷ fromList es)) (confi c)
+      ≡⟨⟩
+        BinaryChoice-Semantics VL₂ tail (confi c)
+      ≡⟨ Eq.sym (mkChoice-preserves tail (confi c)) ⟩
+        ⟦ mkChoice tail ⟧₂ (confi c)
+      ≡⟨ Eq.cong
+           (λ x → ⟦ if x then t l else mkChoice tail ⟧₂ (confi c))
+           (Eq.sym (deselect-<n conv c 0<cD)) ⟩
+        ⟦ if lookup (confi c) (D ∙ zero) then t l else mkChoice tail ⟧₂ (confi c)
+      ∎
+      where tail = unroll (suc max) D (r ∷ fromList es)
+            n    = length es
+
+            0<cD : zero < lookup c D
+            0<cD rewrite cD≡i = s≤s z≤n
+
+            max∸n≡0 : max ∸ n ≡ 0
+            max∸n≡0 = eq
+
+            m≤n : max ≤ n
+            m≤n = {!!} -- follows from max∸n≡0
+
+            m≡n : max ≡ n
+            m≡n = {!!} -- from m≤n and n≤max
+
+            [1+m]∸n≡1 : suc max ∸ n ≡ 1
+            [1+m]∸n≡1 rewrite m≡n = {!!} -- follows from 1 + x - x = x
+
+            lh : i ≡ suc i ∸ (suc max ∸ n)
+            lh rewrite [1+m]∸n≡1 = refl
+
+            n≤1+m : n ≤ suc max
+            n≤1+m rewrite m≡n = {!!} -- follows from x ≤ 1 + x
+
+            1+m≤1+i+n : suc max ≤ suc (i + n)
+            1+m≤1+i+n rewrite m≡n = s≤s {!!} -- follows from x ≤ y + x
+    ... | suc d = -- maybe split on i here?
+      begin
+        ⟦ find-or-last (i ∸ d) (l ∷ r ∷ es) ⟧₁ c
+      ≡⟨ {!!} ⟩
+        ⟦ if lookup (confi c) (D ∙ suc d) then t l else mkChoice tail ⟧₂ (confi c)
+      ∎
+      where tail = unroll (suc max) D (r ∷ fromList es)
+            n    = length es
+
+            m∸n≡1+d : max ∸ n ≡ suc d
+            m∸n≡1+d = eq
+
+            n<m : n < max
+            n<m = {!!} -- follows from m∸n≡1+d
+
+            m∸n≤i : max ∸ n ≤ i
+            m∸n≤i = {!!} -- I think, we cannot prove this.
+
+            0<m∸n : 0 < max ∸ n
+            0<m∸n = {!!} -- follows from m∸n≡1+d
+
+            1+d<cD : suc d < lookup c D
+            1+d<cD rewrite cD≡i | Eq.sym m∸n≡1+d = s≤s m∸n≤i
+      -- begin
+      --   -- Choice-Semantics VL₁ (D ⟨ l ∷ r ∷ es ⟩) c
+      -- -- ≡⟨⟩
+      --   -- ⟦ find-or-last (lookup c D) (l ∷ r ∷ es) ⟧₁ c
+      -- -- ≡⟨ Eq.cong
+      --      -- (λ x → ⟦ find-or-last x (l ∷ r ∷ es) ⟧₁ c)
+      --      -- cD≡i ⟩
+      --   ⟦ find-or-last (suc i ∸ (max ∸ n)) (l ∷ r ∷ es) ⟧₁ c
+      -- -- ≡⟨⟩
+      --   -- ⟦ find-or-last i (r ∷ es) ⟧₁ c
+      -- ≡⟨ {!!} ⟩ -- {!convert-preserves-l r es c conv (r≡tr ∷ hypot-es) max ? (suc i) cD≡i!} ⟩
+      -- --   BinaryChoice-Semantics VL₂ (unroll max D (r ∷ fromList es)) (confi c)
+      -- -- ≡⟨⟩
+      -- --   BinaryChoice-Semantics VL₂ tail (confi c)
+      -- -- ≡⟨ Eq.sym (mkChoice-preserves tail (confi c)) ⟩
+      --   ⟦ mkChoice tail ⟧₂ (confi c)
+      -- ≡⟨ Eq.cong
+      --      (λ x → ⟦ if x then t l else mkChoice tail ⟧₂ (confi c))
+      --      (Eq.sym (deselect-<n conv c {!!})) ⟩
+      --   ⟦ if lookup (confi c) (D ∙ (max ∸ n)) then t l else mkChoice tail ⟧₂ (confi c)
+      -- ∎
+      -- where n = length es
+      --       tail = unroll (suc max) D (r ∷ fromList es)
       -- begin
       --   ⟦ find-or-last (zero ∸ (max ∸ n)) (l ∷ r ∷ es) ⟧₁ c
       -- ≡⟨ Eq.cong
