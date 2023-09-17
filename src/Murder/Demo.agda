@@ -1,47 +1,59 @@
 module Murder.Demo where
 
-open import Data.Nat using (ℕ; zero; suc)
 open import Data.String using (String)
-
--- record Player : Set where
---   constructor _murdered_people
---   field
---     name : String
---     kills : ℕ
--- open Player
-
--- make-player : String → Player
--- make-player = _murdered 0 people
-make-player : ∀ {A : Set} → A → A
-make-player x = x
-
--- kills++ : Player → Player
--- kills++ (x murdered i people) = x murdered (suc i) people
-
--- data Circle (A : Set) : Set where
---   _↻ : A → Circle A
---   _∷_ : A → Circle A → Circle A
+open import Data.Maybe using (Maybe; just; nothing)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 Player : Set
 Player = String
 
-infixr 10 _↣_
 data Game : Set where
   ↩ : Game -- \l
   _↣_ : Player → Game → Game -- \r->
+infixr 10 _↣_
 
-# : Game → ℕ
-# ↩ = zero
-# (_ ↣ g) = suc (# g)
+thomas : Player
+thomas = "thomas"
+sascha = "sascha"
+tobias = "tobias"
 
-open import Data.Bool using (if_then_else_; false; true)
+example : Game
+example = thomas ↣ sascha ↣ tobias ↣ ↩
+
+winner : Game → Maybe Player
+winner ↩ = nothing
+winner (p ↣ ↩) = just p
+winner (_ ↣ _ ↣ _) = nothing
+
+_ : winner example ≡ nothing
+_ = refl
+
+_ : winner (sascha ↣ ↩) ≡ just sascha
+_ = refl
+
+-- simple murder
 open Data.String using (_==_)
-open Data.Nat using (_≤_; z≤n; s≤s)
-open import Data.Product using (∃-syntax; _,_)
+open import Data.Bool using (if_then_else_)
 
+murder' : (target : String) → Game → Game
+murder' _ ↩ = ↩
+murder' target (victim? ↣ others) = if victim? == target
+                                    then others
+                                    else victim? ↣ murder' target others
+
+_ : winner example ≡ nothing
+_ = refl
+
+_ : winner (murder' thomas (murder' sascha example)) ≡ just tobias
+_ = refl
+
+_ : winner (murder' tobias (murder' sascha example)) ≡ just thomas
+_ = refl
+
+-- sophisticated murder
 infix 9 _∈_
 data _∈_ (p : Player) : Game → Set where
-  here : ∀ (g : Game)
+  here : ∀ {g}
            ----------
          → p ∈ p ↣ g
 
@@ -50,10 +62,26 @@ data _∈_ (p : Player) : Game → Set where
             ---------
           → p ∈ q ↣ g
 
+_ : thomas ∈ example
+_ = here
+
+s∈e : sascha ∈ example
+s∈e = there here
+
+open import Data.Nat using (ℕ; zero; suc; _≤_; z≤n; s≤s)
+open import Data.Product using (∃-syntax; _,_)
+
+# : Game → ℕ
+# ↩ = zero
+# (_ ↣ g) = suc (# g)
+
 index-of : (p : Player) → (g : Game) → p ∈ g → ∃[ i ] (i ≤ # g)
-index-of p (p ↣ g) (here g) = zero , z≤n
+index-of p (p ↣ g) here = zero , z≤n
 index-of p (q ↣ g) (there p∈g) with index-of p g p∈g
 ... | i , i≤#g = suc i , s≤s i≤#g
+
+_ : index-of sascha example s∈e ≡ (1 , s≤s z≤n)
+_ = refl
 
 murder-at : (g : Game) → (i : ℕ) → (i ≤ # g) → Game
 murder-at ↩ zero z≤n = ↩
@@ -65,33 +93,42 @@ murder p g p∈g =
   let i , i≤#g = index-of p g p∈g
    in murder-at g i i≤#g
 
-murder' : (target : String) → Game → Game
-murder' _ ↩ = ↩
-murder' target (victim? ↣ others) = if victim? == target
-                                   then others
-                                   else victim? ↣ murder' target others
+_ : winner (murder thomas (murder sascha example s∈e) here) ≡ just tobias
+_ = refl
 
--- winner : Game → Player
--- winner (x ↩) = x
--- winner (x ↣ g) = {!!}
+----- WHAT ELSE
+{-
+- equivalence of games
+- murder reduces game size by 1
+- murder kills no other person that is not the target
+- add kill count
+- formalize murder as denotational semantics!
+  - Denotation of a game g is a function that takes a list of kill targets and produces a sub game (or direct winner)
+-}
 
+----- MIND BLOWERS
+{-
+- ≡ is a type
+- ≡-Reasoning
+-}
+
+----- BONUS
+
+-- open Eq.≡-Reasoning
 open import Relation.Nullary.Negation using (¬_)
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; _≢_; refl)
+_∉_ : Player → Game → Set
+p ∉ g = ¬ (p ∈ g)
 
--- _∉_ : Player → Game → Set
--- p ∉ g = ¬ (p ∈ g)
+-- infix 9 _∉_
+-- data _∉_ (p : Player) : Game → Set where
+--   ∉-↩ : p ∉ ↩
 
-infix 9 _∉_
-data _∉_ (p : Player) : Game → Set where
-  ∉-↩ : p ∉ ↩
+--   ∉-↣ : ∀ {q g}
+--         → ¬ (q == p) ≡ true
 
-  ∉-↣ : ∀ {q g}
-        → ¬ (q == p) ≡ true
-        → p ∉ g
-          ----------
-        → p ∉ q ↣ g
+--           ----------
+--         → p ∉ q ↣ g
 
 data WellFormed : Game → Set where
   ↩-wf : WellFormed ↩
@@ -107,54 +144,3 @@ data Finished : Game → Set where
   𝟙 : ∀ (p : Player)
         --------------
       → Finished (p ↣ ↩)
-
-open import Data.Maybe using (Maybe; just; nothing)
-winner : ∀ (g : Game) → Maybe Player
-winner ↩ = nothing
-winner (p ↣ ↩) = just p
-winner (_ ↣ _ ↣ _) = nothing
-
--- murder target (x ↣ y ↣ rest) = murder' (last y rest) target (x ↣ y ↣ rest)
---   where murder' : Player → String → Game → Game
---         murder' killer target ↩ = ↩
---         murder' killer target (victim? ↣ others) = if name victim? == target
---                                                    then {!!}
---                                                    else {!!}
-
-module Example where
-  Thomas = make-player "Thomas"
-  Sascha = make-player "Sascha"
-  Tobias = make-player "Tobias"
-
-  tsb : Game
-  tsb = Thomas ↣ Sascha ↣ Tobias ↣ ↩
-
-  _ : winner (murder' Thomas (murder' Sascha tsb)) ≡ just Tobias
-  _ = refl
-
-  _ : winner (murder' Tobias (murder' Sascha tsb)) ≡ just Thomas
-  _ = refl
-
-  _ : winner (murder Thomas (murder Sascha tsb {!!}) {!!}) ≡ just Tobias
-  _ = refl
-
-  -- _ : winner (murder Tobias (murder Sascha tsb)) ≡ Thomas
-  -- _ = refl
-
-open Eq.≡-Reasoning
-
-murder'-idemp : ∀ p g → p ∉ g → murder' p g ≡ g
-murder'-idemp _ ↩ _ = refl
-murder'-idemp p (x ↣ g) (∉-↣ p≢q p∉g) with x == p
-... | false = Eq.cong (x ↣_) (murder'-idemp p g p∉g)
-... | true with p≢q refl
-...        | ()
-
-kill-comm : ∀ (g : Game) (p q : Player)
-            → WellFormed g
-              ---------------------------------------------
-            → murder' p (murder' q g) ≡ murder' q (murder' p g)
-kill-comm ↩ p q _ = refl
-kill-comm (x ↣ xs) p q (↣-wf x∉xs) = {!!} --with x ≟ q with x==q
--- ... | false = {!!}
--- ... | true  = {!!}
