@@ -1,132 +1,109 @@
-module Framework.V2.Translation.2Choice-to-NChoice where
+module Framework.V2.Translation.2Choice-to-NChoice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true)
-open import Data.List using (List; _∷_; []; map)
+open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero)
-open import Data.Product using (_×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+open import Data.Product using () renaming (_,_ to _and_)
 
+open import Relation.Binary using (Setoid; IsEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 import Data.IndexedSet
 
-open import Framework.V2.Definitions
-open import Framework.V2.Variants using (VariantSetoid)
-open import Framework.V2.V1Compat
 open import Framework.V2.Constructs.Choices as Chc
-open Chc.Choice₂ using (_⟨_,_⟩)
-open Chc.Choiceₙ using (_⟨_⟩)
+open Chc.Choice₂ Q using () renaming (Config to Config₂)
+open Chc.Choiceₙ Q using () renaming (Config to Configₙ)
 
-private
-  variable
-    A : 𝔸
+{-|
+ConfSpec and FnocSpec define the requirements we have on translated configurations
+to prove preservation of the conversion from binary to n-ary choices.
+-}
+record ConfSpec (f : Q) (conf : Config₂ → Configₙ) : Set ℓ₁ where
+  field
+    false→1 : ∀ (c : Config₂)
+      → c f ≡ false
+      → (conf c) f ≡ 1
 
-  BinaryChoice = VLChoice₂.Syntax
-  BinaryChoice-Semantics = VLChoice₂.Semantics
-  Choice = VLChoiceₙ.Syntax
-  Choice-Semantics = VLChoiceₙ.Semantics
+    true→0 : ∀ (c : Config₂)
+      → c f ≡ true
+      → (conf c) f ≡ 0
+open ConfSpec
 
-module 2→N-Choice {F : 𝔽} where
-  {-|
-  ConfSpec and FnocSpec define the requirements we have on translated configurations
-  to prove preservation of the conversion from binary to n-ary choices.
-  -}
-  record ConfSpec (f : F) (conf : Config F Bool → Config F ℕ) : Set where
-    field
-      false→1 : ∀ (c : Config F Bool)
-        → c f ≡ false
-        → (conf c) f ≡ 1
-      true→0 : ∀ (c : Config F Bool)
-        → c f ≡ true
-        → (conf c) f ≡ 0
-  open ConfSpec
+record FnocSpec (f : Q) (fnoc : Configₙ → Config₂) : Set ℓ₁ where
+  field
+    suc→false : ∀ {n} (c : Configₙ)
+      → c f ≡ suc n
+      → (fnoc c) f ≡ false
 
-  record FnocSpec (f : F) (fnoc : Config F ℕ → Config F Bool) : Set where
-    field
-      suc→false : ∀ {n} (c : Config F ℕ)
-        → c f ≡ suc n
-        → (fnoc c) f ≡ false
-      zero→true : ∀ (c : Config F ℕ)
-        → c f ≡ zero
-        → (fnoc c) f ≡ true
-  open FnocSpec
+    zero→true : ∀ (c : Configₙ)
+      → c f ≡ zero
+      → (fnoc c) f ≡ true
+open FnocSpec
 
-  default-conf : Config F Bool → Config F ℕ
-  (default-conf cb) f with cb f
-  ... | false = 1
-  ... | true  = 0
+default-conf : Config₂ → Configₙ
+(default-conf cb) f with cb f
+... | false = 1
+... | true  = 0
 
-  default-fnoc : Config F ℕ → Config F Bool
-  (default-fnoc cn) f with cn f
-  ... | zero    = true
-  ... | (suc _) = false
+default-fnoc : Configₙ → Config₂
+(default-fnoc cn) f with cn f
+... | zero    = true
+... | (suc _) = false
 
-  default-conf-satisfies-spec : ∀ (f : F) → ConfSpec f default-conf
-  false→1 (default-conf-satisfies-spec f) c cf≡false rewrite cf≡false = refl
-  true→0  (default-conf-satisfies-spec f) c cf≡true  rewrite cf≡true  = refl
+default-conf-satisfies-spec : ∀ (f : Q) → ConfSpec f default-conf
+false→1 (default-conf-satisfies-spec f) c cf≡false rewrite cf≡false = refl
+true→0  (default-conf-satisfies-spec f) c cf≡true  rewrite cf≡true  = refl
 
-  default-fnoc-satisfies-spec : ∀ (f : F) → FnocSpec f default-fnoc
-  suc→false (default-fnoc-satisfies-spec f) c cf≡suc  rewrite cf≡suc  = refl
-  zero→true (default-fnoc-satisfies-spec f) c cf≡zero rewrite cf≡zero = refl
+default-fnoc-satisfies-spec : ∀ (f : Q) → FnocSpec f default-fnoc
+suc→false (default-fnoc-satisfies-spec f) c cf≡suc  rewrite cf≡suc  = refl
+zero→true (default-fnoc-satisfies-spec f) c cf≡zero rewrite cf≡zero = refl
 
-  module Translate {V}
-    (VL₁ : VariabilityLanguage V F Bool)
-    (VL₂ : VariabilityLanguage V F ℕ)
-    (t : expression-set VL₁ A → expression-set VL₂ A)
+module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
+  open Setoid S
+  module ≈-Eq = IsEquivalence isEquivalence
+
+  open Chc.Choice₂ Q
+    using (_⟨_,_⟩)
+    renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂)
+  open Chc.Choiceₙ Q
+    using (_⟨_⟩)
+    renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ)
+
+  convert : 2Choice Carrier → NChoice Carrier
+  convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩
+
+  module Preservation
+    (conf : Config₂ → Configₙ)
+    (fnoc : Configₙ → Config₂)
+    (D : Q)
+    (l r : Carrier)
     where
-    private
-      L₁   = expression-set VL₁
-      L₂   = expression-set VL₂
-      ⟦_⟧₁ = semantics VL₁ {A}
-      ⟦_⟧₂ = semantics VL₂ {A}
+    open Data.IndexedSet S using (⊆-by-index-translation) renaming (_≅_ to _≋_)
 
-    convert : BinaryChoice F L₁ A → Choice F L₂ A
-    convert (D ⟨ l , r ⟩) = D ⟨ t l ∷ t r ∷ [] ⟩
+    preserves-conf :
+        ConfSpec D conf
+      → (c : Config₂)
+      →   (⟦ D ⟨ l , r ⟩ ⟧₂ c)
+        ≈ (⟦ convert (D ⟨ l , r ⟩) ⟧ₙ (conf c))
+    preserves-conf conv c with c D in eq
+    ... | false rewrite false→1 conv c eq = ≈-Eq.refl
+    ... | true  rewrite true→0  conv c eq = ≈-Eq.refl
 
-    module Preservation
-      (confi : Config F Bool → Config F ℕ)
-      (fnoci : Config F ℕ → Config F Bool)
-      (D : F)
-      (l r : expression-set VL₁ A)
-      where
-      open Data.IndexedSet (VariantSetoid V A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+    preserves-fnoc :
+        FnocSpec D fnoc
+      → (c : Configₙ)
+      →   ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ c
+        ≈ ⟦ D ⟨ l , r ⟩ ⟧₂ (fnoc c)
+    preserves-fnoc vnoc c with c D in eq
+    ... | zero  rewrite zero→true vnoc c eq = ≈-Eq.refl
+    ... | suc _ rewrite suc→false vnoc c eq = ≈-Eq.refl
 
-      private
-        2Config = Config F Bool
-        NConfig = Config F ℕ
-
-      preserves-conf :
-          ConfSpec D confi
-        → Conf-Preserves VL₁ VL₂ l (t l) confi
-        → Conf-Preserves VL₁ VL₂ r (t r) confi
-        → (c : 2Config)
-        →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) c
-          ≡ Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩)) (confi c)
-      preserves-conf conv t-l t-r c with c D in eq
-      ... | false rewrite false→1 conv c eq = t-r c
-      ... | true  rewrite true→0  conv c eq = t-l c
-
-      preserves-fnoc :
-          FnocSpec D fnoci
-        → Fnoc-Preserves VL₁ VL₂ l (t l) fnoci
-        → Fnoc-Preserves VL₁ VL₂ r (t r) fnoci
-        → (c : NConfig)
-        →   Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩)) c
-          ≡ BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩) (fnoci c)
-      preserves-fnoc vnoc t-l t-r c with c D in eq
-      ... | zero  rewrite zero→true vnoc c eq = t-l c
-      ... | suc _ rewrite suc→false vnoc c eq = t-r c
-
-      convert-preserves :
-        ∀ (conv : ConfSpec D confi)
-        → (vnoc : FnocSpec D fnoci)
-        -- boilerplaty induction hypothesis
-        → Conf-Preserves VL₁ VL₂ l (t l) confi
-        → Fnoc-Preserves VL₁ VL₂ l (t l) fnoci
-        → Conf-Preserves VL₁ VL₂ r (t r) confi
-        → Fnoc-Preserves VL₁ VL₂ r (t r) fnoci
-        →   BinaryChoice-Semantics VL₁ (D ⟨ l , r ⟩)
-          ≋ Choice-Semantics       VL₂ (convert (D ⟨ l , r ⟩))
-      convert-preserves conv vnoc conf-l fnoc-l conf-r fnoc-r =
-            ⊆-by-index-translation confi (preserves-conf conv conf-l conf-r)
-        and ⊆-by-index-translation fnoci (preserves-fnoc vnoc fnoc-l fnoc-r)
+    convert-preserves :
+      ∀ (conv : ConfSpec D conf)
+      → (vnoc : FnocSpec D fnoc)
+      →   ⟦ D ⟨ l , r ⟩ ⟧₂
+        ≋ ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
+    convert-preserves conv vnoc =
+          ⊆-by-index-translation conf (preserves-conf conv)
+      and ⊆-by-index-translation fnoc (preserves-fnoc vnoc)

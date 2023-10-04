@@ -3,8 +3,8 @@ module Framework.V2.Constructs.Choices where
 open import Data.Bool using (Bool; if_then_else_)
 open import Level using (Level; _⊔_)
 
-module Choice₂ {ℓ₁ ℓ₂ : Level} (Q : Set ℓ₁) (A : Set ℓ₂) where
-  record Syntax : Set (ℓ₁ ⊔ ℓ₂) where
+module Choice₂ {ℓ₁ : Level} (Q : Set ℓ₁) where
+  record Syntax {ℓ₂ : Level} (A : Set ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
     constructor _⟨_,_⟩
     field
       dim : Q
@@ -14,15 +14,15 @@ module Choice₂ {ℓ₁ ℓ₂ : Level} (Q : Set ℓ₁) (A : Set ℓ₂) where
   Config : Set ℓ₁
   Config = Q → Bool
 
-  Standard-Semantics : Syntax → Config → A
+  Standard-Semantics : ∀ {ℓ₂} {A : Set ℓ₂} → Syntax A → Config → A
   Standard-Semantics (D ⟨ l , r ⟩) c = if c D then l else r
 
 open import Data.Nat using (ℕ)
 open import Data.List.NonEmpty using (List⁺)
 open import Util.List using (find-or-last)
 
-module Choiceₙ {ℓ₁ ℓ₂ : Level} (Q : Set ℓ₁) (A : Set ℓ₂) where
-  record Syntax : Set (ℓ₁ ⊔ ℓ₂) where
+module Choiceₙ {ℓ₁ : Level} (Q : Set ℓ₁) where
+  record Syntax {ℓ₂ : Level} (A : Set ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
     constructor _⟨_⟩
     field
       dim : Q
@@ -31,7 +31,7 @@ module Choiceₙ {ℓ₁ ℓ₂ : Level} (Q : Set ℓ₁) (A : Set ℓ₂) where
   Config : Set ℓ₁
   Config = Q → ℕ
 
-  Standard-Semantics : Syntax → Config → A
+  Standard-Semantics : ∀ {ℓ₂} {A : Set ℓ₂} → Syntax A → Config → A
   Standard-Semantics (D ⟨ alternatives ⟩) c = find-or-last (c D) alternatives
 
 open import Data.List using ([]; _∷_)
@@ -52,7 +52,7 @@ module VLChoice₂ where
   Syntax F E A = Choice₂.Syntax F (E A)
 
   Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F Bool (Syntax F)
-  Semantics {_} {F} {A} (E with-sem ⟦_⟧) choice c = ⟦ Choice₂.Standard-Semantics F (E A) choice c ⟧ c
+  Semantics {_} {F} {A} (E with-sem ⟦_⟧) choice c = ⟦ Choice₂.Standard-Semantics F choice c ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Bool
   Construct _ F = record
@@ -65,7 +65,7 @@ module VLChoiceₙ where
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
   Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F ℕ (Syntax F)
-  Semantics {_} {F} {A} (E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics F (E A) choice c ⟧ c
+  Semantics {_} {F} {A} (E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics F choice c ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F ℕ
   Construct _ F = record
