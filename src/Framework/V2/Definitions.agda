@@ -103,8 +103,8 @@ that configures a term `e : E A` to a variant `v : V A`
 record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   constructor _with-sem_
   field
-    expression-set : 𝔼
-    semantics      : 𝔼-Semantics V F S expression-set
+    Expression : 𝔼
+    Semantics  : 𝔼-Semantics V F S Expression
 open VariabilityLanguage public
 
 -- Semantics of constructors
@@ -112,17 +112,17 @@ open VariabilityLanguage public
 ℂ-Semantics V F S C =
   ∀ {A : 𝔸}
   → (Γ : VariabilityLanguage V F S)
-  → C (expression-set Γ) A
+  → C (Expression Γ) A
   → Config F S
   → V A
 
 record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   field
     -- how to create a constructor for a given language
-    construct : ℂ
+    Construct : ℂ
     -- how to resolve a constructor for a given language
-    semantics : ℂ-Semantics V F S construct
-open VariabilityConstruct public
+    _⊢⟦_⟧ : ℂ-Semantics V F S Construct
+  infix 21 _⊢⟦_⟧
 
 -- Syntactic Containment
 record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
@@ -147,14 +147,14 @@ _≅ₛ_ : 𝔼 → 𝔼 → Set₁
 E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
 
 -- Semantic Containment
-record _⟦∈⟧_ {V F S} (R : VariabilityConstruct V F S) (Γ : VariabilityLanguage V F S) : Set₁ where
-  private
-    E = expression-set Γ
-    C = construct R
-
+record _⟦∈⟧_ {V F S} (C : VariabilityConstruct V F S) (Γ : VariabilityLanguage V F S) : Set₁ where
+  open VariabilityConstruct C
+  private ⟦_⟧ = Semantics Γ
   field
-    make : C ∈ₛ E
-    preservation : ∀ {A : 𝔸} → (c : C E A) → semantics Γ (cons make c) ≗ semantics R Γ c
+    make : Construct ∈ₛ Expression Γ
+    preservation : ∀ {A : 𝔸}
+      → (c : Construct (Expression Γ) A)
+      → ⟦ cons make c ⟧ ≗ Γ ⊢⟦ c ⟧
 open _⟦∈⟧_ public
 
 _⟦∉⟧_ : ∀ {V F S} → VariabilityConstruct V F S → VariabilityLanguage V F S → Set₁

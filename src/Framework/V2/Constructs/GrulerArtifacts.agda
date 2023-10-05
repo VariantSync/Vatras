@@ -3,7 +3,7 @@ module Framework.V2.Constructs.GrulerArtifacts where
 open import Data.Maybe using (just; nothing)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.Definitions
+open import Framework.V2.Definitions hiding (Semantics)
 open import Framework.V2.Variants
 
 -- this is just a value
@@ -34,8 +34,8 @@ module VLLeaf where
     → Syntax ∈ₛ V
     → VariabilityConstruct V F S
   Construct _ _ _ mkLeaf = record
-    { construct = Syntax
-    ; semantics = Semantics mkLeaf
+    { Construct = Syntax
+    ; _⊢⟦_⟧ = Semantics mkLeaf
     }
 
   Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
@@ -55,8 +55,8 @@ module VLParallelComposition where
     → Syntax ∈ₛ V
     → VariabilityConstruct V F S
   Construct _ _ _ mkPC = record
-    { construct = Syntax
-    ; semantics = Semantics mkPC
+    { Construct = Syntax
+    ; _⊢⟦_⟧ = Semantics mkPC
     }
 
   ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant

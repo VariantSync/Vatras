@@ -89,14 +89,14 @@ module Choiceₙ where
       Standard-Semantics (map f (D ⟨ as ⟩)) c
     ≡⟨⟩
       find-or-last (c D) (map-list⁺ f as)
-    ≡⟨ Eq.sym (map-find-or-last f (c D) as) ⟩
+    ≡˘⟨ map-find-or-last f (c D) as ⟩
       f (find-or-last (c D) as)
     ≡⟨⟩
       f (Standard-Semantics (D ⟨ as ⟩) c)
     ∎
 
 -- Show how choices can be used as constructors in variability languages.
-open import Framework.V2.Definitions
+open import Framework.V2.Definitions hiding (Semantics)
 
 module VLChoice₂ where
   Syntax : 𝔽 → ℂ
@@ -107,8 +107,8 @@ module VLChoice₂ where
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Bool
   Construct _ F = record
-    { construct = Syntax F
-    ; semantics = Semantics
+    { Construct = Syntax F
+    ; _⊢⟦_⟧ = Semantics
     }
 
 module VLChoiceₙ where
@@ -120,6 +120,6 @@ module VLChoiceₙ where
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F ℕ
   Construct _ F = record
-    { construct = Syntax F
-    ; semantics = Semantics
+    { Construct = Syntax F
+    ; _⊢⟦_⟧ = Semantics
     }

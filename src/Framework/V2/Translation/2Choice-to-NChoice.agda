@@ -12,8 +12,8 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 import Data.IndexedSet
 
 open import Framework.V2.Constructs.Choices as Chc
-open Chc.Choice₂ using () renaming (Config to Config₂)
-open Chc.Choiceₙ using () renaming (Config to Configₙ)
+open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
+open Chc.Choiceₙ using (_⟨_⟩) renaming (Config to Configₙ)
 
 {-|
 ConfSpec and FnocSpec define the requirements we have on translated configurations
@@ -63,12 +63,8 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 
-  open Chc.Choice₂
-    using (_⟨_,_⟩)
-    renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂)
-  open Chc.Choiceₙ
-    using (_⟨_⟩)
-    renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ)
+  open Chc.Choice₂ renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂)
+  open Chc.Choiceₙ renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ)
 
   convert : 2Choice Q Carrier → NChoice Q Carrier
   convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩

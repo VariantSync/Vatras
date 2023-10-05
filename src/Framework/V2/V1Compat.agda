@@ -23,63 +23,63 @@ Complete {V} (L with-sem ⟦_⟧) = ∀ {A n}
 
 record TranslationResult {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) : Set₁ where
   field
-    expr : expression-set L₂ A
+    expr : Expression L₂ A
     conf : Config F S₁ → Config F S₂
     fnoc : Config F S₂ → Config F S₁
 open TranslationResult public
 
 Translation : ∀ {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) → Set₁
-Translation L₁ L₂ = ∀ {A : 𝔸} → expression-set L₁ A → TranslationResult L₁ L₂
+Translation L₁ L₂ = ∀ {A : 𝔸} → Expression L₁ A → TranslationResult L₁ L₂
 
 Conf-Preserves :  ∀ {V F S₁ S₂}
   → (L₁ : VariabilityLanguage V F S₁)
   → (L₂ : VariabilityLanguage V F S₂)
-  → expression-set L₁ A
-  → expression-set L₂ A
+  → Expression L₁ A
+  → Expression L₂ A
   → (Config F S₁ → Config F S₂)
   → Set
 Conf-Preserves {F = F} {S₁ = S₁} L₁ L₂ e₁ e₂ conf =
   ∀ (c₁ : Config F S₁) → ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ (conf c₁)
-  where ⟦_⟧₁ = semantics L₁
-        ⟦_⟧₂ = semantics L₂
+  where ⟦_⟧₁ = Semantics L₁
+        ⟦_⟧₂ = Semantics L₂
 
 Fnoc-Preserves :  ∀ {V F S₁ S₂}
   → (L₁ : VariabilityLanguage V F S₁)
   → (L₂ : VariabilityLanguage V F S₂)
-  → expression-set L₁ A
-  → expression-set L₂ A
+  → Expression L₁ A
+  → Expression L₂ A
   → (Config F S₂ → Config F S₁)
   → Set
 Fnoc-Preserves {F = F} {S₂ = S₂} L₁ L₂ e₁ e₂ fnoc =
   ∀ (c₂ : Config F S₂) → ⟦ e₂ ⟧₂ c₂ ≡ ⟦ e₁ ⟧₁ (fnoc c₂)
-  where ⟦_⟧₁ = semantics L₁
-        ⟦_⟧₂ = semantics L₂
+  where ⟦_⟧₁ = Semantics L₁
+        ⟦_⟧₂ = Semantics L₂
 
 _⊆ₛ-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
-  → (e : expression-set L₁ A)
+  → (e : Expression L₁ A)
   → Translation L₁ L₂
   → Set
 _⊆ₛ-via_ {L₁ = L₁} {L₂ = L₂} e₁ translate = Conf-Preserves L₁ L₂ e₁ (expr (translate e₁)) (conf (translate e₁))
 
 _⊇-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
-  → (e : expression-set L₁ A)
+  → (e : Expression L₁ A)
   → Translation L₁ L₂
   → Set
 _⊇-via_ {L₁ = L₁} {L₂ = L₂} e₁ translate = Fnoc-Preserves L₁ L₂ e₁ (expr (translate e₁)) (fnoc (translate e₁))
 
 _≚-via_ : ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂}
-  → (e : expression-set L₁ A)
+  → (e : Expression L₁ A)
   → Translation L₁ L₂
   → Set
 e ≚-via t = e ⊆ₛ-via t × e ⊇-via t
 
 _is-variant-preserving :  ∀ {V F S₁ S₂} {L₁ : VariabilityLanguage V F S₁} {L₂ : VariabilityLanguage V F S₂} → Translation L₁ L₂ → Set₁
-_is-variant-preserving {L₁ = L₁} t = ∀ {A : 𝔸} → (e₁ : expression-set L₁ A) → e₁ ≚-via t
+_is-variant-preserving {L₁ = L₁} t = ∀ {A : 𝔸} → (e₁ : Expression L₁ A) → e₁ ≚-via t
 
 -- -- any language with artifacts and choices is complete
 -- choices-make-complete : ∀ {V F S}
 --   → (VL : VariabilityLanguage V F S)
---   → (let L = expression-set VL in
+--   → (let L = Expression VL in
 --       Artifact L ∈ₛ L
 --     → Choice F L ∈ₛ L
 --     → Complete VL)

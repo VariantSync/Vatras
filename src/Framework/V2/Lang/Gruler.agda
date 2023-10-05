@@ -32,8 +32,8 @@ data Gruler : 𝔼 where
 
 GrulerVL : VariabilityLanguage GrulerVariant ℕ Bool
 GrulerVL = record
-  { expression-set = Gruler
-  ; semantics   = ⟦_⟧ᵍ
+  { Expression = Gruler
+  ; Semantics  = ⟦_⟧ᵍ
   }
 
 ⟦ GAsset A  ⟧ᵍ = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant GrulerVL A

@@ -22,8 +22,8 @@ data NADT : 𝔼 where
 ⟦_⟧-nadt : 𝔼-Semantics GrulerVariant ℕ ℕ NADT
 
 NADTVL : VariabilityLanguage GrulerVariant ℕ ℕ
-expression-set NADTVL = NADT
-semantics NADTVL   = ⟦_⟧-nadt
+Expression NADTVL = NADT
+Semantics  NADTVL = ⟦_⟧-nadt
 
 ⟦ NADTAsset A  ⟧-nadt = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant NADTVL A
 ⟦ NADTChoice C ⟧-nadt = Choice-Semantics NADTVL C
