@@ -59,9 +59,21 @@ _⊆_ {I} A B = ∀ (i : I) → A i ∈ B
 
 _≅_ : IRel IndexedSet (c ⊔ ℓ)
 A ≅ B = (A ⊆ B) × (B ⊆ A)
+
+-- Same indices point to same values.
+-- This definition is the same as _≗_ from the standard-library but generalized to an arbitrary
+-- underlying equivalence relation _≈_.
+_≐_ : ∀ {I} (A B : IndexedSet I) → Set (c ⊔ ℓ)
+_≐_ {I} A B = ∀ (i : I) → A i ≈ B i
+
+≐→≅ : ∀ {I} {A B : IndexedSet I} → A ≐ B → A ≅ B -- this acts as cong, too
+≐→≅ {J} {A} {B} A≐B =
+    (λ i → (i ,      A≐B i))
+  , (λ i → (i , sym (A≐B i)))
 ```
 
 ## Properties
+
 ```agda
 ⊆-refl : Reflexive IndexedSet _⊆_
 ⊆-refl i = i , Eq.refl
@@ -95,6 +107,91 @@ A ≅ B = (A ⊆ B) × (B ⊆ A)
   ; sym   = ≅-sym
   ; trans = ≅-trans
   }
+
+≐-refl : ∀ {I} → RB.Reflexive (_≐_ {I})
+≐-refl i = refl
+
+≐-sym : ∀ {I} → RB.Symmetric (_≐_ {I})
+≐-sym x≐y i = sym (x≐y i)
+
+≐-trans : ∀ {I} → RB.Transitive (_≐_ {I})
+≐-trans x≐y y≐z i = trans (x≐y i) (y≐z i)
+
+≐-IsEquivalence : ∀ {I} → IsEquivalence (_≐_ {I})
+≐-IsEquivalence = record
+  { refl = ≐-refl
+  ; sym = ≐-sym
+  ; trans = ≐-trans
+  }
+```
+
+## Equational Reasoning
+
+```agda
+module ⊆-Reasoning where
+  infix  3 _∎-⊆
+  infixr 2 _⊆⟨⟩_ step-⊆
+  infix  1 ⊆-begin_
+
+  ⊆-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ⊆ B → A ⊆ B
+  ⊆-begin_ A⊆B = A⊆B
+
+  _⊆⟨⟩_ : ∀ {I J} (A : IndexedSet I) {B : IndexedSet J} → A ⊆ B → A ⊆ B
+  _ ⊆⟨⟩ A⊆B = A⊆B
+
+  step-⊆ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+    → B ⊆ C
+    → A ⊆ B
+    → A ⊆ C
+  step-⊆ _ B⊆C A⊆B = ⊆-trans A⊆B B⊆C
+
+  _∎-⊆ : ∀ {I} (A : IndexedSet I) → A ⊆ A
+  _∎-⊆ _ = ⊆-refl
+
+  syntax step-⊆ A B⊆C A⊆B = A ⊆⟨ A⊆B ⟩ B⊆C
+
+module ≅-Reasoning where
+  infix  3 _∎-≅
+  infixr 2 _≅⟨⟩_ step-≅ step-≅˘ step-≐ step-≐˘
+  infix  1 ≅-begin_
+
+  ≅-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → A ≅ B
+  ≅-begin_ A⊆B = A⊆B
+
+  _≅⟨⟩_ : ∀ {I J} (A : IndexedSet I) {B : IndexedSet J} → A ≅ B → A ≅ B
+  _ ≅⟨⟩ A≅B = A≅B
+
+  step-≅ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+    → B ≅ C
+    → A ≅ B
+    → A ≅ C
+  step-≅ _ B≅C A≅B = ≅-trans A≅B B≅C
+
+  step-≅˘ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+    → B ≅ C
+    → B ≅ A
+    → A ≅ C
+  step-≅˘ A B≅C B≅A = step-≅ A B≅C (≅-sym B≅A)
+
+  step-≐ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+    → B ≅ C
+    → A ≐ B
+    → A ≅ C
+  step-≐ _ B≅C A≐B = ≅-trans (≐→≅ A≐B) B≅C
+
+  step-≐˘ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+    → B ≅ C
+    → B ≐ A
+    → A ≅ C
+  step-≐˘ A B≅C B≐A = step-≐ A B≅C (≐-sym B≐A)
+
+  _∎-≅ : ∀ {I} (A : IndexedSet I) → A ≅ A
+  _∎-≅ _ = ≅-refl
+
+  syntax step-≅ A B≅C A≅B = A ≅⟨ A≅B ⟩ B≅C
+  syntax step-≅˘ A B≅C B≅A = A ≅˘⟨ B≅A ⟩ B≅C
+  syntax step-≐ A B≅C A≐B = A ≐⟨ A≐B ⟩ B≅C
+  syntax step-≐˘ A B≅C B≐A = A ≐˘⟨ B≐A ⟩ B≅C
 ```
 
 ## Common sets and relations
