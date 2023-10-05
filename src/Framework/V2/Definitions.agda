@@ -165,3 +165,17 @@ _⟦⊆⟧_ {V} {F} {S} E₁ E₂ = ∀ (C : VariabilityConstruct V F S) → C �
 
 _⟦≅⟧_ : ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
 E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁
+
+-- Compilations
+
+import Data.IndexedSet
+record ConstructCompiler {V F S A} (VC₁ VC₂ : VariabilityConstruct V F S) : Set₁ where
+  open VariabilityConstruct VC₁ renaming (Construct to C₁; _⊢⟦_⟧ to _⊢⟦_⟧₁)
+  open VariabilityConstruct VC₂ renaming (Construct to C₂; _⊢⟦_⟧ to _⊢⟦_⟧₂)
+  open Data.IndexedSet (Eq.setoid (V A))
+
+  field
+    compile : ∀ {E} → C₁ E A → C₂ E A
+    preserves : ∀ {Γ}
+      → (c₁ : C₁ (Expression Γ) A)
+      → Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂
