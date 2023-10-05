@@ -82,7 +82,7 @@ if-idemp : ∀ {A : Set} {a : A}
 if-idemp false = refl
 if-idemp true  = refl
 
-if-cong : ∀ {A B : Set} {a b : A}
+if-cong : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂} {a b : A}
   → (c : Bool)
   → (P : A → B)
     -------------------------------------------------
