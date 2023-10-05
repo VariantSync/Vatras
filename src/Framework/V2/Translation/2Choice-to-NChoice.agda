@@ -12,41 +12,41 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 import Data.IndexedSet
 
 open import Framework.V2.Constructs.Choices as Chc
-open Chc.Choice₂ Q using () renaming (Config to Config₂)
-open Chc.Choiceₙ Q using () renaming (Config to Configₙ)
+open Chc.Choice₂ using () renaming (Config to Config₂)
+open Chc.Choiceₙ using () renaming (Config to Configₙ)
 
 {-|
 ConfSpec and FnocSpec define the requirements we have on translated configurations
 to prove preservation of the conversion from binary to n-ary choices.
 -}
-record ConfSpec (f : Q) (conf : Config₂ → Configₙ) : Set ℓ₁ where
+record ConfSpec (f : Q) (conf : Config₂ Q → Configₙ Q) : Set ℓ₁ where
   field
-    false→1 : ∀ (c : Config₂)
+    false→1 : ∀ (c : Config₂ Q)
       → c f ≡ false
       → (conf c) f ≡ 1
 
-    true→0 : ∀ (c : Config₂)
+    true→0 : ∀ (c : Config₂ Q)
       → c f ≡ true
       → (conf c) f ≡ 0
 open ConfSpec
 
-record FnocSpec (f : Q) (fnoc : Configₙ → Config₂) : Set ℓ₁ where
+record FnocSpec (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set ℓ₁ where
   field
-    suc→false : ∀ {n} (c : Configₙ)
+    suc→false : ∀ {n} (c : Configₙ Q)
       → c f ≡ suc n
       → (fnoc c) f ≡ false
 
-    zero→true : ∀ (c : Configₙ)
+    zero→true : ∀ (c : Configₙ Q)
       → c f ≡ zero
       → (fnoc c) f ≡ true
 open FnocSpec
 
-default-conf : Config₂ → Configₙ
+default-conf : Config₂ Q → Configₙ Q
 (default-conf cb) f with cb f
 ... | false = 1
 ... | true  = 0
 
-default-fnoc : Configₙ → Config₂
+default-fnoc : Configₙ Q → Config₂ Q
 (default-fnoc cn) f with cn f
 ... | zero    = true
 ... | (suc _) = false
@@ -63,19 +63,19 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 
-  open Chc.Choice₂ Q
+  open Chc.Choice₂
     using (_⟨_,_⟩)
     renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂)
-  open Chc.Choiceₙ Q
+  open Chc.Choiceₙ
     using (_⟨_⟩)
     renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ)
 
-  convert : 2Choice Carrier → NChoice Carrier
+  convert : 2Choice Q Carrier → NChoice Q Carrier
   convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩
 
   module Preservation
-    (conf : Config₂ → Configₙ)
-    (fnoc : Configₙ → Config₂)
+    (conf : Config₂ Q → Configₙ Q)
+    (fnoc : Configₙ Q → Config₂ Q)
     (D : Q)
     (l r : Carrier)
     where
@@ -83,7 +83,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
 
     preserves-conf :
         ConfSpec D conf
-      → (c : Config₂)
+      → (c : Config₂ Q)
       →   (⟦ D ⟨ l , r ⟩ ⟧₂ c)
         ≈ (⟦ convert (D ⟨ l , r ⟩) ⟧ₙ (conf c))
     preserves-conf conv c with c D in eq
@@ -92,7 +92,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
 
     preserves-fnoc :
         FnocSpec D fnoc
-      → (c : Configₙ)
+      → (c : Configₙ Q)
       →   ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ c
         ≈ ⟦ D ⟨ l , r ⟩ ⟧₂ (fnoc c)
     preserves-fnoc vnoc c with c D in eq
