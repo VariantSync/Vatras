@@ -6,10 +6,14 @@ open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
 
+-- open import Level using (suc; _⊔_)
+
 {-
 Some Atomic Data.
 We have no assumptions on that data so its just a type.
 -}
+-- 𝔸 : ∀ {ℓ} → Set (suc ℓ)
+-- 𝔸 {ℓ} = Set ℓ
 𝔸 : Set₁
 𝔸 = Set
 
@@ -17,6 +21,8 @@ We have no assumptions on that data so its just a type.
 Variant Language.
 A variant should represent atomic data in some way so its parameterized in atomic data.
 -}
+-- 𝕍 : ∀ {ℓ} → Set (suc ℓ)
+-- 𝕍 {ℓ} = 𝔸 {ℓ} → Set ℓ
 𝕍 : Set₁
 𝕍 = 𝔸 → Set
 
@@ -27,6 +33,8 @@ We have no assumptions on this kind of language (yet).
 In the future, it might be interesting to dig deeper into 𝔽 and to explore its impact on a
 language's expressiveness more deeply.
 -}
+-- 𝔽 : ∀ {ℓ} → Set (suc ℓ)
+-- 𝔽 {ℓ} = Set ℓ
 𝔽 : Set₁
 𝔽 = Set
 
@@ -40,6 +48,8 @@ annotated elements (i.e., for choices).
 Basically, this can be any kind of information as long as the semantics of
 a construct can resolve it.
 -}
+-- 𝕊 : ∀ {ℓ} → Set (suc ℓ)
+-- 𝕊 {ℓ} = Set ℓ
 𝕊 : Set₁
 𝕊 = Set
 
@@ -50,6 +60,8 @@ occur within an expression.
 Such sub-terms describe variants of atomic data (i.e., some structure on atomic elements),
 and hence expressions are parameterized in the type of this atomic data.
 -}
+-- 𝔼 : ∀ {ℓ} → Set (suc ℓ)
+-- 𝔼 {ℓ} = 𝔸 {ℓ} → Set ℓ
 𝔼 : Set₁
 𝔼 = 𝔸 → Set
 
@@ -61,6 +73,8 @@ Thus, constructs must know the overall set of expressions to include.
 Moreover, constructs might directly host some atomic data (e.g., leaf nodes) and hence
 they must know the atomic data type.
 -}
+-- ℂ : ∀ {ℓ} → Set (suc ℓ)
+-- ℂ {ℓ} = 𝔼 {ℓ} → 𝔸 {ℓ} → Set ℓ
 ℂ : Set₁
 ℂ = 𝔼 → 𝔸 → Set
 
@@ -69,7 +83,8 @@ Configurations.
 A configuration is anything that allows us to do resolve an annotation `F : 𝔽`
 to a selection `S : 𝕊`, which in turn gets resolved by language and construct semantics.
 -}
-Config : (F : 𝔽) (S : 𝕊) → Set
+-- Config : ∀ {ℓ₁ ℓ₂} → (F : 𝔽 {ℓ₁}) (S : 𝕊 {ℓ₂}) → Set (ℓ₁ ⊔ ℓ₂)
+Config : 𝔽 → 𝕊 → Set
 Config F S = F → S
 
 {-
