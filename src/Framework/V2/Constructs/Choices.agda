@@ -19,6 +19,7 @@ module Choice₂  where
   Config : ∀ {ℓ₁} (Q : Set ℓ₁) → Set ℓ₁
   Config Q = Q → Bool
 
+  -- choice-elimination
   Standard-Semantics : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₂} {Q : Set ℓ₁} → Syntax Q A → Config Q → A
   Standard-Semantics (D ⟨ l , r ⟩) c = if c D then l else r
 
@@ -28,6 +29,7 @@ module Choice₂  where
     → Syntax Q B
   map f (D ⟨ l , r ⟩) = D ⟨ f l , f r ⟩
 
+  -- rename
   map-dim : ∀ {ℓ₁ ℓ₂ ℓ₃} {Q : Set ℓ₁} {R : Set ℓ₂} {A : Set ℓ₃}
     → (Q → R)
     → Syntax Q A
@@ -64,6 +66,7 @@ module Choiceₙ where
   Config : ∀ {ℓ₁} (Q : Set ℓ₁) → Set ℓ₁
   Config Q = Q → ℕ
 
+  -- choice-elimination
   Standard-Semantics : ∀ {ℓ₁ ℓ₂} {Q : Set ℓ₁} {A : Set ℓ₂} → Syntax Q A → Config Q → A
   Standard-Semantics (D ⟨ alternatives ⟩) c = find-or-last (c D) alternatives
 
@@ -73,6 +76,7 @@ module Choiceₙ where
     → Syntax Q B
   map f (dim ⟨ alternatives ⟩) = dim ⟨ map-list⁺ f alternatives ⟩
 
+  -- rename
   map-dim : ∀ {ℓ₁ ℓ₂ ℓ₃} {Q : Set ℓ₁} {R : Set ℓ₂} {A : Set ℓ₃}
     → (Q → R)
     → Syntax Q A
