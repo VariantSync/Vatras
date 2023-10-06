@@ -31,6 +31,38 @@ open TranslationResult public
 Translation : ∀ {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) → Set₁
 Translation L₁ L₂ = ∀ {A : 𝔸} → Expression L₁ A → TranslationResult L₁ L₂
 
+open import Relation.Binary.Indexed.Heterogeneous using (IRel; IsIndexedEquivalence)
+open import Level using (0ℓ)
+
+EXPR : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊) (A : 𝔸) → VariabilityLanguage V F S → Set
+EXPR _ _ _ A L = Expression L A
+-- EXPR : ∀ {V F S} (A : 𝔸) → VariabilityLanguage V F S → Set
+-- EXPR A L = Expression L A
+
+-- _⊆ᵥ_ : ∀ {V F S A} → IRel (EXPR V F S A) 0ℓ
+_⊆ᵥ_ : ∀ {V F S} {Γ₁ : VariabilityLanguage V F S} {Γ₂ : VariabilityLanguage V F S} {A}
+  → Expression Γ₁ A
+  → Expression Γ₂ A
+  → Set
+_⊆ᵥ_ {V} {_} {_} {L₁} {L₂} {A} e₁ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
+  where ⟦_⟧₁ = Semantics L₁
+        ⟦_⟧₂ = Semantics L₂
+        open Data.IndexedSet (VariantSetoid V A) using (_⊆_)
+infix 5 _⊆ᵥ_
+
+-- _≚_ : ∀ {A : 𝔸} → IRel (Expression A) 0ℓ
+_,_⊢_≚_ : ∀ {V F₁ F₂ S₁ S₂ A}
+  → (Γ₁ : VariabilityLanguage V F₁ S₁)
+  → (Γ₂ : VariabilityLanguage V F₂ S₂)
+  → Expression Γ₁ A
+  → Expression Γ₂ A
+  → Set
+_,_⊢_≚_ {V} {_} {_} {_} {_} {A} L₁ L₂ e₁ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
+  where ⟦_⟧₁ = Semantics L₁
+        ⟦_⟧₂ = Semantics L₂
+        open Data.IndexedSet (VariantSetoid V A) using (_≅_)
+infix 5 _,_⊢_≚_
+
 Conf-Preserves :  ∀ {V F S₁ S₂}
   → (L₁ : VariabilityLanguage V F S₁)
   → (L₂ : VariabilityLanguage V F S₂)
