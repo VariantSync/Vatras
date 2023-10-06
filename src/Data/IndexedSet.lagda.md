@@ -125,6 +125,17 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
   }
 ```
 
+### Helper Functions for Proving Subset
+
+```agda
+⊆-by-index-translation : {I J : Set c} {A : IndexedSet I} {B : IndexedSet J}
+  → (t : I → J)
+  → (∀ (i : I) → A i ≈ B (t i))
+    ---------------------------
+  → A ⊆ B
+⊆-by-index-translation t t-preserves i = t i , t-preserves i
+```
+
 ## Equational Reasoning
 
 ```agda
@@ -254,17 +265,6 @@ singleton-set-is-nonempty _ = tt
 ```
 
 ## Further Properties
-
-### Helper Functions for Proving Subset
-
-```agda
-⊆-by-index-translation : {I J : Set c} {A : IndexedSet I} {B : IndexedSet J}
-  → (t : I → J)
-  → (∀ (i : I) → A i ≈ B (t i))
-    ---------------------------
-  → A ⊆ B
-⊆-by-index-translation t t-preserves i = t i , t-preserves i
-```
 
 ### Reindexing
 
