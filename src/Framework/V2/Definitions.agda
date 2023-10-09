@@ -169,13 +169,35 @@ E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁
 -- Compilations
 
 import Data.IndexedSet
-record ConstructCompiler {V F S A} (VC₁ VC₂ : VariabilityConstruct V F S) : Set₁ where
+module IVS (V : 𝕍) (A : 𝔸) = Data.IndexedSet (Eq.setoid (V A))
+
+record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Set₁ where
   open VariabilityConstruct VC₁ renaming (Construct to C₁; _⊢⟦_⟧ to _⊢⟦_⟧₁)
   open VariabilityConstruct VC₂ renaming (Construct to C₂; _⊢⟦_⟧ to _⊢⟦_⟧₂)
-  open Data.IndexedSet (Eq.setoid (V A))
 
   field
-    compile : ∀ {E} → C₁ E A → C₂ E A
-    preserves : ∀ {Γ}
+    compile : ∀ {E A} → C₁ E A → C₂ E A
+    preserves : ∀ {Γ A}
       → (c₁ : C₁ (Expression Γ) A)
-      → Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂
+      → (let open IVS V A using (_≅_) in
+         Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂)
+
+_⊕_ : ∀ {V F S} {VC₁ VC₂ VC₃ : VariabilityConstruct V F S}
+  → ConstructCompiler VC₁ VC₂
+  → ConstructCompiler VC₂ VC₃
+  → ConstructCompiler VC₁ VC₃
+_⊕_ {V} {F} {S} {VC₁} {VC₂} {VC₃} 1→2 2→3 = record
+  { compile = compile 2→3 ∘ compile 1→2
+  ; preserves = Pres.p
+  }
+  where open ConstructCompiler
+        open VariabilityConstruct VC₁ renaming (Construct to C₁; _⊢⟦_⟧ to _⊢⟦_⟧₁)
+        open VariabilityConstruct VC₃ renaming (_⊢⟦_⟧ to _⊢⟦_⟧₃)
+
+        module Pres {A : 𝔸} where
+          open IVS V A using (_≅_; ≅-trans)
+
+          p : ∀ {Γ : VariabilityLanguage V F S}
+              → (c₁ : C₁ (Expression Γ) A)
+              → Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile 2→3 (compile 1→2 c₁) ⟧₃
+          p c₁ = ≅-trans (preserves 1→2 c₁) (preserves 2→3 (compile 1→2 c₁))
