@@ -171,6 +171,18 @@ E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁
 import Data.IndexedSet
 module IVS (V : 𝕍) (A : 𝔸) = Data.IndexedSet (Eq.setoid (V A))
 
+record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F₁ S₁) (Γ₂ : VariabilityLanguage V F₂ S₂) : Set₁ where
+  private
+    L₁ = Expression Γ₁
+    L₂ = Expression Γ₂
+    ⟦_⟧₁ = Semantics Γ₁
+    ⟦_⟧₂ = Semantics Γ₂
+
+  field
+    compile : ∀ {A} → L₁ A → L₂ A
+    preserves : ∀ {A} → (let open IVS V A using (_≅_) in
+                  ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅ ⟦ compile e ⟧₂)
+
 record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Set₁ where
   open VariabilityConstruct VC₁ renaming (Construct to C₁; _⊢⟦_⟧ to _⊢⟦_⟧₁)
   open VariabilityConstruct VC₂ renaming (Construct to C₂; _⊢⟦_⟧ to _⊢⟦_⟧₂)
@@ -182,11 +194,32 @@ record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Se
       → (let open IVS V A using (_≅_) in
          Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂)
 
-_⊕_ : ∀ {V F S} {VC₁ VC₂ VC₃ : VariabilityConstruct V F S}
+_⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
+        {Γ₁ : VariabilityLanguage V F₁ S₁}
+        {Γ₂ : VariabilityLanguage V F₂ S₂}
+        {Γ₃ : VariabilityLanguage V F₃ S₃}
+      → LanguageCompiler Γ₁ Γ₂
+      → LanguageCompiler Γ₂ Γ₃
+      → LanguageCompiler Γ₁ Γ₃
+_⊕ˡ_ {V = V} {Γ₁ = Γ₁} {Γ₃ = Γ₃} L₁→L₂ L₂→L₃ = record
+  { compile = compile L₂→L₃ ∘ compile L₁→L₂
+  ; preserves = Pres.p
+  }
+  where open LanguageCompiler
+        module Pres {A : 𝔸} where
+          open IVS V A using (_≅_; ≅-trans)
+          L₁ = Expression Γ₁
+          ⟦_⟧₁ = Semantics Γ₁
+          ⟦_⟧₃ = Semantics Γ₃
+
+          p : ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅ ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
+          p e = ≅-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))
+
+_⊕ᶜ_ : ∀ {V F S} {VC₁ VC₂ VC₃ : VariabilityConstruct V F S}
   → ConstructCompiler VC₁ VC₂
   → ConstructCompiler VC₂ VC₃
   → ConstructCompiler VC₁ VC₃
-_⊕_ {V} {F} {S} {VC₁} {VC₂} {VC₃} 1→2 2→3 = record
+_⊕ᶜ_ {V} {F} {S} {VC₁} {_} {VC₃} 1→2 2→3 = record
   { compile = compile 2→3 ∘ compile 1→2
   ; preserves = Pres.p
   }
