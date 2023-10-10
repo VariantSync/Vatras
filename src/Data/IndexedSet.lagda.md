@@ -32,7 +32,7 @@ open import Data.Unit.Polymorphic using (⊤; tt)
 open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 
-open import Function using (_∘_; Congruent; Surjective) --IsSurjection)
+open import Function using (id; _∘_; Congruent; Surjective) --IsSurjection)
 
 open Setoid S
 module Eq = IsEquivalence isEquivalence
@@ -124,15 +124,90 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
   }
 ```
 
-### Helper Functions for Proving Subset
+## Indexed Sets With Index Translations
 
 ```agda
-⊆-by-index-translation : {I J : Set c} {A : IndexedSet I} {B : IndexedSet J}
-  → (t : I → J)
-  → (∀ (i : I) → A i ≈ B (t i))
-    ---------------------------
+_∈_at_ : ∀ {I} → Carrier → IndexedSet I → I → Set ℓ
+a ∈ A at i = a ≈ A i
+
+_⊆[_]_ : ∀ {I J} → IndexedSet I → (I → J) → IndexedSet J → Set (c ⊔ ℓ)
+_⊆[_]_ {I} A f B = ∀ (i : I) → A i ∈ B at f i
+
+_≅[_][_]_ : ∀ {I J} → IndexedSet I → (I → J) → (J → I) → IndexedSet J → Set (c ⊔ ℓ)
+A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
+```
+
+### Relation to Ordinary Indexed Set Operators
+
+```agda
+∈[]→∈ : ∀ {I} {A : IndexedSet I} {a : Carrier} {i : I}
+  → a ∈ A at i
+    ----------
+  → a ∈ A
+∈[]→∈ {i = i} eq = i , eq
+
+⊆[]→⊆ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J}
+  → A ⊆[ f ] B
+    -----------
   → A ⊆ B
-⊆-by-index-translation t t-preserves i = t i , t-preserves i
+⊆[]→⊆ A⊆B i = ∈[]→∈ (A⊆B i)
+
+-- verbose name
+-- TODO: eta-reducing e here makes Agda have an internal error when importing ⊆[]→⊆.
+--       We should isolate that behaviour and report it as a bug.
+syntax ⊆[]→⊆ e = ⊆-by-index-translation e
+
+≅[]→≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f   : I → J} {f⁻¹ : J → I}
+  → A ≅[ f ][ f⁻¹ ] B
+    -----------------
+  → A ≅ B
+≅[]→≅ (A⊆[f]B , B⊆[f⁻¹]A) = ⊆[]→⊆ A⊆[f]B , ⊆[]→⊆ B⊆[f⁻¹]A
+
+-- verbose name
+syntax ≅[]→≅ e = ≅-by-index-translation e
+```
+
+### Basic Properties
+
+```agda
+⊆[]-refl : ∀ {I} {A : IndexedSet I} → A ⊆[ id ] A
+⊆[]-refl = λ _ → Eq.refl
+
+⊆[]-antisym : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f   : I → J} {f⁻¹ : J → I}
+  → A ⊆[ f   ] B
+  → B ⊆[ f⁻¹ ] A
+    -----------------
+  → A ≅[ f ][ f⁻¹ ] B
+⊆[]-antisym A⊆B B⊆A = A⊆B , B⊆A
+
+⊆[]-trans :
+  ∀ {I J K} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K}
+    {f : I → J} {g : J → K}
+  → A ⊆[ f ] B
+  → B ⊆[ g ] C
+    --------------
+  → A ⊆[ g ∘ f ] C
+⊆[]-trans {f = f} A⊆B B⊆C i = Eq.trans (A⊆B i) (B⊆C (f i))
+
+≅[]-refl : ∀ {I} {A : IndexedSet I} → A ≅[ id ][ id ] A
+≅[]-refl = ⊆[]-refl , ⊆[]-refl
+
+≅[]-sym : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {f⁻¹ : J → I}
+  → A ≅[ f ][ f⁻¹ ] B
+    -----------------
+  → B ≅[ f⁻¹ ][ f ] A
+≅[]-sym (A⊆B , B⊆A) = B⊆A , A⊆B
+
+≅[]-trans :
+  ∀ {I J K} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K}
+    {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
+  → A ≅[ f ][ f⁻¹ ] B
+  → B ≅[ g ][ g⁻¹ ] C
+    ---------------------------
+  → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
+≅[]-trans {A = A} {C = C} (A⊆B , B⊆A) (B⊆C , C⊆B) =
+  ⊆[]-trans {C = C} A⊆B B⊆C ,
+  ⊆[]-trans {C = A} C⊆B B⊆A
 ```
 
 ## Equational Reasoning

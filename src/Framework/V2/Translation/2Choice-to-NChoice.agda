@@ -77,31 +77,24 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
     (D : Q)
     (l r : Carrier)
     where
-    open Data.IndexedSet S using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+    open Data.IndexedSet S using (_⊆[_]_; ≅[]→≅; _≅_)
 
     preserves-conf :
         ConfSpec D conf
-      → (c : Config₂ Q)
-      →   (⟦ D ⟨ l , r ⟩ ⟧₂ c)
-        ≈ (⟦ convert (D ⟨ l , r ⟩) ⟧ₙ (conf c))
+      → ⟦ D ⟨ l , r ⟩ ⟧₂ ⊆[ conf ] ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
     preserves-conf conv c with c D in eq
     ... | false rewrite false→1 conv c eq = ≈-Eq.refl
     ... | true  rewrite true→0  conv c eq = ≈-Eq.refl
 
     preserves-fnoc :
         FnocSpec D fnoc
-      → (c : Configₙ Q)
-      →   ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ c
-        ≈ ⟦ D ⟨ l , r ⟩ ⟧₂ (fnoc c)
+      → ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ ⊆[ fnoc ] ⟦ D ⟨ l , r ⟩ ⟧₂
     preserves-fnoc vnoc c with c D in eq
     ... | zero  rewrite zero→true vnoc c eq = ≈-Eq.refl
     ... | suc _ rewrite suc→false vnoc c eq = ≈-Eq.refl
 
     convert-preserves :
-      ∀ (conv : ConfSpec D conf)
-      → (vnoc : FnocSpec D fnoc)
-      →   ⟦ D ⟨ l , r ⟩ ⟧₂
-        ≋ ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
-    convert-preserves conv vnoc =
-          ⊆-by-index-translation conf (preserves-conf conv)
-      and ⊆-by-index-translation fnoc (preserves-fnoc vnoc)
+        ConfSpec D conf
+      → FnocSpec D fnoc
+      → ⟦ D ⟨ l , r ⟩ ⟧₂ ≅ ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
+    convert-preserves conv vnoc = ≅[]→≅ {f = conf} {f⁻¹ = fnoc} (preserves-conf conv and preserves-fnoc vnoc)

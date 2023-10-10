@@ -63,7 +63,7 @@ open import Framework.Properties.Completeness
 
 -- prove completeness via inference rules
 module Complete (A : 𝔸) where
-  open import Data.IndexedSet (VariantSetoid ∞ A) using (_≅_; ⊆-by-index-translation)
+  open import Data.IndexedSet (VariantSetoid ∞ A) using (_≅_; _⊆[_]_; ≅[]→≅)
   open import Util.AuxProofs using (clampAt)
 
   private
@@ -132,9 +132,8 @@ module Complete (A : 𝔸) where
 
   preserves-∈ :
       n ⊢ V ⟶ e
-    → (i : Fin (suc n))
-      --------------------
-    → V i ≡ ⟦ e ⟧ (conf i)
+      -----------------
+    → V ⊆[ conf ] ⟦ e ⟧
   preserves-∈ E-zero    zero = refl
   preserves-∈ (E-suc _) zero = refl
   preserves-∈ {V = V} (E-suc {n = n} {e = e} ⟶e) (suc i) =
@@ -152,9 +151,8 @@ module Complete (A : 𝔸) where
 
   preserves-∋ :
       n ⊢ V ⟶ e
-    → (c : Configuration)
-      --------------------
-    → ⟦ e ⟧ c ≡ V (fnoc c)
+      -----------------
+    → ⟦ e ⟧ ⊆[ fnoc ] V
   preserves-∋ E-zero    zero    = refl
   preserves-∋ E-zero    (suc _) = refl
   preserves-∋ (E-suc _) zero    = refl
@@ -173,11 +171,9 @@ module Complete (A : 𝔸) where
 
   preserves :
       n ⊢ V ⟶ e
-      -----------
+      ----------
     → V ≅ ⟦ e ⟧
-  preserves encoding =
-      ⊆-by-index-translation conf (preserves-∈ encoding)
-    , ⊆-by-index-translation fnoc (preserves-∋ encoding)
+  preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
 
 VariantList-is-Complete : Complete VariantListL
 VariantList-is-Complete {A} vs =

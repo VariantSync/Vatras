@@ -63,7 +63,7 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
     module LSet = Data.IndexedSet (Eq.setoid (L₁ A))
     module VSet = IVSet V A
     open LSet using () renaming (_≅_ to _≋_)
-    open VSet using (⊆-by-index-translation; _≅_; ≐→≅)
+    open VSet using (_≅_; ≐→≅)
     open VSet.≅-Reasoning
 
     -- preserves-conf :

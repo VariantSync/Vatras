@@ -24,7 +24,7 @@ compile (2ADTAsset  a) = NADTAsset a
 compile (2ADTChoice c) = NADTChoice (mapₙ compile (convert c))
 
 module Preservation where
-  open Data.IndexedSet (VariantSetoid GrulerVariant A) using (⊆-by-index-translation) renaming (_≅_ to _≋_)
+  open Data.IndexedSet (VariantSetoid GrulerVariant A) using () renaming (_≅_ to _≋_)
   -- open 2→N.Translate.Preservation 2ADTVL NADTVL compile conf' fnoc' using (preserves-conf; preserves-fnoc)
 
   -- preserves-l : ∀ (e : 2ADT A) → Conf-Preserves 2ADTVL NADTVL e (compile e) conf'
