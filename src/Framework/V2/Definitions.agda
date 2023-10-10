@@ -169,7 +169,7 @@ E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁
 -- Compilations
 
 import Data.IndexedSet
-module IVS (V : 𝕍) (A : 𝔸) = Data.IndexedSet (Eq.setoid (V A))
+module IVSet (V : 𝕍) (A : 𝔸) = Data.IndexedSet (Eq.setoid (V A))
 
 record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F₁ S₁) (Γ₂ : VariabilityLanguage V F₂ S₂) : Set₁ where
   private
@@ -180,7 +180,7 @@ record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F
 
   field
     compile : ∀ {A} → L₁ A → L₂ A
-    preserves : ∀ {A} → (let open IVS V A using (_≅_) in
+    preserves : ∀ {A} → (let open IVSet V A using (_≅_) in
                   ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅ ⟦ compile e ⟧₂)
 
 record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Set₁ where
@@ -191,7 +191,7 @@ record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Se
     compile : ∀ {E A} → C₁ E A → C₂ E A
     preserves : ∀ {Γ A}
       → (c₁ : C₁ (Expression Γ) A)
-      → (let open IVS V A using (_≅_) in
+      → (let open IVSet V A using (_≅_) in
          Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂)
 
 _⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
@@ -207,7 +207,7 @@ _⊕ˡ_ {V = V} {Γ₁ = Γ₁} {Γ₃ = Γ₃} L₁→L₂ L₂→L₃ = record
   }
   where open LanguageCompiler
         module Pres {A : 𝔸} where
-          open IVS V A using (_≅_; ≅-trans)
+          open IVSet V A using (_≅_; ≅-trans)
           L₁ = Expression Γ₁
           ⟦_⟧₁ = Semantics Γ₁
           ⟦_⟧₃ = Semantics Γ₃
@@ -228,7 +228,7 @@ _⊕ᶜ_ {V} {F} {S} {VC₁} {_} {VC₃} 1→2 2→3 = record
         open VariabilityConstruct VC₃ renaming (_⊢⟦_⟧ to _⊢⟦_⟧₃)
 
         module Pres {A : 𝔸} where
-          open IVS V A using (_≅_; ≅-trans)
+          open IVSet V A using (_≅_; ≅-trans)
 
           p : ∀ {Γ : VariabilityLanguage V F S}
               → (c₁ : C₁ (Expression Γ) A)

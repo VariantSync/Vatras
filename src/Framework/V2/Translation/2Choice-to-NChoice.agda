@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Framework.V2.Translation.2Choice-to-NChoice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true)
@@ -66,6 +67,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Chc.Choice₂ renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂)
   open Chc.Choiceₙ renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ)
 
+  -- TODO: Can we abstract this as some sort of "external" compiler with custom syntax and semantics, which can be composed with ConstructCompilers?
   convert : 2Choice Q Carrier → NChoice Q Carrier
   convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩
 

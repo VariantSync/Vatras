@@ -48,7 +48,6 @@ IndexedSet : Index → Set c
 IndexedSet I = I → Carrier
 
 -- an element is within a subset, if there is an index pointing at that element
--- Later we could employ setoids to parameterize our set formulation in the equivalence relation instead of always relying on propositional equality.
 _∈_ : ∀ {I} → Carrier → IndexedSet I → Set (c ⊔ ℓ)
 a ∈ A = ∃[ i ] (a ≈ A i)
 
@@ -140,7 +139,7 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 
 ```agda
 module ⊆-Reasoning where
-  infix  3 _∎-⊆
+  infix  3 _⊆-∎
   infixr 2 _⊆⟨⟩_ step-⊆
   infix  1 ⊆-begin_
 
@@ -156,14 +155,14 @@ module ⊆-Reasoning where
     → A ⊆ C
   step-⊆ _ B⊆C A⊆B = ⊆-trans A⊆B B⊆C
 
-  _∎-⊆ : ∀ {I} (A : IndexedSet I) → A ⊆ A
-  _∎-⊆ _ = ⊆-refl
+  _⊆-∎ : ∀ {I} (A : IndexedSet I) → A ⊆ A
+  _⊆-∎ _ = ⊆-refl
 
   syntax step-⊆ A B⊆C A⊆B = A ⊆⟨ A⊆B ⟩ B⊆C
 
 module ≅-Reasoning where
-  infix  3 _∎-≅
-  infixr 2 _≅⟨⟩_ step-≅ step-≅˘ step-≐ step-≐˘
+  infix  3 _≅-∎
+  infixr 2 _≅⟨⟩_ step-≅ step-≅˘ step-≐ step-≐˘ --step-≅-by-index-translation
   infix  1 ≅-begin_
 
   ≅-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → A ≅ B
@@ -177,6 +176,15 @@ module ≅-Reasoning where
     → A ≅ B
     → A ≅ C
   step-≅ _ B≅C A≅B = ≅-trans A≅B B≅C
+
+  -- step-≅-by-index-translation : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  --   → (i→j : I → J)
+  --   → (j→i : J → I)
+  --   → (∀ (i : I) → A i ≈ B (i→j i))
+  --   → (∀ (j : J) → B j ≈ A (j→i j))
+  --   → B ≅ C
+  --   → A ≅ C
+  -- step-≅-by-index-translation _ i→j j→i ti tj B≅C = ≅-trans (⊆-by-index-translation i→j ti , ⊆-by-index-translation j→i tj) B≅C
 
   step-≅˘ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
     → B ≅ C
@@ -196,13 +204,14 @@ module ≅-Reasoning where
     → A ≅ C
   step-≐˘ A B≅C B≐A = step-≐ A B≅C (≐-sym B≐A)
 
-  _∎-≅ : ∀ {I} (A : IndexedSet I) → A ≅ A
-  _∎-≅ _ = ≅-refl
+  _≅-∎ : ∀ {I} (A : IndexedSet I) → A ≅ A
+  _≅-∎ _ = ≅-refl
 
   syntax step-≅ A B≅C A≅B = A ≅⟨ A≅B ⟩ B≅C
   syntax step-≅˘ A B≅C B≅A = A ≅˘⟨ B≅A ⟩ B≅C
-  syntax step-≐ A B≅C A≐B = A ≐⟨ A≐B ⟩ B≅C
-  syntax step-≐˘ A B≅C B≐A = A ≐˘⟨ B≐A ⟩ B≅C
+  syntax step-≐ A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
+  syntax step-≐˘ A B≅C (λ i → Bi≈Ai) = A ≐˘[ i ]⟨ Bi≈Ai ⟩ B≅C
+  -- syntax step-≅-by-index-translation A i→j j→i ti tj B≅C = A ≅[ i→j ]⟨ ti ⟩[ j→i ]⟨ tj ⟩ B≅C
 ```
 
 ## Common sets and relations

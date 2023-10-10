@@ -60,11 +60,11 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
 
     open import Framework.V2.V1Compat using (Conf-Preserves; Fnoc-Preserves; _,_⊢_≚_)
 
-    module IVSet = Data.IndexedSet (VariantSetoid V A)
-    module ILSet = Data.IndexedSet (Eq.setoid (L₁ A))
-    open ILSet using () renaming (_≅_ to _≋_)
-    open IVSet using (⊆-by-index-translation; _≅_; ≐→≅)
-    open IVSet.≅-Reasoning
+    module LSet = Data.IndexedSet (Eq.setoid (L₁ A))
+    module VSet = IVSet V A
+    open LSet using () renaming (_≅_ to _≋_)
+    open VSet using (⊆-by-index-translation; _≅_; ≐→≅)
+    open VSet.≅-Reasoning
 
     -- preserves-conf :
     --     ConfSpec D conf
@@ -91,61 +91,63 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
       -- → Fnoc-Preserves Γ₁ Γ₂ l (t l) fnoc
       -- → Conf-Preserves Γ₁ Γ₂ r (t r) conf
       -- → Fnoc-Preserves Γ₁ Γ₂ r (t r) fnoc
-      →   Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂
-        ≅ Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ
-    proj₁ (convert-vl-preserves conv vnoc t-is-nice) = ⊆-by-index-translation conf left
+      →   (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂) ≅ (Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ)
+    -- proj₁ (convert-vl-preserves conv vnoc t-is-nice) = ⊆-by-index-translation conf left
+    --   where open Eq.≡-Reasoning
+    --         left : (c : Config₂ F)
+    --           →   (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂) c
+    --             ≡ (Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ) (conf c)
+    --         left c =
+    --           begin
+    --             (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂) c
+    --           ≡⟨⟩
+    --             ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c
+    --           ≡⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) (preserves-conf conv c) ⟩
+    --             ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c) ⟧₁ c
+    --           ≡⟨ {!!} ⟩ -- t validity here
+    --             ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c)
+    --           ≡˘⟨ Eq.cong (λ x → ⟦ x ⟧₂ (conf c)) (Choiceₙ.map-preserves t (convert (D ⟨ l , r ⟩)) (conf c)) ⟩
+    --             ⟦ Choiceₙ.Standard-Semantics (mapₙ t (convert (D ⟨ l , r ⟩))) (conf c) ⟧₂ (conf c)
+    --           ≡⟨⟩
+    --             (Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ) (conf c)
+    --           ∎
+    -- proj₂ (convert-vl-preserves conv vnoc t-is-nice) = ⊆-by-index-translation fnoc {!!}
+    convert-vl-preserves conv vnoc t-is-nice =
+      ≅-begin
+        Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂
+      ≅⟨⟩
+        (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c)
+      -- ≐[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) (preserves-conf conv c) ⟩
+        -- (λ c → ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c) ⟧₁ c)
+      -- ≅⟨ {!!} ⟩
+        -- (λ c → ⟦ t (Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c) ⟧₂ (conf c))
+      -- ≅⟨ {!!} and ⊆-by-index-translation fnoc {!!} ⟩ -- eliminate t because it preserves by assumption
+        -- (λ c → ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) c ⟧₁ c)
+      -- ≐[ c ]⟨ t-is-nice (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟩
+        -- (λ c → ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c))
+      ≅⟨ {!!} ⟩
+        (λ c → ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) c) ⟧₂ c)
+      ≅⟨⟩
+        (λ c → ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) c) ⟧₂ c)
+      ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (Choiceₙ.map-preserves t (convert (D ⟨ l , r ⟩)) c) ⟩
+        (λ c → ⟦ Choiceₙ.Standard-Semantics (mapₙ t (convert (D ⟨ l , r ⟩))) c ⟧₂ c)
+      ≅⟨⟩
+        Γ₂ ⊢⟦ (mapₙ t ∘ convert) (D ⟨ l , r ⟩) ⟧ₙ
+      ≅⟨⟩
+        Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ
+      ≅-∎
       where open Eq.≡-Reasoning
+
+            chc-eq : Choice₂.Standard-Semantics (D ⟨ l , r ⟩) ≋ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩))
+            chc-eq = convert-preserves conv vnoc
             left : (c : Config₂ F)
-              →   (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂) c
-                ≡ (Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ) (conf c)
+                 →   ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c
+                   ≡ ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c)
             left c =
               begin
-                (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂) c
-              ≡⟨⟩
                 ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c
-              ≡⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) (preserves-conf conv c) ⟩
+              ≡⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) {!proj₁ chc-eq c !} ⟩
                 ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c) ⟧₁ c
-              ≡⟨ {!!} ⟩ -- t validity here
+              ≡⟨ {!!} ⟩
                 ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c)
-              ≡˘⟨ Eq.cong (λ x → ⟦ x ⟧₂ (conf c)) (Choiceₙ.map-preserves t (convert (D ⟨ l , r ⟩)) (conf c)) ⟩
-                ⟦ Choiceₙ.Standard-Semantics (mapₙ t (convert (D ⟨ l , r ⟩))) (conf c) ⟧₂ (conf c)
-              ≡⟨⟩
-                (Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ) (conf c)
               ∎
-    proj₂ (convert-vl-preserves conv vnoc t-is-nice) = ⊆-by-index-translation fnoc {!!}
-      -- ≅-begin
-      --   Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₂
-      -- ≅⟨⟩
-      --   (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c)
-      -- ≐[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) (preserves-conf conv c) ⟩
-      --   (λ c → ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c) ⟧₁ c)
-      -- -- ≅⟨ {!!} ⟩
-      --   -- (λ c → ⟦ t (Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c) ⟧₂ (conf c))
-      -- -- ≅⟨ {!!} and ⊆-by-index-translation fnoc {!!} ⟩ -- eliminate t because it preserves by assumption
-      --   -- (λ c → ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) c ⟧₁ c)
-      -- ≐[ c ]⟨ t-is-nice (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟩
-      --   (λ c → ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c))
-      -- ≅⟨ ? ⟩
-      --   (λ c → ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ c)
-      -- ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (Choiceₙ.map-preserves t (convert (D ⟨ l , r ⟩)) c) ⟩
-      --   (λ c → ⟦ Choiceₙ.Standard-Semantics (mapₙ t (convert (D ⟨ l , r ⟩))) c ⟧₂ c)
-      -- ≅⟨⟩
-      --   Γ₂ ⊢⟦ (mapₙ t ∘ convert) (D ⟨ l , r ⟩)) ⟧ₙ
-      -- ≅⟨⟩
-      --   Γ₂ ⊢⟦ convert-vl (D ⟨ l , r ⟩) ⟧ₙ
-      -- ∎-≅
-      -- where open Eq.≡-Reasoning
-
-      --       chc-eq : Choice₂.Standard-Semantics (D ⟨ l , r ⟩) ≋ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩))
-      --       chc-eq = convert-preserves conv vnoc
-      --       left : (c : Config₂ F)
-      --            →   ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c
-      --              ≡ ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c)
-      --       left c =
-      --         begin
-      --           ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c
-      --         ≡⟨ Eq.cong (λ x → ⟦ x ⟧₁ c) {!proj₁ chc-eq c !} ⟩
-      --           ⟦ Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c) ⟧₁ c
-      --         ≡⟨ {!!} ⟩
-      --           ⟦ t (Choiceₙ.Standard-Semantics (convert (D ⟨ l , r ⟩)) (conf c)) ⟧₂ (conf c)
-      --         ∎
