@@ -292,6 +292,58 @@ module ≅-Reasoning where
   syntax step-≐ A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
   syntax step-≐˘ A B≅C (λ i → Bi≈Ai) = A ≐˘[ i ]⟨ Bi≈Ai ⟩ B≅C
   -- syntax step-≅-by-index-translation A i→j j→i ti tj B≅C = A ≅[ i→j ]⟨ ti ⟩[ j→i ]⟨ tj ⟩ B≅C
+
+module ≅[]-Reasoning where
+  infix  3 _≅[]-∎
+  infixr 2 _≅[]⟨⟩_ step-≅[] step-≅[]˘ step-≐[] step-≐[]˘
+  infix  1 ≅[]-begin_
+
+  ≅[]-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {g : J → I}
+    → A ≅[ f ][ g ] B
+    → A ≅[ f ][ g ] B
+  ≅[]-begin_ A≅B = A≅B
+
+  _≅[]⟨⟩_ : ∀ {I J} {f : I → J} {g : J → I} (A : IndexedSet I) {B : IndexedSet J}
+    → A ≅[ f ][ g ] B
+    → A ≅[ f ][ g ] B
+  _ ≅[]⟨⟩ A≅B = A≅B
+
+  step-≅[] : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+               {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
+    → B ≅[ g ][ g⁻¹ ] C
+    → A ≅[ f ][ f⁻¹ ] B
+    → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
+  step-≅[] _ B≅C A≅B = ≅[]-trans A≅B B≅C
+
+  step-≅[]˘ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+                {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
+    → B ≅[ g ][ g⁻¹ ] C
+    → B ≅[ f⁻¹ ][ f ] A
+    → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
+  step-≅[]˘ A B≅C B≅A = step-≅[] A B≅C (≅[]-sym B≅A)
+
+  step-≐[] : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+              {g : I → J} {ginv : J → I}
+    → B ≅[ g ][ ginv ] C
+    → A ≐ B
+    → A ≅[ g ][ ginv ] C
+  step-≐[] _ B≅C A≐B = ≅[]-trans (≐→≅[] A≐B) B≅C
+
+  step-≐[]˘ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+                {g : I → J} {ginv : J → I}
+    → B ≅[ g ][ ginv ] C
+    → B ≐ A
+    → A ≅[ g ][ ginv ] C
+  step-≐[]˘ A B≅C B≐A = step-≐[] A B≅C (≐-sym B≐A)
+
+  _≅[]-∎ : ∀ {I} (A : IndexedSet I)
+    → A ≅[ id ][ id ] A
+  _≅[]-∎ _ = ≅[]-refl
+
+  syntax step-≅[] A B≅C A≅B = A ≅[]⟨ A≅B ⟩ B≅C
+  syntax step-≅[]˘ A B≅C B≅A = A ≅[]˘⟨ B≅A ⟩ B≅C
+  syntax step-≐[] A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
+  syntax step-≐[]˘ A B≅C (λ i → Bi≈Ai) = A ≐˘[ i ]⟨ Bi≈Ai ⟩ B≅C
 ```
 
 ## Common sets and relations
