@@ -246,7 +246,7 @@ module ≅-Reasoning where
   infix  1 ≅-begin_
 
   ≅-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → A ≅ B
-  ≅-begin_ A⊆B = A⊆B
+  ≅-begin_ A≅B = A≅B
 
   _≅⟨⟩_ : ∀ {I J} (A : IndexedSet I) {B : IndexedSet J} → A ≅ B → A ≅ B
   _ ≅⟨⟩ A≅B = A≅B
