@@ -165,6 +165,11 @@ syntax ⊆[]→⊆ e = ⊆-by-index-translation e
 
 -- verbose name
 syntax ≅[]→≅ e = ≅-by-index-translation e
+
+≐→≅[] : ∀ {I} {A B : IndexedSet I} → A ≐ B → A ≅[ id ][ id ] B
+≐→≅[] {J} {A} {B} A≐B =
+    (λ i →      A≐B i )
+  , (λ i → sym (A≐B i))
 ```
 
 ### Basic Properties
