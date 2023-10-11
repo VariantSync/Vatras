@@ -105,7 +105,8 @@ open import Framework.V2.Definitions hiding (Semantics; Config)
 
 module VLChoice₂ where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
-  open LanguageCompiler using (compile; preserves)
+  open Choice₂.Syntax using (dim)
+  open LanguageCompiler using (compile; preserves; conf; fnoc)
 
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
@@ -119,46 +120,72 @@ module VLChoice₂ where
     ; _⊢⟦_⟧ = Semantics
     }
 
-  compile-language : ∀ {V F A} {Γ₁ Γ₂ : VariabilityLanguage V F Bool}
-    → (t : LanguageCompiler Γ₁ Γ₂)
-    → Syntax F (Expression Γ₁) A
-    → Syntax F (Expression Γ₂) A
-  compile-language t = map (compile t)
+  -- TODO: - Make the analogous definitions for Choice₂
+  --       - Collect this compilation and the preservation proof in a suitable Compiler record.
+  compile-language : ∀ {F A} {L₁ L₂ : 𝔼}
+    → (L₁ A → L₂ A)
+    → Syntax F L₁ A
+    → Syntax F L₂ A
+  compile-language = map
 
   compile-language-preserves : ∀ {V F} {Γ₁ Γ₂ : VariabilityLanguage V F Bool} {A}
-    → (let open IVSet V A using (_≅_) in
+    → (let open IVSet V A using (_≅_; _≅[_][_]_) in
          ∀ (t : LanguageCompiler Γ₁ Γ₂)
          → (chc : Syntax F (Expression Γ₁) A)
-         → Semantics Γ₁ chc ≅ Semantics Γ₂ (compile-language t chc))
-  compile-language-preserves {V} {F} {Γ₁} {Γ₂} {A} t (dim ⟨ l , r ⟩) =
-    ≅-begin
+         -- TODO: Find proper names and extract these requirements to a proper predicate.
+         → (∀ c → conf t c (dim chc) ≡ c (dim chc))
+         → (∀ c → fnoc t c (dim chc) ≡ c (dim chc))
+         → Semantics Γ₁ chc ≅[ conf t ][ fnoc t ] Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc))
+  compile-language-preserves {V} {F} {Γ₁} {Γ₂} {A} t (D ⟨ l , r ⟩) conf-stable fnoc-stable =
+    ≅[]-begin
       Semantics Γ₁ chc
-    ≅⟨⟩
+    ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
-    ≅⟨ (λ i → let j , eq = proj₁ (foo i) i in
-              j , {!!}) ,
-       {!!}
-       ⟩
+    -- First compiler proof composition:
+    -- Here, we currently cannot do a simply apply preserves t (which is essentially what we have to do)
+    -- but instead we alos have to perform a case analysis because of the nested, twice usage of the index c.
+    -- (see proof of t-⊆ for more details)
+    ≅[]⟨ t-⊆ , t-⊇ ⟩
       (λ c → ⟦ compile t (Standard-Semantics chc c) ⟧₂ c)
+    -- Second compiler proof composition:
+    -- We can just apply map-preserves directly.
+    -- We need a cong to apply the proof to the first compiler phase instead of the second.
     ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc c) ⟩
       (λ c → ⟦ Standard-Semantics (map (compile t) chc) c ⟧₂ c)
-    ≅⟨⟩
-      (λ c → ⟦ Standard-Semantics (compile-language t chc) c ⟧₂ c)
-    ≅⟨⟩
-      Semantics Γ₂ (compile-language t chc)
-    ≅-∎
-    where module Defs = Framework.V2.Definitions
-          module I = IVSet V A
-          open I using (_≅_)
-          open I.≅-Reasoning
+    ≅[]⟨⟩
+      (λ c → ⟦ Standard-Semantics (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc) c ⟧₂ c)
+    ≅[]⟨⟩
+      Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc)
+    ≅[]-∎
+    where module I = IVSet V A
+          open I using (_≅[_][_]_; _⊆[_]_)
+          open I.≅[]-Reasoning
+          open LanguageCompiler using (conf; fnoc)
+          open import Data.Bool using (true; false)
           open import Data.Product using (_,_; proj₁; proj₂)
 
-          chc = dim ⟨ l , r ⟩
-          ⟦_⟧₁ = Defs.Semantics Γ₁
-          ⟦_⟧₂ = Defs.Semantics Γ₂
+          chc = D ⟨ l , r ⟩
+          ⟦_⟧₁ = VariabilityLanguage.Semantics Γ₁
+          ⟦_⟧₂ = VariabilityLanguage.Semantics Γ₂
 
-          foo : ∀ (c : Config F) → ⟦ Standard-Semantics chc c ⟧₁ ≅ ⟦ compile t (Standard-Semantics chc c) ⟧₂
-          foo c = preserves t (Standard-Semantics chc c)
+          -- We have to do a manual case distinction here and we cannot chain the proof of preserves without that case distinction.
+          -- The problem is that the indices c and z in the indexed sets below are used as an index (second usage, which is fine)
+          -- but also within the indexed element (first usage in Standard-Semantics) which is bad.
+          -- Such an inner indexing is not supported by indexed sets (yet) so we must eliminate that inner reference,
+          -- which we do by case analysis.
+          t-⊆ : (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
+                ⊆[ conf t ]
+                (λ z → ⟦ compile t (Standard-Semantics chc z) ⟧₂ z)
+          t-⊆ c rewrite conf-stable c with c D
+          ... | false = proj₁ (preserves t r) c
+          ... | true  = proj₁ (preserves t l) c
+
+          t-⊇ : (λ z → ⟦ compile t (Standard-Semantics chc z) ⟧₂ z)
+                ⊆[ fnoc t ]
+                (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
+          t-⊇ c rewrite fnoc-stable c with c D
+          ... | false = proj₂ (preserves t r) c
+          ... | true  = proj₂ (preserves t l) c
 
 module VLChoiceₙ where
   Syntax : 𝔽 → ℂ

@@ -180,8 +180,10 @@ record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F
 
   field
     compile : ∀ {A} → L₁ A → L₂ A
-    preserves : ∀ {A} → (let open IVSet V A using (_≅_) in
-                  ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅ ⟦ compile e ⟧₂)
+    conf : Config F₁ S₁ → Config F₂ S₂
+    fnoc : Config F₂ S₂ → Config F₁ S₁
+    preserves : ∀ {A} → (let open IVSet V A using (_≅[_][_]_) in
+                  ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ conf ][ fnoc ] ⟦ compile e ⟧₂)
 
 record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Set₁ where
   open VariabilityConstruct VC₁ renaming (Construct to C₁; _⊢⟦_⟧ to _⊢⟦_⟧₁)
@@ -192,7 +194,7 @@ record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Se
     preserves : ∀ {Γ A}
       → (c₁ : C₁ (Expression Γ) A)
       → (let open IVSet V A using (_≅_) in
-         Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂)
+         Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂) -- also add conf and fnoc here?
 
 _⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
         {Γ₁ : VariabilityLanguage V F₁ S₁}
@@ -201,19 +203,29 @@ _⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
       → LanguageCompiler Γ₁ Γ₂
       → LanguageCompiler Γ₂ Γ₃
       → LanguageCompiler Γ₁ Γ₃
-_⊕ˡ_ {V = V} {Γ₁ = Γ₁} {Γ₃ = Γ₃} L₁→L₂ L₂→L₃ = record
+_⊕ˡ_ {V} {F₁} {F₂} {F₃} {S₁} {S₂} {S₃} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
   { compile = compile L₂→L₃ ∘ compile L₁→L₂
-  ; preserves = Pres.p
+  ; conf = conf'
+  ; fnoc = fnoc'
+  ; preserves = p
   }
   where open LanguageCompiler
-        module Pres {A : 𝔸} where
-          open IVSet V A using (_≅_; ≅-trans)
-          L₁ = Expression Γ₁
-          ⟦_⟧₁ = Semantics Γ₁
-          ⟦_⟧₃ = Semantics Γ₃
+        L₁ = Expression Γ₁
+        ⟦_⟧₁ = Semantics Γ₁
+        ⟦_⟧₃ = Semantics Γ₃
 
-          p : ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅ ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
-          p e = ≅-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))
+        conf' : Config F₁ S₁ → Config F₃ S₃
+        conf' = conf L₂→L₃ ∘ conf L₁→L₂
+
+        fnoc' : Config F₃ S₃ → Config F₁ S₁
+        fnoc' = fnoc L₁→L₂ ∘ fnoc L₂→L₃
+
+        module _ {A : 𝔸} where
+          open IVSet V A using (_≅[_][_]_; ≅[]-trans)
+
+          -- this pattern is very similar of ⊆[]-trans
+          p : ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ conf' ][ fnoc' ] ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
+          p e = ≅[]-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))
 
 _⊕ᶜ_ : ∀ {V F S} {VC₁ VC₂ VC₃ : VariabilityConstruct V F S}
   → ConstructCompiler VC₁ VC₂
