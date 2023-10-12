@@ -197,6 +197,25 @@ record ConstructCompiler {V F S} (VC₁ VC₂ : VariabilityConstruct V F S) : Se
       → (let open IVSet V A using (_≅_) in
          Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile c₁ ⟧₂) -- also add conf and fnoc here?
 
+{-|
+Compiles constructs over languages.
+This means that an expression in a language Γ₁ of which we know that it has a specific
+syntactic construct VC at the top is compiled to Γ₂ retaining the very same construct at the top.
+-}
+record ConstructCongruenceCompiler {V F S} (VC : VariabilityConstruct V F S) : Set₁ where
+  open VariabilityConstruct VC
+  open LanguageCompiler using (conf; fnoc) renaming (compile to compile-lang)
+  field
+    compile : ∀ {A} {L₁ L₂ : 𝔼}
+      → (L₁ A → L₂ A)
+      → Construct L₁ A
+      → Construct L₂ A
+    preserves : ∀ {Γ₁ Γ₂ : VariabilityLanguage V F S} {A} → let open IVSet V A using (_≅[_][_]_) in
+      ∀ (t : LanguageCompiler Γ₁ Γ₂)
+      → (c : Construct (Expression Γ₁) A)
+      -- → requirements on configurations
+      → Γ₁ ⊢⟦ c ⟧ ≅[ conf t ][ fnoc t ] Γ₂ ⊢⟦ compile (compile-lang t) c ⟧
+
 _⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
         {Γ₁ : VariabilityLanguage V F₁ S₁}
         {Γ₂ : VariabilityLanguage V F₂ S₂}
