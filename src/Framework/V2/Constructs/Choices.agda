@@ -112,6 +112,13 @@ module VLChoice₂ where
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
 
+  -- TODO: This definition entails that binary choices can be used in only boolean languages and nothing else.
+  --       This is a reasonable and probably very useful restriction when reasoning about configuring choices.
+  --       However, it disallows any intermediate compilation formats, such as a language without binary choices
+  --       but at which top there is still a binary choice left to eliminate.
+  --       To loosen this constraint, we could ask for any suitable config here but require that we can configure
+  --       our choice (i.e., lookup its dimension) in some way in that other configuration format.
+  --       Maybe, we have this kind of cross-lookup already formalized by means of conf and fnoc?
   Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F Bool (Syntax F)
   Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) choice c = ⟦ Standard-Semantics choice c ⟧ c
 
@@ -133,15 +140,26 @@ module VLChoice₂ where
 
   -- TODO: The requirement that also Γ₂ also has to map to Bool makes this proof kind of useless
   --       because we can not translate anything to non-boolean annotations now.
-  compile-language-preserves : ∀ {V F} {Γ₁ Γ₂ : VariabilityLanguage V F Bool} {A}
   -- compile-language-preserves : ∀ {V F S} {Γ₁ : VariabilityLanguage V F Bool} {Γ₂ : VariabilityLanguage V F S} {A}
-    → (let open IVSet V A using (_≅_; _≅[_][_]_) in
-         ∀ (t : LanguageCompiler Γ₁ Γ₂)
-         → (chc : Syntax F (Expression Γ₁) A)
-         -- TODO: Find proper names and extract these requirements to a proper predicate.
-         → Stable (conf t)
-         → Stable (fnoc t)
-         → Semantics Γ₁ chc ≅[ conf t ][ fnoc t ] Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc))
+  --   → let open IVSet V A using (_≅_; _≅[_][_]_) in
+  --   ∀ (t : LanguageCompiler Γ₁ Γ₂)
+  --   → (chc : Syntax F (Expression Γ₁) A)
+  --   -- TODO: Find proper names and extract these requirements to a proper predicate.
+  --   -- → Stable (conf t)
+  --   -- → Stable (fnoc t)
+  --   → Semantics Γ₁ chc
+  --       ≅[ conf t ][ fnoc t ]
+  --     Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc)
+  compile-language-preserves : ∀ {V F} {Γ₁ Γ₂ : VariabilityLanguage V F Bool} {A}
+    → let open IVSet V A using (_≅_; _≅[_][_]_) in
+    ∀ (t : LanguageCompiler Γ₁ Γ₂)
+    → (chc : Syntax F (Expression Γ₁) A)
+    -- TODO: Find proper names and extract these requirements to a proper predicate.
+    → Stable (conf t)
+    → Stable (fnoc t)
+    → Semantics Γ₁ chc
+        ≅[ conf t ][ fnoc t ]
+      Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc)
   compile-language-preserves {V} {F} {Γ₁} {Γ₂} {A} t (D ⟨ l , r ⟩) conf-stable fnoc-stable =
     ≅[]-begin
       Semantics Γ₁ chc
