@@ -101,24 +101,22 @@ module Choiceₙ where
     ∎
 
 -- Show how choices can be used as constructors in variability languages.
-open import Framework.V2.Definitions hiding (Semantics; Config)
+open import Framework.V2.Definitions as Defs hiding (Semantics; Config)
 
 module VLChoice₂ where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choice₂.Syntax using (dim)
   open LanguageCompiler using (compile; preserves; conf; fnoc)
+  open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
 
   Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F Bool (Syntax F)
-  Semantics {_} {F} {A} (E with-sem ⟦_⟧) choice c = ⟦ Standard-Semantics choice c ⟧ c
+  Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) choice c = ⟦ Standard-Semantics choice c ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Bool
-  Construct _ F = record
-    { Construct = Syntax F
-    ; _⊢⟦_⟧ = Semantics
-    }
+  Construct _ F = con Syntax F with-sem Semantics
 
   -- TODO: - Make the analogous definitions for Choice₂
   --       - Collect this compilation and the preservation proof in a suitable Compiler record.
@@ -128,13 +126,21 @@ module VLChoice₂ where
     → Syntax F L₂ A
   compile-language = map
 
+  Stable : ∀ {F S}
+    → (Defs.Config F S → Defs.Config F S)
+    → Set
+  Stable f = ∀ c → f c ≗ c
+
+  -- TODO: The requirement that also Γ₂ also has to map to Bool makes this proof kind of useless
+  --       because we can not translate anything to non-boolean annotations now.
   compile-language-preserves : ∀ {V F} {Γ₁ Γ₂ : VariabilityLanguage V F Bool} {A}
+  -- compile-language-preserves : ∀ {V F S} {Γ₁ : VariabilityLanguage V F Bool} {Γ₂ : VariabilityLanguage V F S} {A}
     → (let open IVSet V A using (_≅_; _≅[_][_]_) in
          ∀ (t : LanguageCompiler Γ₁ Γ₂)
          → (chc : Syntax F (Expression Γ₁) A)
          -- TODO: Find proper names and extract these requirements to a proper predicate.
-         → (∀ c → conf t c (dim chc) ≡ c (dim chc))
-         → (∀ c → fnoc t c (dim chc) ≡ c (dim chc))
+         → Stable (conf t)
+         → Stable (fnoc t)
          → Semantics Γ₁ chc ≅[ conf t ][ fnoc t ] Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc))
   compile-language-preserves {V} {F} {Γ₁} {Γ₂} {A} t (D ⟨ l , r ⟩) conf-stable fnoc-stable =
     ≅[]-begin
@@ -176,14 +182,14 @@ module VLChoice₂ where
           t-⊆ : (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
                 ⊆[ conf t ]
                 (λ z → ⟦ compile t (Standard-Semantics chc z) ⟧₂ z)
-          t-⊆ c rewrite conf-stable c with c D
+          t-⊆ c rewrite conf-stable c D with c D
           ... | false = proj₁ (preserves t r) c
           ... | true  = proj₁ (preserves t l) c
 
           t-⊇ : (λ z → ⟦ compile t (Standard-Semantics chc z) ⟧₂ z)
                 ⊆[ fnoc t ]
                 (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
-          t-⊇ c rewrite fnoc-stable c with c D
+          t-⊇ c rewrite fnoc-stable c D with c D
           ... | false = proj₂ (preserves t r) c
           ... | true  = proj₂ (preserves t l) c
 
@@ -192,7 +198,7 @@ module VLChoiceₙ where
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
   Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F ℕ (Syntax F)
-  Semantics {_} {F} {A} (E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice c ⟧ c
+  Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice c ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F ℕ
   Construct _ F = record

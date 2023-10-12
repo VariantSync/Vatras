@@ -101,7 +101,7 @@ that configures a term `e : E A` to a variant `v : V A`
 
 -- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
 record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
-  constructor _with-sem_
+  constructor syn_with-sem_
   field
     Expression : 𝔼
     Semantics  : 𝔼-Semantics V F S Expression
@@ -117,6 +117,7 @@ open VariabilityLanguage public
   → V A
 
 record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+  constructor con_with-sem_
   field
     -- how to create a constructor for a given language
     Construct : ℂ
