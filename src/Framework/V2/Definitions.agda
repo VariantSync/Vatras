@@ -112,9 +112,10 @@ open VariabilityLanguage public
 -- Semantics of constructors
 ℂ-Semantics : 𝔽 → 𝕊 → ℂ → Set₁
 ℂ-Semantics F S C =
-  ∀ {V : 𝕍} {Fγ : 𝔽} {Sγ : 𝕊} {A : 𝔸}
-  → (Γ : VariabilityLanguage V Fγ Sγ) -- The underlying language
+  ∀ {Fγ : 𝔽} {Sγ : 𝕊}
   → (Config Fγ Sγ → Config F S) -- a function that lets us apply language configurations to constructs
+  → {V : 𝕍} {A : 𝔸}
+  → (Γ : VariabilityLanguage V Fγ Sγ) -- The underlying language
   → C F (Expression Γ) A -- the construct to compile
   → Config Fγ Sγ -- a configuration for underlying subexpressions
   → V A
@@ -126,6 +127,7 @@ record VariabilityConstruct (F : 𝔽) (S : 𝕊) : Set₁ where
     Construct : ℂ
     -- how to resolve a constructor for a given language
     construct-semantics : ℂ-Semantics F S Construct
+  _⊢⟦_⟧ = construct-semantics id
 
 -- Syntactic Containment
 record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
@@ -157,7 +159,7 @@ record _⟦∈⟧_ {V F S} (C : VariabilityConstruct F S) (Γ : VariabilityLangu
     make : Construct ∈ₛ Expression Γ
     preservation : ∀ {A : 𝔸}
       → (c : Construct F (Expression Γ) A)
-      → ⟦ cons make c ⟧ ≗ construct-semantics Γ id c
+      → ⟦ cons make c ⟧ ≗ construct-semantics id Γ c
 open _⟦∈⟧_ public
 
 _⟦∉⟧_ : ∀ {V F S} → VariabilityConstruct F S → VariabilityLanguage V F S → Set₁

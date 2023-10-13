@@ -101,6 +101,7 @@ module Choiceₙ where
     ∎
 
 -- Show how choices can be used as constructors in variability languages.
+open import Framework.V2.Variants
 open import Framework.V2.Definitions as Defs hiding (Semantics; Config)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)
@@ -116,23 +117,23 @@ module VLChoice₂ where
   Syntax F E A = Choice₂.Syntax F (E A)
 
   Semantics : ∀ (F : 𝔽) → ℂ-Semantics F Bool Syntax
-  Semantics _ (syn _ with-sem ⟦_⟧) fnoc chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
+  Semantics _ fnoc (syn _ with-sem ⟦_⟧) chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
 
   Construct : ∀ (F : 𝔽) → VariabilityConstruct F Bool
   Construct F = con Syntax with-sem Semantics F
 
   -- TODO: Make the analogous definitions for Choice₂
   map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Bool} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
-    → let open Comp.IVSet V A using (_≅_; _≅[_][_]_) in
+    → let open IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
     → (chc : Syntax F₁ (Expression Γ₁) A)
     → Stable (config-compiler t)
-    → Semantics F₁ Γ₁ id chc
+    → Semantics F₁ id Γ₁ chc
         ≅[ conf t ][ fnoc t ]
-      Semantics F₁ Γ₂ (fnoc t) (map (compile t) chc)
+      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
   map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
     ≅[]-begin
-      Semantics F₁ Γ₁ id chc
+      Semantics F₁ id Γ₁ chc
     ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
     -- First compiler proof composition:
@@ -145,9 +146,9 @@ module VLChoice₂ where
     ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
       (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
     ≅[]⟨⟩
-      Semantics F₁ Γ₂ (fnoc t) (map (compile t) chc)
+      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
     ≅[]-∎
-    where module I = Comp.IVSet V A
+    where module I = IVSet V A
           open I using (_≅[_][_]_; _⊆[_]_)
           open I.≅[]-Reasoning
 
@@ -191,7 +192,7 @@ module VLChoiceₙ where
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
   Semantics : ∀ {F : 𝔽} → ℂ-Semantics F ℕ Syntax
-  Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) fnoc choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
+  Semantics {_} {F} {A} fnoc (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
 
   Construct : ∀ (F : 𝔽) → VariabilityConstruct F ℕ
   Construct _ = record

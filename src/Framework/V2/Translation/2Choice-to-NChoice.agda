@@ -93,6 +93,8 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
     ... | zero  rewrite zero→true vnoc c eq = ≈-Eq.refl
     ... | suc _ rewrite suc→false vnoc c eq = ≈-Eq.refl
 
+    -- TODO: This theorem requires D, l, and r to be known but we can use any choice in fact.
+    --       => Generalize.
     convert-preserves :
         ConfSpec D conf
       → FnocSpec D fnoc
