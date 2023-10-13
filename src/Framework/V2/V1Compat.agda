@@ -14,7 +14,7 @@ private
     A : 𝔸
 
 Complete : ∀ {V F S} → VariabilityLanguage V F S → Set₁
-Complete {V} (L with-sem ⟦_⟧) = ∀ {A n}
+Complete {V} (syn L with-sem ⟦_⟧) = ∀ {A n}
   → (vs : VMap V A n)
     ----------------------------------
   → Σ[ e ∈ L A ]

@@ -11,20 +11,18 @@ open import Framework.V2.Definitions using (𝕍; 𝔸)
 
 import Data.IndexedSet
 
-private
-  variable
-    A : 𝔸
-
 data GrulerVariant : 𝕍 where
-  asset : (a : A) → GrulerVariant A
-  _∥_   : (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
+  asset : ∀ {A : 𝔸} (a : A) → GrulerVariant A
+  _∥_   : ∀ {A : 𝔸} (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
 
 VariantSetoid : 𝕍 → 𝔸 → Setoid 0ℓ 0ℓ
 VariantSetoid V A = Eq.setoid (V A)
 
+module IVSet (V : 𝕍) (A : 𝔸) = Data.IndexedSet (VariantSetoid V A)
+
 IndexedVMap : 𝕍 → 𝔸 → Set → Set
 IndexedVMap V A I = IndexedSet I
-  where open Data.IndexedSet (VariantSetoid V A) using (IndexedSet)
+  where open IVSet V A using (IndexedSet)
 
 {-|
 Variant maps constitute the semantic domain of variability languages.

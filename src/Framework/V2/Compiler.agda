@@ -1,12 +1,10 @@
 module Framework.V2.Compiler where
 
+open import Framework.V2.Variants
 open import Framework.V2.Definitions
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Data.Product using (_×_)
 open import Function using (id; _∘_)
-import Data.IndexedSet
-
-module IVSet (V : 𝕍) (A : 𝔸) = Data.IndexedSet (Eq.setoid (V A))
 
 ConfigTranslation : ∀ (F₁ : 𝔽) (S₁ : 𝕊) (F₂ : 𝔽) (S₂ : 𝕊) → Set
 ConfigTranslation F₁ S₁ F₂ S₂ = Config F₁ S₁ → Config F₂ S₂
@@ -60,17 +58,18 @@ record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F
 --        To preserve semantics, most of the time, additional requirements on the
 --        config translations are required which are currently not part of the
 --        preservation theorem here. Maybe we have to add these constraints as type parameters here?
-record ConstructCompiler {F S} (VC₁ VC₂ : VariabilityConstruct F S) : Set₁ where
+record ConstructCompiler {F₁ S₁ F₂ S₂} (VC₁ : VariabilityConstruct F₁ S₁) (VC₂ : VariabilityConstruct F₂ S₂) : Set₁ where
   open VariabilityConstruct VC₁ renaming (Construct to C₁; construct-semantics to sem₁)
   open VariabilityConstruct VC₂ renaming (Construct to C₂; construct-semantics to sem₂)
 
   field
-    -- TODO: F and S might change. Example: Binary to Nary choices.
-    compile : ∀ {E A} → C₁ F E A → C₂ F E A
-    preserves : ∀ {V} {Γ : VariabilityLanguage V F S} {A}
-      → (c₁ : C₁ F (Expression Γ) A)
+    compile : ∀ {E A} → C₁ F₁ E A → C₂ F₂ E A
+    config-compiler : ConfigCompiler F₁ S₁ F₂ S₂
+    stable : Stable config-compiler
+    preserves : ∀ {V} {Γ : VariabilityLanguage V F₁ S₁} {A}
+      → (c : C₁ F₁ (Expression Γ) A)
       → let open IVSet V A using (_≅_) in
-        sem₁ Γ id c₁ ≅ sem₂ Γ id (compile c₁) -- maybe add conf and fnoc here?
+        sem₁ Γ id c ≅ sem₂ Γ (to config-compiler) (compile c)
 
 {-|
 Compiles languages below construcst.
@@ -94,6 +93,36 @@ record ConstructFunctor {F S} (VC : VariabilityConstruct F S) : Set₁ where
       → construct-semantics Γ₁ id c
           ≅[ conf t ][ fnoc t ]
         construct-semantics Γ₂ (fnoc t) (map (compile t) c)
+
+_⊕ᶜᶜ_ : ∀ {F₁ F₂ F₃} {S₁ S₂ S₃}
+  → ConfigCompiler F₁ S₁ F₂ S₂
+  → ConfigCompiler F₂ S₂ F₃ S₃
+  → ConfigCompiler F₁ S₁ F₃ S₃
+1→2 ⊕ᶜᶜ 2→3 = record
+  { to   = to   2→3 ∘ to   1→2
+  ; from = from 1→2 ∘ from 2→3
+  }
+
+⊕ᶜᶜ-stable :
+  ∀ {F₁ F₂ F₃} {S₁ S₂ S₃}
+    (1→2 : ConfigCompiler F₁ S₁ F₂ S₂) (2→3 : ConfigCompiler F₂ S₂ F₃ S₃)
+  → Stable 1→2
+  → Stable 2→3
+    --------------------
+  → Stable (1→2 ⊕ᶜᶜ 2→3)
+⊕ᶜᶜ-stable 1→2 2→3 s1 s2 c₁ =
+  let open Eq.≡-Reasoning in
+  begin
+    from 1→2 (from 2→3 (to 2→3 (to 1→2 c₁)))
+  ≡⟨⟩
+    from 1→2 ((from 2→3 ∘ to 2→3) (to 1→2 c₁))
+  ≡⟨ Eq.cong (from 1→2) (s2 (to 1→2 c₁)) ⟩
+    from 1→2 (id (to 1→2 c₁))
+  ≡⟨⟩
+    from 1→2 (to 1→2 c₁)
+  ≡⟨ s1 c₁ ⟩
+    id c₁
+  ∎
 
 _⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
         {Γ₁ : VariabilityLanguage V F₁ S₁}
@@ -125,22 +154,31 @@ _⊕ˡ_ {V} {F₁} {F₂} {F₃} {S₁} {S₂} {S₃} {Γ₁} {Γ₂} {Γ₃} L�
           p : ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ conf' ][ fnoc' ] ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
           p e = ≅[]-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))
 
--- _⊕ᶜ_ : ∀ {V F S} {VC₁ VC₂ VC₃ : VariabilityConstruct V F S}
---   → ConstructCompiler VC₁ VC₂
---   → ConstructCompiler VC₂ VC₃
---   → ConstructCompiler VC₁ VC₃
--- _⊕ᶜ_ {V} {F} {S} {VC₁} {_} {VC₃} 1→2 2→3 = record
---   { compile = compile 2→3 ∘ compile 1→2
---   ; preserves = Pres.p
---   }
---   where open ConstructCompiler
---         open VariabilityConstruct VC₁ renaming (Construct to C₁; _⊢⟦_⟧ to _⊢⟦_⟧₁)
---         open VariabilityConstruct VC₃ renaming (_⊢⟦_⟧ to _⊢⟦_⟧₃)
+_⊕ᶜ_ : ∀ {F S} {VC₁ VC₂ VC₃ : VariabilityConstruct F S}
+  → ConstructCompiler VC₁ VC₂
+  → ConstructCompiler VC₂ VC₃
+  → ConstructCompiler VC₁ VC₃
+_⊕ᶜ_ {F} {S} {VC₁} {_} {VC₃} 1→2 2→3 = record
+  { compile = compile 2→3 ∘ compile 1→2
+  ; config-compiler = cc
+  ; stable = stb
+  ; preserves = Pres.p
+  }
+  where open ConstructCompiler
+        open VariabilityConstruct VC₁ renaming (Construct to C₁; construct-semantics to sem₁)
+        open VariabilityConstruct VC₃ renaming (construct-semantics to sem₃)
 
---         module Pres {A : 𝔸} where
---           open IVSet V A using (_≅_; ≅-trans)
+        cc : ConfigCompiler F S F S
+        cc = config-compiler 1→2 ⊕ᶜᶜ config-compiler 2→3
 
---           p : ∀ {Γ : VariabilityLanguage V F S}
---               → (c₁ : C₁ F (Expression Γ) A)
---               → Γ ⊢⟦ c₁ ⟧₁ ≅ Γ ⊢⟦ compile 2→3 (compile 1→2 c₁) ⟧₃
---           p c₁ = ≅-trans (preserves 1→2 c₁) (preserves 2→3 (compile 1→2 c₁))
+        stb : Stable cc
+        stb = ⊕ᶜᶜ-stable (config-compiler 1→2) (config-compiler 2→3) (stable 1→2) (stable 2→3)
+
+        module Pres {V : 𝕍} {A : 𝔸} where
+          open IVSet V A using (_≅_; ≅-trans)
+
+          p : ∀ {Γ : VariabilityLanguage V F S}
+              → (c : C₁ F (Expression Γ) A)
+              → sem₁ Γ id c ≅ sem₃ Γ (to cc) (compile 2→3 (compile 1→2 c))
+          p c = ≅-trans (preserves 1→2 c) {!preserves 2→3 (compile 1→2 c)!} --
+          -- p c₁ = ≅-trans (preserves 1→2 c₁) (preserves 2→3 (compile 1→2 c₁))
