@@ -77,7 +77,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
     (D : Q)
     (l r : Carrier)
     where
-    open Data.IndexedSet S using (_⊆[_]_; ≅[]→≅; _≅_)
+    open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
         ConfSpec D conf
@@ -96,5 +96,5 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
     convert-preserves :
         ConfSpec D conf
       → FnocSpec D fnoc
-      → ⟦ D ⟨ l , r ⟩ ⟧₂ ≅ ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
-    convert-preserves conv vnoc = ≅[]→≅ {f = conf} {f⁻¹ = fnoc} (preserves-conf conv and preserves-fnoc vnoc)
+      → ⟦ D ⟨ l , r ⟩ ⟧₂ ≅[ conf ][ fnoc ] ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
+    convert-preserves conv vnoc = preserves-conf conv and preserves-fnoc vnoc

@@ -102,124 +102,99 @@ module Choiceₙ where
 
 -- Show how choices can be used as constructors in variability languages.
 open import Framework.V2.Definitions as Defs hiding (Semantics; Config)
+open import Data.Product using (_,_; proj₁; proj₂)
+open import Function using (id)
 
 module VLChoice₂ where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choice₂.Syntax using (dim)
-  open LanguageCompiler using (compile; preserves; conf; fnoc)
-  open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 
-  Syntax : 𝔽 → ℂ
+  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
+  open LanguageCompiler
+
+  Syntax : ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
 
-  -- TODO: This definition entails that binary choices can be used in only boolean languages and nothing else.
-  --       This is a reasonable and probably very useful restriction when reasoning about configuring choices.
-  --       However, it disallows any intermediate compilation formats, such as a language without binary choices
-  --       but at which top there is still a binary choice left to eliminate.
-  --       To loosen this constraint, we could ask for any suitable config here but require that we can configure
-  --       our choice (i.e., lookup its dimension) in some way in that other configuration format.
-  --       Maybe, we have this kind of cross-lookup already formalized by means of conf and fnoc?
-  Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F Bool (Syntax F)
-  Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) choice c = ⟦ Standard-Semantics choice c ⟧ c
+  Semantics : ∀ (F : 𝔽) → ℂ-Semantics F Bool Syntax
+  Semantics _ (syn _ with-sem ⟦_⟧) fnoc chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Bool
-  Construct _ F = con Syntax F with-sem Semantics
+  Construct : ∀ (F : 𝔽) → VariabilityConstruct F Bool
+  Construct F = con Syntax with-sem Semantics F
 
-  -- TODO: - Make the analogous definitions for Choice₂
-  --       - Collect this compilation and the preservation proof in a suitable Compiler record.
-  compile-language : ∀ {F A} {L₁ L₂ : 𝔼}
-    → (L₁ A → L₂ A)
-    → Syntax F L₁ A
-    → Syntax F L₂ A
-  compile-language = map
-
-  Stable : ∀ {F S}
-    → (Defs.Config F S → Defs.Config F S)
-    → Set
-  Stable f = ∀ c → f c ≗ c
-
-  -- TODO: The requirement that also Γ₂ also has to map to Bool makes this proof kind of useless
-  --       because we can not translate anything to non-boolean annotations now.
-  -- compile-language-preserves : ∀ {V F S} {Γ₁ : VariabilityLanguage V F Bool} {Γ₂ : VariabilityLanguage V F S} {A}
-  --   → let open IVSet V A using (_≅_; _≅[_][_]_) in
-  --   ∀ (t : LanguageCompiler Γ₁ Γ₂)
-  --   → (chc : Syntax F (Expression Γ₁) A)
-  --   -- TODO: Find proper names and extract these requirements to a proper predicate.
-  --   -- → Stable (conf t)
-  --   -- → Stable (fnoc t)
-  --   → Semantics Γ₁ chc
-  --       ≅[ conf t ][ fnoc t ]
-  --     Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc)
-  compile-language-preserves : ∀ {V F} {Γ₁ Γ₂ : VariabilityLanguage V F Bool} {A}
-    → let open IVSet V A using (_≅_; _≅[_][_]_) in
+  -- TODO: Make the analogous definitions for Choice₂
+  map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Bool} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
+    → let open Comp.IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
-    → (chc : Syntax F (Expression Γ₁) A)
-    -- TODO: Find proper names and extract these requirements to a proper predicate.
-    → Stable (conf t)
-    → Stable (fnoc t)
-    → Semantics Γ₁ chc
+    → (chc : Syntax F₁ (Expression Γ₁) A)
+    → Stable (config-compiler t)
+    → Semantics F₁ Γ₁ id chc
         ≅[ conf t ][ fnoc t ]
-      Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc)
-  compile-language-preserves {V} {F} {Γ₁} {Γ₂} {A} t (D ⟨ l , r ⟩) conf-stable fnoc-stable =
+      Semantics F₁ Γ₂ (fnoc t) (map (compile t) chc)
+  map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
     ≅[]-begin
-      Semantics Γ₁ chc
+      Semantics F₁ Γ₁ id chc
     ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
     -- First compiler proof composition:
-    -- Here, we currently cannot do a simply apply preserves t (which is essentially what we have to do)
-    -- but instead we alos have to perform a case analysis because of the nested, twice usage of the index c.
-    -- (see proof of t-⊆ for more details)
+    -- We apply the hypotheses that t preserves semantics and that its configuration compiler is stable.
     ≅[]⟨ t-⊆ , t-⊇ ⟩
-      (λ c → ⟦ compile t (Standard-Semantics chc c) ⟧₂ c)
+      (λ c → ⟦ compile t (Standard-Semantics chc (fnoc t c)) ⟧₂ c)
     -- Second compiler proof composition:
     -- We can just apply map-preserves directly.
     -- We need a cong to apply the proof to the first compiler phase instead of the second.
-    ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc c) ⟩
-      (λ c → ⟦ Standard-Semantics (map (compile t) chc) c ⟧₂ c)
+    ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
+      (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
     ≅[]⟨⟩
-      (λ c → ⟦ Standard-Semantics (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc) c ⟧₂ c)
-    ≅[]⟨⟩
-      Semantics Γ₂ (compile-language {F} {A} {Expression Γ₁} {Expression Γ₂} (compile t) chc)
+      Semantics F₁ Γ₂ (fnoc t) (map (compile t) chc)
     ≅[]-∎
-    where module I = IVSet V A
+    where module I = Comp.IVSet V A
           open I using (_≅[_][_]_; _⊆[_]_)
           open I.≅[]-Reasoning
-          open LanguageCompiler using (conf; fnoc)
-          open import Data.Bool using (true; false)
-          open import Data.Product using (_,_; proj₁; proj₂)
 
-          chc = D ⟨ l , r ⟩
           ⟦_⟧₁ = VariabilityLanguage.Semantics Γ₁
           ⟦_⟧₂ = VariabilityLanguage.Semantics Γ₂
 
-          -- We have to do a manual case distinction here and we cannot chain the proof of preserves without that case distinction.
-          -- The problem is that the indices c and z in the indexed sets below are used as an index (second usage, which is fine)
-          -- but also within the indexed element (first usage in Standard-Semantics) which is bad.
-          -- Such an inner indexing is not supported by indexed sets (yet) so we must eliminate that inner reference,
-          -- which we do by case analysis.
           t-⊆ : (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
                 ⊆[ conf t ]
-                (λ z → ⟦ compile t (Standard-Semantics chc z) ⟧₂ z)
-          t-⊆ c rewrite conf-stable c D with c D
-          ... | false = proj₁ (preserves t r) c
-          ... | true  = proj₁ (preserves t l) c
+                (λ f → ⟦ compile t (Standard-Semantics chc (fnoc t f)) ⟧₂ f)
+          t-⊆ i =
+            begin
+              ⟦ Standard-Semantics chc i ⟧₁ i
+            ≡⟨ proj₁ (preserves t (Standard-Semantics chc i)) i ⟩
+              ⟦ compile t (Standard-Semantics chc i) ⟧₂ (conf t i)
+            ≡˘⟨ Eq.cong (λ eq → ⟦ compile t (Standard-Semantics chc eq) ⟧₂ (conf t i)) (stable i) ⟩
+              ⟦ compile t (Standard-Semantics chc (fnoc t (conf t i))) ⟧₂ (conf t i)
+            ≡⟨⟩
+              (λ f → ⟦ compile t (Standard-Semantics chc (fnoc t f)) ⟧₂ f) (conf t i)
+            ∎
 
-          t-⊇ : (λ z → ⟦ compile t (Standard-Semantics chc z) ⟧₂ z)
+          t-⊇ : (λ f → ⟦ compile t (Standard-Semantics chc (fnoc t f)) ⟧₂ f)
                 ⊆[ fnoc t ]
                 (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
-          t-⊇ c rewrite fnoc-stable c D with c D
-          ... | false = proj₂ (preserves t r) c
-          ... | true  = proj₂ (preserves t l) c
+          t-⊇ i =
+            begin
+              ⟦ compile t (Standard-Semantics chc (fnoc t i)) ⟧₂ i
+            ≡⟨ proj₂ (preserves t (Standard-Semantics chc (fnoc t i))) i ⟩
+              ⟦ Standard-Semantics chc (fnoc t i) ⟧₁ (fnoc t i)
+            ≡⟨⟩
+              (λ c → ⟦ Standard-Semantics chc c ⟧₁ c) (fnoc t i)
+            ∎
+
+  cong-compiler : ∀ F → ConstructFunctor (Construct F)
+  cong-compiler _ = record
+    { map = map
+    ; preserves = map-compile-preserves
+    }
 
 module VLChoiceₙ where
-  Syntax : 𝔽 → ℂ
+  Syntax : ℂ
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
-  Semantics : ∀ {V : 𝕍} {F : 𝔽} → ℂ-Semantics V F ℕ (Syntax F)
-  Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice c ⟧ c
+  Semantics : ∀ {F : 𝔽} → ℂ-Semantics F ℕ Syntax
+  Semantics {_} {F} {A} (syn E with-sem ⟦_⟧) fnoc choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F ℕ
-  Construct _ F = record
-    { Construct = Syntax F
-    ; _⊢⟦_⟧ = Semantics
+  Construct : ∀ (F : 𝔽) → VariabilityConstruct F ℕ
+  Construct _ = record
+    { Construct = Syntax
+    ; construct-semantics = Semantics
     }
