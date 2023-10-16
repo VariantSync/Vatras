@@ -72,7 +72,7 @@ record ConstructCompiler {F₁ S₁ F₂ S₂} (VC₁ : VariabilityConstruct F�
         sem₁ id Γ c ≅ sem₂ (to config-compiler) Γ (compile c)
 
 {-|
-Compiles languages below construcst.
+Compiles languages below constructs.
 This means that an expression in a language Γ₁ of which we know that it has a specific
 syntactic construct VC at the top is compiled to Γ₂ retaining the very same construct at the top.
 -}
