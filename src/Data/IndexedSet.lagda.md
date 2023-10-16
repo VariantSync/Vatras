@@ -66,7 +66,7 @@ _≐_ : ∀ {I} (A B : IndexedSet I) → Set (c ⊔ ℓ)
 _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 
 ≐→≅ : ∀ {I} {A B : IndexedSet I} → A ≐ B → A ≅ B -- this acts as cong, too
-≐→≅ {J} {A} {B} A≐B =
+≐→≅ A≐B =
     (λ i → (i ,      A≐B i))
   , (λ i → (i , sym (A≐B i)))
 ```
