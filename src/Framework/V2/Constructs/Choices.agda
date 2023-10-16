@@ -122,7 +122,6 @@ module VLChoice₂ where
   Construct : ∀ (F : 𝔽) → VariabilityConstruct F Bool
   Construct F = con Syntax with-sem Semantics F
 
-  -- TODO: Make the analogous definitions for Choice₂
   map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Bool} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
     → let open IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
@@ -188,14 +187,84 @@ module VLChoice₂ where
     }
 
 module VLChoiceₙ where
+  open Choiceₙ using (_⟨_⟩; Config; Standard-Semantics; map; map-preserves)
+  open Choiceₙ.Syntax using (dim)
+
+  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
+  open LanguageCompiler
+
   Syntax : ℂ
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
-  Semantics : ∀ {F : 𝔽} → ℂ-Semantics F ℕ Syntax
-  Semantics {_} {F} {A} fnoc (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
+  Semantics : ∀ (F : 𝔽) → ℂ-Semantics F ℕ Syntax
+  Semantics _ fnoc (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
 
   Construct : ∀ (F : 𝔽) → VariabilityConstruct F ℕ
-  Construct _ = record
+  Construct F = record
     { Construct = Syntax
-    ; construct-semantics = Semantics
+    ; construct-semantics = Semantics F
     }
+
+  -- Interestingly, this proof is entirely copy and paste from VLChoice₂.map-compile-preserves.
+  -- Only minor adjustments to adapt the theorem had to be made.
+  -- Is there something useful to extract to a common definition here?
+  -- This proof is oblivious of at least
+  --   - the implementation of map, we only need the preservation theorem
+  --   - the Standard-Semantics, we only need the preservation theorem of t, and that the config-compiler is stable.
+  map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ ℕ} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
+    → let open IVSet V A using (_≅_; _≅[_][_]_) in
+    ∀ (t : LanguageCompiler Γ₁ Γ₂)
+    → (chc : Syntax F₁ (Expression Γ₁) A)
+    → Stable (config-compiler t)
+    → Semantics F₁ id Γ₁ chc
+        ≅[ conf t ][ fnoc t ]
+      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
+  map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
+    ≅[]-begin
+      Semantics F₁ id Γ₁ chc
+    ≅[]⟨⟩
+      (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
+    -- First compiler proof composition:
+    -- We apply the hypotheses that t preserves semantics and that its configuration compiler is stable.
+    ≅[]⟨ t-⊆ , t-⊇ ⟩
+      (λ c → ⟦ compile t (Standard-Semantics chc (fnoc t c)) ⟧₂ c)
+    -- Second compiler proof composition:
+    -- We can just apply map-preserves directly.
+    -- We need a cong to apply the proof to the first compiler phase instead of the second.
+    ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
+      (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
+    ≅[]⟨⟩
+      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
+    ≅[]-∎
+    where module I = IVSet V A
+          open I using (_≅[_][_]_; _⊆[_]_)
+          open I.≅[]-Reasoning
+
+          ⟦_⟧₁ = VariabilityLanguage.Semantics Γ₁
+          ⟦_⟧₂ = VariabilityLanguage.Semantics Γ₂
+
+          t-⊆ : (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
+                ⊆[ conf t ]
+                (λ f → ⟦ compile t (Standard-Semantics chc (fnoc t f)) ⟧₂ f)
+          t-⊆ i =
+            begin
+              ⟦ Standard-Semantics chc i ⟧₁ i
+            ≡⟨ proj₁ (preserves t (Standard-Semantics chc i)) i ⟩
+              ⟦ compile t (Standard-Semantics chc i) ⟧₂ (conf t i)
+            ≡˘⟨ Eq.cong (λ eq → ⟦ compile t (Standard-Semantics chc eq) ⟧₂ (conf t i)) (stable i) ⟩
+              ⟦ compile t (Standard-Semantics chc (fnoc t (conf t i))) ⟧₂ (conf t i)
+            ≡⟨⟩
+              (λ f → ⟦ compile t (Standard-Semantics chc (fnoc t f)) ⟧₂ f) (conf t i)
+            ∎
+
+          t-⊇ : (λ f → ⟦ compile t (Standard-Semantics chc (fnoc t f)) ⟧₂ f)
+                ⊆[ fnoc t ]
+                (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
+          t-⊇ i =
+            begin
+              ⟦ compile t (Standard-Semantics chc (fnoc t i)) ⟧₂ i
+            ≡⟨ proj₂ (preserves t (Standard-Semantics chc (fnoc t i))) i ⟩
+              ⟦ Standard-Semantics chc (fnoc t i) ⟧₁ (fnoc t i)
+            ≡⟨⟩
+              (λ c → ⟦ Standard-Semantics chc c ⟧₁ c) (fnoc t i)
+            ∎
