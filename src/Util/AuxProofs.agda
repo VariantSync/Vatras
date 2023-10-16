@@ -75,7 +75,7 @@ clampAt (suc n) (suc c) = suc (clampAt n c)
 
 ----- Properties of if_then_else
 
-if-idemp : ∀ {A : Set} {a : A}
+if-idemp : ∀ {ℓ} {A : Set ℓ} {a : A}
   → (c : Bool)
     ------------------------
   → (if c then a else a) ≡ a
