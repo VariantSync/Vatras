@@ -268,3 +268,9 @@ module VLChoiceₙ where
             ≡⟨⟩
               (λ c → ⟦ Standard-Semantics chc c ⟧₁ c) (fnoc t i)
             ∎
+
+  cong-compiler : ∀ F → ConstructFunctor (Construct F)
+  cong-compiler _ = record
+    { map = map
+    ; preserves = map-compile-preserves
+    }

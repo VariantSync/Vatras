@@ -12,15 +12,23 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 import Data.IndexedSet
 
+open import Framework.V2.Definitions using (𝔽)
+open import Framework.V2.Compiler using (ConstructCompiler)
 open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Config to Configₙ)
+open Chc.VLChoice₂ using () renaming (Construct to C₂)
+open Chc.VLChoiceₙ using () renaming (Construct to Cₙ)
 
 {-|
-ConfSpec and FnocSpec define the requirements we have on translated configurations
+ConfContract and FnocContract define the requirements we have on translated configurations
 to prove preservation of the conversion from binary to n-ary choices.
+
+The requirement for translating binary to n-ary configurations is
+that there exist two natural numbers that we can associate with the boolean values true and false.
+To simplify things, we fix these two numbers to be 0 for true, and 1 for false.
 -}
-record ConfSpec (f : Q) (conf : Config₂ Q → Configₙ Q) : Set ℓ₁ where
+record ConfContract (f : Q) (conf : Config₂ Q → Configₙ Q) : Set ℓ₁ where
   field
     false→1 : ∀ (c : Config₂ Q)
       → c f ≡ false
@@ -29,9 +37,18 @@ record ConfSpec (f : Q) (conf : Config₂ Q → Configₙ Q) : Set ℓ₁ where
     true→0 : ∀ (c : Config₂ Q)
       → c f ≡ true
       → (conf c) f ≡ 0
-open ConfSpec
+open ConfContract
 
-record FnocSpec (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set ℓ₁ where
+{-|
+ConfContract and FnocContract define the requirements we have on translated configurations
+to prove preservation of the conversion from binary to n-ary choices.
+
+The requirement for translating n-ary to binary configurations is
+that we can associate each natural numbers with the boolean values true and false,
+such that the association is inverse to ConfContract.
+Hence, we associate 0 with true and all other numbers with false.
+-}
+record FnocContract (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set ℓ₁ where
   field
     suc→false : ∀ {n} (c : Configₙ Q)
       → c f ≡ suc n
@@ -40,7 +57,7 @@ record FnocSpec (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set ℓ₁ where
     zero→true : ∀ (c : Configₙ Q)
       → c f ≡ zero
       → (fnoc c) f ≡ true
-open FnocSpec
+open FnocContract
 
 default-conf : Config₂ Q → Configₙ Q
 (default-conf cb) f with cb f
@@ -52,13 +69,13 @@ default-fnoc : Configₙ Q → Config₂ Q
 ... | zero    = true
 ... | (suc _) = false
 
-default-conf-satisfies-spec : ∀ (f : Q) → ConfSpec f default-conf
-false→1 (default-conf-satisfies-spec f) c cf≡false rewrite cf≡false = refl
-true→0  (default-conf-satisfies-spec f) c cf≡true  rewrite cf≡true  = refl
+default-conf-satisfies-contract : ∀ (f : Q) → ConfContract f default-conf
+false→1 (default-conf-satisfies-contract f) c cf≡false rewrite cf≡false = refl
+true→0  (default-conf-satisfies-contract f) c cf≡true  rewrite cf≡true  = refl
 
-default-fnoc-satisfies-spec : ∀ (f : Q) → FnocSpec f default-fnoc
-suc→false (default-fnoc-satisfies-spec f) c cf≡suc  rewrite cf≡suc  = refl
-zero→true (default-fnoc-satisfies-spec f) c cf≡zero rewrite cf≡zero = refl
+default-fnoc-satisfies-contract : ∀ (f : Q) → FnocContract f default-fnoc
+suc→false (default-fnoc-satisfies-contract f) c cf≡suc  rewrite cf≡suc  = refl
+zero→true (default-fnoc-satisfies-contract f) c cf≡zero rewrite cf≡zero = refl
 
 module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Setoid S
@@ -67,36 +84,44 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Chc.Choice₂ renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂)
   open Chc.Choiceₙ renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ)
 
-  -- TODO: Can we abstract this as some sort of "external" compiler with custom syntax and semantics, which can be composed with ConstructCompilers?
+  -- TODO: This should be put into a ConstructCompiler.
+  --       However, that might not be possible because it would require to abstract
+  --       arbitrary requirements on the configuration compiler.
+  --       Maybe this could be done via type parameters but lets see whether it pays off.
   convert : 2Choice Q Carrier → NChoice Q Carrier
   convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩
 
   module Preservation
     (conf : Config₂ Q → Configₙ Q)
     (fnoc : Configₙ Q → Config₂ Q)
-    (D : Q)
-    (l r : Carrier)
+    (chc : 2Choice Q Carrier)
     where
     open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
-        ConfSpec D conf
-      → ⟦ D ⟨ l , r ⟩ ⟧₂ ⊆[ conf ] ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
-    preserves-conf conv c with c D in eq
+        ConfContract (2Choice.dim chc) conf
+      → ⟦ chc ⟧₂ ⊆[ conf ] ⟦ convert chc ⟧ₙ
+    preserves-conf conv c with c (2Choice.dim chc) in eq
     ... | false rewrite false→1 conv c eq = ≈-Eq.refl
     ... | true  rewrite true→0  conv c eq = ≈-Eq.refl
 
     preserves-fnoc :
-        FnocSpec D fnoc
-      → ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ ⊆[ fnoc ] ⟦ D ⟨ l , r ⟩ ⟧₂
-    preserves-fnoc vnoc c with c D in eq
+        FnocContract (2Choice.dim chc) fnoc
+      → ⟦ convert chc ⟧ₙ ⊆[ fnoc ] ⟦ chc ⟧₂
+    preserves-fnoc vnoc c with c (2Choice.dim chc) in eq
     ... | zero  rewrite zero→true vnoc c eq = ≈-Eq.refl
     ... | suc _ rewrite suc→false vnoc c eq = ≈-Eq.refl
 
-    -- TODO: This theorem requires D, l, and r to be known but we can use any choice in fact.
-    --       => Generalize.
     convert-preserves :
-        ConfSpec D conf
-      → FnocSpec D fnoc
-      → ⟦ D ⟨ l , r ⟩ ⟧₂ ≅[ conf ][ fnoc ] ⟦ convert (D ⟨ l , r ⟩) ⟧ₙ
+        ConfContract (2Choice.dim chc) conf
+      → FnocContract (2Choice.dim chc) fnoc
+      → ⟦ chc ⟧₂ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧ₙ
     convert-preserves conv vnoc = preserves-conf conv and preserves-fnoc vnoc
+
+  -- compiler : ∀ (F : 𝔽) → ConstructCompiler (C₂ F) (Cₙ F)
+  -- compiler F = record
+  --   { compile = {!convert!}
+  --   ; config-compiler = {!!}
+  --   ; stable = {!!}
+  --   ; preserves = {!!}
+  --   }

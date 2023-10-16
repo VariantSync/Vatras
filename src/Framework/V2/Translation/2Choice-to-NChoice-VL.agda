@@ -104,7 +104,7 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
       ≅[]⟨⟩
         (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ compile l , compile r ⟩) (fnoc c) ⟧₂ c)
         -- TODO: Figure out why we need only proj₂ and not also proj₁ in this proof.
-      ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (proj₂ (convert-preserves D (compile l) (compile r) conv vnoc) c) ⟩
+      ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (proj₂ (convert-preserves (map₂ compile (D ⟨ l , r ⟩)) conv vnoc) c) ⟩
         (λ c → ⟦ Choiceₙ.Standard-Semantics (convert₂ (D ⟨ compile l , compile r ⟩)) c ⟧₂ c)
       ≅[]⟨⟩
         (λ c → ⟦ Choiceₙ.Standard-Semantics (convert₂ (map₂ compile (D ⟨ l , r ⟩))) c ⟧₂ c)
