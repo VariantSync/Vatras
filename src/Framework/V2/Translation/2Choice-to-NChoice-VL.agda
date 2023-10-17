@@ -16,7 +16,7 @@ open import Framework.V2.Variants
 open import Framework.V2.Compiler using (LanguageCompiler; Stable)
 
 import Framework.V2.Translation.2Choice-to-NChoice as 2→N
-open 2→N using (ConfSpec; FnocSpec)
+open 2→N using (ConfContract; FnocContract)
 
 open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
@@ -34,9 +34,9 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
     ⟦_⟧₂ = Semantics  Γ₂
     open LanguageCompiler t
 
-  open VariabilityConstruct (Chc.VLChoice₂.Construct F)
+  open VariabilityConstruct (Chc.VLChoice₂.Construct V F)
     renaming (Construct to 2Choice; _⊢⟦_⟧ to _⊢⟦_⟧₁)
-  open VariabilityConstruct (Chc.VLChoiceₙ.Construct F)
+  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V F)
     renaming (Construct to NChoice; _⊢⟦_⟧ to _⊢⟦_⟧₂)
 
   -- TODO: Generalize to any setoids over L₁ or L₂.
@@ -90,8 +90,8 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
     open VSet.≅[]-Reasoning
 
     convert-compile-preserves :
-      ∀ (conv : ConfSpec D conf)
-      → (vnoc : FnocSpec D fnoc)
+      ∀ (conv : ConfContract D conf)
+      → (vnoc : FnocContract D fnoc)
       → Stable config-compiler
       → (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁) ≅[ conf ][ fnoc ] (Γ₂ ⊢⟦ convert-compile (D ⟨ l , r ⟩) ⟧₂)
     convert-compile-preserves conv vnoc stable =
@@ -115,8 +115,8 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
       ≅[]-∎
 
     compile-convert-preserves :
-      ∀ (conv : ConfSpec D conf)
-      → (vnoc : FnocSpec D fnoc)
+      ∀ (conv : ConfContract D conf)
+      → (vnoc : FnocContract D fnoc)
       → Stable config-compiler
       → (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁) ≅[ conf ][ fnoc ] (Γ₂ ⊢⟦ compile-convert (D ⟨ l , r ⟩) ⟧₂)
     compile-convert-preserves conv vnoc stable =

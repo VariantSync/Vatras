@@ -1,6 +1,7 @@
 module Framework.V2.Lang.NADT where
 
 open import Data.Nat using (ℕ)
+open import Function using (id)
 
 open import Framework.V2.Definitions
 open import Framework.V2.Constructs.GrulerArtifacts
@@ -25,5 +26,5 @@ NADTVL : VariabilityLanguage GrulerVariant ℕ ℕ
 Expression NADTVL = NADT
 Semantics  NADTVL = ⟦_⟧-nadt
 
-⟦ NADTAsset A  ⟧-nadt = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant NADTVL A
-⟦ NADTChoice C ⟧-nadt = Choice-Semantics NADTVL C
+⟦ NADTAsset A  ⟧-nadt = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant id NADTVL A
+⟦ NADTChoice C ⟧-nadt = Choice-Semantics GrulerVariant ℕ id NADTVL C

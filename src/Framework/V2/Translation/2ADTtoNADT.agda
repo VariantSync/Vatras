@@ -15,7 +15,8 @@ open import Framework.V2.Variants using (VariantSetoid; GrulerVariant)
 open import Framework.V2.Lang.2ADT
 open import Framework.V2.Lang.NADT
 
-open import Framework.V2.Translation.2Choice-to-NChoice {0ℓ} {ℕ} as 2→N using (default-conf; default-fnoc; default-conf-satisfies-spec; default-fnoc-satisfies-spec)
+open import Framework.V2.Translation.2Choice-to-NChoice {0ℓ} {ℕ} as 2→N
+  using (default-conf; default-fnoc; default-conf-satisfies-contract; default-fnoc-satisfies-contract)
 open 2→N.Translate (Eq.setoid (2ADT A)) using (convert)
 
 {-# TERMINATING #-}

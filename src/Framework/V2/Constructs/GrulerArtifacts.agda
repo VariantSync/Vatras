@@ -19,23 +19,23 @@ record ParallelComposition {ℓ} (A : Set ℓ) : Set ℓ where
 
 module VLLeaf where
   Syntax : ℂ
-  Syntax _ A = Leaf A
+  Syntax _ _ A = Leaf A
 
   make-leaf :
     ∀ (E : 𝔼) → Syntax ∈ₛ E
     → {A : 𝔸} → A
-    → E A
-  make-leaf _ mkLeaf a = cons mkLeaf (leaf a)
+    → {F : 𝔽} → E A
+  make-leaf _ mkLeaf a {F} = cons mkLeaf {F = F} (leaf a)
 
   Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
-  Semantics leaf∈V _ l _ = cons leaf∈V l
+  Semantics {F = F} leaf∈V _ _ l _ = cons leaf∈V {F = F} l
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
     → Syntax ∈ₛ V
     → VariabilityConstruct V F S
   Construct _ _ _ mkLeaf = record
     { Construct = Syntax
-    ; _⊢⟦_⟧ = Semantics mkLeaf
+    ; construct-semantics = Semantics mkLeaf
     }
 
   Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
@@ -46,17 +46,17 @@ module VLLeaf where
 
 module VLParallelComposition where
   Syntax : ℂ
-  Syntax E A = ParallelComposition (E A)
+  Syntax _ E A = ParallelComposition (E A)
 
   Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
-  Semantics leaf∈V (E with-sem ⟦_⟧) (l ∥ r) c = cons leaf∈V (⟦ l ⟧ c ∥ ⟦ r ⟧ c)
+  Semantics {F = F} leaf∈V _ (syn E with-sem ⟦_⟧) (l ∥ r) c = cons leaf∈V {F = F} (⟦ l ⟧ c ∥ ⟦ r ⟧ c)
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
     → Syntax ∈ₛ V
     → VariabilityConstruct V F S
   Construct _ _ _ mkPC = record
     { Construct = Syntax
-    ; _⊢⟦_⟧ = Semantics mkPC
+    ; construct-semantics = Semantics mkPC
     }
 
   ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant

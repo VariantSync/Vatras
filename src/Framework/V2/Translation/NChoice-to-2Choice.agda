@@ -101,6 +101,7 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
 
   open import Data.Vec using (Vec; []; _∷_; fromList)
 
+  {-| A dialect of binary choice calculus in which all data is in leaves. -}
   data Intermediate : Set ℓ₁ where
     val : Carrier                → Intermediate
     chc : 2Choice I Intermediate → Intermediate
@@ -112,6 +113,33 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
   -- TODO: Write eliminator for Intermediate given a variability language with choices.
   --       Then prove that the eliminator preserves semantics.
 
+  data _⟨_⟩⇝_ : Q → List⁺ Carrier → 2Choice I Intermediate → Set
+  infix 3 _⟨_⟩⇝_
+  data _⟨_⟩⇝_ where
+    base : ∀ {D : Q} {e : Carrier}
+        ----------------------------------------
+      → D ⟨ e ∷ [] ⟩⇝ (D ∙ 0) ⟨ val e , val e ⟩
+
+    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate} {i}
+      →      D ⟨ e₂ ∷ es ⟩⇝ (D ∙ i) ⟨ l , r ⟩
+        --------------------------------------------------------------------
+      → D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ suc i) ⟨ val e₁ , chc ((D ∙ i) ⟨ l , r ⟩) ⟩
+
+   {-
+   D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ suc i) ⟨ chc ((D ∙ i) ⟨ l , r ⟩) , val e₁ ⟩
+
+               D ⟨ 4 ⟩ ⇝                D0 ⟨ 4 , 4 ⟩
+           D ⟨ 3 , 4 ⟩ ⇝           D1 ⟨ D0 ⟨ 4 , 4 ⟩ , 3 ⟩
+       D ⟨ 2 , 3 , 4 ⟩ ⇝      D2 ⟨ D1 ⟨ D0 ⟨ 4 , 4 ⟩ , 3 ⟩ , 2 ⟩
+   D ⟨ 1 , 2 , 3 , 4 ⟩ ⇝ D3 ⟨ D2 ⟨ D1 ⟨ D0 ⟨ 4 , 4 ⟩ , 3 ⟩ , 2 ⟩ , 1 ⟩
+
+   -- This gives a method to avoid redundand binary choices.
+   D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ suc i) ⟨ chc ((D ∙ i) ⟨ l , val e₁ ⟩) , r ⟩
+               D ⟨ 4 ⟩ ⇝                D0 ⟨ 4 , 4 ⟩
+           D ⟨ 3 , 4 ⟩ ⇝           D1 ⟨ D0 ⟨ 4 , 3 ⟩ , 4 ⟩
+       D ⟨ 2 , 3 , 4 ⟩ ⇝      D2 ⟨ D1 ⟨ D0 ⟨ 4 , 3 ⟩ , 2 ⟩ , 4 ⟩
+   D ⟨ 1 , 2 , 3 , 4 ⟩ ⇝ D3 ⟨ D2 ⟨ D1 ⟨ D0 ⟨ 4 , 3 ⟩ , 2 ⟩ , 1 ⟩ , 4 ⟩
+   -}
   unroll : ∀ {n}
     → (max : ℕ)
     → Q      -- initial dimension in input formula that we translate (D in the example above).
@@ -150,16 +178,20 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
 
     preservation-⊆ : ∀ (es : List⁺ Carrier)
       → ⟦ D ⟨ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
-    preservation-⊆ (head ∷ []) c =
+    preservation-⊆ (_ ∷ []) c =
       Eq.cong
         (λ eq → ⟦ eq ⟧ᵢ (confi c))
         (Eq.sym
           (if-idemp (confi c (D ∙ 0))))
-    preservation-⊆ (head ∷ x ∷ tail) c = {!!}
+    preservation-⊆ (l ∷ r ∷ rs) c = {!!}
 
     preservation-⊇ : ∀ (es : List⁺ Carrier)
       → ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ ⊆[ fnoci ] ⟦ D ⟨ es ⟩ ⟧ₙ
-    preservation-⊇ es c = {!!}
+    preservation-⊇ (_ ∷ []) c =
+      Eq.cong
+        (λ eq → ⟦ eq ⟧ᵢ c)
+          (if-idemp (c (D ∙ 0)))
+    preservation-⊇ (l ∷ r ∷ rs) c = {!!}
 
     preservation : ∀ (es : List⁺ Carrier)
       → ⟦ D ⟨ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ

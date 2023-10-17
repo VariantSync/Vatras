@@ -2,6 +2,7 @@ module Framework.V2.Lang.2ADT where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
+open import Function using (id)
 
 open import Framework.V2.Definitions
 open import Framework.V2.Constructs.GrulerArtifacts
@@ -23,5 +24,5 @@ data 2ADT : 𝔼 where
 Expression 2ADTVL = 2ADT
 VariabilityLanguage.Semantics  2ADTVL = ⟦_⟧-2adt
 
-⟦ 2ADTAsset A  ⟧-2adt = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant 2ADTVL A
-⟦ 2ADTChoice C ⟧-2adt = BinaryChoice-Semantics 2ADTVL C
+⟦ 2ADTAsset A  ⟧-2adt = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant id 2ADTVL A
+⟦ 2ADTChoice C ⟧-2adt = BinaryChoice-Semantics GrulerVariant ℕ id 2ADTVL C

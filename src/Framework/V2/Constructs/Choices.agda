@@ -116,23 +116,23 @@ module VLChoice₂ where
   Syntax : ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
 
-  Semantics : ∀ (F : 𝔽) → ℂ-Semantics F Bool Syntax
-  Semantics _ fnoc (syn _ with-sem ⟦_⟧) chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
+  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F Bool Syntax
+  Semantics _ _ fnoc (syn _ with-sem ⟦_⟧) chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
 
-  Construct : ∀ (F : 𝔽) → VariabilityConstruct F Bool
-  Construct F = con Syntax with-sem Semantics F
+  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Bool
+  Construct V F = con Syntax with-sem Semantics V F
 
   map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Bool} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
     → let open IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
     → (chc : Syntax F₁ (Expression Γ₁) A)
     → Stable (config-compiler t)
-    → Semantics F₁ id Γ₁ chc
+    → Semantics V F₁ id Γ₁ chc
         ≅[ conf t ][ fnoc t ]
-      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
+      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
   map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
     ≅[]-begin
-      Semantics F₁ id Γ₁ chc
+      Semantics V F₁ id Γ₁ chc
     ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
     -- First compiler proof composition:
@@ -145,7 +145,7 @@ module VLChoice₂ where
     ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
       (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
     ≅[]⟨⟩
-      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
+      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
     ≅[]-∎
     where module I = IVSet V A
           open I using (_≅[_][_]_; _⊆[_]_)
@@ -180,8 +180,8 @@ module VLChoice₂ where
               (λ c → ⟦ Standard-Semantics chc c ⟧₁ c) (fnoc t i)
             ∎
 
-  cong-compiler : ∀ F → ConstructFunctor (Construct F)
-  cong-compiler _ = record
+  cong-compiler : ∀ V F → ConstructFunctor (Construct V F)
+  cong-compiler _ _ = record
     { map = map
     ; preserves = map-compile-preserves
     }
@@ -196,14 +196,11 @@ module VLChoiceₙ where
   Syntax : ℂ
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
-  Semantics : ∀ (F : 𝔽) → ℂ-Semantics F ℕ Syntax
-  Semantics _ fnoc (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
+  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F ℕ Syntax
+  Semantics _ _ fnoc (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
 
-  Construct : ∀ (F : 𝔽) → VariabilityConstruct F ℕ
-  Construct F = record
-    { Construct = Syntax
-    ; construct-semantics = Semantics F
-    }
+  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F ℕ
+  Construct V F = con Syntax with-sem Semantics V F
 
   -- Interestingly, this proof is entirely copy and paste from VLChoice₂.map-compile-preserves.
   -- Only minor adjustments to adapt the theorem had to be made.
@@ -216,12 +213,12 @@ module VLChoiceₙ where
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
     → (chc : Syntax F₁ (Expression Γ₁) A)
     → Stable (config-compiler t)
-    → Semantics F₁ id Γ₁ chc
+    → Semantics V F₁ id Γ₁ chc
         ≅[ conf t ][ fnoc t ]
-      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
+      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
   map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
     ≅[]-begin
-      Semantics F₁ id Γ₁ chc
+      Semantics V F₁ id Γ₁ chc
     ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
     -- First compiler proof composition:
@@ -234,7 +231,7 @@ module VLChoiceₙ where
     ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
       (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
     ≅[]⟨⟩
-      Semantics F₁ (fnoc t) Γ₂ (map (compile t) chc)
+      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
     ≅[]-∎
     where module I = IVSet V A
           open I using (_≅[_][_]_; _⊆[_]_)
@@ -269,8 +266,8 @@ module VLChoiceₙ where
               (λ c → ⟦ Standard-Semantics chc c ⟧₁ c) (fnoc t i)
             ∎
 
-  cong-compiler : ∀ F → ConstructFunctor (Construct F)
-  cong-compiler _ = record
+  cong-compiler : ∀ V F → ConstructFunctor (Construct V F)
+  cong-compiler _ _ = record
     { map = map
     ; preserves = map-compile-preserves
     }

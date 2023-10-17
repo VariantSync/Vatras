@@ -58,7 +58,7 @@ record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F
 --        To preserve semantics, most of the time, additional requirements on the
 --        config translations are required which are currently not part of the
 --        preservation theorem here. Maybe we have to add these constraints as type parameters here?
-record ConstructCompiler {F₁ S₁ F₂ S₂} (VC₁ : VariabilityConstruct F₁ S₁) (VC₂ : VariabilityConstruct F₂ S₂) : Set₁ where
+record ConstructCompiler {V F₁ S₁ F₂ S₂} (VC₁ : VariabilityConstruct V F₁ S₁) (VC₂ : VariabilityConstruct V F₂ S₂) : Set₁ where
   open VariabilityConstruct VC₁ renaming (Construct to C₁; construct-semantics to sem₁)
   open VariabilityConstruct VC₂ renaming (Construct to C₂; construct-semantics to sem₂)
 
@@ -66,7 +66,7 @@ record ConstructCompiler {F₁ S₁ F₂ S₂} (VC₁ : VariabilityConstruct F�
     compile : ∀ {E A} → C₁ F₁ E A → C₂ F₂ E A
     config-compiler : ConfigCompiler F₁ S₁ F₂ S₂
     stable : Stable config-compiler
-    preserves : ∀ {V} {Γ : VariabilityLanguage V F₁ S₁} {A}
+    preserves : ∀ {Γ : VariabilityLanguage V F₁ S₁} {A}
       → (c : C₁ F₁ (Expression Γ) A)
       → let open IVSet V A using (_≅_) in
         sem₁ id Γ c ≅ sem₂ (to config-compiler) Γ (compile c)
@@ -76,7 +76,7 @@ Compiles languages below constructs.
 This means that an expression in a language Γ₁ of which we know that it has a specific
 syntactic construct VC at the top is compiled to Γ₂ retaining the very same construct at the top.
 -}
-record ConstructFunctor {F S} (VC : VariabilityConstruct F S) : Set₁ where
+record ConstructFunctor {V F S} (VC : VariabilityConstruct V F S) : Set₁ where
   open VariabilityConstruct VC
   open LanguageCompiler using (conf; fnoc; compile; config-compiler)
 
@@ -85,7 +85,7 @@ record ConstructFunctor {F S} (VC : VariabilityConstruct F S) : Set₁ where
       → (L₁ A → L₂ A)
       → Construct F L₁ A
       → Construct F L₂ A
-    preserves : ∀ {V} {F'} {S'} {Γ₁ : VariabilityLanguage V F S} {Γ₂ : VariabilityLanguage V F' S'} {A}
+    preserves : ∀ {F'} {S'} {Γ₁ : VariabilityLanguage V F S} {Γ₂ : VariabilityLanguage V F' S'} {A}
       → let open IVSet V A using (_≅[_][_]_) in
       ∀ (t : LanguageCompiler Γ₁ Γ₂)
       → (c : Construct F (Expression Γ₁) A)

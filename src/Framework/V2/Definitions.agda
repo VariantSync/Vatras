@@ -110,23 +110,23 @@ record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
 open VariabilityLanguage public
 
 -- Semantics of constructors
-ℂ-Semantics : 𝔽 → 𝕊 → ℂ → Set₁
-ℂ-Semantics F S C =
+ℂ-Semantics : 𝕍 → 𝔽 → 𝕊 → ℂ → Set₁
+ℂ-Semantics V F S C =
   ∀ {Fγ : 𝔽} {Sγ : 𝕊}
   → (Config Fγ Sγ → Config F S) -- a function that lets us apply language configurations to constructs
-  → {V : 𝕍} {A : 𝔸}
+  → {A : 𝔸} -- the domain in which we embed variability
   → (Γ : VariabilityLanguage V Fγ Sγ) -- The underlying language
   → C F (Expression Γ) A -- the construct to compile
   → Config Fγ Sγ -- a configuration for underlying subexpressions
   → V A
 
-record VariabilityConstruct (F : 𝔽) (S : 𝕊) : Set₁ where
+record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   constructor con_with-sem_
   field
     -- how to create a constructor for a given language
     Construct : ℂ
     -- how to resolve a constructor for a given language
-    construct-semantics : ℂ-Semantics F S Construct
+    construct-semantics : ℂ-Semantics V F S Construct
   _⊢⟦_⟧ = construct-semantics id
 
 -- Syntactic Containment
@@ -152,7 +152,7 @@ _≅ₛ_ : 𝔼 → 𝔼 → Set₁
 E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
 
 -- Semantic Containment
-record _⟦∈⟧_ {V F S} (C : VariabilityConstruct F S) (Γ : VariabilityLanguage V F S) : Set₁ where
+record _⟦∈⟧_ {V F S} (C : VariabilityConstruct V F S) (Γ : VariabilityLanguage V F S) : Set₁ where
   open VariabilityConstruct C
   private ⟦_⟧ = Semantics Γ
   field
@@ -162,11 +162,11 @@ record _⟦∈⟧_ {V F S} (C : VariabilityConstruct F S) (Γ : VariabilityLangu
       → ⟦ cons make c ⟧ ≗ construct-semantics id Γ c
 open _⟦∈⟧_ public
 
-_⟦∉⟧_ : ∀ {V F S} → VariabilityConstruct F S → VariabilityLanguage V F S → Set₁
+_⟦∉⟧_ : ∀ {V F S} → VariabilityConstruct V F S → VariabilityLanguage V F S → Set₁
 C ⟦∉⟧ E = ¬ (C ⟦∈⟧ E)
 
 _⟦⊆⟧_ :  ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
-_⟦⊆⟧_ {V} {F} {S} E₁ E₂ = ∀ (C : VariabilityConstruct F S) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
+_⟦⊆⟧_ {V} {F} {S} E₁ E₂ = ∀ (C : VariabilityConstruct V F S) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
 
 _⟦≅⟧_ : ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
 E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁
