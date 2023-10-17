@@ -5,6 +5,7 @@ open import Framework.V2.Definitions
 open import Data.Bool using (Bool)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Nat using (ℕ)
+open import Function using (id)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
@@ -22,9 +23,9 @@ private
   BinaryChoice-Semantics = VLChoice₂.Semantics
 
 data Gruler : 𝔼 where
-  GAsset  : Leaf A                       → Gruler A
+  GAsset  : Leaf A                         → Gruler A
   GPComp  : ParallelComposition (Gruler A) → Gruler A
-  GChoice : BinaryChoice ℕ Gruler A      → Gruler A
+  GChoice : BinaryChoice ℕ Gruler A        → Gruler A
 
 -- I have no idea how we could prove this terminating but let's just avoid that headache.
 {-# TERMINATING #-}
@@ -36,11 +37,11 @@ GrulerVL = record
   ; Semantics  = ⟦_⟧ᵍ
   }
 
-⟦ GAsset A  ⟧ᵍ = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant GrulerVL A
-⟦ GPComp PC ⟧ᵍ = VLParallelComposition.Semantics VLParallelComposition.ParallelComposition∈ₛGrulerVariant GrulerVL PC
-⟦ GChoice C ⟧ᵍ = BinaryChoice-Semantics GrulerVL C
+⟦ GAsset A  ⟧ᵍ = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant id GrulerVL A
+⟦ GPComp PC ⟧ᵍ = VLParallelComposition.Semantics VLParallelComposition.ParallelComposition∈ₛGrulerVariant id GrulerVL PC
+⟦ GChoice C ⟧ᵍ = BinaryChoice-Semantics GrulerVariant ℕ id GrulerVL C
 
-gruler-has-leaf : VLLeaf.Syntax ∈ₛ Gruler
+gruler-has-leaf : ℕ ⊢ VLLeaf.Syntax ∈ₛ Gruler
 gruler-has-leaf = record
   { cons = GAsset
   ; snoc = snoc'
@@ -50,7 +51,7 @@ gruler-has-leaf = record
         snoc' (GAsset A)  = just A
         snoc' _ = nothing
 
-gruler-has-choice : BinaryChoice ℕ ∈ₛ Gruler
+gruler-has-choice : ℕ ⊢ BinaryChoice ∈ₛ Gruler
 gruler-has-choice = record
   { cons = GChoice
   ; snoc = snoc'
@@ -65,5 +66,5 @@ make gruler-models-choice = gruler-has-choice
 preservation gruler-models-choice _ _ = refl
 
 gruler-choice-preserves : ∀ {D l r c}
-  → ⟦ GChoice {A} (D ⟨ l , r ⟩) ⟧ᵍ c ≡ BinaryChoice-Semantics GrulerVL (D ⟨ l , r ⟩) c
+  → ⟦ GChoice {A} (D ⟨ l , r ⟩) ⟧ᵍ c ≡ BinaryChoice-Semantics GrulerVariant ℕ id GrulerVL (D ⟨ l , r ⟩) c
 gruler-choice-preserves = refl

@@ -130,33 +130,36 @@ record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   _⊢⟦_⟧ = construct-semantics id
 
 -- Syntactic Containment
-record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
+-- TODO: Is there any point in allowing a specialization of F here?
+--       It lets us say "Construct x is in language y but only for the annotation language ℕ".
+--       Is there ever a use case though, in which a language must be fixed to a particular annotation language?
+record _⊢_∈ₛ_ (F : 𝔽) (C : ℂ) (E : 𝔼) : Set₁ where
   field
     -- from a construct, an expression can be created
-    cons : ∀ {F A} → C F E A → E A
+    cons : ∀ {A} → C F E A → E A
     -- an expression might be the construct C
-    snoc : ∀ {F A} →   E A → Maybe (C F E A)
+    snoc : ∀ {A} →   E A → Maybe (C F E A)
     -- An expression of a construct must preserve all information of that construct.
     -- There might be more syntactic information though because of which we do not require
     -- the dual equality cons ∘ snoc
-    id-l : ∀ {F A} → snoc {F} {A} ∘ cons {F} {A} ≗ just
-open _∈ₛ_ public
+    id-l : ∀ {A} → snoc {A} ∘ cons {A} ≗ just
+open _⊢_∈ₛ_ public
 
-_∉ₛ_ : ℂ → 𝔼 → Set₁
-C ∉ₛ E = ¬ (C ∈ₛ E)
+_⊢_∉ₛ_ : 𝔽 → ℂ → 𝔼 → Set₁
+F ⊢ C ∉ₛ E = ¬ (F ⊢ C ∈ₛ E)
 
-_⊆ₛ_ : 𝔼 → 𝔼 → Set₁
-E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → C ∈ₛ E₁ → C ∈ₛ E₂
+_⊢_⊆ₛ_ : 𝔽 → 𝔼 → 𝔼 → Set₁
+F ⊢ E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → F ⊢ C ∈ₛ E₁ → F ⊢ C ∈ₛ E₂
 
-_≅ₛ_ : 𝔼 → 𝔼 → Set₁
-E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
+_⊢_≅ₛ_ : 𝔽 → 𝔼 → 𝔼 → Set₁
+F ⊢ E₁ ≅ₛ E₂ = F ⊢ E₁ ⊆ₛ E₂ × F ⊢ E₂ ⊆ₛ E₁
 
 -- Semantic Containment
 record _⟦∈⟧_ {V F S} (C : VariabilityConstruct V F S) (Γ : VariabilityLanguage V F S) : Set₁ where
   open VariabilityConstruct C
   private ⟦_⟧ = Semantics Γ
   field
-    make : Construct ∈ₛ Expression Γ
+    make : F ⊢ Construct ∈ₛ Expression Γ
     preservation : ∀ {A : 𝔸}
       → (c : Construct F (Expression Γ) A)
       → ⟦ cons make c ⟧ ≗ construct-semantics id Γ c

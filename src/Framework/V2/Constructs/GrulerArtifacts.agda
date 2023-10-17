@@ -22,23 +22,23 @@ module VLLeaf where
   Syntax _ _ A = Leaf A
 
   make-leaf :
-    ∀ (E : 𝔼) → Syntax ∈ₛ E
+    ∀ {F : 𝔽} {E : 𝔼} → F ⊢ Syntax ∈ₛ E
     → {A : 𝔸} → A
-    → {F : 𝔽} → E A
-  make-leaf _ mkLeaf a {F} = cons mkLeaf {F = F} (leaf a)
+    → E A
+  make-leaf mkLeaf a = cons mkLeaf (leaf a)
 
-  Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
-  Semantics {F = F} leaf∈V _ _ l _ = cons leaf∈V {F = F} l
+  Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → F ⊢ Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
+  Semantics {F = F} leaf∈V _ _ l _ = cons leaf∈V l
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
-    → Syntax ∈ₛ V
+    → F ⊢ Syntax ∈ₛ V
     → VariabilityConstruct V F S
   Construct _ _ _ mkLeaf = record
     { Construct = Syntax
     ; construct-semantics = Semantics mkLeaf
     }
 
-  Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
+  Leaf∈ₛGrulerVariant : ∀ {F} → F ⊢ Syntax ∈ₛ GrulerVariant
   cons Leaf∈ₛGrulerVariant (leaf a) = asset a
   snoc Leaf∈ₛGrulerVariant (asset a) = just (leaf a)
   snoc Leaf∈ₛGrulerVariant (_ ∥ _) = nothing
@@ -48,18 +48,18 @@ module VLParallelComposition where
   Syntax : ℂ
   Syntax _ E A = ParallelComposition (E A)
 
-  Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
-  Semantics {F = F} leaf∈V _ (syn E with-sem ⟦_⟧) (l ∥ r) c = cons leaf∈V {F = F} (⟦ l ⟧ c ∥ ⟦ r ⟧ c)
+  Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → F ⊢ Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
+  Semantics leaf∈V _ (syn E with-sem ⟦_⟧) (l ∥ r) c = cons leaf∈V (⟦ l ⟧ c ∥ ⟦ r ⟧ c)
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
-    → Syntax ∈ₛ V
+    → F ⊢ Syntax ∈ₛ V
     → VariabilityConstruct V F S
   Construct _ _ _ mkPC = record
     { Construct = Syntax
     ; construct-semantics = Semantics mkPC
     }
 
-  ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
+  ParallelComposition∈ₛGrulerVariant : ∀ {F} → F ⊢ Syntax ∈ₛ GrulerVariant
   cons ParallelComposition∈ₛGrulerVariant (l ∥ r) = l ∥ r
   snoc ParallelComposition∈ₛGrulerVariant (asset a) = nothing
   snoc ParallelComposition∈ₛGrulerVariant (l ∥ r) = just (l ∥ r)
