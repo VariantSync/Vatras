@@ -1,8 +1,11 @@
+{-# OPTIONS --sized-types #-}
+
 module Framework.V2.Lang.2ADT where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
 open import Function using (id)
+open import Size using (Size; ↑_)
 
 open import Framework.V2.Definitions
 open import Framework.V2.Constructs.GrulerArtifacts
@@ -13,16 +16,14 @@ private
   BinaryChoice = VLChoice₂.Syntax
   BinaryChoice-Semantics = VLChoice₂.Semantics
 
-data 2ADT : 𝔼 where
-  2ADTAsset  : ∀ {A : 𝔸} → Leaf A                → 2ADT A
-  2ADTChoice : ∀ {A : 𝔸} → BinaryChoice ℕ 2ADT A → 2ADT A
+data 2ADT : Size → 𝔼 where
+  2ADTAsset  : ∀ {i A} → Leaf A → 2ADT i A
+  2ADTChoice : ∀ {i A} → BinaryChoice ℕ (2ADT i) A → 2ADT (↑ i) A
 
-{-# TERMINATING #-}
-⟦_⟧-2adt : 𝔼-Semantics GrulerVariant ℕ Bool 2ADT
+semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant ℕ Bool (2ADT i)
 
-2ADTVL : VariabilityLanguage GrulerVariant ℕ Bool
-Expression 2ADTVL = 2ADT
-VariabilityLanguage.Semantics  2ADTVL = ⟦_⟧-2adt
+2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant ℕ Bool
+2ADTVL {i} = syn 2ADT i with-sem semantics
 
-⟦ 2ADTAsset A  ⟧-2adt = VLLeaf.Semantics VLLeaf.Leaf∈ₛGrulerVariant id 2ADTVL A
-⟦ 2ADTChoice C ⟧-2adt = BinaryChoice-Semantics GrulerVariant ℕ id 2ADTVL C
+semantics (2ADTAsset a) _  = VLLeaf.elim-leaf ℕ VLLeaf.Leaf∈ₛGrulerVariant a
+semantics (2ADTChoice chc) = BinaryChoice-Semantics GrulerVariant ℕ id 2ADTVL chc

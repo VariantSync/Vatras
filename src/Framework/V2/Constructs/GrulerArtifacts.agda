@@ -27,8 +27,11 @@ module VLLeaf where
     → E A
   make-leaf mkLeaf a = cons mkLeaf (leaf a)
 
-  Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → F ⊢ Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
-  Semantics {F = F} leaf∈V _ _ l _ = cons leaf∈V l
+  elim-leaf : ∀ {V} (F : 𝔽) → F ⊢ Syntax ∈ₛ V → ∀ {A} → Leaf A → V A
+  elim-leaf _ leaf∈V l = cons leaf∈V l
+
+  Semantics : ∀ {V F S} → F ⊢ Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
+  Semantics {F = F} leaf∈V _ _ l _ = elim-leaf F leaf∈V l
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
     → F ⊢ Syntax ∈ₛ V
