@@ -150,7 +150,7 @@ A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
   → A ⊆[ f ] B
     -----------
   → A ⊆ B
-⊆[]→⊆ A⊆B i = ∈[]→∈ (A⊆B i)
+⊆[]→⊆ A⊆[f]B i = ∈[]→∈ (A⊆[f]B i)
 
 -- verbose name
 -- TODO: eta-reducing e here makes Agda have an internal error when importing ⊆[]→⊆.
