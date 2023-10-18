@@ -1,11 +1,10 @@
 {-# OPTIONS --sized-types #-}
-module Framework.V2.Lang.Gruler where
 
 open import Framework.V2.Definitions
+module Framework.V2.Lang.Gruler (F : 𝔽) where
 
 open import Data.Bool using (Bool)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Data.Nat using (ℕ)
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
@@ -25,18 +24,18 @@ private
 data Gruler : Size → 𝔼 where
   GAsset  : ∀ {i A} → Leaf A                           → Gruler i A
   GPComp  : ∀ {i A} → ParallelComposition (Gruler i A) → Gruler (↑ i) A
-  GChoice : ∀ {i A} → BinaryChoice ℕ (Gruler i) A      → Gruler (↑ i) A
+  GChoice : ∀ {i A} → BinaryChoice F (Gruler i) A      → Gruler (↑ i) A
 
-semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant ℕ Bool (Gruler i)
+semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Bool (Gruler i)
 
-GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant ℕ Bool
+GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Bool
 GrulerVL {i} = syn Gruler i with-sem semantics
 
-semantics (GAsset a)  _ = VLLeaf.elim-leaf ℕ VLLeaf.Leaf∈ₛGrulerVariant a
+semantics (GAsset a)  _ = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
 semantics (GPComp pc)   = VLParallelComposition.Semantics VLParallelComposition.ParallelComposition∈ₛGrulerVariant id GrulerVL pc
-semantics (GChoice chc) = BinaryChoice-Semantics GrulerVariant ℕ id (GrulerVL) chc
+semantics (GChoice chc) = BinaryChoice-Semantics GrulerVariant F id (GrulerVL) chc
 
-gruler-has-leaf : ∀ {i} → ℕ ⊢ VLLeaf.Syntax ∈ₛ Gruler i
+gruler-has-leaf : ∀ {i} → F ⊢ VLLeaf.Syntax ∈ₛ Gruler i
 gruler-has-leaf {i} = record
   { cons = GAsset
   ; snoc = snoc'
@@ -46,20 +45,20 @@ gruler-has-leaf {i} = record
         snoc' (GAsset A)  = just A
         snoc' _ = nothing
 
-gruler-has-choice : ℕ ⊢ BinaryChoice ∈ₛ Gruler ∞
+gruler-has-choice : F ⊢ BinaryChoice ∈ₛ Gruler ∞
 gruler-has-choice = record
   { cons = GChoice
   ; snoc = snoc'
   ; id-l = λ _ → refl
   }
-  where snoc' : ∀ {i A} → Gruler (↑ i) A → Maybe (BinaryChoice ℕ (Gruler i) A)
+  where snoc' : ∀ {i A} → Gruler (↑ i) A → Maybe (BinaryChoice F (Gruler i) A)
         snoc' (GChoice chc) = just chc
         snoc' _ = nothing
 
-gruler-models-choice : VLChoice₂.Construct GrulerVariant ℕ ⟦∈⟧ GrulerVL
+gruler-models-choice : VLChoice₂.Construct GrulerVariant F ⟦∈⟧ GrulerVL
 make gruler-models-choice = gruler-has-choice
 preservation gruler-models-choice _ _ = refl
 
 gruler-choice-preserves : ∀ {A : 𝔸} {D l r c}
-  → semantics (GChoice {A = A} (D ⟨ l , r ⟩)) c ≡ BinaryChoice-Semantics GrulerVariant ℕ id GrulerVL (D ⟨ l , r ⟩) c
+  → semantics (GChoice {A = A} (D ⟨ l , r ⟩)) c ≡ BinaryChoice-Semantics GrulerVariant F id GrulerVL (D ⟨ l , r ⟩) c
 gruler-choice-preserves = refl
