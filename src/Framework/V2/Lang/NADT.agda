@@ -13,7 +13,7 @@ open import Framework.V2.Variants using (GrulerVariant)
 
 private
   Choice = VLChoiceₙ.Syntax
-  Choice-Semantics = VLChoiceₙ.Semantics
+  choice-semantics = VLChoiceₙ.Semantics
 
 data NADT : Size → 𝔼 where
   NADTAsset  : ∀ {i A} → Leaf A              → NADT i A
@@ -25,4 +25,4 @@ NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F ℕ
 NADTVL {i} = syn NADT i with-sem semantics
 
 semantics (NADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-semantics (NADTChoice chc) = Choice-Semantics GrulerVariant F id NADTVL chc
+semantics (NADTChoice chc) = choice-semantics GrulerVariant F id NADTVL chc

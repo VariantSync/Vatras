@@ -12,12 +12,12 @@ open import Framework.V2.Constructs.Choices
 open import Framework.V2.Variants using (GrulerVariant)
 
 private
-  BinaryChoice = VLChoice₂.Syntax
-  BinaryChoice-Semantics = VLChoice₂.Semantics
+  Choice₂ = VLChoice₂.Syntax
+  choice₂-semantics = VLChoice₂.Semantics
 
 data 2ADT : Size → 𝔼 where
   2ADTAsset  : ∀ {i A} → Leaf A → 2ADT i A
-  2ADTChoice : ∀ {i A} → BinaryChoice F (2ADT i) A → 2ADT (↑ i) A
+  2ADTChoice : ∀ {i A} → Choice₂ F (2ADT i) A → 2ADT (↑ i) A
 
 semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Bool (2ADT i)
 
@@ -25,4 +25,4 @@ semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Bool (2ADT i)
 2ADTVL {i} = syn 2ADT i with-sem semantics
 
 semantics (2ADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-semantics (2ADTChoice chc) = BinaryChoice-Semantics GrulerVariant F id 2ADTVL chc
+semantics (2ADTChoice chc) = choice₂-semantics GrulerVariant F id 2ADTVL chc
