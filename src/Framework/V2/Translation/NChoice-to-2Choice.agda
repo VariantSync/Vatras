@@ -1,9 +1,11 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Framework.V2.Translation.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.List using (List; _∷_; []; map)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero)
+open import Data.Product using (∃-syntax) renaming (_,_ to _and_)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 
@@ -102,18 +104,24 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
   open import Data.Vec using (Vec; []; _∷_; fromList)
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
+  -- TODO: Write eliminator for Intermediate given a variability language with choices.
+  --       Then prove that the eliminator preserves semantics.
   data Intermediate : Set ℓ₁ where
     val : Carrier                → Intermediate
     chc : 2Choice I Intermediate → Intermediate
 
   {-# TERMINATING #-}
+  -- TODO: Prove termination
   ⟦_⟧ᵢ : Intermediate → 2Config → Carrier
   ⟦ val v ⟧ᵢ _ = v
   ⟦ chc γ ⟧ᵢ c = ⟦ ⟦ γ ⟧₂ c ⟧ᵢ c
-  -- TODO: Write eliminator for Intermediate given a variability language with choices.
-  --       Then prove that the eliminator preserves semantics.
 
-  data _⟨_⟩⇝_ : Q → List⁺ Carrier → 2Choice I Intermediate → Set
+  inc-dim : Intermediate → Intermediate
+  inc-dim (val v) = val v
+  inc-dim (chc ((D ∙ i) ⟨ l , r ⟩)) = chc ((D ∙ suc i) ⟨ inc-dim l , inc-dim r ⟩)
+
+  -- TODO: Do we actually need the name of the choice here?
+  data _⟨_⟩⇝_ : Q → List⁺ Carrier → 2Choice I Intermediate → Set ℓ₁
   infix 3 _⟨_⟩⇝_
   data _⟨_⟩⇝_ where
     base : ∀ {D : Q} {e : Carrier}
@@ -122,24 +130,45 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
 
     step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate} {i}
       →      D ⟨ e₂ ∷ es ⟩⇝ (D ∙ i) ⟨ l , r ⟩
-        --------------------------------------------------------------------
-      → D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ suc i) ⟨ val e₁ , chc ((D ∙ i) ⟨ l , r ⟩) ⟩
+        ---------------------------------------------------------------------------
+      → D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ i) ⟨ val e₁ , inc-dim (chc ((D ∙ i) ⟨ l , r ⟩)) ⟩
+    {-
+    Example execution trace
+    step: D ⟨ 1 , 2 , 3 , 4 ⟩ ⇝ D0 ⟨ 1 , D1 ⟨ 2 , D2 ⟨ 3 , D3 ⟨ 4 , 4 ⟩ ⟩ ⟩ ⟩
+    step:     D ⟨ 2 , 3 , 4 ⟩ ⇝          D0 ⟨ 2 , D1 ⟨ 3 , D2 ⟨ 4 , 4 ⟩ ⟩ ⟩
+    step:         D ⟨ 3 , 4 ⟩ ⇝                   D0 ⟨ 3 , D1 ⟨ 4 , 4 ⟩ ⟩
+    base:             D ⟨ 4 ⟩ ⇝                            D0 ⟨ 4 , 4 ⟩
+    -}
 
-   {-
-   D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ suc i) ⟨ chc ((D ∙ i) ⟨ l , r ⟩) , val e₁ ⟩
+  determinism : ∀ {D} {es} {e e' : 2Choice I Intermediate}
+    → D ⟨ es ⟩⇝ e
+    → D ⟨ es ⟩⇝ e'
+    → e ≡ e
+  determinism base base = refl
+  determinism (step x) (step y) rewrite determinism x y = refl
 
-               D ⟨ 4 ⟩ ⇝                D0 ⟨ 4 , 4 ⟩
-           D ⟨ 3 , 4 ⟩ ⇝           D1 ⟨ D0 ⟨ 4 , 4 ⟩ , 3 ⟩
-       D ⟨ 2 , 3 , 4 ⟩ ⇝      D2 ⟨ D1 ⟨ D0 ⟨ 4 , 4 ⟩ , 3 ⟩ , 2 ⟩
-   D ⟨ 1 , 2 , 3 , 4 ⟩ ⇝ D3 ⟨ D2 ⟨ D1 ⟨ D0 ⟨ 4 , 4 ⟩ , 3 ⟩ , 2 ⟩ , 1 ⟩
+  Total' : Q → List⁺ Carrier → Set ℓ₁
+  Total' D es = ∃[ e ] (D ⟨ es ⟩⇝ e)
 
-   -- This gives a method to avoid redundand binary choices.
-   D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ suc i) ⟨ chc ((D ∙ i) ⟨ l , val e₁ ⟩) , r ⟩
-               D ⟨ 4 ⟩ ⇝                D0 ⟨ 4 , 4 ⟩
-           D ⟨ 3 , 4 ⟩ ⇝           D1 ⟨ D0 ⟨ 4 , 3 ⟩ , 4 ⟩
-       D ⟨ 2 , 3 , 4 ⟩ ⇝      D2 ⟨ D1 ⟨ D0 ⟨ 4 , 3 ⟩ , 2 ⟩ , 4 ⟩
-   D ⟨ 1 , 2 , 3 , 4 ⟩ ⇝ D3 ⟨ D2 ⟨ D1 ⟨ D0 ⟨ 4 , 3 ⟩ , 2 ⟩ , 1 ⟩ , 4 ⟩
-   -}
+  Total : NChoice Q Carrier → Set ℓ₁
+  Total (D ⟨ es ⟩) = Total' D es
+
+  -- Smart constructor for Totalₒ that does not require naming the expression explicitly.
+  return : ∀ {D es e}
+    → D ⟨ es ⟩⇝ e
+      ------------
+    → Total (D ⟨ es ⟩)
+  return {e = e} ⇝e = e and ⇝e
+
+  total : ∀ (D : Q) → (es : List⁺ Carrier)
+    → Total' D es
+  total D (e ∷ []) = return base
+  total D (e₁ ∷ e₂ ∷ es) =
+    let (_ ∙ i) ⟨ l , r ⟩ and ⇝e = total D (e₂ ∷ es)
+     in return (step {D} {e₁} {e₂} {es} {l} {r} {i} {!⇝e!})
+  -- -- with total D (e₂ ∷ es)
+  -- -- ... | (D₁ ∙ i) ⟨ l , r ⟩ and snd = return (step {D} {e₁} {e₂} {es} {!snd!})
+
   unroll : ∀ {n}
     → (max : ℕ)
     → Q      -- initial dimension in input formula that we translate (D in the example above).
@@ -555,3 +584,4 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     --       ⟦ D ⟨ alts ⟩ ⟧ₙ
     --     ≅ ⟦ convert (D ⟨ alts ⟩) ⟧₂
     -- convert-preserves = {!!}
+
