@@ -1,4 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --sized-types #-}
 module Framework.V2.Translation.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true; if_then_else_)
@@ -6,6 +7,8 @@ open import Data.List using (List; _∷_; []; map)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero)
 open import Data.Product using (∃-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+
+open import Size using (Size; ↑_; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 
@@ -106,29 +109,29 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
   -- TODO: Write eliminator for Intermediate given a variability language with choices.
   --       Then prove that the eliminator preserves semantics.
-  data Intermediate : Set ℓ₁ where
-    val : Carrier                → Intermediate
-    chc : 2Choice I Intermediate → Intermediate
+  data Intermediate : Size → Set ℓ₁ where
+    val : ∀ {ⅈ} → Carrier → Intermediate ⅈ
+    chc : ∀ {ⅈ} → 2Choice I (Intermediate ⅈ) → Intermediate (↑ ⅈ)
 
-  {-# TERMINATING #-}
-  -- TODO: Prove termination
-  ⟦_⟧ᵢ : Intermediate → 2Config → Carrier
+  ⟦_⟧ᵢ : ∀ {ⅈ} → Intermediate ⅈ → 2Config → Carrier
   ⟦ val v ⟧ᵢ _ = v
   ⟦ chc γ ⟧ᵢ c = ⟦ ⟦ γ ⟧₂ c ⟧ᵢ c
 
-  inc-dim : Intermediate → Intermediate
+  inc-dim : ∀ {ⅈ} → Intermediate ⅈ → Intermediate ⅈ
   inc-dim (val v) = val v
+  -- TODO: Choices are always on the right-hand side, so it might be fine to simplify this function
+  -- by applying inc-dim only to the right argument here.
   inc-dim (chc ((D ∙ i) ⟨ l , r ⟩)) = chc ((D ∙ suc i) ⟨ inc-dim l , inc-dim r ⟩)
 
   -- TODO: Do we actually need the name of the choice here?
-  data _⟨_,_⟩⇝_ : Q → Carrier → List Carrier → 2Choice I Intermediate → Set ℓ₁
+  data _⟨_,_⟩⇝_ : Q → Carrier → List Carrier → 2Choice I (Intermediate ∞) → Set ℓ₁
   infix 3 _⟨_,_⟩⇝_
   data _⟨_,_⟩⇝_ where
     base : ∀ {D : Q} {e : Carrier}
         ----------------------------------------
       → D ⟨ e , [] ⟩⇝ (D ∙ 0) ⟨ val e , val e ⟩
 
-    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate}
+    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate ∞}
       →      D ⟨ e₂ , es ⟩⇝ (D ∙ 0) ⟨ l , r ⟩
         ---------------------------------------------------------------------------
       → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
@@ -160,7 +163,7 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
   determinism-r base base = refl
   determinism-r (step x) (step y) rewrite determinism-r x y | determinism-l x y = refl
 
-  determinism : ∀ {D e es} {x y : 2Choice I Intermediate}
+  determinism : ∀ {D e es} {x y : 2Choice I (Intermediate ∞)}
     → D ⟨ e , es ⟩⇝ x
     → D ⟨ e , es ⟩⇝ y
     → x ≡ y
@@ -192,7 +195,7 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
         → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
       s ⇝f rewrite dim-constant ⇝e = step ⇝f
 
-  convert : NChoice Q Carrier → 2Choice I Intermediate
+  convert : NChoice Q Carrier → 2Choice I (Intermediate ∞)
   convert (D ⟨ e ∷ es ⟩) = proj₁ (total D e es)
 
   -- unroll : ∀ {n}
