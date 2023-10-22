@@ -170,6 +170,27 @@ syntax ≅[]→≅ e = ≅-by-index-translation e
 ≐→≅[] {J} {A} {B} A≐B =
     (λ i →      A≐B i )
   , (λ i → sym (A≐B i))
+
+irrelevant-index-⊆ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J}
+  → (x : Carrier)
+  → (∀ i → A i ≈ x)
+  → (∀ j → B j ≈ x)
+    ------------------------
+  → ∀ f → A ⊆[ f ] B
+irrelevant-index-⊆ _ const-A const-B =
+  λ f i →
+    Eq.trans (const-A i) (Eq.sym (const-B (f i)))
+
+irrelevant-index-≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J}
+  → (x : Carrier)
+  → (∀ i → A i ≈ x)
+  → (∀ j → B j ≈ x)
+    ------------------------
+  → ∀ f g → A ≅[ f ][ g ] B
+irrelevant-index-≅ x const-A const-B =
+  λ f g →
+      irrelevant-index-⊆ x const-A const-B f
+    , irrelevant-index-⊆ x const-B const-A g
 ```
 
 ### Basic Properties
