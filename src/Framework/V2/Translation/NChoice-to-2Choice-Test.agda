@@ -15,9 +15,9 @@ open Chc.VLChoiceₙ using () renaming (Construct to Cₙ)
 open import Framework.V2.Translation.NChoice-to-2Choice {Q = F} as BLUB
 open BLUB.Translate ℕ
 
-example : ∀ {D : F} → D ⟨ 1 ∷ 2 ∷ [] ⟩⇝ (D ∙ 0) ⟨ val 1 , chc ((D ∙ 1) ⟨ val 2 , val 2 ⟩) ⟩
-example = step base 
+example : ∀ {D : F} → D ⟨ 1 , 2 ∷ [] ⟩⇝ (D ∙ 0) ⟨ val 1 , chc ((D ∙ 1) ⟨ val 2 , val 2 ⟩) ⟩
+example = step base
 
 example' : ∀ {D : F}
-  → D ⟨ 1 ∷ 2 ∷ 3 ∷ [] ⟩⇝ (D ∙ 0) ⟨ val 1 , chc ((D ∙ 1) ⟨ val 2 , chc ((D ∙ 2) ⟨ val 3 , val 3 ⟩) ⟩) ⟩
+  → D ⟨ 1 , 2 ∷ 3 ∷ [] ⟩⇝ (D ∙ 0) ⟨ val 1 , chc ((D ∙ 1) ⟨ val 2 , chc ((D ∙ 2) ⟨ val 3 , val 3 ⟩) ⟩) ⟩
 example' = step (step base)

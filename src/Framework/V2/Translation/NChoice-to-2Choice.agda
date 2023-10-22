@@ -5,7 +5,7 @@ open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.List using (List; _∷_; []; map)
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero)
-open import Data.Product using (∃-syntax) renaming (_,_ to _and_)
+open import Data.Product using (∃-syntax; proj₁; proj₂) renaming (_,_ to _and_)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 
@@ -121,17 +121,17 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
   inc-dim (chc ((D ∙ i) ⟨ l , r ⟩)) = chc ((D ∙ suc i) ⟨ inc-dim l , inc-dim r ⟩)
 
   -- TODO: Do we actually need the name of the choice here?
-  data _⟨_⟩⇝_ : Q → List⁺ Carrier → 2Choice I Intermediate → Set ℓ₁
-  infix 3 _⟨_⟩⇝_
-  data _⟨_⟩⇝_ where
+  data _⟨_,_⟩⇝_ : Q → Carrier → List Carrier → 2Choice I Intermediate → Set ℓ₁
+  infix 3 _⟨_,_⟩⇝_
+  data _⟨_,_⟩⇝_ where
     base : ∀ {D : Q} {e : Carrier}
         ----------------------------------------
-      → D ⟨ e ∷ [] ⟩⇝ (D ∙ 0) ⟨ val e , val e ⟩
+      → D ⟨ e , [] ⟩⇝ (D ∙ 0) ⟨ val e , val e ⟩
 
-    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate} {i}
-      →      D ⟨ e₂ ∷ es ⟩⇝ (D ∙ i) ⟨ l , r ⟩
+    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate}
+      →      D ⟨ e₂ , es ⟩⇝ (D ∙ 0) ⟨ l , r ⟩
         ---------------------------------------------------------------------------
-      → D ⟨ e₁ ∷ e₂ ∷ es ⟩⇝ (D ∙ i) ⟨ val e₁ , inc-dim (chc ((D ∙ i) ⟨ l , r ⟩)) ⟩
+      → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
     {-
     Example execution trace
     step: D ⟨ 1 , 2 , 3 , 4 ⟩ ⇝ D0 ⟨ 1 , D1 ⟨ 2 , D2 ⟨ 3 , D3 ⟨ 4 , 4 ⟩ ⟩ ⟩ ⟩
@@ -140,57 +140,82 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     base:             D ⟨ 4 ⟩ ⇝                            D0 ⟨ 4 , 4 ⟩
     -}
 
-  determinism : ∀ {D} {es} {e e' : 2Choice I Intermediate}
-    → D ⟨ es ⟩⇝ e
-    → D ⟨ es ⟩⇝ e'
-    → e ≡ e
-  determinism base base = refl
-  determinism (step x) (step y) rewrite determinism x y = refl
+  dim-constant : ∀ {D D'} {e es l r} {i}
+    → D ⟨ e , es ⟩⇝ (D' ∙ i) ⟨ l , r ⟩
+    → D ≡ D'
+  dim-constant base = refl
+  dim-constant (step _) = refl
 
-  Total' : Q → List⁺ Carrier → Set ℓ₁
-  Total' D es = ∃[ e ] (D ⟨ es ⟩⇝ e)
+  determinism-l : ∀ {D e es} {D₁ l₁ r₁} {D₂ l₂ r₂}
+    → D ⟨ e , es ⟩⇝ (D₁ ∙ 0) ⟨ l₁ , r₁ ⟩
+    → D ⟨ e , es ⟩⇝ (D₂ ∙ 0) ⟨ l₂ , r₂ ⟩
+    → l₁ ≡ l₂
+  determinism-l base base = refl
+  determinism-l (step x) (step y) rewrite determinism-l x y = refl
+
+  determinism-r : ∀ {D e es} {D₁ l₁ r₁} {D₂ l₂ r₂}
+    → D ⟨ e , es ⟩⇝ (D₁ ∙ 0) ⟨ l₁ , r₁ ⟩
+    → D ⟨ e , es ⟩⇝ (D₂ ∙ 0) ⟨ l₂ , r₂ ⟩
+    → r₁ ≡ r₂
+  determinism-r base base = refl
+  determinism-r (step x) (step y) rewrite determinism-r x y | determinism-l x y = refl
+
+  determinism : ∀ {D e es} {x y : 2Choice I Intermediate}
+    → D ⟨ e , es ⟩⇝ x
+    → D ⟨ e , es ⟩⇝ y
+    → x ≡ y
+  determinism base base = refl
+  determinism (step ⇝x) (step ⇝y) rewrite determinism-r ⇝x ⇝y | determinism-l ⇝x ⇝y = refl
+
+  Total' : Q → Carrier → List Carrier → Set ℓ₁
+  Total' D e es = ∃[ x ] (D ⟨ e , es ⟩⇝ x)
 
   Total : NChoice Q Carrier → Set ℓ₁
-  Total (D ⟨ es ⟩) = Total' D es
+  Total (D ⟨ e ∷ es ⟩) = Total' D e es
 
   -- Smart constructor for Totalₒ that does not require naming the expression explicitly.
-  return : ∀ {D es e}
-    → D ⟨ es ⟩⇝ e
+  return : ∀ {D e es x}
+    → D ⟨ e , es ⟩⇝ x
       ------------
-    → Total (D ⟨ es ⟩)
-  return {e = e} ⇝e = e and ⇝e
+    → Total (D ⟨ e ∷ es ⟩)
+  return {x = x} ⇝x = x and ⇝x
 
-  total : ∀ (D : Q) → (es : List⁺ Carrier)
-    → Total' D es
-  total D (e ∷ []) = return base
-  total D (e₁ ∷ e₂ ∷ es) =
-    let (_ ∙ i) ⟨ l , r ⟩ and ⇝e = total D (e₂ ∷ es)
-     in return (step {D} {e₁} {e₂} {es} {l} {r} {i} {!⇝e!})
-  -- -- with total D (e₂ ∷ es)
-  -- -- ... | (D₁ ∙ i) ⟨ l , r ⟩ and snd = return (step {D} {e₁} {e₂} {es} {!snd!})
-
-  unroll : ∀ {n}
-    → (max : ℕ)
-    → Q      -- initial dimension in input formula that we translate (D in the example above).
-    → Vec Carrier (suc n) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
-    → 2Choice I Intermediate
-  unroll {n} max D (e ∷ [])     = (D ∙ (max ∸ n)) ⟨ val e , val e ⟩
-  unroll {n} max D (l ∷ r ∷ es) = (D ∙ (max ∸ n)) ⟨ val l , chc (unroll max D (r ∷ es)) ⟩
-  -- an unrolled choice D ∙ i gives you i effective choices
+  total : ∀ (D : Q) → (e : Carrier) (es : List Carrier)
+    → Total' D e es
+  total D e [] = return base
+  total D e₁ (e₂ ∷ es) with total D e₂ es
+  ... | (D' ∙ 0) ⟨ l , r ⟩ and ⇝e = return (s ⇝e)
+    where
+      -- TODO: Find out why we need this auxiliary function s to use rewriting here.
+      s : D ⟨ e₂ , es ⟩⇝ (D' ∙ 0) ⟨ l , r ⟩
+          ---------------------------------------------------------------------------
+        → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
+      s ⇝f rewrite dim-constant ⇝e = step ⇝f
 
   convert : NChoice Q Carrier → 2Choice I Intermediate
-  convert (D ⟨ e ∷ es ⟩) = unroll #es D (e ∷ fromList es)
-    where #es = Data.List.length es
+  convert (D ⟨ e ∷ es ⟩) = proj₁ (total D e es)
 
-  -- unroll-name : ∀ (D : F) (e : L₁ A) (es : List (L₁ A)) (n : ℕ)
-    -- → Σ[ x ∈ L₂ A ] (unroll D (e ∷ es) n ≡ (D ∙ n) ⟨ t e , x ⟩)
-  -- unroll-name D e [] n = t e and refl
-  -- unroll-name D e (r ∷ rs) n = mkChoice (unroll D (r ∷ rs) (suc n)) and refl
+  -- unroll : ∀ {n}
+  --   → (max : ℕ)
+  --   → Q      -- initial dimension in input formula that we translate (D in the example above).
+  --   → Vec Carrier (suc n) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
+  --   → 2Choice I Intermediate
+  -- unroll {n} max D (e ∷ [])     = (D ∙ (max ∸ n)) ⟨ val e , val e ⟩
+  -- unroll {n} max D (l ∷ r ∷ es) = (D ∙ (max ∸ n)) ⟨ val l , chc (unroll max D (r ∷ es)) ⟩
+  -- -- an unrolled choice D ∙ i gives you i effective choices
+
+  -- convert : NChoice Q Carrier → 2Choice I Intermediate
+  -- convert (D ⟨ e ∷ es ⟩) = unroll #es D (e ∷ fromList es)
+  --   where #es = Data.List.length es
+
+  -- -- unroll-name : ∀ (D : F) (e : L₁ A) (es : List (L₁ A)) (n : ℕ)
+  --   -- → Σ[ x ∈ L₂ A ] (unroll D (e ∷ es) n ≡ (D ∙ n) ⟨ t e , x ⟩)
+  -- -- unroll-name D e [] n = t e and refl
+  -- -- unroll-name D e (r ∷ rs) n = mkChoice (unroll D (r ∷ rs) (suc n)) and refl
 
   module Preservation
     (confi : NConfig → 2Config)
     (fnoci : 2Config → NConfig)
-    (D : Q)
     where
     open Data.List using (length)
     open import Data.Product using () renaming (_,_ to _and_)
@@ -198,53 +223,45 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     -- open import Data.List.NonEmpty.Relation.Unary.All using (_∷_) renaming (All to All⁺)
     module ISS = Data.IndexedSet (Eq.setoid Carrier)
     -- module ISS = Data.IndexedSet S
-    open ISS using (_∈_at_; _⊆[_]_; _≅[_][_]_)
+    open ISS using (_∈_at_; _⊆[_]_; _≅[_][_]_; ≐→≅[]; irrelevant-index-≅)
     open ISS.≅[]-Reasoning
     open import Util.AuxProofs using (if-idemp)
     open Eq.≡-Reasoning
     -- open Data.Nat using (_+_)
     -- open import Data.Nat.Properties using (≤-refl; m∸n≤m; m∸n≢0⇒n<m; 0∸n≡0; n∸n≡0; m≤n⇒m∸n≡0)
 
-    preservation-⊆ : ∀ (es : List⁺ Carrier)
-      → ⟦ D ⟨ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
-    preservation-⊆ (_ ∷ []) c =
-      Eq.cong
-        (λ eq → ⟦ eq ⟧ᵢ (confi c))
-        (Eq.sym
-          (if-idemp (confi c (D ∙ 0))))
-    preservation-⊆ (l ∷ r ∷ rs) c = {!!}
+    -- preservation-⊆ : ∀ (es : List⁺ Carrier)
+    --   → ⟦ D ⟨ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
+    -- preservation-⊆ (_ ∷ []) c =
+    --   Eq.cong
+    --     (λ eq → ⟦ eq ⟧ᵢ (confi c))
+    --     (Eq.sym
+    --       (if-idemp (confi c (D ∙ 0))))
+    -- preservation-⊆ (l ∷ r ∷ rs) c = {!!}
 
-    preservation-⊇ : ∀ (es : List⁺ Carrier)
-      → ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ ⊆[ fnoci ] ⟦ D ⟨ es ⟩ ⟧ₙ
-    preservation-⊇ (_ ∷ []) c =
-      Eq.cong
-        (λ eq → ⟦ eq ⟧ᵢ c)
-          (if-idemp (c (D ∙ 0)))
-    preservation-⊇ (l ∷ r ∷ rs) c = {!!}
+    -- preservation-⊇ : ∀ (es : List⁺ Carrier)
+    --   → ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ ⊆[ fnoci ] ⟦ D ⟨ es ⟩ ⟧ₙ
+    -- preservation-⊇ (_ ∷ []) c =
+    --   Eq.cong
+    --     (λ eq → ⟦ eq ⟧ᵢ c)
+    --       (if-idemp (c (D ∙ 0)))
+    -- preservation-⊇ (l ∷ r ∷ rs) c = {!!}
 
-    preservation : ∀ (es : List⁺ Carrier)
-      → ⟦ D ⟨ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
-    preservation es = (preservation-⊆ es) and preservation-⊇ es
-    --   ≅[]-begin
-    --     ⟦ D ⟨ head ∷ [] ⟩ ⟧ₙ
-    --   ≅[]⟨⟩
-    --     (λ c → head)
-    --   ≅[]⟨ (λ _ → refl) and (λ _ → refl) ⟩
-    --     (λ c → ⟦ val head ⟧ᵢ c)
-    --   ≐˘[ c ]⟨ Eq.cong (λ eq → ⟦ eq ⟧ᵢ c) (if-idemp (c (D ∙ 0))) ⟩
-    --     (λ c → ⟦ if c (D ∙ 0) then val head else val head ⟧ᵢ c)
-    --   ≅[]⟨⟩
-    --     (λ c → ⟦ ⟦ (D ∙ 0) ⟨ val head , val head ⟩ ⟧₂ c ⟧ᵢ c)
-    --   ≅[]⟨⟩
-    --     (λ c → ⟦ ⟦ convert (D ⟨ head ∷ [] ⟩) ⟧₂ c ⟧ᵢ c)
-    --   ≅[]⟨⟩
-    --     ⟦ chc (convert (D ⟨ head ∷ [] ⟩)) ⟧ᵢ
-    --   ≅[]-∎
-      -- ≅[]-begin
-      --   ⟦ D ⟨ es ⟩ ⟧ₙ
-      -- ≅[]⟨ {!!} ⟩
-      --   ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
-      -- ≅[]-∎
+    preservation : ∀ (e : NChoice Q Carrier)
+      → ⟦ e ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert e) ⟧ᵢ
+    preservation (D ⟨ e ∷ [] ⟩) =
+      -- No matter how we configure our expression (or its translation),
+      -- the result will always be e. This means, configurations are
+      -- irrelevant here. Hence, any translations of configurations may
+      -- be used. Hence, config and fnoci are fine.
+      irrelevant-index-≅ e l-const r-const confi fnoci
+      where
+        l-const : ∀ c → ⟦ D ⟨ e ∷ [] ⟩ ⟧ₙ c ≈ e
+        l-const c = refl
+
+        r-const : ∀ c → ⟦ chc (convert (D ⟨ e ∷ [] ⟩)) ⟧ᵢ c ≈ e
+        r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵢ c) (if-idemp (c (D ∙ 0)))
+    preservation (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = {!!}
 
     -- -- convert-preserves-l : ∀ (e : L₁ A) (es : List (L₁ A)) (c : NConfig)
     -- --   → ConfSpec D confi
@@ -584,4 +601,3 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     --       ⟦ D ⟨ alts ⟩ ⟧ₙ
     --     ≅ ⟦ convert (D ⟨ alts ⟩) ⟧₂
     -- convert-preserves = {!!}
-
