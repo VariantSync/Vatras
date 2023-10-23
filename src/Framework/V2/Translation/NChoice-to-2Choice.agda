@@ -52,7 +52,7 @@ record ConfSpec (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     in the choice at nesting level (c D).
     -}
     select-n : ∀ (c : NConfig) {i : ℕ}
-      → i ≡ c D
+      → c D ≡ i
       → (conf c) (D ∙ i) ≡ true
 
     {-|
@@ -71,29 +71,27 @@ record ConfSpec (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     -}
 open ConfSpec
 
-record FnocSpec (n : ℕ) (fnoc : 2Config → NConfig) : Set ℓ₁ where
+record FnocSpec (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
   field
     {-|
     The nary config must chose index i iff
     - the alternative at nesting depth i is chosen in the binary expression
     - and no other alternative at a higher nesting depth was chosen.
     -}
-    correct : ∀ (c : 2Config) (D : Q) (i : ℕ)
+    correct : ∀ (c : 2Config) (i : ℕ)
       → c (D ∙ i) ≡ true
       → (∀ (j : ℕ) → j < i → c (D ∙ j) ≡ false)
       → (fnoc c) D ≡ i
 open FnocSpec
 
-module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
-  -- TODO: Generalize everything here to setoid.
-  -- open Setoid S
-  -- module ≈-Eq = IsEquivalence isEquivalence
-  -- Carrier = Setoid.Carrier S
+-- module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
+module Translate (Carrier : Set ℓ₁) where
+  -- open Setoid S renaming (refl to ≈-refl)
   _≈_ = _≡_
   open Eq.≡-Reasoning
 
   open Data.Nat using (_∸_; _≤_)
-  open import Data.Nat.Show using (show)
+  -- open import Data.Nat.Show using (show)
 
     -- L₂-has-choices-syntactically : BinaryChoice I ∈ₛ L₂
     -- L₂-has-choices-syntactically = make L₂-has-choices
@@ -104,7 +102,7 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     -- mkChoice-preserves : ∀ (c : BinaryChoice I L₂ A) → ⟦ mkChoice c ⟧₂ ≗ BinaryChoice-Semantics VL₂ c
     -- mkChoice-preserves = preservation L₂-has-choices
 
-  open import Data.Vec using (Vec; []; _∷_; fromList)
+  -- open import Data.Vec using (Vec; []; _∷_; fromList)
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
   -- TODO: Write eliminator for Intermediate given a variability language with choices.
@@ -187,13 +185,13 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     → Total' D e es
   total D e [] = return base
   total D e₁ (e₂ ∷ es) with total D e₂ es
-  ... | (D' ∙ 0) ⟨ l , r ⟩ and ⇝e = return (s ⇝e)
-    where
-      -- TODO: Find out why we need this auxiliary function s to use rewriting here.
-      s : D ⟨ e₂ , es ⟩⇝ (D' ∙ 0) ⟨ l , r ⟩
-          ---------------------------------------------------------------------------
-        → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
-      s ⇝f rewrite dim-constant ⇝e = step ⇝f
+  -- ... | ((.D ∙ 0) ⟨ .(val e₂) , .(val e₂) ⟩) and base = return (step base)
+  -- ... | ((.D ∙ 0) ⟨ .(val e₂) , .(inc-dim (chc ((D ∙ 0) ⟨ _ , _ ⟩))) ⟩) and step ⇝e = return (step (step ⇝e))
+  ... | (.D ∙ 0) ⟨ .(val e₂) , .(val e₂) ⟩ and base
+    = (D ∙ 0) ⟨ val e₁ , chc ((D ∙ 1) ⟨ val e₂ , val e₂ ⟩) ⟩ and step base
+  ... | (.D ∙ 0) ⟨ .(val e₂) , r ⟩ and step ⇝e
+    = (D ∙ 0) ⟨ val e₁ , chc ((D ∙ 1) ⟨ val e₂ , inc-dim r ⟩) ⟩ and (step (step ⇝e))
+
 
   convert : NChoice Q Carrier → 2Choice I (Intermediate ∞)
   convert (D ⟨ e ∷ es ⟩) = proj₁ (total D e es)
@@ -216,26 +214,73 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
   -- -- unroll-name D e [] n = t e and refl
   -- -- unroll-name D e (r ∷ rs) n = mkChoice (unroll D (r ∷ rs) (suc n)) and refl
 
+  module ISS = Data.IndexedSet (Eq.setoid Carrier)
+  -- module ISS = Data.IndexedSet S
+  open ISS using (_∈_at_; _⊆[_]_; _≅[_][_]_; ≐→≅[]; irrelevant-index-⊆; irrelevant-index-≅)
+  open ISS.≅[]-Reasoning
+  Preserved : NChoice Q Carrier → (NConfig → 2Config) → (2Config → NConfig) → Set ℓ₁
+  Preserved (D ⟨ es ⟩) confi fnoci = (⟦ D ⟨ es ⟩ ⟧ₙ) ≅[ confi ][ fnoci ] (⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ)
+
   module Preservation
     (confi : NConfig → 2Config)
     (fnoci : 2Config → NConfig)
     where
     open Data.List using (length)
     open import Data.Product using () renaming (_,_ to _and_)
-    -- open import Data.List.Relation.Unary.All using (All; []; _∷_)
-    -- open import Data.List.NonEmpty.Relation.Unary.All using (_∷_) renaming (All to All⁺)
-    module ISS = Data.IndexedSet (Eq.setoid Carrier)
-    -- module ISS = Data.IndexedSet S
-    open ISS using (_∈_at_; _⊆[_]_; _≅[_][_]_; ≐→≅[]; irrelevant-index-≅)
-    open ISS.≅[]-Reasoning
-    open import Util.AuxProofs using (if-idemp)
+    open import Util.AuxProofs using (if-idemp; if-idemp')
     open Eq.≡-Reasoning
-    -- open Data.Nat using (_+_)
-    -- open import Data.Nat.Properties using (≤-refl; m∸n≤m; m∸n≢0⇒n<m; 0∸n≡0; n∸n≡0; m≤n⇒m∸n≡0)
 
-    -- preservation-⊆ : ∀ (es : List⁺ Carrier)
-    --   → ⟦ D ⟨ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
-    -- preservation-⊆ (_ ∷ []) c =
+    -- open Data.Nat using (_+_)
+    open import Data.Nat.Properties using (≤-refl) --; m∸n≤m; m∸n≢0⇒n<m; 0∸n≡0; n∸n≡0; m≤n⇒m∸n≡0)
+
+    flub : ∀ {n m}
+      → n ≡ suc m
+      → m < n
+    flub refl = s≤s ≤-refl
+
+    blar : ∀ {n m}
+      → n ≡ suc m
+      → 0 < n
+    blar refl = s≤s z≤n
+
+    preservation : ∀ {D} {e es} {l r}
+      → ConfSpec D confi
+      → FnocSpec D fnoci
+      → D ⟨ e , es ⟩⇝ (D ∙ 0) ⟨ l , r ⟩
+      → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc ((D ∙ 0) ⟨ l , r ⟩) ⟧ᵢ
+
+    -- preservation-⊆ : ∀ {D} {e₁ e₂ es} {l r}
+    --   → ConfSpec D confi
+    --   → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
+    --   → ⟦ D ⟨ e₁ ∷ e₂ ∷ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc ((D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩) ⟧ᵢ
+    -- preservation-⊆ conv x c = {!!}
+    -- preservation-⊆ D e₁ e₂ es convi c with c D in cD≡x | total D e₂ es
+    -- ... | zero | .((D ∙ 0) ⟨ val e₂ , val e₂ ⟩) and base rewrite select-n convi c cD≡x = refl
+    -- ... | zero | .((D ∙ 0) ⟨ val e₂ , inc-dim (chc ((D ∙ 0) ⟨ _ , _ ⟩)) ⟩) and step snd rewrite select-n convi c cD≡x = refl
+    -- ... | suc x | .((D ∙ 0) ⟨ val e₂ , val e₂ ⟩) and base rewrite deselect-<n convi c (blar cD≡x) =
+    --   begin
+    --     e₂
+    --   ≡⟨ {!!} ⟩
+    --     ⟦ ⟦ (D ∙ 1) ⟨ val e₂ , val e₂ ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+    --   ∎
+    -- preservation-⊆ D e₁ e₂ (e₃ ∷ es) convi c
+    --   | suc x | .(D ∙ 0) ⟨ .(val e₂) , chc (.(D ∙ 1) ⟨ l , r ⟩ ) ⟩ and step snd rewrite deselect-<n convi c (blar cD≡x) =
+    --     begin
+    --       find-or-last x (e₂ ∷ e₃ ∷ es)
+    --     ≡⟨ {!!} ⟩
+    --       ⟦ ⟦ (D ∙ 1) ⟨ val e₂ , chc ((D ∙ 2) ⟨ inc-dim l , inc-dim r ⟩) ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+    --     ∎
+    --     where
+    --       ind = preserves snd
+
+      -- begin
+      --   e₁
+      -- ≡⟨ {!!} ⟩
+      --   ⟦ chc (convert e) ⟧ᵢ (confi c)
+      -- ≡⟨⟩
+      --   ⟦ chc (convert e) ⟧ᵢ (confi c)
+      -- ∎
+    -- preservation-⊆ D _ _ [] c = ?
     --   Eq.cong
     --     (λ eq → ⟦ eq ⟧ᵢ (confi c))
     --     (Eq.sym
@@ -250,21 +295,51 @@ module Translate (Carrier : Set ℓ₁) where --{ℓ₂} (S : Setoid ℓ₁ ℓ�
     --       (if-idemp (c (D ∙ 0)))
     -- preservation-⊇ (l ∷ r ∷ rs) c = {!!}
 
-    preservation : ∀ (e : NChoice Q Carrier)
-      → ⟦ e ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert e) ⟧ᵢ
-    preservation (D ⟨ e ∷ [] ⟩) =
-      -- No matter how we configure our expression (or its translation),
-      -- the result will always be e. This means, configurations are
-      -- irrelevant here. Hence, any translations of configurations may
-      -- be used. Hence, config and fnoci are fine.
+    preservation _ _ (base {D} {e}) =
+      -- no matter how we configure our expression (or its translation),
+      -- the result will always be e. this means, configurations are
+      -- irrelevant here. hence, any translations of configurations may
+      -- be used. hence, config and fnoci are fine.
       irrelevant-index-≅ e l-const r-const confi fnoci
       where
         l-const : ∀ c → ⟦ D ⟨ e ∷ [] ⟩ ⟧ₙ c ≈ e
-        l-const c = refl
+        l-const c = refl --≈-refl
 
         r-const : ∀ c → ⟦ chc (convert (D ⟨ e ∷ [] ⟩)) ⟧ᵢ c ≈ e
         r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵢ c) (if-idemp (c (D ∙ 0)))
-    preservation (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = {!!}
+    proj₁ (preservation conv vnoc (step {D} {e₁} {e₂} {es} {l} {r} ⇝x)) c with c D in eq
+    ... | zero rewrite select-n conv c eq = refl
+    ... | suc x rewrite deselect-<n conv c (blar eq) =
+      begin
+      -- TODO: The following can never be true. So somewhere, we have a wrong assumption!
+      --       We have to find it.
+      --       Is it within deselect-<n?
+      --       Or is the translation not preserving at all?
+      --       Or are we applying the induction hypothesis wrongly?
+        find-or-last x (e₂ ∷ es)
+      ≡⟨ {!!} ⟩
+        find-or-last (suc x) (e₂ ∷ es)
+      ≡˘⟨ Eq.cong (λ a → find-or-last a (e₂ ∷ es)) eq ⟩
+        find-or-last (c D) (e₂ ∷ es)
+      ≡⟨⟩
+        ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ c
+      ≡⟨ hypot ⟩
+        ⟦ ⟦ (D ∙ 0) ⟨ l , r ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+      ≡⟨ {!!} ⟩
+        ⟦ ⟦ (D ∙ 1) ⟨ inc-dim l , inc-dim r ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+      ∎
+      where
+        hypot : ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ c ≡ ⟦ ⟦ (D ∙ 0) ⟨ l , r ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+        hypot = proj₁ (preservation conv vnoc ⇝x) c
+    proj₂ (preservation conv vnoc (step {D} {e₁} {e₂} {es} {l} {r} ⇝x)) c = {!!}
+      -- ≅[]-begin
+      --   ⟦ D ⟨ e₁ ∷ e₂ ∷ es ⟩ ⟧ₙ
+      -- ≅[]⟨ {!!} ⟩
+      --   (λ c → ⟦ ⟦ (D ∙ 0) ⟨ val e₁ , chc ((D ∙ 1) ⟨ inc-dim l , inc-dim r ⟩) ⟩ ⟧₂ c ⟧ᵢ c)
+      -- ≅[]-∎
+
+    -- preservation _ (D ⟨ e ∷ [] ⟩) =
+    -- preservation (D ⟨ e₁ ∷ e₂ ∷ es ⟩) = ? --preservation-⊆ D e₁ e₂ es {!!} and {!!}
 
     -- -- convert-preserves-l : ∀ (e : L₁ A) (es : List (L₁ A)) (c : NConfig)
     -- --   → ConfSpec D confi

@@ -82,6 +82,12 @@ if-idemp : ∀ {ℓ} {A : Set ℓ} {a : A}
 if-idemp false = refl
 if-idemp true  = refl
 
+if-idemp' : ∀ {ℓ} {A : Set ℓ}
+  → (a : A)
+    ------------------------
+  → ∀ {c} → (if c then a else a) ≡ a
+if-idemp' _ {b} = if-idemp b
+
 if-cong : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂} {a b : A}
   → (c : Bool)
   → (P : A → B)
