@@ -5,7 +5,7 @@
 
 module Framework.Proof.Completeness where
 
-open import Data.Product using (_,_)
+open import Data.Product using (_,_; _×_; ∄-syntax)
 
 open import Function using (_∘_)
 open import Size using (∞)
@@ -86,8 +86,17 @@ more-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage}
   → Sound L₋
   → Incomplete L₋
     ------------------------------
-  → L₊ is-more-expressive-than L₋
+  → L₊ ≻ L₋
 more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-sound L₋-incomp =
     expressiveness-by-completeness-and-soundness L₊-comp L₋-sound
   , less-expressive-from-completeness L₊-comp L₋-incomp
+```
+
+```agda
+complete-is-most-expressive : ∀ {L₁ : VariabilityLanguage}
+  → Complete L₁
+    ----------------
+  → ∄[ L₂ ] (Sound L₂ × L₂ ≻ L₁)
+complete-is-most-expressive L₁-comp (L₂ , L₂-sound , L₂≽L₁ , L₁⋡L₂) =
+  L₁⋡L₂ (expressiveness-by-completeness-and-soundness L₁-comp L₂-sound)
 ```
