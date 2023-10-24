@@ -219,7 +219,7 @@ module Translate (Carrier : Set ℓ₁) where
   open ISS using (_∈_at_; _⊆[_]_; _≅[_][_]_; ≐→≅[]; irrelevant-index-⊆; irrelevant-index-≅)
   open ISS.≅[]-Reasoning
   Preserved : NChoice Q Carrier → (NConfig → 2Config) → (2Config → NConfig) → Set ℓ₁
-  Preserved (D ⟨ es ⟩) confi fnoci = (⟦ D ⟨ es ⟩ ⟧ₙ) ≅[ confi ][ fnoci ] (⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ)
+  Preserved (D ⟨ es ⟩) confi fnoci = ⟦ D ⟨ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
 
   module Preservation
     (confi : NConfig → 2Config)
