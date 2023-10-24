@@ -5,7 +5,7 @@ module Framework.V2.Translation.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} whe
 open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.List using (List; _∷_; []; map)
 open import Data.List.NonEmpty using (List⁺; _∷_)
-open import Data.Nat using (ℕ; suc; zero)
+open import Data.Nat using (ℕ; suc; zero; _+_)
 open import Data.Product using (∃-syntax; proj₁; proj₂) renaming (_,_ to _and_)
 
 open import Size using (Size; ↑_; ∞)
@@ -90,46 +90,45 @@ module Translate (Carrier : Set ℓ₁) where
   _≈_ = _≡_
   open Eq.≡-Reasoning
 
-  open Data.Nat using (_∸_; _≤_)
-  -- open import Data.Nat.Show using (show)
-
-    -- L₂-has-choices-syntactically : BinaryChoice I ∈ₛ L₂
-    -- L₂-has-choices-syntactically = make L₂-has-choices
-
-    -- mkChoice : BinaryChoice I L₂ A → L₂ A
-    -- mkChoice = cons L₂-has-choices-syntactically
-
-    -- mkChoice-preserves : ∀ (c : BinaryChoice I L₂ A) → ⟦ mkChoice c ⟧₂ ≗ BinaryChoice-Semantics VL₂ c
-    -- mkChoice-preserves = preservation L₂-has-choices
-
   -- open import Data.Vec using (Vec; []; _∷_; fromList)
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
-  -- TODO: Write eliminator for Intermediate given a variability language with choices.
+  -- TODO: Write eliminator for NestedChoice given a variability language with choices.
   --       Then prove that the eliminator preserves semantics.
-  data Intermediate : Size → Set ℓ₁ where
-    val : ∀ {ⅈ} → Carrier → Intermediate ⅈ
-    chc : ∀ {ⅈ} → 2Choice I (Intermediate ⅈ) → Intermediate (↑ ⅈ)
+  data NestedChoice : Size → Set ℓ₁ where
+    val : ∀ {ⅈ} → Carrier → NestedChoice ⅈ -- \ii
+    chc : ∀ {ⅈ} → 2Choice I (NestedChoice ⅈ) → NestedChoice (↑ ⅈ)
 
-  ⟦_⟧ᵢ : ∀ {ⅈ} → Intermediate ⅈ → 2Config → Carrier
-  ⟦ val v ⟧ᵢ _ = v
-  ⟦ chc γ ⟧ᵢ c = ⟦ ⟦ γ ⟧₂ c ⟧ᵢ c
+  ⟦_⟧ᵣ : ∀ {ⅈ} → NestedChoice ⅈ → 2Config → Carrier
+  ⟦ val v ⟧ᵣ _ = v
+  ⟦ chc γ ⟧ᵣ c = ⟦ ⟦ γ ⟧₂ c ⟧ᵣ c
 
-  inc-dim : ∀ {ⅈ} → Intermediate ⅈ → Intermediate ⅈ
+  inc-dim : ∀ {ⅈ} → NestedChoice ⅈ → NestedChoice ⅈ
   inc-dim (val v) = val v
   -- TODO: Choices are always on the right-hand side, so it might be fine to simplify this function
   -- by applying inc-dim only to the right argument here.
   inc-dim (chc ((D ∙ i) ⟨ l , r ⟩)) = chc ((D ∙ suc i) ⟨ inc-dim l , inc-dim r ⟩)
 
+  record Intermediate : Set ℓ₁ where
+    constructor _≫_⟨_,_⟩
+    field
+      skip : ℕ
+      name : Q
+      head : Carrier
+      tail : List Carrier
+
+  ⟦_⟧ : Intermediate → NConfig → Carrier
+  ⟦ skip ≫ D ⟨ e , es ⟩ ⟧ c = find-or-last (skip + c D) (e ∷ es)
+
   -- TODO: Do we actually need the name of the choice here?
-  data _⟨_,_⟩⇝_ : Q → Carrier → List Carrier → 2Choice I (Intermediate ∞) → Set ℓ₁
+  data _⟨_,_⟩⇝_ : Q → Carrier → List Carrier → 2Choice I (NestedChoice ∞) → Set ℓ₁
   infix 3 _⟨_,_⟩⇝_
   data _⟨_,_⟩⇝_ where
     base : ∀ {D : Q} {e : Carrier}
         ----------------------------------------
       → D ⟨ e , [] ⟩⇝ (D ∙ 0) ⟨ val e , val e ⟩
 
-    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : Intermediate ∞}
+    step : ∀ {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : NestedChoice ∞}
       →      D ⟨ e₂ , es ⟩⇝ (D ∙ 0) ⟨ l , r ⟩
         ---------------------------------------------------------------------------
       → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
@@ -161,7 +160,7 @@ module Translate (Carrier : Set ℓ₁) where
   determinism-r base base = refl
   determinism-r (step x) (step y) rewrite determinism-r x y | determinism-l x y = refl
 
-  determinism : ∀ {D e es} {x y : 2Choice I (Intermediate ∞)}
+  determinism : ∀ {D e es} {x y : 2Choice I (NestedChoice ∞)}
     → D ⟨ e , es ⟩⇝ x
     → D ⟨ e , es ⟩⇝ y
     → x ≡ y
@@ -193,33 +192,15 @@ module Translate (Carrier : Set ℓ₁) where
     = (D ∙ 0) ⟨ val e₁ , chc ((D ∙ 1) ⟨ val e₂ , inc-dim r ⟩) ⟩ and (step (step ⇝e))
 
 
-  convert : NChoice Q Carrier → 2Choice I (Intermediate ∞)
+  convert : NChoice Q Carrier → 2Choice I (NestedChoice ∞)
   convert (D ⟨ e ∷ es ⟩) = proj₁ (total D e es)
-
-  -- unroll : ∀ {n}
-  --   → (max : ℕ)
-  --   → Q      -- initial dimension in input formula that we translate (D in the example above).
-  --   → Vec Carrier (suc n) -- remaining alternatives of the choice to unroll. We let this shrink recursively.
-  --   → 2Choice I Intermediate
-  -- unroll {n} max D (e ∷ [])     = (D ∙ (max ∸ n)) ⟨ val e , val e ⟩
-  -- unroll {n} max D (l ∷ r ∷ es) = (D ∙ (max ∸ n)) ⟨ val l , chc (unroll max D (r ∷ es)) ⟩
-  -- -- an unrolled choice D ∙ i gives you i effective choices
-
-  -- convert : NChoice Q Carrier → 2Choice I Intermediate
-  -- convert (D ⟨ e ∷ es ⟩) = unroll #es D (e ∷ fromList es)
-  --   where #es = Data.List.length es
-
-  -- -- unroll-name : ∀ (D : F) (e : L₁ A) (es : List (L₁ A)) (n : ℕ)
-  --   -- → Σ[ x ∈ L₂ A ] (unroll D (e ∷ es) n ≡ (D ∙ n) ⟨ t e , x ⟩)
-  -- -- unroll-name D e [] n = t e and refl
-  -- -- unroll-name D e (r ∷ rs) n = mkChoice (unroll D (r ∷ rs) (suc n)) and refl
 
   module ISS = Data.IndexedSet (Eq.setoid Carrier)
   -- module ISS = Data.IndexedSet S
   open ISS using (_∈_at_; _⊆[_]_; _≅[_][_]_; ≐→≅[]; irrelevant-index-⊆; irrelevant-index-≅)
   open ISS.≅[]-Reasoning
   Preserved : NChoice Q Carrier → (NConfig → 2Config) → (2Config → NConfig) → Set ℓ₁
-  Preserved (D ⟨ es ⟩) confi fnoci = ⟦ D ⟨ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ
+  Preserved (D ⟨ es ⟩) confi fnoci = ⟦ D ⟨ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵣ
 
   module Preservation
     (confi : NConfig → 2Config)
@@ -243,16 +224,10 @@ module Translate (Carrier : Set ℓ₁) where
       → 0 < n
     blar refl = s≤s z≤n
 
-    preservation : ∀ {D} {e es} {l r}
-      → ConfSpec D confi
-      → FnocSpec D fnoci
-      → D ⟨ e , es ⟩⇝ (D ∙ 0) ⟨ l , r ⟩
-      → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc ((D ∙ 0) ⟨ l , r ⟩) ⟧ᵢ
-
     -- preservation-⊆ : ∀ {D} {e₁ e₂ es} {l r}
     --   → ConfSpec D confi
     --   → D ⟨ e₁ , e₂ ∷ es ⟩⇝ (D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩
-    --   → ⟦ D ⟨ e₁ ∷ e₂ ∷ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc ((D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩) ⟧ᵢ
+    --   → ⟦ D ⟨ e₁ ∷ e₂ ∷ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc ((D ∙ 0) ⟨ val e₁ , inc-dim (chc ((D ∙ 0) ⟨ l , r ⟩)) ⟩) ⟧ᵣ
     -- preservation-⊆ conv x c = {!!}
     -- preservation-⊆ D e₁ e₂ es convi c with c D in cD≡x | total D e₂ es
     -- ... | zero | .((D ∙ 0) ⟨ val e₂ , val e₂ ⟩) and base rewrite select-n convi c cD≡x = refl
@@ -261,14 +236,14 @@ module Translate (Carrier : Set ℓ₁) where
     --   begin
     --     e₂
     --   ≡⟨ {!!} ⟩
-    --     ⟦ ⟦ (D ∙ 1) ⟨ val e₂ , val e₂ ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+    --     ⟦ ⟦ (D ∙ 1) ⟨ val e₂ , val e₂ ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
     --   ∎
     -- preservation-⊆ D e₁ e₂ (e₃ ∷ es) convi c
     --   | suc x | .(D ∙ 0) ⟨ .(val e₂) , chc (.(D ∙ 1) ⟨ l , r ⟩ ) ⟩ and step snd rewrite deselect-<n convi c (blar cD≡x) =
     --     begin
     --       find-or-last x (e₂ ∷ e₃ ∷ es)
     --     ≡⟨ {!!} ⟩
-    --       ⟦ ⟦ (D ∙ 1) ⟨ val e₂ , chc ((D ∙ 2) ⟨ inc-dim l , inc-dim r ⟩) ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+    --       ⟦ ⟦ (D ∙ 1) ⟨ val e₂ , chc ((D ∙ 2) ⟨ inc-dim l , inc-dim r ⟩) ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
     --     ∎
     --     where
     --       ind = preserves snd
@@ -276,25 +251,30 @@ module Translate (Carrier : Set ℓ₁) where
       -- begin
       --   e₁
       -- ≡⟨ {!!} ⟩
-      --   ⟦ chc (convert e) ⟧ᵢ (confi c)
+      --   ⟦ chc (convert e) ⟧ᵣ (confi c)
       -- ≡⟨⟩
-      --   ⟦ chc (convert e) ⟧ᵢ (confi c)
+      --   ⟦ chc (convert e) ⟧ᵣ (confi c)
       -- ∎
     -- preservation-⊆ D _ _ [] c = ?
     --   Eq.cong
-    --     (λ eq → ⟦ eq ⟧ᵢ (confi c))
+    --     (λ eq → ⟦ eq ⟧ᵣ (confi c))
     --     (Eq.sym
     --       (if-idemp (confi c (D ∙ 0))))
     -- preservation-⊆ (l ∷ r ∷ rs) c = {!!}
 
     -- preservation-⊇ : ∀ (es : List⁺ Carrier)
-    --   → ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵢ ⊆[ fnoci ] ⟦ D ⟨ es ⟩ ⟧ₙ
+    --   → ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵣ ⊆[ fnoci ] ⟦ D ⟨ es ⟩ ⟧ₙ
     -- preservation-⊇ (_ ∷ []) c =
     --   Eq.cong
-    --     (λ eq → ⟦ eq ⟧ᵢ c)
+    --     (λ eq → ⟦ eq ⟧ᵣ c)
     --       (if-idemp (c (D ∙ 0)))
     -- preservation-⊇ (l ∷ r ∷ rs) c = {!!}
 
+    preservation : ∀ {D} {e es} {l r}
+      → ConfSpec D confi
+      → FnocSpec D fnoci
+      → D ⟨ e , es ⟩⇝ (D ∙ 0) ⟨ l , r ⟩
+      → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc ((D ∙ 0) ⟨ l , r ⟩) ⟧ᵣ
     preservation _ _ (base {D} {e}) =
       -- no matter how we configure our expression (or its translation),
       -- the result will always be e. this means, configurations are
@@ -305,8 +285,8 @@ module Translate (Carrier : Set ℓ₁) where
         l-const : ∀ c → ⟦ D ⟨ e ∷ [] ⟩ ⟧ₙ c ≈ e
         l-const c = refl --≈-refl
 
-        r-const : ∀ c → ⟦ chc (convert (D ⟨ e ∷ [] ⟩)) ⟧ᵢ c ≈ e
-        r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵢ c) (if-idemp (c (D ∙ 0)))
+        r-const : ∀ c → ⟦ chc (convert (D ⟨ e ∷ [] ⟩)) ⟧ᵣ c ≈ e
+        r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵣ c) (if-idemp (c (D ∙ 0)))
     proj₁ (preservation conv vnoc (step {D} {e₁} {e₂} {es} {l} {r} ⇝x)) c with c D in eq
     ... | zero rewrite select-n conv c eq = refl
     ... | suc x rewrite deselect-<n conv c (blar eq) =
@@ -317,6 +297,7 @@ module Translate (Carrier : Set ℓ₁) where
       --       Or is the translation not preserving at all?
       --       Or are we applying the induction hypothesis wrongly?
         find-or-last x (e₂ ∷ es)
+      -- ≡⟨⟩ ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ iff c D ≡ x
       ≡⟨ {!!} ⟩
         find-or-last (suc x) (e₂ ∷ es)
       ≡˘⟨ Eq.cong (λ a → find-or-last a (e₂ ∷ es)) eq ⟩
@@ -324,18 +305,18 @@ module Translate (Carrier : Set ℓ₁) where
       ≡⟨⟩
         ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ c
       ≡⟨ hypot ⟩
-        ⟦ ⟦ (D ∙ 0) ⟨ l , r ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+        ⟦ ⟦ (D ∙ 0) ⟨ l , r ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
       ≡⟨ {!!} ⟩
-        ⟦ ⟦ (D ∙ 1) ⟨ inc-dim l , inc-dim r ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+        ⟦ ⟦ (D ∙ 1) ⟨ inc-dim l , inc-dim r ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
       ∎
       where
-        hypot : ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ c ≡ ⟦ ⟦ (D ∙ 0) ⟨ l , r ⟩ ⟧₂ (confi c) ⟧ᵢ (confi c)
+        hypot : ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ c ≡ ⟦ ⟦ (D ∙ 0) ⟨ l , r ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
         hypot = proj₁ (preservation conv vnoc ⇝x) c
     proj₂ (preservation conv vnoc (step {D} {e₁} {e₂} {es} {l} {r} ⇝x)) c = {!!}
       -- ≅[]-begin
       --   ⟦ D ⟨ e₁ ∷ e₂ ∷ es ⟩ ⟧ₙ
       -- ≅[]⟨ {!!} ⟩
-      --   (λ c → ⟦ ⟦ (D ∙ 0) ⟨ val e₁ , chc ((D ∙ 1) ⟨ inc-dim l , inc-dim r ⟩) ⟩ ⟧₂ c ⟧ᵢ c)
+      --   (λ c → ⟦ ⟦ (D ∙ 0) ⟨ val e₁ , chc ((D ∙ 1) ⟨ inc-dim l , inc-dim r ⟩) ⟩ ⟧₂ c ⟧ᵣ c)
       -- ≅[]-∎
 
     -- preservation _ (D ⟨ e ∷ [] ⟩) =
@@ -679,3 +660,12 @@ module Translate (Carrier : Set ℓ₁) where
     --       ⟦ D ⟨ alts ⟩ ⟧ₙ
     --     ≅ ⟦ convert (D ⟨ alts ⟩) ⟧₂
     -- convert-preserves = {!!}
+
+    -- L₂-has-choices-syntactically : BinaryChoice I ∈ₛ L₂
+    -- L₂-has-choices-syntactically = make L₂-has-choices
+
+    -- mkChoice : BinaryChoice I L₂ A → L₂ A
+    -- mkChoice = cons L₂-has-choices-syntactically
+
+    -- mkChoice-preserves : ∀ (c : BinaryChoice I L₂ A) → ⟦ mkChoice c ⟧₂ ≗ BinaryChoice-Semantics VL₂ c
+    -- mkChoice-preserves = preservation L₂-has-choices
