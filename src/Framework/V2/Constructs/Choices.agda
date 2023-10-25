@@ -2,6 +2,7 @@
 module Framework.V2.Constructs.Choices where
 
 open import Data.Bool using (Bool; if_then_else_)
+open import Data.String using (String; _<+>_; intersperse)
 open import Level using (Level; _⊔_)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -53,8 +54,11 @@ module Choice₂ where
       f (Standard-Semantics (D ⟨ l , r ⟩) c)
     ∎
 
+  show : ∀ {ℓ₁ ℓ₂} {Q : Set ℓ₁} {A : Set ℓ₂} → (Q → String) → (A → String) → Syntax Q A → String
+  show show-q show-a (D ⟨ l , r ⟩) = show-q D <+> "⟨" <+> show-a l <+> "," <+> show-a r <+> "⟩"
+
 open import Data.Nat using (ℕ)
-open import Data.List.NonEmpty using (List⁺) renaming (map to map-list⁺)
+open import Data.List.NonEmpty using (List⁺; toList) renaming (map to map-list⁺)
 open import Util.List using (find-or-last; map-find-or-last)
 
 module Choiceₙ where
@@ -99,6 +103,9 @@ module Choiceₙ where
     ≡⟨⟩
       f (Standard-Semantics (D ⟨ as ⟩) c)
     ∎
+
+  show : ∀ {ℓ₁ ℓ₂} {Q : Set ℓ₁} {A : Set ℓ₂} → (Q → String) → (A → String) → Syntax Q A → String
+  show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-list⁺ show-a es))) <+> "⟩"
 
 -- Show how choices can be used as constructors in variability languages.
 open import Framework.V2.Variants
