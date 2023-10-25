@@ -2,9 +2,11 @@
 
 module Main where
 
+open import Level using (0ℓ; suc)
+
 open import Data.String using (String)
 open import Data.List using (List; []; _∷_; map)
-open import Data.Product using (∃-syntax; _×_; _,_)
+open import Data.Product using (∃-syntax; Σ-syntax; _×_; _,_)
 open import Size using (∞)
 
 open import Show.Lines
@@ -22,17 +24,26 @@ open import Test.Examples.OC using (optex-all)
 open import Test.Experiments.CCC-to-BCC
 open import Test.Experiments.OC-to-BCC
 
+open import Framework.V2.Translation.NChoice-to-2Choice-Experiment using (exp; all-ex)
+
+ExperimentExecution : ∀ ℓ → Set (suc ℓ)
+ExperimentExecution ℓ = Σ[ A ∈ Set ℓ ] (Experiment A × List (Example A))
+
+add : ∀ {ℓ} {A : Set ℓ} → Experiment A → List (Example A) → ExperimentExecution ℓ
+add {ℓ} {A} program inputs = A , program , inputs
+
 {-|
 A list of programs that we want to run.
 Each program is implemented in terms of an Experiment.
 Each experiment is run on each example from a list of examples (i.e., experiment inputs).
 -}
-experimentsToRun : List (∃[ A ] (Experiment A × List (Example A)))
+experimentsToRun : List (ExperimentExecution 0ℓ)
 experimentsToRun =
     -- Run some example translations from n-ary to binary choice calculus
-    (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
+    -- (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
     -- Run some example translations of option calculus to binary choice calculus
-    (WFOC ∞ String ,          exp-oc-to-bcc , optex-all) ∷
+    -- (WFOC ∞ String ,          exp-oc-to-bcc , optex-all) ∷
+    (add exp all-ex) ∷
   []
 
 {-|
