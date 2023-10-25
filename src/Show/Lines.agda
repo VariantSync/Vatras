@@ -53,7 +53,7 @@ align-all width = map (align width)
 overwrite-alignment-with : Alignment → Lines → Lines
 overwrite-alignment-with a = map (λ l → record l { alignment = a })
 
--- Export the composition operator do allow do-notation.
+-- Export the composition operator to allow do-notation.
 -- We do not rely on _>>_ of the list monad because it forgets the first argument and just keeps the second list. We thus would forget everything we wanted to print except for the last line.
 _>>_ : Lines → Lines → Lines
 _>>_ = Data.List._++_
@@ -65,12 +65,15 @@ _>>_ = Data.List._++_
 infix 1 [_]>_
 
 >_ : String → Lines
->_ = [_]>_ Left
+>_ = [ Left ]>_
 infix 1 >_
 
 >∷_ : List String → Lines
 >∷_ = lines ∘ map >_
 infix 1 >∷_
+
+phantom : String → String
+phantom s = replicate (Data.String.length s) ' '
 
 mantle : String → String → Lines → Lines
 mantle prefix suffix = map (manipulate (λ s → prefix ++ s ++ suffix))
