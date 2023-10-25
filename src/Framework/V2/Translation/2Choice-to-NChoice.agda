@@ -60,12 +60,12 @@ record FnocContract (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set ℓ₁ wh
 open FnocContract
 
 default-conf : Config₂ Q → Configₙ Q
-(default-conf cb) f with cb f
+default-conf cb f with cb f
 ... | false = 1
 ... | true  = 0
 
 default-fnoc : Configₙ Q → Config₂ Q
-(default-fnoc cn) f with cn f
+default-fnoc cn f with cn f
 ... | zero    = true
 ... | (suc _) = false
 
