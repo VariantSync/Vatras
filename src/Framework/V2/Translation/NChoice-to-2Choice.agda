@@ -3,9 +3,10 @@
 module Framework.V2.Translation.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true; if_then_else_)
-open import Data.List using (List; _∷_; []; map)
+open import Data.List using (List; _∷_; []; map; length)
 open import Data.List.NonEmpty using (List⁺; _∷_)
-open import Data.Nat using (ℕ; suc; zero; _+_)
+open import Data.Nat using (ℕ; suc; zero; _+_; _∸_)
+open import Data.Nat.Show renaming (show to show-ℕ)
 open import Data.Product using (∃-syntax; proj₁; proj₂) renaming (_,_ to _and_)
 
 open import Size using (Size; ↑_; ∞)
@@ -20,16 +21,20 @@ open import Relation.Binary using (Setoid; IsEquivalence)
 open import Framework.V2.Definitions using (𝔽)
 open import Framework.V2.Compiler using (ConstructCompiler)
 open import Framework.V2.Constructs.Choices as Chc
-open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂)
+open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 open Chc.VLChoice₂ using () renaming (Construct to C₂)
 open Chc.VLChoiceₙ using () renaming (Construct to Cₙ)
 
+open import Data.String using (String; _++_)
 record IndexedDimension {ℓ} (Q : Set ℓ) : Set ℓ where
   constructor _∙_
   field
     dim : Q
     index : ℕ
+
+show-indexed-dimension : (Q → String) → IndexedDimension Q → String
+show-indexed-dimension show-q (D ∙ i) = show-q D ++ "∙" ++ show-ℕ i
 
 private
   I = IndexedDimension Q
@@ -98,6 +103,14 @@ module Translate (Carrier : Set ℓ₁) where
   data NestedChoice : Size → Set ℓ₁ where
     val : ∀ {ⅈ} → Carrier → NestedChoice ⅈ -- \ii
     chc : ∀ {ⅈ} → 2Choice I (NestedChoice ⅈ) → NestedChoice (↑ ⅈ)
+
+  show-nested-choice : ∀ {ⅈ} → (Q → String) → (Carrier → String) → NestedChoice ⅈ → String
+  show-nested-choice show-q show-carrier (val v) = show-carrier v
+  show-nested-choice show-q show-carrier (chc c) =
+    show-2choice
+      (show-indexed-dimension show-q)
+      (show-nested-choice show-q show-carrier)
+      c
 
   ⟦_⟧ᵣ : ∀ {ⅈ} → NestedChoice ⅈ → 2Config → Carrier
   ⟦ val v ⟧ᵣ _ = v
