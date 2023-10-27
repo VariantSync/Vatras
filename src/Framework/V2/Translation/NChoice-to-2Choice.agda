@@ -5,6 +5,8 @@ module Framework.V2.Translation.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} whe
 open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.List using (List; _∷_; []; map; length)
 open import Data.List.NonEmpty using (List⁺; _∷_)
+open import Data.Fin using (Fin; suc; zero; toℕ; fromℕ; _-_; cast; _ℕ-ℕ_)
+open import Data.Fin.Properties using (toℕ-fromℕ)
 open import Data.Nat using (ℕ; suc; zero; _+_; _∸_)
 open import Data.Nat.Show renaming (show to show-ℕ)
 open import Data.Product using (∃-syntax; proj₁; proj₂) renaming (_,_ to _and_)
@@ -14,15 +16,17 @@ open import Size using (Size; ↑_; ∞)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 
 import Data.IndexedSet
-open import Util.List using (find-or-last)
+-- open import Util.List using (find-or-last)
+open import Data.Vec using (Vec; []; _∷_; lookup; fromList)
 
 open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Framework.V2.Definitions using (𝔽)
 open import Framework.V2.Compiler using (ConstructCompiler)
 open import Framework.V2.Constructs.Choices as Chc
+open Chc.Choice-Fix using (_⟨_⟩; shift) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
-open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
+-- open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 open Chc.VLChoice₂ using () renaming (Construct to C₂)
 open Chc.VLChoiceₙ using () renaming (Construct to Cₙ)
 
@@ -38,11 +42,12 @@ show-indexed-dimension show-q (D ∙ i) = show-q D ++ "∙" ++ show-ℕ i
 
 private
   I = IndexedDimension Q
-  NConfig = Configₙ Q
+  NConfig : ℕ → Set ℓ₁
+  NConfig n = Configₙ n Q
   2Config = Config₂ I
 
 open Data.Nat using (_<_; _≤_; s≤s; z≤n)
-record ConfSpec (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
+record ConfSpec (D : Q) (n : ℕ) (cD : Fin (suc n)) (confi : 2Config) : Set ℓ₁ where
   field
     {-|
     A translated, binary configuration (conf c)
@@ -56,17 +61,18 @@ record ConfSpec (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     has to pick the left alternative (true)
     in the choice at nesting level (c D).
     -}
-    select-n : ∀ (c : NConfig) {i : ℕ}
-      → c D ≡ i
-      → (conf c) (D ∙ i) ≡ true
+    select-n : ∀ {i : Fin (suc n)}
+      → cD ≡ i
+      → confi (D ∙ (n ∸ toℕ i)) ≡ true
 
     {-|
     All alternatives before the desired alternative must be deselected so
     that we go right until we find the correct alternative to pick.
     -}
-    deselect-<n : ∀ (c : NConfig) {i : ℕ}
-      → i < c D
-      → (conf c) (D ∙ i) ≡ false
+    deselect-<n : ∀ {i : ℕ}
+      → n ℕ-ℕ cD < i
+      -- → toℕ ((fromℕ n) - cast (Eq.cong suc (Eq.sym (toℕ-fromℕ n))) (c D)) < toℕ i -- c D is a Fin n, so ∸ here will never overflow into negative numbers. Maybe there is a - on Fin?
+      → confi (D ∙ i) ≡ false
 
     {-|
     There is no third requirement because we do not care
@@ -76,17 +82,18 @@ record ConfSpec (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     -}
 open ConfSpec
 
-record FnocSpec (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
-  field
+record FnocSpec (D : Q) (n : ℕ) (fnoc : 2Config → NConfig (suc n)) : Set ℓ₁ where
+  -- field
     {-|
     The nary config must chose index i iff
     - the alternative at nesting depth i is chosen in the binary expression
     - and no other alternative at a higher nesting depth was chosen.
     -}
-    correct : ∀ (c : 2Config) (i : ℕ)
-      → c (D ∙ i) ≡ true
-      → (∀ (j : ℕ) → j < i → c (D ∙ j) ≡ false)
-      → (fnoc c) D ≡ i
+    -- TODO: Fix
+--     correct : ∀ (c : 2Config) (i : ℕ)
+--       → c (D ∙ i) ≡ true
+--       → (∀ (j : ℕ) → j < i → c (D ∙ j) ≡ false)
+--       → (fnoc c) D ≡ i
 open FnocSpec
 
 -- module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
@@ -95,7 +102,6 @@ module Translate (Carrier : Set ℓ₁) where
   _≈_ = _≡_
   open Eq.≡-Reasoning
 
-  -- open import Data.Vec using (Vec; []; _∷_; fromList)
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
   -- TODO: Write eliminator for NestedChoice given a variability language with choices.
@@ -131,8 +137,8 @@ module Translate (Carrier : Set ℓ₁) where
   --     tail : List Carrier
   -- open Intermediate public
 
-  intermediate-semantics : ℕ → Q → Carrier → List Carrier → NConfig → Carrier
-  intermediate-semantics skip D e es c = find-or-last (c D ∸ skip) (e ∷ es)
+  -- intermediate-semantics : ℕ → Q → Carrier → List Carrier → NConfig → Carrier
+  -- intermediate-semantics skip D e es c = find-or-last (c D ∸ skip) (e ∷ es)
 
   {-
   Example execution trace
@@ -142,68 +148,65 @@ module Translate (Carrier : Set ℓ₁) where
   base:             D ⟨ 4 ⟩ ⇝                            D0 ⟨ 4 , 4 ⟩
   -}
   -- TODO: Do we actually need the name of the choice here?
-  infix 3 _,_⊢_⟨_,_⟩⟶_
-  data _,_⊢_⟨_,_⟩⟶_ (max : ℕ) : ℕ → Q → Carrier → List Carrier → 2Choice I (NestedChoice ∞) → Set ℓ₁ where
+  infix 3 _⟨_,_⟩⟶_
+  data _⟨_,_⟩⟶_ : ∀ {n} → Q → Carrier → Vec Carrier n → 2Choice I (NestedChoice ∞) → Set ℓ₁ where
     base : ∀ {D : Q} {e : Carrier}
-        -----------------------------------------------------
-      → max , max ⊢ D ⟨ e , [] ⟩⟶ (D ∙ max) ⟨ val e , val e ⟩
+        ------------------------------------------------
+      → D ⟨ e , [] ⟩⟶ (D ∙ 0) ⟨ val e , val e ⟩
 
-    step : ∀ {i : ℕ} {D : Q} {e₁ e₂ : Carrier} {es : List Carrier} {l r : NestedChoice ∞}
-      → max , suc i ⊢ D ⟨ e₂ , es ⟩⟶                         (D ∙ suc i) ⟨ l , r ⟩
+    step : ∀ {n : ℕ} {D : Q} {e₁ e₂ : Carrier} {es : Vec Carrier n} {l r : NestedChoice ∞}
+      → D ⟨      e₂ , es ⟩⟶                             (D ∙ n) ⟨ l , r ⟩
         ------------------------------------------------------------------------------------
-      → max ,     i ⊢ D ⟨ e₁ , e₂ ∷ es ⟩⟶ (D ∙ i) ⟨ val e₁ , chc ((D ∙ suc i) ⟨ l , r ⟩) ⟩
+      → D ⟨ e₁ , e₂ ∷ es ⟩⟶ (D ∙ suc n) ⟨ val e₁ , chc ((D ∙ n) ⟨ l , r ⟩) ⟩
 
   infix 3 _⇝_
-  data _⇝_ : NChoice Q Carrier → 2Choice I (NestedChoice ∞) → Set ℓ₁ where
-    start : ∀ {D : Q} {e : Carrier} {es : List Carrier} {l r : NestedChoice ∞}
-      → length (es), 0 ⊢ D ⟨ e , es ⟩⟶ (D ∙ 0) ⟨ l , r ⟩
+  data _⇝_ : ∀ {n} → NChoice n Q Carrier → 2Choice I (NestedChoice ∞) → Set ℓ₁ where
+    start : ∀ {n : ℕ} {D : Q} {e : Carrier} {es : Vec Carrier n} {x}
+      → D ⟨ e , es ⟩⟶ x
         -------------------------------------------------------
-      →                       D ⟨ e ∷ es ⟩ ⇝ (D ∙ 0) ⟨ l , r ⟩
+      → D ⟨ e ∷ es ⟩ ⇝ x
 
-  determinism : ∀ {max i D e es} {x y : 2Choice I (NestedChoice ∞)}
-    → max , i ⊢ D ⟨ e , es ⟩⟶ x
-    → max , i ⊢ D ⟨ e , es ⟩⟶ y
+  determinism : ∀ {D e n} {es : Vec Carrier n} {x y : 2Choice I (NestedChoice ∞)}
+    → D ⟨ e , es ⟩⟶ x
+    → D ⟨ e , es ⟩⟶ y
     → x ≡ y
   determinism base base = refl
   determinism (step x) (step y) rewrite determinism x y = refl
 
-  Total' : ℕ → Q → Carrier → List Carrier → Set ℓ₁
-  Total' i D e es = ∃[ max ] (∃[ x ] (max , i ⊢ D ⟨ e , es ⟩⟶ x))
+  Total' : ∀ {n : ℕ} → Q → Carrier → Vec Carrier n → Set ℓ₁
+  Total' D e es = ∃[ x ] (D ⟨ e , es ⟩⟶ x)
 
-  Total : NChoice Q Carrier → Set ℓ₁
-  Total (D ⟨ e ∷ es ⟩) = ∃[ x ] (D ⟨ e ∷ es ⟩ ⇝ x)
+  Total : ∀ {n} → NChoice (suc n) Q Carrier → Set ℓ₁
+  Total (D ⟨ es ⟩) = ∃[ x ] (D ⟨ es ⟩ ⇝ x)
 
   -- Smart constructor for Totalₒ that does not require naming the expression explicitly.
-  return' : ∀ {m s D e es x}
-    → m , s ⊢ D ⟨ e , es ⟩⟶ x
+  return' : ∀ {D e n x} {es : Vec Carrier n}
+    → D ⟨ e , es ⟩⟶ x
       -----------------------
-    → Total' s D e es
-  return' {m = m} {x = x} ⇝x = m and x and ⇝x
+    → Total' D e es
+  return' {x = x} ⇝x = x and ⇝x
 
-  return : ∀ {c} {x}
+  return : ∀ {n} {c : NChoice (suc n) Q Carrier} {x}
     → c ⇝ x
-      --------
+      -------
     → Total c
-  return {c} {x} ⇝x = x and ⇝x
+  return {_} {c} {x} ⇝x = x and ⇝x
 
-  ⟶-total : (s : ℕ) → (D : Q) → (e : Carrier) → (es : List Carrier) → Total' s D e es
-  ⟶-total s D e [] = return' base
-  ⟶-total s D e₁ (e₂ ∷ es) with ⟶-total (suc s) D e₂ es
-  ... | .(suc s) and .((D ∙ suc s) ⟨ val e₂ , val e₂ ⟩) and base
-    = return' (step base)
-  ... | m and .((D ∙ suc s) ⟨ val e₂ , chc ((D ∙ suc (suc s)) ⟨ _ , _ ⟩) ⟩) and step deriv
-    = return' (step (step deriv))
+  ⟶-total : ∀ {n : ℕ} → (D : Q) → (e : Carrier) → (es : Vec Carrier n) → Total' D e es
+  ⟶-total D e [] = return' base
+  ⟶-total D e₁ (e₂ ∷ es) with ⟶-total D e₂ es
+  ... | (.(D ∙ 0) ⟨ .(val e₂) , .(val e₂) ⟩) and base = return' (step base)
+  ... | (.(D ∙ suc _) ⟨ .(val e₂) , .(chc ((D ∙ _) ⟨ _ , _ ⟩)) ⟩) and step snd = return' (step (step snd))
 
-      -- → length (e ∷ es), 0 ⊢ D ⟨ e , es ⟩⟶ (D ∙ 0) ⟨ l , r ⟩
-  ⇝-total : ∀ (c : NChoice Q Carrier) → Total c
-  ⇝-total (D ⟨ e ∷ es ⟩) with ⟶-total 0 D e es
-  ... | .0 and (.(D ∙ 0) ⟨ .(val e) , .(val e) ⟩) and base
-    = return (start base)
-  ... | m and .(D ∙ 0) ⟨ .(val e) , chc (.(D ∙ 1) ⟨ l , r ⟩) ⟩ and step snd = {!!}
+  --     -- → length (e ∷ es), 0 ⊢ D ⟨ e , es ⟩⟶ (D ∙ 0) ⟨ l , r ⟩
+  ⇝-total : ∀ {n : ℕ} (c : NChoice (suc n) Q Carrier) → Total c
+  ⇝-total (D ⟨ e ∷ es ⟩) with ⟶-total D e es
+  ... | .((D ∙ 0) ⟨ val e , val e ⟩) and base = return (start base)
+  ... | .((D ∙ suc _) ⟨ val e , chc ((D ∙ _) ⟨ _ , _ ⟩) ⟩) and step snd = return (start (step snd))
 
-  ⇝-total-weak : NChoice Q Carrier → 2Choice I (NestedChoice ∞)
-  ⇝-total-weak (D ⟨ e ∷ es ⟩) with ⟶-total 0 D e es
-  ... | _ and expr and _ = expr
+  -- ⇝-total-weak : NChoice Q Carrier → 2Choice I (NestedChoice ∞)
+  -- ⇝-total-weak (D ⟨ e ∷ es ⟩) with ⟶-total 0 D e es
+  -- ... | _ and expr and _ = expr
 
   -- total : ∀ (D : Q) → (e : Carrier) (es : List Carrier)
   --   → Total' D e es
@@ -228,8 +231,6 @@ module Translate (Carrier : Set ℓ₁) where
   -- Preserved (D ⟨ es ⟩) confi fnoci = ⟦ D ⟨ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc (convert (D ⟨ es ⟩)) ⟧ᵣ
 
   module Preservation
-    (confi : NConfig → 2Config)
-    (fnoci : 2Config → NConfig)
     where
     open Data.List using (length)
     open import Data.Product using () renaming (_,_ to _and_)
@@ -239,15 +240,15 @@ module Translate (Carrier : Set ℓ₁) where
     -- open Data.Nat using (_+_)
     open import Data.Nat.Properties using (≤-refl) --; m∸n≤m; m∸n≢0⇒n<m; 0∸n≡0; n∸n≡0; m≤n⇒m∸n≡0)
 
-    flub : ∀ {n m}
-      → n ≡ suc m
-      → m < n
-    flub refl = s≤s ≤-refl
+    -- flub : ∀ {n m}
+    --   → n ≡ suc m
+    --   → m < n
+    -- flub refl = s≤s ≤-refl
 
-    blar : ∀ {n m}
-      → n ≡ suc m
-      → 0 < n
-    blar refl = s≤s z≤n
+    -- blar : ∀ {n m}
+    --   → n ≡ suc m
+    --   → 0 < n
+    -- blar refl = s≤s z≤n
 
     -- preservation-⊆ : ∀ {D} {e₁ e₂ es} {l r}
     --   → ConfSpec D confi
@@ -295,39 +296,97 @@ module Translate (Carrier : Set ℓ₁) where
     --       (if-idemp (c (D ∙ 0)))
     -- preservation-⊇ (l ∷ r ∷ rs) c = {!!}
 
-    ⟶-preserves : ∀ {m s D e es} {x}
-      → ConfSpec D confi
-      → FnocSpec D fnoci
-      → m , s ⊢ D ⟨ e , es ⟩⟶ x
-      → intermediate-semantics s D e es ≅[ confi ][ fnoci ] ⟦ chc x ⟧ᵣ
-    ⟶-preserves {m} .{m} {D} {e} {es} {(D ∙ m) ⟨ val e , val e ⟩} conv vnoc base =
-      -- no matter how we configure our expression (or its translation),
-      -- the result will always be e. this means, configurations are
-      -- irrelevant here. hence, any translations of configurations may
-      -- be used. hence, config and fnoci are fine.
-      irrelevant-index-≅ e l-const r-const confi fnoci
+    ⟶-preserves-⊆ : ∀ {n D e} {es : Vec Carrier n} {x}
+      → (confi : NConfig (suc n) → 2Config)
+      → (∀ (cₙ : NConfig (suc n)) → ConfSpec D n (cₙ D) (confi cₙ))
+      → D ⟨ e , es ⟩⟶ x
+      → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ⊆[ confi ] ⟦ chc x ⟧ᵣ
+    ⟶-preserves-⊆ {zero} {D} {e} {[]} {(D ∙ 0) ⟨ val e , val e ⟩} confi conv base =
+      irrelevant-index-⊆ e l-const r-const confi
       where
         l-const : ∀ c → ⟦ D ⟨ e ∷ [] ⟩ ⟧ₙ c ≈ e
-        l-const c = refl --≈-refl
+        l-const c with c D
+        ... | zero = refl
 
-        r-const : ∀ c → ⟦ chc ((D ∙ m) ⟨ val e , val e ⟩) ⟧ᵣ c ≈ e
-        r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵣ c) (if-idemp (c (D ∙ m)))
-    proj₁ (⟶-preserves {m} conv vnoc (step {s} {D} {e₁} {e₂} {es} {l} {r} ⟶x)) c with c D in eq
-    ... | zero  rewrite select-n conv c eq = {!!}
-    ... | suc y = {!!}
-      -- begin
-        -- intermediate-semantics s D e₁ (e₂ ∷ es) c
-      -- ≡⟨ {!!} ⟩
-        -- ⟦ ⟦ (D ∙ s) ⟨ val e₁ , chc ((D ∙ suc s) ⟨ l , r ⟩) ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
-      -- ∎
-    proj₂ (⟶-preserves {m} conv vnoc (step {s} {D} {e₁} {e₂} {es} {l} {r} ⟶x)) = {!!}
+        r-const : ∀ c → ⟦ chc ((D ∙ zero) ⟨ val e , val e ⟩) ⟧ᵣ c ≈ e
+        r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵣ c) (if-idemp (c (D ∙ zero)))
+    ⟶-preserves-⊆ {suc n} {D} {e₁} {e₂ ∷ es} {.(D ∙ suc n) ⟨ val .e₁ , chc (.(D ∙ n) ⟨ l , r ⟩) ⟩} confi conv (step ⟶x) c with c D in eq
+    ... | zero rewrite select-n (conv c) eq = refl
+    ... | suc i =
+      begin
+        lookup (e₁ ∷ e₂ ∷ es) (suc i)
+      ≡⟨⟩
+        lookup (e₂ ∷ es) i
+      ≡⟨ {!!} ⟩
+        ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ c-ind
+      ≡⟨ ind c-ind ⟩
+        ⟦ chc ((D ∙ n) ⟨ l , r ⟩) ⟧ᵣ (confi-ind c-ind) -- Somehow convert config from (suc n) to n here.
+      ≡⟨ {!!} ⟩
+        ⟦ chc ((D ∙ n) ⟨ l , r ⟩) ⟧ᵣ (confi c)
+      ≡⟨⟩
+        ⟦ if false then val e₁ else chc ((D ∙ n) ⟨ l , r ⟩) ⟧ᵣ (confi c)
+      ≡⟨ Eq.cong (λ z → ⟦ if z then val e₁ else chc ((D ∙ n) ⟨ l , r ⟩) ⟧ᵣ (confi c)) (Eq.sym foo) ⟩
+        ⟦ if confi c (D ∙ suc n) then val e₁ else chc ((D ∙ n) ⟨ l , r ⟩) ⟧ᵣ (confi c)
+      ∎
+      where
+          c-ind : NConfig (suc n)
+          c-ind = {!!}
 
-    ⇝-preserves : ∀ {D} {e es} {l r}
-      → ConfSpec D confi
-      → FnocSpec D fnoci
-      → D ⟨ e ∷ es ⟩ ⇝ (D ∙ 0) ⟨ l , r ⟩
-      → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc ((D ∙ 0) ⟨ l , r ⟩) ⟧ᵣ
-    ⇝-preserves = {!!}
+          -- Is this correct?
+          confi-ind : NConfig (suc n) → 2Config
+          confi-ind c (D ∙ i) = confi (lift c) (D ∙ i)
+            where lift : NConfig (suc n) → NConfig (suc (suc n))
+                  lift cₙ q = Data.Fin.inject₁ (cₙ q)
+
+          confi-ind-conv : ∀ (cₙ : NConfig (suc n)) → ConfSpec D n (cₙ D) (confi-ind cₙ)
+          select-n (confi-ind-conv cₙ) refl = {!!}
+          deselect-<n (confi-ind-conv cₙ) {suc i} (s≤s n-cₙD≤i) = {!!}
+
+          ind : ⟦ D ⟨ e₂ ∷ es ⟩ ⟧ₙ ⊆[ confi-ind ] ⟦ chc ((D ∙ n) ⟨ l , r ⟩) ⟧ᵣ
+          ind = ⟶-preserves-⊆ confi-ind confi-ind-conv ⟶x
+
+          open Data.Fin.Properties using (nℕ-ℕi≤n)
+          proof : suc n ℕ-ℕ c D < suc n
+          proof rewrite eq = s≤s (nℕ-ℕi≤n n i)
+          foo : confi c (D ∙ suc n) ≡ false
+          foo = deselect-<n (conv c) proof
+
+    ⟶-preserves : ∀ {n D e} {es : Vec Carrier n} {x}
+      → (confi : NConfig (suc n) → 2Config)
+      → (fnoci : 2Config → NConfig (suc n))
+      → (∀ (cₙ : NConfig (suc n)) → ConfSpec D n (cₙ D) (confi cₙ))
+      → FnocSpec D n fnoci
+      → D ⟨ e , es ⟩⟶ x
+      → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc x ⟧ᵣ
+    ⟶-preserves confi fnoci conv vnoc ⇝x = ⟶-preserves-⊆ confi conv ⇝x and {!!}
+    -- -- ⟶-preserves {m} .{m} {D} {e} {es} {(D ∙ m) ⟨ val e , val e ⟩} conv vnoc base =
+    --   -- no matter how we configure our expression (or its translation),
+    --   -- the result will always be e. this means, configurations are
+    --   -- irrelevant here. hence, any translations of configurations may
+    --   -- be used. hence, config and fnoci are fine.
+    --   irrelevant-index-≅ e l-const r-const confi fnoci
+    --   where
+    --     l-const : ∀ c → ⟦ D ⟨ e ∷ [] ⟩ ⟧ₙ c ≈ e
+    --     l-const c = refl --≈-refl
+
+    --     r-const : ∀ c → ⟦ chc ((D ∙ m) ⟨ val e , val e ⟩) ⟧ᵣ c ≈ e
+    --     r-const c = Eq.cong (λ eq → ⟦ eq ⟧ᵣ c) (if-idemp (c (D ∙ m)))
+    -- proj₁ (⟶-preserves {m} conv vnoc (step {s} {D} {e₁} {e₂} {es} {l} {r} ⟶x)) c with c D in eq
+    -- ... | zero  rewrite select-n conv c eq = {!!}
+    -- ... | suc y = {!!}
+    --   -- begin
+    --     -- intermediate-semantics s D e₁ (e₂ ∷ es) c
+    --   -- ≡⟨ {!!} ⟩
+    --     -- ⟦ ⟦ (D ∙ s) ⟨ val e₁ , chc ((D ∙ suc s) ⟨ l , r ⟩) ⟩ ⟧₂ (confi c) ⟧ᵣ (confi c)
+    --   -- ∎
+    -- proj₂ (⟶-preserves {m} conv vnoc (step {s} {D} {e₁} {e₂} {es} {l} {r} ⟶x)) = {!!}
+
+    -- ⇝-preserves : ∀ {D} {e es} {l r}
+    --   → ConfSpec D confi
+    --   → FnocSpec D fnoci
+    --   → D ⟨ e ∷ es ⟩ ⇝ (D ∙ 0) ⟨ l , r ⟩
+    --   → ⟦ D ⟨ e ∷ es ⟩ ⟧ₙ ≅[ confi ][ fnoci ] ⟦ chc ((D ∙ 0) ⟨ l , r ⟩) ⟧ᵣ
+    -- ⇝-preserves = {!!}
     -- preservation _ _ (base {D} {e}) =
     --   -- no matter how we configure our expression (or its translation),
     --   -- the result will always be e. this means, configurations are

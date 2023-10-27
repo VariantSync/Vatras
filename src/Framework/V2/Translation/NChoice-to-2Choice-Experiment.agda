@@ -38,13 +38,17 @@ open import Test.Example
 open import Test.Experiment
 open import Show.Lines
 open import Data.String using (String; _<+>_)
+open import Data.Vec using (fromList)
+
+simple-conv : ∀ (c : NChoice String ℕ) → Chc.Choice-Fix.Syntax (Data.List.NonEmpty.length (NChoice.alternatives c)) String ℕ
+simple-conv (D ⟨ es ⟩) = D Choice-Fix.⟨ fromList (toList es) ⟩
 
 exp : Experiment (NChoice String ℕ)
 getName exp = "Check N → 2 Choice trans"
 get exp (name example: e) = do
- let open Trans ℕ using (⇝-total-weak; NestedChoice; chc; show-nested-choice)
+ let open Trans ℕ using (⇝-total; NestedChoice; chc; show-nested-choice)
  > name <+> "=" <+> show-nchoice id show-ℕ e
- let e' = ⇝-total-weak e
+ let e' and ⇝ = ⇝-total (simple-conv e)
  > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ (chc e')
 
 un-ex : Example (NChoice String ℕ)
