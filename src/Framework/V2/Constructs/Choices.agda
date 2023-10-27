@@ -10,6 +10,57 @@ open Eq.≡-Reasoning
 
 open import Util.AuxProofs using (if-cong)
 
+module Choice-Fix where
+  open import Data.Fin using (Fin)
+  open import Data.Nat using (ℕ)
+  open import Data.Vec using (Vec; lookup; toList) renaming (map to map-vec)
+  open import Data.Vec.Properties using (lookup-map)
+
+  record Syntax {ℓ₁ ℓ₂ : Level} (n : ℕ) (Q : Set ℓ₁) (A : Set ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
+    constructor _⟨_⟩
+    field
+      dim : Q
+      alternatives : Vec A n
+
+  Config : ∀ {ℓ₁} → ℕ → Set ℓ₁ → Set ℓ₁
+  Config n Q = Q → Fin n
+
+  -- choice-elimination
+  Standard-Semantics : ∀ {ℓ₁ ℓ₂} {n : ℕ} {A : Set ℓ₂} {Q : Set ℓ₁} → Syntax n Q A → Config n Q → A
+  Standard-Semantics (D ⟨ alternatives ⟩) c = lookup alternatives (c D)
+
+  map : ∀ {ℓ₁ ℓ₂ ℓ₃} {n : ℕ} {Q : Set ℓ₁} {A : Set ℓ₂} {B : Set ℓ₃}
+    → (A → B)
+    → Syntax n Q A
+    → Syntax n Q B
+  map f (D ⟨ alternatives ⟩) = D ⟨ map-vec f alternatives ⟩
+
+  -- -- rename
+  map-dim : ∀ {ℓ₁ ℓ₂ ℓ₃} {n : ℕ} {Q : Set ℓ₁} {R : Set ℓ₂} {A : Set ℓ₃}
+    → (Q → R)
+    → Syntax n Q A
+    → Syntax n R A
+  map-dim f (D ⟨ es ⟩) = (f D) ⟨ es ⟩
+
+  map-preserves : ∀ {ℓ₁ ℓ₂ ℓ₃} {n : ℕ} {Q : Set ℓ₁} {A : Set ℓ₂} {B : Set ℓ₃}
+    → (f : A → B)
+    → (chc : Syntax n Q A)
+    → (c : Config n Q)
+    → Standard-Semantics (map f chc) c ≡ f (Standard-Semantics chc c)
+  map-preserves f (D ⟨ es ⟩) c =
+    begin
+      Standard-Semantics (map f (D ⟨ es ⟩)) c
+    ≡⟨⟩
+      lookup (map-vec f es) (c D)
+    ≡⟨ lookup-map (c D) f es ⟩
+      f (lookup es (c D))
+    ≡⟨⟩
+      f (Standard-Semantics (D ⟨ es ⟩) c)
+    ∎
+
+  show : ∀ {ℓ₁ ℓ₂} {n : ℕ} {Q : Set ℓ₁} {A : Set ℓ₂} → (Q → String) → (A → String) → Syntax n Q A → String
+  show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-vec show-a es))) <+> "⟩"
+
 module Choice₂ where
   record Syntax {ℓ₁ ℓ₂ : Level} (Q : Set ℓ₁) (A : Set ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
     constructor _⟨_,_⟩
