@@ -2,10 +2,10 @@
 {-# OPTIONS --sized-types #-}
 module Framework.V2.Translation.NChoice-to-2Choice- {ℓ₁} {Q : Set ℓ₁} where
 
-open import Data.Bool using (Bool; false; true)
+open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty using (_∷_)
-open import Data.Nat using (ℕ; suc; zero; _+_; _≟_; _≡ᵇ_; _<_; _≤_; s≤s; z≤n)
+open import Data.Nat using (ℕ; suc; zero; _+_; _≡ᵇ_; _<_; _≤_; s≤s; z≤n) renaming (_≟_ to _≟ⁿ_)
 open import Data.Nat.Show renaming (show to show-ℕ)
 import Data.Nat.Properties as Nat
 open import Data.Product using (∃-syntax; Σ; proj₁; proj₂; Σ-syntax) renaming (_,_ to _and_)
@@ -102,21 +102,6 @@ open FnocContract
 true≢false : {a : Bool} → a ≡ true → a ≡ false → ⊥
 true≢false refl ()
 
-true≟ : (b : Bool) → Dec (b ≡ true)
-true≟ true = yes refl
-true≟ false = no λ ()
-
-suc-n+m≡k→m<k : (n m : ℕ) → {k : ℕ} → suc n + m ≡ k → m < k
-suc-n+m≡k→m<k n zero refl = s≤s z≤n
-suc-n+m≡k→m<k n (suc m) refl = s≤s (suc-n+m≡k→m<k n m (Eq.sym (Nat.+-suc n m)))
-
-n≢n+suc-m : (n m : ℕ) → n ≢ n + suc m
-n≢n+suc-m (suc n) m n≡n+m = n≢n+suc-m n m (Nat.suc-injective n≡n+m)
-
-n≡n+m→m≡zero : (n m : ℕ) → n ≡ n + m → m ≡ zero
-n≡n+m→m≡zero n zero n≡n+m = refl
-n≡n+m→m≡zero n (suc m) n≡n+m = ⊥-elim (n≢n+suc-m n m n≡n+m)
-
 n≡ᵇn : (n : ℕ) → (n ≡ᵇ n) ≡ true
 n≡ᵇn zero = refl
 n≡ᵇn (suc n) = n≡ᵇn n
@@ -124,10 +109,6 @@ n≡ᵇn (suc n) = n≡ᵇn n
 n<m→m≡ᵇn : {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
 n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
-
-n+0≡n : (n : ℕ) → n + 0 ≡ n
-n+0≡n zero = refl
-n+0≡n (suc n) rewrite n+0≡n n = refl
 
 module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Setoid S
@@ -176,7 +157,8 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
           rewrite select-n confContract c (Eq.sym m≡cD)
           = ≈-Eq.refl
         induction l (r ∷ rs) (suc n) m n+m≡cD
-          rewrite deselect-<n confContract c (suc-n+m≡k→m<k _ m n+m≡cD)
+          rewrite Eq.sym (Nat.+-suc n m)
+          rewrite deselect-<n confContract c (Nat.m+n≤o⇒n≤o n (Nat.≤-reflexive n+m≡cD))
           rewrite Eq.sym (Nat.+-suc n m)
           = induction r rs n (suc m) n+m≡cD
 
@@ -199,7 +181,8 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
         induction l (r ∷ rs) n m p ps with config-without-proof c (D ∙ n) in selected
         ... | true
           rewrite correct fnocContract c n selected ps
-          rewrite n≡n+m→m≡zero n m p
+          rewrite Nat.+-comm n m
+          rewrite Eq.sym (Nat.+-cancelʳ-≡ n zero m p)
           = ≈-Eq.refl
         induction l (r ∷ rs) n zero p ps | false
           rewrite Nat.+-comm n zero
@@ -209,7 +192,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
           = induction r rs (suc n) m p ps'
           where
             ps' : (j : ℕ) → j < suc n → config-without-proof c (D ∙ j) ≡ false
-            ps' j i<suc-n with j ≟ n
+            ps' j i<suc-n with j ≟ⁿ n
             ... | no p = ps j (Nat.≤∧≢⇒< (Nat.≤-pred i<suc-n) p)
             ... | yes refl = selected
 
@@ -225,10 +208,10 @@ conf c .proj₁ (dim ∙ index) = c dim ≡ᵇ index
 conf c .proj₂ dim = c dim and n≡ᵇn (c dim)
 
 fnoc' : (D : Q) → (c : Config₂ I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
-fnoc' D c n i p with true≟ (c (D ∙ n))
+fnoc' D c n i p with c (D ∙ n) ≟ᵇ true
 ... | yes cn≡true = n
 fnoc' D c n zero p | no cn≢true
-  rewrite n+0≡n n
+  rewrite Nat.+-comm n zero
   = ⊥-elim (cn≢true p)
 fnoc' D c n (suc i) p | no cn≢true
   rewrite Nat.+-suc n i
@@ -239,15 +222,19 @@ fnoc (c and p) D with p D
 ... | i and p' = fnoc' D c zero i p'
 
 confContract : (D : Q) → ConfContract D conf
-confContract D .select-n c refl rewrite n≡ᵇn (c D) = refl
-confContract D .deselect-<n c i≤cD rewrite n<m→m≡ᵇn i≤cD = refl
+confContract D .select-n c refl
+  rewrite n≡ᵇn (c D)
+  = refl
+confContract D .deselect-<n c i≤cD
+  rewrite n<m→m≡ᵇn i≤cD
+  = refl
 
 fnocContract : (D : Q) → FnocContract D fnoc
 fnocContract D .correct (c and p) i' ci'≡true c<i'≡false with p D
 ... | i and p' = induction zero i p' i' refl
   where
     induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → (m : ℕ) → (n + m ≡ i') → fnoc' D c n i p ≡ i'
-    induction n i p m m+n≡i' with true≟ (c (D ∙ n))
+    induction n i p m m+n≡i' with c (D ∙ n) ≟ᵇ true
     induction n i p zero m+n≡i' | yes cn≡true
       rewrite Nat.+-comm n zero
       = m+n≡i'
@@ -255,7 +242,7 @@ fnocContract D .correct (c and p) i' ci'≡true c<i'≡false with p D
       rewrite Nat.+-suc n m
       = ⊥-elim (true≢false cn≡true (c<i'≡false n (Nat.m+n≤o⇒m≤o (suc n) (Nat.≤-reflexive m+n≡i'))))
     induction n zero p m m+n≡i' | no cn≢true
-      rewrite n+0≡n n
+      rewrite Nat.+-comm n zero
       = ⊥-elim (cn≢true p)
     induction n (suc i) p zero m+n≡i' | no cn≢true
       rewrite Nat.+-comm n zero
@@ -269,12 +256,12 @@ fnocContract D .incorrect (c and p) i' ci'≡false with p D
 ... | i and p' = induction zero i p'
   where
     induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → fnoc' D c n i p ≢ i'
-    induction n i p n≡i' with true≟ (c (D ∙ n))
+    induction n i p n≡i' with c (D ∙ n) ≟ᵇ true
     induction n i p n≡i' | yes cn≡true
       rewrite Eq.sym n≡i'
       = true≢false cn≡true ci'≡false
     induction n zero p n≡i' | no cn≢true
-      rewrite n+0≡n n
+      rewrite Nat.+-comm n zero
       = ⊥-elim (cn≢true p)
     induction n (suc i) p n≡i' | no cn≢true
       rewrite Nat.+-suc n i
