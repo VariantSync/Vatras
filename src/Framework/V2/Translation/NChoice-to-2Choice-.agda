@@ -9,9 +9,9 @@ open import Data.Nat using (ℕ; suc; zero; _+_; _≟_; _≡ᵇ_; _<_; _≤_; s�
 open import Data.Nat.Show renaming (show to show-ℕ)
 import Data.Nat.Properties as Nat
 open import Data.Product using (∃-syntax; Σ; proj₁; proj₂; Σ-syntax) renaming (_,_ to _and_)
-open import Data.Empty using (⊥-elim)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_)
-open import Relation.Nullary.Decidable using (yes; no)
+open import Relation.Nullary.Decidable using (Dec; yes; no)
 
 open import Size using (Size; ↑_; ∞)
 
@@ -99,6 +99,13 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
       → fnoc c D ≢ i
 open FnocContract
 
+true≢false : {a : Bool} → a ≡ true → a ≡ false → ⊥
+true≢false refl ()
+
+true≟ : (b : Bool) → Dec (b ≡ true)
+true≟ true = yes refl
+true≟ false = no λ ()
+
 suc-n+m≡k→m<k : (n m : ℕ) → {k : ℕ} → suc n + m ≡ k → m < k
 suc-n+m≡k→m<k n zero refl = s≤s z≤n
 suc-n+m≡k→m<k n (suc m) refl = s≤s (suc-n+m≡k→m<k n m (Eq.sym (Nat.+-suc n m)))
@@ -117,6 +124,10 @@ n≡ᵇn (suc n) = n≡ᵇn n
 n<m→m≡ᵇn : {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
 n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
+
+n+0≡n : (n : ℕ) → n + 0 ≡ n
+n+0≡n zero = refl
+n+0≡n (suc n) rewrite n+0≡n n = refl
 
 module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Setoid S
@@ -213,22 +224,19 @@ conf : NConfig → 2Config
 conf c .proj₁ (dim ∙ index) = c dim ≡ᵇ index
 conf c .proj₂ dim = c dim and n≡ᵇn (c dim)
 
-true≢false : true ≢ false
-true≢false ()
-
-n+0≡n : (n : ℕ) → n + 0 ≡ n
-n+0≡n zero = refl
-n+0≡n (suc n) rewrite n+0≡n n = refl
-
-fnoc' : (c : ℕ → Bool) → (n i : ℕ) → c (n + i) ≡ true → ℕ
-fnoc' c n i p with c n in eq
-... | true = n
-fnoc' c n zero p | false rewrite n+0≡n n rewrite p = ⊥-elim (true≢false eq)
-fnoc' c n (suc i) p | false rewrite Nat.+-suc n i = fnoc' c (suc n) i p
+fnoc' : (D : Q) → (c : Config₂ I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
+fnoc' D c n i p with true≟ (c (D ∙ n))
+... | yes cn≡true = n
+fnoc' D c n zero p | no cn≢true
+  rewrite n+0≡n n
+  = ⊥-elim (cn≢true p)
+fnoc' D c n (suc i) p | no cn≢true
+  rewrite Nat.+-suc n i
+  = fnoc' D c (suc n) i p
 
 fnoc : 2Config → NConfig
-fnoc (c and p) d with p d
-... | i and p' = fnoc' (λ i → c (d ∙ i)) zero i p'
+fnoc (c and p) D with p D
+... | i and p' = fnoc' D c zero i p'
 
 confContract : (D : Q) → ConfContract D conf
 confContract D .select-n c refl rewrite n≡ᵇn (c D) = refl
@@ -236,6 +244,38 @@ confContract D .deselect-<n c i≤cD rewrite n<m→m≡ᵇn i≤cD = refl
 
 fnocContract : (D : Q) → FnocContract D fnoc
 fnocContract D .correct (c and p) i' ci'≡true c<i'≡false with p D
-... | i and p' = {!!}
-fnocContract D .incorrect (c and p) i ci≡false fnoc-dD≡i with p D
-... | i and p' = {!!}
+... | i and p' = induction zero i p' i' refl
+  where
+    induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → (m : ℕ) → (n + m ≡ i') → fnoc' D c n i p ≡ i'
+    induction n i p m m+n≡i' with true≟ (c (D ∙ n))
+    induction n i p zero m+n≡i' | yes cn≡true
+      rewrite Nat.+-comm n zero
+      = m+n≡i'
+    induction n i p (suc m) m+n≡i' | yes cn≡true
+      rewrite Nat.+-suc n m
+      = ⊥-elim (true≢false cn≡true (c<i'≡false n (Nat.m+n≤o⇒m≤o (suc n) (Nat.≤-reflexive m+n≡i'))))
+    induction n zero p m m+n≡i' | no cn≢true
+      rewrite n+0≡n n
+      = ⊥-elim (cn≢true p)
+    induction n (suc i) p zero m+n≡i' | no cn≢true
+      rewrite Nat.+-comm n zero
+      rewrite m+n≡i'
+      = ⊥-elim (cn≢true ci'≡true)
+    induction n (suc i) p (suc m) m+n≡i' | no cn≢true
+      rewrite Nat.+-suc n i
+      rewrite Nat.+-suc n m
+      = induction (suc n) i p m m+n≡i'
+fnocContract D .incorrect (c and p) i' ci'≡false with p D
+... | i and p' = induction zero i p'
+  where
+    induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → fnoc' D c n i p ≢ i'
+    induction n i p n≡i' with true≟ (c (D ∙ n))
+    induction n i p n≡i' | yes cn≡true
+      rewrite Eq.sym n≡i'
+      = true≢false cn≡true ci'≡false
+    induction n zero p n≡i' | no cn≢true
+      rewrite n+0≡n n
+      = ⊥-elim (cn≢true p)
+    induction n (suc i) p n≡i' | no cn≢true
+      rewrite Nat.+-suc n i
+      = induction (suc n) i p n≡i'
