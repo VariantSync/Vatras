@@ -117,21 +117,18 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
   data NestedChoice : Size → Set ℓ₁ where
     val : {i : Size} → Carrier → NestedChoice i
-    nchc : {i : Size} → 2Choice Q (NestedChoice i) → NestedChoice (↑ i)
+    nchc : {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
 
-  ⟦_⟧' : {i : Size} → (NestedChoice i) → 2Config → ℕ → Carrier
-  ⟦ val n ⟧' c i = n
-  ⟦ nchc chc ⟧' c i = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c (q ∙ i)) ⟧' c (suc i)
+  ⟦_⟧ : {i : Size} → (NestedChoice i) → 2Config → Carrier
+  ⟦ val v ⟧ c = v
+  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
 
-  ⟦_⟧ : {i : Size} → NestedChoice i → 2Config → Carrier
-  ⟦ nc ⟧ c = ⟦ nc ⟧' c zero
-
-  convert' : Q → Carrier → List Carrier → NestedChoice ∞
-  convert' D l [] = val l
-  convert' D l (r ∷ rs) = nchc (D ⟨ val l , (convert' D r rs) ⟩)
+  convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞
+  convert' D l [] n = val l
+  convert' D l (r ∷ rs) n = nchc ((D ∙ n) ⟨ val l , convert' D r rs (suc n) ⟩)
 
   convert : NChoice Q Carrier → NestedChoice ∞
-  convert (D ⟨ c ∷ cs ⟩) = convert' D c cs
+  convert (D ⟨ c ∷ cs ⟩) = convert' D c cs zero
 
   module Preservation
       (conf : NConfig → 2Config)
@@ -151,7 +148,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
         induction : (l : Carrier) → (rs : List Carrier)
                   → (n m : ℕ)
                   → n + m ≡ c D
-                  → find-or-last n (l ∷ rs) ≈ ⟦ convert' D l rs ⟧' (conf c) m
+                  → find-or-last n (l ∷ rs) ≈ ⟦ convert' D l rs m ⟧ (conf c)
         induction l [] n m n+m≡cD = ≈-Eq.refl
         induction l (r ∷ rs) zero m m≡cD
           rewrite select-n confContract c (Eq.sym m≡cD)
@@ -176,7 +173,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
                   → (n m : ℕ)
                   → fnoc c D ≡ n + m
                   → (∀ (j : ℕ) → j < n → config-without-proof c (D ∙ j) ≡ false)
-                  → ⟦ convert' D l rs ⟧' c n ≈ find-or-last m (l ∷ rs)
+                  → ⟦ convert' D l rs n ⟧ c ≈ find-or-last m (l ∷ rs)
         induction l [] n m p ps = ≈-Eq.refl
         induction l (r ∷ rs) n m p ps with config-without-proof c (D ∙ n) in selected
         ... | true
