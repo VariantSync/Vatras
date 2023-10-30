@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.V2.Definitions
-module Framework.V2.Translation.NChoice-to-2Choice-Experiment where
+module Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment where
 
 open import Data.Nat using (ℕ)
 open import Data.Nat.Show renaming (show to show-ℕ)
@@ -10,6 +10,8 @@ open import Data.List.NonEmpty using (List⁺; _∷_; length; toList) renaming (
 open import Data.Product using (proj₁; proj₂) renaming (_,_ to _and_)
 open import Level using (_⊔_)
 open import Function using (id)
+
+import Relation.Binary.PropositionalEquality as Eq
 
 open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂
@@ -42,10 +44,10 @@ open import Data.String using (String; _<+>_)
 exp : Experiment (NChoice String ℕ)
 getName exp = "Check N → 2 Choice trans"
 get exp (name example: e) = do
- let open Trans ℕ using (⇝-total-weak; NestedChoice; chc; show-nested-choice)
+ let open Trans (Eq.setoid ℕ) using (convert; NestedChoice; show-nested-choice)
  > name <+> "=" <+> show-nchoice id show-ℕ e
- let e' = ⇝-total-weak e
- > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ (chc e')
+ let e' = convert e
+ > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ e'
 
 un-ex : Example (NChoice String ℕ)
 un-ex = "e₁" example: "D" ⟨ 0 ∷ [] ⟩

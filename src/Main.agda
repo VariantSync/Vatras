@@ -24,7 +24,7 @@ open import Test.Examples.OC using (optex-all)
 open import Test.Experiments.CCC-to-BCC
 open import Test.Experiments.OC-to-BCC
 
-open import Framework.V2.Translation.NChoice-to-2Choice-Experiment using (exp; all-ex)
+open import Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment using (exp; all-ex)
 
 ExperimentExecution : ∀ ℓ → Set (suc ℓ)
 ExperimentExecution ℓ = Σ[ A ∈ Set ℓ ] (Experiment A × List (Example A))
