@@ -164,23 +164,25 @@ open import Framework.V2.Definitions as Defs hiding (Semantics; Config)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)
 
-module VLChoice₂ where
+module VLChoice₂ {ℓ ℓᶠ} where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choice₂.Syntax using (dim)
 
   open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
   open LanguageCompiler
 
-  Syntax : ℂ
+  Syntax : ℂ ℓ ℓᶠ
   Syntax F E A = Choice₂.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F Bool Syntax
+  Semantics : ∀ (V : 𝕍 ℓ) (F : 𝔽 ℓᶠ) → ℂ-Semantics V F Bool Syntax
   Semantics _ _ fnoc (syn _ with-sem ⟦_⟧) chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Bool
+  Construct : ∀ (V : 𝕍 ℓ) (F : 𝔽 ℓᶠ) → VariabilityConstruct V F Bool
   Construct V F = con Syntax with-sem Semantics V F
 
-  map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Bool} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
+  map-compile-preserves :
+    ∀ {f s} {V : 𝕍 ℓ} {F₁ : 𝔽 ℓᶠ} {F₂ : 𝔽 f} {S₂ : 𝕊 s}
+      {Γ₁ : VariabilityLanguage V F₁ Bool} {Γ₂ : VariabilityLanguage V F₂ S₂} {A : 𝔸 ℓ}
     → let open IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
     → (chc : Syntax F₁ (Expression Γ₁) A)
@@ -188,7 +190,7 @@ module VLChoice₂ where
     → Semantics V F₁ id Γ₁ chc
         ≅[ conf t ][ fnoc t ]
       Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
-  map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
+  map-compile-preserves {V = V} {F₁ = F₁} {Γ₁ = Γ₁} {Γ₂ = Γ₂} {A = A} t chc stable =
     ≅[]-begin
       Semantics V F₁ id Γ₁ chc
     ≅[]⟨⟩
