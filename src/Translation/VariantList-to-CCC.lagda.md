@@ -39,7 +39,7 @@ open import Lang.CCC
 open import Framework.Proof.Translation using (Translation; TranslationResult; expr; conf; fnoc; _is-variant-preserving; expressiveness-by-translation)
 open import Framework.Relation.Expressiveness using (_≽_)
 open import Framework.Properties.Completeness using (Complete)
-open import Framework.Properties.Conclude.Completeness using (completeness-by-expressiveness)
+open import Framework.Proof.Completeness using (completeness-by-expressiveness)
 
 open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
