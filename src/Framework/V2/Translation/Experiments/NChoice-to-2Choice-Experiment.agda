@@ -43,22 +43,22 @@ open import Data.String using (String; _<+>_)
 
 exp : Experiment (NChoice String ℕ)
 getName exp = "Check N → 2 Choice trans"
-get exp (name example: e) = do
+get exp (name ≔ e) = do
  let open Trans (Eq.setoid ℕ) using (convert; show-nested-choice)
  >         name <+> "=" <+> show-nchoice id show-ℕ e
  > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ (convert e)
 
 un-ex : Example (NChoice String ℕ)
-un-ex = "e₁" example: "D" ⟨ 0 ∷ [] ⟩
+un-ex = "e₁" ≔ "D" ⟨ 0 ∷ [] ⟩
 
 bi-ex : Example (NChoice String ℕ)
-bi-ex = "e₂" example: "D" ⟨ 0 ∷ 1 ∷ [] ⟩
+bi-ex = "e₂" ≔ "D" ⟨ 0 ∷ 1 ∷ [] ⟩
 
 tri-ex : Example (NChoice String ℕ)
-tri-ex = "e₃" example: "D" ⟨ 0 ∷ 1 ∷ 2 ∷ [] ⟩
+tri-ex = "e₃" ≔ "D" ⟨ 0 ∷ 1 ∷ 2 ∷ [] ⟩
 
 many-ex : Example (NChoice String ℕ)
-many-ex = "e₄" example: "D" ⟨ 0 ∷ 1 ∷ 2 ∷ 3 ∷ 4 ∷ 5 ∷ 6 ∷ 7 ∷ 8 ∷ [] ⟩
+many-ex = "e₄" ≔ "D" ⟨ 0 ∷ 1 ∷ 2 ∷ 3 ∷ 4 ∷ 5 ∷ 6 ∷ 7 ∷ 8 ∷ [] ⟩
 
 all-ex : List (Example (NChoice String ℕ))
 all-ex = un-ex ∷ bi-ex ∷ tri-ex ∷ many-ex ∷ []

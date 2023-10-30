@@ -27,25 +27,25 @@ chcA-leaves es = chcA (leaves es)
 -- examples
 
 cccex-ekko : CCCExample
-cccex-ekko = "ekko" example: cc_example_walk
+cccex-ekko = "ekko" ≔ cc_example_walk
 
 cccex-binary : CCCExample
-cccex-binary = "binary" example: "D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩
+cccex-binary = "binary" ≔ "D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩
 
 cccex-binary-nested : CCCExample
-cccex-binary-nested = "binary-nested" example:
+cccex-binary-nested = "binary-nested" ≔
   "A" ⟨ ("A" ⟨ leaf "1" ∷ leaf "2" ∷ [] ⟩) ∷
         ("A" ⟨ leaf "3" ∷ leaf "4" ∷ [] ⟩) ∷ []
       ⟩
 
 cccex-ternary-nested : CCCExample
-cccex-ternary-nested = "ternary-nested" example:
+cccex-ternary-nested = "ternary-nested" ≔
   chcA ( chcA-leaves ("1" ∷ "2" ∷ "3" ∷ []) ∷
          chcA-leaves ("4" ∷ "5" ∷ "6" ∷ []) ∷
          chcA-leaves ("7" ∷ "8" ∷ "9" ∷ []) ∷ [])
 
 cccex-complex1 : CCCExample
-cccex-complex1 = "complex1" example:
+cccex-complex1 = "complex1" ≔
   "A" ⟨ ("B" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
         ("C" ⟨ leaf "c" ∷ [] ⟩) ∷
         ("A" ⟨ leaf "4" ∷
@@ -55,7 +55,7 @@ cccex-complex1 = "complex1" example:
       ⟩
 
 cccex-nametrick : CCCExample
-cccex-nametrick = "name-trick" example:
+cccex-nametrick = "name-trick" ≔
   "A" ⟨ ("A.0" ⟨ leaf "A.0-left" ∷ leaf "A.0-right" ∷ [] ⟩) ∷ leaf "x" ∷ [] ⟩
 
 cccex-all : List CCCExample

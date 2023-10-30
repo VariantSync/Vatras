@@ -12,7 +12,7 @@ open import Framework.Definitions using (VMap; leaf)
 open import Test.Example
 
 𝕍-123 : Example (VMap ℕ 2)
-𝕍-123 = "123" example: set
+𝕍-123 = "123" ≔ set
   where set : VMap ℕ 2
         set zero = leaf 1
         set (suc zero) = leaf 2

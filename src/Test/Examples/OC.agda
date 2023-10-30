@@ -19,10 +19,10 @@ singleton : ∀ {i : Size} {A : 𝔸} → A → OC i A → OC (↑ i) A
 singleton a e = Artifact a [ e ]
 
 optex-unary : OCExample
-optex-unary = "unary" example: (Root "r" [ opt "O" (oc-leaf "lol") ])
+optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "lol") ])
 
 optex-lock : OCExample
-optex-lock = "lock" example: (Root "void f() {" (
+optex-lock = "lock" ≔ (Root "void f() {" (
     oc-leaf          "int bobedi = 3;"
   ∷ "Lock" ❲ oc-leaf "lock();" ❳
   ∷ oc-leaf          "magic(bobedi);"
@@ -30,7 +30,7 @@ optex-lock = "lock" example: (Root "void f() {" (
   ∷ []))
 
 optex-sandwich : OCExample
-optex-sandwich = "sandwich" example: (Root "Buns" (
+optex-sandwich = "sandwich" ≔ (Root "Buns" (
     "Tomato?" ❲ oc-leaf "Tomato" ❳
   ∷ "Salad?"  ❲ oc-leaf "Salad"  ❳
   ∷ "Cheese?" ❲ oc-leaf "Cheese" ❳
@@ -38,7 +38,7 @@ optex-sandwich = "sandwich" example: (Root "Buns" (
   ∷ []))
 
 optex-deep : OCExample
-optex-deep = "deep" example:
+optex-deep = "deep" ≔
   (Root "A"
     (singleton "B"
       (singleton "C"

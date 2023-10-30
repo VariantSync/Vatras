@@ -59,7 +59,7 @@ OC→BCC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 -- Then configure it with an all-yes and an all-no config and print the resulting variants.
 exp-oc-to-bcc : Experiment (WFOC ∞ String)
 getName exp-oc-to-bcc = "Translate OC to BCC"
-get     exp-oc-to-bcc ex@(name example: oc) = do
+get     exp-oc-to-bcc ex@(name ≔ oc) = do
   let --trans-result   = translate oc
       --bcc            = expr trans-result
       trans-result   = ⟶-is-total oc
