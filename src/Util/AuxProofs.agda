@@ -4,16 +4,32 @@ open import Level using (Level)
 open import Function using (id; _∘_)
 
 open import Data.Bool using (Bool; false; true; if_then_else_)
-open import Data.Nat using (ℕ; zero; suc; NonZero; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
+open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 
 open import Data.Nat.Properties using (m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; _≗_; refl)
+open Eq using (_≡_; _≢_; _≗_; refl)
 open Eq.≡-Reasoning
 
+-- Some logic helpers
+
+true≢false : ∀ {a : Bool}
+  → a ≡ true
+    ---------
+  → a ≢ false
+true≢false refl ()
+
 ----- Some aritmetic properties
+
+n≡ᵇn : ∀ (n : ℕ) → (n ≡ᵇ n) ≡ true
+n≡ᵇn zero = refl
+n≡ᵇn (suc n) = n≡ᵇn n
+
+n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
+n<m→m≡ᵇn {zero} (s≤s n<m) = refl
+n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 
 m≤n⇒m<1+n : ∀ (m n : ℕ)
   → m ≤ n

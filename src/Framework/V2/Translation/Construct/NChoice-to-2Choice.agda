@@ -21,6 +21,7 @@ open import Util.List using (find-or-last)
 
 open import Relation.Binary using (Setoid; IsEquivalence)
 
+open import Util.AuxProofs using (true≢false; n≡ᵇn; n<m→m≡ᵇn)
 open import Framework.V2.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
@@ -99,21 +100,6 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
       → config-without-proof c (D ∙ i) ≡ false
       → fnoc c D ≢ i
 open FnocContract
-
--- TODO: Move the following three functions to proper place within the Util submodule.
-true≢false : ∀ {a : Bool}
-  → a ≡ true
-    ---------
-  → a ≢ false
-true≢false refl ()
-
-n≡ᵇn : ∀ (n : ℕ) → (n ≡ᵇ n) ≡ true
-n≡ᵇn zero = refl
-n≡ᵇn (suc n) = n≡ᵇn n
-
-n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
-n<m→m≡ᵇn {zero} (s≤s n<m) = refl
-n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 
 module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   open Setoid S
