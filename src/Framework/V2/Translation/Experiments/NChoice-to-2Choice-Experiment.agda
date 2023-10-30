@@ -31,9 +31,9 @@ open Chc.Choiceₙ
     ; show to show-nchoice
     )
 
-open import Framework.V2.Translation.NChoice-to-2Choice as N→2
+open import Framework.V2.Annotation.IndexedName
+open import Framework.V2.Translation.Construct.NChoice-to-2Choice as N→2
 module Trans = N→2.Translate
-open IndexedDimension
 
 open import Util.Named
 open import Test.Example
@@ -44,10 +44,9 @@ open import Data.String using (String; _<+>_)
 exp : Experiment (NChoice String ℕ)
 getName exp = "Check N → 2 Choice trans"
 get exp (name example: e) = do
- let open Trans (Eq.setoid ℕ) using (convert; NestedChoice; show-nested-choice)
- > name <+> "=" <+> show-nchoice id show-ℕ e
- let e' = convert e
- > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ e'
+ let open Trans (Eq.setoid ℕ) using (convert; show-nested-choice)
+ >         name <+> "=" <+> show-nchoice id show-ℕ e
+ > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ (convert e)
 
 un-ex : Example (NChoice String ℕ)
 un-ex = "e₁" example: "D" ⟨ 0 ∷ [] ⟩

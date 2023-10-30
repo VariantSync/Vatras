@@ -5,7 +5,6 @@ open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty using (_∷_)
 open import Data.Nat using (ℕ; suc; zero; _+_; _≡ᵇ_; _<_; _≤_; s≤s; z≤n) renaming (_≟_ to _≟ⁿ_)
-open import Data.Nat.Show renaming (show to show-ℕ)
 import Data.Nat.Properties as Nat
 open import Data.Product using (∃-syntax; Σ; proj₁; proj₂; Σ-syntax) renaming (_,_ to _and_)
 open import Data.Empty using (⊥; ⊥-elim)
@@ -22,23 +21,15 @@ open import Util.List using (find-or-last)
 
 open import Relation.Binary using (Setoid; IsEquivalence)
 
+open import Framework.V2.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 
 open import Data.String using (String; _++_)
 
-record IndexedDimension {ℓ} (Q : Set ℓ) : Set ℓ where
-  constructor _∙_
-  field
-    dim : Q
-    index : ℕ
-
-show-indexed-dimension : (Q → String) → IndexedDimension Q → String
-show-indexed-dimension show-q (D ∙ i) = show-q D ++ "∙" ++ show-ℕ i
-
 private
-  I = IndexedDimension Q
+  I = IndexedName Q
 
   -- TODO: We should decide on a consistent naming conventions for dimensions.
   --       I always use capital letter D for a dimension variable
@@ -133,12 +124,21 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
 
   show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i → String
-  show-nested-choice show-q show-carrier (val v)  = show-carrier v
+  show-nested-choice show-q show-carrier ( val v) = show-carrier v
   show-nested-choice show-q show-carrier (nchc c) =
     show-2choice
-      (show-indexed-dimension show-q)
+      (show-IndexedName show-q)
       (show-nested-choice show-q show-carrier)
       c
+
+  -- TODO?: Replace NestedChoice by 2ADT
+  -- open import Framework.V2.Lang.2ADT Q using (2ADT; 2ADTAsset; 2ADTChoice; semantics)
+  -- NestedChoice : Size → Set ℓ₁
+  -- NestedChoice i = 2ADT i I
+  -- val = 2ADTAsset
+  -- nchc = 2ADTChoice
+  -- ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
+  -- ⟦_⟧ = semantics ???? -- this should work
 
   convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞
   convert' D l []       n = val l
