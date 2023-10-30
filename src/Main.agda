@@ -13,7 +13,7 @@ open import Show.Lines
 open import Show.Print
 
 open import Test.Example using (Example)
-open import Test.Experiment using (Experiment; runAll)
+open import Test.Experiment using (Experiment; ExperimentSetup; setup; run-setup)
 
 open import Lang.CCC using (CCC)
 open import Lang.OC using (WFOC)
@@ -26,24 +26,19 @@ open import Test.Experiments.OC-to-BCC
 
 open import Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment using (exp; all-ex)
 
-ExperimentExecution : ∀ ℓ → Set (suc ℓ)
-ExperimentExecution ℓ = Σ[ A ∈ Set ℓ ] (Experiment A × List (Example A))
-
-add : ∀ {ℓ} {A : Set ℓ} → Experiment A → List (Example A) → ExperimentExecution ℓ
-add {ℓ} {A} program inputs = A , program , inputs
-
 {-|
 A list of programs that we want to run.
 Each program is implemented in terms of an Experiment.
 Each experiment is run on each example from a list of examples (i.e., experiment inputs).
 -}
-experimentsToRun : List (ExperimentExecution 0ℓ)
+experimentsToRun : List (ExperimentSetup 0ℓ)
 experimentsToRun =
-    -- Run some example translations from n-ary to binary choice calculus
-    -- (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
-    -- Run some example translations of option calculus to binary choice calculus
-    -- (WFOC ∞ String ,          exp-oc-to-bcc , optex-all) ∷
-    (add exp all-ex) ∷
+  -- DEPRECATED: Run some example translations from n-ary to binary choice calculus
+  -- DEPRECATED: (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
+  -- Run some example translations of option calculus to binary choice calculus
+  setup exp-oc-to-bcc optex-all ∷
+  -- Run some example translations from b-ary to binary choices
+  setup exp all-ex ∷
   []
 
 {-|
@@ -56,11 +51,10 @@ main_lines = do
   > "  ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳"
   > "... but now on to the experiments."
   linebreak
-  let runEntry = λ (A , exp , exa) → runAll exp exa
   linebreak
   overwrite-alignment-with
     Center
-    (lines (map runEntry experimentsToRun))
+    (lines (map run-setup experimentsToRun))
 
 open import IO using (IO; Main; putStrLn)
 
