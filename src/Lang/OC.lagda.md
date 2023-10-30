@@ -108,6 +108,7 @@ WFOCL = record
 Option calculus is unsound by construction because the following does not type check.
 The reason is that `⟦_⟧ₒ` produces a `Maybe (Variant ∞ A)` and not a `Variant ∞ A` as required by
 the framework.
+TODO: Maybe we can still explicitly construct the `Unsound` predicate.
 ```text
 OCL : VariabilityLanguage
 OCL = record
