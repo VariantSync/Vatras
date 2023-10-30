@@ -1,5 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-module Framework.V2.Translation.2Choice-to-NChoice {ℓ₁} {Q : Set ℓ₁} where
+module Framework.V2.Translation.Construct.2Choice-to-NChoice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true)
 open import Data.List using (List; _∷_; [])

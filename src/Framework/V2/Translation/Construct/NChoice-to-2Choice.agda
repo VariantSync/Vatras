@@ -1,5 +1,5 @@
 {-# OPTIONS --sized-types #-}
-module Framework.V2.Translation.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
+module Framework.V2.Translation.Construct.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
 
 open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])

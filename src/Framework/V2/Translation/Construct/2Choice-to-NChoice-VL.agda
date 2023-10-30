@@ -1,6 +1,6 @@
 open import Framework.V2.Definitions
 
-module Framework.V2.Translation.2Choice-to-NChoice-VL {F : 𝔽} where
+module Framework.V2.Translation.Construct.2Choice-to-NChoice-VL {F : 𝔽} where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
@@ -15,7 +15,7 @@ import Data.IndexedSet
 open import Framework.V2.Variants
 open import Framework.V2.Compiler using (LanguageCompiler; Stable)
 
-import Framework.V2.Translation.2Choice-to-NChoice as 2→N
+import Framework.V2.Translation.Construct.2Choice-to-NChoice as 2→N
 open 2→N using (ConfContract; FnocContract)
 
 open import Framework.V2.Constructs.Choices as Chc
