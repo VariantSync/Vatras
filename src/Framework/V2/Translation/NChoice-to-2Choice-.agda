@@ -40,11 +40,17 @@ show-indexed-dimension show-q (D ∙ i) = show-q D ++ "∙" ++ show-ℕ i
 
 private
   I = IndexedDimension Q
-  NConfig = Configₙ Q
-  -- 2Config = Config₂ I
+
+  -- TODO: We should decide on a consistent naming conventions for dimensions.
+  --       I always use capital letter D for a dimension variable
+  --       because it is written in upper case in the choice calculus papers,
+  --       altough a lower case character (e.g., 'd') would be more appropriate in Agda I guess.
   at-least-true-once : Config₂ I → Set ℓ₁
-  at-least-true-once c = (d : Q) → Σ[ i ∈ ℕ ] (c (d ∙ i) ≡ true)
+  at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true) -- TODO: Should we use `Data.Bool.T (c (D ∙ i))` here instead of `c (D ∙ i) ≡ true`?
+
+  NConfig = Configₙ Q
   2Config = Σ (Config₂ I) at-least-true-once
+
   config-without-proof : 2Config → Config₂ I
   config-without-proof = proj₁
 
@@ -99,14 +105,18 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
       → fnoc c D ≢ i
 open FnocContract
 
-true≢false : {a : Bool} → a ≡ true → a ≡ false → ⊥
+-- TODO: Move the following three functions to proper place within the Util submodule.
+true≢false : ∀ {a : Bool}
+  → a ≡ true
+    ---------
+  → a ≢ false
 true≢false refl ()
 
-n≡ᵇn : (n : ℕ) → (n ≡ᵇ n) ≡ true
+n≡ᵇn : ∀ (n : ℕ) → (n ≡ᵇ n) ≡ true
 n≡ᵇn zero = refl
 n≡ᵇn (suc n) = n≡ᵇn n
 
-n<m→m≡ᵇn : {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
+n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
 n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 
@@ -116,15 +126,15 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
   data NestedChoice : Size → Set ℓ₁ where
-    val : {i : Size} → Carrier → NestedChoice i
-    nchc : {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
+    val  : ∀ {i : Size} → Carrier → NestedChoice i
+    nchc : ∀ {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
 
-  ⟦_⟧ : {i : Size} → (NestedChoice i) → 2Config → Carrier
-  ⟦ val v ⟧ c = v
+  ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
+  ⟦ val  v   ⟧ c = v
   ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
 
   convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞
-  convert' D l [] n = val l
+  convert' D l []       n = val l
   convert' D l (r ∷ rs) n = nchc ((D ∙ n) ⟨ val l , convert' D r rs (suc n) ⟩)
 
   convert : NChoice Q Carrier → NestedChoice ∞
@@ -137,8 +147,9 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
     open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
-        (chc : NChoice Q Carrier)
+      ∀ (chc : NChoice Q Carrier)
       → ConfContract (NChoice.dim chc) conf
+        -----------------------------------
       → ⟦ chc ⟧ₙ ⊆[ conf ] ⟦ convert chc ⟧
     preserves-conf (D ⟨ l ∷ rs ⟩) confContract c
       = induction l rs
@@ -146,10 +157,18 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
                   (Nat.+-comm (c D) zero)
       where
         induction : (l : Carrier) → (rs : List Carrier)
+                  -- TODO: Document the following properly.
+                  -- n = number of available alternatives?
+                  --     c D?
+                  --     What is n?
+                  -- m = recursion depth and hence the index of the generated
+                  --     indexed dimension?
                   → (n m : ℕ)
-                  → n + m ≡ c D
+                  → n + m ≡ c D -- TODO: Document the reasoning behind this invariant.
                   → find-or-last n (l ∷ rs) ≈ ⟦ convert' D l rs m ⟧ (conf c)
         induction l [] n m n+m≡cD = ≈-Eq.refl
+        -- When we select the first alternative, we go left in the translated
+        -- choice by the contract.
         induction l (r ∷ rs) zero m m≡cD
           rewrite select-n confContract c (Eq.sym m≡cD)
           = ≈-Eq.refl
@@ -160,8 +179,9 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
           = induction r rs n (suc m) n+m≡cD
 
     preserves-fnoc :
-        (chc : NChoice Q Carrier)
+      ∀ (chc : NChoice Q Carrier)
       → FnocContract (NChoice.dim chc) fnoc
+        -----------------------------------
       → ⟦ convert chc ⟧ ⊆[ fnoc ] ⟦ chc ⟧ₙ
     preserves-fnoc (D ⟨ l ∷ rs ⟩) fnocContract c
       = induction l rs
@@ -170,6 +190,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
                   (λ where j ())
       where
         induction : (l : Carrier) → (rs : List Carrier)
+                    -- TODO: Document the meaning of n and m and the idea of the invariant.
                   → (n m : ℕ)
                   → fnoc c D ≡ n + m
                   → (∀ (j : ℕ) → j < n → config-without-proof c (D ∙ j) ≡ false)
@@ -194,43 +215,44 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
             ... | yes refl = selected
 
     convert-preserves :
-        (chc : NChoice Q Carrier)
+      ∀ (chc : NChoice Q Carrier)
       → ConfContract (NChoice.dim chc) conf
       → FnocContract (NChoice.dim chc) fnoc
+        ------------------------------------------
       → ⟦ chc ⟧ₙ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧
     convert-preserves chc conv vnoc = preserves-conf chc conv and preserves-fnoc chc vnoc
 
-conf : NConfig → 2Config
-conf c .proj₁ (dim ∙ index) = c dim ≡ᵇ index
-conf c .proj₂ dim = c dim and n≡ᵇn (c dim)
+default-conf : NConfig → 2Config
+default-conf c .proj₁ (D ∙ i) = c D ≡ᵇ i
+default-conf c .proj₂ D = c D and n≡ᵇn (c D)
 
-fnoc' : (D : Q) → (c : Config₂ I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
-fnoc' D c n i p with c (D ∙ n) ≟ᵇ true
+default-fnoc' : (D : Q) → (c : Config₂ I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
+default-fnoc' D c n i p with c (D ∙ n) ≟ᵇ true
 ... | yes cn≡true = n
-fnoc' D c n zero p | no cn≢true
+default-fnoc' D c n zero p | no cn≢true
   rewrite Nat.+-comm n zero
   = ⊥-elim (cn≢true p)
-fnoc' D c n (suc i) p | no cn≢true
+default-fnoc' D c n (suc i) p | no cn≢true
   rewrite Nat.+-suc n i
-  = fnoc' D c (suc n) i p
+  = default-fnoc' D c (suc n) i p
 
-fnoc : 2Config → NConfig
-fnoc (c and p) D with p D
-... | i and p' = fnoc' D c zero i p'
+default-fnoc : 2Config → NConfig
+default-fnoc (c and p) D with p D
+... | i and p' = default-fnoc' D c zero i p'
 
-confContract : (D : Q) → ConfContract D conf
-confContract D .select-n c refl
+default-conf-satisfies-contract : (D : Q) → ConfContract D default-conf
+default-conf-satisfies-contract D .select-n c refl
   rewrite n≡ᵇn (c D)
   = refl
-confContract D .deselect-<n c i≤cD
+default-conf-satisfies-contract D .deselect-<n c i≤cD
   rewrite n<m→m≡ᵇn i≤cD
   = refl
 
-fnocContract : (D : Q) → FnocContract D fnoc
-fnocContract D .correct (c and p) i' ci'≡true c<i'≡false with p D
+default-fnoc-satisfies-contract : (D : Q) → FnocContract D default-fnoc
+default-fnoc-satisfies-contract D .correct (c and p) i' ci'≡true c<i'≡false with p D
 ... | i and p' = induction zero i p' i' refl
   where
-    induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → (m : ℕ) → (n + m ≡ i') → fnoc' D c n i p ≡ i'
+    induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → (m : ℕ) → (n + m ≡ i') → default-fnoc' D c n i p ≡ i'
     induction n i p m m+n≡i' with c (D ∙ n) ≟ᵇ true
     induction n i p zero m+n≡i' | yes cn≡true
       rewrite Nat.+-comm n zero
@@ -249,10 +271,10 @@ fnocContract D .correct (c and p) i' ci'≡true c<i'≡false with p D
       rewrite Nat.+-suc n i
       rewrite Nat.+-suc n m
       = induction (suc n) i p m m+n≡i'
-fnocContract D .incorrect (c and p) i' ci'≡false with p D
+default-fnoc-satisfies-contract D .incorrect (c and p) i' ci'≡false with p D
 ... | i and p' = induction zero i p'
   where
-    induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → fnoc' D c n i p ≢ i'
+    induction : (n i : ℕ) → (p : c (D ∙ (n + i)) ≡ true) → default-fnoc' D c n i p ≢ i'
     induction n i p n≡i' with c (D ∙ n) ≟ᵇ true
     induction n i p n≡i' | yes cn≡true
       rewrite Eq.sym n≡i'
