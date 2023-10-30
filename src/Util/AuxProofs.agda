@@ -31,13 +31,6 @@ n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
 n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 
-m≤n⇒m<1+n : ∀ (m n : ℕ)
-  → m ≤ n
-    ---------
-  → m < suc n -- suc m ≤ suc n
-m≤n⇒m<1+n zero n m≤n = s≤s z≤n
-m≤n⇒m<1+n (suc m) (suc n) sm≤sn = s≤s sm≤sn
-
 1+[m-n]=[1+m]-n : ∀ (m n : ℕ) → (n ≤ m) → suc (m ∸ n) ≡ suc m ∸ n
 1+[m-n]=[1+m]-n m n n≤m =
   begin
@@ -71,10 +64,7 @@ Takes the minium of the two given numbers and proves that the result is smaller 
 To prove that the result is smaller than 1 + the second number, use flip to sap the arguments of this function.
 -}
 minFinFromLimit : (n-1 : ℕ) → ℕ → Fin (suc n-1)
-minFinFromLimit n-1 t =
-  let min = n-1 ⊓ t
-      x = m⊓n≤m n-1 t
-   in fromℕ< (m≤n⇒m<1+n min n-1 x)
+minFinFromLimit n-1 t = fromℕ< {n-1 ⊓ t} (s≤s (m⊓n≤m n-1 t))
 
 {-|
 Clamps a non-negative natural number at the given limit.
