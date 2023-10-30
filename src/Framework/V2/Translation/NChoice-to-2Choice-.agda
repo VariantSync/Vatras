@@ -24,7 +24,7 @@ open import Util.List using (find-or-last)
 open import Relation.Binary using (Setoid; IsEquivalence)
 
 import Framework.V2.Constructs.Choices as Chc
-open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂)
+open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 
 open import Data.String using (String; _++_)
@@ -132,6 +132,14 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
   ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
   ⟦ val  v   ⟧ c = v
   ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
+
+  show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i → String
+  show-nested-choice show-q show-carrier (val v)  = show-carrier v
+  show-nested-choice show-q show-carrier (nchc c) =
+    show-2choice
+      (show-indexed-dimension show-q)
+      (show-nested-choice show-q show-carrier)
+      c
 
   convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞
   convert' D l []       n = val l
