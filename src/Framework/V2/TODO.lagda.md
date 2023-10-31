@@ -34,9 +34,7 @@ Prove for all of the following languages whether they are complete, sound, and h
 
 ## Issues
 
-### [1] Generalize Levels
-
-Started on branch `generalize-levels` but has to be continued. We need this at several places to simplify or refactor things.
+Nest Issue No: 12
 
 ### [2] Embed NestedChoice
 
@@ -57,6 +55,21 @@ and prove that semantics is preserved.
 
 The idea is the we can express a nested choice in any language that has binary choices.
 Once this proof is complete, we can by transitivity, encode an n-ary choice into any language that has binary choices.
+
+```agda
+{-|
+assume: Choice₂ ∈ₛ L₂
+Choiceₙ L₁ ── convert ─⟶ 2ADT L₁
+                          |
+                          | map compile
+                          ↓
+                        2ADT (L₂ A)
+                          |
+                          | embed
+                          ↓
+                          L₂
+-}
+```
 
 ### [3] Embed Variants
 
@@ -137,3 +150,9 @@ Maybe this issue is the goal towards syntactic comparisons instead of semantic o
 2. Compare size if syntax of constructs.
 
 Or something like this.
+
+## Closed Issues
+
+### [1] Generalize Levels
+
+Started on branch `generalize-levels` but has to be continued. We need this at several places to simplify or refactor things.
