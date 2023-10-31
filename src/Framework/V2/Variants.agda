@@ -1,6 +1,7 @@
 module Framework.V2.Variants where
 
 open import Data.Fin using (Fin)
+open import Data.List using (List)
 open import Data.Nat using (ℕ; suc)
 
 open import Level using (0ℓ)
@@ -14,6 +15,10 @@ import Data.IndexedSet
 data GrulerVariant : 𝕍 where
   asset : ∀ {A : 𝔸} (a : A) → GrulerVariant A
   _∥_   : ∀ {A : 𝔸} (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
+
+data WalkingshawVariant : 𝕍 where
+  -- TODO: Use Artifact Construct here.
+  _-<_>- : ∀ {A : 𝔸} (a : A) → List (WalkingshawVariant A) → WalkingshawVariant A
 
 VariantSetoid : 𝕍 → 𝔸 → Setoid 0ℓ 0ℓ
 VariantSetoid V A = Eq.setoid (V A)
