@@ -1,5 +1,5 @@
 {-# OPTIONS --sized-types #-}
-module Framework.V2.Translation.Construct.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
+module Framework.V2.Translation.Construct.NChoice-to-2Choice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])
@@ -11,6 +11,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 
+import Level
 open import Size using (Size; ↑_; ∞)
 
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≢_)
@@ -37,7 +38,7 @@ private
   In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
   termination checker that it wont search for a non-existing true alternative.
   |-}
-  at-least-true-once : Config₂ I → Set ℓ₁
+  at-least-true-once : Config₂ I → Set
   at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
 
   NConfig = Configₙ Q
@@ -46,7 +47,7 @@ private
   config-without-proof : 2Config → Config₂ I
   config-without-proof = proj₁
 
-record ConfContract (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
+record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
   field
     {-|
     A translated, binary configuration (conf c)
@@ -80,7 +81,7 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     -}
 open ConfContract
 
-record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
+record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
   field
     {-|
     The nary config must chose index i if
@@ -101,12 +102,12 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
       → fnoc c D ≢ i
 open FnocContract
 
-module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
+module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
-  data NestedChoice : Size → Set ℓ₁ where
+  data NestedChoice : Size → Set where
     val  : ∀ {i : Size} → Carrier → NestedChoice i
     nchc : ∀ {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
 
@@ -124,7 +125,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
 
   -- TODO?: Replace NestedChoice by 2ADT
   -- open import Framework.V2.Lang.2ADT Q using (2ADT; 2ADTAsset; 2ADTChoice; semantics)
-  -- NestedChoice : Size → Set ℓ₁
+  -- NestedChoice : Size → Set
   -- NestedChoice i = 2ADT i I
   -- val = 2ADTAsset
   -- nchc = 2ADTChoice
