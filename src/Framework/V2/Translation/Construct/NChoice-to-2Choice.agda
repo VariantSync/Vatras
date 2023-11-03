@@ -28,10 +28,12 @@ import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 
-open import Data.String using (String; _++_)
+open import Data.String using (String)
 
 private
   I = IndexedName Q
+
+open import Framework.V2.Constructs.NestedChoice I as NestedChoice public using (NestedChoice; value; choice) renaming (⟦_⟧ to ⟦_⟧ₒ)
 
 {-|
 There needs to be at least one true alternative.
@@ -106,37 +108,17 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 
-  {-| A dialect of binary choice calculus in which all data is in leaves. -}
-  data NestedChoice : Size → Set where
-    val  : ∀ {i : Size} → Carrier → NestedChoice i
-    nchc : ∀ {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
+  show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i Carrier → String
+  show-nested-choice show-q = NestedChoice.show-nested-choice (show-IndexedName show-q)
 
-  ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
-  ⟦ val  v   ⟧ c = v
-  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (evalConfig c) ⟧ c
+  ⟦_⟧ : ∀ {i : Size} → NestedChoice i Carrier → 2Config → Carrier
+  ⟦ chc ⟧ c = ⟦ chc ⟧ₒ (evalConfig c)
 
-  show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i → String
-  show-nested-choice show-q show-carrier ( val v) = show-carrier v
-  show-nested-choice show-q show-carrier (nchc c) =
-    show-2choice
-      (show-IndexedName show-q)
-      (show-nested-choice show-q show-carrier)
-      c
+  convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞ Carrier
+  convert' D l []       n = value l
+  convert' D l (r ∷ rs) n = choice ((D ∙ n) ⟨ value l , convert' D r rs (suc n) ⟩)
 
-  -- TODO?: Replace NestedChoice by 2ADT
-  -- open import Framework.V2.Lang.2ADT Q using (2ADT; 2ADTAsset; 2ADTChoice; semantics)
-  -- NestedChoice : Size → Set
-  -- NestedChoice i = 2ADT i I
-  -- val = 2ADTAsset
-  -- nchc = 2ADTChoice
-  -- ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
-  -- ⟦_⟧ = semantics ???? -- this should work
-
-  convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞
-  convert' D l []       n = val l
-  convert' D l (r ∷ rs) n = nchc ((D ∙ n) ⟨ val l , convert' D r rs (suc n) ⟩)
-
-  convert : NChoice Q Carrier → NestedChoice ∞
+  convert : NChoice Q Carrier → NestedChoice ∞ Carrier
   convert (D ⟨ c ∷ cs ⟩) = convert' D c cs zero
 
   module Preservation

@@ -20,7 +20,7 @@ open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
 open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to Choice₂-sem)
 
 import Framework.V2.Translation.Construct.NChoice-to-2Choice as NChoice-to-2Choice
-open NChoice-to-2Choice using (evalConfig)
+open NChoice-to-2Choice using (NestedChoice; value; choice; evalConfig)
 module NChoice-to-2Choice-explicit Q = NChoice-to-2Choice {Q}
 open NChoice-to-2Choice-explicit using (2Config)
 
@@ -42,22 +42,23 @@ module Embed
   open NChoice-to-2Choice.Translate {F} (Eq.setoid (Expression Γ A))
   open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
 
-  embed : ∀ {i} → NestedChoice i → Expression Γ A
-  embed (val v) = v
-  embed (nchc c) = cons (make constr) (map (embed) c)
+
+  embed : ∀ {i} → NestedChoice i (Expression Γ A) → Expression Γ A
+  embed (value v) = v
+  embed (choice c) = cons (make constr) (map embed c)
     where
     open Chc.Choice₂ using (map)
 
   embed-preserves : ∀ {i}
-    → (e : NestedChoice i)
+    → (e : NestedChoice i (Expression Γ A))
     → Semantics Γ (embed e) ≅ λ c → Semantics Γ (⟦ e ⟧ c) c
   embed-preserves e = ≗→≅ (induction e)
     where
     induction : ∀ {i}
-      → (e : NestedChoice i)
+      → (e : NestedChoice i (Expression Γ A))
       → Semantics Γ (embed e) ≗ λ c → Semantics Γ (⟦ e ⟧ c) c
-    induction (val v) c = refl
-    induction (nchc (dim ⟨ l , r ⟩)) c
+    induction (value v) c = refl
+    induction (choice (dim ⟨ l , r ⟩)) c
       rewrite preservation constr (dim ⟨ embed l , embed r ⟩) c
       with evalConfig c dim
     ... | true = induction l c
