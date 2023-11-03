@@ -1,27 +1,14 @@
 module Framework.V2.Lang.FeatureAlgebra where
 
 open import Data.Product using (proj₁; proj₂; _×_; _,_)
-open import Data.List using (List) renaming (_∷_ to _．_)
-
 open import Algebra.Structures using (IsMonoid)
 open import Algebra.Core using (Op₂)
-import Algebra.Definitions
-
-open import Relation.Binary using (Rel; Reflexive; Symmetric; Transitive; IsEquivalence)
+open import Algebra.Definitions using (Associative)
+open import Relation.Binary using (Rel; Reflexive; Symmetric; Transitive; IsEquivalence; IsPreorder)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
-
 open import Level using (suc; _⊔_)
 
-open import Framework.V2.Annotation.Name using (Name)
-
-record FeaturePath (N : Set) (S : Set) : Set where
-  constructor _∷_
-  field
-    name : Name N
-    path : List S
-
 record FeatureAlgebra {c} : Set (suc c) where
-  open Algebra.Definitions using (Associative)
   open Eq.≡-Reasoning
   infixr 7 _⊕_
 
