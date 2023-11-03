@@ -63,13 +63,13 @@ record FeatureAlgebra {c} : Set (suc c) where
   ≤-trans {i} {j} {k} i≤j j≤k =
     begin
       i ⊕ k
-    ≡⟨ Eq.cong (i ⊕_) (Eq.sym j≤k) ⟩
+    ≡˘⟨ Eq.cong (i ⊕_) j≤k ⟩
       i ⊕ (j ⊕ k)
-    ≡⟨ Eq.cong (λ x → i ⊕ x ⊕ k) (Eq.sym i≤j) ⟩
+    ≡˘⟨ Eq.cong (λ x → i ⊕ x ⊕ k) i≤j ⟩
       i ⊕ ((i ⊕ j) ⊕ k)
-    ≡⟨ Eq.sym (assoc i (i ⊕ j) k) ⟩
+    ≡˘⟨ assoc i (i ⊕ j) k ⟩
       (i ⊕ (i ⊕ j)) ⊕ k
-    ≡⟨ Eq.cong (_⊕ k) (Eq.sym (assoc i i j)) ⟩
+    ≡˘⟨ Eq.cong (_⊕ k) (assoc i i j) ⟩
       ((i ⊕ i) ⊕ j) ⊕ k
     ≡⟨ Eq.cong (_⊕ k) (Eq.cong (_⊕ j) (direct-idempotence i)) ⟩
       (i ⊕ j) ⊕ k
