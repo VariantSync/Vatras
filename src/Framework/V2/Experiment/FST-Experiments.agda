@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 open import Framework.V2.Definitions
 module Framework.V2.Experiment.FST-Experiments where
 

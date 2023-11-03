@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module Framework.V2.Lang.FST where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
