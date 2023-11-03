@@ -8,15 +8,13 @@ open import Relation.Binary using (Rel; Reflexive; Symmetric; Transitive; IsEqui
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Level using (suc; _⊔_)
 
-record FeatureAlgebra {c} : Set (suc c) where
+record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) where
   open Eq.≡-Reasoning
+
+  _⊕_ = sum
   infixr 7 _⊕_
 
   field
-    I : Set c
-    _⊕_ : Op₂ I
-    𝟘 : I
-
     monoid : IsMonoid _≡_ _⊕_ 𝟘
 
     -- Only the rightmost occurence of an introduction is effective in a sum,
