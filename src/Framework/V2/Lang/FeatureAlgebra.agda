@@ -36,9 +36,20 @@ record FeatureAlgebra {c} : Set (suc c) where
     -- because it has been introduced first.
     -- This is, duplicates of i have no effect.
     distant-idempotence : ∀ (i₁ i₂ : I) → i₂ ⊕ i₁ ⊕ i₂ ≡ i₁ ⊕ i₂
-    direct-idempotence : ∀ (i : I) → i ⊕ i ≡ i
 
   open IsMonoid monoid
+
+  direct-idempotence : ∀ (i : I) → i ⊕ i ≡ i
+  direct-idempotence i =
+    begin
+      i ⊕ i
+    ≡˘⟨ Eq.cong (i ⊕_) (proj₁ identity i) ⟩
+      i ⊕ 𝟘 ⊕ i
+    ≡⟨ distant-idempotence 𝟘 i ⟩
+      𝟘 ⊕ i
+    ≡⟨ proj₁ identity i ⟩
+      i
+    ∎
 
   -- introduction inclusion
   infix 6 _≤_
