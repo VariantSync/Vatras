@@ -47,6 +47,11 @@ single = pure list-applicative
 lines : List Lines → Lines
 lines = concat
 
+for-loop : ∀ {ℓ} {A : Set ℓ} → List A → (A → Lines) → Lines
+for-loop items op = lines (map op items)
+
+syntax for-loop items (λ c → l) = foreach [ c ∈ items ] l
+
 align-all : ℕ → Lines → Lines
 align-all width = map (align width)
 
