@@ -33,19 +33,19 @@ open import Data.String using (String; _++_)
 private
   I = IndexedName Q
 
-  {-|
-  There needs to be at least one true alternative.
-  In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
-  termination checker that it wont search for a non-existing true alternative.
-  |-}
-  at-least-true-once : Config₂ I → Set
-  at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
+{-|
+There needs to be at least one true alternative.
+In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
+termination checker that it wont search for a non-existing true alternative.
+|-}
+at-least-true-once : Config₂ I → Set
+at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
 
-  NConfig = Configₙ Q
-  2Config = Σ (Config₂ I) at-least-true-once
+NConfig = Configₙ Q
+2Config = Σ (Config₂ I) at-least-true-once
 
-  config-without-proof : 2Config → Config₂ I
-  config-without-proof = proj₁
+config-without-proof : 2Config → Config₂ I
+config-without-proof = proj₁
 
 record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
   field
