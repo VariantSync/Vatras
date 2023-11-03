@@ -25,6 +25,8 @@ open import Test.Experiments.CCC-to-BCC
 open import Test.Experiments.OC-to-BCC
 
 open import Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment using (exp; all-ex)
+import Framework.V2.Experiment.FST-Experiments as FSTs
+open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
 
 {-|
 A list of programs that we want to run.
@@ -39,6 +41,7 @@ experimentsToRun =
   setup exp-oc-to-bcc optex-all ∷
   -- Run some example translations from b-ary to binary choices
   setup exp all-ex ∷
+  setup toy-calculator-experiment ex-all ∷
   []
 
 {-|
