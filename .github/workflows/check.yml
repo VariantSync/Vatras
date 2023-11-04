@@ -1,4 +1,4 @@
-name: Build the nix derivation
+name: Check the Agda files
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     - name: Install Nix with cached packages
       uses: ibbem/cache-install@b5946e901c509f3478455a3f315e887e254bd36b
       with:
-        key: nix-${{ hashFiles('.github/workflows/build.yml', 'default.nix', 'nix/**') }}
+        key: nix-${{ hashFiles('.github/workflows/check.yml', 'default.nix', 'nix/**') }}
         nix_file: nix/github-workflow-dependencies.nix
-    - name: Build
-      run: nix-build
+    - name: Check Agda files
+      run: nix-shell --run 'make check'
