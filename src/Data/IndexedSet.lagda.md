@@ -30,6 +30,7 @@ open import Data.Empty.Polymorphic using (⊥)
 open import Data.Unit.Polymorphic using (⊤; tt)
 
 open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; proj₁; proj₂)
+open import Relation.Binary.PropositionalEquality using (_≗_)
 open import Relation.Nullary using (¬_)
 
 open import Function using (id; _∘_; Congruent; Surjective) --IsSurjection)
@@ -69,6 +70,12 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 ≐→≅ A≐B =
     (λ i → (i ,      A≐B i))
   , (λ i → (i , sym (A≐B i)))
+
+≗→≐ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≐ B
+≗→≐ A≗B i = Eq.reflexive (A≗B i)
+
+≗→≅ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅ B
+≗→≅ A≗B = ≐→≅ (≗→≐ A≗B)
 ```
 
 ## Properties
