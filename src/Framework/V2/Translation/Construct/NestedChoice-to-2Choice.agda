@@ -21,35 +21,34 @@ open import Framework.V2.Translation.Construct.NChoice-to-2Choice
 
 module Embed
   {V : 𝕍} {F : 𝔽} {S : 𝕊} {A : 𝔸}
-  (Γ : VariabilityLanguage V F S)
-  (constr : F ⊢ 2Choice ∈ₛ Expression Γ)
+  (Γ : VariabilityLanguage V (IndexedName F) S)
+  (constr : IndexedName F ⊢ 2Choice ∈ₛ Expression Γ)
   where
 
   open Translate {F} (Eq.setoid (Expression Γ A))
   open Data.IndexedSet (Eq.setoid (V A)) using (_≐_; _≅_; ≐→≅)
 
-  embed : ∀ {i} → (IndexedName F → F) → NestedChoice i → Expression Γ A
-  embed conv (val v) = v
-  embed conv (nchc c) = cons constr (map-dim conv (map (embed conv) c))
+  embed : ∀ {i} → NestedChoice i → Expression Γ A
+  embed (val v) = v
+  embed (nchc c) = cons constr (map (embed) c)
     where
-    open Chc.Choice₂ using (map; map-dim)
+    open Chc.Choice₂ using (map)
 
   embed-preserves : ∀ {i}
-    → (IF→F : IndexedName F → F)
     → (S->Bool : S → Bool)
-    → (config-is-valid : (c : Config F S) → at-least-true-once (S->Bool ∘ c ∘ IF→F))
+    → (config-is-valid : (c : Config (IndexedName F) S) → at-least-true-once (S->Bool ∘ c))
     → (∀ e → Semantics Γ (cons constr e) ≡ λ c → Semantics Γ (⟦ e ⟧₂ (S->Bool ∘ c)) c)
     → (e : NestedChoice i)
-    ----------------------------------------------------------------------------------------------------
-    → Semantics Γ (embed IF→F e) ≅ λ c → Semantics Γ (⟦ e ⟧ (S->Bool ∘ c ∘ IF→F and config-is-valid c)) c
-  embed-preserves IF→F S->Bool config-is-valid constr-semantic e = ≐→≅ (induction e)
+    -----------------------------------------------------------------------------------------
+    → Semantics Γ (embed e) ≅ λ c → Semantics Γ (⟦ e ⟧ (S->Bool ∘ c and config-is-valid c)) c
+  embed-preserves S->Bool config-is-valid constr-semantic e = ≐→≅ (induction e)
     where
     induction : ∀ {i}
       → (e : NestedChoice i)
-      → Semantics Γ (embed IF→F e) ≐ λ c → Semantics Γ (⟦ e ⟧ (S->Bool ∘ c ∘ IF→F and config-is-valid c)) c
+      → Semantics Γ (embed e) ≐ λ c → Semantics Γ (⟦ e ⟧ (S->Bool ∘ c and config-is-valid c)) c
     induction (val v) c = refl
     induction (nchc (dim ⟨ l , r ⟩)) c
-      rewrite constr-semantic (IF→F dim ⟨ embed IF→F l , embed IF→F r ⟩)
-      with S->Bool (c (IF→F dim))
+      rewrite constr-semantic (dim ⟨ embed l , embed r ⟩)
+      with S->Bool (c dim)
     ... | true = induction l c
     ... | false = induction r c
