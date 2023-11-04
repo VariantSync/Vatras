@@ -20,8 +20,8 @@ open Chc.VLChoice₂ using () renaming (Syntax to 2Choice)
 open import Framework.V2.Translation.Construct.NChoice-to-2Choice
 
 module Embed
-  {V : 𝕍} {F : 𝔽} {S : 𝕊} {A : 𝔸}
-  (Γ : VariabilityLanguage V (IndexedName F) S)
+  {V : 𝕍} {F : 𝔽} {A : 𝔸}
+  (Γ : VariabilityLanguage V (IndexedName F) Bool)
   (constr : IndexedName F ⊢ 2Choice ∈ₛ Expression Γ)
   where
 
@@ -35,20 +35,19 @@ module Embed
     open Chc.Choice₂ using (map)
 
   embed-preserves : ∀ {i}
-    → (S->Bool : S → Bool)
-    → (config-is-valid : (c : Config (IndexedName F) S) → at-least-true-once (S->Bool ∘ c))
-    → (∀ e → Semantics Γ (cons constr e) ≡ λ c → Semantics Γ (⟦ e ⟧₂ (S->Bool ∘ c)) c)
+    → (config-is-valid : (c : Config (IndexedName F) Bool) → at-least-true-once c)
+    → (∀ e → Semantics Γ (cons constr e) ≡ λ c → Semantics Γ (⟦ e ⟧₂ c) c)
     → (e : NestedChoice i)
-    -----------------------------------------------------------------------------------------
-    → Semantics Γ (embed e) ≅ λ c → Semantics Γ (⟦ e ⟧ (S->Bool ∘ c and config-is-valid c)) c
-  embed-preserves S->Bool config-is-valid constr-semantic e = ≐→≅ (induction e)
+    -------------------------------------------------------------------------------
+    → Semantics Γ (embed e) ≅ λ c → Semantics Γ (⟦ e ⟧ (c and config-is-valid c)) c
+  embed-preserves config-is-valid constr-semantic e = ≐→≅ (induction e)
     where
     induction : ∀ {i}
       → (e : NestedChoice i)
-      → Semantics Γ (embed e) ≐ λ c → Semantics Γ (⟦ e ⟧ (S->Bool ∘ c and config-is-valid c)) c
+      → Semantics Γ (embed e) ≐ λ c → Semantics Γ (⟦ e ⟧ (c and config-is-valid c)) c
     induction (val v) c = refl
     induction (nchc (dim ⟨ l , r ⟩)) c
       rewrite constr-semantic (dim ⟨ embed l , embed r ⟩)
-      with S->Bool (c dim)
+      with c dim
     ... | true = induction l c
     ... | false = induction r c
