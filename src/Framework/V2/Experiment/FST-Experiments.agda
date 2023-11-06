@@ -32,7 +32,7 @@ module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
     → (N → String)
     → (A → String)
     → List (Conf N)
-    → Experiment (FSF N)
+    → Experiment (SPL N)
   getName (exp _ _ _) = "Configure FST example"
   get (exp show-N show-A configs) (example-name ≔ forest) =
     let open FSTDefsA.Show show-N show-A
@@ -47,7 +47,7 @@ module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
       linebreak
       > "⟦ e ⟧" <+> cstr <+> "="
       indent 2 do
-        show-FST (⟦ forest ⟧ c)
+        show-FSF (⟦ forest ⟧ c)
 
 pick-all : ∀ {N} → Conf N
 pick-all _ = true
@@ -103,16 +103,16 @@ module Java where
 
     ---- Example SPLs
 
-    ex-Add-Sub : Example (FSF ASTNode)
+    ex-Add-Sub : Example (SPL ASTNode)
     ex-Add-Sub = "add-sub" ≔ feature-Add ∷ feature-Sub ∷ []
 
-    ex-Sub-Add : Example (FSF ASTNode)
+    ex-Sub-Add : Example (SPL ASTNode)
     ex-Sub-Add = "sub-add" ≔ feature-Sub ∷ feature-Add ∷ []
 
-    ex-Add-Sub-Log : Example (FSF ASTNode)
+    ex-Add-Sub-Log : Example (SPL ASTNode)
     ex-Add-Sub-Log = "add-sub" ≔ feature-Add ∷ feature-Sub ∷ feature-Log ∷ []
 
-    ex-all : List (Example (FSF ASTNode))
+    ex-all : List (Example (SPL ASTNode))
     ex-all = ex-Add-Sub ∷ ex-Sub-Add ∷ ex-Add-Sub-Log ∷ []
 
     ---- Experiments
