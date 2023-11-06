@@ -18,10 +18,6 @@ open import Framework.V2.Annotation.Name using (Name)
 open import Framework.V2.Constructs.Artifact
 open import Framework.V2.Lang.FeatureAlgebra
 
--- data FST : 𝕍 where
---   -- add a proof that the children are disjoint wrt. ≡
---   node : ∀ {A} → A → List (FST A) → FST A
-
 Conf : (N : 𝔽) → Set
 Conf N = Config N Bool
 
