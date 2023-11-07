@@ -5,10 +5,9 @@ module Framework.V2.Translation.Construct.NestedChoice-to-2Choice where
 open import Data.Bool using (Bool; false; true)
 open import Data.Product using (Σ-syntax) renaming (_,_ to _and_)
 
+open import Relation.Binary using (Setoid)
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≗_)
 import Relation.Binary.PropositionalEquality as Eq
-
-import Data.IndexedSet
 
 open import Function.Base using (id; _∘_)
 
@@ -26,7 +25,7 @@ module Embed
   where
 
   open Translate {F} (Eq.setoid (Expression Γ A))
-  open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
+  open Setoid (Eq.setoid (V A)) using (_≈_)
 
   embed : ∀ {i} → NestedChoice i → Expression Γ A
   embed (val v) = v
@@ -35,18 +34,19 @@ module Embed
     open Chc.Choice₂ using (map)
 
   embed-preserves : ∀ {i}
-    → (config-is-valid : (c : Config (IndexedName F) Bool) → at-least-true-once c)
     → (e : NestedChoice i)
-    -------------------------------------------------------------------------------
-    → Semantics Γ (embed e) ≅ λ c → Semantics Γ (⟦ e ⟧ (c and config-is-valid c)) c
-  embed-preserves config-is-valid e = ≗→≅ (induction e)
+    → (c : Config (IndexedName F) Bool)
+    → (valid : at-least-true-once c)
+    ---------------------------------------------------------------
+    → Semantics Γ (embed e) c ≈ Semantics Γ (⟦ e ⟧ (c and valid)) c
+  embed-preserves e c valid = induction e
     where
     induction : ∀ {i}
       → (e : NestedChoice i)
-      → Semantics Γ (embed e) ≗ λ c → Semantics Γ (⟦ e ⟧ (c and config-is-valid c)) c
-    induction (val v) c = refl
-    induction (nchc (dim ⟨ l , r ⟩)) c
+      → Semantics Γ (embed e) c ≈ Semantics Γ (⟦ e ⟧ (c and valid)) c
+    induction (val v) = refl
+    induction (nchc (dim ⟨ l , r ⟩))
       rewrite preservation constr (dim ⟨ embed l , embed r ⟩) c
       with c dim
-    ... | true = induction l c
-    ... | false = induction r c
+    ... | true = induction l
+    ... | false = induction r
