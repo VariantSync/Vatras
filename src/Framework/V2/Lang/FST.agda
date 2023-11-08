@@ -6,12 +6,13 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (tt)
 open import Function using (_∘_)
 open import Level using (0ℓ)
 
 open import Relation.Nullary.Negation using (¬_)
-open import Relation.Nullary.Decidable using (yes; no; False)
+open import Relation.Nullary.Decidable using (yes; no; _because_; False)
 open import Relation.Binary using (DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
@@ -23,6 +24,26 @@ open import Framework.V2.Lang.FeatureAlgebra
 
 Conf : (N : 𝔽) → Set
 Conf N = Config N Bool
+
+≠-sym : ∀ {ℓ} {A : Set ℓ} (a b : A)
+  → ¬ (a ≡ b)
+  → ¬ (b ≡ a)
+≠-sym a b a≠b refl = a≠b refl
+
+≠→False : ∀ {ℓ} {A : Set ℓ} {a b : A}
+  → (_≟_ : DecidableEquality A)
+  → ¬ (a ≡ b)
+  → False (a ≟ b)
+≠→False {a = a} {b = b} _≟_ a≠b with a ≟ b
+... | yes a≡b = ⊥-elim (a≠b a≡b)
+... | no    _ = tt
+
+False-sym : ∀ {ℓ} {A : Set ℓ} {a b : A}
+  → (_≟_ : DecidableEquality A)
+  → False (a ≟ b)
+  → False (b ≟ a)
+False-sym {a = a} {b = b} _≟_ _ with a ≟ b
+... | no ¬p = ≠→False _≟_ (≠-sym a b ¬p)
 
 module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
   data FST : Set
@@ -95,13 +116,40 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
   mutual
     data PlainFST : Set where
       pnode : A → List PlainFST → PlainFST
+    foo = pnode
 
     pdifferent : Rel PlainFST 0ℓ
     pdifferent (pnode a _) (pnode b _) = False (a ≟ b)
 
+    Unique : List PlainFST → Set
+    Unique = AllPairs pdifferent
+
+    data UFST : Set where
+      unode : A → (cs : List UFST) → AllPairs udifferent cs → UFST
+
+    udifferent : Rel UFST 0ℓ
+    udifferent (unode a _ _) (unode b _ _) = False (a ≟ b)
+
+    forget-unique : UFST -> PlainFST
+    forget-unique (unode a cs _) = pnode a (map forget-unique cs)
+
+
+    map-pdifferent : ∀ {b xs} (ys : List PlainFST) (z : PlainFST)
+      → pdifferent (foo b xs) z
+      → pdifferent (foo b ys) z
+    map-pdifferent {b} _ (pnode z _) l with z ≟ b
+    ... | yes _ = l
+    ... | no  _ = l
+
+    map-all-pdifferent : ∀ {b cs cs' xs}
+      → All (pdifferent (foo b cs )) xs
+      → All (pdifferent (foo b cs')) xs
+    map-all-pdifferent [] = []
+    map-all-pdifferent {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-pdifferent cs' x px ∷ map-all-pdifferent pxs
+
     infix 4 _+_⟶_
     data _+_⟶_ : PlainFST → List (PlainFST) → List (PlainFST) → Set where
-      base : ∀ {l}
+      base : ∀ {l : PlainFST}
           ----------
         → l + [] ⟶ l ∷ []
 
@@ -120,13 +168,10 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
         → [] + rs ↝ rs
 
       impose-step : ∀ {l ls rs e e'}
-        → l  + rs ⟶ e
-        → ls + e  ↝ e'
+        → l  + rs ⟶ e'
+        → ls + e' ↝ e
           ----------------
-        → l ∷ ls + rs ↝ e'
-
-    Unique : List PlainFST → Set
-    Unique = AllPairs pdifferent
+        → l ∷ ls + rs ↝ e
 
     ↝-deterministic : ∀ {fs rs e e'}
       → fs + rs ↝ e
@@ -135,7 +180,6 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
     ↝-deterministic impose-nothing impose-nothing = refl
     ↝-deterministic (impose-step ⟶x ↝x) (impose-step ⟶y ↝y) rewrite ⟶-deterministic ⟶x ⟶y | ↝-deterministic ↝x ↝y = refl
 
-    open import Data.Empty using (⊥; ⊥-elim)
     ⟶-deterministic : ∀ {f rs e e'}
       → f + rs ⟶ e
       → f + rs ⟶ e'
@@ -147,13 +191,96 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
     ⟶-deterministic (skip neq x) (skip neq' y) rewrite ⟶-deterministic x y = refl
 
     open import Data.Product using (∃-syntax; _,_)
+    ↝-return : ∀ {e ls rs}
+      → ls + rs ↝ e
+      → ∃[ e ] (ls + rs ↝ e)
+    ↝-return {e} ↝e = e , ↝e
+
+    ⟶-return : ∀ {e l rs}
+      → l + rs ⟶ e
+      → ∃[ e ] (l + rs ⟶ e)
+    ⟶-return {e} ⟶e = e , ⟶e
+
     ↝-total : ∀ (ls rs : List PlainFST) → ∃[ e ] (ls + rs ↝ e)
-    ↝-total [] rs = rs , impose-nothing
-    ↝-total (l ∷ ls) rs = {!!} , {!!}
+    ↝-total [] rs = ↝-return impose-nothing
+    ↝-total (l ∷ ls) rs =
+      let e' , ⟶e' = ⟶-total l rs
+          _  , ↝e  = ↝-total ls e'
+       in ↝-return (impose-step ⟶e' ↝e)
 
     ⟶-total : ∀ (l : PlainFST) (rs : List PlainFST) → ∃[ e ] (l + rs ⟶ e)
-    ⟶-total l [] = {!!}
-    ⟶-total l (x ∷ rs) = {!!}
+    ⟶-total l [] = ⟶-return base
+    ⟶-total (pnode a as) (pnode b bs ∷ rs) with a ≟ b
+    ... | yes refl =
+      let cs , ↝cs = ↝-total as bs
+       in ⟶-return (merge ↝cs)
+    ... | no  a≠b =
+      let cs , ⟶cs = ⟶-total (pnode a as) rs
+       in ⟶-return (skip a≠b ⟶cs)
+
+    map-Unique-head : ∀ {a as bs rs}
+      → Unique (foo a as ∷ rs)
+      → Unique (foo a bs ∷ rs)
+    map-Unique-head (x ∷ xs) = map-all-pdifferent x ∷ xs
+
+    drop-second-Unique : ∀ {x y zs}
+      → Unique (x ∷ y ∷ zs)
+      → Unique (x ∷ zs)
+    drop-second-Unique ((_ ∷ pxs) ∷ _ ∷ zs) = pxs ∷ zs
+
+    head-Unique : ∀ {x xs}
+      → Unique (x ∷ xs)
+      → All (pdifferent x) xs
+    head-Unique (x ∷ xs) = x
+
+    -- Observation: We can actually generalize this to any All, not just Unique!
+      -- impose-step : ∀ {l ls rs e e'}
+      --   → l  + rs ⟶ e'
+      --   → ls + e' ↝ e
+      --     ----------------
+      --   → l ∷ ls + rs ↝ e
+    impose-nothing-preserves-unique : ∀ {rs e : List PlainFST}
+      → [] + rs ↝ e
+      → Unique rs
+      → Unique e
+    impose-nothing-preserves-unique impose-nothing u-rs = u-rs
+
+    impose-step-preserves-unique : ∀ {a : A} {as ls rs e : List PlainFST}
+      → foo a as ∷ ls + rs ↝ e
+      → Unique as
+      → Unique ls
+      → Unique rs
+      → Unique e
+    impose-step-preserves-unique {a} {as} {[]} {rs} {e} (impose-step {e' = e'} ⟶e' ↝e) u-as u-ls u-rs =
+      let u-e' = ⟶-preserves-unique a as rs u-as u-rs e' ⟶e'
+          u-e  = impose-nothing-preserves-unique ↝e u-e'
+       in u-e
+    impose-step-preserves-unique {a} {as} {pnode a' as' ∷ ls} {rs} {e} (impose-step {e' = e'} ⟶e' ↝e) u-as u-ls u-rs =
+      let u-e' = ⟶-preserves-unique a as rs u-as u-rs e' ⟶e'
+          u-e  = {!impose-step-preserves-unique ↝e!} --↝-preserves-unique ls e' e u-ls u-e' ↝e
+       in u-e
+
+    ⟶-preserves-unique : ∀ (a : A) (ls rs : List PlainFST)
+      → Unique ls
+      → Unique rs
+      → (e : List PlainFST)
+      → (foo a ls + rs ⟶ e) -- Bug in Agda here: replacing foo by pnode breaks
+      → Unique e
+    ⟶-preserves-unique _ _ _ _ _ _ base = [] ∷ []
+    ⟶-preserves-unique _ _ _ _ u-rs _ (merge _) = map-Unique-head u-rs
+    ⟶-preserves-unique a ls (pnode b bs ∷ rs) u-ls (u-r ∷ u-rs) (pnode .b .bs ∷ cs) (skip a≠b ⟶cs)
+      = induction a≠b (u-r ∷ u-rs) ⟶cs ∷ unique-cs
+      where
+        unique-cs = ⟶-preserves-unique a ls rs u-ls u-rs cs ⟶cs
+
+        induction : ∀ {a ls rs cs b bs}
+          → ¬ (a ≡ b)
+          → Unique (foo b bs ∷ rs)
+          → foo a ls + rs ⟶ cs
+          → All (pdifferent (foo b bs)) cs
+        induction a≠b _     base     = False-sym _≟_ (≠→False _≟_ a≠b) ∷ []
+        induction a≠b u-rs (merge _) = False-sym _≟_ (≠→False _≟_ a≠b) ∷ head-Unique (drop-second-Unique u-rs)
+        induction a≠b ((b≠b' ∷ u-r) ∷ _ ∷ u-rs) (skip a≠b' ⟶cs) = b≠b' ∷ induction a≠b (u-r ∷ u-rs) ⟶cs
 
     -- TODO: Avoid termination macro.
     {-# TERMINATING #-}
