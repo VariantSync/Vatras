@@ -6,6 +6,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+open import Data.Product using (∃-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (tt)
 open import Function using (_∘_)
@@ -124,6 +125,12 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
     Unique : List PlainFST → Set
     Unique = AllPairs pdifferent
 
+    UniqueNode : PlainFST → Set
+    UniqueNode (pnode _ as) = UniqueR as
+
+    UniqueR : List PlainFST → Set
+    UniqueR cs = Unique cs × All UniqueNode cs
+
     data UFST : Set where
       unode : A → (cs : List UFST) → AllPairs udifferent cs → UFST
 
@@ -132,7 +139,6 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
 
     forget-unique : UFST -> PlainFST
     forget-unique (unode a cs _) = pnode a (map forget-unique cs)
-
 
     map-pdifferent : ∀ {b xs} (ys : List PlainFST) (z : PlainFST)
       → pdifferent (foo b xs) z
@@ -150,16 +156,18 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
     infix 4 _+_⟶_
     data _+_⟶_ : PlainFST → List (PlainFST) → List (PlainFST) → Set where
       base : ∀ {l : PlainFST}
-          ----------
+          ---------------
         → l + [] ⟶ l ∷ []
 
       merge : ∀ {a as bs rs cs}
         → as + bs ↝ cs
+          ----------------------------------------------
         → pnode a as + pnode a bs ∷ rs ⟶ pnode a cs ∷ rs
 
       skip : ∀ {a as b bs rs cs}
         → ¬ (a ≡ b)
         → pnode a as + rs ⟶ cs
+          ----------------------------------------------
         → pnode a as + pnode b bs ∷ rs ⟶ pnode b bs ∷ cs
 
     infix 4 _+_↝_
@@ -190,7 +198,6 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
     ⟶-deterministic (skip a≠a x) (merge y) = ⊥-elim (a≠a refl)
     ⟶-deterministic (skip neq x) (skip neq' y) rewrite ⟶-deterministic x y = refl
 
-    open import Data.Product using (∃-syntax; _,_)
     ↝-return : ∀ {e ls rs}
       → ls + rs ↝ e
       → ∃[ e ] (ls + rs ↝ e)
@@ -234,44 +241,37 @@ module Defs {A : 𝔸} (_≟_ : DecidableEquality A) where
     head-Unique (x ∷ xs) = x
 
     -- Observation: We can actually generalize this to any All, not just Unique!
-      -- impose-step : ∀ {l ls rs e e'}
-      --   → l  + rs ⟶ e'
-      --   → ls + e' ↝ e
-      --     ----------------
-      --   → l ∷ ls + rs ↝ e
     impose-nothing-preserves-unique : ∀ {rs e : List PlainFST}
       → [] + rs ↝ e
       → Unique rs
       → Unique e
     impose-nothing-preserves-unique impose-nothing u-rs = u-rs
 
-    impose-step-preserves-unique : ∀ {a : A} {as ls rs e : List PlainFST}
-      → foo a as ∷ ls + rs ↝ e
-      → Unique as
-      → Unique ls
-      → Unique rs
-      → Unique e
-    impose-step-preserves-unique {a} {as} {[]} {rs} {e} (impose-step {e' = e'} ⟶e' ↝e) u-as u-ls u-rs =
-      let u-e' = ⟶-preserves-unique a as rs u-as u-rs e' ⟶e'
-          u-e  = impose-nothing-preserves-unique ↝e u-e'
-       in u-e
-    impose-step-preserves-unique {a} {as} {pnode a' as' ∷ ls} {rs} {e} (impose-step {e' = e'} ⟶e' ↝e) u-as u-ls u-rs =
-      let u-e' = ⟶-preserves-unique a as rs u-as u-rs e' ⟶e'
-          u-e  = {!impose-step-preserves-unique ↝e!} --↝-preserves-unique ls e' e u-ls u-e' ↝e
-       in u-e
+    ↝-preserves-unique : ∀ {ls rs e : List PlainFST}
+      → ls + rs ↝ e
+      → UniqueR ls
+      → UniqueR rs
+      → UniqueR e
+    ↝-preserves-unique impose-nothing ur-ls ur-rs = ur-rs
+    ↝-preserves-unique {pnode a as ∷ ls} {rs} (impose-step {e' = e'} ⟶e' ↝e) (u-l ∷ u-ls , ur-as ∷ ur-ls) ur-rs =
+      let ur-e' = ⟶-preserves-unique a as rs e' ⟶e' ur-as ur-rs
+          ur-e  = ↝-preserves-unique ↝e (u-ls , ur-ls) ur-e'
+       in ur-e
 
-    ⟶-preserves-unique : ∀ (a : A) (ls rs : List PlainFST)
-      → Unique ls
-      → Unique rs
-      → (e : List PlainFST)
-      → (foo a ls + rs ⟶ e) -- Bug in Agda here: replacing foo by pnode breaks
-      → Unique e
-    ⟶-preserves-unique _ _ _ _ _ _ base = [] ∷ []
-    ⟶-preserves-unique _ _ _ _ u-rs _ (merge _) = map-Unique-head u-rs
-    ⟶-preserves-unique a ls (pnode b bs ∷ rs) u-ls (u-r ∷ u-rs) (pnode .b .bs ∷ cs) (skip a≠b ⟶cs)
-      = induction a≠b (u-r ∷ u-rs) ⟶cs ∷ unique-cs
+    ⟶-preserves-unique : ∀ (a : A) (ls rs : List PlainFST) (e : List PlainFST)
+      → foo a ls + rs ⟶ e -- Bug in Agda here: replacing foo by pnode breaks
+      → UniqueR ls
+      → UniqueR rs
+      → UniqueR e
+    ⟶-preserves-unique _ _ _ _ base ur-ls _ = [] ∷ [] , ur-ls ∷ []
+    ⟶-preserves-unique a ls (pnode .a bs ∷ rs) e@(pnode .a cs ∷ rs) (merge ↝e) ur-ls (u-rs , ur-bs ∷ un-rs)
+      = map-Unique-head u-rs , ↝-preserves-unique ↝e ur-ls ur-bs ∷ un-rs
+    ⟶-preserves-unique a ls (pnode b bs ∷ rs) (pnode .b .bs ∷ cs) (skip a≠b ⟶cs) u-ls (u-r ∷ u-rs , ur-bs ∷ ur-rs)
+      = induction a≠b (u-r ∷ u-rs) ⟶cs ∷ u-cs , ur-bs ∷ un-cs
       where
-        unique-cs = ⟶-preserves-unique a ls rs u-ls u-rs cs ⟶cs
+        ur-cs = ⟶-preserves-unique a ls rs cs ⟶cs u-ls (u-rs , ur-rs)
+        u-cs = proj₁ ur-cs
+        un-cs = proj₂ ur-cs
 
         induction : ∀ {a ls rs cs b bs}
           → ¬ (a ≡ b)
