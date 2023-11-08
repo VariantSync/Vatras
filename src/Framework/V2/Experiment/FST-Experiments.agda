@@ -20,13 +20,12 @@ open import Show.Lines
 open import Util.ShowHelpers
 open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
-open import Framework.V2.Lang.FST as FSTModule
-module FSTDefs = FSTModule.Defs
+open import Framework.V2.Lang.FST as FSTModule using (Conf)
 
 module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
-  module FSTDefsA = FSTDefs _≟_
-  open FSTDefsA
-  open FSTModule using (Conf)
+  open FSTModule.Defs {A}
+  open FSTModule.Defs.Impose _≟_
+  module FSTShow = FSTModule.Defs.Impose.Show
 
   exp : ∀ {N}
     → (N → String)
@@ -35,7 +34,7 @@ module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
     → Experiment (SPL N)
   getName (exp _ _ _) = "Configure FST example"
   get (exp show-N show-A configs) (example-name ≔ forest) =
-    let open FSTDefsA.Show show-N show-A
+    let open FSTShow _≟_ show-N show-A
     in
     do
     > "Expression e has features"
@@ -47,7 +46,7 @@ module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
       linebreak
       > "⟦ e ⟧" <+> cstr <+> "="
       indent 2 do
-        show-FSF (⟦ forest ⟧ c)
+        show-FSF (forget-uniqueness (⟦ forest ⟧ c))
 
 pick-all : ∀ {N} → Conf N
 pick-all _ = true
@@ -66,7 +65,8 @@ module Java where
   _≟-ast_ : DecidableEquality ASTNode
   _≟-ast_ = _≟ˢ_
 
-  open FSTDefs _≟-ast_
+  open FSTModule.Defs {ASTNode}
+  open FSTModule.Defs.Impose _≟-ast_
 
   module Calculator where
     fname-Add = "Add"
@@ -88,18 +88,19 @@ module Java where
     open import Data.Unit using (tt)
     open import Data.List.Relation.Unary.AllPairs using ([]; _∷_)
     open import Data.List.Relation.Unary.All using ([]; _∷_)
+
     feature-Add : Feature ASTNode
-    feature-Add = fname-Add :: cls ． add ． add-ret ． [] [ [] ] [ [] ∷ [] ] [ [] ∷ [] ]
+    feature-Add = fname-Add :: (cls ． add ． add-ret ． [] , ([] ∷ []) , ((unq ([] ∷ [] , (unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ [])) ∷ []))
 
     feature-Sub : Feature ASTNode
-    feature-Sub = fname-Sub :: cls ． sub ． sub-ret ． [] [ [] ] [ [] ∷ [] ] [ [] ∷ [] ]
+    feature-Sub = fname-Sub :: (cls ． sub ． sub-ret ． [] , ([] ∷ []) , ((unq ([] ∷ [] , (unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ [])) ∷ []))
 
     feature-Log : Feature ASTNode
     feature-Log = fname-Log :: cls ．
       branches (
-        (add ． log ． [] [ [] ] [ [] ∷ [] ])
-      ∷ (sub ． log ． [] [ [] ] [ [] ∷ [] ])
-      ∷ []) [ (tt ∷ []) ∷ [] ∷ [] ]
+        (add ． log ． [])
+      ∷ (sub ． log ． [])
+      ∷ []) , ([] ∷ []) , ((unq (((tt ∷ []) ∷ ([] ∷ [])) , ((unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ ((unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ [])))) ∷ [])
 
     ---- Example SPLs
 

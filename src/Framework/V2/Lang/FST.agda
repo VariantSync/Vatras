@@ -6,7 +6,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
-open import Data.Product using (∃-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Product using (Σ; ∃-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (tt)
 open import Function using (_∘_)
@@ -51,6 +51,15 @@ open TODO-MOVE-TO-AUX-OR-USE-STL
 module Defs {A : 𝔸} where
   data PlainFST : Set where
     pnode : A → List PlainFST → PlainFST
+
+  -- the syntax used in the paper for paths
+  infixr 5 _．_
+  _．_ : A → (cs : List PlainFST) → List PlainFST
+  a ． cs = pnode a cs ∷ []
+
+  -- helper function when branching in paths
+  branches : List (List PlainFST) → List PlainFST
+  branches = concat
 
   mutual
     infix 4 _+_⟶_
@@ -111,74 +120,9 @@ module Defs {A : 𝔸} where
   ⟶-return {e} ⟶e = e , ⟶e
 
   module Impose (_≟_ : DecidableEquality A) where
-    data FST : Set
-    record FSF : Set
-    different : Rel FST 0ℓ
-
-    data FST where
-      node : A → FSF → FST
-
-    different (node a _) (node b _) = False (a ≟ b)
-
-    -- Feature Structure Forest
-    infix 4 ⟪_,_⟫
-    record FSF where
-      inductive
-      constructor ⟪_,_⟫
-      field
-        roots : List FST
-        no-duplicates : AllPairs different roots
-
-    infixr 3 _::_
-    record Feature (N : 𝔽) : Set where
-      constructor _::_
-      field
-        name : Name N
-        impl : FSF
-    open Feature public
-
-  -- the syntax used in the paper for paths
-    infixr 5 _．_[_]
-    _．_[_] : A → (cs : List FST) → AllPairs different cs → FSF
-    a ． cs [ d ] = ⟪ node a ⟪ cs , d ⟫ ∷ [] , [] ∷ [] ⟫
-
-    -- helper function when branching in paths
-    branches : List (List FST) → List FST
-    branches = concat
-
-    SPL : (N : 𝔽) → Set --𝔼
-    SPL N  = List (Feature N)
-
-    select : ∀ {N} → Conf N → SPL N → SPL N
-    select c = filterᵇ (c ∘ name)
-
-    forget-names : ∀ {N} → SPL N → List FSF
-    forget-names = map impl
-
-    names : ∀ {N} → SPL N → List N
-    names = map name
-
-    map-different : ∀ {b xs} →
-      ∀ (ys : FSF) (z : FST)
-      → different (node b xs) z
-      → different (node b ys) z
-    map-different {b} _ (node z _) l with z ≟ b
-    ... | yes _ = l
-    ... | no  _ = l
-
-    map-all-different : ∀ {b cs cs' xs}
-      → All (different (node b cs )) xs
-      → All (different (node b cs')) xs
-    map-all-different [] = []
-    map-all-different {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-different cs' x px ∷ map-all-different pxs
-
-    open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂)
-    open Eq.≡-Reasoning
-
-    𝟘 : FSF
-    𝟘 = ⟪ [] , [] ⟫
 
     mutual
+      --- TODO: Fix termination checking
       {-# TERMINATING #-}
       ↝-total : ∀ (ls rs : List PlainFST) → ∃[ e ] (ls + rs ↝ e)
       ↝-total [] rs = ↝-return impose-nothing
@@ -269,55 +213,48 @@ module Defs {A : 𝔸} where
           induction a≠b u-rs (merge _) = False-sym _≟_ (≠→False _≟_ a≠b) ∷ head (drop-second-Unique u-rs)
           induction a≠b ((b≠b' ∷ u-r) ∷ _ ∷ u-rs) (skip a≠b' ⟶cs) = b≠b' ∷ induction a≠b (u-r ∷ u-rs) ⟶cs
 
-    mutual
-      -- TODO: Avoid termination macro.
-      {-# TERMINATING #-}
-      impose-subtree : FST → FSF → FSF
-      impose-subtree l ⟪ [] , no-duplicates ⟫ = ⟪ l ∷ [] , [] ∷ [] ⟫
-      impose-subtree (node a ⟪ as , υ-as ⟫) ⟪ node b ⟪ bs , υ-bs ⟫ ∷ rs , υ-b ∷ υ-rs ⟫ with a ≟ b
-      ... | yes _ = ⟪ node b (⟪ as , υ-as ⟫ ⊕ ⟪ bs , υ-bs ⟫) ∷ rs , map-all-different υ-b ∷ υ-rs ⟫
-      ... | no ¬p =
-        ⟪ node b ⟪ bs , υ-bs ⟫ ∷ r-rec , helpi (different-values a b ⟪ as , υ-as ⟫ ⟪ bs , υ-bs ⟫ ¬p) υ-b ∷ υ-rec ⟫
-        where
-          rec = impose-subtree (node a ⟪ as , υ-as ⟫) ⟪ rs , υ-rs ⟫
-          r-rec = FSF.roots rec
-          υ-rec = FSF.no-duplicates rec
+    ---- SPL Stuff ----
 
-          ¬-sym : ∀ {ℓ} {A : Set ℓ} {a b : A} → ¬ (a ≡ b) → ¬ (b ≡ a)
-          ¬-sym ¬a≡b b≡a = ¬a≡b (Eq.sym b≡a)
+    -- Feature Structure Forest
+    FSF : Set
+    FSF = Σ (List PlainFST) UniqueR
 
-          different-values : ∀ (a b : A) (xs ys : FSF)
-            → ¬ (a ≡ b)
-            → different (node a xs) (node b ys)
-          different-values a b _ _ neq with a ≟ b
-          ... | yes eq = neq eq
-          ... | no neq = tt
+    forget-uniqueness : FSF → List PlainFST
+    forget-uniqueness = proj₁
 
-          open import Data.Empty using (⊥; ⊥-elim)
-          open import Relation.Nullary.Decidable using (isYes)
-          different-sym : ∀ {a b}
-            → different a b
-            → different b a
-          different-sym {node a as} {node b bs} neq with b ≟ a
-          ... | no neq = tt
-          ... | yes eq = {!!}
+    infixr 3 _::_
+    record Feature (N : 𝔽) : Set where
+      constructor _::_
+      field
+        name : Name N
+        impl : FSF
+    open Feature public
 
-          helpi : ∀ {na nb} {xs : List FST} {υ-xs : AllPairs different xs}
-            → different na nb
-            → All (different nb) xs
-            → All (different nb) (FSF.roots (impose-subtree na ⟪ xs , υ-xs ⟫))
-          helpi {na} {nb} na≠nb [] = different-sym {na} {nb} na≠nb ∷ []
-          helpi {node a as} {node b bs} {x ∷ xs} {υ-x ∷ υ-xs} na≠nb (px ∷ pxs) with a ≟ b
-          ... | yes _ = {!!}
-          ... | no _ = {!!}
-      -- impose-subtree l ⟪ [] , _ ⟫ = l ∷ []
-      -- impose-subtree (node a ⟪ as , as-unique ⟫) ⟪ node b ⟪ bs , bs-unique ⟫ ∷ rs , _ ⟫ with a ≟ b
-      -- ... | yes _ = node b ? ∷ rs
-      -- ... | no  _ = node b ⟪ bs , bs-unique ⟫ ∷ impose-subtree (node a ⟪ as , as-unique ⟫) rs
+    SPL : (N : 𝔽) → Set --𝔼
+    SPL N  = List (Feature N)
 
-      infixr 7 _⊕_
-      _⊕_ : FSF → FSF → FSF
-      ⟪ l , _ ⟫ ⊕ r = foldr impose-subtree r l
+    select : ∀ {N} → Conf N → SPL N → SPL N
+    select c = filterᵇ (c ∘ name)
+
+    forget-names : ∀ {N} → SPL N → List FSF
+    forget-names = map impl
+
+    names : ∀ {N} → SPL N → List N
+    names = map name
+
+    ---- Algebra ----
+    open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂)
+    open Eq.≡-Reasoning
+
+    𝟘 : FSF
+    𝟘 = [] , [] , []
+
+    infixr 7 _⊕_
+    _⊕_ : FSF → FSF → FSF
+    (l , u-l) ⊕ (r , u-r) =
+      let e , ↝e = ↝-total l r
+          u-e    = ↝-preserves-unique ↝e u-l u-r
+       in e , u-e
 
     ⊕-all : List FSF → FSF
     ⊕-all = foldr _⊕_ 𝟘
@@ -325,25 +262,14 @@ module Defs {A : 𝔸} where
     l-id : LeftIdentity _≡_ 𝟘 _⊕_
     l-id _ = refl
 
-    -- This is not satisfied. What did we do wrong?
-    -- I think the problem is that (x ∷ xs) ⊕ 𝟘
-    -- denotes an FST superimposition of x onto xs, recursively,
-    -- which is not what we want.
-    -- What happens is that
-    -- 1.) x gets imposed onto 𝟘 and yields x
-    -- 2.) the next child in xs gets imposed onto x, potentially mutating x.
-    -- BOOM
-    -- TODO: How to fix that? This self-imposition also occurs when the rhs is not 𝟘.
-    --       So it is normal, right?
-    --       Maybe, the imposition should not be done sequentially but in parallel?
     r-id : RightIdentity _≡_ 𝟘 _⊕_
-    r-id = {!!}
-      -- rewrite r-id xs =
-      -- begin
-      --   impose-subtree x xs
-      -- ≡⟨ {!!} ⟩
-      --   x ∷ xs
-      -- ∎
+    r-id ([] , [] , []) = refl
+    r-id (x ∷ xs , u) =
+      begin
+        (x ∷ xs , u) ⊕ 𝟘
+      ≡⟨ {!!} ⟩
+        x ∷ xs , u
+      ∎
 
     assoc : Associative _≡_ _⊕_
     assoc x y z = {!!}
@@ -389,15 +315,15 @@ module Defs {A : 𝔸} where
       mutual
         -- TODO: Why does termination checking fail here?
         {-# TERMINATING #-}
-        show-FST : FST → Lines
-        show-FST (node a ⟪ children , uniq ⟫) = do
+        show-FST : PlainFST → Lines
+        show-FST (pnode a children) = do
           > show-A a
-          indent 2 (show-FSF ⟪ children , uniq ⟫)
+          indent 2 (show-FSF children)
 
-        show-FSF : FSF → Lines
-        show-FSF fst = lines (map (show-FST) (FSF.roots fst))
+        show-FSF : List PlainFST → Lines
+        show-FSF roots = lines (map show-FST roots)
 
         show-Feature : Feature N → Lines
         show-Feature feature = do
           > show-N (name feature) <+> "∷"
-          indent 2 (show-FSF (impl feature))
+          indent 2 (show-FSF (forget-uniqueness (impl feature)))
