@@ -1,4 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --sized-types #-}
 
 module Framework.V2.Lang.FST where
 
@@ -6,11 +7,12 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
-open import Data.Product using (Σ; ∃-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Product using (Σ; Σ-syntax; ∃-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (tt)
 open import Function using (_∘_)
 open import Level using (0ℓ)
+open import Size using (Size; ↑_; ∞)
 
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (yes; no; _because_; False)
@@ -49,31 +51,31 @@ module TODO-MOVE-TO-AUX-OR-USE-STL where
 open TODO-MOVE-TO-AUX-OR-USE-STL
 
 module Defs {A : 𝔸} where
-  data PlainFST : Set where
-    pnode : A → List PlainFST → PlainFST
+  data PlainFST : Size → Set where
+    pnode : ∀ {i} → A → List (PlainFST i) → PlainFST (↑ i)
 
   -- the syntax used in the paper for paths
   infixr 5 _．_
-  _．_ : A → (cs : List PlainFST) → List PlainFST
+  _．_ : ∀ {i} → A → (cs : List (PlainFST i)) → List (PlainFST (↑ i))
   a ． cs = pnode a cs ∷ []
 
   -- helper function when branching in paths
-  branches : List (List PlainFST) → List PlainFST
+  branches : ∀ {i} → List (List (PlainFST i)) → List (PlainFST i)
   branches = concat
 
   mutual
     infix 4 _+_⟶_
-    data _+_⟶_ : PlainFST → List (PlainFST) → List (PlainFST) → Set where
-      base : ∀ {l : PlainFST}
+    data _+_⟶_ : ∀ {i} → PlainFST i → List (PlainFST i) → List (PlainFST i) → Set where
+      base : ∀ {i} {l : PlainFST i}
           ---------------
         → l + [] ⟶ l ∷ []
 
-      merge : ∀ {a as bs rs cs}
+      merge : ∀ {i} {a} {as bs cs : List (PlainFST i)} {rs : List (PlainFST (↑ i))}
         → as + bs ↝ cs
           ----------------------------------------------
         → pnode a as + pnode a bs ∷ rs ⟶ pnode a cs ∷ rs
 
-      skip : ∀ {a as b bs rs cs}
+      skip : ∀ {i} {a b} {as bs : List (PlainFST i)} {rs cs : List (PlainFST (↑ i))}
         → ¬ (a ≡ b)
         → pnode a as + rs ⟶ cs
           ----------------------------------------------
@@ -81,11 +83,11 @@ module Defs {A : 𝔸} where
 
     -- This is bascially just a fold on lists. Maybe we can simplify it accordingly.
     infix 4 _+_↝_
-    data _+_↝_ : List PlainFST → List PlainFST → List PlainFST → Set where
-      impose-nothing : ∀ {rs}
+    data _+_↝_ : ∀ {i} → List (PlainFST i) → List (PlainFST i) → List (PlainFST i) → Set where
+      impose-nothing : ∀ {i} {rs : List (PlainFST i)}
         → [] + rs ↝ rs
 
-      impose-step : ∀ {l ls rs e e'}
+      impose-step : ∀ {i} {ls rs e' e : List (PlainFST i)} {l : PlainFST i}
         → l  + rs ⟶ e'
         → ls + e' ↝ e
           ----------------
@@ -109,87 +111,86 @@ module Defs {A : 𝔸} where
     ⟶-deterministic (skip a≠a x) (merge y) = ⊥-elim (a≠a refl)
     ⟶-deterministic (skip neq x) (skip neq' y) rewrite ⟶-deterministic x y = refl
 
-  ↝-return : ∀ {e ls rs}
+  ↝-return : ∀ {i} {e ls rs : List (PlainFST i)}
     → ls + rs ↝ e
     → ∃[ e ] (ls + rs ↝ e)
-  ↝-return {e} ↝e = e , ↝e
+  ↝-return {e = e} ↝e = e , ↝e
 
-  ⟶-return : ∀ {e l rs}
+  ⟶-return : ∀ {i} {l : PlainFST i} {e rs : List (PlainFST i)}
     → l + rs ⟶ e
     → ∃[ e ] (l + rs ⟶ e)
-  ⟶-return {e} ⟶e = e , ⟶e
+  ⟶-return {e = e} ⟶e = e , ⟶e
 
   module Impose (_≟_ : DecidableEquality A) where
-
     mutual
       --- TODO: Fix termination checking
-      {-# TERMINATING #-}
-      ↝-total : ∀ (ls rs : List PlainFST) → ∃[ e ] (ls + rs ↝ e)
+      -- {-# TERMINATING #-}
+      ↝-total : ∀ {i} (ls rs : List (PlainFST i)) → Σ[ e ∈ List (PlainFST i) ] (ls + rs ↝ e)
       ↝-total [] rs = ↝-return impose-nothing
       ↝-total (l ∷ ls) rs =
         let e' , ⟶e' = ⟶-total l rs
             _  , ↝e  = ↝-total ls e'
         in ↝-return (impose-step ⟶e' ↝e)
 
-      ⟶-total : ∀ (l : PlainFST) (rs : List PlainFST) → ∃[ e ] (l + rs ⟶ e)
+      ⟶-total : ∀ {i} (l : PlainFST i) (rs : List (PlainFST i)) → ∃[ e ] (l + rs ⟶ e)
       ⟶-total l [] = ⟶-return base
-      ⟶-total (pnode a as) (pnode b bs ∷ rs) with a ≟ b
+      ⟶-total an@(pnode a as) (pnode b bs ∷ rs) with a ≟ b
       ... | yes refl =
         let cs , ↝cs = ↝-total as bs
         in ⟶-return (merge ↝cs)
       ... | no  a≠b =
-        let cs , ⟶cs = ⟶-total (pnode a as) rs
+        let _ , ⟶cs = ⟶-total an rs
         in ⟶-return (skip a≠b ⟶cs)
 
-    pdifferent : Rel PlainFST 0ℓ
+    pdifferent : ∀ {i} → Rel (PlainFST i) 0ℓ
     pdifferent (pnode a _) (pnode b _) = False (a ≟ b)
 
-    map-pdifferent : ∀ {b xs} (ys : List PlainFST) (z : PlainFST)
+    map-pdifferent : ∀ {i} {b} ({xs} ys : List (PlainFST i)) (z : PlainFST (↑ i))
       → pdifferent (pnode b xs) z
       → pdifferent (pnode b ys) z
-    map-pdifferent {b} _ (pnode z _) l with z ≟ b
+    map-pdifferent {b = b} _ (pnode z _) l with z ≟ b
     ... | yes _ = l
     ... | no  _ = l
 
-    map-all-pdifferent : ∀ {b cs cs' xs}
+    map-all-pdifferent : ∀ {i} {b} {cs cs' : List (PlainFST i)} {xs : List (PlainFST (↑ i))}
       → All (pdifferent (pnode b cs )) xs
       → All (pdifferent (pnode b cs')) xs
     map-all-pdifferent [] = []
     map-all-pdifferent {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-pdifferent cs' x px ∷ map-all-pdifferent pxs
 
-    Unique : List PlainFST → Set
+    Unique : ∀ {i} → List (PlainFST i) → Set
     Unique = AllPairs pdifferent
 
-    unique-ignores-children : ∀ {a as bs rs}
+    unique-ignores-children : ∀ {i} {a} {as bs : List (PlainFST i)} {rs : List (PlainFST (↑ i))}
       → Unique (pnode a as ∷ rs)
       → Unique (pnode a bs ∷ rs)
     unique-ignores-children (x ∷ xs) = map-all-pdifferent x ∷ xs
 
-    drop-second-Unique : ∀ {x y zs}
+    drop-second-Unique : ∀ {i} {x y : PlainFST i} {zs : List (PlainFST i)}
       → Unique (x ∷ y ∷ zs)
       → Unique (x ∷ zs)
     drop-second-Unique ((_ ∷ pxs) ∷ _ ∷ zs) = pxs ∷ zs
 
     mutual
-      data UniqueNode : PlainFST → Set where
-        unq : ∀ {a cs} → UniqueR cs → UniqueNode (pnode a cs)
+      data UniqueNode : ∀ {i} → PlainFST i → Set where
+        unq : ∀ {i} {a} {cs : List (PlainFST i)} → UniqueR cs → UniqueNode (pnode a cs)
 
-      UniqueR : List PlainFST → Set
+      UniqueR : ∀ {i} → List (PlainFST i) → Set
       UniqueR cs = Unique cs × All UniqueNode cs
 
     mutual
-      ↝-preserves-unique : ∀ {ls rs e : List PlainFST}
+      ↝-preserves-unique : ∀ {i} {ls rs e : List (PlainFST i)}
         → ls + rs ↝ e
         → UniqueR ls
         → UniqueR rs
         → UniqueR e
       ↝-preserves-unique impose-nothing ur-ls ur-rs = ur-rs
-      ↝-preserves-unique {pnode a as ∷ ls} {rs} (impose-step {e' = e'} ⟶e' ↝e) (u-l ∷ u-ls , unq ur-as ∷ ur-ls) ur-rs =
+      ↝-preserves-unique {_} {pnode a as ∷ ls} {rs} (impose-step {e' = e'} ⟶e' ↝e) (u-l ∷ u-ls , unq ur-as ∷ ur-ls) ur-rs =
         let ur-e' = ⟶-preserves-unique a as rs e' ⟶e' ur-as ur-rs
             ur-e  = ↝-preserves-unique ↝e (u-ls , ur-ls) ur-e'
          in ur-e
 
-      ⟶-preserves-unique : ∀ (a : A) (ls rs : List PlainFST) (e : List PlainFST)
+      ⟶-preserves-unique : ∀ {i} (a : A) (ls : List (PlainFST i)) (rs e : List (PlainFST (↑ i)))
         → pnode a ls + rs ⟶ e
         → UniqueR ls
         → UniqueR rs
@@ -217,9 +218,9 @@ module Defs {A : 𝔸} where
 
     -- Feature Structure Forest
     FSF : Set
-    FSF = Σ (List PlainFST) UniqueR
+    FSF = Σ (List (PlainFST ∞)) UniqueR
 
-    forget-uniqueness : FSF → List PlainFST
+    forget-uniqueness : FSF → List (PlainFST ∞)
     forget-uniqueness = proj₁
 
     infixr 3 _::_
