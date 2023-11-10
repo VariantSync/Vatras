@@ -11,11 +11,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_)
 Name : Set
 Name = String
 
-_≟_ : Decidable (_≡_)
-_≟_ = Data.String.Properties._≟_
-
-_==_ : Name → Name → Bool
-_==_ = Data.String.Properties._==_
+open Data.String.Properties using (_≟_; _==_) public
 
 -- Some common names for names.
 
