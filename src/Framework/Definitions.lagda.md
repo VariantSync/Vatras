@@ -56,7 +56,7 @@ Artifactˡ L = ∀ {i : Size} {A : 𝔸} → A → List (L i A) → L (↑ i) A
 
 Variability languages denote sets of variants.
 Interestingly, variants can be modelled as a variability language in which nothing can be configured.
-Every expressions describes a singleton set of variants.
+Every expression describes a singleton set of variants.
 ```agda
 -- 𝟙-Lang
 data Variant : 𝕃 where

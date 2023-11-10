@@ -26,7 +26,9 @@ to prove preservation of the conversion from binary to n-ary choices.
 
 The requirement for translating binary to n-ary configurations is
 that there exist two natural numbers that we can associate with the boolean values true and false.
-To simplify things, we fix these two numbers to be 0 for true, and 1 for false.
+To simplify things, we fix these two numbers to be 0 for true, and 1 for false. These values are chosen such that
+`D < l ,  r       >` lines up with
+`D < l :: r :: [] >`
 -}
 record ConfContract (f : Q) (conf : Config₂ Q → Configₙ Q) : Set ℓ₁ where
   field

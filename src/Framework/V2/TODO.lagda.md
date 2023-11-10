@@ -34,7 +34,7 @@ Prove for all of the following languages whether they are complete, sound, and h
 
 ## Issues
 
-Nest Issue No: 12
+Next Issue No: 12
 
 ### [2] Embed NestedChoice
 
