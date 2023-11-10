@@ -124,7 +124,7 @@ module Defs {A : 𝔸} where
   module Impose (_≟_ : DecidableEquality A) where
     mutual
       --- TODO: Fix termination checking
-      -- {-# TERMINATING #-}
+      {-# TERMINATING #-}
       ↝-total : ∀ {i} (ls rs : List (PlainFST i)) → Σ[ e ∈ List (PlainFST i) ] (ls + rs ↝ e)
       ↝-total [] rs = ↝-return impose-nothing
       ↝-total (l ∷ ls) rs =
@@ -316,12 +316,12 @@ module Defs {A : 𝔸} where
       mutual
         -- TODO: Why does termination checking fail here?
         {-# TERMINATING #-}
-        show-FST : PlainFST → Lines
+        show-FST : ∀ {i} → PlainFST i → Lines
         show-FST (pnode a children) = do
           > show-A a
           indent 2 (show-FSF children)
 
-        show-FSF : List PlainFST → Lines
+        show-FSF : ∀ {i} → List (PlainFST i) → Lines
         show-FSF roots = lines (map show-FST roots)
 
         show-Feature : Feature N → Lines
