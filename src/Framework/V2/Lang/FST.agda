@@ -264,12 +264,8 @@ module Defs {A : 𝔸} where
 
     r-id : RightIdentity _≡_ 𝟘 _⊕_
     r-id ([] , [] , []) = refl
-    r-id (x ∷ xs , u) =
-      begin
-        (x ∷ xs , u) ⊕ 𝟘
-      ≡⟨ {!!} ⟩
-        x ∷ xs , u
-      ∎
+    r-id (.(pnode _ _) ∷ [] , [] ∷ [] , unq x ∷ []) = refl
+    r-id (x ∷ y ∷ zs , u-x ∷ u-y ∷ u-zs , ur-x ∷ ur-y ∷ ur-zs) = {!!}
 
     assoc : Associative _≡_ _⊕_
     assoc x y z = {!!}
