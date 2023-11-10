@@ -191,8 +191,7 @@ suc-variant-size : ∀ {i} {A} → Variant i A → Variant i A
 suc-variant-size v = v
 
 forget-variant-size : ∀ {i} {A} → Variant i A → Variant ∞ A
-forget-variant-size (Artifactᵥ a []) = Artifactᵥ a []
-forget-variant-size (Artifactᵥ a (e ∷ es)) = Artifactᵥ a (map forget-variant-size (e ∷ es))
+forget-variant-size (Artifactᵥ a es) = Artifactᵥ a (map forget-variant-size es)
 
 forget-size-cong : ∀ {i} {A B : Set} {x : Variant ∞ A} {y : Variant i A}
   → (f : ∀ {j} → Variant j A → B)
@@ -203,8 +202,7 @@ forget-size-cong _ refl = refl
 sequence-forget-size : ∀ {A} {i} {a : A}
   → (xs : List (Variant i A))
   → Artifactᵥ a (map forget-variant-size xs) ≡ forget-variant-size (Artifactᵥ a xs)
-sequence-forget-size [] = refl
-sequence-forget-size (_ ∷ _) = refl
+sequence-forget-size _ = refl
 
 {-
 Creates an Artifact from a list of expressions of a certain size.
