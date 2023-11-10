@@ -19,7 +19,7 @@ open import Framework.V2.Variants using (VariantSetoid; GrulerVariant)
 open import Framework.V2.Lang.2ADT
 open import Framework.V2.Lang.NADT
 
-import Framework.V2.Translation.Construct.2Choice-to-NChoice {0ℓ} {F} as 2→N
+import Framework.V2.Translation.Construct.2Choice-to-NChoice {F} as 2→N
 open 2→N.Translate using (convert)
 
 compile : ∀ {i} → 2ADT F i A → NADT F i A

@@ -1,11 +1,12 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-module Framework.V2.Translation.Construct.2Choice-to-NChoice {ℓ₁} {Q : Set ℓ₁} where
+module Framework.V2.Translation.Construct.2Choice-to-NChoice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true)
 open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero)
 open import Data.Product using () renaming (_,_ to _and_)
+open import Level using (0ℓ)
 
 open import Relation.Binary using (Setoid; IsEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -30,7 +31,7 @@ To simplify things, we fix these two numbers to be 0 for true, and 1 for false. 
 `D < l ,  r       >` lines up with
 `D < l :: r :: [] >`
 -}
-record ConfContract (f : Q) (conf : Config₂ Q → Configₙ Q) : Set ℓ₁ where
+record ConfContract (f : Q) (conf : Config₂ Q → Configₙ Q) : Set where
   field
     false→1 : ∀ (c : Config₂ Q)
       → c f ≡ false
@@ -50,7 +51,7 @@ that we can associate each natural numbers with the boolean values true and fals
 such that the association is inverse to ConfContract.
 Hence, we associate 0 with true and all other numbers with false.
 -}
-record FnocContract (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set ℓ₁ where
+record FnocContract (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set where
   field
     suc→false : ∀ {n} (c : Configₙ Q)
       → c f ≡ suc n
@@ -79,7 +80,7 @@ default-fnoc-satisfies-contract : ∀ (f : Q) → FnocContract f default-fnoc
 suc→false (default-fnoc-satisfies-contract f) c cf≡suc  rewrite cf≡suc  = refl
 zero→true (default-fnoc-satisfies-contract f) c cf≡zero rewrite cf≡zero = refl
 
-module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
+module Translate (S : Setoid 0ℓ 0ℓ) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 

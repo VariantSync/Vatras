@@ -47,7 +47,7 @@ postulate
   embed : ∀ {V F S A} {i}
     → (Γ : VariabilityLanguage V F S)
     → F ⊢ 2Choice ∈ₛ Expression Γ
-    → NestedChoice {0ℓ} {F} (Eq.setoid (Expression Γ A)) i
+    → NestedChoice {F} (Eq.setoid (Expression Γ A)) i
     → Expression Γ A
 ```
 
