@@ -8,6 +8,7 @@ open import Data.Nat using (ℕ; suc; zero; _+_; _≡ᵇ_; _<_; _≤_; s≤s; z�
 import Data.Nat.Properties as Nat
 open import Data.Product using (∃-syntax; Σ; proj₁; proj₂; Σ-syntax) renaming (_,_ to _and_)
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Unit using (tt)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 
@@ -23,6 +24,7 @@ open import Util.List using (find-or-last)
 open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Util.AuxProofs using (true≢false; n≡ᵇn; n<m→m≡ᵇn)
+open import Framework.V2.Definitions using (evalConfig; unrestricted)
 open import Framework.V2.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
@@ -33,21 +35,10 @@ open import Data.String using (String; _++_)
 private
   I = IndexedName Q
 
-{-|
-There needs to be at least one true alternative.
-In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
-termination checker that it wont search for a non-existing true alternative.
-|-}
-at-least-true-once : Config₂ I → Set
-at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
-
 NConfig = Configₙ Q
-2Config = Σ (Config₂ I) at-least-true-once
+2Config = Config₂ I
 
-config-without-proof : 2Config → Config₂ I
-config-without-proof = proj₁
-
-record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
+record ConfContract (D : Q) (Rₙ : (Q → ℕ) → Set) (R₂ : (I → Bool) → Set) (conf : NConfig Rₙ → 2Config R₂) : Set where
   field
     {-|
     A translated, binary configuration (conf c)
@@ -61,17 +52,17 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
     has to pick the left alternative (true)
     in the choice at nesting level (c D).
     -}
-    select-n : ∀ (c : NConfig) {i : ℕ}
-      → c D ≡ i
-      → config-without-proof (conf c) (D ∙ i) ≡ true
+    select-n : ∀ (c : NConfig Rₙ) {i : ℕ}
+      → evalConfig c D ≡ i
+      → evalConfig (conf c) (D ∙ i) ≡ true
 
     {-|
     All alternatives before the desired alternative must be deselected so
     that we go right until we find the correct alternative to pick.
     -}
-    deselect-<n : ∀ (c : NConfig) {i : ℕ}
-      → i < c D
-      → config-without-proof (conf c) (D ∙ i) ≡ false
+    deselect-<n : ∀ (c : NConfig Rₙ) {i : ℕ}
+      → i < evalConfig c D
+      → evalConfig (conf c) (D ∙ i) ≡ false
 
     {-|
     There is no third requirement because we do not care
@@ -81,25 +72,25 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
     -}
 open ConfContract
 
-record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
+record FnocContract (D : Q) (R₂ : (I → Bool) → Set) (Rₙ : (Q → ℕ) → Set) (fnoc : 2Config R₂ → NConfig Rₙ) : Set where
   field
     {-|
     The nary config must chose index i if
     - the alternative at nesting depth i is chosen in the binary expression
     - and no other alternative at a higher nesting depth was chosen.
     -}
-    correct : ∀ (c : 2Config) (i : ℕ)
-      → config-without-proof c (D ∙ i) ≡ true
-      → (∀ (j : ℕ) → j < i → config-without-proof c (D ∙ j) ≡ false)
-      → fnoc c D ≡ i
+    correct : ∀ (c : 2Config R₂) (i : ℕ)
+      → evalConfig c (D ∙ i) ≡ true
+      → (∀ (j : ℕ) → j < i → evalConfig c (D ∙ j) ≡ false)
+      → evalConfig (fnoc c) D ≡ i
 
     {-|
     The nary config must not choose an index i if the alternative at nesting
     depth i in the binary expressio is not chosen
     |-}
-    incorrect : ∀ (c : 2Config) (i : ℕ)
-      → config-without-proof c (D ∙ i) ≡ false
-      → fnoc c D ≢ i
+    incorrect : ∀ (c : 2Config R₂) (i : ℕ)
+      → evalConfig c (D ∙ i) ≡ false
+      → evalConfig (fnoc c) D ≢ i
 open FnocContract
 
 module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
@@ -111,9 +102,9 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
     val  : ∀ {i : Size} → Carrier → NestedChoice i
     nchc : ∀ {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
 
-  ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
+  ⟦_⟧ : ∀ {i : Size} {R₂ : (I → Bool) → Set} → (NestedChoice i) → 2Config R₂ → Carrier
   ⟦ val  v   ⟧ c = v
-  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
+  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ ((λ i → evalConfig c i) and tt) ⟧ c
 
   show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i → String
   show-nested-choice show-q show-carrier ( val v) = show-carrier v
@@ -140,20 +131,22 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
   convert (D ⟨ c ∷ cs ⟩) = convert' D c cs zero
 
   module Preservation
-      (conf : NConfig → 2Config)
-      (fnoc : 2Config → NConfig)
+      {Rₙ : (Q → ℕ) → Set}
+      {R₂ : (I → Bool) → Set}
+      (conf : NConfig Rₙ → 2Config R₂)
+      (fnoc : 2Config R₂ → NConfig Rₙ)
       where
     open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
       ∀ (chc : NChoice Q Carrier)
-      → ConfContract (NChoice.dim chc) conf
+      → ConfContract (NChoice.dim chc) Rₙ R₂ conf
         -----------------------------------
       → ⟦ chc ⟧ₙ ⊆[ conf ] ⟦ convert chc ⟧
     preserves-conf (D ⟨ l ∷ rs ⟩) confContract c
       = induction l rs
-                  (c D) 0
-                  (Nat.+-comm (c D) zero)
+                  (evalConfig c D) 0
+                  (Nat.+-comm (evalConfig c D) zero)
       where
         {-
         The heart of this induction proof lies in proving that
@@ -168,7 +161,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
         -}
         induction : (l : Carrier) → (rs : List Carrier)
                   → (n m : ℕ)
-                  → n + m ≡ c D
+                  → n + m ≡ evalConfig c D
                   → find-or-last n (l ∷ rs) ≈ ⟦ convert' D l rs m ⟧ (conf c)
         -- Only one alternative left
         induction l [] n m n+m≡cD = ≈-Eq.refl
@@ -187,12 +180,12 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
 
     preserves-fnoc :
       ∀ (chc : NChoice Q Carrier)
-      → FnocContract (NChoice.dim chc) fnoc
+      → FnocContract (NChoice.dim chc) R₂ Rₙ fnoc
         -----------------------------------
       → ⟦ convert chc ⟧ ⊆[ fnoc ] ⟦ chc ⟧ₙ
     preserves-fnoc (D ⟨ l ∷ rs ⟩) fnocContract c
       = induction l rs
-                  zero (fnoc c D)
+                  zero (evalConfig (fnoc c) D)
                   Eq.refl
                   (λ where j ())
       where
@@ -205,12 +198,12 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
         -}
         induction : (l : Carrier) → (rs : List Carrier)
                   → (n m : ℕ)
-                  → fnoc c D ≡ n + m
-                  → (∀ (j : ℕ) → j < n → config-without-proof c (D ∙ j) ≡ false)
+                  → evalConfig (fnoc c) D ≡ n + m
+                  → (∀ (j : ℕ) → j < n → evalConfig c (D ∙ j) ≡ false)
                   → ⟦ convert' D l rs n ⟧ c ≈ find-or-last m (l ∷ rs)
         -- Only one alternative left
         induction l [] n m p ps = ≈-Eq.refl
-        induction l (r ∷ rs) n m p ps with config-without-proof c (D ∙ n) in selected
+        induction l (r ∷ rs) n m p ps with evalConfig c (D ∙ n) in selected
         -- Select the current alternative because it is the first one where
         -- `config-without-proof c (D ∙ n)` is true
         ... | true
@@ -230,24 +223,32 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
           rewrite Nat.+-suc n m
           = induction r rs (suc n) m p ps'
           where
-            ps' : (j : ℕ) → j < suc n → config-without-proof c (D ∙ j) ≡ false
+            ps' : (j : ℕ) → j < suc n → evalConfig c (D ∙ j) ≡ false
             ps' j i<suc-n with j ≟ⁿ n
             ... | no p = ps j (Nat.≤∧≢⇒< (Nat.≤-pred i<suc-n) p)
             ... | yes refl = selected
 
     convert-preserves :
       ∀ (chc : NChoice Q Carrier)
-      → ConfContract (NChoice.dim chc) conf
-      → FnocContract (NChoice.dim chc) fnoc
+      → ConfContract (NChoice.dim chc) Rₙ R₂ conf
+      → FnocContract (NChoice.dim chc) R₂ Rₙ fnoc
         ------------------------------------------
       → ⟦ chc ⟧ₙ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧
     convert-preserves chc conv vnoc = preserves-conf chc conv and preserves-fnoc chc vnoc
 
-default-conf : NConfig → 2Config
-default-conf c .proj₁ (D ∙ i) = c D ≡ᵇ i
-default-conf c .proj₂ D = c D and n≡ᵇn (c D)
+{-|
+There needs to be at least one true alternative.
+In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
+termination checker that it wont search for a non-existing true alternative.
+|-}
+at-least-true-once : (I → Bool) → Set
+at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
 
-default-fnoc' : (D : Q) → (c : Config₂ I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
+default-conf : ∀ {R} → NConfig R → 2Config at-least-true-once
+default-conf c .proj₁ (D ∙ i) = evalConfig c D ≡ᵇ i
+default-conf c .proj₂ D = evalConfig c D and n≡ᵇn (evalConfig c D)
+
+default-fnoc' : (D : Q) → (c : I → Bool) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
 default-fnoc' D c n i p with c (D ∙ n) ≟ᵇ true
 ... | yes cn≡true = n
 -- Impossible case because `at-least-true-once` guarantees at least one true
@@ -259,19 +260,20 @@ default-fnoc' D c n (suc i) p | no cn≢true
   rewrite Nat.+-suc n i
   = default-fnoc' D c (suc n) i p
 
-default-fnoc : 2Config → NConfig
-default-fnoc (c and p) D with p D
+default-fnoc : 2Config at-least-true-once → NConfig unrestricted
+default-fnoc (c and p) .proj₁ D with p D
 ... | i and p' = default-fnoc' D c zero i p'
+default-fnoc c .proj₂ = tt
 
-default-conf-satisfies-contract : (D : Q) → ConfContract D default-conf
-default-conf-satisfies-contract D .select-n c refl
-  rewrite n≡ᵇn (c D)
+default-conf-satisfies-contract : (D : Q) → (R : (Q → ℕ) → Set) → ConfContract D R at-least-true-once default-conf
+default-conf-satisfies-contract D R .select-n c refl
+  rewrite n≡ᵇn (evalConfig c D)
   = refl
-default-conf-satisfies-contract D .deselect-<n c i≤cD
+default-conf-satisfies-contract D R .deselect-<n c i≤cD
   rewrite n<m→m≡ᵇn i≤cD
   = refl
 
-default-fnoc-satisfies-contract : (D : Q) → FnocContract D default-fnoc
+default-fnoc-satisfies-contract : (D : Q) → FnocContract D at-least-true-once unrestricted default-fnoc
 default-fnoc-satisfies-contract D .correct (c and p) i' ci'≡true c<i'≡false with p D
 ... | i and p' = induction zero i p' i' refl
   where

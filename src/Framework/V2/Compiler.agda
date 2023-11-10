@@ -6,23 +6,23 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Data.Product using (_×_)
 open import Function using (id; _∘_)
 
-ConfigTranslation : ∀ (F₁ : 𝔽) (S₁ : 𝕊) (F₂ : 𝔽) (S₂ : 𝕊) → Set
-ConfigTranslation F₁ S₁ F₂ S₂ = Config F₁ S₁ → Config F₂ S₂
+ConfigTranslation : ∀ (F₁ : 𝔽) (S₁ : 𝕊) (R₁ : (F₁ → S₁) → Set) (F₂ : 𝔽) (S₂ : 𝕊) (R₂ : (F₂ → S₂) → Set) → Set
+ConfigTranslation F₁ S₁ R₁ F₂ S₂ R₂ = Config F₁ S₁ R₁ → Config F₂ S₂ R₂
 
-record ConfigCompiler (F₁ : 𝔽) (S₁ : 𝕊) (F₂ : 𝔽) (S₂ : 𝕊) : Set where
+record ConfigCompiler (F₁ : 𝔽) (S₁ : 𝕊) (R₁ : (F₁ → S₁) → Set) (F₂ : 𝔽) (S₂ : 𝕊) (R₂ : (F₂ → S₂) → Set) : Set where
   field
-    to   : ConfigTranslation F₁ S₁ F₂ S₂
-    from : ConfigTranslation F₂ S₂ F₁ S₁
+    to   : ConfigTranslation F₁ S₁ R₁ F₂ S₂ R₂
+    from : ConfigTranslation F₂ S₂ R₂ F₁ S₁ R₁
 open ConfigCompiler public
 
 {-|
 A translated configuration is extensionally equal.
 Fixme: Give me a proper name not this ugly one.
 -}
-ExtensionallyEqual-Translation : ∀ {F S} → ConfigTranslation F S F S → Set
-ExtensionallyEqual-Translation f = ∀ c → f c ≗ c
+ExtensionallyEqual-Translation : ∀ {F S R} → ConfigTranslation F S R F S R → Set
+ExtensionallyEqual-Translation f = ∀ c → evalConfig (f c) ≗ evalConfig c
 
-ExtensionallyEqual : ∀ {F S} → ConfigCompiler F S F S → Set
+ExtensionallyEqual : ∀ {F S R} → ConfigCompiler F S R F S R → Set
 ExtensionallyEqual record { to = to ; from = from } =
   ExtensionallyEqual-Translation to × ExtensionallyEqual-Translation from
 
@@ -30,10 +30,10 @@ ExtensionallyEqual record { to = to ; from = from } =
 -- (i.e., if `to` is an embedding into the second configuration language via its inverse `from`).
 -- We do not require the inverse direction `from`, being an embedding of configurations from `C₂` into `C₁`, because `C₂` could be larger than `C₁` (when interpreted as a set).
 -- For example, the set of features in `C₂` could be bigger (e.g., when going from core choice calculus to binary choice calculus) but all information can be derived by `conf` from our initial configuration `c₁`.
-Stable : ∀ {F₁ S₁ F₂ S₂} → ConfigCompiler F₁ S₁ F₂ S₂ → Set
+Stable : ∀ {F₁ S₁ R₁ F₂ S₂ R₂} → ConfigCompiler F₁ S₁ R₁ F₂ S₂ R₂ → Set
 Stable cc = from cc ∘ to cc ≗ id
 
-record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F₁ S₁) (Γ₂ : VariabilityLanguage V F₂ S₂) : Set₁ where
+record LanguageCompiler {V F₁ S₁ R₁ F₂ S₂ R₂} (Γ₁ : VariabilityLanguage V F₁ S₁ R₁) (Γ₂ : VariabilityLanguage V F₂ S₂ R₂) : Set₁ where
   private
     L₁ = Expression Γ₁
     L₂ = Expression Γ₂
@@ -42,7 +42,7 @@ record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F
 
   field
     compile         : ∀ {A} → L₁ A → L₂ A
-    config-compiler : ConfigCompiler F₁ S₁ F₂ S₂
+    config-compiler : ConfigCompiler F₁ S₁ R₁ F₂ S₂ R₂
     preserves : ∀ {A} → let open IVSet V A using (_≅[_][_]_) in
                 ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ to config-compiler ][ from config-compiler ] ⟦ compile e ⟧₂
                 -- TODO: It might nice to have syntax
@@ -58,15 +58,15 @@ record LanguageCompiler {V F₁ F₂ S₁ S₂} (Γ₁ : VariabilityLanguage V F
 --        To preserve semantics, most of the time, additional requirements on the
 --        config translations are required which are currently not part of the
 --        preservation theorem here. Maybe we have to add these constraints as type parameters here?
-record ConstructCompiler {V F₁ S₁ F₂ S₂} (VC₁ : VariabilityConstruct V F₁ S₁) (VC₂ : VariabilityConstruct V F₂ S₂) : Set₁ where
+record ConstructCompiler {V F₁ S₁ R₁ F₂ S₂ R₂} (VC₁ : VariabilityConstruct V F₁ S₁ R₁) (VC₂ : VariabilityConstruct V F₂ S₂ R₂) : Set₁ where
   open VariabilityConstruct VC₁ renaming (Construct to C₁; construct-semantics to sem₁)
   open VariabilityConstruct VC₂ renaming (Construct to C₂; construct-semantics to sem₂)
 
   field
     compile : ∀ {E A} → C₁ F₁ E A → C₂ F₂ E A
-    config-compiler : ConfigCompiler F₁ S₁ F₂ S₂
+    config-compiler : ConfigCompiler F₁ S₁ R₁ F₂ S₂ R₂
     stable : Stable config-compiler
-    preserves : ∀ {Γ : VariabilityLanguage V F₁ S₁} {A}
+    preserves : ∀ {Γ : VariabilityLanguage V F₁ S₁ R₁} {A}
       → (c : C₁ F₁ (Expression Γ) A)
       → let open IVSet V A using (_≅_) in
         sem₁ id Γ c ≅ sem₂ (to config-compiler) Γ (compile c)
@@ -76,7 +76,7 @@ Compiles languages below constructs.
 This means that an expression in a language Γ₁ of which we know that it has a specific
 syntactic construct VC at the top is compiled to Γ₂ retaining the very same construct at the top.
 -}
-record ConstructFunctor {V F S} (VC : VariabilityConstruct V F S) : Set₁ where
+record ConstructFunctor {V F S R} (VC : VariabilityConstruct V F S R) : Set₁ where
   open VariabilityConstruct VC
   open LanguageCompiler using (conf; fnoc; compile; config-compiler)
 
@@ -85,7 +85,7 @@ record ConstructFunctor {V F S} (VC : VariabilityConstruct V F S) : Set₁ where
       → (L₁ A → L₂ A)
       → Construct F L₁ A
       → Construct F L₂ A
-    preserves : ∀ {F'} {S'} {Γ₁ : VariabilityLanguage V F S} {Γ₂ : VariabilityLanguage V F' S'} {A}
+    preserves : ∀ {F'} {S' R'} {Γ₁ : VariabilityLanguage V F S R} {Γ₂ : VariabilityLanguage V F' S' R'} {A}
       → let open IVSet V A using (_≅[_][_]_) in
       ∀ (t : LanguageCompiler Γ₁ Γ₂)
       → (c : Construct F (Expression Γ₁) A)
@@ -94,18 +94,18 @@ record ConstructFunctor {V F S} (VC : VariabilityConstruct V F S) : Set₁ where
           ≅[ conf t ][ fnoc t ]
         construct-semantics (fnoc t) Γ₂ (map (compile t) c)
 
-_⊕ᶜᶜ_ : ∀ {F₁ F₂ F₃} {S₁ S₂ S₃}
-  → ConfigCompiler F₁ S₁ F₂ S₂
-  → ConfigCompiler F₂ S₂ F₃ S₃
-  → ConfigCompiler F₁ S₁ F₃ S₃
+_⊕ᶜᶜ_ : ∀ {F₁ F₂ F₃} {S₁ S₂ S₃} {R₁ R₂ R₃}
+  → ConfigCompiler F₁ S₁ R₁ F₂ S₂ R₂
+  → ConfigCompiler F₂ S₂ R₂ F₃ S₃ R₃
+  → ConfigCompiler F₁ S₁ R₁ F₃ S₃ R₃
 1→2 ⊕ᶜᶜ 2→3 = record
   { to   = to   2→3 ∘ to   1→2
   ; from = from 1→2 ∘ from 2→3
   }
 
 ⊕ᶜᶜ-stable :
-  ∀ {F₁ F₂ F₃} {S₁ S₂ S₃}
-    (1→2 : ConfigCompiler F₁ S₁ F₂ S₂) (2→3 : ConfigCompiler F₂ S₂ F₃ S₃)
+  ∀ {F₁ F₂ F₃} {S₁ S₂ S₃} {R₁ R₂ R₃}
+    (1→2 : ConfigCompiler F₁ S₁ R₁ F₂ S₂ R₂) (2→3 : ConfigCompiler F₂ S₂ R₂ F₃ S₃ R₃)
   → Stable 1→2
   → Stable 2→3
     --------------------
@@ -124,14 +124,14 @@ _⊕ᶜᶜ_ : ∀ {F₁ F₂ F₃} {S₁ S₂ S₃}
     id c₁
   ∎
 
-_⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃}
-        {Γ₁ : VariabilityLanguage V F₁ S₁}
-        {Γ₂ : VariabilityLanguage V F₂ S₂}
-        {Γ₃ : VariabilityLanguage V F₃ S₃}
+_⊕ˡ_ : ∀ {V} {F₁ F₂ F₃} {S₁ S₂ S₃} {R₁ R₂ R₃}
+        {Γ₁ : VariabilityLanguage V F₁ S₁ R₁}
+        {Γ₂ : VariabilityLanguage V F₂ S₂ R₂}
+        {Γ₃ : VariabilityLanguage V F₃ S₃ R₃}
       → LanguageCompiler Γ₁ Γ₂
       → LanguageCompiler Γ₂ Γ₃
       → LanguageCompiler Γ₁ Γ₃
-_⊕ˡ_ {V} {F₁} {F₂} {F₃} {S₁} {S₂} {S₃} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
+_⊕ˡ_ {V} {F₁} {F₂} {F₃} {S₁} {S₂} {S₃} {R₁} {R₂} {R₃} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
   { compile = compile L₂→L₃ ∘ compile L₁→L₂
   ; config-compiler = record { to = conf'; from = fnoc' }
   ; preserves = p
@@ -141,10 +141,10 @@ _⊕ˡ_ {V} {F₁} {F₂} {F₃} {S₁} {S₂} {S₃} {Γ₁} {Γ₂} {Γ₃} L�
         ⟦_⟧₁ = Semantics Γ₁
         ⟦_⟧₃ = Semantics Γ₃
 
-        conf' : Config F₁ S₁ → Config F₃ S₃
+        conf' : Config F₁ S₁ R₁ → Config F₃ S₃ R₃
         conf' = conf L₂→L₃ ∘ conf L₁→L₂
 
-        fnoc' : Config F₃ S₃ → Config F₁ S₁
+        fnoc' : Config F₃ S₃ R₃ → Config F₁ S₁ R₁
         fnoc' = fnoc L₁→L₂ ∘ fnoc L₂→L₃
 
         module _ {A : 𝔸} where

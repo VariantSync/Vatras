@@ -44,8 +44,8 @@ Essentially, implement a function:
 ```agda
 postulate
   -- When levels are generalized, we do not have to specifically use 0ℓ here.
-  embed : ∀ {V F S A} {i}
-    → (Γ : VariabilityLanguage V F S)
+  embed : ∀ {V F S R A} {i}
+    → (Γ : VariabilityLanguage V F S R)
     → F ⊢ 2Choice ∈ₛ Expression Γ
     → NestedChoice {F} (Eq.setoid (Expression Γ A)) i
     → Expression Γ A

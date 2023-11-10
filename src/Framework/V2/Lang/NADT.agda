@@ -21,9 +21,9 @@ data NADT : Size → 𝔼 where
   NADTChoice : ∀ {i A} → Choice F (NADT i) A → NADT (↑ i) A
 
 mutual
-  NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F ℕ
-  NADTVL {i} = syn NADT i with-sem semantics
+  NADTVL : ∀ {i : Size} → (R : (F → ℕ) → Set) → VariabilityLanguage GrulerVariant F ℕ R
+  NADTVL {i} R = syn NADT i with-sem semantics R
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F ℕ (NADT i)
-  semantics (NADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-  semantics (NADTChoice chc) = choice-semantics GrulerVariant F id NADTVL chc
+  semantics : ∀ {i : Size} → (R : (F → ℕ) → Set) → 𝔼-Semantics GrulerVariant F ℕ R (NADT i)
+  semantics R (NADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
+  semantics R (NADTChoice chc) = choice-semantics GrulerVariant F R id (NADTVL R) chc

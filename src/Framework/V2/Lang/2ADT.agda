@@ -21,9 +21,9 @@ data 2ADT : Size → 𝔼 where
   2ADTChoice : ∀ {i A} → Choice₂ F (2ADT i) A → 2ADT (↑ i) A
 
 mutual
-  2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Bool
-  2ADTVL {i} = syn 2ADT i with-sem semantics
+  2ADTVL : ∀ {i : Size} → (R : (F → Bool) → Set) → VariabilityLanguage GrulerVariant F Bool R
+  2ADTVL {i} R = syn 2ADT i with-sem semantics R
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Bool (2ADT i)
-  semantics (2ADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-  semantics (2ADTChoice chc) = choice₂-semantics GrulerVariant F id 2ADTVL chc
+  semantics : ∀ {i : Size} → (R : (F → Bool) → Set) → 𝔼-Semantics GrulerVariant F Bool R (2ADT i)
+  semantics R (2ADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
+  semantics R (2ADTChoice chc) = choice₂-semantics GrulerVariant F R id (2ADTVL R) chc
