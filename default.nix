@@ -8,7 +8,7 @@
       inherit system;
     },
 }:
-pkgs.agdaPackages.mkDerivation rec {
+pkgs.agdaPackages.mkDerivation {
   version = "1.0";
   pname = "EPVL";
   src = ./.;
