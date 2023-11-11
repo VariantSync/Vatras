@@ -8,3 +8,6 @@
 # build
 src/cc
 src/Main
+
+# default nix-build symlink name
+/result
