@@ -1,9 +1,10 @@
+.PHONY: andrun check check-all build build-2.6.3 run clean
+
 andrun : build run
 
 check:
 	env AGDA_DIR="./libs" agda src/Main.agda
 
-.PHONY: check-all
 check-all:
 	./scripts/check-all.sh
 
