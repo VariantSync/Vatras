@@ -27,6 +27,7 @@ pkgs.agdaPackages.mkDerivation rec {
   ];
 
   buildPhase = ''
+    make check-all
     make build
   '';
 
