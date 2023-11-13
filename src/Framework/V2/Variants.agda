@@ -9,7 +9,7 @@ open import Relation.Binary using (Setoid)
 import Relation.Binary.PropositionalEquality as Eq
 
 open import Framework.V2.Definitions using (𝕍; 𝔸)
-open import Framework.V2.Constructs.Artifact using (Artifact)
+open import Framework.V2.Constructs.Plain.Artifact using (Artifact)
 
 import Data.IndexedSet
 
