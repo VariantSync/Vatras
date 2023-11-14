@@ -44,8 +44,8 @@ at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
 NConfig = Configₙ Q
 2Config = Σ (Config₂ I) at-least-true-once
 
-config-without-proof : 2Config → Config₂ I
-config-without-proof = proj₁
+evalConfig : 2Config → Config₂ I
+evalConfig = proj₁
 
 record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
   field
@@ -63,7 +63,7 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
     -}
     select-n : ∀ (c : NConfig) {i : ℕ}
       → c D ≡ i
-      → config-without-proof (conf c) (D ∙ i) ≡ true
+      → evalConfig (conf c) (D ∙ i) ≡ true
 
     {-|
     All alternatives before the desired alternative must be deselected so
@@ -71,7 +71,7 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
     -}
     deselect-<n : ∀ (c : NConfig) {i : ℕ}
       → i < c D
-      → config-without-proof (conf c) (D ∙ i) ≡ false
+      → evalConfig (conf c) (D ∙ i) ≡ false
 
     {-|
     There is no third requirement because we do not care
@@ -89,8 +89,8 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
     - and no other alternative at a higher nesting depth was chosen.
     -}
     correct : ∀ (c : 2Config) (i : ℕ)
-      → config-without-proof c (D ∙ i) ≡ true
-      → (∀ (j : ℕ) → j < i → config-without-proof c (D ∙ j) ≡ false)
+      → evalConfig c (D ∙ i) ≡ true
+      → (∀ (j : ℕ) → j < i → evalConfig c (D ∙ j) ≡ false)
       → fnoc c D ≡ i
 
     {-|
@@ -98,7 +98,7 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
     depth i in the binary expressio is not chosen
     |-}
     incorrect : ∀ (c : 2Config) (i : ℕ)
-      → config-without-proof c (D ∙ i) ≡ false
+      → evalConfig c (D ∙ i) ≡ false
       → fnoc c D ≢ i
 open FnocContract
 
@@ -113,7 +113,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
 
   ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
   ⟦ val  v   ⟧ c = v
-  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
+  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (evalConfig c) ⟧ c
 
   show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i → String
   show-nested-choice show-q show-carrier ( val v) = show-carrier v
@@ -206,11 +206,11 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
         induction : (l : Carrier) → (rs : List Carrier)
                   → (n m : ℕ)
                   → fnoc c D ≡ n + m
-                  → (∀ (j : ℕ) → j < n → config-without-proof c (D ∙ j) ≡ false)
+                  → (∀ (j : ℕ) → j < n → evalConfig c (D ∙ j) ≡ false)
                   → ⟦ convert' D l rs n ⟧ c ≈ find-or-last m (l ∷ rs)
         -- Only one alternative left
         induction l [] n m p ps = ≈-Eq.refl
-        induction l (r ∷ rs) n m p ps with config-without-proof c (D ∙ n) in selected
+        induction l (r ∷ rs) n m p ps with evalConfig c (D ∙ n) in selected
         -- Select the current alternative because it is the first one where
         -- `config-without-proof c (D ∙ n)` is true
         ... | true
@@ -230,7 +230,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
           rewrite Nat.+-suc n m
           = induction r rs (suc n) m p ps'
           where
-            ps' : (j : ℕ) → j < suc n → config-without-proof c (D ∙ j) ≡ false
+            ps' : (j : ℕ) → j < suc n → evalConfig c (D ∙ j) ≡ false
             ps' j i<suc-n with j ≟ⁿ n
             ... | no p = ps j (Nat.≤∧≢⇒< (Nat.≤-pred i<suc-n) p)
             ... | yes refl = selected
