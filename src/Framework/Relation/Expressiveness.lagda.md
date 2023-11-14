@@ -26,7 +26,7 @@ L₁ ≽ L₂ =
   ∀ {A : 𝔸} (e₂ : Expression A L₂) →
       (Σ[ e₁ ∈ Expression A L₁ ]
         (e₂ ≚ e₁))
-  -- It would be nice if we could rephrase expressiveness to (semantics L₂) ⊆ (semantics L₁) but I we have to generalize our multisets somehow first to allow keys in the source set.
+  -- It would be nice if we could rephrase expressiveness to (semantics L₂) ⊆ (semantics L₁) but first we have to generalize our multisets somehow to allow keys in the source set.
 
 _⋡_ : VariabilityLanguage → VariabilityLanguage → Set₁ -- \nsucceq
 L₁ ⋡ L₂ = ¬ (L₁ ≽ L₂)

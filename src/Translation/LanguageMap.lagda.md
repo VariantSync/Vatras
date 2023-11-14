@@ -30,9 +30,9 @@ open import Lang.BCC
 ### Properties and Relations
 
 ```agda
+open import Framework.Relation.Expressiveness
 open import Framework.Properties.Completeness
-open import Framework.Properties.Conclude.Completeness
-open import Relations.Semantic
+open import Framework.Proof.Completeness
 ```
 
 ### Translations
