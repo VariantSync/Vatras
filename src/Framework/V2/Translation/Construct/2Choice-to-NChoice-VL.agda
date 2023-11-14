@@ -22,7 +22,7 @@ open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
 open Chc.Choiceₙ using () renaming (map to mapₙ)
 
-module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
+module Translate {V : 𝕍} {F : 𝔽} {A : 𝔸}
   (Γ₁ : VariabilityLanguage V F Bool)
   (Γ₂ : VariabilityLanguage V F ℕ)
   (t : LanguageCompiler Γ₁ Γ₂)
