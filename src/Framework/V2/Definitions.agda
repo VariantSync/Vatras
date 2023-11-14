@@ -1,8 +1,7 @@
 module Framework.V2.Definitions where
 
-open import Data.Unit using (⊤)
 open import Data.Maybe using (Maybe; just)
-open import Data.Product using (Σ; _×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+open import Data.Product using (_×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
@@ -40,19 +39,20 @@ language's expressiveness more deeply.
 𝔽 = Set
 
 {-
-Selections Language.
-This is the semantic domain of an annotation language 𝔽.
-Resolving an annotation `F : 𝔽` yields some data `S : 𝕊` which
-can be used to decide whether to in- or exclude an annotated statement
-(i.e., for options) or to decide which alternative to pick from a range of
-annotated elements (i.e., for choices).
-Basically, this can be any kind of information as long as the semantics of
-a construct can resolve it.
+Feature Selection Language.
+This is the semantic of an annotation language 𝔽. An instance of 𝕊 describes the
+set of configurations for a feature language 𝔽.  Usually, each feature selection
+language `S : 𝕊` has a some function `ConfigEvaluater F S Sel` which resolves an
+expression of the annotation language `F : 𝔽` to a selection `Sel` interpreted
+by a concrete language.
+For example, a binary choice language may use `F → Bool` as the feature
+selections language.
 -}
--- 𝕊 : ∀ {ℓ} → Set (suc ℓ)
--- 𝕊 {ℓ} = Set ℓ
 𝕊 : Set₁
-𝕊 = Set
+𝕊 = 𝔽 → Set
+
+ConfigEvaluator : 𝔽 → 𝕊 → Set → Set
+ConfigEvaluator F S Sel = (S F → F → Sel)
 
 {-
 The set of expressions of a variability language.
@@ -82,62 +82,44 @@ for variability annotations 𝔽.
 ℂ = 𝔽 → 𝔼 → 𝔸 → Set
 
 {-
-Configurations.
-A configuration is anything that allows us to do resolve an annotation `F : 𝔽`
-to a selection `S : 𝕊`, which in turn gets resolved by language and construct semantics.
--}
--- Config : ∀ {ℓ₁ ℓ₂} → (F : 𝔽 {ℓ₁}) (S : 𝕊 {ℓ₂}) → Set (ℓ₁ ⊔ ℓ₂)
-Config : (F : 𝔽) → (S : 𝕊) → ((F → S) → Set) → Set
-Config F S Restriction = Σ (F → S) Restriction
-
-evalConfig : ∀ {F : 𝔽} {S : 𝕊} {R : (F → S) → Set} → Config F S R → F → S
-evalConfig (c and _) = c
-
-unrestricted : {A : Set} -> A → Set
-unrestricted a = ⊤
-
-mapConfigProof : ∀ {F : 𝔽} {S : 𝕊} {R R' : (F → S) → Set} → ((c : F → S) → R c → R' c) → Config F S R → Config F S R'
-mapConfigProof f (c and p) = c and f c p
-
-{-
 Semantics of variability languages.
 The semantics of a set of expressions `E : 𝔼` is a function
 that configures a term `e : E A` to a variant `v : V A`
 -}
-𝔼-Semantics : 𝕍 → (F : 𝔽) → (S : 𝕊) → ((F → S) → Set) → 𝔼 → Set₁
-𝔼-Semantics V F S R E =
+𝔼-Semantics : 𝕍 → 𝔽 → 𝕊 → 𝔼 → Set₁
+𝔼-Semantics V F S E =
   ∀ {A : 𝔸}
   → E A
-  → Config F S R
+  → S F
   → V A
 
 -- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
-record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) (R : (F → S) → Set) : Set₁ where
+record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   constructor syn_with-sem_
   field
     Expression : 𝔼
-    Semantics  : 𝔼-Semantics V F S R Expression
+    Semantics  : 𝔼-Semantics V F S Expression
 open VariabilityLanguage public
 
 -- Semantics of constructors
-ℂ-Semantics : 𝕍 → (F : 𝔽) → (S : 𝕊) → ((F → S) → Set) → ℂ → Set₁
-ℂ-Semantics V F S R C =
-  ∀ {Fγ : 𝔽} {Sγ : 𝕊} {Rγ : (Fγ → Sγ) → Set}
-  → (Config Fγ Sγ Rγ → Config F S R) -- a function that lets us apply language configurations to constructs
+ℂ-Semantics : 𝕍 → 𝔽 → 𝕊 → ℂ → Set₁
+ℂ-Semantics V F S C =
+  ∀ {Fγ : 𝔽} {Sγ : 𝕊}
+  → (Sγ Fγ → S F) -- a function that lets us apply language configurations to constructs
   → {A : 𝔸} -- the domain in which we embed variability
-  → (Γ : VariabilityLanguage V Fγ Sγ Rγ) -- The underlying language
+  → (Γ : VariabilityLanguage V Fγ Sγ) -- The underlying language
   → C F (Expression Γ) A -- the construct to compile
-  → Config Fγ Sγ Rγ -- a configuration for underlying subexpressions
+  → Sγ Fγ -- a configuration for underlying subexpressions
   → V A
 
-record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) (R : (F → S) → Set) : Set₁ where
+record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
   constructor con_with-sem_
   field
     -- how to create a constructor for a given language
     Construct : ℂ
     -- how to resolve a constructor for a given language
-    construct-semantics : ℂ-Semantics V F S R Construct
-  _⊢⟦_⟧ = construct-semantics id
+    construct-semantics : ℂ-Semantics V F S Construct
+  _⊢⟦_⟧ = construct-semantics {Sγ = S} id
 
 -- Syntactic Containment
 -- TODO: Is there any point in allowing a specialization of F here?
@@ -165,7 +147,7 @@ _⊢_≅ₛ_ : 𝔽 → 𝔼 → 𝔼 → Set₁
 F ⊢ E₁ ≅ₛ E₂ = F ⊢ E₁ ⊆ₛ E₂ × F ⊢ E₂ ⊆ₛ E₁
 
 -- Semantic Containment
-record _⟦∈⟧_ {V F S R} (C : VariabilityConstruct V F S R) (Γ : VariabilityLanguage V F S R) : Set₁ where
+record _⟦∈⟧_ {V F S} (C : VariabilityConstruct V F S) (Γ : VariabilityLanguage V F S) : Set₁ where
   open VariabilityConstruct C
   private ⟦_⟧ = Semantics Γ
   field
@@ -175,11 +157,11 @@ record _⟦∈⟧_ {V F S R} (C : VariabilityConstruct V F S R) (Γ : Variabilit
       → ⟦ cons make c ⟧ ≗ construct-semantics id Γ c
 open _⟦∈⟧_ public
 
-_⟦∉⟧_ : ∀ {V F S R} → VariabilityConstruct V F S R → VariabilityLanguage V F S R → Set₁
+_⟦∉⟧_ : ∀ {V F S} → VariabilityConstruct V F S → VariabilityLanguage V F S → Set₁
 C ⟦∉⟧ E = ¬ (C ⟦∈⟧ E)
 
-_⟦⊆⟧_ :  ∀ {V F S R} → VariabilityLanguage V F S R → VariabilityLanguage V F S R → Set₁
-_⟦⊆⟧_ {V} {F} {S} {R} E₁ E₂ = ∀ (C : VariabilityConstruct V F S R) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
+_⟦⊆⟧_ :  ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
+_⟦⊆⟧_ {V} {F} {S} E₁ E₂ = ∀ (C : VariabilityConstruct V F S) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
 
-_⟦≅⟧_ : ∀ {V F S R} → VariabilityLanguage V F S R → VariabilityLanguage V F S R → Set₁
+_⟦≅⟧_ : ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
 E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁

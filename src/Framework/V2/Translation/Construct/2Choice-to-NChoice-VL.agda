@@ -20,11 +20,11 @@ open 2→N using (ConfContract; FnocContract)
 
 open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
-open Chc.Choiceₙ using () renaming (map to mapₙ)
+open Chc.Choiceₙ using () renaming (Config to Configₙ; map to mapₙ)
 
-module Translate {V : 𝕍} {F : 𝔽} {R₂ : (F → Bool) → Set} {Rₙ : (F → ℕ) → Set} {A : 𝔸}
-  (Γ₁ : VariabilityLanguage V F Bool R₂)
-  (Γ₂ : VariabilityLanguage V F ℕ Rₙ)
+module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
+  (Γ₁ : VariabilityLanguage V F Config₂)
+  (Γ₂ : VariabilityLanguage V F Configₙ)
   (t : LanguageCompiler Γ₁ Γ₂)
   where
   private
@@ -34,9 +34,9 @@ module Translate {V : 𝕍} {F : 𝔽} {R₂ : (F → Bool) → Set} {Rₙ : (F 
     ⟦_⟧₂ = Semantics  Γ₂
     open LanguageCompiler t
 
-  open VariabilityConstruct (Chc.VLChoice₂.Construct V F R₂)
+  open VariabilityConstruct (Chc.VLChoice₂.Construct V F)
     renaming (Construct to 2Choice; _⊢⟦_⟧ to _⊢⟦_⟧₁)
-  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V F Rₙ)
+  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V F)
     renaming (Construct to NChoice; _⊢⟦_⟧ to _⊢⟦_⟧₂)
 
   -- TODO: Generalize to any setoids over L₁ or L₂.
@@ -90,8 +90,8 @@ module Translate {V : 𝕍} {F : 𝔽} {R₂ : (F → Bool) → Set} {Rₙ : (F 
     open VSet.≅[]-Reasoning
 
     convert-compile-preserves :
-      ∀ (conv : ConfContract D R₂ Rₙ conf)
-      → (vnoc : FnocContract D Rₙ R₂ fnoc)
+      ∀ (conv : ConfContract D conf)
+      → (vnoc : FnocContract D fnoc)
       → Stable config-compiler
       → (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁) ≅[ conf ][ fnoc ] (Γ₂ ⊢⟦ convert-compile (D ⟨ l , r ⟩) ⟧₂)
     convert-compile-preserves conv vnoc stable =
@@ -115,8 +115,8 @@ module Translate {V : 𝕍} {F : 𝔽} {R₂ : (F → Bool) → Set} {Rₙ : (F 
       ≅[]-∎
 
     compile-convert-preserves :
-      ∀ (conv : ConfContract D R₂ Rₙ conf)
-      → (vnoc : FnocContract D Rₙ R₂ fnoc)
+      ∀ (conv : ConfContract D conf)
+      → (vnoc : FnocContract D fnoc)
       → Stable config-compiler
       → (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁) ≅[ conf ][ fnoc ] (Γ₂ ⊢⟦ compile-convert (D ⟨ l , r ⟩) ⟧₂)
     compile-convert-preserves conv vnoc stable =

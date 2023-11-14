@@ -14,6 +14,7 @@ open import Framework.V2.Variants using (GrulerVariant)
 
 private
   Choice₂ = VLChoice₂.Syntax
+  Config₂ = Choice₂.Config
   choice₂-semantics = VLChoice₂.Semantics
 
 data 2ADT : Size → 𝔼 where
@@ -21,9 +22,9 @@ data 2ADT : Size → 𝔼 where
   2ADTChoice : ∀ {i A} → Choice₂ F (2ADT i) A → 2ADT (↑ i) A
 
 mutual
-  2ADTVL : ∀ {i : Size} → (R : (F → Bool) → Set) → VariabilityLanguage GrulerVariant F Bool R
-  2ADTVL {i} R = syn 2ADT i with-sem semantics R
+  2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Config₂
+  2ADTVL {i} = syn 2ADT i with-sem semantics
 
-  semantics : ∀ {i : Size} → (R : (F → Bool) → Set) → 𝔼-Semantics GrulerVariant F Bool R (2ADT i)
-  semantics R (2ADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-  semantics R (2ADTChoice chc) = choice₂-semantics GrulerVariant F R id (2ADTVL R) chc
+  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Config₂ (2ADT i)
+  semantics (2ADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
+  semantics (2ADTChoice chc) = choice₂-semantics GrulerVariant F id 2ADTVL chc

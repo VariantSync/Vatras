@@ -5,8 +5,7 @@ open import Data.Bool using (Bool; false; true)
 open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty using (List⁺; _∷_)
 open import Data.Nat using (ℕ; suc; zero)
-open import Data.Product using (proj₁; proj₂) renaming (_,_ to _and_)
-open import Data.Unit using (tt)
+open import Data.Product using () renaming (_,_ to _and_)
 open import Level using (0ℓ)
 
 open import Relation.Binary using (Setoid; IsEquivalence)
@@ -14,7 +13,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 import Data.IndexedSet
 
-open import Framework.V2.Definitions using (𝔽; evalConfig; unrestricted)
+open import Framework.V2.Definitions using (𝔽)
 open import Framework.V2.Compiler using (ConstructCompiler)
 open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂)
@@ -32,15 +31,15 @@ To simplify things, we fix these two numbers to be 0 for true, and 1 for false. 
 `D < l ,  r       >` lines up with
 `D < l :: r :: [] >`
 -}
-record ConfContract (f : Q) (R₂ : (Q → Bool) → Set) (Rₙ : (Q → ℕ) → Set) (conf : Config₂ Q R₂ → Configₙ Q Rₙ) : Set where
+record ConfContract (f : Q) (conf : Config₂ Q → Configₙ Q) : Set where
   field
-    false→1 : ∀ (c : Config₂ Q R₂)
-      → evalConfig c f ≡ false
-      → evalConfig (conf c) f ≡ 1
+    false→1 : ∀ (c : Config₂ Q)
+      → c f ≡ false
+      → (conf c) f ≡ 1
 
-    true→0 : ∀ (c : Config₂ Q R₂)
-      → evalConfig c f ≡ true
-      → evalConfig (conf c) f ≡ 0
+    true→0 : ∀ (c : Config₂ Q)
+      → c f ≡ true
+      → (conf c) f ≡ 0
 open ConfContract
 
 {-|
@@ -52,34 +51,32 @@ that we can associate each natural numbers with the boolean values true and fals
 such that the association is inverse to ConfContract.
 Hence, we associate 0 with true and all other numbers with false.
 -}
-record FnocContract (f : Q) (Rₙ : (Q → ℕ) → Set) (R₂ : (Q → Bool) → Set) (fnoc : Configₙ Q Rₙ → Config₂ Q R₂) : Set where
+record FnocContract (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set where
   field
-    suc→false : ∀ {n} (c : Configₙ Q Rₙ)
-      → evalConfig c f ≡ suc n
-      → evalConfig (fnoc c) f ≡ false
+    suc→false : ∀ {n} (c : Configₙ Q)
+      → c f ≡ suc n
+      → (fnoc c) f ≡ false
 
-    zero→true : ∀ (c : Configₙ Q Rₙ)
-      → evalConfig c f ≡ zero
-      → evalConfig (fnoc c) f ≡ true
+    zero→true : ∀ (c : Configₙ Q)
+      → c f ≡ zero
+      → (fnoc c) f ≡ true
 open FnocContract
 
-default-conf : ∀ {R₂ : (Q → Bool) → Set} → Config₂ Q R₂ → Configₙ Q unrestricted
-default-conf cb .proj₁ f with evalConfig cb f
+default-conf : Config₂ Q → Configₙ Q
+default-conf cb f with cb f
 ... | false = 1
 ... | true  = 0
-default-conf cb .proj₂ = tt
 
-default-fnoc : ∀ {Rₙ : (Q → ℕ) → Set} → Configₙ Q Rₙ → Config₂ Q unrestricted
-default-fnoc cn .proj₁ f with evalConfig cn f
+default-fnoc : Configₙ Q → Config₂ Q
+default-fnoc cn f with cn f
 ... | zero    = true
 ... | (suc _) = false
-default-fnoc cb .proj₂ = tt
 
-default-conf-satisfies-contract : ∀ {R₂ : (Q → Bool) → Set} (f : Q) → ConfContract f R₂ unrestricted default-conf
+default-conf-satisfies-contract : ∀ (f : Q) → ConfContract f default-conf
 false→1 (default-conf-satisfies-contract f) c cf≡false rewrite cf≡false = refl
 true→0  (default-conf-satisfies-contract f) c cf≡true  rewrite cf≡true  = refl
 
-default-fnoc-satisfies-contract : ∀ {Rₙ : (Q → ℕ) → Set} (f : Q) → FnocContract f Rₙ unrestricted default-fnoc
+default-fnoc-satisfies-contract : ∀ (f : Q) → FnocContract f default-fnoc
 suc→false (default-fnoc-satisfies-contract f) c cf≡suc  rewrite cf≡suc  = refl
 zero→true (default-fnoc-satisfies-contract f) c cf≡zero rewrite cf≡zero = refl
 
@@ -95,31 +92,29 @@ module Translate (S : Setoid 0ℓ 0ℓ) where
   convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩
 
   module Preservation
-    {R₂ : (Q → Bool) → Set}
-    {Rₙ : (Q → ℕ) → Set}
-    (conf : Config₂ Q R₂ → Configₙ Q Rₙ)
-    (fnoc : Configₙ Q Rₙ → Config₂ Q R₂)
+    (conf : Config₂ Q → Configₙ Q)
+    (fnoc : Configₙ Q → Config₂ Q)
     (chc : 2Choice Q Carrier)
     where
     open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
-        ConfContract (2Choice.dim chc) R₂ Rₙ conf
+        ConfContract (2Choice.dim chc) conf
       → ⟦ chc ⟧₂ ⊆[ conf ] ⟦ convert chc ⟧ₙ
-    preserves-conf conv c with evalConfig c (2Choice.dim chc) in eq
+    preserves-conf conv c with c (2Choice.dim chc) in eq
     ... | false rewrite false→1 conv c eq = ≈-Eq.refl
     ... | true  rewrite true→0  conv c eq = ≈-Eq.refl
 
     preserves-fnoc :
-        FnocContract (2Choice.dim chc) Rₙ R₂ fnoc
+        FnocContract (2Choice.dim chc) fnoc
       → ⟦ convert chc ⟧ₙ ⊆[ fnoc ] ⟦ chc ⟧₂
-    preserves-fnoc vnoc c with evalConfig c (2Choice.dim chc) in eq
+    preserves-fnoc vnoc c with c (2Choice.dim chc) in eq
     ... | zero  rewrite zero→true vnoc c eq = ≈-Eq.refl
     ... | suc _ rewrite suc→false vnoc c eq = ≈-Eq.refl
 
     convert-preserves :
-        ConfContract (2Choice.dim chc) R₂ Rₙ conf
-      → FnocContract (2Choice.dim chc) Rₙ R₂ fnoc
+        ConfContract (2Choice.dim chc) conf
+      → FnocContract (2Choice.dim chc) fnoc
       → ⟦ chc ⟧₂ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧ₙ
     convert-preserves conv vnoc = preserves-conf conv and preserves-fnoc vnoc
 
