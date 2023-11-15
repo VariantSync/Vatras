@@ -2,8 +2,11 @@
 
 module Framework.V2.Lang.FST where
 
+open import Data.Nat using (ℕ)
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat)
+open import Data.Vec using (Vec; []; _∷_) renaming (map to map-vec; filter to filter-vec; concat to concat-vec)
+open import Data.Vec.Bounded using (Vec≤) renaming (_,_ to _bounded-by_)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
 open import Data.Product using (Σ; ∃-syntax; _×_; _,_; proj₁; proj₂)
@@ -50,12 +53,12 @@ open TODO-MOVE-TO-AUX-OR-USE-STL
 
 module Defs {A : 𝔸} where
   data PlainFST : Set where
-    pnode : A → List PlainFST → PlainFST
+    pnode : A → Σ ℕ (Vec PlainFST) → PlainFST
 
   -- the syntax used in the paper for paths
-  infixr 5 _．_
-  _．_ : A → (cs : List PlainFST) → List PlainFST
-  a ． cs = pnode a cs ∷ []
+  -- infixr 5 _．_
+  -- _．_ : A → (cs : List PlainFST) → List PlainFST
+  -- a ． cs = pnode a cs ∷ []
 
   -- helper function when branching in paths
   branches : List (List PlainFST) → List PlainFST
@@ -63,15 +66,15 @@ module Defs {A : 𝔸} where
 
   mutual
     infix 4 _+_⟶_
-    data _+_⟶_ : PlainFST → List (PlainFST) → List (PlainFST) → Set where
+    data _+_⟶_ : ∀ {n} → PlainFST → Vec PlainFST n → Vec≤ PlainFST n → Set where
       base : ∀ {l : PlainFST}
           ---------------
-        → l + [] ⟶ l ∷ []
+        → l + [] ⟶ (l ∷ [] bounded-by ?)
 
-      merge : ∀ {a as bs rs cs}
+      merge : ∀ {na nb nr} {a : A} {as : Vec PlainFST na} {bs : Vec PlainFST nb} {rs : Vec PlainFST nr} {cs : Vec≤ PlainFST nb}
         → as + bs ↝ cs
           ----------------------------------------------
-        → pnode a as + pnode a bs ∷ rs ⟶ pnode a cs ∷ rs
+        → pnode a (na , as) + pnode a (nb , bs) ∷ rs ⟶ pnode a cs ∷ rs
 
       skip : ∀ {a as b bs rs cs}
         → ¬ (a ≡ b)
@@ -81,7 +84,7 @@ module Defs {A : 𝔸} where
 
     -- This is bascially just a fold on lists. Maybe we can simplify it accordingly.
     infix 4 _+_↝_
-    data _+_↝_ : List PlainFST → List PlainFST → List PlainFST → Set where
+    data _+_↝_ : ∀ {m n} → Vec PlainFST m → Vec PlainFST n → Vec≤ PlainFST n → Set where
       impose-nothing : ∀ {rs}
         → [] + rs ↝ rs
 
@@ -123,14 +126,22 @@ module Defs {A : 𝔸} where
 
     mutual
       --- TODO: Fix termination checking
-      {-# TERMINATING #-}
+      -- {-# TERMINATING #-}
       ↝-total : ∀ (ls rs : List PlainFST) → ∃[ e ] (ls + rs ↝ e)
       ↝-total [] rs = ↝-return impose-nothing
       ↝-total (l ∷ ls) rs =
-        let e' , ⟶e' = ⟶-total l rs
+        let
+            e' , ⟶e' = ⟶-total l rs
+            -- e' , ⟶e' = ⟶magic l rs
             _  , ↝e  = ↝-total ls e'
+            -- _  , ↝e  = magic ls e'
         in ↝-return (impose-step ⟶e' ↝e)
+        where
+          postulate
+            ⟶magic : ∀ (l : PlainFST) (rs : List PlainFST) → ∃[ e ] (l + rs ⟶ e)
+            ↝magic : ∀ (ls rs : List PlainFST) → ∃[ e ] (ls + rs ↝ e)
 
+      -- {-# TERMINATING #-}
       ⟶-total : ∀ (l : PlainFST) (rs : List PlainFST) → ∃[ e ] (l + rs ⟶ e)
       ⟶-total l [] = ⟶-return base
       ⟶-total (pnode a as) (pnode b bs ∷ rs) with a ≟ b
@@ -260,11 +271,11 @@ module Defs {A : 𝔸} where
     ⊕-all = foldr _⊕_ 𝟘
 
     l-id : LeftIdentity _≡_ 𝟘 _⊕_
-    l-id _ = refl
+    l-id _ = {!!} -- refl
 
     r-id : RightIdentity _≡_ 𝟘 _⊕_
-    r-id ([] , [] , []) = refl
-    r-id (.(pnode _ _) ∷ [] , [] ∷ [] , unq x ∷ []) = refl
+    r-id ([] , [] , []) = {!!} --refl
+    r-id (.(pnode _ _) ∷ [] , [] ∷ [] , unq x ∷ []) = {!!} -- refl
     r-id (x ∷ y ∷ zs , u-x ∷ u-y ∷ u-zs , ur-x ∷ ur-y ∷ ur-zs) = {!!}
 
     assoc : Associative _≡_ _⊕_
