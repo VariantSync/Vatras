@@ -14,7 +14,7 @@ open import Framework.V2.Constructs.Choices
 open import Framework.V2.Constructs.GrulerArtifacts
 open import Framework.V2.Variants using (GrulerVariant)
 
-open Framework.V2.Constructs.Choices.Choice₂ using (_⟨_,_⟩)
+open Framework.V2.Constructs.Choices.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
 
 private
   PC = VLParallelComposition.Syntax
@@ -27,14 +27,14 @@ data Gruler : Size → 𝔼 where
   GPComp  : ∀ {i A} → ParallelComposition (Gruler i A) → Gruler (↑ i) A
   GChoice : ∀ {i A} → Choice₂ F (Gruler i) A      → Gruler (↑ i) A
 
-semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Bool (Gruler i)
+semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Config₂ (Gruler i)
 
-GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Bool
+GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Config₂
 GrulerVL {i} = syn Gruler i with-sem semantics
 
 semantics (GAsset a)  _ = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-semantics (GPComp pc)   = pc-semantics VLParallelComposition.ParallelComposition∈ₛGrulerVariant id GrulerVL pc
-semantics (GChoice chc) = choice₂-semantics GrulerVariant F id (GrulerVL) chc
+semantics (GPComp pc)   = pc-semantics {S = Config₂} VLParallelComposition.ParallelComposition∈ₛGrulerVariant id GrulerVL pc
+semantics (GChoice chc) = choice₂-semantics GrulerVariant F id GrulerVL chc
 
 gruler-has-leaf : ∀ {i} → F ⊢ VLLeaf.Syntax ∈ₛ Gruler i
 gruler-has-leaf {i} = record

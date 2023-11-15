@@ -36,9 +36,9 @@ module VLLeaf where
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
     → F ⊢ Syntax ∈ₛ V
     → VariabilityConstruct V F S
-  Construct _ _ _ mkLeaf = record
+  Construct V F S mkLeaf = record
     { Construct = Syntax
-    ; construct-semantics = Semantics mkLeaf
+    ; construct-semantics = Semantics {V} {F} {S} mkLeaf
     }
 
   Leaf∈ₛGrulerVariant : ∀ {F} → F ⊢ Syntax ∈ₛ GrulerVariant
@@ -57,9 +57,9 @@ module VLParallelComposition where
   Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
     → F ⊢ Syntax ∈ₛ V
     → VariabilityConstruct V F S
-  Construct _ _ _ mkPC = record
+  Construct V F S mkPC = record
     { Construct = Syntax
-    ; construct-semantics = Semantics mkPC
+    ; construct-semantics = Semantics {V} {F} {S} mkPC
     }
 
   ParallelComposition∈ₛGrulerVariant : ∀ {F} → F ⊢ Syntax ∈ₛ GrulerVariant

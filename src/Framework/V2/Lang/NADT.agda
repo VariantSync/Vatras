@@ -14,6 +14,7 @@ open import Framework.V2.Variants using (GrulerVariant)
 
 private
   Choice = VLChoiceₙ.Syntax
+  Config = Choiceₙ.Config
   choice-semantics = VLChoiceₙ.Semantics
 
 data NADT : Size → 𝔼 where
@@ -21,9 +22,9 @@ data NADT : Size → 𝔼 where
   NADTChoice : ∀ {i A} → Choice F (NADT i) A → NADT (↑ i) A
 
 mutual
-  NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F ℕ
+  NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Config
   NADTVL {i} = syn NADT i with-sem semantics
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F ℕ (NADT i)
+  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Config (NADT i)
   semantics (NADTAsset a) _  = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
   semantics (NADTChoice chc) = choice-semantics GrulerVariant F id NADTVL chc

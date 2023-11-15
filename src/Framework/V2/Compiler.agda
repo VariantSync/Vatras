@@ -7,7 +7,7 @@ open import Data.Product using (_×_)
 open import Function using (id; _∘_)
 
 ConfigTranslation : ∀ (F₁ : 𝔽) (S₁ : 𝕊) (F₂ : 𝔽) (S₂ : 𝕊) → Set
-ConfigTranslation F₁ S₁ F₂ S₂ = Config F₁ S₁ → Config F₂ S₂
+ConfigTranslation F₁ S₁ F₂ S₂ = S₁ F₁ → S₂ F₂
 
 record ConfigCompiler (F₁ : 𝔽) (S₁ : 𝕊) (F₂ : 𝔽) (S₂ : 𝕊) : Set where
   field
@@ -19,12 +19,12 @@ open ConfigCompiler public
 A translated configuration is extensionally equal.
 Fixme: Give me a proper name not this ugly one.
 -}
-ExtensionallyEqual-Translation : ∀ {F S} → ConfigTranslation F S F S → Set
-ExtensionallyEqual-Translation f = ∀ c → f c ≗ c
+ExtensionallyEqual-Translation : ∀ {F S Sel} → ConfigEvaluator F S Sel → ConfigTranslation F S F S → Set
+ExtensionallyEqual-Translation evalConfig f = ∀ c → evalConfig (f c) ≗ evalConfig c
 
-ExtensionallyEqual : ∀ {F S} → ConfigCompiler F S F S → Set
-ExtensionallyEqual record { to = to ; from = from } =
-  ExtensionallyEqual-Translation to × ExtensionallyEqual-Translation from
+ExtensionallyEqual : ∀ {F S Sel} → ConfigEvaluator F S Sel → ConfigCompiler F S F S → Set
+ExtensionallyEqual {F} {S} evalConfig record { to = to ; from = from } =
+  ExtensionallyEqual-Translation {F} {S} evalConfig to × ExtensionallyEqual-Translation {F} {S} evalConfig from
 
 -- We identify a configuration to be the same if it can be uniquely translated back
 -- (i.e., if `to` is an embedding into the second configuration language via its inverse `from`).
@@ -141,10 +141,10 @@ _⊕ˡ_ {V} {F₁} {F₂} {F₃} {S₁} {S₂} {S₃} {Γ₁} {Γ₂} {Γ₃} L�
         ⟦_⟧₁ = Semantics Γ₁
         ⟦_⟧₃ = Semantics Γ₃
 
-        conf' : Config F₁ S₁ → Config F₃ S₃
+        conf' : S₁ F₁ → S₃ F₃
         conf' = conf L₂→L₃ ∘ conf L₁→L₂
 
-        fnoc' : Config F₃ S₃ → Config F₁ S₁
+        fnoc' : S₃ F₃ → S₁ F₁
         fnoc' = fnoc L₁→L₂ ∘ fnoc L₂→L₃
 
         module _ {A : 𝔸} where

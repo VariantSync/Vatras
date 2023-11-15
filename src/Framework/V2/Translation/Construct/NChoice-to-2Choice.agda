@@ -1,5 +1,5 @@
 {-# OPTIONS --sized-types #-}
-module Framework.V2.Translation.Construct.NChoice-to-2Choice {ℓ₁} {Q : Set ℓ₁} where
+module Framework.V2.Translation.Construct.NChoice-to-2Choice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])
@@ -11,6 +11,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
 
+import Level
 open import Size using (Size; ↑_; ∞)
 
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≢_)
@@ -32,21 +33,21 @@ open import Data.String using (String; _++_)
 private
   I = IndexedName Q
 
-  {-|
-  There needs to be at least one true alternative.
-  In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
-  termination checker that it wont search for a non-existing true alternative.
-  |-}
-  at-least-true-once : Config₂ I → Set ℓ₁
-  at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
+{-|
+There needs to be at least one true alternative.
+In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
+termination checker that it wont search for a non-existing true alternative.
+|-}
+at-least-true-once : Config₂ I → Set
+at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
 
-  NConfig = Configₙ Q
-  2Config = Σ (Config₂ I) at-least-true-once
+NConfig = Configₙ Q
+2Config = Σ (Config₂ I) at-least-true-once
 
-  config-without-proof : 2Config → Config₂ I
-  config-without-proof = proj₁
+evalConfig : 2Config → Config₂ I
+evalConfig = proj₁
 
-record ConfContract (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
+record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
   field
     {-|
     A translated, binary configuration (conf c)
@@ -62,7 +63,7 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     -}
     select-n : ∀ (c : NConfig) {i : ℕ}
       → c D ≡ i
-      → config-without-proof (conf c) (D ∙ i) ≡ true
+      → evalConfig (conf c) (D ∙ i) ≡ true
 
     {-|
     All alternatives before the desired alternative must be deselected so
@@ -70,7 +71,7 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     -}
     deselect-<n : ∀ (c : NConfig) {i : ℕ}
       → i < c D
-      → config-without-proof (conf c) (D ∙ i) ≡ false
+      → evalConfig (conf c) (D ∙ i) ≡ false
 
     {-|
     There is no third requirement because we do not care
@@ -80,7 +81,7 @@ record ConfContract (D : Q) (conf : NConfig → 2Config) : Set ℓ₁ where
     -}
 open ConfContract
 
-record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
+record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
   field
     {-|
     The nary config must chose index i if
@@ -88,8 +89,8 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
     - and no other alternative at a higher nesting depth was chosen.
     -}
     correct : ∀ (c : 2Config) (i : ℕ)
-      → config-without-proof c (D ∙ i) ≡ true
-      → (∀ (j : ℕ) → j < i → config-without-proof c (D ∙ j) ≡ false)
+      → evalConfig c (D ∙ i) ≡ true
+      → (∀ (j : ℕ) → j < i → evalConfig c (D ∙ j) ≡ false)
       → fnoc c D ≡ i
 
     {-|
@@ -97,22 +98,22 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set ℓ₁ where
     depth i in the binary expressio is not chosen
     |-}
     incorrect : ∀ (c : 2Config) (i : ℕ)
-      → config-without-proof c (D ∙ i) ≡ false
+      → evalConfig c (D ∙ i) ≡ false
       → fnoc c D ≢ i
 open FnocContract
 
-module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
+module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 
   {-| A dialect of binary choice calculus in which all data is in leaves. -}
-  data NestedChoice : Size → Set ℓ₁ where
+  data NestedChoice : Size → Set where
     val  : ∀ {i : Size} → Carrier → NestedChoice i
     nchc : ∀ {i : Size} → 2Choice I (NestedChoice i) → NestedChoice (↑ i)
 
   ⟦_⟧ : ∀ {i : Size} → (NestedChoice i) → 2Config → Carrier
   ⟦ val  v   ⟧ c = v
-  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (λ q → config-without-proof c q) ⟧ c
+  ⟦ nchc chc ⟧ c = ⟦ ⟦ chc ⟧₂ (evalConfig c) ⟧ c
 
   show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i → String
   show-nested-choice show-q show-carrier ( val v) = show-carrier v
@@ -124,7 +125,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
 
   -- TODO?: Replace NestedChoice by 2ADT
   -- open import Framework.V2.Lang.2ADT Q using (2ADT; 2ADTAsset; 2ADTChoice; semantics)
-  -- NestedChoice : Size → Set ℓ₁
+  -- NestedChoice : Size → Set
   -- NestedChoice i = 2ADT i I
   -- val = 2ADTAsset
   -- nchc = 2ADTChoice
@@ -205,11 +206,11 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
         induction : (l : Carrier) → (rs : List Carrier)
                   → (n m : ℕ)
                   → fnoc c D ≡ n + m
-                  → (∀ (j : ℕ) → j < n → config-without-proof c (D ∙ j) ≡ false)
+                  → (∀ (j : ℕ) → j < n → evalConfig c (D ∙ j) ≡ false)
                   → ⟦ convert' D l rs n ⟧ c ≈ find-or-last m (l ∷ rs)
         -- Only one alternative left
         induction l [] n m p ps = ≈-Eq.refl
-        induction l (r ∷ rs) n m p ps with config-without-proof c (D ∙ n) in selected
+        induction l (r ∷ rs) n m p ps with evalConfig c (D ∙ n) in selected
         -- Select the current alternative because it is the first one where
         -- `config-without-proof c (D ∙ n)` is true
         ... | true
@@ -229,7 +230,7 @@ module Translate {ℓ₂} (S : Setoid ℓ₁ ℓ₂) where
           rewrite Nat.+-suc n m
           = induction r rs (suc n) m p ps'
           where
-            ps' : (j : ℕ) → j < suc n → config-without-proof c (D ∙ j) ≡ false
+            ps' : (j : ℕ) → j < suc n → evalConfig c (D ∙ j) ≡ false
             ps' j i<suc-n with j ≟ⁿ n
             ... | no p = ps j (Nat.≤∧≢⇒< (Nat.≤-pred i<suc-n) p)
             ... | yes refl = selected

@@ -24,8 +24,8 @@ Complete {V} (syn L with-sem ⟦_⟧) = ∀ {A n}
 record TranslationResult {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) : Set₁ where
   field
     expr : Expression L₂ A
-    conf : Config F S₁ → Config F S₂
-    fnoc : Config F S₂ → Config F S₁
+    conf : S₁ F → S₂ F
+    fnoc : S₂ F → S₁ F
 open TranslationResult public
 
 Translation : ∀ {V F S₁ S₂} (L₁ : VariabilityLanguage V F S₁) (L₂ : VariabilityLanguage V F S₂) → Set₁
@@ -68,10 +68,10 @@ Conf-Preserves :  ∀ {V F S₁ S₂}
   → (L₂ : VariabilityLanguage V F S₂)
   → Expression L₁ A
   → Expression L₂ A
-  → (Config F S₁ → Config F S₂)
+  → (S₁ F → S₂ F)
   → Set
 Conf-Preserves {F = F} {S₁ = S₁} L₁ L₂ e₁ e₂ conf =
-  ∀ (c₁ : Config F S₁) → ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ (conf c₁)
+  ∀ (c₁ : S₁ F) → ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ (conf c₁)
   where ⟦_⟧₁ = Semantics L₁
         ⟦_⟧₂ = Semantics L₂
 
@@ -80,10 +80,10 @@ Fnoc-Preserves :  ∀ {V F S₁ S₂}
   → (L₂ : VariabilityLanguage V F S₂)
   → Expression L₁ A
   → Expression L₂ A
-  → (Config F S₂ → Config F S₁)
+  → (S₂ F → S₁ F)
   → Set
 Fnoc-Preserves {F = F} {S₂ = S₂} L₁ L₂ e₁ e₂ fnoc =
-  ∀ (c₂ : Config F S₂) → ⟦ e₂ ⟧₂ c₂ ≡ ⟦ e₁ ⟧₁ (fnoc c₂)
+  ∀ (c₂ : S₂ F) → ⟦ e₂ ⟧₂ c₂ ≡ ⟦ e₁ ⟧₁ (fnoc c₂)
   where ⟦_⟧₁ = Semantics L₁
         ⟦_⟧₂ = Semantics L₂
 
