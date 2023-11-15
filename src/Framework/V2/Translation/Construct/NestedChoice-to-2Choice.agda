@@ -17,23 +17,21 @@ open import Framework.V2.Annotation.IndexedName using (IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choiceₙ using () renaming (Config to Configₙ)
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
-open Chc.VLChoice₂ using () renaming (Syntax to 2Choice; Semantics to 2Choice-sem)
-open import Framework.V2.Translation.Construct.NChoice-to-2Choice hiding (NConfig; 2Config)
+open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to Choice₂-sem)
 
-NConfig : Set → Set
-NConfig Q = Configₙ Q
+import Framework.V2.Translation.Construct.NChoice-to-2Choice as NChoice-to-2Choice
+open NChoice-to-2Choice using (evalConfig)
+module NChoice-to-2Choice-explicit Q = NChoice-to-2Choice {Q}
+open NChoice-to-2Choice-explicit using (2Config)
 
-2Config : Set → Set
-2Config Q = Σ (Config₂ (IndexedName Q)) at-least-true-once
+2Choice : ℂ
+2Choice F E A = Choice₂ (IndexedName F) E A
 
-2Choice' : ℂ
-2Choice' F E A = 2Choice (IndexedName F) E A
+2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F 2Config 2Choice
+2Choice-sem V F fnoc Γ cons conf = Choice₂-sem V (IndexedName F) (proj₁ ∘ fnoc) Γ cons conf
 
 ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F 2Config
-ChoiceConstructor V F = con 2Choice' with-sem sem V F
-  where
-  sem : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F 2Config 2Choice'
-  sem V F fnoc Γ cons conf = 2Choice-sem V (IndexedName F) (proj₁ ∘ fnoc) Γ cons conf
+ChoiceConstructor V F = con 2Choice with-sem 2Choice-sem V F
 
 module Embed
   {V : 𝕍} {F : 𝔽} {A : 𝔸}
@@ -41,7 +39,7 @@ module Embed
   (constr : (ChoiceConstructor V F) ⟦∈⟧ Γ)
   where
 
-  open Translate {F} (Eq.setoid (Expression Γ A))
+  open NChoice-to-2Choice.Translate {F} (Eq.setoid (Expression Γ A))
   open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
 
   embed : ∀ {i} → NestedChoice i → Expression Γ A
