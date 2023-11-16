@@ -11,8 +11,7 @@ open import Framework.V2.Definitions
 import Framework.V2.Constructs.Choices as Chc
 open Chc.VLChoice₂ renaming (Syntax to 2Choice)
 
-import Framework.V2.Translation.Construct.NChoice-to-2Choice as N→2
-open N→2.Translate using (NestedChoice)
+open import Framework.V2.Constructs.NestedChoice using (NestedChoice)
 ```
 
 # TODOs for Framework V.2
@@ -47,7 +46,7 @@ postulate
   embed : ∀ {V F S A} {i}
     → (Γ : VariabilityLanguage V F S)
     → F ⊢ 2Choice ∈ₛ Expression Γ
-    → NestedChoice {F} (Eq.setoid (Expression Γ A)) i
+    → NestedChoice F i (Expression Γ A)
     → Expression Γ A
 ```
 
