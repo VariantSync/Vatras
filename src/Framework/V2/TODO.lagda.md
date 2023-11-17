@@ -100,6 +100,8 @@ Since OC can be converted to BCC, it can be converted to any langauge with binar
 Generalizing this, would allow us to generalize the concluded expressiveness statement:
 Any language with binary choices and artifacts is at least as expressive as OC.
 
+## Future Work
+
 ### [11] Expressiveness of Constructs
 
 Can we reasonably model expressiveness for constructs and not just whole langauges?
