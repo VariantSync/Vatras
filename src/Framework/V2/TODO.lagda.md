@@ -35,40 +35,6 @@ Prove for all of the following languages whether they are complete, sound, and h
 
 Next Issue No: 12
 
-### [2] Embed NestedChoice
-
-Prove that we can embed a NestedChoice into any variability language that has binary choices.
-Essentially, implement a function:
-
-```agda
-postulate
-  -- When levels are generalized, we do not have to specifically use 0ℓ here.
-  embed : ∀ {V F S A} {i}
-    → (Γ : VariabilityLanguage V F S)
-    → F ⊢ 2Choice ∈ₛ Expression Γ
-    → NestedChoice F i (Expression Γ A)
-    → Expression Γ A
-```
-
-and prove that semantics is preserved.
-
-The idea is the we can express a nested choice in any language that has binary choices.
-Once this proof is complete, we can by transitivity, encode an n-ary choice into any language that has binary choices.
-
-```agda
-{-|
-assume: Choice₂ ∈ₛ L₂
-Choiceₙ L₁ ── convert ─⟶ 2ADT L₁
-                          |
-                          | map compile
-                          ↓
-                        2ADT (L₂ A)
-                          |
-                          | embed
-                          ↓
-                          L₂
--}
-```
 
 ### [3] Embed Variants
 
@@ -76,10 +42,6 @@ Similar to [2], show that any language that
 - has `Artifact`s can encode a single given `Variant`
 - has `ParallelComposition` and `Leaf` can encode any given `GrulerVariant`
 We need this to prove completeness of languages later.
-
-### [4] Replace NestedChoice by 2ADT
-
-Both languages have the same syntax, so we could just use 2ADT where we currently use NestedChoice.
 
 ### [5] Generalize Completeness and Soundness Proofs of CCC in Framework V1
 
@@ -155,3 +117,42 @@ Or something like this.
 ### [1] Generalize Levels
 
 Started on branch `generalize-levels` but has to be continued. We need this at several places to simplify or refactor things.
+
+### [2] Embed NestedChoice
+
+Prove that we can embed a NestedChoice into any variability language that has binary choices.
+Essentially, implement a function:
+
+```agda
+postulate
+  -- When levels are generalized, we do not have to specifically use 0ℓ here.
+  embed : ∀ {V F S A} {i}
+    → (Γ : VariabilityLanguage V F S)
+    → F ⊢ 2Choice ∈ₛ Expression Γ
+    → NestedChoice F i (Expression Γ A)
+    → Expression Γ A
+```
+
+and prove that semantics is preserved.
+
+The idea is the we can express a nested choice in any language that has binary choices.
+Once this proof is complete, we can by transitivity, encode an n-ary choice into any language that has binary choices.
+
+```agda
+{-|
+assume: Choice₂ ∈ₛ L₂
+Choiceₙ L₁ ── convert ─⟶ 2ADT L₁
+                          |
+                          | map compile
+                          ↓
+                        2ADT (L₂ A)
+                          |
+                          | embed
+                          ↓
+                          L₂
+-}
+```
+
+### [4] Replace NestedChoice by 2ADT
+
+Both languages have the same syntax, so we could just use 2ADT where we currently use NestedChoice.
