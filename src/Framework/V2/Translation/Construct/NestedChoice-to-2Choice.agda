@@ -24,18 +24,18 @@ open NChoice-to-2Choice using (NestedChoice; value; choice; evalConfig)
 module NChoice-to-2Choice-explicit Q = NChoice-to-2Choice {Q}
 open NChoice-to-2Choice-explicit using (2Config)
 
-2Choice : ℂ
+2Choice : 𝔽 → ℂ
 2Choice F E A = Choice₂ (IndexedName F) E A
 
-2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F 2Config 2Choice
+2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V (2Config F) (2Choice F)
 2Choice-sem V F fnoc Γ cons conf = Choice₂-sem V (IndexedName F) (proj₁ ∘ fnoc) Γ cons conf
 
-ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F 2Config
-ChoiceConstructor V F = con 2Choice with-sem 2Choice-sem V F
+ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V (2Config F)
+ChoiceConstructor V F = con 2Choice F with-sem 2Choice-sem V F
 
 module Embed
   {V : 𝕍} {F : 𝔽} {A : 𝔸}
-  (Γ : VariabilityLanguage V F 2Config)
+  (Γ : VariabilityLanguage V (2Config F))
   (constr : (ChoiceConstructor V F) ⟦∈⟧ Γ)
   where
 

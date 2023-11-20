@@ -49,10 +49,10 @@ For example, a binary choice language may use `F → Bool` as the feature
 selections language.
 -}
 𝕊 : Set₁
-𝕊 = 𝔽 → Set
+𝕊 = Set
 
 ConfigEvaluator : 𝔽 → 𝕊 → Set → Set
-ConfigEvaluator F S Sel = (S F → F → Sel)
+ConfigEvaluator F S Sel = (S → F → Sel)
 
 {-
 The set of expressions of a variability language.
@@ -79,89 +79,89 @@ for variability annotations 𝔽.
 -- ℂ : ∀ {ℓ} → Set (suc ℓ)
 -- ℂ {ℓ} = 𝔼 {ℓ} → 𝔸 {ℓ} → Set ℓ
 ℂ : Set₁
-ℂ = 𝔽 → 𝔼 → 𝔸 → Set
+ℂ = 𝔼 → 𝔸 → Set
 
 {-
 Semantics of variability languages.
 The semantics of a set of expressions `E : 𝔼` is a function
 that configures a term `e : E A` to a variant `v : V A`
 -}
-𝔼-Semantics : 𝕍 → 𝔽 → 𝕊 → 𝔼 → Set₁
-𝔼-Semantics V F S E =
+𝔼-Semantics : 𝕍 → 𝕊 → 𝔼 → Set₁
+𝔼-Semantics V S E =
   ∀ {A : 𝔸}
   → E A
-  → S F
+  → S
   → V A
 
 -- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
-record VariabilityLanguage (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+record VariabilityLanguage (V : 𝕍) (S : 𝕊) : Set₁ where
   constructor syn_with-sem_
   field
     Expression : 𝔼
-    Semantics  : 𝔼-Semantics V F S Expression
+    Semantics  : 𝔼-Semantics V S Expression
 open VariabilityLanguage public
 
 -- Semantics of constructors
-ℂ-Semantics : 𝕍 → 𝔽 → 𝕊 → ℂ → Set₁
-ℂ-Semantics V F S C =
-  ∀ {Fγ : 𝔽} {Sγ : 𝕊}
-  → (Sγ Fγ → S F) -- a function that lets us apply language configurations to constructs
+ℂ-Semantics : 𝕍 → 𝕊 → ℂ → Set₁
+ℂ-Semantics V S C =
+  ∀ {Sγ : 𝕊}
+  → (Sγ → S) -- a function that lets us apply language configurations to constructs
   → {A : 𝔸} -- the domain in which we embed variability
-  → (Γ : VariabilityLanguage V Fγ Sγ) -- The underlying language
-  → C F (Expression Γ) A -- the construct to compile
-  → Sγ Fγ -- a configuration for underlying subexpressions
+  → (Γ : VariabilityLanguage V Sγ) -- The underlying language
+  → C (Expression Γ) A -- the construct to compile
+  → Sγ -- a configuration for underlying subexpressions
   → V A
 
-record VariabilityConstruct (V : 𝕍) (F : 𝔽) (S : 𝕊) : Set₁ where
+record VariabilityConstruct (V : 𝕍) (S : 𝕊) : Set₁ where
   constructor con_with-sem_
   field
     -- how to create a constructor for a given language
     Construct : ℂ
     -- how to resolve a constructor for a given language
-    construct-semantics : ℂ-Semantics V F S Construct
+    construct-semantics : ℂ-Semantics V S Construct
   _⊢⟦_⟧ = construct-semantics {Sγ = S} id
 
 -- Syntactic Containment
 -- TODO: Is there any point in allowing a specialization of F here?
 --       It lets us say "Construct x is in language y but only for the annotation language ℕ".
 --       Is there ever a use case though, in which a language must be fixed to a particular annotation language?
-record _⊢_∈ₛ_ (F : 𝔽) (C : ℂ) (E : 𝔼) : Set₁ where
+record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
   field
     -- from a construct, an expression can be created
-    cons : ∀ {A} → C F E A → E A
+    cons : ∀ {A} → C E A → E A
     -- an expression might be the construct C
-    snoc : ∀ {A} →   E A → Maybe (C F E A)
+    snoc : ∀ {A} →   E A → Maybe (C E A)
     -- An expression of a construct must preserve all information of that construct.
     -- There might be more syntactic information though because of which we do not require
     -- the dual equality cons ∘ snoc
     id-l : ∀ {A} → snoc {A} ∘ cons {A} ≗ just
-open _⊢_∈ₛ_ public
+open _∈ₛ_ public
 
-_⊢_∉ₛ_ : 𝔽 → ℂ → 𝔼 → Set₁
-F ⊢ C ∉ₛ E = ¬ (F ⊢ C ∈ₛ E)
+_∉ₛ_ : ℂ → 𝔼 → Set₁
+C ∉ₛ E = ¬ (C ∈ₛ E)
 
-_⊢_⊆ₛ_ : 𝔽 → 𝔼 → 𝔼 → Set₁
-F ⊢ E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → F ⊢ C ∈ₛ E₁ → F ⊢ C ∈ₛ E₂
+_⊆ₛ_ : 𝔼 → 𝔼 → Set₁
+E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → C ∈ₛ E₁ → C ∈ₛ E₂
 
-_⊢_≅ₛ_ : 𝔽 → 𝔼 → 𝔼 → Set₁
-F ⊢ E₁ ≅ₛ E₂ = F ⊢ E₁ ⊆ₛ E₂ × F ⊢ E₂ ⊆ₛ E₁
+_≅ₛ_ : 𝔼 → 𝔼 → Set₁
+E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
 
 -- Semantic Containment
-record _⟦∈⟧_ {V F S} (C : VariabilityConstruct V F S) (Γ : VariabilityLanguage V F S) : Set₁ where
+record _⟦∈⟧_ {V S} (C : VariabilityConstruct V S) (Γ : VariabilityLanguage V S) : Set₁ where
   open VariabilityConstruct C
   private ⟦_⟧ = Semantics Γ
   field
-    make : F ⊢ Construct ∈ₛ Expression Γ
+    make : Construct ∈ₛ Expression Γ
     preservation : ∀ {A : 𝔸}
-      → (c : Construct F (Expression Γ) A)
+      → (c : Construct (Expression Γ) A)
       → ⟦ cons make c ⟧ ≗ construct-semantics id Γ c
 open _⟦∈⟧_ public
 
-_⟦∉⟧_ : ∀ {V F S} → VariabilityConstruct V F S → VariabilityLanguage V F S → Set₁
+_⟦∉⟧_ : ∀ {V S} → VariabilityConstruct V S → VariabilityLanguage V S → Set₁
 C ⟦∉⟧ E = ¬ (C ⟦∈⟧ E)
 
-_⟦⊆⟧_ :  ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
-_⟦⊆⟧_ {V} {F} {S} E₁ E₂ = ∀ (C : VariabilityConstruct V F S) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
+_⟦⊆⟧_ :  ∀ {V S} → VariabilityLanguage V S → VariabilityLanguage V S → Set₁
+_⟦⊆⟧_ {V} {S} E₁ E₂ = ∀ (C : VariabilityConstruct V S) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
 
-_⟦≅⟧_ : ∀ {V F S} → VariabilityLanguage V F S → VariabilityLanguage V F S → Set₁
+_⟦≅⟧_ : ∀ {V S} → VariabilityLanguage V S → VariabilityLanguage V S → Set₁
 E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁

@@ -16,23 +16,23 @@ import Data.IndexedSet
 open import Framework.V2.Constructs.Plain.Artifact public
 
 Syntax : ℂ
-Syntax _ E A = Artifact A (E A)
+Syntax E A = Artifact A (E A)
 
-Semantics : ∀ {V : 𝕍} (F : 𝔽) (S : 𝕊)
-  → F ⊢ Syntax ∈ₛ V
-  → ℂ-Semantics V F S Syntax
-Semantics _ _ V-has-Artifact conf-comp (syn _ with-sem ⟦_⟧) a c
+Semantics : ∀ {V : 𝕍} (S : 𝕊)
+  → Syntax ∈ₛ V
+  → ℂ-Semantics V S Syntax
+Semantics _ V-has-Artifact conf-comp (syn _ with-sem ⟦_⟧) a c
   = cons V-has-Artifact (map-children (λ e → ⟦ e ⟧ c) a)
 
-map-children-preserves : ∀ {V : 𝕍} {F₁ F₂ : 𝔽} {S₁ S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ S₁} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
+map-children-preserves : ∀ {V : 𝕍} {S₁ S₂ : 𝕊} {Γ₁ : VariabilityLanguage V S₁} {Γ₂ : VariabilityLanguage V S₂} {A}
   → let open IVSet V A using (_≅_; _≅[_][_]_) in
-  ∀ (mkArtifact : F₁ ⊢ Syntax ∈ₛ V)
+  ∀ (mkArtifact : Syntax ∈ₛ V)
   → (t : LanguageCompiler Γ₁ Γ₂)
-  → (at : Syntax F₁ (Expression Γ₁) A)
-  → Semantics F₁ S₁ mkArtifact id Γ₁ at
+  → (at : Syntax (Expression Γ₁) A)
+  → Semantics S₁ mkArtifact id Γ₁ at
       ≅[ conf t ][ fnoc t ]
-    Semantics F₁ S₁ mkArtifact (fnoc t) Γ₂ (map-children (compile t) at)
-map-children-preserves {V} {F₁} {F₂} {S₁} {S₂} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
+    Semantics S₁ mkArtifact (fnoc t) Γ₂ (map-children (compile t) at)
+map-children-preserves {V} {S₁} {S₂} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
     ≅[]-begin
       (λ c → cons mkArtifact (a -< map (λ e → ⟦ e ⟧₁ c) cs >-))
     ≅[]⟨ t-⊆ , t-⊇ ⟩
