@@ -1,6 +1,6 @@
 open import Framework.V2.Definitions
 
-module Framework.V2.Translation.Construct.2Choice-to-NChoice-VL {F : 𝔽} where
+module Framework.V2.Translation.Construct.2Choice-to-NChoice-VL where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
@@ -22,9 +22,9 @@ open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
 open Chc.Choiceₙ using () renaming (Config to Configₙ; map to mapₙ)
 
-module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
-  (Γ₁ : VariabilityLanguage V F Config₂)
-  (Γ₂ : VariabilityLanguage V F Configₙ)
+module Translate {V : 𝕍} {Q : Set} {A : 𝔸}
+  (Γ₁ : VariabilityLanguage V (Config₂ Q))
+  (Γ₂ : VariabilityLanguage V (Configₙ Q))
   (t : LanguageCompiler Γ₁ Γ₂)
   where
   private
@@ -34,15 +34,15 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
     ⟦_⟧₂ = Semantics  Γ₂
     open LanguageCompiler t
 
-  open VariabilityConstruct (Chc.VLChoice₂.Construct V F)
+  open VariabilityConstruct (Chc.VLChoice₂.Construct Q V)
     renaming (Construct to 2Choice; _⊢⟦_⟧ to _⊢⟦_⟧₁)
-  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V F)
+  open VariabilityConstruct (Chc.VLChoiceₙ.Construct Q V)
     renaming (Construct to NChoice; _⊢⟦_⟧ to _⊢⟦_⟧₂)
 
   -- TODO: Generalize to any setoids over L₁ or L₂.
-  module 2→N-T₁ = 2→N.Translate {Q = F} (Eq.setoid (L₁ A))
+  module 2→N-T₁ = 2→N.Translate {Q} (Eq.setoid (L₁ A))
   open 2→N-T₁ using () renaming (convert to convert₁)
-  module 2→N-T = 2→N.Translate {Q = F} (Eq.setoid (L₂ A))
+  module 2→N-T = 2→N.Translate {Q} (Eq.setoid (L₂ A))
   open 2→N-T using () renaming (convert to convert₂)
 
   {-|
@@ -51,13 +51,13 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
   Second, we convert the binary choice to an n-ary choice via convert, not changing any data.
   The order of these steps does not matter, as proven by `convert-comm` below.
   -}
-  compile-convert : 2Choice F L₁ A → NChoice F L₂ A
+  compile-convert : 2Choice L₁ A → NChoice L₂ A
   compile-convert = convert₂ ∘ map₂ compile
 
   {-|
   The same compiler as compile-convert, but the steps are executed in the other order.
   -}
-  convert-compile : 2Choice F L₁ A → NChoice F L₂ A
+  convert-compile : 2Choice L₁ A → NChoice L₂ A
   convert-compile = mapₙ compile ∘ convert₁
 
   {-|
@@ -80,7 +80,7 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
   convert-comm _ = refl
 
   module Preservation
-    (D : F)
+    (D : Q)
     (l r : L₁ A)
     where
     open 2→N-T.Preservation conf fnoc using (convert-preserves)
@@ -99,7 +99,7 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
         Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁
       ≅[]⟨⟩
         (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c)
-      ≅[]⟨ VLChoice₂.map-compile-preserves t (D ⟨ l , r ⟩) stable ⟩
+      ≅[]⟨ VLChoice₂.map-compile-preserves Q t (D ⟨ l , r ⟩) stable ⟩
         (λ c → ⟦ Choice₂.Standard-Semantics (map₂ compile (D ⟨ l , r ⟩)) (fnoc c) ⟧₂ c)
       ≅[]⟨⟩
         (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ compile l , compile r ⟩) (fnoc c) ⟧₂ c)

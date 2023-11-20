@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
-module Framework.V2.Translation.Construct.NestedChoice-to-2Choice where
+module Framework.V2.Translation.Construct.NestedChoice-to-2Choice (Q : Set) where
 
 open import Data.Bool using (Bool; false; true)
 open import Data.Product using (Σ; proj₁; Σ-syntax) renaming (_,_ to _and_)
@@ -17,29 +17,25 @@ open import Framework.V2.Annotation.IndexedName using (IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choiceₙ using () renaming (Config to Configₙ)
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
-open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to Choice₂-sem)
+open Chc.VLChoice₂ (IndexedName Q) using () renaming (Syntax to Choice₂; Semantics to Choice₂-sem; Construct to Choice₂-Constructor)
 
 import Framework.V2.Translation.Construct.NChoice-to-2Choice as NChoice-to-2Choice
 open NChoice-to-2Choice using (NestedChoice; value; choice; evalConfig)
-module NChoice-to-2Choice-explicit Q = NChoice-to-2Choice {Q}
-open NChoice-to-2Choice-explicit using (2Config)
+open NChoice-to-2Choice {Q} using (2Config)
 
-2Choice : ℂ
-2Choice F E A = Choice₂ (IndexedName F) E A
+2Choice-sem : ∀ (V : 𝕍) → ℂ-Semantics V 2Config Choice₂
+2Choice-sem V fnoc Γ cons conf = Choice₂-sem V (proj₁ ∘ fnoc) Γ cons conf
 
-2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F 2Config 2Choice
-2Choice-sem V F fnoc Γ cons conf = Choice₂-sem V (IndexedName F) (proj₁ ∘ fnoc) Γ cons conf
-
-ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F 2Config
-ChoiceConstructor V F = con 2Choice with-sem 2Choice-sem V F
+ChoiceConstructor : ∀ (V : 𝕍) → VariabilityConstruct V 2Config
+ChoiceConstructor V = con Choice₂ with-sem 2Choice-sem V
 
 module Embed
-  {V : 𝕍} {F : 𝔽} {A : 𝔸}
-  (Γ : VariabilityLanguage V F 2Config)
-  (constr : (ChoiceConstructor V F) ⟦∈⟧ Γ)
+  {V : 𝕍} {A : 𝔸}
+  (Γ : VariabilityLanguage V 2Config)
+  (constr : ChoiceConstructor V ⟦∈⟧ Γ)
   where
 
-  open NChoice-to-2Choice.Translate {F} (Eq.setoid (Expression Γ A))
+  open NChoice-to-2Choice.Translate {Q} (Eq.setoid (Expression Γ A))
   open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
 
 

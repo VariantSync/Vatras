@@ -13,7 +13,6 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 import Data.IndexedSet
 
-open import Framework.V2.Definitions using (𝔽)
 open import Framework.V2.Compiler using (ConstructCompiler)
 open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂)

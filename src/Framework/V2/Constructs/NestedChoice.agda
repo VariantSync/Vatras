@@ -2,7 +2,7 @@
 
 open import Framework.V2.Definitions
 
-module Framework.V2.Constructs.NestedChoice (F : 𝔽) where
+module Framework.V2.Constructs.NestedChoice (F : Set) where
 
 open import Data.String using (String)
 open import Size using (Size; ↑_)

@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.V2.Definitions
-module Framework.V2.Translation.Lang.2ADT-to-NADT {F : 𝔽} {A : 𝔸} where
+module Framework.V2.Translation.Lang.2ADT-to-NADT {F : Set} {A : 𝔸} where
 
 open import Data.Nat using (ℕ)
 open import Level using (0ℓ)
