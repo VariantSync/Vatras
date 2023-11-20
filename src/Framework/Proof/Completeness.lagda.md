@@ -10,13 +10,13 @@ open import Data.Product using (_,_; _×_; ∄-syntax)
 open import Function using (_∘_)
 open import Size using (∞)
 
+open import Framework.Variant
 open import Framework.Definitions
 open import Framework.Relation.Expressiveness
 open import Framework.Properties.Completeness
 open import Framework.Properties.Soundness
 
 import Data.IndexedSet
-private module ISet A = Data.IndexedSet (VariantSetoid ∞ A)
 ```
 
 ## Conclusions
@@ -41,7 +41,7 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage}
 completeness-by-expressiveness encode-in-L₂ L₂-to-L₁ vs with encode-in-L₂ vs
 ... | e₂ , vs≅e₂ with L₂-to-L₁ e₂
 ...   | e₁ , e₂≅e₁ = e₁ , ≅-trans vs≅e₂ e₂≅e₁
-  where open ISet _ using (≅-trans)
+  where open IVSet _ using (≅-trans)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -52,7 +52,7 @@ Given the semantics S of the complete language L of e, we compute the set of all
 Since L₊ is complete, we can encode this list of variants in L₊, giving us an expression in e₊ in L₊ and a proof that this expression exactly describes the variants of e₋.
 Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 ```agda
-expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLanguage}
+expressiveness-by-completeness-and-soundness : ∀ {V S} {Lᶜ : VariabilityLanguage V S₁} {Lˢ : VariabilityLanguage V S₂}
   → Complete Lᶜ
   → Sound Lˢ
     ----------------------------------
@@ -60,7 +60,7 @@ expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLangua
 expressiveness-by-completeness-and-soundness {L₊} L₊-comp L-sound {A = A} eˢ with L-sound eˢ
 ... | n , vsetₑ , vsetₑ≅⟦eˢ⟧ with L₊-comp vsetₑ
 ...   | eᶜ , vsetₑ≅⟦eᶜ⟧ᶜ = eᶜ , ≅-trans (≅-sym vsetₑ≅⟦eˢ⟧) vsetₑ≅⟦eᶜ⟧ᶜ
-  where open ISet A using (≅-sym; ≅-trans)
+  where open IVSet V A using (≅-sym; ≅-trans)
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.

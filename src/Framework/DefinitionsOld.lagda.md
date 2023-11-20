@@ -2,7 +2,7 @@
 {-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 
-module Framework.Definitions where
+module Framework.DefinitionsOld where
 ```
 
 # Definitions of Central Abstractions for Variability Languages

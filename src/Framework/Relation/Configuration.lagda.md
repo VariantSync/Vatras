@@ -15,30 +15,37 @@ open import Framework.Definitions
 
 Two configurations are equivalent for an expression when they produce the same variants for all expressions.
 ```agda
-_⊢_≣ᶜ_ : ∀ {A : 𝔸} {L : VariabilityLanguage}
-  → Expression A L
-  → (c₁ c₂ : configuration L)
+_∋_⊢_≣ᶜ_ : ∀ {V S A}
+  → (L : VariabilityLanguage V S)
+  → Expression L A
+  → (c₁ c₂ : S)
   → Set
-_⊢_≣ᶜ_ {L = L} e c₁ c₂ = ⟦e⟧ c₁ ≡ ⟦e⟧ c₂
-  where ⟦e⟧ = semantics L {size e} (get e)
-infix 5 _⊢_≣ᶜ_
+(syn _ with-sem ⟦_⟧) ∋ e ⊢ c₁ ≣ᶜ c₂ = ⟦ e ⟧ c₁ ≡ ⟦ e ⟧ c₂
+infix 5 _∋_⊢_≣ᶜ_
 
-≣ᶜ-IsEquivalence : ∀ {A L} → (e : Expression A L) → IsEquivalence ( e ⊢_≣ᶜ_)
-≣ᶜ-IsEquivalence _ = record
+≣ᶜ-IsEquivalence : ∀ {V S A}
+  → (L : VariabilityLanguage V S)
+  → (e : Expression L A)
+  → IsEquivalence (L ∋ e ⊢_≣ᶜ_)
+≣ᶜ-IsEquivalence _ _ = record
   { refl  = Eq.refl
   ; sym   = Eq.sym
   ; trans = Eq.trans
   }
 
-≣ᶜ-congruent : ∀ {A L} → (e : Expression A L) → Congruent (e ⊢_≣ᶜ_) _≡_ (semantics L (get e))
-≣ᶜ-congruent _ e⊢x≣ᶜy = e⊢x≣ᶜy
+≣ᶜ-congruent : ∀ {V S A}
+  → (L : VariabilityLanguage V S)
+  → (e : Expression L A)
+  → Congruent (L ∋ e ⊢_≣ᶜ_) _≡_ (Semantics L e)
+≣ᶜ-congruent _ _ e⊢x≣ᶜy = e⊢x≣ᶜy
 
-≣ᶜ-setoid : ∀ {A} {L : VariabilityLanguage}
-  → Expression A L
+≣ᶜ-setoid : ∀ {V S A}
+  → (L : VariabilityLanguage V S)
+  → Expression L A
   → Setoid 0ℓ 0ℓ
-≣ᶜ-setoid {A} {L} e = record
-  { Carrier       = configuration L
-  ; _≈_           = e ⊢_≣ᶜ_
-  ; isEquivalence = ≣ᶜ-IsEquivalence e
+≣ᶜ-setoid {_} {S} L e = record
+  { Carrier       = S
+  ; _≈_           = L ∋ e ⊢_≣ᶜ_
+  ; isEquivalence = ≣ᶜ-IsEquivalence L e
   }
 ```
