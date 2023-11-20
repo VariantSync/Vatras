@@ -11,7 +11,6 @@ open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Util.Named using (get)
-open import Test.Example using (_example:_)
 open import Test.Examples.Variants
 open import Test.UnitTest
 
