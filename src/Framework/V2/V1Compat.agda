@@ -7,7 +7,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; ref
 import Data.IndexedSet
 
 open import Framework.V2.Definitions
-open import Framework.V2.Variants
+open import Framework.V2.Variant
 
 private
   variable

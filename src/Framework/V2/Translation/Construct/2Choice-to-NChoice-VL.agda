@@ -12,7 +12,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
 
 import Data.IndexedSet
 
-open import Framework.V2.Variants
+open import Framework.V2.Variant
 open import Framework.V2.Compiler using (LanguageCompiler; Stable)
 
 import Framework.V2.Translation.Construct.2Choice-to-NChoice as 2→N

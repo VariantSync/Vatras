@@ -1,6 +1,6 @@
 module Framework.V2.Compiler where
 
-open import Framework.V2.Variants
+open import Framework.V2.Variant
 open import Framework.V2.Definitions
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Data.Product using (_×_)

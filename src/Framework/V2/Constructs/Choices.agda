@@ -159,7 +159,7 @@ module Choiceₙ where
   show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-list⁺ show-a es))) <+> "⟩"
 
 -- Show how choices can be used as constructors in variability languages.
-open import Framework.V2.Variants
+open import Framework.V2.Variant
 open import Framework.V2.Definitions as Defs hiding (Semantics)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)

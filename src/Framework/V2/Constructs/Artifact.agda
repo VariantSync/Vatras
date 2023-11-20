@@ -7,7 +7,7 @@ open import Level using (_⊔_)
 open import Function using (id; _$_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.Variants
+open import Framework.V2.Variant
 open import Framework.V2.Definitions hiding (Semantics)
 open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
 open LanguageCompiler
