@@ -28,5 +28,9 @@ via Fin (suc n) here for convenience.
 VMap : ℕ → Set
 VMap n = IndexedVMap (Fin (suc n))
 
-forget-first : ∀ {n} → VMap (suc n) → VMap n
-forget-first set i = set (Data.Fin.suc i)
+-- Utility functions for manipulating variant maps.
+remove-first : ∀ {n} → VMap (suc n) → VMap n
+remove-first set i = set (Data.Fin.suc i)
+
+remove-last : ∀ {n} → VMap (suc n) → VMap n
+remove-last set i = set (Data.Fin.inject₁ i)
