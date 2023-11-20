@@ -171,26 +171,26 @@ module VLChoice₂ where
   open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
   open LanguageCompiler
 
-  Syntax : ℂ
+  Syntax : 𝔽 → ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F Config Syntax
+  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V (Config F) (Syntax F)
   Semantics _ _ fnoc (syn _ with-sem ⟦_⟧) chc c = ⟦ Standard-Semantics chc (fnoc c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Config
-  Construct V F = con Syntax with-sem Semantics V F
+  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V (Config F)
+  Construct V F = con Syntax F with-sem Semantics V F
 
-  map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Config} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
+  map-compile-preserves : ∀ {V} {F : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V (Config F)} {Γ₂ : VariabilityLanguage V S₂} {A}
     → let open IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
-    → (chc : Syntax F₁ (Expression Γ₁) A)
+    → (chc : Syntax F (Expression Γ₁) A)
     → Stable (config-compiler t)
-    → Semantics V F₁ id Γ₁ chc
+    → Semantics V F id Γ₁ chc
         ≅[ conf t ][ fnoc t ]
-      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
-  map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
+      Semantics V F (fnoc t) Γ₂ (map (compile t) chc)
+  map-compile-preserves {V} {F} {_} {Γ₁} {Γ₂} {A} t chc stable =
     ≅[]-begin
-      Semantics V F₁ id Γ₁ chc
+      Semantics V F id Γ₁ chc
     ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
     -- First compiler proof composition:
@@ -203,7 +203,7 @@ module VLChoice₂ where
     ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
       (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
     ≅[]⟨⟩
-      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
+      Semantics V F (fnoc t) Γ₂ (map (compile t) chc)
     ≅[]-∎
     where module I = IVSet V A
           open I using (_≅[_][_]_; _⊆[_]_)
@@ -251,14 +251,14 @@ module VLChoiceₙ where
   open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
   open LanguageCompiler
 
-  Syntax : ℂ
+  Syntax : 𝔽 → ℂ
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V F Config Syntax
+  Semantics : ∀ (V : 𝕍) (F : 𝔽) → ℂ-Semantics V (Config F) (Syntax F)
   Semantics _ _ fnoc (syn E with-sem ⟦_⟧) choice c = ⟦ Choiceₙ.Standard-Semantics choice (fnoc c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V F Config
-  Construct V F = con Syntax with-sem Semantics V F
+  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V (Config F)
+  Construct V F = con Syntax F with-sem Semantics V F
 
   -- Interestingly, this proof is entirely copy and paste from VLChoice₂.map-compile-preserves.
   -- Only minor adjustments to adapt the theorem had to be made.
@@ -266,17 +266,17 @@ module VLChoiceₙ where
   -- This proof is oblivious of at least
   --   - the implementation of map, we only need the preservation theorem
   --   - the Standard-Semantics, we only need the preservation theorem of t, and that the config-compiler is stable.
-  map-compile-preserves : ∀ {V} {F₁ F₂ : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V F₁ Config} {Γ₂ : VariabilityLanguage V F₂ S₂} {A}
+  map-compile-preserves : ∀ {V} {F : 𝔽} {S₂ : 𝕊} {Γ₁ : VariabilityLanguage V (Config F)} {Γ₂ : VariabilityLanguage V S₂} {A}
     → let open IVSet V A using (_≅_; _≅[_][_]_) in
     ∀ (t : LanguageCompiler Γ₁ Γ₂)
-    → (chc : Syntax F₁ (Expression Γ₁) A)
+    → (chc : Syntax F (Expression Γ₁) A)
     → Stable (config-compiler t)
-    → Semantics V F₁ id Γ₁ chc
+    → Semantics V F id Γ₁ chc
         ≅[ conf t ][ fnoc t ]
-      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
-  map-compile-preserves {V} {F₁} {_} {_} {Γ₁} {Γ₂} {A} t chc stable =
+      Semantics V F (fnoc t) Γ₂ (map (compile t) chc)
+  map-compile-preserves {V} {F} {_} {Γ₁} {Γ₂} {A} t chc stable =
     ≅[]-begin
-      Semantics V F₁ id Γ₁ chc
+      Semantics V F id Γ₁ chc
     ≅[]⟨⟩
       (λ c → ⟦ Standard-Semantics chc c ⟧₁ c)
     -- First compiler proof composition:
@@ -289,7 +289,7 @@ module VLChoiceₙ where
     ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (fnoc t c)) ⟩
       (λ c → ⟦ Standard-Semantics (map (compile t) chc) (fnoc t c) ⟧₂ c)
     ≅[]⟨⟩
-      Semantics V F₁ (fnoc t) Γ₂ (map (compile t) chc)
+      Semantics V F (fnoc t) Γ₂ (map (compile t) chc)
     ≅[]-∎
     where module I = IVSet V A
           open I using (_≅[_][_]_; _⊆[_]_)

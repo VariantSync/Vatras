@@ -19,29 +19,29 @@ record ParallelComposition {ℓ} (A : Set ℓ) : Set ℓ where
 
 module VLLeaf where
   Syntax : ℂ
-  Syntax _ _ A = Leaf A
+  Syntax _ A = Leaf A
 
   make-leaf :
-    ∀ {F : 𝔽} {E : 𝔼} → F ⊢ Syntax ∈ₛ E
+    ∀ {E : 𝔼} → Syntax ∈ₛ E
     → {A : 𝔸} → A
     → E A
   make-leaf mkLeaf a = cons mkLeaf (leaf a)
 
-  elim-leaf : ∀ {V} (F : 𝔽) → F ⊢ Syntax ∈ₛ V → ∀ {A} → Leaf A → V A
-  elim-leaf _ leaf∈V l = cons leaf∈V l
+  elim-leaf : ∀ {V} → Syntax ∈ₛ V → ∀ {A} → Leaf A → V A
+  elim-leaf leaf∈V l = cons leaf∈V l
 
-  Semantics : ∀ {V F S} → F ⊢ Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
-  Semantics {F = F} leaf∈V _ _ l _ = elim-leaf F leaf∈V l
+  Semantics : ∀ {V S} → Syntax ∈ₛ V → ℂ-Semantics V S Syntax
+  Semantics {V} leaf∈V _ _ l _ = elim-leaf {V} leaf∈V l
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
-    → F ⊢ Syntax ∈ₛ V
-    → VariabilityConstruct V F S
-  Construct V F S mkLeaf = record
+  Construct : ∀ (V : 𝕍) (S : 𝕊)
+    → Syntax ∈ₛ V
+    → VariabilityConstruct V S
+  Construct V S mkLeaf = record
     { Construct = Syntax
-    ; construct-semantics = Semantics {V} {F} {S} mkLeaf
+    ; construct-semantics = Semantics {V} {S} mkLeaf
     }
 
-  Leaf∈ₛGrulerVariant : ∀ {F} → F ⊢ Syntax ∈ₛ GrulerVariant
+  Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons Leaf∈ₛGrulerVariant (leaf a) = asset a
   snoc Leaf∈ₛGrulerVariant (asset a) = just (leaf a)
   snoc Leaf∈ₛGrulerVariant (_ ∥ _) = nothing
@@ -49,20 +49,20 @@ module VLLeaf where
 
 module VLParallelComposition where
   Syntax : ℂ
-  Syntax _ E A = ParallelComposition (E A)
+  Syntax E A = ParallelComposition (E A)
 
-  Semantics : ∀ {V : 𝕍} {F : 𝔽} {S : 𝕊} → F ⊢ Syntax ∈ₛ V → ℂ-Semantics V F S Syntax
+  Semantics : ∀ {V : 𝕍} {S : 𝕊} → Syntax ∈ₛ V → ℂ-Semantics V S Syntax
   Semantics leaf∈V _ (syn E with-sem ⟦_⟧) (l ∥ r) c = cons leaf∈V (⟦ l ⟧ c ∥ ⟦ r ⟧ c)
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) (S : 𝕊)
-    → F ⊢ Syntax ∈ₛ V
-    → VariabilityConstruct V F S
-  Construct V F S mkPC = record
+  Construct : ∀ (V : 𝕍) (S : 𝕊)
+    → Syntax ∈ₛ V
+    → VariabilityConstruct V S
+  Construct V S mkPC = record
     { Construct = Syntax
-    ; construct-semantics = Semantics {V} {F} {S} mkPC
+    ; construct-semantics = Semantics {V} {S} mkPC
     }
 
-  ParallelComposition∈ₛGrulerVariant : ∀ {F} → F ⊢ Syntax ∈ₛ GrulerVariant
+  ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons ParallelComposition∈ₛGrulerVariant (l ∥ r) = l ∥ r
   snoc ParallelComposition∈ₛGrulerVariant (asset a) = nothing
   snoc ParallelComposition∈ₛGrulerVariant (l ∥ r) = just (l ∥ r)

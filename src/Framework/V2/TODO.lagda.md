@@ -129,8 +129,8 @@ Essentially, implement a function:
 postulate
   -- When levels are generalized, we do not have to specifically use 0ℓ here.
   embed : ∀ {V F S A} {i}
-    → (Γ : VariabilityLanguage V F S)
-    → F ⊢ 2Choice ∈ₛ Expression Γ
+    → (Γ : VariabilityLanguage V S)
+    → 2Choice F ∈ₛ Expression Γ
     → NestedChoice F i (Expression Γ A)
     → Expression Γ A
 ```

@@ -27,16 +27,16 @@ data Gruler : Size → 𝔼 where
   GPComp  : ∀ {i A} → ParallelComposition (Gruler i A) → Gruler (↑ i) A
   GChoice : ∀ {i A} → Choice₂ F (Gruler i) A      → Gruler (↑ i) A
 
-semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant F Config₂ (Gruler i)
+semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Config₂ F) (Gruler i)
 
-GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant F Config₂
+GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant (Config₂ F)
 GrulerVL {i} = syn Gruler i with-sem semantics
 
-semantics (GAsset a)  _ = VLLeaf.elim-leaf F VLLeaf.Leaf∈ₛGrulerVariant a
-semantics (GPComp pc)   = pc-semantics {S = Config₂} VLParallelComposition.ParallelComposition∈ₛGrulerVariant id GrulerVL pc
+semantics (GAsset a)  _ = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
+semantics (GPComp pc)   = pc-semantics {S = Config₂ F} VLParallelComposition.ParallelComposition∈ₛGrulerVariant id GrulerVL pc
 semantics (GChoice chc) = choice₂-semantics GrulerVariant F id GrulerVL chc
 
-gruler-has-leaf : ∀ {i} → F ⊢ VLLeaf.Syntax ∈ₛ Gruler i
+gruler-has-leaf : ∀ {i} → VLLeaf.Syntax ∈ₛ Gruler i
 gruler-has-leaf {i} = record
   { cons = GAsset
   ; snoc = snoc'
@@ -46,7 +46,7 @@ gruler-has-leaf {i} = record
         snoc' (GAsset A)  = just A
         snoc' _ = nothing
 
-gruler-has-choice : F ⊢ Choice₂ ∈ₛ Gruler ∞
+gruler-has-choice : Choice₂ F ∈ₛ Gruler ∞
 gruler-has-choice = record
   { cons = GChoice
   ; snoc = snoc'

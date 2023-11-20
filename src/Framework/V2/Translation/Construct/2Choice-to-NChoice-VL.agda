@@ -23,8 +23,8 @@ open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map�
 open Chc.Choiceₙ using () renaming (Config to Configₙ; map to mapₙ)
 
 module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
-  (Γ₁ : VariabilityLanguage V F Config₂)
-  (Γ₂ : VariabilityLanguage V F Configₙ)
+  (Γ₁ : VariabilityLanguage V (Config₂ F))
+  (Γ₂ : VariabilityLanguage V (Configₙ F))
   (t : LanguageCompiler Γ₁ Γ₂)
   where
   private
@@ -51,13 +51,13 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
   Second, we convert the binary choice to an n-ary choice via convert, not changing any data.
   The order of these steps does not matter, as proven by `convert-comm` below.
   -}
-  compile-convert : 2Choice F L₁ A → NChoice F L₂ A
+  compile-convert : 2Choice L₁ A → NChoice L₂ A
   compile-convert = convert₂ ∘ map₂ compile
 
   {-|
   The same compiler as compile-convert, but the steps are executed in the other order.
   -}
-  convert-compile : 2Choice F L₁ A → NChoice F L₂ A
+  convert-compile : 2Choice L₁ A → NChoice L₂ A
   convert-compile = mapₙ compile ∘ convert₁
 
   {-|
