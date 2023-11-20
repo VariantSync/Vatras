@@ -1,6 +1,6 @@
 open import Framework.V2.Definitions
 
-module Framework.V2.Translation.Construct.2Choice-to-NChoice-VL {F : 𝔽} where
+module Framework.V2.Translation.Construct.2Choice-to-NChoice-VL where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
@@ -22,10 +22,12 @@ open import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
 open Chc.Choiceₙ using () renaming (Config to Configₙ; map to mapₙ)
 
-module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
-  (Γ₁ : VariabilityLanguage V (Config₂ F))
-  (Γ₂ : VariabilityLanguage V (Configₙ F))
+module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
+  (Γ₁ Γ₂ : VariabilityLanguage V)
+  (extract₁ : Compatible (Chc.VLChoice₂.Construct V Q) Γ₁)
   (t : LanguageCompiler Γ₁ Γ₂)
+  (confi : Config₂ Q → Configₙ Q)
+  (fnoci : Configₙ Q → Config₂ Q)
   where
   private
     L₁   = Expression Γ₁
@@ -34,16 +36,16 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
     ⟦_⟧₂ = Semantics  Γ₂
     open LanguageCompiler t
 
-  open VariabilityConstruct (Chc.VLChoice₂.Construct V F)
-    renaming (Construct to 2Choice; _⊢⟦_⟧ to _⊢⟦_⟧₁)
-  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V F)
-    renaming (Construct to NChoice; _⊢⟦_⟧ to _⊢⟦_⟧₂)
+  open VariabilityConstruct (Chc.VLChoice₂.Construct V Q) using ()
+    renaming (VSyntax to 2Choice; VSemantics to Sem₂)
+  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V Q) using ()
+    renaming (VSyntax to NChoice; VSemantics to Semₙ)
 
   -- TODO: Generalize to any setoids over L₁ or L₂.
-  module 2→N-T₁ = 2→N.Translate {Q = F} (Eq.setoid (L₁ A))
+  module 2→N-T₁ = 2→N.Translate {Q} (Eq.setoid (L₁ A))
   open 2→N-T₁ using () renaming (convert to convert₁)
-  module 2→N-T = 2→N.Translate {Q = F} (Eq.setoid (L₂ A))
-  open 2→N-T using () renaming (convert to convert₂)
+  module 2→N-T₂ = 2→N.Translate {Q} (Eq.setoid (L₂ A))
+  open 2→N-T₂ using () renaming (convert to convert₂)
 
   {-|
   Composition of two compilers:
@@ -80,50 +82,53 @@ module Translate {F : 𝔽} {V : 𝕍} {A : 𝔸}
   convert-comm _ = refl
 
   module Preservation
-    (D : F)
+    (D : Q)
     (l r : L₁ A)
     where
-    open 2→N-T.Preservation conf fnoc using (convert-preserves)
+    open 2→N-T₂.Preservation confi fnoci using (convert-preserves)
 
     module VSet = IVSet V A
     open VSet using (_≅[_][_]_)
     open VSet.≅[]-Reasoning
 
+    extract₂ : Compatible (Chc.VLChoiceₙ.Construct V Q) Γ₂
+    extract₂ = confi ∘ extract₁ ∘ fnoc -- proof by diagram chasing
+
     convert-compile-preserves :
-      ∀ (conv : ConfContract D conf)
-      → (vnoc : FnocContract D fnoc)
+      ∀ (conv : ConfContract D confi)
+      → (vnoc : FnocContract D fnoci)
       → Stable config-compiler
-      → (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁) ≅[ conf ][ fnoc ] (Γ₂ ⊢⟦ convert-compile (D ⟨ l , r ⟩) ⟧₂)
+      → Sem₂ Γ₁ extract₁ (D ⟨ l , r ⟩)
+          ≅[ conf ][ fnoc ]
+        Semₙ Γ₂ extract₂ (convert-compile (D ⟨ l , r ⟩))
     convert-compile-preserves conv vnoc stable =
       ≅[]-begin
-        Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁
+        (Sem₂ Γ₁ extract₁ (D ⟨ l , r ⟩))
       ≅[]⟨⟩
-        (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) c ⟧₁ c)
-      ≅[]⟨ VLChoice₂.map-compile-preserves t (D ⟨ l , r ⟩) stable ⟩
-        (λ c → ⟦ Choice₂.Standard-Semantics (map₂ compile (D ⟨ l , r ⟩)) (fnoc c) ⟧₂ c)
+        (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ l , r ⟩) (extract₁ c) ⟧₁ c)
+      ≅[]⟨ VLChoice₂.map-compile-preserves Γ₁ Γ₂ extract₁ t (D ⟨ l , r ⟩) stable ⟩
+        (λ c → ⟦ Choice₂.Standard-Semantics (map₂ compile (D ⟨ l , r ⟩)) (extract₁ (fnoc c)) ⟧₂ c)
+      ≐[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c)
+        (proj₁ (convert-preserves (map₂ compile (D ⟨ l , r ⟩)) conv vnoc) (extract₁ (fnoc (c))) )⟩
+        (λ c → ⟦ Choiceₙ.Standard-Semantics (convert₂ (map₂ compile (D ⟨ l , r ⟩))) (extract₂ c) ⟧₂ c)
       ≅[]⟨⟩
-        (λ c → ⟦ Choice₂.Standard-Semantics (D ⟨ compile l , compile r ⟩) (fnoc c) ⟧₂ c)
-        -- TODO: Figure out why we need only proj₂ and not also proj₁ in this proof.
-      ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (proj₂ (convert-preserves (map₂ compile (D ⟨ l , r ⟩)) conv vnoc) c) ⟩
-        (λ c → ⟦ Choiceₙ.Standard-Semantics (convert₂ (D ⟨ compile l , compile r ⟩)) c ⟧₂ c)
+        (Semₙ Γ₂ extract₂ (convert₂ (map₂ compile (D ⟨ l , r ⟩))))
       ≅[]⟨⟩
-        (λ c → ⟦ Choiceₙ.Standard-Semantics (convert₂ (map₂ compile (D ⟨ l , r ⟩))) c ⟧₂ c)
-      ≅[]⟨⟩
-        Γ₂ ⊢⟦ convert₂ (map₂ compile (D ⟨ l , r ⟩)) ⟧₂
-      ≅[]⟨⟩
-        Γ₂ ⊢⟦ convert-compile (D ⟨ l , r ⟩) ⟧₂
+        (Semₙ Γ₂ extract₂ (convert-compile (D ⟨ l , r ⟩)))
       ≅[]-∎
 
     compile-convert-preserves :
-      ∀ (conv : ConfContract D conf)
-      → (vnoc : FnocContract D fnoc)
+      ∀ (conv : ConfContract D confi)
+      → (vnoc : FnocContract D fnoci)
       → Stable config-compiler
-      → (Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁) ≅[ conf ][ fnoc ] (Γ₂ ⊢⟦ compile-convert (D ⟨ l , r ⟩) ⟧₂)
+      → Sem₂ Γ₁ extract₁ (D ⟨ l , r ⟩)
+          ≅[ conf ][ fnoc ]
+        Semₙ Γ₂ extract₂ (compile-convert (D ⟨ l , r ⟩))
     compile-convert-preserves conv vnoc stable =
       ≅[]-begin
-        Γ₁ ⊢⟦ D ⟨ l , r ⟩ ⟧₁
+        Sem₂ Γ₁ extract₁ (D ⟨ l , r ⟩)
       ≅[]⟨ convert-compile-preserves conv vnoc stable ⟩
-        Γ₂ ⊢⟦ convert-compile (D ⟨ l , r ⟩) ⟧₂
-      ≐[ c ]⟨ Eq.cong (λ eq → ⟦ Choiceₙ.Standard-Semantics eq c ⟧₂ c) (convert-comm (D ⟨ l , r ⟩)) ⟩
-        Γ₂ ⊢⟦ compile-convert (D ⟨ l , r ⟩) ⟧₂
+        Semₙ Γ₂ extract₂ (convert-compile (D ⟨ l , r ⟩))
+      ≐[ c ]⟨ Eq.cong (λ eq → ⟦ Choiceₙ.Standard-Semantics eq (extract₂ c) ⟧₂ c) (convert-comm (D ⟨ l , r ⟩)) ⟩
+        Semₙ Γ₂ extract₂ (compile-convert (D ⟨ l , r ⟩))
       ≅[]-∎

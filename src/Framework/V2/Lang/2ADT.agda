@@ -21,8 +21,8 @@ private
 2ADT i A = NestedChoice i (Leaf A)
 
 mutual
-  2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant (Config₂ F)
-  2ADTVL {i} = syn 2ADT i with-sem semantics
+  2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
+  2ADTVL {i} = Lang-⟪ 2ADT i , Config₂ F , semantics ⟫
 
   semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Config₂ F) (2ADT i)
   semantics e c = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant (⟦ e ⟧ c)

@@ -2,6 +2,7 @@ module Framework.V2.Definitions where
 
 open import Data.Maybe using (Maybe; just)
 open import Data.Product using (_×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+open import Data.Unit using (⊤; tt) public
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
@@ -94,37 +95,15 @@ that configures a term `e : E A` to a variant `v : V A`
   → V A
 
 -- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
-record VariabilityLanguage (V : 𝕍) (S : 𝕊) : Set₁ where
-  constructor syn_with-sem_
+record VariabilityLanguage (V : 𝕍) : Set₁ where
+  constructor Lang-⟪_,_,_⟫
   field
     Expression : 𝔼
-    Semantics  : 𝔼-Semantics V S Expression
+    Config : 𝕊
+    Semantics : 𝔼-Semantics V Config Expression
 open VariabilityLanguage public
 
--- Semantics of constructors
-ℂ-Semantics : 𝕍 → 𝕊 → ℂ → Set₁
-ℂ-Semantics V S C =
-  ∀ {Sγ : 𝕊}
-  → (Sγ → S) -- a function that lets us apply language configurations to constructs
-  → {A : 𝔸} -- the domain in which we embed variability
-  → (Γ : VariabilityLanguage V Sγ) -- The underlying language
-  → C (Expression Γ) A -- the construct to compile
-  → Sγ -- a configuration for underlying subexpressions
-  → V A
-
-record VariabilityConstruct (V : 𝕍) (S : 𝕊) : Set₁ where
-  constructor con_with-sem_
-  field
-    -- how to create a constructor for a given language
-    Construct : ℂ
-    -- how to resolve a constructor for a given language
-    construct-semantics : ℂ-Semantics V S Construct
-  _⊢⟦_⟧ = construct-semantics {Sγ = S} id
-
 -- Syntactic Containment
--- TODO: Is there any point in allowing a specialization of F here?
---       It lets us say "Construct x is in language y but only for the annotation language ℕ".
---       Is there ever a use case though, in which a language must be fixed to a particular annotation language?
 record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
   field
     -- from a construct, an expression can be created
@@ -146,22 +125,143 @@ E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → C ∈ₛ E₁ → C ∈ₛ E₂
 _≅ₛ_ : 𝔼 → 𝔼 → Set₁
 E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
 
--- Semantic Containment
-record _⟦∈⟧_ {V S} (C : VariabilityConstruct V S) (Γ : VariabilityLanguage V S) : Set₁ where
-  open VariabilityConstruct C
+
+-- Constructors
+
+record PlainConstruct : Set₁ where
+  constructor Plain-⟪_,_⟫
+  field
+    PSyntax : ℂ
+
+    {-|
+    The semantics of a plain construct is a map.
+    A plain construct does not embody any variational choices and does
+    not require a configuration.
+    Hence, after configuration, it just remains as is but any
+    sub-expressions have been configured to variants.
+    -}
+    PSemantics : ∀ {V A}
+      → (Γ : VariabilityLanguage V)
+      → (e : PSyntax (Expression Γ) A)
+      → (c : Config Γ)
+      → PSyntax V A
+open PlainConstruct public
+
+Plain-ℂ-Semantics : ∀ {V}
+  → (P : PlainConstruct)
+  → PSyntax P ∈ₛ V
+  → (Γ : VariabilityLanguage V)
+  → {A : 𝔸} -- the domain in which we embed variability
+  → PSyntax P (Expression Γ) A -- the construct to compile
+  → Config Γ -- a configuration for underlying subexpressions
+  → V A
+Plain-ℂ-Semantics P make Γ e = cons make ∘ PSemantics P Γ e
+
+-- Semantics of constructors
+Variational-ℂ-Semantics : 𝕍 → 𝕊 → ℂ → Set₁
+Variational-ℂ-Semantics V S C =
+  -- The underlying language, which the construct is part of.
+  ∀ (Γ : VariabilityLanguage V)
+  -- A function that lets us apply language configurations to constructs.
+  -- A language might be composed many constructors, each requiring another type
+  -- of configuration (i.e., each having different requirements on a configuration).
+  -- To configure an expression, we thus need a configuration 'c : Config Γ', which
+  -- satisfies _all_ these requirements.
+  -- The function 'extract' fetches only those requirements from this big config
+  -- that we need.
+  → (extract : Config Γ → S)
+  → {A : 𝔸} -- the domain in which we embed variability
+  → C (Expression Γ) A -- the construct to compile
+  → Config Γ -- a configuration for underlying subexpressions
+  → V A
+
+record VariabilityConstruct (V : 𝕍) : Set₁ where
+  constructor Variational-⟪_,_,_⟫
+  field
+    -- How to create a constructor...
+    VSyntax : ℂ
+    -- What is required to configure a constructor...
+    VConfig : 𝕊
+    -- How to resolve a constructor...
+    VSemantics : Variational-ℂ-Semantics V VConfig VSyntax
+  -- _⊢⟦_⟧ = ∀ (Γ : VariabilityLanguage V) →  VSemantics Γ id
+open VariabilityConstruct public
+
+{-|
+A variability construct C is compatible with a language Γ when the construct
+can be used within Γ to configure expressions with that construct over that language.
+This is the case when the configurations of the variability language Γ provide
+enough information to configure a construct c : C.
+A proof for compatibility is thus a function that extracts the necessary information
+from a language's configuration.
+TODO: We might want to have a better name for this.
+-}
+Compatible : ∀ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) → Set
+Compatible C Γ = Config Γ → VConfig C
+
+-- Semantic containment of variational constructs
+record _⟦∈⟧ᵥ_ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where
   private ⟦_⟧ = Semantics Γ
   field
-    make : Construct ∈ₛ Expression Γ
+    make : VSyntax C ∈ₛ Expression Γ
+    extract : Compatible C Γ
     preservation : ∀ {A : 𝔸}
-      → (c : Construct (Expression Γ) A)
-      → ⟦ cons make c ⟧ ≗ construct-semantics id Γ c
-open _⟦∈⟧_ public
+      → (c : VSyntax C (Expression Γ) A)
+      → ⟦ cons make c ⟧ ≗ VSemantics C Γ extract c
+open _⟦∈⟧ᵥ_ public
 
-_⟦∉⟧_ : ∀ {V S} → VariabilityConstruct V S → VariabilityLanguage V S → Set₁
-C ⟦∉⟧ E = ¬ (C ⟦∈⟧ E)
+_⟦∉⟧ᵥ_ : ∀ {V} → VariabilityConstruct V → VariabilityLanguage V → Set₁
+C ⟦∉⟧ᵥ E = ¬ (C ⟦∈⟧ᵥ E)
 
-_⟦⊆⟧_ :  ∀ {V S} → VariabilityLanguage V S → VariabilityLanguage V S → Set₁
-_⟦⊆⟧_ {V} {S} E₁ E₂ = ∀ (C : VariabilityConstruct V S) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
+_⟦⊆⟧ᵥ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+E₁ ⟦⊆⟧ᵥ E₂ = ∀ C → C ⟦∈⟧ᵥ E₁ → C ⟦∈⟧ᵥ E₂
 
-_⟦≅⟧_ : ∀ {V S} → VariabilityLanguage V S → VariabilityLanguage V S → Set₁
-E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁
+_⟦≅⟧ᵥ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+E₁ ⟦≅⟧ᵥ E₂ = E₁ ⟦⊆⟧ᵥ E₂ × E₂ ⟦⊆⟧ᵥ E₁
+
+-- Semantic containment of plain constructs
+record _⟦∈⟧ₚ_ {V} (C : PlainConstruct)  (Γ : VariabilityLanguage V) : Set₁ where
+  private ⟦_⟧ = Semantics Γ
+  field
+    C∈ₛΓ : PSyntax C ∈ₛ Expression Γ
+    C∈ₛV : PSyntax C ∈ₛ V
+    -- Commuting Square:
+    -- Creating a plain construct 'const P∈ₛΓ' in a variability language Γ and then configuring the expression
+    -- should be equivalent to
+    -- configuring the expression first and then creating the plain construct in the variant.
+    -- This equality ensures that plain constructs are resistant to configuration.
+    resistant : ∀ {A} (c : PSyntax C (Expression Γ) A)
+      → Semantics Γ (cons C∈ₛΓ c) ≗ cons C∈ₛV ∘ PSemantics C Γ c
+open _⟦∈⟧ₚ_ public
+
+_⟦∉⟧ₚ_ : ∀ {V} → PlainConstruct → VariabilityLanguage V → Set₁
+C ⟦∉⟧ₚ E = ¬ (C ⟦∈⟧ₚ E)
+
+_⟦⊆⟧ₚ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+E₁ ⟦⊆⟧ₚ E₂ = ∀ C → C ⟦∈⟧ₚ E₁ → C ⟦∈⟧ₚ E₂
+
+_⟦≅⟧ₚ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+E₁ ⟦≅⟧ₚ E₂ = E₁ ⟦⊆⟧ₚ E₂ × E₂ ⟦⊆⟧ₚ E₁
+
+---- Plain constructs can be seen as variational constructs that do nothing upon configuration. ---
+
+Plain-ℂ-Semantics-Are-Variational-ℂ-Semantics : ∀ {V}
+  → (P : PlainConstruct)
+  → PSyntax P ∈ₛ V
+  → Variational-ℂ-Semantics V ⊤ (PSyntax P)
+Plain-ℂ-Semantics-Are-Variational-ℂ-Semantics P make Γ _ e = Plain-ℂ-Semantics P make Γ e
+
+toVariational : ∀ {V}
+  → (P : PlainConstruct)
+  → PSyntax P ∈ₛ V
+  → VariabilityConstruct V
+toVariational P make = Variational-⟪ PSyntax P , ⊤ , Plain-ℂ-Semantics-Are-Variational-ℂ-Semantics P make ⟫
+
+⟦∈⟧ₚ→⟦∈⟧ᵥ : ∀ {V P} {Γ : VariabilityLanguage V}
+  → (p : P ⟦∈⟧ₚ Γ)
+  → toVariational P (C∈ₛV p) ⟦∈⟧ᵥ Γ
+⟦∈⟧ₚ→⟦∈⟧ᵥ P⟦∈⟧ₚΓ = record
+  { make = C∈ₛΓ P⟦∈⟧ₚΓ
+  ; extract = λ _ → tt
+  ; preservation = resistant P⟦∈⟧ₚΓ
+  }

@@ -50,8 +50,8 @@ Configuration = ℕ
 ⟦_⟧ : 𝔼-Semantics Variant Configuration VariantList
 ⟦_⟧ e c = find-or-last c e
 
-VariantListL : VariabilityLanguage Variant Configuration
-VariantListL = syn VariantList with-sem ⟦_⟧
+VariantListL : VariabilityLanguage Variant
+VariantListL = Lang-⟪ VariantList , Configuration , ⟦_⟧ ⟫
 ```
 
 ## Properties

@@ -30,16 +30,9 @@ module VLLeaf where
   elim-leaf : ∀ {V} → Syntax ∈ₛ V → ∀ {A} → Leaf A → V A
   elim-leaf leaf∈V l = cons leaf∈V l
 
-  Semantics : ∀ {V S} → Syntax ∈ₛ V → ℂ-Semantics V S Syntax
-  Semantics {V} leaf∈V _ _ l _ = elim-leaf {V} leaf∈V l
-
-  Construct : ∀ (V : 𝕍) (S : 𝕊)
-    → Syntax ∈ₛ V
-    → VariabilityConstruct V S
-  Construct V S mkLeaf = record
-    { Construct = Syntax
-    ; construct-semantics = Semantics {V} {S} mkLeaf
-    }
+  Construct : PlainConstruct
+  PConstruct Construct = Syntax
+  PSemantics Construct _ e _ = e
 
   Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons Leaf∈ₛGrulerVariant (leaf a) = asset a
@@ -51,16 +44,9 @@ module VLParallelComposition where
   Syntax : ℂ
   Syntax E A = ParallelComposition (E A)
 
-  Semantics : ∀ {V : 𝕍} {S : 𝕊} → Syntax ∈ₛ V → ℂ-Semantics V S Syntax
-  Semantics leaf∈V _ (syn E with-sem ⟦_⟧) (l ∥ r) c = cons leaf∈V (⟦ l ⟧ c ∥ ⟦ r ⟧ c)
-
-  Construct : ∀ (V : 𝕍) (S : 𝕊)
-    → Syntax ∈ₛ V
-    → VariabilityConstruct V S
-  Construct V S mkPC = record
-    { Construct = Syntax
-    ; construct-semantics = Semantics {V} {S} mkPC
-    }
+  Construct : PlainConstruct
+  PConstruct Construct = Syntax
+  PSemantics Construct Lang-⟪ _ , _ , ⟦_⟧ ⟫ (l ∥ r) c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
 
   ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons ParallelComposition∈ₛGrulerVariant (l ∥ r) = l ∥ r

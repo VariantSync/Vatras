@@ -8,7 +8,7 @@ open import Function using (id)
 open import Size using (Size; ↑_)
 
 open import Framework.V2.Variants
-open import Framework.V2.Constructs.Artifact using () renaming (Syntax to Artifact; Semantics to at-sem)
+open import Framework.V2.Constructs.Artifact using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to chc-sem)
 open Chc.Choice₂ using () renaming (Config to Config₂)
@@ -19,9 +19,9 @@ data BCC : Size → 𝔼 where
 
 module _ (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
-    BCCL : ∀ {i : Size} → VariabilityLanguage V (Config₂ F)
-    BCCL {i} = syn BCC i with-sem ⟦_⟧
+    BCCL : ∀ {i : Size} → VariabilityLanguage V
+    BCCL {i} = Lang-⟪ BCC i , Config₂ F , ⟦_⟧ ⟫
 
     ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V (Config₂ F) (BCC i)
-    ⟦ atom x ⟧ = at-sem (Config₂ F) mkArtifact id BCCL x
-    ⟦ chc  x ⟧ = chc-sem V F id BCCL x
+    ⟦ atom x ⟧ = Plain-ℂ-Semantics Artifact-Construct mkArtifact BCCL x
+    ⟦ chc  x ⟧ = chc-sem V F BCCL id x
