@@ -19,4 +19,4 @@ jobs:
         key: nix-${{ hashFiles('.github/workflows/check.yml', 'default.nix', 'nix/**') }}
         nix_file: nix/github-workflow-dependencies.nix
     - name: Check Agda files
-      run: nix-shell --run 'make check'
+      run: nix-shell --run './scripts/check-all.sh github-action'
