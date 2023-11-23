@@ -32,7 +32,8 @@ open import Util.List using (find-or-last)
 
 import Data.IndexedSet
 
--- open import Framework.Definitions
+open import Framework.V2.Definitions
+open import Framework.V2.VariabilityLanguage
 import Framework.V2.Variant
 ```
 

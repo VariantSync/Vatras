@@ -3,8 +3,10 @@ module Framework.V2.Constructs.GrulerArtifacts where
 open import Data.Maybe using (just; nothing)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.Definitions hiding (Semantics)
+open import Framework.V2.Definitions
 open import Framework.V2.Variants
+open import Framework.V2.Construct
+open import Framework.V2.VariabilityLanguage
 
 -- this is just a value
 data Leaf {ℓ} (A : Set ℓ) : Set ℓ where
@@ -31,8 +33,8 @@ module VLLeaf where
   elim-leaf leaf∈V l = cons leaf∈V l
 
   Construct : PlainConstruct
-  PConstruct Construct = Syntax
-  PSemantics Construct _ e _ = e
+  PSyntax Construct = Syntax
+  pcong Construct _ e _ = e
 
   Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons Leaf∈ₛGrulerVariant (leaf a) = asset a
@@ -45,8 +47,8 @@ module VLParallelComposition where
   Syntax E A = ParallelComposition (E A)
 
   Construct : PlainConstruct
-  PConstruct Construct = Syntax
-  PSemantics Construct Lang-⟪ _ , _ , ⟦_⟧ ⟫ (l ∥ r) c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
+  PSyntax Construct = Syntax
+  pcong Construct Lang-⟪ _ , _ , ⟦_⟧ ⟫ (l ∥ r) c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
 
   ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons ParallelComposition∈ₛGrulerVariant (l ∥ r) = l ∥ r

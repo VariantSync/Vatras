@@ -13,6 +13,8 @@ import Data.IndexedSet
 open import Function.Base using (id; _∘_)
 
 open import Framework.V2.Definitions
+open import Framework.V2.VariabilityLanguage
+open import Framework.V2.Construct
 open import Framework.V2.Annotation.IndexedName using (IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choiceₙ using () renaming (Config to Configₙ)
@@ -27,7 +29,7 @@ open NChoice-to-2Choice-explicit using (2Config)
 2Choice : 𝔽 → ℂ
 2Choice F E A = Choice₂ (IndexedName F) E A
 
-2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → Variational-ℂ-Semantics V (2Config F) (2Choice F)
+2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (2Config F) (2Choice F)
 2Choice-sem V F Γ fnoc cons conf = Choice₂-sem V (IndexedName F) Γ (proj₁ ∘ fnoc) cons conf
 
 ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V

@@ -161,7 +161,10 @@ module Choiceₙ where
 
 -- Show how choices can be used as constructors in variability languages.
 open import Framework.V2.Variant
-open import Framework.V2.Definitions as Defs hiding (Semantics; Config)
+open import Framework.V2.Definitions
+open import Framework.V2.VariabilityLanguage hiding (Config; Semantics)
+open import Framework.V2.FunctionLanguage using (to-is-Embedding)
+open import Framework.V2.Construct
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)
 
@@ -169,13 +172,13 @@ module VLChoice₂ where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choice₂.Syntax using (dim)
 
-  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
+  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
   open LanguageCompiler
 
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → Variational-ℂ-Semantics V (Config F) (Syntax F)
+  Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
   Semantics _ _ (Lang-⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ Standard-Semantics chc (extract c) ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
@@ -186,7 +189,7 @@ module VLChoice₂ where
       → (extract : Compatible (Construct V F) Γ₁)
       → (t : LanguageCompiler Γ₁ Γ₂)
       → (chc : Syntax F (Expression Γ₁) A)
-      → Stable (config-compiler t)
+      → to-is-Embedding (config-compiler t)
       → Semantics V F Γ₁ extract chc
           ≅[ conf t ][ fnoc t ]
         Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
@@ -250,13 +253,13 @@ module VLChoiceₙ where
   open Choiceₙ using (_⟨_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choiceₙ.Syntax using (dim)
 
-  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
+  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
   open LanguageCompiler
 
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → Variational-ℂ-Semantics V (Config F) (Syntax F)
+  Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
   Semantics _ _ (Lang-⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choiceₙ.Standard-Semantics choice (extract c) ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
@@ -273,7 +276,7 @@ module VLChoiceₙ where
       → (extract : Compatible (Construct V F) Γ₁)
       → (t : LanguageCompiler Γ₁ Γ₂)
       → (chc : Syntax F (Expression Γ₁) A)
-      → Stable (config-compiler t)
+      → to-is-Embedding (config-compiler t)
       → Semantics V F Γ₁ extract chc
           ≅[ conf t ][ fnoc t ]
         Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)

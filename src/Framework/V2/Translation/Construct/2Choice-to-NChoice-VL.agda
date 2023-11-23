@@ -13,7 +13,10 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
 import Data.IndexedSet
 
 open import Framework.V2.Variant
-open import Framework.V2.Compiler using (LanguageCompiler; Stable)
+open import Framework.V2.FunctionLanguage using (to-is-Embedding)
+open import Framework.V2.VariabilityLanguage
+open import Framework.V2.Construct
+open import Framework.V2.Compiler using (LanguageCompiler)
 
 import Framework.V2.Translation.Construct.2Choice-to-NChoice as 2→N
 open 2→N using (ConfContract; FnocContract)
@@ -97,7 +100,7 @@ module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
     convert-compile-preserves :
       ∀ (conv : ConfContract D confi)
       → (vnoc : FnocContract D fnoci)
-      → Stable config-compiler
+      → to-is-Embedding config-compiler
       → Sem₂ Γ₁ extract₁ (D ⟨ l , r ⟩)
           ≅[ conf ][ fnoc ]
         Semₙ Γ₂ extract₂ (convert-compile (D ⟨ l , r ⟩))
@@ -120,7 +123,7 @@ module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
     compile-convert-preserves :
       ∀ (conv : ConfContract D confi)
       → (vnoc : FnocContract D fnoci)
-      → Stable config-compiler
+      → to-is-Embedding config-compiler
       → Sem₂ Γ₁ extract₁ (D ⟨ l , r ⟩)
           ≅[ conf ][ fnoc ]
         Semₙ Γ₂ extract₂ (compile-convert (D ⟨ l , r ⟩))

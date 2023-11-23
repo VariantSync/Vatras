@@ -8,6 +8,7 @@ import Data.IndexedSet
 
 open import Framework.V2.Definitions
 open import Framework.V2.Variant
+open import Framework.V2.VariabilityLanguage
 
 private
   variable
@@ -18,8 +19,8 @@ Complete {V} (Lang-⟪ L , _ , ⟦_⟧ ⟫) = ∀ {A n}
   → (vs : VMap V A n)
     ----------------------------------
   → Σ[ e ∈ L A ]
-      (let open Data.IndexedSet (VariantSetoid V A) renaming (_≅_ to _≋_)
-        in vs ≋ ⟦ e ⟧)
+      let open IVSet V A renaming (_≅_ to _≋_)
+        in vs ≋ ⟦ e ⟧
 
 -- record TranslationResult {V S₁ S₂} (L₁ : VariabilityLanguage V S₁) (L₂ : VariabilityLanguage V S₂) : Set₁ where
 --   field

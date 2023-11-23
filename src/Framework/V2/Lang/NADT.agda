@@ -8,6 +8,7 @@ open import Data.Nat using (ℕ)
 open import Function using (id)
 open import Size using (Size; ↑_)
 
+open import Framework.V2.VariabilityLanguage
 open import Framework.V2.Constructs.GrulerArtifacts
 open import Framework.V2.Constructs.Choices
 open import Framework.V2.Variants using (GrulerVariant)

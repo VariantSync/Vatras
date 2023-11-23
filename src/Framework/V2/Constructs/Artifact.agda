@@ -9,7 +9,9 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Framework.V2.Variant
 open import Framework.V2.Definitions
-open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
+open import Framework.V2.VariabilityLanguage
+open import Framework.V2.Construct
+open import Framework.V2.Compiler using (LanguageCompiler)
 open LanguageCompiler
 import Data.IndexedSet
 
@@ -26,9 +28,9 @@ map-children-preserves : ∀ {V : 𝕍} {Γ₁ Γ₂ : VariabilityLanguage V} {A
   ∀ (mkArtifact : Syntax ∈ₛ V)
   → (t : LanguageCompiler Γ₁ Γ₂)
   → (a : Syntax (Expression Γ₁) A)
-  → Plain-ℂ-Semantics Construct mkArtifact Γ₁ a
+  → PlainConstruct-Semantics Construct mkArtifact Γ₁ a
       ≅[ conf t ][ fnoc t ]
-    Plain-ℂ-Semantics Construct mkArtifact Γ₂ (map-children (compile t) a)
+    PlainConstruct-Semantics Construct mkArtifact Γ₂ (map-children (compile t) a)
 map-children-preserves {V} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
     ≅[]-begin
       (λ c → cons mkArtifact (a -< map (λ e → ⟦ e ⟧₁ c) cs >-))

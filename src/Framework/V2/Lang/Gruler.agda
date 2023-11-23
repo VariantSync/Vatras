@@ -10,6 +10,8 @@ open import Size using (Size; ↑_; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
+open import Framework.V2.VariabilityLanguage
+open import Framework.V2.Construct
 open import Framework.V2.Constructs.Choices
 open import Framework.V2.Constructs.GrulerArtifacts
 open import Framework.V2.Variants using (GrulerVariant)
@@ -18,7 +20,7 @@ open Framework.V2.Constructs.Choices.Choice₂ using (_⟨_,_⟩) renaming (Conf
 
 private
   PC = VLParallelComposition.Syntax
-  pc-semantics = Plain-ℂ-Semantics VLParallelComposition.Construct VLParallelComposition.ParallelComposition∈ₛGrulerVariant
+  pc-semantics = PlainConstruct-Semantics VLParallelComposition.Construct VLParallelComposition.ParallelComposition∈ₛGrulerVariant
   Choice₂ = VLChoice₂.Syntax
   choice₂-semantics = VLChoice₂.Semantics
 
