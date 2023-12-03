@@ -1,7 +1,7 @@
-module Framework.V2.ConfigurationLanguage where
+module Framework.ConfigurationLanguage where
 
-open import Framework.V2.Definitions
-open import Framework.V2.FunctionLanguage
+open import Framework.Definitions
+open import Framework.FunctionLanguage
 
 ConfigurationLanguage : (S : 𝕊) → Set₁
 ConfigurationLanguage S = FunctionLanguage S

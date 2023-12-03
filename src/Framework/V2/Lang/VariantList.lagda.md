@@ -118,7 +118,7 @@ module Complete (A : 𝔸) where
   total {n = suc n} vs = return (E-suc (proj₂ (total (remove-first vs))))
 
   {-| Encodes a set of variants into a list of variants. -}
-  encode : ∀ (V : VMap n) → VariantList A
+  encode : VMap n → VariantList A
   encode = proj₁ ∘ total
 
   -- translate configs

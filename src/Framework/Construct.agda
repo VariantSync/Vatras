@@ -1,4 +1,4 @@
-module Framework.V2.Construct where
+module Framework.Construct where
 
 open import Data.Maybe using (Maybe; just)
 open import Data.Product using (_×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
@@ -7,10 +7,10 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; ref
 open import Relation.Nullary.Negation using (¬_)
 open import Function using (id; _∘_)
 
-open import Framework.V2.Definitions
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.ConfigurationLanguage
-open import Framework.V2.FunctionLanguage
+open import Framework.Definitions
+open import Framework.VariabilityLanguage
+open import Framework.ConfigurationLanguage
+open import Framework.FunctionLanguage
 
 -- Syntactic Containment
 record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where

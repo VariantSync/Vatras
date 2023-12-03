@@ -1,6 +1,6 @@
-module Framework.V2.Variants where
+module Framework.Variants where
 
-open import Framework.V2.Definitions using (𝕍; 𝔸)
+open import Framework.Definitions using (𝕍; 𝔸)
 open import Framework.V2.Constructs.Plain.Artifact using (Artifact)
 
 data GrulerVariant : 𝕍 where

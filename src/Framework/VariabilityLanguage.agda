@@ -1,9 +1,9 @@
-module Framework.V2.VariabilityLanguage where
+module Framework.VariabilityLanguage where
 
-open import Framework.V2.Definitions
-open import Framework.V2.Variant
-open import Framework.V2.FunctionLanguage as FL
-open import Framework.V2.ConfigurationLanguage as CL using (ConfigurationLanguage; Configuration)
+open import Framework.Definitions
+open import Framework.Variant
+open import Framework.FunctionLanguage as FL
+open import Framework.ConfigurationLanguage as CL using (ConfigurationLanguage; Configuration)
 
 {-
 Semantics of variability languages.

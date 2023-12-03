@@ -1,6 +1,6 @@
 ```agda
 open import Level using (Level; suc; _⊔_)
-module Framework.V2.FunctionLanguage where
+module Framework.FunctionLanguage where
 
 open import Data.Product using (_,_; _×_; Σ-syntax)
 open import Relation.Nullary.Negation using (¬_)

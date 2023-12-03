@@ -2,6 +2,7 @@ module Framework.Definitions where
 
 open import Data.Maybe using (Maybe; just)
 open import Data.Product using (_×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+open import Data.Unit using (⊤; tt) public
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Negation using (¬_)
@@ -51,8 +52,8 @@ selections language.
 𝕊 : Set₁
 𝕊 = Set
 
-ConfigEvaluator : 𝔽 → 𝕊 → Set → Set
-ConfigEvaluator F S Sel = (S → F → Sel)
+𝕂 : Set₁
+𝕂 = Set
 
 {-
 The set of expressions of a variability language.
@@ -81,122 +82,3 @@ for variability annotations 𝔽.
 ℂ : Set₁
 ℂ = 𝔼 → 𝔸 → Set
 
-{-
-Semantics of variability languages.
-The semantics of a set of expressions `E : 𝔼` is a function
-that configures a term `e : E A` to a variant `v : V A`
--}
-𝔼-Semantics : 𝕍 → 𝕊 → 𝔼 → Set₁
-𝔼-Semantics V S E =
-  ∀ {A : 𝔸}
-  → E A
-  → S
-  → V A
-
--- A variability language consists of syntax and semantics (syntax is a keyword in Agda)
-record VariabilityLanguage (V : 𝕍) : Set₁ where
-  constructor Lang-⟪_,_,_⟫
-  field
-    Expression : 𝔼
-    Config : 𝕊
-    Semantics : 𝔼-Semantics V Config Expression
-open VariabilityLanguage public
-
--- Syntactic Containment
-record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
-  field
-    -- from a construct, an expression can be created
-    cons : ∀ {A} → C E A → E A
-    -- an expression might be the construct C
-    snoc : ∀ {A} →   E A → Maybe (C E A)
-    -- An expression of a construct must preserve all information of that construct.
-    -- There might be more syntactic information though because of which we do not require
-    -- the dual equality cons ∘ snoc
-    id-l : ∀ {A} → snoc {A} ∘ cons {A} ≗ just
-open _∈ₛ_ public
-
-_∉ₛ_ : ℂ → 𝔼 → Set₁
-C ∉ₛ E = ¬ (C ∈ₛ E)
-
-_⊆ₛ_ : 𝔼 → 𝔼 → Set₁
-E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → C ∈ₛ E₁ → C ∈ₛ E₂
-
-_≅ₛ_ : 𝔼 → 𝔼 → Set₁
-E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
-
--- Semantics of constructors
-Variational-ℂ-Semantics : 𝕍 → 𝕊 → ℂ → Set₁
-Variational-ℂ-Semantics V S C =
-  -- The underlying language, which the construct is part of.
-  ∀ (Γ : VariabilityLanguage V)
-  -- A function that lets us apply language configurations to constructs.
-  -- A language might be composed many constructors, each requiring another type
-  -- of configuration (i.e., each having different requirements on a configuration).
-  -- To configure an expression, we thus need a configuration 'c : Config Γ', which
-  -- satisfies _all_ these requirements.
-  -- The function 'extract' fetches only those requirements from this big config
-  -- that we need.
-  → (extract : Config Γ → S)
-  → {A : 𝔸} -- the domain in which we embed variability
-  → C (Expression Γ) A -- the construct to compile
-  → Config Γ -- a configuration for underlying subexpressions
-  → V A
-
-record PlainConstruct (C : ℂ) : Set₁ where
-  constructor Plain-⟪_⟫
-  field
-    {-|
-    The semantics of a plain construct is a map.
-    A plain construct does not embody any variational choices and does
-    not require a configuration.
-    Hence, after configuration, it just remains as is but any
-    sub-expressions have been configured to variants.
-    -}
-    plain-semantics : ∀ {V A}
-      → (Γ : VariabilityLanguage V)
-      → (e : C (Expression Γ) A)
-      → (c : Config Γ)
-      → C V A
-open PlainConstruct public
-
-Plain-ℂ-Semantics : ∀ {V C}
-  → PlainConstruct C
-  → C ∈ₛ V
-  → (Γ : VariabilityLanguage V)
-  → {A : 𝔸} -- the domain in which we embed variability
-  → C (Expression Γ) A -- the construct to compile
-  → Config Γ -- a configuration for underlying subexpressions
-  → V A
-Plain-ℂ-Semantics C make Γ plain-expr = cons make ∘ plain-semantics C Γ plain-expr
-
-record VariabilityConstruct (V : 𝕍) : Set₁ where
-  constructor Variational-⟪_,_,_⟫
-  field
-    -- how to create a constructor for a given language
-    Construct : ℂ
-    -- TODO: Rename to nicer and uppercase name.
-    construct-config : 𝕊
-    -- how to resolve a constructor for a given language
-    -- TODO: Rename to nicer and uppercase name.
-    construct-semantics : Variational-ℂ-Semantics V construct-config Construct
-
--- Semantic Containment
-record _⟦∈⟧_ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where
-  open VariabilityConstruct C
-  private ⟦_⟧ = Semantics Γ
-  field
-    make : Construct ∈ₛ Expression Γ
-    extract : Config Γ → construct-config
-    preservation : ∀ {A : 𝔸}
-      → (c : Construct (Expression Γ) A)
-      → ⟦ cons make c ⟧ ≗ construct-semantics Γ extract c
-open _⟦∈⟧_ public
-
-_⟦∉⟧_ : ∀ {V} → VariabilityConstruct V → VariabilityLanguage V → Set₁
-C ⟦∉⟧ E = ¬ (C ⟦∈⟧ E)
-
-_⟦⊆⟧_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
-_⟦⊆⟧_ {V} E₁ E₂ = ∀ (C : VariabilityConstruct V) → C ⟦∈⟧ E₁ → C ⟦∈⟧ E₂
-
-_⟦≅⟧_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
-E₁ ⟦≅⟧ E₂ = E₁ ⟦⊆⟧ E₂ × E₂ ⟦⊆⟧ E₁

@@ -1,10 +1,10 @@
-module Framework.V2.Compiler where
+module Framework.Compiler where
 
-open import Framework.V2.Variant
-open import Framework.V2.Definitions
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.FunctionLanguage using (_⇔_; to; from; to-is-Embedding)
-open import Framework.V2.Construct
+open import Framework.Variant
+open import Framework.Definitions
+open import Framework.VariabilityLanguage
+open import Framework.FunctionLanguage using (_⇔_; to; from; to-is-Embedding)
+open import Framework.Construct
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Data.Product using (_×_)
