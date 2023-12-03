@@ -7,7 +7,8 @@ open import Relation.Binary using (Setoid)
 open import Level using (0ℓ)
 module Framework.Function.Properties.Completeness
   (O : Setoid 0ℓ 0ℓ)
-  (I : Set)
+  (P : Set)
+  (I : P → Set)
   where
 ```
 
@@ -33,7 +34,7 @@ via Fin (suc n) here for convenience.
 -}
 Complete : FunctionLanguage Carrier → Set
 Complete ⟪ Expr , _ , ⟦_⟧ ⟫ =
-  ∀ (m : IndexedSet I)
+  ∀ {p : P} (m : IndexedSet (I p))
     ----------------------------------
   → Σ[ e ∈ Expr ] m ≅ ⟦ e ⟧
 ```

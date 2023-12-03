@@ -7,8 +7,8 @@ module Framework.Function.Properties.Finity
 open Setoid O
 
 open import Data.Fin using (Fin)
-open import Data.Nat using (suc)
-open import Data.Product using (_,_; ∃-syntax; Σ-syntax)
+open import Data.Nat using (ℕ; suc)
+open import Data.Product using (Σ; proj₁; _,_; ∃-syntax; Σ-syntax)
 open import Function using (_∘_; Surjective; Congruent)
 
 open import Relation.Binary using (IsEquivalence; Symmetric; Decidable)
@@ -48,3 +48,9 @@ finity-from-enumerability {L} L-has-finite-semantics e =
       where ⟦_⟧ = Semantics L
             fin = L-has-finite-semantics e
             enumerate-configuration = enumerate fin
+
+soundness-from-finity : ∀ {L : FunctionLanguage Carrier}
+  → (fin : IsFiniteAndNotEmpty L)
+  → Sound ℕ (Fin ∘ suc) L
+soundness-from-finity fin e with fin e
+... | n , m , m≅⟦e⟧ = n , m , m≅⟦e⟧

@@ -7,7 +7,8 @@ open import Relation.Binary using (Setoid)
 open import Level using (0ℓ)
 module Framework.Function.Properties.Soundness
   (O : Setoid 0ℓ 0ℓ)
-  (I : Set)
+  (P : Set)
+  (I : P → Set)
   where
 ```
 
@@ -29,7 +30,7 @@ Sound : FunctionLanguage Carrier → Set
 Sound ⟪ Expr , _ , ⟦_⟧ ⟫ =
   ∀ (e : Expr)
     --------------------------------
-  → Σ[ m ∈ IndexedSet I ] m ≅ ⟦ e ⟧
+  → ∃[ p ] (Σ[ m ∈ IndexedSet (I p) ] m ≅ ⟦ e ⟧)
 
 Unsound : FunctionLanguage Carrier → Set
 Unsound L = ¬ (Sound L)

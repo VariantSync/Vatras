@@ -5,14 +5,15 @@ open import Relation.Binary using (Setoid)
 open import Level using (0ℓ)
 module Framework.Function.Proof.Completeness
   (O : Setoid 0ℓ 0ℓ)
-  (I : Set)
+  (P : Set)
+  (I : P → Set)
   where
 
 open Setoid O
 
 open import Data.Product using (_,_; _×_; ∄-syntax)
-open import Framework.Function.Properties.Completeness O I
-open import Framework.Function.Properties.Soundness O I
+open import Framework.Function.Properties.Completeness O P I
+open import Framework.Function.Properties.Soundness O P I
 open import Data.IndexedSet O using (≅-sym; ≅-trans)
 open import Framework.FunctionLanguage as FL using (FunctionLanguage)
 open FL.Comp {0ℓ} {O}
@@ -38,8 +39,8 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : FunctionLanguage Carrier}
     -----------------------------------
   → Complete L₁
 completeness-by-expressiveness encode-in-L₂ L₂-to-L₁ vs with encode-in-L₂ vs
-... | e₂ , vs≅e₂ with L₂-to-L₁ e₂
-...   | e₁ , e₂≅e₁ = e₁ , ≅-trans vs≅e₂ e₂≅e₁
+... | e₂ , m≅e₂ with L₂-to-L₁ e₂
+...   | e₁ , e₂≅e₁ = e₁ , ≅-trans m≅e₂ e₂≅e₁
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -56,7 +57,7 @@ expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : FunctionLanguage 
     ----------------------------------
   → Lᶜ ≽ Lˢ
 expressiveness-by-completeness-and-soundness comp sound eˢ with sound eˢ
-... | m , m≅⟦eˢ⟧ with comp m
+... | p , m , m≅⟦eˢ⟧ with comp m
 ...   | eᶜ , m≅⟦eᶜ⟧ = eᶜ , ≅-trans (≅-sym m≅⟦eˢ⟧) m≅⟦eᶜ⟧
 ```
 
