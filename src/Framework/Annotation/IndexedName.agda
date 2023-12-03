@@ -1,10 +1,10 @@
-module Framework.V2.Annotation.IndexedName where
+module Framework.Annotation.IndexedName where
 
 open import Data.Nat using (ℕ)
 open import Data.Nat.Show renaming (show to show-ℕ)
 open import Data.String using (String; _++_)
 
-open import Framework.V2.Annotation.Name using (Name)
+open import Framework.Annotation.Name using (Name)
 
 record IndexedName {ℓ} (N : Set ℓ) : Set ℓ where
   constructor _∙_

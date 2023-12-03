@@ -25,7 +25,8 @@ record VariabilityLanguage (V : 𝕍) : Set₁ where
     Config     : 𝕂
     Semantics  : 𝔼-Semantics V Config Expression
 
-  isFunctionLanguage : ∀ (A : 𝔸) → FunctionLanguage (V A)
-  isFunctionLanguage A = ⟪ Expression A , Config , Semantics ⟫
+  _⇂_ : ∀ (A : 𝔸) → FunctionLanguage (V A)
+  _⇂_ A = ⟪ Expression A , Config , Semantics ⟫
+  infix 21 _⇂_
 open VariabilityLanguage public
 

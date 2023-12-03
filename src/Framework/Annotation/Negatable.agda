@@ -1,6 +1,6 @@
-module Framework.V2.Annotation.Negatable where
+module Framework.Annotation.Negatable where
 
-open import Framework.V2.Annotation.Name using (Name)
+open import Framework.Annotation.Name using (Name)
 open import Data.Bool using (Bool; true; false; not)
 
 {-|

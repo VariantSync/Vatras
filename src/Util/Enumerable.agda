@@ -4,7 +4,7 @@ that a type has a finite amount of instances
 (or might have infinite instances but only a finite
 subset of _unique_ instances w.r.t. to an equivalence relation).
 -}
-module Util.Finity where
+module Util.Enumerable where
 
 open import Data.Nat using (ℕ; suc)
 open import Data.Fin using (Fin)
@@ -21,7 +21,7 @@ params:
 mod - A modification function on the size of the index that can be used to simultaneously encode that the set must be non-empty
 IndexSet - A set of indices that should be proven finite. Given as a setoid because we need an equivalence relation to ensure that every index is enumerated.
 -}
-record FiniteAnd (mod : ℕ → ℕ) {ℓ} {c} (IndexSet : Setoid c ℓ) : Set (c ⊔ ℓ) where
+record EnumerableAnd (mod : ℕ → ℕ) {ℓ} {c} (IndexSet : Setoid c ℓ) : Set (c ⊔ ℓ) where
   open Setoid IndexSet using (_≈_) renaming (Carrier to I)
   field
     {-| A lower bound of the number of indices in I. -}
@@ -36,14 +36,14 @@ record FiniteAnd (mod : ℕ → ℕ) {ℓ} {c} (IndexSet : Setoid c ℓ) : Set (
     and not just some of them.
     -}
     enumerate-is-surjective : Surjective _≡_ _≈_ enumerate
-open FiniteAnd public
+open EnumerableAnd public
 
 private
   Nothing  = id
   NonEmpty = suc
 
-Finite : ∀ {ℓ} {c} (IndexSet : Setoid c ℓ) → Set (c ⊔ ℓ)
-Finite = FiniteAnd Nothing
+Enumerable : ∀ {ℓ} {c} (IndexSet : Setoid c ℓ) → Set (c ⊔ ℓ)
+Enumerable = EnumerableAnd Nothing
 
-FiniteAndNonEmpty : ∀ {ℓ} {c} (IndexSet : Setoid c ℓ) → Set (c ⊔ ℓ)
-FiniteAndNonEmpty = FiniteAnd NonEmpty
+EnumerableAndNonEmpty : ∀ {ℓ} {c} (IndexSet : Setoid c ℓ) → Set (c ⊔ ℓ)
+EnumerableAndNonEmpty = EnumerableAnd NonEmpty
