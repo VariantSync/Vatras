@@ -78,6 +78,21 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 ≗→≅ A≗B = ≐→≅ (≗→≐ A≗B)
 ```
 
+## Singletons
+
+```agda
+{-|
+An indexed set contains only a single element if all indices point to the same element.
+-}
+Singleton : ∀ {I} → IndexedSet I → Set (c ⊔ ℓ)
+Singleton A = ∃[ x ] ∀ i → A i ≈ x
+
+irrelevant-index : ∀ {I} {A : IndexedSet I}
+  → Singleton A
+  → ∀ {i j} → A i ≈ A j
+irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
+```
+
 ## Properties
 
 ```agda
