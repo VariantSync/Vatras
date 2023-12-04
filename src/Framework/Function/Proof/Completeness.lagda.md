@@ -16,7 +16,7 @@ open import Framework.Function.Properties.Completeness O P I
 open import Framework.Function.Properties.Soundness O P I
 open import Data.IndexedSet O using (≅-sym; ≅-trans)
 open import Framework.FunctionLanguage as FL using (FunctionLanguage)
-open FL.Comp {0ℓ} {O}
+open FL.Comp O
 ```
 
 ## Conclusions

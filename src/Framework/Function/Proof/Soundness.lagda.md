@@ -14,7 +14,7 @@ open Setoid O
 open import Data.Product using (_,_)
 open import Framework.FunctionLanguage as FL
 open FL.FunctionLanguage
-open FL.Comp {0ℓ} {O}
+open FL.Comp O
 open import Data.IndexedSet O using (≅-trans; ≅-sym)
 open import Framework.Function.Properties.Soundness O P I
 ```

@@ -70,17 +70,19 @@ Embedding→Injective t emb {x} {y} to-x≡to-y
 Two expressions `e₁` , `e₂` of the same language are semantically equivalent
 if the functions they describe are pointwise equal (same output for same inputs):
 ```agda
-c = Level.0ℓ
-e = Level.0ℓ
+private
+  c = Level.0ℓ
+  e = Level.0ℓ
 module Comp
   {ℓ : Level}
-  {O : Setoid c ℓ}
+  (O : Setoid c ℓ)
   where
 
   open Setoid O
   open import Data.IndexedSet O
     using
       (_⊆_; _≅_; _≐_
+      ; ≐→≅
       ; ⊆-refl; ⊆-antisym; ⊆-trans
       ; ≅-refl;     ≅-sym; ≅-trans
       )
@@ -105,11 +107,11 @@ module Comp
 
 Syntactic equality implies semantic equality, independent of the semantics:
 ```agda
-  ≡→≣ : ∀ {L : 𝕃} {a b : Expression L}
+  ≡→≣₁ : ∀ {L : 𝕃} {a b : Expression L}
     → a ≡ b
       ----------
     → L ⊢ a ≣₁ b
-  ≡→≣ eq c rewrite eq = refl
+  ≡→≣₁ eq c rewrite eq = refl
 ```
 
 ## Comparing expressions across languages
@@ -175,6 +177,11 @@ Then we leverage these relations to model relations between whole languages.
       -------------
     → A , C ⊢ a ≣ c
   ≣-trans = ≅-trans
+
+  ≣₁→≣ : ∀ {L : 𝕃} {a b : Expression L}
+    → L ⊢ a ≣₁ b
+    → L , L ⊢ a ≣ b
+  ≣₁→≣ = ≐→≅
 ```
 
 We say that a language `L₁` is as expressive as another language `L₂` **iff** for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same function.
