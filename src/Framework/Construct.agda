@@ -52,14 +52,18 @@ record PlainConstruct : Set₁ where
       → PSyntax V A
 open PlainConstruct public
 
+{-|
+The semantics of a construct is that it can be configured to a variant
+when the construct is used within a variability language.
+-}
+Construct-Semantics : ∀ {V} → VariabilityLanguage V → ℂ → Set₁
+Construct-Semantics {V} Γ C = ∀ {A : 𝔸} → C (Expression Γ) A → Config Γ → V A
+
 PlainConstruct-Semantics : ∀ {V}
   → (P : PlainConstruct)
   → PSyntax P ∈ₛ V
   → (Γ : VariabilityLanguage V)
-  → {A : 𝔸} -- the domain in which we embed variability
-  → PSyntax P (Expression Γ) A -- the construct to compile
-  → Config Γ -- a configuration for underlying subexpressions
-  → V A
+  → Construct-Semantics Γ (PSyntax P)
 PlainConstruct-Semantics P make Γ e = cons make ∘ pcong P Γ e
 
 VariationalConstruct-Semantics : 𝕍 → 𝕂 → ℂ → Set₁
@@ -74,10 +78,7 @@ VariationalConstruct-Semantics V K C =
   -- The function 'extract' fetches only those requirements from this big config
   -- that we need.
   → (extract : Config Γ → K)
-  → {A : 𝔸} -- the domain in which we embed variability
-  → C (Expression Γ) A -- the construct to compile
-  → Config Γ -- a configuration for underlying subexpressions
-  → V A
+  → Construct-Semantics Γ C
 
 record VariabilityConstruct (V : 𝕍) : Set₁ where
   constructor Variational-⟪_,_,_⟫
@@ -123,7 +124,7 @@ _⟦≅⟧ᵥ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V →
 E₁ ⟦≅⟧ᵥ E₂ = E₁ ⟦⊆⟧ᵥ E₂ × E₂ ⟦⊆⟧ᵥ E₁
 
 -- Semantic containment of plain constructs
-record _⟦∈⟧ₚ_ {V} (C : PlainConstruct)  (Γ : VariabilityLanguage V) : Set₁ where
+record _⟦∈⟧ₚ_ {V} (C : PlainConstruct) (Γ : VariabilityLanguage V) : Set₁ where
   private ⟦_⟧ = Semantics Γ
   field
     C∈ₛΓ : PSyntax C ∈ₛ Expression Γ
