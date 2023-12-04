@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.V2.Definitions
+open import Framework.Definitions
 module Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment where
 
 open import Data.Nat using (ℕ)
@@ -31,7 +31,7 @@ open Chc.Choiceₙ
     ; show to show-nchoice
     )
 
-open import Framework.V2.Annotation.IndexedName
+open import Framework.Annotation.IndexedName
 open import Framework.V2.Translation.Construct.NChoice-to-2Choice as N→2
 module Trans = N→2.Translate
 

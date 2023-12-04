@@ -10,8 +10,12 @@
 ## Module
 
 ```agda
-open import Framework.V2.Definitions
-module Framework.V2.Lang.VariantList (Variant : 𝕍) where
+open import Level using (0ℓ)
+open import Relation.Binary using (Rel; IsEquivalence)
+open import Framework.Definitions
+module Lang.VariantList
+  (Variant : 𝕍)
+  where
 ```
 
 ## Imports
@@ -25,16 +29,16 @@ open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
 open import Function using (_∘_)
 open import Size using (Size; ∞)
 
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
-open Eq.≡-Reasoning
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
 
-open import Util.List using (find-or-last)
+open Relation.Binary using (Setoid)
 
 import Data.IndexedSet
+open import Util.List using (find-or-last)
 
-open import Framework.V2.Definitions
-open import Framework.V2.VariabilityLanguage
-import Framework.V2.Variant
+open import Framework.Definitions
+open import Framework.VariabilityLanguage
+import Framework.Variant
 ```
 
 ## Definitions
@@ -60,12 +64,23 @@ VariantListL = Lang-⟪ VariantList , Configuration , ⟦_⟧ ⟫
 ### Completeness
 
 ```agda
-open import Framework.V2.V1Compat
-
 -- prove completeness via inference rules
-module Complete (A : 𝔸) where
-  open Framework.V2.Variant Variant A
-  open IVSet using (_≅_; _⊆[_]_; ≅[]→≅)
+module Properties
+  (A : 𝔸)
+  (_≈_ : Rel (Variant A) 0ℓ)
+  (isEquivalence : IsEquivalence _≈_)
+  where
+
+  open IsEquivalence isEquivalence
+  private
+    S : Setoid 0ℓ 0ℓ
+    Setoid.Carrier S = Variant A
+    Setoid._≈_ S = _≈_
+    Setoid.isEquivalence S = isEquivalence
+
+  open import Framework.Variability.Completeness S using (Complete)
+  open Framework.Variant Variant A
+  open Data.IndexedSet S using (_≅_; _⊆[_]_; ≅[]→≅)
   open import Util.AuxProofs using (clampAt)
 
   private
@@ -98,8 +113,8 @@ module Complete (A : 𝔸) where
     → n ⊢ V ⟶ e₂
       -----------------
     → e₁ ≡ e₂
-  determinism E-zero E-zero = refl
-  determinism (E-suc l) (E-suc r) rewrite determinism l r = refl
+  determinism E-zero E-zero = Eq.refl
+  determinism (E-suc l) (E-suc r) rewrite determinism l r = Eq.refl
 
   -- smart constructor for totality proofs
   -- makes the implicit result expression e explicit
@@ -155,45 +170,39 @@ module Complete (A : 𝔸) where
     → V ≅ ⟦ e ⟧
   preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
 
-VariantList-is-Complete : Complete VariantListL
-VariantList-is-Complete {A} vs =
-  let open Complete A
-      e , derivation = total vs
-   in e , preserves derivation
+  VariantList-is-Complete : Complete (VariantListL ⇂ A)
+  VariantList-is-Complete {A} vs =
+    let e , derivation = total vs
+    in e , preserves derivation
 ```
 
 ### Soundness
 
-```text
-open import Framework.Properties.Soundness
-open import Framework.Proof.Soundness using (soundness-by-finite-semantics)
-open import Framework.Relation.Configuration using (_⊢_≣ᶜ_)
-
-module Finity (A : 𝔸) where
+```agda
+  open import Framework.Variability.Soundness S using (Sound)
+  open import Framework.Function.Properties.Finity S using (soundness-from-enumerability)
+  open import Framework.Function.Relation.Index S using (_∋_⊢_≣ⁱ_)
   open Data.List.NonEmpty using (length)
-  open import Function using (Surjective)
+  open Function using (Surjective)
 
-  open Complete A using (vl-conf; vl-fnoc)
-
-  #' : Expression VariantListL → ℕ
+  #' : VariantList A → ℕ
   #' = length
 
-  pick-conf : (e : Expression A VariantListL) → Fin (suc (#' e)) → Configuration
-  pick-conf _ = conf
+  pick-conf : (e : VariantList A) → Fin (suc (#' e)) → Configuration
+  pick-conf _ = vl-conf
 
-  pick-conf-surjective : ∀ (e : Expression VariantListL) → Surjective _≡_ (e ⊢_≣ᶜ_) (pick-conf e)
+  pick-conf-surjective : ∀ (e : VariantList A) → Surjective _≡_ (VariantListL ⇂ A ∋ e ⊢_≣ⁱ_) (pick-conf e)
   pick-conf-surjective _ zero = zero , refl
-  pick-conf-surjective [ _ ∷ [] ] (suc y) = fnoc (suc y) , refl
-  pick-conf-surjective [ e ∷ f ∷ es ] (suc y) with pick-conf-surjective [ f ∷ es ] y
+  pick-conf-surjective (_ ∷ []) (suc y) = vl-fnoc (suc y) , refl
+  pick-conf-surjective (e ∷ f ∷ es) (suc y) with pick-conf-surjective (f ∷ es) y
   ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
 
-VariantList-is-Sound : Sound VariantListL
-VariantList-is-Sound = soundness-by-finite-semantics (λ {A} e →
-      let open Finity A in
-      record
-      { size = #' e
-      ; enumerate = pick-conf e
-      ; enumerate-is-surjective = pick-conf-surjective e
-      })
+  VariantList-is-Sound : Sound (VariantListL ⇂ A)
+  VariantList-is-Sound = soundness-from-enumerability (λ e →
+        record
+        { size = #' e
+        ; enumerate = pick-conf e
+        ; enumerate-is-surjective = pick-conf-surjective e
+        })
 ```
 

@@ -23,7 +23,7 @@ open import Util.List using (find-or-last)
 open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Util.AuxProofs using (true≢false; n≡ᵇn; n<m→m≡ᵇn)
-open import Framework.V2.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
+open import Framework.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
 import Framework.V2.Constructs.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)

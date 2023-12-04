@@ -1,5 +1,7 @@
 module Framework.VariabilityLanguage where
 
+open import Data.Unit using (⊤)
+
 open import Framework.Definitions
 open import Framework.Variant
 open import Framework.FunctionLanguage as FL

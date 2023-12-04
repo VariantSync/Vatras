@@ -160,11 +160,11 @@ module Choiceₙ where
   show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-list⁺ show-a es))) <+> "⟩"
 
 -- Show how choices can be used as constructors in variability languages.
-open import Framework.V2.Variant
-open import Framework.V2.Definitions
-open import Framework.V2.VariabilityLanguage hiding (Config; Semantics)
-open import Framework.V2.FunctionLanguage using (to-is-Embedding)
-open import Framework.V2.Construct
+open import Framework.Variant
+open import Framework.Definitions
+open import Framework.VariabilityLanguage hiding (Config; Semantics)
+open import Framework.FunctionLanguage using (to-is-Embedding)
+open import Framework.Construct
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)
 
@@ -172,7 +172,7 @@ module VLChoice₂ where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choice₂.Syntax using (dim)
 
-  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
+  open import Framework.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
   open LanguageCompiler
 
   Syntax : 𝔽 → ℂ
@@ -253,7 +253,7 @@ module VLChoiceₙ where
   open Choiceₙ using (_⟨_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choiceₙ.Syntax using (dim)
 
-  open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
+  open import Framework.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
   open LanguageCompiler
 
   Syntax : 𝔽 → ℂ

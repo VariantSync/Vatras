@@ -7,11 +7,11 @@ open import Level using (_⊔_)
 open import Function using (id; flip; _$_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.Variant
-open import Framework.V2.Definitions
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.Construct
-open import Framework.V2.Compiler using (LanguageCompiler)
+open import Framework.Variant
+open import Framework.Definitions
+open import Framework.VariabilityLanguage
+open import Framework.Construct
+open import Framework.Compiler using (LanguageCompiler)
 open LanguageCompiler
 import Data.IndexedSet
 

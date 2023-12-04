@@ -1,6 +1,6 @@
 module Framework.V2.Constructs.Plain.Artifact where
 
-open import Data.List using (List; map)
+open import Data.List using (List; []; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-dec-l)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Level using (_⊔_)
@@ -42,3 +42,12 @@ children-equality refl = refl
 ... | yes a≡b | yes as≡bs = yes (Eq.cong₂ _-<_>- a≡b as≡bs)
 ... | yes a≡b | no ¬as≡bs = no (¬as≡bs ∘ children-equality)
 ... | no ¬a≡b | _         = no (¬a≡b   ∘ root-equality)
+
+{-|
+Smart constructor for artifact without children.
+-}
+leaf : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} (C : Set ℓ₂) → N → Artifact N C
+leaf _ a = a -< [] >-
+
+leaves : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} (C : Set ℓ₂) → List N → List (Artifact N C)
+leaves C = map (leaf C)

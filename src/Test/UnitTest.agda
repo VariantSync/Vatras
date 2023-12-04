@@ -2,7 +2,6 @@
 
 module Test.UnitTest where
 
-
 open import Data.List using (List)
 open import Data.List.Relation.Unary.All using (All)
 
@@ -14,7 +13,8 @@ open import Level using (0ℓ; _⊔_; suc)
 open import Size using (Size)
 
 open import Framework.Definitions
-open import Framework.Proof.Translation
+open import Framework.FunctionLanguage
+open import Framework.VariabilityLanguage
 
 open import Test.Example using (Example; _called_)
 
@@ -59,26 +59,25 @@ ForAllExamplesIn : ∀ {Data : Set}
   → Set
 ForAllExamplesIn ex utest = ForAllExamples utest ex
 
-test-translation : ∀ {L₁ L₂ : VariabilityLanguage} {A i}
-  → (Translation L₁ L₂)
-  → configuration L₁
-  → UnitTest (expression L₁ i A)
-test-translation {L₁} {L₂} {A} translate c₁ e₁ =
+test-translation : ∀ {V A}
+  → (L₁ L₂ : VariabilityLanguage V)
+  → Expression L₁ A ⇒ Expression L₂ A
+  → Config L₁ ⇔ Config L₂
+  → Config L₁
+  → UnitTest (Expression L₁ A)
+test-translation L₁ L₂ translate t c₁ e₁ =
   -- TODO: Can we somehow reuse our definition of _⊆-via_ here?
-  let tr : TranslationResult A L₁ L₂
-      tr = translate e₁
-      e₂ = expr tr
-      ⟦_⟧₁ = semantics L₁
-      ⟦_⟧₂ = semantics L₂
-   in
-      ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₂ ⟧₂ (conf tr c₁)
+  ⟦ e₁ ⟧₁ c₁ ≡ ⟦ translate e₁ ⟧₂ (to t c₁)
+  where
+    ⟦_⟧₁ = Semantics L₁
+    ⟦_⟧₂ = Semantics L₂
 
-test-translation-fnoc∘conf≡id : ∀ {L₁ L₂ : VariabilityLanguage} {A i}
-  → (Translation L₁ L₂)
-  → configuration L₁
-  → UnitTest (expression L₁ i A)
-test-translation-fnoc∘conf≡id {L₁} {_} t c₁ e₁ =
-  let tr = t e₁
-      ⟦_⟧₁ = semantics L₁
-   in
-      ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₁ ⟧₁ (fnoc tr (conf tr c₁))
+test-translation-fnoc∘conf≡id : ∀ {V A}
+  → (L₁ L₂ : VariabilityLanguage V)
+  → Config L₁ ⇔ Config L₂
+  → Config L₁
+  → UnitTest (Expression L₁ A)
+test-translation-fnoc∘conf≡id L₁ _ t c₁ e₁ =
+  ⟦ e₁ ⟧₁ c₁ ≡ ⟦ e₁ ⟧₁ (from t (to t c₁))
+  where
+    ⟦_⟧₁ = Semantics L₁

@@ -33,3 +33,4 @@ remove-first set i = set (Data.Fin.suc i)
 
 remove-last : ∀ {n} → VMap (suc n) → VMap n
 remove-last set i = set (Data.Fin.inject₁ i)
+

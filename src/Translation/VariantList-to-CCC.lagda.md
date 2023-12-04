@@ -9,7 +9,20 @@
 ## Module
 
 ```agda
-module Translation.VariantList-to-CCC where
+open import Level using (0ℓ)
+open import Relation.Binary using (Rel; IsEquivalence; Setoid)
+
+open import Framework.Definitions
+open import Framework.VariabilityLanguage
+open import Framework.Construct
+open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact)
+
+module Translation.VariantList-to-CCC
+  (Dimension : 𝔽)
+  (𝔻 : Dimension)
+  (V : 𝕍)
+  (mkArtifact : Artifact ∈ₛ V)
+  where
 ```
 
 ## Imports
@@ -19,27 +32,26 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using ([]; _∷_; map)
 open import Data.List.NonEmpty using (List⁺; _∷_) renaming (map to map⁺)
 open import Data.List.NonEmpty.Properties using () renaming (map-∘ to map⁺-∘; map-cong to map⁺-cong)
-open import Data.Product using (_,_)
+open import Data.Product using (_,_; proj₁)
 
-open import Function using (id; flip; _∘_)
+open import Function using (id; flip; _∘_; _$_)
 open import Size
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
-open import Framework.Definitions
-open import Framework.Annotation.Name using (Dimension)
-open import Lang.VariantList
-  using (VariantList; VariantListL; VariantList-is-Complete)
+open import Framework.Compiler using (LanguageCompiler)
+open import Lang.VariantList V as VL
+  using (VariantList; VariantListL)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Cₗ)
-open import Lang.CCC
-  using (CCC; CCCL; Artifact; _⟨_⟩; ⟦_⟧; describe-variant; describe-variant-preserves)
+open import Lang.CCC Dimension as CCC-Module
   renaming (Configuration to Cᶜ)
+open CCC-Module.Sem V mkArtifact
+  -- using (CCC; CCCL; Artifact; _⟨_⟩; ⟦_⟧; compile; compile-preserves)
 
-open import Framework.Proof.Translation using (Translation; TranslationResult; expr; conf; fnoc; _is-variant-preserving; expressiveness-by-translation)
-open import Framework.Relation.Expressiveness using (_≽_)
-open import Framework.Properties.Completeness using (Complete)
-open import Framework.Proof.Completeness using (completeness-by-expressiveness)
+import Framework.Variant
+open import Framework.Variants
+open import Framework.FunctionLanguage as FL
 
 open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
@@ -47,99 +59,125 @@ open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ## Translation
 
 ```agda
-𝔻 : Dimension
-𝔻 = "D"
+module Translate
+  (embed : LanguageCompiler (Variant-is-VL V) CCCL)
+  where
+  open LanguageCompiler embed using (compile; preserves) renaming (conf to v-conf)
 
-VariantList→CCC : Translation VariantListL CCCL
-VariantList→CCC vlist =
-  record
-  { expr = 𝔻 ⟨ map⁺ describe-variant vlist ⟩
-  ; conf = λ cₗ _ → cₗ
-  ; fnoc = λ c → c 𝔻
-  }
+  translate : ∀ {A} → VariantList A ⇒ CCC ∞ A
+  translate vs =  𝔻 ⟨ map⁺ compile vs ⟩
+
+  conf : Cₗ ⇒ Cᶜ
+  conf cₗ _ = cₗ
+
+  fnoc : Cᶜ ⇒ Cₗ
+  fnoc c = c 𝔻
 ```
 
 ### Properties
 
 ```agda
+  module Preservation (A : 𝔸) where
+    open Framework.Variant V A
+    open import Framework.Variability.Completeness VariantSetoid using (Complete)
+    open import Data.IndexedSet VariantSetoid using (_≅_; irrelevant-index; _⊆[_]_; _≅[_][_]_; ≅[]→≅)
 
--- The proofs for preserves-⊆ and preserves-⊇ are highly similar and contain copy-and-paste. I could not yet see though how to properly abstract to reuse.
-preserves-⊆ : ∀ {A} (l : VariantList ∞ A) (c : Cₗ) → ⟦ l ⟧ₗ c ≡ ⟦ expr (VariantList→CCC l) ⟧ (conf (VariantList→CCC l) c)
-preserves-⊆ (v ∷ []) n =
-  let c = λ _ → n
-  in
-  begin
-    ⟦ v ∷ [] ⟧ₗ n
-  ≡⟨ describe-variant-preserves v ⟩
-    ⟦ describe-variant v ⟧ c
-  ≡⟨⟩
-    ⟦ find-or-last (c 𝔻) (describe-variant v ∷ []) ⟧ c
-  ≡⟨⟩
-    ⟦ 𝔻 ⟨ map⁺ describe-variant (v ∷ []) ⟩ ⟧ c
-  ∎
-preserves-⊆ (v ∷ w ∷ zs) zero = describe-variant-preserves v
-preserves-⊆ (v ∷ w ∷ zs) (suc n) =
-  let c = λ _ → suc n
-      ⟦⟧c = flip ⟦_⟧ c
-      tail-in-ccc = describe-variant w ∷ map describe-variant zs
-  in
-  begin
-    ⟦ v ∷ w ∷ zs ⟧ₗ (suc n)
-  ≡⟨⟩
-    ⟦ w ∷ zs ⟧ₗ n
-  ≡⟨⟩
-    find-or-last n (w ∷ zs)
-  ≡⟨ Eq.cong (find-or-last n) (Eq.sym (map⁺-id (w ∷ zs))) ⟩
-    find-or-last n (map⁺ id (w ∷ zs))
-  ≡⟨ Eq.cong (find-or-last n) (map⁺-cong describe-variant-preserves (w ∷ zs)) ⟩
-    find-or-last n (map⁺ (⟦⟧c ∘ describe-variant) (w ∷ zs))
-  ≡⟨ Eq.cong (find-or-last n) (map⁺-∘ (w ∷ zs)) ⟩
-    find-or-last n (map⁺ ⟦⟧c tail-in-ccc)
-  ≡⟨ Eq.sym (map-find-or-last ⟦⟧c n tail-in-ccc) ⟩
-    ⟦⟧c (find-or-last n tail-in-ccc)
-  ≡⟨⟩
-    ⟦ find-or-last n (describe-variant w ∷ map describe-variant zs) ⟧ c
-  ≡⟨⟩
-    ⟦ find-or-last (suc n) (describe-variant v ∷ describe-variant w ∷ map describe-variant zs) ⟧ c
-  ≡⟨⟩
-    ⟦ find-or-last (c 𝔻)  (describe-variant v ∷ describe-variant w ∷ map describe-variant zs) ⟧ c
-  ≡⟨⟩
-    ⟦ 𝔻 ⟨ map⁺ describe-variant (v ∷ w ∷ zs) ⟩ ⟧ c
-  ∎
+    ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
+    open import Data.Unit using (tt)
+
+    -- The proofs for preserves-⊆ and preserves-⊇ are highly similar and contain copy-and-paste. I could not yet see though how to properly abstract to reuse.
+    preserves-⊆ : ∀ (l : VariantList A)
+      → ⟦ l ⟧ₗ ⊆[ conf ] ⟦ translate l ⟧
+    preserves-⊆ (v ∷ []) n
+      rewrite encode-idemp V A embed (λ _ → n) v
+      = refl
+    preserves-⊆ (v ∷ w ∷ zs) zero
+      rewrite encode-idemp V A embed (λ _ → zero) v
+      = refl
+    preserves-⊆ (v ∷ w ∷ zs) (suc n) =
+      begin
+        ⟦ v ∷ w ∷ zs ⟧ₗ (suc n)
+      ≡⟨⟩
+        ⟦ w ∷ zs ⟧ₗ n
+      ≡⟨⟩
+        find-or-last n (w ∷ zs)
+      ≡⟨ Eq.cong (find-or-last n) (
+        begin
+          w ∷ zs
+        ≡˘⟨ map⁺-id (w ∷ zs) ⟩
+          map⁺ id (w ∷ zs)
+        ≡˘⟨ map⁺-cong (encode-idemp V A embed c) (w ∷ zs) ⟩
+          map⁺ (⟦⟧c ∘ compile) (w ∷ zs)
+        ≡⟨ map⁺-∘ (w ∷ zs) ⟩
+          map⁺ ⟦⟧c tail-in-ccc
+        ∎)⟩
+        find-or-last n (map⁺ ⟦⟧c tail-in-ccc)
+      ≡˘⟨ map-find-or-last ⟦⟧c n tail-in-ccc ⟩
+        ⟦⟧c (find-or-last n tail-in-ccc)
+      ≡⟨⟩
+        ⟦ find-or-last n (compile w ∷ map compile zs) ⟧ c
+      ≡⟨⟩
+        ⟦ find-or-last (suc n) (compile v ∷ compile w ∷ map compile zs) ⟧ c
+      ≡⟨⟩
+        ⟦ find-or-last (c 𝔻)  (compile v ∷ compile w ∷ map compile zs) ⟧ c
+      ≡⟨⟩
+        ⟦ 𝔻 ⟨ map⁺ compile (v ∷ w ∷ zs) ⟩ ⟧ c
+      ∎
+      where
+        c = λ _ → suc n
+        ⟦⟧c = flip ⟦_⟧ c
+        tail-in-ccc = compile w ∷ map compile zs
+
+    preserves-⊇ : ∀ (l : VariantList A)
+      → ⟦ translate l ⟧ ⊆[ fnoc ] ⟦ l ⟧ₗ
+    preserves-⊇ (v ∷ []) c -- This proof is the same as for the preserves-⊆ (so look there if you want to see a step by step proof)
+      rewrite encode-idemp V A embed c v
+      = refl
+    preserves-⊇ (v ∷ w ∷ zs) c with c 𝔻
+    ... | zero = encode-idemp V A embed c v
+    ... | suc i =
+      let ⟦⟧c = flip ⟦_⟧ c
+          tail = w ∷ zs
+          tail-in-ccc = map⁺ compile tail
+      in Eq.sym $
+      begin
+        find-or-last i tail
+      ≡⟨ Eq.cong (find-or-last i) (Eq.sym (map⁺-id tail)) ⟩
+        find-or-last i (map⁺ id tail)
+      ≡˘⟨ Eq.cong (find-or-last i) (map⁺-cong (encode-idemp V A embed c) tail) ⟩
+        find-or-last i (map⁺ (⟦⟧c ∘ compile) tail)
+      ≡⟨ Eq.cong (find-or-last i) (map⁺-∘ tail) ⟩
+        find-or-last i (map⁺ ⟦⟧c tail-in-ccc)
+      ≡⟨ Eq.sym (map-find-or-last ⟦⟧c i tail-in-ccc) ⟩
+        ⟦⟧c (find-or-last i tail-in-ccc)
+      ≡⟨⟩
+        ⟦_⟧ (find-or-last i tail-in-ccc) c
+      ≡⟨⟩
+        ⟦ find-or-last i tail-in-ccc ⟧ c
+      ∎
+
+  VariantList→CCC : LanguageCompiler VariantListL CCCL
+  VariantList→CCC = record
+    { compile = translate
+    ; config-compiler = record { to = conf ; from = fnoc }
+    ; preserves = λ {A} e →
+      let open Preservation A in
+        preserves-⊆ e , preserves-⊇ e
+    }
 
 
-preserves-⊇ : ∀ {A} (l : VariantList ∞ A) (c : Cᶜ) → ⟦ l ⟧ₗ (fnoc (VariantList→CCC l) c) ≡ ⟦ expr (VariantList→CCC l) ⟧ c
-preserves-⊇ {A} (v ∷ []) c = describe-variant-preserves v -- This proof is the same as for the preserves-⊆ (so look there if you want to see a step by step proof)
-preserves-⊇ (v ∷ w ∷ zs) c with c 𝔻
-... | zero  = describe-variant-preserves v
-... | suc i =
-  let ⟦⟧c = flip ⟦_⟧ c
-      tail = w ∷ zs
-      tail-in-ccc = map⁺ describe-variant tail
-  in
-  begin
-    find-or-last i tail
-  ≡⟨ Eq.cong (find-or-last i) (Eq.sym (map⁺-id tail)) ⟩
-    find-or-last i (map⁺ id tail)
-  ≡⟨ Eq.cong (find-or-last i) (map⁺-cong describe-variant-preserves tail) ⟩
-    find-or-last i (map⁺ (⟦⟧c ∘ describe-variant) tail)
-  ≡⟨ Eq.cong (find-or-last i) (map⁺-∘ tail) ⟩
-    find-or-last i (map⁺ ⟦⟧c tail-in-ccc)
-  ≡⟨ Eq.sym (map-find-or-last ⟦⟧c i tail-in-ccc) ⟩
-    ⟦⟧c (find-or-last i tail-in-ccc)
-  ≡⟨⟩
-    ⟦_⟧ (find-or-last i tail-in-ccc) c
-  ≡⟨⟩
-    ⟦ find-or-last i tail-in-ccc ⟧ c
-  ∎
+  module _ (A : 𝔸) where
+    open Framework.Variant V A
+    open FL.Comp VariantSetoid
+    open import Framework.Variability.Completeness VariantSetoid
+    open VL.Properties A (Setoid._≈_ VariantSetoid) (Setoid.isEquivalence VariantSetoid)
+    open import Data.IndexedSet VariantSetoid using (≅[]→≅)
 
-VariantList→CCC-is-variant-preserving : VariantList→CCC is-variant-preserving
-VariantList→CCC-is-variant-preserving [ e ] = preserves-⊆ e , preserves-⊇ e
+    -- TODO: Relate Compilers and Expressiveness in their own module.
+    CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ⇂ A ≽ VariantListL ⇂ A
+    CCCL-is-at-least-as-expressive-as-VariantListL = λ e → translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
 
-CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
-CCCL-is-at-least-as-expressive-as-VariantListL = expressiveness-by-translation VariantList→CCC VariantList→CCC-is-variant-preserving
-
-CCCL-is-complete : Complete CCCL
-CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
+    CCCL-is-complete : Complete (CCCL ⇂ A)
+    CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
 ```
 

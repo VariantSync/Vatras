@@ -11,7 +11,7 @@ open import Data.Product
 open import Size
   using (Size; ∞; ↑_)
 
-open import Lang.CCC
+open import Lang.CCC String -- use strings as dimensions
 open import Test.Example
 
 CCCExample : Set
@@ -25,9 +25,6 @@ chcA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CCC (↑ ↑ i) A
 chcA-leaves es = chcA (leaves es)
 
 -- examples
-
-cccex-ekko : CCCExample
-cccex-ekko = "ekko" ≔ cc_example_walk
 
 cccex-binary : CCCExample
 cccex-binary = "binary" ≔ "D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩
@@ -60,7 +57,6 @@ cccex-nametrick = "name-trick" ≔
 
 cccex-all : List CCCExample
 cccex-all =
-  cccex-ekko ∷
   cccex-binary ∷
   cccex-binary-nested ∷
   cccex-ternary-nested ∷
