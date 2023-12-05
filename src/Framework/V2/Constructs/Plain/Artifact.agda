@@ -46,8 +46,8 @@ children-equality refl = refl
 {-|
 Smart constructor for artifact without children.
 -}
-leaf : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} (C : Set ℓ₂) → N → Artifact N C
-leaf _ a = a -< [] >-
+leaf : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} {C : Set ℓ₂} → N → Artifact N C
+leaf a = a -< [] >-
 
-leaves : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} (C : Set ℓ₂) → List N → List (Artifact N C)
-leaves C = map (leaf C)
+leaves : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} {C : Set ℓ₂} → List N → List (Artifact N C)
+leaves = map leaf

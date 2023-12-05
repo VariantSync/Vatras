@@ -1,4 +1,5 @@
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 
 module Framework.Variants where
 
@@ -20,11 +21,21 @@ data Rose : Size → 𝕍 where
   rose : ∀ {i} {A : 𝔸} → Artifact (Rose i) A → Rose (↑ i) A
 
 rose-leaf : ∀ {A : 𝔸} → A → Rose ∞ A
-rose-leaf {A} a = rose (At.leaf (Rose ∞ A) a)
+rose-leaf {A} a = rose (At.leaf a)
 
 -- Variants are also variability languages
 Variant-is-VL : ∀ (V : 𝕍) → VariabilityLanguage V
 Variant-is-VL V = Lang-⟪ V , ⊤ , (λ e c → e) ⟫
+
+open import Framework.Construct
+open import Data.Maybe using (nothing; just)
+open import Relation.Binary.PropositionalEquality as Peq using (_≡_; _≗_; refl)
+open Peq.≡-Reasoning
+
+Artifact∈ₛRose : Artifact ∈ₛ Rose ∞
+cons Artifact∈ₛRose x = rose x
+snoc Artifact∈ₛRose (rose x) = just x
+id-l Artifact∈ₛRose x = refl
 
 GrulerVL : VariabilityLanguage GrulerVariant
 GrulerVL = Variant-is-VL GrulerVariant
