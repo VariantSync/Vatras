@@ -54,8 +54,6 @@ open LanguageCompiler
 VariantEncoder : ∀ (V : 𝕍) (Γ : VariabilityLanguage V) → Set₁
 VariantEncoder V Γ = LanguageCompiler (Variant-is-VL V) Γ
 
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
-open Eq.≡-Reasoning
 
 module _ (V : 𝕍) (A : 𝔸) {Γ : VariabilityLanguage V} (encoder : VariantEncoder V Γ) where
   open import Framework.Variant V A
@@ -82,8 +80,6 @@ module _ (V : 𝕍) (A : 𝔸) {Γ : VariabilityLanguage V} (encoder : VariantEn
       v
     ∎
 
-open import Framework.Construct
-
 rose-encoder :
   ∀ (Γ : VariabilityLanguage (Rose ∞))
   → ArtifactC ⟦∈⟧ₚ Γ
@@ -99,14 +95,23 @@ rose-encoder Γ has c = record
     ⟦_⟧ᵥ = Semantics (Variant-is-VL (Rose ∞))
 
     confi : ⊤ → Config Γ
-    confi _ =  c
+    confi tt = c
 
     fnoci : Config Γ → ⊤
     fnoci _ = tt
 
+    ppp : toVariational ArtifactC (C∈ₛV has) ⟦∈⟧ᵥ Γ
+    ppp = ⟦∈⟧ₚ→⟦∈⟧ᵥ has
+
     module _ {A : 𝔸} where
       t : ∀ {i} → Rose i A → Expression Γ A
       t (rose x) = cons (C∈ₛΓ has) (map-children t x)
+
+      ⟦_⟧ₚ : ∀ {A}
+        → (e : Artifact (Expression Γ) A)
+        → (c : Config Γ)
+        → Artifact (Rose ∞) A
+      ⟦_⟧ₚ = pcong ArtifactC Γ
 
       open import Framework.Variant (Rose ∞) A using (VariantSetoid)
       open import Data.IndexedSet VariantSetoid
@@ -116,19 +121,57 @@ rose-encoder Γ has c = record
         begin
           ⟦ cons (C∈ₛΓ has) (map-children t (a -< cs >-)) ⟧ j
         ≡⟨ resistant has (map-children t (a -< cs >-)) j ⟩
-          (cons (C∈ₛV has) ∘ pcong ArtifactC Γ (map-children t (a -< cs >-))) j
+          (cons (C∈ₛV has) ∘ ⟦ map-children t (a -< cs >-)⟧ₚ) j
         ≡⟨⟩
-          cons (C∈ₛV has) (pcong ArtifactC Γ (a -< map t cs >-) j)
+          cons (C∈ₛV has) (⟦ map-children t (a -< cs >-) ⟧ₚ j)
+        ≡⟨⟩
+          (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (map-children t (a -< cs >-))
+        ≡⟨⟩
+          (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (a -< map t cs >-)
+        -- ≡⟨ Peq.cong (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (Peq.cong (a -<_>-) {!!}) ⟩
+          -- (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (a -< cs >-)
         ≡⟨ {!!} ⟩
-          cons (C∈ₛV has) (a -< cs >-)
-        ≡⟨ foo ⟩
+        -- ≡⟨ bar _ ⟩
+          -- rose            (pcong ArtifactC Γ (a -< map t cs >-) j)
+        -- ≡⟨ Peq.cong rose {!preservation ppp (a -< map t cs >-)!} ⟩
           rose (a -< cs >-)
         ∎
         where
-          foo : cons (C∈ₛV has) (a -< cs >-) ≡ rose (a -< cs >-)
-          foo with cons (C∈ₛV has) (a -< cs >-) in eq
-          ... | rose (b -< bs >-) = {!!}
+          module _ where
+            open import Data.Maybe using (just; nothing)
+            co = cons (C∈ₛV has)
+            oc = snoc (C∈ₛV has)
 
+            -- unprovable
+            -- Imagine our domain A is pairs (a , b)
+            -- Then cons could take an '(a , b) -< cs >-'
+            -- and encode it as a 'rose ((b , a) -< cs >-)'
+            -- for which exists an inverse snoc that just has
+            -- to swap the arguments in the pair again.
+            -- So we need a stronger axiom here that syntax
+            -- and not just information is retained???
+            bar : co ≗ rose
+            bar x with co x in eq
+            ... | rose y = {!!}
+
+            sno : oc ∘ rose ≗ just
+            sno a rewrite Peq.sym (bar a) = id-l (C∈ₛV has) a
+
+            foo : co (a -< cs >-) ≡ rose (a -< cs >-)
+            foo = bar (a -< cs >-)
+
+      -- lp : ∀ (e : Rose ∞ A) → ⟦ e ⟧ᵥ ⊆[ confi ] ⟦ t e ⟧
+      -- lp (rose x) i =
+      --   begin
+      --     ⟦ rose x ⟧ᵥ i
+      --   ≡⟨⟩
+      --     rose x
+      --   ≡⟨ {!!} ⟩
+      --     (cons (C∈ₛV has) ∘ pcong ArtifactC Γ (map-children t x)) (confi i)
+      --   ≡˘⟨ resistant has (map-children t x) (confi i) ⟩
+      --     ⟦ cons (C∈ₛΓ has) (map-children t x) ⟧ (confi i)
+      --   ∎
 
       p : ∀ (e : Rose ∞ A) → ⟦ e ⟧ᵥ ≅[ confi ][ fnoci ] ⟦ t e ⟧
-      p e = irrelevant-index-≅ e (λ i → refl) (λ j → h e j) confi fnoci
+      -- p (rose x) = {!!}
+      p e = irrelevant-index-≅ e (λ _ → refl) (λ j → h e j) confi fnoci
