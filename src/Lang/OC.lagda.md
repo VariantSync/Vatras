@@ -91,11 +91,11 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
   OCL : ∀ {i : Size} → VariabilityLanguage (Maybe ∘ V)
   OCL {i} = Lang-⟪ OC i , Configuration , ⟦_⟧ₒ ⟫
 
-  -- ⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (V A)
   ⟦_⟧ₒ : ∀ {i : Size} → 𝔼-Semantics (Maybe ∘ V) Configuration (OC i)
 
   -- -- recursive application of the semantics to all children of an artifact
-  ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
+  -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
+  ⟦_⟧ₒ-recurse : ∀ {i} → 𝔼-Semantics (List ∘ V) Configuration (List ∘ OC i)
   ⟦ es ⟧ₒ-recurse c =
     catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
     (map (flip ⟦_⟧ₒ c) es)
@@ -106,6 +106,8 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
 -- {-| New semantics of option calculus that replaces
 -- - selected options with their content
 -- - deselected options with an empty value.
+-- Note: I am not 100% sure but I think this semantics is nonsense because
+-- there cannot be a proof that Artifact ∈ₛ (Maybe ∘ V).
 -- -}
 -- module SemComp (V : 𝕍) (mkArtifact : Artifact ∈ₛ (Maybe ∘ V)) where mutual
 --   OCL : ∀ {i : Size} → VariabilityLanguage (Maybe ∘ V)
@@ -178,8 +180,8 @@ module IncompleteOnRose where
 
   variant-0 = rose-leaf 0
   variant-1 = rose-leaf 1
-  -- variant-0 = cons mkArtifact (At.leaf (V ℕ) 0)
-  -- variant-1 = cons mkArtifact (At.leaf (V ℕ) 1)
+  -- variant-0 = cons mkArtifact (At.leaf 0)
+  -- variant-1 = cons mkArtifact (At.leaf 1)
 
   variants-0-and-1 : VMap 1
   variants-0-and-1 zero = variant-0
