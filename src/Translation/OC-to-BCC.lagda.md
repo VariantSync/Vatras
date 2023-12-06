@@ -10,7 +10,21 @@
 ## Module
 
 ```agda
-module Translation.OC-to-BCC where
+open import Framework.Definitions
+open import Framework.Construct
+open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
+module Translation.OC-to-BCC
+  (F : 𝔽)
+  -- (V : 𝕍)
+  -- (mkArtifact : Artifact ∈ₛ V)
+  where
+
+open import Framework.Variants using (Rose; rose; Artifact∈ₛRose)
+open import Size using (Size; ↑_; _⊔ˢ_; ∞)
+V = Rose ∞
+mkArtifact = Artifact∈ₛRose
+Option = F
+
 ```
 
 ## Imports
@@ -21,28 +35,36 @@ open import Data.List using (List; _∷_; []; _∷ʳ_; _++_; length; map; catMay
 open import Data.Nat using (ℕ)
 open import Data.Product using (∃; ∃-syntax; _,_; proj₁; proj₂)
 open import Data.Vec using (Vec; []; _∷_; toList; fromList)
-open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 open import Function using (id; flip)
 
-open import Framework.Definitions
-open import Framework.Annotation.Name using (Option)
-open import Lang.OC
-     using ( OC; WFOC; WFOCL; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
-  renaming ( Artifact to Artifactₒ
-           ; Configuration to Confₒ
-           )
-open import Lang.BCC
-     using ( BCC; BCCL; _⟨_,_⟩)
-  renaming ( ⟦_⟧ to ⟦_⟧₂
-           ; Artifact to Artifact₂
-           ; Configuration to Conf₂
-           )
-open import Framework.Relation.Expressiveness using (_≽_)
-open import Framework.Proof.Translation using
-  (Translation; TranslationResult;
-   _⊆-via_;
-   _is-variant-preserving; _is-semantics-preserving;
-   expressiveness-by-translation)
+open import Framework.VariabilityLanguage
+-- open import Framework.Annotation.Name using (Option)
+-- open import Lang.OC
+--      using ( OC; WFOC; WFOCL; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
+--   renaming ( Artifact to Artifactₒ
+--            ; Configuration to Confₒ
+--            )
+-- open import Lang.BCC
+--      using ( BCC; BCCL; _⟨_,_⟩)
+--   renaming ( ⟦_⟧ to ⟦_⟧₂
+--            ; Artifact to Artifact₂
+--            ; Configuration to Conf₂
+--            )
+-- open import Framework.Relation.Expressiveness using (_≽_)
+-- open import Framework.Proof.Translation using
+--   (Translation; TranslationResult;
+--    _⊆-via_;
+--    _is-variant-preserving; _is-semantics-preserving;
+--    expressiveness-by-translation)
+import Lang.OC as LOC
+open LOC F renaming (Configuration to Confₒ; _-<_>- to Artifactₒ)
+open LOC.Sem F V mkArtifact
+import Lang.BCC as LBCC
+open LBCC F renaming (Configuration to Conf₂; _-<_>- to Artifact₂)
+open LBCC.Sem F V mkArtifact renaming (⟦_⟧ to ⟦_⟧₂)
+
+Artifactᵥ : ∀ {A} → A → List (Rose ∞ A) → Rose ∞ A
+Artifactᵥ a cs = rose (a At.-< cs >-)
 
 open import Util.AuxProofs using (id≗toList∘fromList)
 
@@ -94,14 +116,14 @@ open Zip public
 infix 4 _-<_≪_>-
 
 -- Curiously, Zip is itself a variability language (parameterized in the remaining work to do).
-Zip-is-𝕃 : ℕ → 𝕃
-Zip-is-𝕃 = Zip
+Zip-is-𝔼 : ℕ → Size → 𝔼
+Zip-is-𝔼 = Zip
 
-⟦_⟧ₜ : ∀ {w : ℕ} → Semantics (Zip w) Confₒ
+⟦_⟧ₜ : ∀ {w i} → 𝔼-Semantics V Confₒ (Zip w i)
 ⟦ a -< ls ≪ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
-   in Artifactᵥ a (⟦ls⟧ ++ ⟦rs⟧)
+   in cons mkArtifact (a At.-< ⟦ls⟧ ++ ⟦rs⟧ >-)
 ```
 
 ## Translation as Big-Step Semantics
@@ -157,7 +179,7 @@ data _⊢_⟶ₒ_ where
   T-option :
     ∀ {i   : Size  }
       {n   : ℕ     }
-      {A   : 𝔸}
+      {A   : 𝔸     }
       {a   : A     }
       {O   : Option}
       {e   : OC i A}
@@ -330,7 +352,7 @@ preservesₒ-artifact :
     {ls  : List (BCC ∞ A)}
     {es  : List (OC i A)}
     {e   : BCC ∞ A}
-  → (rs  : List (Variant ∞ A))
+  → (rs  : List (V A))
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ----------------------------------------------------------------
   →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
@@ -438,7 +460,7 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
 
 ## Translation Implementation
 
-```agda
+```text
 OC→BCC : Translation WFOCL BCCL
 OC→BCC oc =
   let bcc , trace = ⟶-is-total oc in
@@ -452,7 +474,7 @@ OC→BCC oc =
 
 ## Conclusions
 
-```agda
+```text
 ⊆-via-OC→BCC : ∀ {i : Size} {A : 𝔸}
   → (e : WFOC i A)
     --------------

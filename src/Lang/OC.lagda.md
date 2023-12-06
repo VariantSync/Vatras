@@ -36,12 +36,30 @@ open Chc.Choice₂ using () renaming (Config to Config₂)
 
 ```agda
 data OC : Size → 𝔼 where
-  atom : ∀ {i A} → Artifact (OC i) A → OC (↑ i) A
+  {-|
+  FIXME:
+  We do not reuse the artifact constructor here.
+  Below is a commented out variant of this type where we
+  reuse that constructor.
+  However, for some unfathomable reason then termination
+  checking fails within OC-to-BCC.agda
+  because prepending an 'OC i A' to a 'Vec (OC (↑ i) A) n'
+  is illegal then (but as of now just works).
+  I have no idea what's the reason for this.
+  Maybe reusing Artifact hides something from the Agda
+  compiler that it needs for termination checking.
+  -}
+  _-<_>- : ∀ {i A} → A → List (OC i A) → OC (↑ i) A
   _❲_❳ : ∀ {i : Size} {A : 𝔸} →
     Option → OC i A → OC (↑ i) A
 infixl 6 _❲_❳
 
-pattern _-<_>- a cs  = atom (a At.-< cs >-)
+-- data OC : Size → 𝔼 where
+--   atom : ∀ {i A} → Artifact (OC i) A → OC (↑ i) A
+--   _❲_❳ : ∀ {i : Size} {A : 𝔸} →
+--     Option → OC i A → OC (↑ i) A
+-- infixl 6 _❲_❳
+-- pattern _-<_>- a cs  = atom (a At.-< cs >-)
 ```
 
 An expression is well-formed if there is an artifact at the root.
