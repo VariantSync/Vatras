@@ -10,8 +10,8 @@ open import Function using (id; _∘_; flip)
 open import Size using (Size; ↑_; ∞)
 
 open import Framework.Definitions using (𝕍; 𝔸)
-open import Framework.V2.Constructs.Artifact as At using (_-<_>-; map-children; map-children-preserves) renaming (Syntax to Artifact; Construct to ArtifactC)
 open import Framework.VariabilityLanguage
+open import Construct.Artifact as At using (_-<_>-; map-children; map-children-preserves) renaming (Syntax to Artifact; Construct to ArtifactC)
 
 data GrulerVariant : 𝕍 where
   asset : ∀ {A : 𝔸} (a : A) → GrulerVariant A

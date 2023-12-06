@@ -26,8 +26,8 @@ open import Function using (_∘_)
 open import Framework.Variants
 open import Framework.VariabilityLanguage
 open import Framework.Construct
-open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-import Framework.V2.Constructs.Choices as Chc
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
+import Construct.Choices as Chc
 open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to chc-sem)
 open Chc.Choice₂ using () renaming (Config to Config₂)
 ```

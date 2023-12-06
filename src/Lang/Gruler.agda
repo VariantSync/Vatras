@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.V2.Definitions
-module Framework.V2.Lang.Gruler (F : 𝔽) where
+open import Framework.Definitions
+module Lang.Gruler (F : 𝔽) where
 
 open import Data.Bool using (Bool)
 open import Data.Maybe using (Maybe; just; nothing)
@@ -10,13 +10,13 @@ open import Size using (Size; ↑_; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.Construct
-open import Framework.V2.Constructs.Choices
-open import Framework.V2.Constructs.GrulerArtifacts
-open import Framework.V2.Variants using (GrulerVariant)
+open import Framework.VariabilityLanguage
+open import Framework.Variants using (GrulerVariant)
+open import Framework.Construct
+open import Construct.Choices
+open import Construct.GrulerArtifacts
 
-open Framework.V2.Constructs.Choices.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
+open Construct.Choices.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
 
 private
   PC = VLParallelComposition.Syntax

@@ -1,5 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-module Framework.V2.Constructs.Choices where
+module Construct.Choices where
 
 open import Data.Bool using (Bool; if_then_else_)
 open import Data.String using (String; _<+>_; intersperse)

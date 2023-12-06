@@ -1,4 +1,4 @@
-module Framework.V2.Constructs.Plain.Artifact where
+module Construct.Plain.Artifact where
 
 open import Data.List using (List; []; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-dec-l)
