@@ -162,7 +162,7 @@ module Choiceₙ where
 -- Show how choices can be used as constructors in variability languages.
 open import Framework.Variant
 open import Framework.Definitions
-open import Framework.VariabilityLanguage hiding (Config; Semantics)
+open import Framework.VariabilityLanguage as VL hiding (Config; Semantics)
 open import Framework.FunctionLanguage using (to-is-Embedding)
 open import Framework.Construct
 open import Data.Product using (_,_; proj₁; proj₂)
@@ -214,8 +214,8 @@ module VLChoice₂ where
           open I using (_≅[_][_]_; _⊆[_]_)
           open I.≅[]-Reasoning
 
-          ⟦_⟧₁ = VariabilityLanguage.Semantics Γ₁
-          ⟦_⟧₂ = VariabilityLanguage.Semantics Γ₂
+          ⟦_⟧₁ = VL.Semantics Γ₁
+          ⟦_⟧₂ = VL.Semantics Γ₂
 
           t-⊆ : (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
                 ⊆[ conf t ]
@@ -301,8 +301,8 @@ module VLChoiceₙ where
           open I using (_≅[_][_]_; _⊆[_]_)
           open I.≅[]-Reasoning
 
-          ⟦_⟧₁ = VariabilityLanguage.Semantics Γ₁
-          ⟦_⟧₂ = VariabilityLanguage.Semantics Γ₂
+          ⟦_⟧₁ = VL.Semantics Γ₁
+          ⟦_⟧₂ = VL.Semantics Γ₂
 
           t-⊆ : (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
                 ⊆[ conf t ]

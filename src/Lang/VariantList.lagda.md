@@ -13,9 +13,7 @@
 open import Level using (0ℓ)
 open import Relation.Binary using (Rel; IsEquivalence)
 open import Framework.Definitions
-module Lang.VariantList
-  (Variant : 𝕍)
-  where
+module Lang.VariantList (V : 𝕍) where
 ```
 
 ## Imports
@@ -37,25 +35,25 @@ import Data.IndexedSet
 open import Util.List using (find-or-last)
 
 open import Framework.Definitions
-open import Framework.VariabilityLanguage
 import Framework.Variant
+open import Framework.VariabilityLanguage
 ```
 
 ## Definitions
 
 ```agda
 VariantList : 𝔼
-VariantList A = List⁺ (Variant A)
+VariantList A = List⁺ (V A)
 
 -- it would be nice if the confLang would be parameterized in expressions
 Configuration : 𝕊
 Configuration = ℕ
 
 -- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → VariantList i A → Configuration → Variant i A
-⟦_⟧ : 𝔼-Semantics Variant Configuration VariantList
+⟦_⟧ : 𝔼-Semantics V Configuration VariantList
 ⟦_⟧ e c = find-or-last c e
 
-VariantListL : VariabilityLanguage Variant
+VariantListL : VariabilityLanguage V
 VariantListL = Lang-⟪ VariantList , Configuration , ⟦_⟧ ⟫
 ```
 
@@ -65,86 +63,76 @@ VariantListL = Lang-⟪ VariantList , Configuration , ⟦_⟧ ⟫
 
 ```agda
 -- prove completeness via inference rules
-module Properties
-  (A : 𝔸)
-  (_≈_ : Rel (Variant A) 0ℓ)
-  (isEquivalence : IsEquivalence _≈_)
-  where
+open import Util.AuxProofs using (clampAt)
 
-  open IsEquivalence isEquivalence
-  private
-    S : Setoid 0ℓ 0ℓ
-    Setoid.Carrier S = Variant A
-    Setoid._≈_ S = _≈_
-    Setoid.isEquivalence S = isEquivalence
+private
+  open Framework.Variant V
+  variable
+    n : ℕ
+    A : 𝔸
+    e : VariantList A
 
-  open import Framework.Variability.Completeness S using (Complete)
-  open Framework.Variant Variant A
-  open Data.IndexedSet S using (_≅_; _⊆[_]_; ≅[]→≅)
-  open import Util.AuxProofs using (clampAt)
+-- rules for translating a set of variants to a list of variants
+infix 3 _⊢_⟶_
+data _⊢_⟶_ : ∀ (n : ℕ) → VMap A n → VariantList A → Set where
+  -- a singleton set is translated to a singleton list
+  E-zero : ∀ {A} {V : VMap A zero}
+      ------------------------
+    → zero ⊢ V ⟶ V zero ∷ []
 
-  private
-    variable
-      n : ℕ
-      e : VariantList A
+  {-|
+  For a set V with more than one variant, we:
+  - put the first variant into our list
+  - remove that first variant from our set of variants
+  - translate the rest recursively.
+  -}
+  E-suc : ∀ {V : VMap A (suc n)}
+    → n ⊢ remove-first A V ⟶ e
+      -------------------------------
+    → suc n ⊢ V ⟶ V zero ∷ toList e
 
-  -- rules for translating a set of variants to a list of variants
-  infix 3 _⊢_⟶_
-  data _⊢_⟶_ : (n : ℕ) → VMap n → VariantList A → Set where
-    -- a singleton set is translated to a singleton list
-    E-zero : ∀ {V : VMap zero}
-        ------------------------
-      → zero ⊢ V ⟶ V zero ∷ []
+{-| Proof that the encoding is deterministic -}
+determinism : ∀ {e₁ e₂ : VariantList A} {V : VMap A n}
+  → n ⊢ V ⟶ e₁
+  → n ⊢ V ⟶ e₂
+    -----------------
+  → e₁ ≡ e₂
+determinism E-zero E-zero = Eq.refl
+determinism (E-suc l) (E-suc r) rewrite determinism l r = Eq.refl
 
-    {-|
-    For a set V with more than one variant, we:
-    - put the first variant into our list
-    - remove that first variant from our set of variants
-    - translate the rest recursively.
-    -}
-    E-suc : ∀ {V : VMap (suc n)}
-      → n ⊢ remove-first V ⟶ e
-        -------------------------------
-      → suc n ⊢ V ⟶ V zero ∷ toList e
+-- smart constructor for totality proofs
+-- makes the implicit result expression e explicit
+return : ∀ {V : VMap A n}
+  →         n ⊢ V ⟶ e
+    --------------------
+  → ∃[ e ] (n ⊢ V ⟶ e)
+return {e = e} ⟶e = e , ⟶e
 
-  {-| Proof that the encoding is deterministic -}
-  determinism : ∀ {e₁ e₂ : VariantList A} {V : VMap n}
-    → n ⊢ V ⟶ e₁
-    → n ⊢ V ⟶ e₂
-      -----------------
-    → e₁ ≡ e₂
-  determinism E-zero E-zero = Eq.refl
-  determinism (E-suc l) (E-suc r) rewrite determinism l r = Eq.refl
+{-| Proof that the encoding is total and thus can be computed. -}
+total :
+  ∀ (V : VMap A n)
+    --------------------
+  → ∃[ e ] (n ⊢ V ⟶ e)
+total {n = zero}  vs = return E-zero
+total {n = suc n} vs = return (E-suc (proj₂ (total (remove-first _ vs))))
 
-  -- smart constructor for totality proofs
-  -- makes the implicit result expression e explicit
-  return : ∀ {V : VMap n}
-    →         n ⊢ V ⟶ e
-      --------------------
-    → ∃[ e ] (n ⊢ V ⟶ e)
-  return {e = e} ⟶e = e , ⟶e
+{-| Encodes a set of variants into a list of variants. -}
+encode : VMap A n → VariantList A
+encode = proj₁ ∘ total
 
-  {-| Proof that the encoding is total and thus can be computed. -}
-  total :
-    ∀ (V : VMap n)
-      --------------------
-    → ∃[ e ] (n ⊢ V ⟶ e)
-  total {n = zero}  vs = return E-zero
-  total {n = suc n} vs = return (E-suc (proj₂ (total (remove-first vs))))
+-- translate configs
 
-  {-| Encodes a set of variants into a list of variants. -}
-  encode : VMap n → VariantList A
-  encode = proj₁ ∘ total
+vl-conf : Fin (suc n) → Configuration
+vl-conf i = toℕ i
 
-  -- translate configs
+vl-fnoc : Configuration → Fin (suc n)
+vl-fnoc {n} c = clampAt n c
 
-  vl-conf : Fin (suc n) → Configuration
-  vl-conf i = toℕ i
+-- proof of preservation
 
-  vl-fnoc : Configuration → Fin (suc n)
-  vl-fnoc {n} c = clampAt n c
-
-  -- proof of preservation
+module _ {A : 𝔸} where
+  open Data.IndexedSet (VariantSetoid A) using (_≅_; _⊆[_]_; ≅[]→≅)
+  open Setoid (VariantSetoid A)
 
   preserves-∈ : ∀ {V}
     → n ⊢ V ⟶ e
@@ -170,20 +158,25 @@ module Properties
     → V ≅ ⟦ e ⟧
   preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
 
-  VariantList-is-Complete : Complete (VariantListL ⇂ A)
-  VariantList-is-Complete {A} vs =
-    let e , derivation = total vs
-    in e , preserves derivation
+open import Framework.Variability.Completeness V using (Complete)
+
+VariantList-is-Complete : Complete VariantListL
+VariantList-is-Complete {A} vs =
+  let e , derivation = total vs
+  in  e , preserves derivation
 ```
 
 ### Soundness
 
 ```agda
-  open import Framework.Variability.Soundness S using (Sound)
-  open import Framework.Function.Properties.Finity S using (soundness-from-enumerability)
-  open import Framework.Function.Relation.Index S using (_∋_⊢_≣ⁱ_)
-  open Data.List.NonEmpty using (length)
-  open Function using (Surjective)
+open import Framework.Variability.Soundness V using (Sound)
+open import Framework.Function.Properties.Finity VariantSetoid using (soundness-from-enumerability)
+open import Framework.Function.Relation.Index VariantSetoid using (_∋_⊢_≣ⁱ_)
+open Data.List.NonEmpty using (length)
+open Function using (Surjective)
+
+module _ {A : 𝔸} where
+  open Setoid (VariantSetoid A)
 
   #' : VariantList A → ℕ
   #' = length
@@ -191,18 +184,17 @@ module Properties
   pick-conf : (e : VariantList A) → Fin (suc (#' e)) → Configuration
   pick-conf _ = vl-conf
 
-  pick-conf-surjective : ∀ (e : VariantList A) → Surjective _≡_ (VariantListL ⇂ A ∋ e ⊢_≣ⁱ_) (pick-conf e)
+  pick-conf-surjective : ∀ (e : VariantList A) → Surjective _≡_ (VariantListL ∋ e ⊢_≣ⁱ_) (pick-conf e)
   pick-conf-surjective _ zero = zero , refl
   pick-conf-surjective (_ ∷ []) (suc y) = vl-fnoc (suc y) , refl
   pick-conf-surjective (e ∷ f ∷ es) (suc y) with pick-conf-surjective (f ∷ es) y
   ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
 
-  VariantList-is-Sound : Sound (VariantListL ⇂ A)
-  VariantList-is-Sound = soundness-from-enumerability (λ e →
-        record
-        { size = #' e
-        ; enumerate = pick-conf e
-        ; enumerate-is-surjective = pick-conf-surjective e
-        })
-```
+VariantList-is-Sound : Sound VariantListL
+VariantList-is-Sound = soundness-from-enumerability (λ e → record
+  { size = #' e
+  ; enumerate = pick-conf e
+  ; enumerate-is-surjective = pick-conf-surjective e
+  })
 
+```

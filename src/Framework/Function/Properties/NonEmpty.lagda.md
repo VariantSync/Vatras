@@ -17,6 +17,6 @@ open FL.FunctionLanguage
 
 A variability language is not empty if there exists at least one configuration for each expression.
 ```agda
-NonEmpty : ∀ {O} (L : FunctionLanguage O) → Set
-NonEmpty L = Expression L → Input L
+NonEmpty : ∀ {O} (L : FunctionLanguage O) → Set₁
+NonEmpty L = ∀ {A} → Expression L A → Input L
 ```

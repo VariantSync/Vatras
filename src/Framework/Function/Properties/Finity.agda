@@ -1,10 +1,8 @@
 open import Relation.Binary using (Setoid)
 open import Level using (0ℓ)
 module Framework.Function.Properties.Finity
-  (O : Setoid 0ℓ 0ℓ)
+  (O : Set → Setoid 0ℓ 0ℓ)
   where
-
-open Setoid O
 
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc)
@@ -19,18 +17,17 @@ open FL.FunctionLanguage
 open FL.Comp O
 open import Framework.Function.Relation.Index O using (_∋_⊢_≣ⁱ_; ≣ⁱ-IsEquivalence; ≣ⁱ-congruent; ≣ⁱ-setoid)
 open import Framework.Function.Properties.Soundness O
-open import Data.IndexedSet O using (IndexedSet; _≅_; ≅-trans; ≅-sym; re-index)
 open import Util.Enumerable
 
-HasEnumerableNonEmptySemantics : FunctionLanguage Carrier → Set
-HasEnumerableNonEmptySemantics L = ∀ e → EnumerableAndNonEmpty (≣ⁱ-setoid L e)
+HasEnumerableNonEmptySemantics : 𝕃 → Set₁
+HasEnumerableNonEmptySemantics L = ∀ {A} e → EnumerableAndNonEmpty (≣ⁱ-setoid {A} L e)
 
 -- TODO: Move the following to the variability package?
-soundness-from-enumerability : ∀ {L : FunctionLanguage Carrier}
+soundness-from-enumerability : ∀ {L : 𝕃}
   → HasEnumerableNonEmptySemantics L
     --------------------------------
   → Sound ℕ (Fin ∘ suc) L
-soundness-from-enumerability {L} L-has-finite-semantics e =
+soundness-from-enumerability {L} L-has-finite-semantics {A} e =
       size fin
     , ⟦ e ⟧ ∘ enumerate-configuration
     , re-index
@@ -43,3 +40,4 @@ soundness-from-enumerability {L} L-has-finite-semantics e =
       where ⟦_⟧ = Semantics L
             fin = L-has-finite-semantics e
             enumerate-configuration = enumerate fin
+            open import Data.IndexedSet (O A) using (IndexedSet; _≅_; ≅-trans; ≅-sym; re-index)

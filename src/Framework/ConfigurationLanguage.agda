@@ -4,7 +4,7 @@ open import Framework.Definitions
 open import Framework.FunctionLanguage
 
 ConfigurationLanguage : (S : 𝕊) → Set₁
-ConfigurationLanguage S = FunctionLanguage S
+ConfigurationLanguage S = FunctionLanguage λ _ → S
 pattern Conf-⟪_,_,_⟫ E F S = ⟪ E , F , S ⟫
 
 -- aliases

@@ -42,8 +42,8 @@ map-children-preserves {V} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
           open I.≅[]-Reasoning
           open Eq.≡-Reasoning
 
-          ⟦_⟧₁ = VariabilityLanguage.Semantics Γ₁
-          ⟦_⟧₂ = VariabilityLanguage.Semantics Γ₂
+          ⟦_⟧₁ = Semantics Γ₁
+          ⟦_⟧₂ = Semantics Γ₂
 
           -- TODO: The following two proofs contain quite some redundancy that can probably be abstracted.
           t-⊆ : (λ c → cons mkArtifact (a -< map (λ e → ⟦ e ⟧₁ c) cs >-))

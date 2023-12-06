@@ -140,47 +140,38 @@ open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 
 module Properties
   (V : 𝕍)
-  (A : 𝔸)
   (mkArtifact : Artifact ∈ₛ V)
-  (_≈_ : Rel (V A) 0ℓ)
-  (isEquivalence : IsEquivalence _≈_)
   where
-
-  private
-    S : Setoid 0ℓ 0ℓ
-    Setoid.Carrier S = V A
-    Setoid._≈_ S = _≈_
-    Setoid.isEquivalence S = isEquivalence
-
+  open import Framework.Variant V
   import Framework.FunctionLanguage as FL
-
-  open FL.Comp S
-  open Setoid S
-  open import Data.IndexedSet S
+  open FL.Comp VariantSetoid
   open Sem V mkArtifact
 
-  -- unary choices are mandatory
-  D⟨e⟩≣e : ∀ {e : CCC ∞ A} {D : Dimension}
-      -----------------------------
-    → CCCL ⇂ A ⊢ D ⟨ e ∷ [] ⟩ ≣₁ e
-  D⟨e⟩≣e _ = refl
+  module _ {A : 𝔸} where
+    open Setoid (VariantSetoid A)
 
-  -- other way to prove the above via variant-equivalence
+    -- unary choices are mandatory
+    D⟨e⟩≣e : ∀ {e : CCC ∞ A} {D : Dimension}
+        -----------------------------
+      → CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣₁ e
+    D⟨e⟩≣e _ = refl
 
-  D⟨e⟩⊆e : ∀ {e : CCC ∞ A} {D : Dimension}
-      -------------------------------
-    → CCCL ⇂ A , CCCL ⇂ A ⊢ D ⟨ e ∷ [] ⟩ ≤ e
-  D⟨e⟩⊆e c = c , refl
+    -- other way to prove the above via variant-equivalence
 
-  e⊆D⟨e⟩ : ∀ {e : CCC ∞ A} {D : Dimension}
-      -------------------------------
-    → CCCL ⇂ A , CCCL ⇂ A ⊢ e ≤ D ⟨ e ∷ [] ⟩
-  e⊆D⟨e⟩ c = c , refl
+    D⟨e⟩⊆e : ∀ {e : CCC ∞ A} {D : Dimension}
+        -------------------------------
+      → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≤ e
+    D⟨e⟩⊆e c = c , refl
 
-  D⟨e⟩≣e' : ∀ {e : CCC ∞ A} {D : Dimension}
-      ------------------------------
-    → CCCL ⇂ A , CCCL ⇂ A ⊢ D ⟨ e ∷ [] ⟩ ≣ e
-  D⟨e⟩≣e' {e} {D} = D⟨e⟩⊆e {e} {D} , e⊆D⟨e⟩ {e} {D}
+    e⊆D⟨e⟩ : ∀ {e : CCC ∞ A} {D : Dimension}
+        -------------------------------
+      → CCCL , CCCL ⊢ e ≤ D ⟨ e ∷ [] ⟩
+    e⊆D⟨e⟩ c = c , refl
+
+    D⟨e⟩≣e' : ∀ {e : CCC ∞ A} {D : Dimension}
+        ------------------------------
+      → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣ e
+    D⟨e⟩≣e' {e} {D} = D⟨e⟩⊆e {e} {D} , e⊆D⟨e⟩ {e} {D}
 ```
 
 ## Completeness

@@ -6,7 +6,7 @@
 open import Relation.Binary using (Setoid)
 open import Level using (0ℓ)
 module Framework.Function.Properties.Soundness
-  (O : Setoid 0ℓ 0ℓ)
+  (O : Set → Setoid 0ℓ 0ℓ)
   (P : Set)
   (I : P → Set)
   where
@@ -19,19 +19,20 @@ open import Data.Product using (∃-syntax; Σ-syntax)
 open import Relation.Nullary.Negation  using (¬_)
 open import Framework.FunctionLanguage
 open import Framework.Function.Relation.Index using (≣ⁱ-setoid)
-open import Data.IndexedSet O using (IndexedSet; _≅_)
-open Setoid O
+open import Function using (_∘_)
+import Data.IndexedSet
 ```
 
 ## Definitions
 
 ```agda
-Sound : FunctionLanguage Carrier → Set
+Sound : FunctionLanguage (Setoid.Carrier ∘ O) → Set₁
 Sound ⟪ Expr , _ , ⟦_⟧ ⟫ =
-  ∀ (e : Expr)
+  ∀ {A} → let open Data.IndexedSet (O A) in
+  ∀ (e : Expr A)
     --------------------------------
-  → ∃[ p ] (Σ[ m ∈ IndexedSet (I p) ] m ≅ ⟦ e ⟧)
+  → ∃[ p ] Σ[ m ∈ IndexedSet (I p) ] m ≅ ⟦ e ⟧
 
-Unsound : FunctionLanguage Carrier → Set
+Unsound : FunctionLanguage (Setoid.Carrier ∘ O) → Set₁
 Unsound L = ¬ (Sound L)
 ```

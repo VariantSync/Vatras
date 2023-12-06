@@ -42,7 +42,7 @@ open Eq.≡-Reasoning
 
 open import Framework.Compiler using (LanguageCompiler)
 open import Lang.VariantList V as VL
-  using (VariantList; VariantListL)
+  using (VariantList; VariantListL; VariantList-is-Complete)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Cₗ)
 open import Lang.CCC Dimension as CCC-Module
   renaming (Configuration to Cᶜ)
@@ -79,7 +79,7 @@ module Translate
 ```agda
   module Preservation (A : 𝔸) where
     open Framework.Variant V A
-    open import Framework.Variability.Completeness VariantSetoid using (Complete)
+    open import Framework.Variability.Completeness V using (Complete)
     open import Data.IndexedSet VariantSetoid using (_≅_; irrelevant-index; _⊆[_]_; _≅[_][_]_; ≅[]→≅)
 
     ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
@@ -165,19 +165,18 @@ module Translate
         preserves-⊆ e , preserves-⊇ e
     }
 
+  open Framework.Variant V
+  open FL.Comp VariantSetoid
+  open import Framework.Variability.Completeness V
+  import Data.IndexedSet
 
-  module _ (A : 𝔸) where
-    open Framework.Variant V A
-    open FL.Comp VariantSetoid
-    open import Framework.Variability.Completeness VariantSetoid
-    open VL.Properties A (Setoid._≈_ VariantSetoid) (Setoid.isEquivalence VariantSetoid)
-    open import Data.IndexedSet VariantSetoid using (≅[]→≅)
+  -- TODO: Relate Compilers and Expressiveness in their own module.
+  CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
+  CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
+    where
+      open Data.IndexedSet (VariantSetoid A) using (≅[]→≅)
 
-    -- TODO: Relate Compilers and Expressiveness in their own module.
-    CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ⇂ A ≽ VariantListL ⇂ A
-    CCCL-is-at-least-as-expressive-as-VariantListL = λ e → translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
-
-    CCCL-is-complete : Complete (CCCL ⇂ A)
-    CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
+  CCCL-is-complete : Complete CCCL
+  CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
 ```
 

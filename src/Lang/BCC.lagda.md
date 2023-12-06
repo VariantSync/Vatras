@@ -87,78 +87,69 @@ open import Relation.Binary using (Setoid; Rel; IsEquivalence)
 
 module Properties
   (V : 𝕍)
-  (A : 𝔸)
   (mkArtifact : Artifact ∈ₛ V)
-  (_≈_ : Rel (V A) 0ℓ)
-  (isEquivalence : IsEquivalence _≈_)
   where
-
-  private
-    S : Setoid 0ℓ 0ℓ
-    Setoid.Carrier S = V A
-    Setoid._≈_ S = _≈_
-    Setoid.isEquivalence S = isEquivalence
-
+  open import Framework.Variant V
   import Framework.FunctionLanguage as FL
-
-  open FL.Comp S
-  open Setoid S
-  open import Data.IndexedSet S
+  open FL.Comp VariantSetoid
   open Sem V mkArtifact
 
-  ast-factoring : ∀ {i : Size} {D : Dimension} {a : A} {n : ℕ}
-    → (xs ys : Vec (BCC i A) n)
-      -------------------------------------------------------------------------------------
-    → BCCL ⇂ A ⊢
-           D ⟨ a -< toList xs >- , a -< toList ys >- ⟩
-        ≣₁ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >-
-  ast-factoring xs ys c = {!!}
+  module _ {A : 𝔸} where
+    open Setoid (VariantSetoid A)
 
-  choice-idempotency : ∀ {D} {e : BCC ∞ A}  -- do not use ∞ here?
-      ---------------------------
-    → BCCL ⇂ A ⊢ D ⟨ e , e ⟩ ≣₁ e
-  choice-idempotency {D} {e} c with c D
-  ... | false = refl
-  ... | true  = refl
+    ast-factoring : ∀ {i} {D : Dimension} {a : A} {n : ℕ}
+      → (xs ys : Vec (BCC i A) n)
+        -------------------------------------------------------------------------------------
+      → BCCL ⊢
+            D ⟨ a -< toList xs >- , a -< toList ys >- ⟩
+          ≣₁ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >-
+    ast-factoring xs ys c = {!!}
 
-  {-
-  TODO: Formulate choice-domination.
-  We cannot do this currently because we only cover total configurations so far.
-  We have to implement choice-elimination as an extra function first.
-  -}
+    choice-idempotency : ∀ {D} {e : BCC ∞ A}  -- do not use ∞ here?
+        ---------------------------
+      → BCCL ⊢ D ⟨ e , e ⟩ ≣₁ e
+    choice-idempotency {D} {e} c with c D
+    ... | false = refl
+    ... | true  = refl
 
-  {-
-  TODO: Formulate AST-congruence.
-  This is tricky because it ranges over any sub-expression below an artifact (i.e., an arbitrary element in that list).
-  Maybe using a zipper on lists (i.e., a list where we can focus any element except for just the head) is what we want here.
-  Then we could say:
-  ∀ expressions 'e' and 'e′',
-    prefix 'p', and tail 't'
-    with 'BCC , ⟦_⟧ ⊢ e ≈ e′'
-    -----------------------------------------------------------------------------------
-    'BCC , ⟦_⟧ ⊢ Artifact a (toList (p -∷ e ∷- t)) ≈ Artifact a (toList (p -∷ e′ ∷- t))'
-  where toList turns a zipper to a list and '-∷' and '∷-' denote the focus location behind the prefix and before the tail in the zipper.
-  I expect proving this theorem to be quite boilerplaty but easy in theory:
-  To show that both artifacts are semantically equivalent, we have to show that all the child nodes remain semantically equal.
-  We know this by identity for all children in p and t.
-  for e and e′, we know it per assumption.
-  -}
+    {-
+    TODO: Formulate choice-domination.
+    We cannot do this currently because we only cover total configurations so far.
+    We have to implement choice-elimination as an extra function first.
+    -}
 
-  choice-l-congruence : ∀ {i : Size} {D : Dimension} {l l′ r : BCC i A}
-    → BCCL ⇂ A ⊢ l ≣₁ l′
-      ---------------------------------------
-    → BCCL ⇂ A ⊢ D ⟨ l , r ⟩ ≣₁ D ⟨ l′ , r ⟩
-  choice-l-congruence {D = D} l≣l′ c with c D
-  ... | false = refl
-  ... | true  = l≣l′ c
+    {-
+    TODO: Formulate AST-congruence.
+    This is tricky because it ranges over any sub-expression below an artifact (i.e., an arbitrary element in that list).
+    Maybe using a zipper on lists (i.e., a list where we can focus any element except for just the head) is what we want here.
+    Then we could say:
+    ∀ expressions 'e' and 'e′',
+      prefix 'p', and tail 't'
+      with 'BCC , ⟦_⟧ ⊢ e ≈ e′'
+      -----------------------------------------------------------------------------------
+      'BCC , ⟦_⟧ ⊢ Artifact a (toList (p -∷ e ∷- t)) ≈ Artifact a (toList (p -∷ e′ ∷- t))'
+    where toList turns a zipper to a list and '-∷' and '∷-' denote the focus location behind the prefix and before the tail in the zipper.
+    I expect proving this theorem to be quite boilerplaty but easy in theory:
+    To show that both artifacts are semantically equivalent, we have to show that all the child nodes remain semantically equal.
+    We know this by identity for all children in p and t.
+    for e and e′, we know it per assumption.
+    -}
 
-  choice-r-congruence : ∀ {i : Size} {D : Dimension} {l r r′ : BCC i A}
-    → BCCL ⇂ A ⊢ r ≣₁ r′
-      ---------------------------------------
-    → BCCL ⇂ A ⊢ D ⟨ l , r ⟩ ≣₁ D ⟨ l , r′ ⟩
-  choice-r-congruence {D = D} r≣r′ c with c D
-  ... | false = r≣r′ c
-  ... | true  = refl
+    choice-l-congruence : ∀ {i : Size} {D : Dimension} {l l′ r : BCC i A}
+      → BCCL ⊢ l ≣₁ l′
+        ---------------------------------------
+      → BCCL ⊢ D ⟨ l , r ⟩ ≣₁ D ⟨ l′ , r ⟩
+    choice-l-congruence {D = D} l≣l′ c with c D
+    ... | false = refl
+    ... | true  = l≣l′ c
+
+    choice-r-congruence : ∀ {i : Size} {D : Dimension} {l r r′ : BCC i A}
+      → BCCL ⊢ r ≣₁ r′
+        ---------------------------------------
+      → BCCL ⊢ D ⟨ l , r ⟩ ≣₁ D ⟨ l , r′ ⟩
+    choice-r-congruence {D = D} r≣r′ c with c D
+    ... | false = r≣r′ c
+    ... | true  = refl
 ```
 
 ## Semantic Preserving Transformations

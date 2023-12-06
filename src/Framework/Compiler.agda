@@ -89,7 +89,7 @@ _⊕ᶜᶜ_ : ∀ {K₁ K₂ K₃ : 𝕂}
   → to-is-Embedding 1→2
   → to-is-Embedding 2→3
     --------------------
-  → to-is-Embedding(1→2 ⊕ᶜᶜ 2→3)
+  → to-is-Embedding (1→2 ⊕ᶜᶜ 2→3)
 ⊕ᶜᶜ-stable 1→2 2→3 s1 s2 c₁ =
   let open Eq.≡-Reasoning in
   begin

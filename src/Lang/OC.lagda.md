@@ -175,7 +175,7 @@ As our counter example, we use the set `{0, 1}` as our variants:
 module IncompleteOnRose where
   open import Framework.Variants using (Rose; Artifact∈ₛRose)
   open import Framework.Variant (Rose ∞) ℕ
-  open import Framework.Variability.Completeness VariantSetoid using (Incomplete)
+  open import Framework.Variability.Completeness (Rose ∞) using (Incomplete)
   open Sem (Rose ∞) Artifact∈ₛRose
 
   variant-0 = rose-leaf 0
@@ -206,7 +206,7 @@ So we show that given an expression `e`, a proof that `e` can be configured to `
 Finally, we can conclude incompleteness by showing that assuming completeness yields a contradiction using our definition above.
 We pattern match on the assumed completeness evidence to unveil the expression `e` and the proofs that it can be configured to `0` and `1`.
 ```agda
-  OC-is-incomplete : Incomplete (WFOCL ⇂ ℕ)
+  OC-is-incomplete : Incomplete WFOCL
   OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
   ... | e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 e (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
 ```
