@@ -15,9 +15,9 @@ open import Relation.Binary using (Rel; IsEquivalence; Setoid)
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
 open import Framework.Construct
-open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact)
+open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
-module Translation.VariantList-to-CCC
+module Translation.Lang.VariantList-to-CCC
   (Dimension : 𝔽)
   (𝔻 : Dimension)
   (V : 𝕍)

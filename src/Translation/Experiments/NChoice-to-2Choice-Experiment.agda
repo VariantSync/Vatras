@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Definitions
-module Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment where
+module Translation.Experiments.NChoice-to-2Choice-Experiment where
 
 open import Data.Nat using (ℕ)
 open import Data.Nat.Show renaming (show to show-ℕ)
@@ -13,7 +13,7 @@ open import Function using (id)
 
 import Relation.Binary.PropositionalEquality as Eq
 
-open import Framework.V2.Constructs.Choices as Chc
+open import Construct.Choices as Chc
 open Chc.Choice₂
   using (_⟨_,_⟩)
   renaming
@@ -32,7 +32,7 @@ open Chc.Choiceₙ
     )
 
 open import Framework.Annotation.IndexedName
-open import Framework.V2.Translation.Construct.NChoice-to-2Choice as N→2
+open import Translation.Construct.NChoice-to-2Choice as N→2
 module Trans = N→2.Translate
 
 open import Util.Named

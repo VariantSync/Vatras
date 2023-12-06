@@ -17,12 +17,13 @@ open import Util.Named
 show-in-semantics : String → String
 show-in-semantics s = "⟦ " ++ s ++ " ⟧"
 
-show-eval : ∀ {V A} {L : VariabilityLanguage V}
+show-eval : ∀ {V A}
+  → (L : VariabilityLanguage V)
   → (V A → String)
   → Named (Config L)
   → Named (Expression L A)
   → Lines
-show-eval {L = L} show-variant (c called cname) (e called ename) =
+show-eval L show-variant (c called cname) (e called ename) =
   > show-in-semantics ename ++ " " ++ cname ++ " = " ++ (show-variant (⟦ e ⟧ c))
   where
     ⟦_⟧ = Semantics L

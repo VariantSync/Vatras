@@ -1,4 +1,4 @@
-module Framework.V2.Constructs.Artifact where
+module Construct.Artifact where
 
 open import Data.List using (List; map)
 open import Data.List.Properties using (map-cong; map-∘)
@@ -15,7 +15,7 @@ open import Framework.Compiler using (LanguageCompiler)
 open LanguageCompiler
 import Data.IndexedSet
 
-open import Framework.V2.Constructs.Plain.Artifact public
+open import Construct.Plain.Artifact public
 
 Syntax : ℂ
 Syntax E A = Artifact A (E A)

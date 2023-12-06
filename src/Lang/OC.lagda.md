@@ -26,8 +26,8 @@ open import Function using (_∘_)
 open import Framework.Variants
 open import Framework.VariabilityLanguage
 open import Framework.Construct
-open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-import Framework.V2.Constructs.Choices as Chc
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
+import Construct.Choices as Chc
 open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to chc-sem)
 open Chc.Choice₂ using () renaming (Config to Config₂)
 ```
@@ -120,37 +120,10 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
 
   ⟦ a -< es >- ⟧ₒ c = just (cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-))
   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
-
--- {-| New semantics of option calculus that replaces
--- - selected options with their content
--- - deselected options with an empty value.
--- Note: I am not 100% sure but I think this semantics is nonsense because
--- there cannot be a proof that Artifact ∈ₛ (Maybe ∘ V).
--- -}
--- module SemComp (V : 𝕍) (mkArtifact : Artifact ∈ₛ (Maybe ∘ V)) where mutual
---   OCL : ∀ {i : Size} → VariabilityLanguage (Maybe ∘ V)
---   OCL {i} = Lang-⟪ OC i , Configuration , ⟦_⟧ₒ ⟫
-
---   ⟦_⟧ₒ : ∀ {i : Size} → 𝔼-Semantics (Maybe ∘ V) Configuration (OC i)
---   ⟦ atom a ⟧ₒ c = PlainConstruct-Semantics Artifact-Construct mkArtifact OCL a c
---   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
-
--- module Rosee where
---   open import Framework.Variants using (Rose; Artifact∈ₛRose)
-
---   p : Artifact ∈ₛ (Maybe ∘ Rose ∞)
---   cons p (a At.-< cs >-) = just (rose (a At.-< catMaybes cs >-))
---   snoc p (just (rose (a At.-< cs >-))) = just (a At.-< map just cs >-)
---   snoc p nothing = nothing
---   -- I think this is unprovable
---   id-l p (a At.-< cs >-) = {!!}
-
---   open SemComp (Rose ∞) p
 ```
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
-  -- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → WFOC i A → Configuration → Variant i A
   ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V Configuration (WFOC i)
   ⟦ Root a es ⟧ c = cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-)
 
@@ -237,12 +210,15 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Utility
 
 ```agda
-oc-leaf : ∀ {i : Size} {A : Set} → A → OC (↑ i) A
+oc-leaf : ∀ {i : Size} {A : 𝔸} → A → OC (↑ i) A
 oc-leaf a = a -< [] >-
 
 -- alternative name that does not require writing tortoise shell braces
-opt : ∀ {i : Size} {A : Set} → Option → OC i A → OC (↑ i) A
+opt : ∀ {i : Size} {A : 𝔸} → Option → OC i A → OC (↑ i) A
 opt O = _❲_❳ O
+
+singleton : ∀ {i : Size} {A : 𝔸} → A → OC i A → OC (↑ i) A
+singleton a e = a -< e ∷ [] >-
 
 open import Util.Named
 

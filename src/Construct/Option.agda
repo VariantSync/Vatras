@@ -1,4 +1,4 @@
-module Framework.V2.Constructs.Option where
+module Construct.Option where
 
 open import Data.Bool using (Bool; if_then_else_)
 open import Data.Maybe using (Maybe; nothing; just)

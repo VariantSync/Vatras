@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.V2.Definitions
-module Framework.V2.Translation.Lang.2ADT-to-NADT {F : 𝔽} {A : 𝔸} where
+open import Framework.Definitions
+module Translation.Lang.2ADT-to-NADT {F : 𝔽} {A : 𝔸} where
 
 open import Data.Nat using (ℕ)
 open import Level using (0ℓ)
@@ -12,15 +12,15 @@ open Eq.≡-Reasoning
 
 import Data.IndexedSet
 
-import Framework.V2.Constructs.Choices
-open Framework.V2.Constructs.Choices.Choiceₙ renaming (map to mapₙ)
+import Construct.Choices
+open Construct.Choices.Choiceₙ renaming (map to mapₙ)
 
-open import Framework.V2.Variant using (VariantSetoid)
-open import Framework.V2.Variants using (GrulerVariant)
-open import Framework.V2.Lang.2ADT
-open import Framework.V2.Lang.NADT
+open import Framework.Variant using (VariantSetoid)
+open import Framework.Variants using (GrulerVariant)
+open import Lang.2ADT
+open import Lang.NADT
 
-import Framework.V2.Translation.Construct.2Choice-to-NChoice {F} as 2→N
+import Translation.Construct.2Choice-to-NChoice {F} as 2→N
 open 2→N.Translate using (convert)
 
 compile : ∀ {i} → 2ADT F i A → NADT F i A

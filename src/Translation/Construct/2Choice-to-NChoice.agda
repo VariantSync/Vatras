@@ -1,5 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-module Framework.V2.Translation.Construct.2Choice-to-NChoice {Q : Set} where
+module Translation.Construct.2Choice-to-NChoice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true)
 open import Data.List using (List; _∷_; [])
@@ -13,9 +13,9 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 import Data.IndexedSet
 
-open import Framework.V2.Definitions using (𝔽)
-open import Framework.V2.Compiler using (ConstructCompiler)
-open import Framework.V2.Constructs.Choices as Chc
+open import Framework.Definitions using (𝔽)
+open import Framework.Compiler using (ConstructCompiler)
+open import Construct.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 open Chc.VLChoice₂ using () renaming (Construct to C₂)

@@ -4,6 +4,7 @@
 module Test.Test.VariantList-Completeness where
 
 open import Level using (Level; 0ℓ; Lift; lift) renaming (suc to lsuc)
+open import Size using (∞)
 
 open import Data.Nat using (ℕ; suc)
 open import Data.Fin using (Fin) renaming (zero to f-zero; suc to f-suc)
@@ -14,20 +15,18 @@ open import Util.Named using (get)
 open import Test.Examples.Variants
 open import Test.UnitTest
 
-open import Framework.Definitions using (VMap)
-open import Lang.VariantList as VL using (Configuration; ⟦_⟧)
+open import Framework.Variants using (Rose; Artifact∈ₛRose)
+Variant = Rose ∞
+open import Lang.VariantList Variant using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
+open import Framework.Variant Variant using (VMap)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VMap A n)
-test-encode-conf {A} i 𝕍 =
-  let open VL.Complete A using (encode; conf)
-   in ⟦ encode 𝕍 ⟧ (conf i) ≡ 𝕍 i
+test-encode-conf i vs = ⟦ encode vs ⟧ (vl-conf i) ≡ vs i
 
 test-encode-fnoc : ∀ {A n} → Configuration → UnitTest (VMap A n)
-test-encode-fnoc {A} c 𝕍 =
-  let open VL.Complete A using (encode; fnoc)
-   in ⟦ encode 𝕍 ⟧ c ≡ 𝕍 (fnoc c)
+test-encode-fnoc c vs = ⟦ encode vs ⟧ c ≡ vs (vl-fnoc c)
 
--- is there a better way to write these shortcuts?
+-- -- is there a better way to write these shortcuts?
 0f : ∀ {n} → Fin (suc n)
 0f = f-zero
 1f : ∀ {n} → Fin (suc (suc n))

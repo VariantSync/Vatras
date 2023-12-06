@@ -2,12 +2,12 @@
 
 open import Framework.Definitions
 
-module Framework.V2.Constructs.NestedChoice (F : 𝔽) where
+module Construct.NestedChoice (F : 𝔽) where
 
 open import Data.String using (String)
 open import Size using (Size; ↑_)
 
-import Framework.V2.Constructs.Choices as Chc
+import Construct.Choices as Chc
 open Chc.Choice₂ renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 
 data NestedChoice : Size → 𝔼 where

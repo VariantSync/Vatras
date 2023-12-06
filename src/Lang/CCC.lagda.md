@@ -24,33 +24,8 @@ open import Data.List
 open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
   renaming (map to map⁺)
--- open import Data.Nat
---   using (ℕ; zero; suc; NonZero)
 open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
--- open import Function
---   using (flip)
--- open import Size
---   using (Size; ↑_; ∞)
-
--- import Relation.Binary.PropositionalEquality as Eq
--- open Eq
---   using (_≡_; refl)
-
--- Imports of own modules
--- open import Framework.Annotation.Name using (Dimension)
--- open import Framework.Definitions using (
---   𝔸;
---   Variant; Artifactᵥ; VMap; forget-last; VariantSetoid;
---   𝕃; ℂ; VariabilityLanguage;
---   Semantics;
---   fromExpression; Artifactˡ;
---   forget-variant-size; sequence-forget-size)
--- open import Framework.Function.Relation.Expression using (_⊢_≣_; _,_⊢_⊆ᵥ_; _,_⊢_≚_; ≣→≚)
-
--- open import Util.List using (find-or-last) --lookup-clamped)
-
-
 
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
@@ -58,8 +33,8 @@ open import Size using (Size; ↑_; ∞)
 open import Framework.Variants
 open import Framework.VariabilityLanguage
 open import Framework.Construct
-open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-import Framework.V2.Constructs.Choices as Chc
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
+import Construct.Choices as Chc
 open Chc.VLChoiceₙ using () renaming (Syntax to Choiceₙ; Semantics to chc-sem)
 open Chc.Choiceₙ using () renaming (Config to Configₙ)
 ```
@@ -67,15 +42,8 @@ open Chc.Choiceₙ using () renaming (Config to Configₙ)
 ## Syntax
 
 ```agda
--- Tag : Set
--- Tag = ℕ
-
--- data CCC : 𝕃 where
-  -- Artifact : Artifactˡ CCC
-  -- _⟨_⟩ : ∀ {i : Size} {A : 𝔸} →
-    -- Dimension → List⁺ (CCC i A) → CCC (↑ i) A
 data CCC : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact  (CCC i) A → CCC (↑ i) A
+   atom : ∀ {i A} → Artifact (CCC i) A → CCC (↑ i) A
    chc  : ∀ {i A} → Choiceₙ Dimension (CCC i) A → CCC (↑ i) A
 
 pattern _-<_>- a cs = atom (a At.-< cs >-)
@@ -111,24 +79,6 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
     ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V (Configₙ Dimension) (CCC i)
     ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact CCCL x
     ⟦ chc  x ⟧ = chc-sem V Dimension CCCL id x
--- Selects the alternative at the given tag.
--- choice-elimination : ∀ {A : 𝔸} → Tag → List⁺ A → A
--- choice-elimination = find-or-last
-
--- {-|
--- Semantics of core choice calculus.
--- The semantic domain is a function that generates variants given configurations.
--- -}
--- ⟦_⟧ : Semantics CCC Configuration
--- ⟦ Artifact a es ⟧ c = Artifactᵥ a (map (flip ⟦_⟧ c) es)
--- ⟦ D ⟨ alternatives ⟩ ⟧ c = ⟦ choice-elimination (c D) alternatives ⟧ c
-
--- CCCL : VariabilityLanguage
--- CCCL = record
---   { expression    = CCC
---   ; configuration = Configuration
---   ; semantics     = ⟦_⟧
---   }
 ```
 
 ## Properties

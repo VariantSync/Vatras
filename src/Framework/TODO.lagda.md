@@ -1,19 +1,19 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 
-module Framework.V2.TODO where
+module Framework.TODO where
 
 -- open import Relation.Binary using (Setoid)
 import Relation.Binary.PropositionalEquality as Eq
 open import Level using (0ℓ)
 
-open import Framework.V2.Definitions
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.Construct
-import Framework.V2.Constructs.Choices as Chc
+open import Framework.Definitions
+open import Framework.VariabilityLanguage
+open import Framework.Construct
+import Construct.Choices as Chc
 open Chc.VLChoice₂ renaming (Syntax to 2Choice)
 
-open import Framework.V2.Constructs.NestedChoice using (NestedChoice)
+open import Construct.NestedChoice using (NestedChoice)
 ```
 
 # TODOs for Framework V.2

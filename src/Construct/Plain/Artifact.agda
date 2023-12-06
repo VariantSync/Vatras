@@ -1,6 +1,7 @@
-module Framework.V2.Constructs.Plain.Artifact where
+module Construct.Plain.Artifact where
 
 open import Data.List using (List; []; map)
+open import Data.List.NonEmpty using (List⁺) renaming (map to map⁺)
 open import Data.List.Properties using () renaming (≡-dec to ≡-dec-l)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Level using (_⊔_)
@@ -51,3 +52,6 @@ leaf a = a -< [] >-
 
 leaves : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} {C : Set ℓ₂} → List N → List (Artifact N C)
 leaves = map leaf
+
+leaves⁺ : ∀ {ℓ₁ ℓ₂} {N : Set ℓ₁} {C : Set ℓ₂} → List⁺ N → List⁺ (Artifact N C)
+leaves⁺ = map⁺ leaf

@@ -1,5 +1,5 @@
 {-# OPTIONS --sized-types #-}
-module Framework.V2.Translation.Construct.NChoice-to-2Choice {Q : Set} where
+module Translation.Construct.NChoice-to-2Choice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])
@@ -24,7 +24,7 @@ open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Util.AuxProofs using (true≢false; n≡ᵇn; n<m→m≡ᵇn)
 open import Framework.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
-import Framework.V2.Constructs.Choices as Chc
+import Construct.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
 open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
 
@@ -33,7 +33,7 @@ open import Data.String using (String)
 private
   I = IndexedName Q
 
-open import Framework.V2.Constructs.NestedChoice I as NestedChoice public using (NestedChoice; value; choice) renaming (⟦_⟧ to ⟦_⟧ₒ)
+open import Construct.NestedChoice I as NestedChoice public using (NestedChoice; value; choice) renaming (⟦_⟧ to ⟦_⟧ₒ)
 
 {-|
 There needs to be at least one true alternative.

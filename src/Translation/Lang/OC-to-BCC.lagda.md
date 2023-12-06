@@ -12,19 +12,14 @@
 ```agda
 open import Framework.Definitions
 open import Framework.Construct
-open import Framework.V2.Constructs.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-module Translation.OC-to-BCC
-  (F : 𝔽)
-  -- (V : 𝕍)
-  -- (mkArtifact : Artifact ∈ₛ V)
-  where
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
+module Translation.Lang.OC-to-BCC (F : 𝔽) where
 
 open import Framework.Variants using (Rose; rose; Artifact∈ₛRose)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 V = Rose ∞
 mkArtifact = Artifact∈ₛRose
 Option = F
-
 ```
 
 ## Imports
@@ -35,27 +30,9 @@ open import Data.List using (List; _∷_; []; _∷ʳ_; _++_; length; map; catMay
 open import Data.Nat using (ℕ)
 open import Data.Product using (∃; ∃-syntax; _,_; proj₁; proj₂)
 open import Data.Vec using (Vec; []; _∷_; toList; fromList)
-open import Function using (id; flip)
+open import Function using (id; _∘_; flip)
 
 open import Framework.VariabilityLanguage
--- open import Framework.Annotation.Name using (Option)
--- open import Lang.OC
---      using ( OC; WFOC; WFOCL; Root; _❲_❳; ⟦_⟧; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse)
---   renaming ( Artifact to Artifactₒ
---            ; Configuration to Confₒ
---            )
--- open import Lang.BCC
---      using ( BCC; BCCL; _⟨_,_⟩)
---   renaming ( ⟦_⟧ to ⟦_⟧₂
---            ; Artifact to Artifact₂
---            ; Configuration to Conf₂
---            )
--- open import Framework.Relation.Expressiveness using (_≽_)
--- open import Framework.Proof.Translation using
---   (Translation; TranslationResult;
---    _⊆-via_;
---    _is-variant-preserving; _is-semantics-preserving;
---    expressiveness-by-translation)
 import Lang.OC as LOC
 open LOC F renaming (Configuration to Confₒ; _-<_>- to Artifactₒ)
 open LOC.Sem F V mkArtifact
@@ -460,39 +437,46 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
 
 ## Translation Implementation
 
-```text
-OC→BCC : Translation WFOCL BCCL
-OC→BCC oc =
-  let bcc , trace = ⟶-is-total oc in
-  record
-  { size = ∞
-  ; expr = bcc
-  ; conf = id
-  ; fnoc = id
+```agda
+open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Variant V
+open import Framework.FunctionLanguage as FL using (_⇔_)
+open FL.Comp VariantSetoid
+
+compile : ∀ {i : Size} {A : 𝔸} → WFOC i A → BCC ∞ A
+compile = proj₁ ∘ ⟶-is-total
+
+compile-preserves : ∀ {i : Size} {A : 𝔸}
+  → let open IVSet A using (_≅[_][_]_) in
+    (e : WFOC i A)
+    ----------------------------
+  → ⟦ e ⟧ ≅[ id ][ id ] ⟦ compile e ⟧₂
+compile-preserves {i} {A} e = left , Eq.sym ∘ left -- this works because id is our config translation
+  where
+    open IVSet A using (_⊆[_]_)
+
+    left : ⟦ e ⟧ ⊆[ id ] ⟦ compile e ⟧₂
+    left c =
+      let trans      = ⟶-is-total e
+          derivation = proj₂ trans
+       in preserves c derivation
+
+compile-configs : Confₒ ⇔ Conf₂
+compile-configs = record { to = id ; from = id }
+
+OC→BCC : LanguageCompiler WFOCL BCCL
+OC→BCC = record
+  { compile = compile
+  ; config-compiler = compile-configs
+  ; preserves = compile-preserves
   }
-```
-
-## Conclusions
-
-```text
-⊆-via-OC→BCC : ∀ {i : Size} {A : 𝔸}
-  → (e : WFOC i A)
-    --------------
-  → e ⊆-via OC→BCC
-⊆-via-OC→BCC e c =
-  let trans      = ⟶-is-total e
-      derivation = proj₂ trans
-   in preserves c derivation
-
--- When the translation of configurations is id, then the theorems for both sides become equivalent.
--- TODO: Maybe we want to gerneralize this observation to the framework?
-OC→BCC-is-variant-preserving : OC→BCC is-variant-preserving
-OC→BCC-is-variant-preserving e = ⊆-via-OC→BCC (get e) , ⊆-via-OC→BCC (get e)
-
-OC→BCC-is-semantics-preserving : OC→BCC is-semantics-preserving
-OC→BCC-is-semantics-preserving = OC→BCC-is-variant-preserving , λ e c → refl
 
 BCC-is-at-least-as-expressive-as-OC : BCCL ≽ WFOCL
-BCC-is-at-least-as-expressive-as-OC = expressiveness-by-translation OC→BCC OC→BCC-is-variant-preserving
+BCC-is-at-least-as-expressive-as-OC = expressiveness-by-translation compile compile-preserves-semantics
+  where
+    -- this drops the knowledge on id, id being the configuration compiler
+    compile-preserves-semantics : SemanticsPreserving WFOCL BCCL compile
+    compile-preserves-semantics {A} e =
+      let open IVSet A using (≅[]→≅) in
+      ≅[]→≅ (compile-preserves e)
 ```
-

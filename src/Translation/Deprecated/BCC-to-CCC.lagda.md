@@ -9,7 +9,7 @@
 ## Module
 
 ```agda
-module Translation.BCC-to-CCC where
+module Translation.Deprecated.BCC-to-CCC where
 ```
 
 ## Imports

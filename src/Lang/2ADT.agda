@@ -1,18 +1,18 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.V2.Definitions
+open import Framework.Definitions
 -- TODO: Generalize level of F
-module Framework.V2.Lang.2ADT (F : 𝔽) where
+module Lang.2ADT (F : 𝔽) where
 
 open import Data.Bool using (Bool)
 open import Function using (id)
 open import Size using (Size; ↑_)
 
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.Constructs.GrulerArtifacts
-open import Framework.V2.Constructs.Choices
-open import Framework.V2.Constructs.NestedChoice F public
-open import Framework.V2.Variants using (GrulerVariant)
+open import Framework.VariabilityLanguage
+open import Framework.Variants using (GrulerVariant)
+open import Construct.GrulerArtifacts
+open import Construct.Choices
+open import Construct.NestedChoice F public
 
 private
   Choice₂ = VLChoice₂.Syntax

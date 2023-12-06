@@ -1,12 +1,14 @@
-module Framework.V2.Constructs.GrulerArtifacts where
+{-# OPTIONS --sized-types #-}
+
+module Construct.GrulerArtifacts where
 
 open import Data.Maybe using (just; nothing)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.Definitions
-open import Framework.V2.Variants
-open import Framework.V2.Construct
-open import Framework.V2.VariabilityLanguage
+open import Framework.Definitions
+open import Framework.Variants
+open import Framework.VariabilityLanguage
+open import Framework.Construct
 
 -- this is just a value
 data Leaf {ℓ} (A : Set ℓ) : Set ℓ where

@@ -14,60 +14,58 @@ module Translation.LanguageMap where
 
 ## Imports
 
-### Languages
-
 ```agda
-open import Lang.OC
-     using (OC; WFOC; WFOCL; ⟦_⟧; ⟦_⟧ₒ; OC-is-incomplete)
-  renaming (Configuration to Confₒ)
-open import Lang.BCC
-     using (BCC; BCCL)
-  renaming ( ⟦_⟧ to ⟦_⟧₂
-           ; Configuration to Conf₂
-           )
-```
+open import Size using (∞)
 
-### Properties and Relations
+open import Framework.Variants using (Rose; Artifact∈ₛRose)
+Variant = Rose ∞
+mkArtifact = Artifact∈ₛRose
 
-```agda
-open import Framework.Relation.Expressiveness
-open import Framework.Properties.Completeness
-open import Framework.Proof.Completeness
-```
+open import Framework.Variant Variant using (VariantSetoid)
+open import Framework.Definitions using (𝕍; 𝔽)
+open import Framework.FunctionLanguage as FL using ()
+open FL.Comp VariantSetoid using (_⋡_)
+open import Framework.Variability.Completeness Variant
+open import Framework.Variability.Soundness Variant
 
-### Translations
-```agda
+import Lang.OC as OCL
+import Lang.BCC as BCCL
+
 -- DONE
-import Translation.OC-to-BCC
-import Translation.BCC-to-CCC
+import Translation.Lang.OC-to-BCC
+-- import Translation.Lang.BCC-to-CCC
 
 -- IN PROGRESS
-import Translation.CCC-to-BCC
+-- import Translation.Lang.CCC-to-BCC
 ```
 
 ## Core Choice Calculus vs Binary Choice Calculus
 
 ```agda
-open Translation.CCC-to-BCC using (
-  -- TODO: Still unproven
-  -- BCC-is-at-least-as-expressive-as-CCC
-  ) public
+-- open Translation.CCC-to-BCC using (
+--   -- TODO: Still unproven
+--   -- BCC-is-at-least-as-expressive-as-CCC
+--   ) public
 
-open Translation.BCC-to-CCC using (
-  CCC-is-at-least-as-expressive-as-BCC;
-  BCC→CCC-is-semantics-preserving
-  ) public
+-- open Translation.BCC-to-CCC using (
+--   CCC-is-at-least-as-expressive-as-BCC;
+--   BCC→CCC-is-semantics-preserving
+--   ) public
 ```
 
 ## Option Calculus vs Binary Choice Calculus
 
 ```agda
-{- TODO: Substitute completeness proof of BCC here. -}
-OC-is-less-expressive-than-BCC : WFOCL is-less-expressive-than BCCL
-OC-is-less-expressive-than-BCC = less-expressive-from-completeness {!!} OC-is-incomplete
+module _ (F : 𝔽) where
+  open OCL.Sem  F Variant mkArtifact using (WFOCL)
+  open BCCL.Sem F Variant mkArtifact using (BCCL)
+  open OCL.IncompleteOnRose F using (OC-is-incomplete)
 
-open Translation.OC-to-BCC using (
-  BCC-is-at-least-as-expressive-as-OC;
-  OC→BCC-is-semantics-preserving
+  {- TODO: Substitute completeness proof of BCC here. -}
+  OC-is-less-expressive-than-BCC : WFOCL ⋡ BCCL
+  OC-is-less-expressive-than-BCC = less-expressive-from-completeness {!!} OC-is-incomplete
+
+open Translation.Lang.OC-to-BCC using (
+  BCC-is-at-least-as-expressive-as-OC
   ) public
 ```

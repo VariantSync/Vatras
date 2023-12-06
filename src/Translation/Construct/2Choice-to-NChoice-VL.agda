@@ -1,6 +1,6 @@
-open import Framework.V2.Definitions
+open import Framework.Definitions
 
-module Framework.V2.Translation.Construct.2Choice-to-NChoice-VL where
+module Translation.Construct.2Choice-to-NChoice-VL where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
@@ -12,16 +12,16 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
 
 import Data.IndexedSet
 
-open import Framework.V2.Variant
-open import Framework.V2.FunctionLanguage using (to-is-Embedding)
-open import Framework.V2.VariabilityLanguage
-open import Framework.V2.Construct
-open import Framework.V2.Compiler using (LanguageCompiler)
+open import Framework.Variant
+open import Framework.FunctionLanguage using (to-is-Embedding)
+open import Framework.VariabilityLanguage
+open import Framework.Construct
+open import Framework.Compiler using (LanguageCompiler)
 
-import Framework.V2.Translation.Construct.2Choice-to-NChoice as 2→N
+import Translation.Construct.2Choice-to-NChoice as 2→N
 open 2→N using (ConfContract; FnocContract)
 
-open import Framework.V2.Constructs.Choices as Chc
+open import Construct.Choices as Chc
 open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
 open Chc.Choiceₙ using () renaming (Config to Configₙ; map to mapₙ)
 

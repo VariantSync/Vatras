@@ -6,17 +6,14 @@ open import Data.List using (List; []; _∷_; [_])
 open import Data.String using (String)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Annotation.Name using (Option)
-open import Framework.Definitions using (𝔸)
-open import Lang.OC
+-- open import Framework.Annotation.Name using (Option)
+open import Framework.Definitions using (𝔸; 𝔽)
+open import Lang.OC String
 
 open import Test.Example
 
 OCExample : Set
 OCExample = Example (WFOC ∞ String)
-
-singleton : ∀ {i : Size} {A : 𝔸} → A → OC i A → OC (↑ i) A
-singleton a e = Artifact a [ e ]
 
 optex-unary : OCExample
 optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "lol") ])
