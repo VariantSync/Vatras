@@ -3,7 +3,7 @@
 module Framework.V2.Lang.FST where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat)
+open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat; reverse)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
 open import Data.Product using (Σ; ∃-syntax; _×_; _,_; proj₁; proj₂)
@@ -51,6 +51,12 @@ open TODO-MOVE-TO-AUX-OR-USE-STL
 module Defs {A : 𝔸} where
   data PlainFST : Set where
     pnode : A → List PlainFST → PlainFST
+
+  PlainFST-induction : {B : Set} → (A → List B → B) → PlainFST → B
+  PlainFST-induction {B} f n = go n [] where
+    go : PlainFST → List B → B
+    go (pnode a []) bs = f a (reverse bs)
+    go (pnode a (c ∷ cs)) bs = go (pnode a cs) (go c [] ∷ bs)
 
   -- the syntax used in the paper for paths
   infixr 5 _．_
@@ -121,24 +127,25 @@ module Defs {A : 𝔸} where
 
   module Impose (_≟_ : DecidableEquality A) where
 
+    childs : PlainFST → List PlainFST
+    childs (pnode a as) = as
+
     mutual
-      --- TODO: Fix termination checking
-      {-# TERMINATING #-}
       ↝-total : ∀ (ls rs : List PlainFST) → ∃[ e ] (ls + rs ↝ e)
       ↝-total [] rs = ↝-return impose-nothing
-      ↝-total (l ∷ ls) rs =
-        let e' , ⟶e' = ⟶-total l rs
+      ↝-total (pnode a as ∷ ls) rs =
+        let e' , ⟶e' = ⟶-total (pnode a as) rs (↝-total as)
             _  , ↝e  = ↝-total ls e'
         in ↝-return (impose-step ⟶e' ↝e)
 
-      ⟶-total : ∀ (l : PlainFST) (rs : List PlainFST) → ∃[ e ] (l + rs ⟶ e)
-      ⟶-total l [] = ⟶-return base
-      ⟶-total (pnode a as) (pnode b bs ∷ rs) with a ≟ b
+      ⟶-total : ∀ (l : PlainFST) (rs : List PlainFST) → ((rs' : List PlainFST) → ∃[ e ] (childs l + rs' ↝ e)) → ∃[ e ] (l + rs ⟶ e)
+      ⟶-total l [] _ = ⟶-return base
+      ⟶-total (pnode a as) (pnode b bs ∷ rs) ↝-total-as with a ≟ b
       ... | yes refl =
-        let cs , ↝cs = ↝-total as bs
+        let cs , ↝cs = ↝-total-as bs
         in ⟶-return (merge ↝cs)
       ... | no  a≠b =
-        let cs , ⟶cs = ⟶-total (pnode a as) rs
+        let cs , ⟶cs = ⟶-total (pnode a as) rs ↝-total-as
         in ⟶-return (skip a≠b ⟶cs)
 
     pdifferent : Rel PlainFST 0ℓ
@@ -309,12 +316,10 @@ module Defs {A : 𝔸} where
 
     module Show {N : 𝔽} (show-N : N → String) (show-A : A → String) where
       mutual
-        -- TODO: Why does termination checking fail here?
-        {-# TERMINATING #-}
         show-FST : PlainFST → Lines
-        show-FST (pnode a children) = do
+        show-FST = PlainFST-induction λ a children → do
           > show-A a
-          indent 2 (show-FSF children)
+          indent 2 (lines children)
 
         show-FSF : List PlainFST → Lines
         show-FSF roots = lines (map show-FST roots)
