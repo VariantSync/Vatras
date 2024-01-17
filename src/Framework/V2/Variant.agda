@@ -9,15 +9,14 @@ open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
 import Relation.Binary.PropositionalEquality as Eq
 
-import Data.IndexedSet
-
 VariantSetoid : Setoid 0ℓ 0ℓ
 VariantSetoid = Eq.setoid (V A)
 
+import Data.IndexedSet
 module IVSet = Data.IndexedSet VariantSetoid
 
-IndexedVMap : Set → Set
-IndexedVMap I = IndexedSet I
+VMapWithIndex : Set → Set
+VMapWithIndex I = IndexedSet I
   where open IVSet using (IndexedSet)
 
 {-|
@@ -26,7 +25,11 @@ While we defined variant maps to be indexed sets with an arbitrary finite and no
 via Fin (suc n) here for convenience.
 -}
 VMap : ℕ → Set
-VMap n = IndexedVMap (Fin (suc n))
+VMap n = VMapWithIndex (Fin (suc n))
 
-forget-first : ∀ {n} → VMap (suc n) → VMap n
-forget-first set i = set (Data.Fin.suc i)
+-- Utility functions for manipulating variant maps.
+remove-first : ∀ {n} → VMap (suc n) → VMap n
+remove-first set i = set (Data.Fin.suc i)
+
+remove-last : ∀ {n} → VMap (suc n) → VMap n
+remove-last set i = set (Data.Fin.inject₁ i)

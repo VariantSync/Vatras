@@ -8,6 +8,8 @@ import Relation.Binary.PropositionalEquality as Eq
 open import Level using (0ℓ)
 
 open import Framework.V2.Definitions
+open import Framework.V2.VariabilityLanguage
+open import Framework.V2.Construct
 import Framework.V2.Constructs.Choices as Chc
 open Chc.VLChoice₂ renaming (Syntax to 2Choice)
 
@@ -128,8 +130,8 @@ Essentially, implement a function:
 ```agda
 postulate
   -- When levels are generalized, we do not have to specifically use 0ℓ here.
-  embed : ∀ {V F S A} {i}
-    → (Γ : VariabilityLanguage V S)
+  embed : ∀ {V F A} {i}
+    → (Γ : VariabilityLanguage V)
     → 2Choice F ∈ₛ Expression Γ
     → NestedChoice F i (Expression Γ A)
     → Expression Γ A

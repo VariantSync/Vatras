@@ -4,12 +4,14 @@ open import Data.List using (List; map)
 open import Data.List.Properties using (map-cong; map-∘)
 open import Data.Product using (proj₁; proj₂; _,_)
 open import Level using (_⊔_)
-open import Function using (id; _$_)
+open import Function using (id; flip; _$_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Framework.V2.Variant
-open import Framework.V2.Definitions hiding (Semantics)
-open import Framework.V2.Compiler as Comp using (LanguageCompiler; ConfigTranslation; ConstructFunctor; Stable)
+open import Framework.V2.Definitions
+open import Framework.V2.VariabilityLanguage
+open import Framework.V2.Construct
+open import Framework.V2.Compiler using (LanguageCompiler)
 open LanguageCompiler
 import Data.IndexedSet
 
@@ -18,21 +20,18 @@ open import Framework.V2.Constructs.Plain.Artifact public
 Syntax : ℂ
 Syntax E A = Artifact A (E A)
 
-Semantics : ∀ {V : 𝕍} (S : 𝕊)
-  → Syntax ∈ₛ V
-  → ℂ-Semantics V S Syntax
-Semantics _ V-has-Artifact conf-comp (syn _ with-sem ⟦_⟧) a c
-  = cons V-has-Artifact (map-children (λ e → ⟦ e ⟧ c) a)
+Construct : PlainConstruct
+Construct = Plain-⟪ Syntax , (λ Γ e c → map-children (flip (Semantics Γ) c) e) ⟫
 
-map-children-preserves : ∀ {V : 𝕍} {S₁ S₂ : 𝕊} {Γ₁ : VariabilityLanguage V S₁} {Γ₂ : VariabilityLanguage V S₂} {A}
+map-children-preserves : ∀ {V : 𝕍} {Γ₁ Γ₂ : VariabilityLanguage V} {A}
   → let open IVSet V A using (_≅_; _≅[_][_]_) in
   ∀ (mkArtifact : Syntax ∈ₛ V)
   → (t : LanguageCompiler Γ₁ Γ₂)
-  → (at : Syntax (Expression Γ₁) A)
-  → Semantics S₁ mkArtifact id Γ₁ at
+  → (a : Syntax (Expression Γ₁) A)
+  → PlainConstruct-Semantics Construct mkArtifact Γ₁ a
       ≅[ conf t ][ fnoc t ]
-    Semantics S₁ mkArtifact (fnoc t) Γ₂ (map-children (compile t) at)
-map-children-preserves {V} {S₁} {S₂} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
+    PlainConstruct-Semantics Construct mkArtifact Γ₂ (map-children (compile t) a)
+map-children-preserves {V} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
     ≅[]-begin
       (λ c → cons mkArtifact (a -< map (λ e → ⟦ e ⟧₁ c) cs >-))
     ≅[]⟨ t-⊆ , t-⊇ ⟩

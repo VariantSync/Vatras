@@ -320,3 +320,22 @@ default-fnoc-satisfies-contract D .incorrect (c and p) i' ci'≡false with p D
     induction n (suc i) p n≡i' | no cn≢true
       rewrite Nat.+-suc n i
       = induction (suc n) i p n≡i'
+
+-- open import Framework.V2.Compiler using (ConfigCompiler; Stable)
+-- open import Axioms.Extensionality using (extensionality)
+-- open import Function using (id)
+
+-- cf : ConfigCompiler NConfig 2Config
+-- ConfigCompiler.to   cf = default-conf
+-- ConfigCompiler.from cf = default-fnoc
+
+-- s : Stable cf
+-- s cₙ = extensionality (help refl)
+--   where
+--     help : ∀ {cq} → default-conf cₙ ≡ cq → (q : Q) → default-fnoc (default-conf cₙ) q ≡ id cₙ q
+--     help {r} refl q = {!!}
+
+
+-- default-conf : NConfig → 2Config
+-- default-conf c .proj₁ (D ∙ i) = c D ≡ᵇ i
+-- default-conf c .proj₂ D = c D and n≡ᵇn (c D)

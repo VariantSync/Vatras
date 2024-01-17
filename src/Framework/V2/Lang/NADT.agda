@@ -8,23 +8,24 @@ open import Data.Nat using (ℕ)
 open import Function using (id)
 open import Size using (Size; ↑_)
 
+open import Framework.V2.VariabilityLanguage
 open import Framework.V2.Constructs.GrulerArtifacts
 open import Framework.V2.Constructs.Choices
 open import Framework.V2.Variants using (GrulerVariant)
 
 private
-  Choice = VLChoiceₙ.Syntax
-  Config = Choiceₙ.Config
+  Choiceₙ = VLChoiceₙ.Syntax
+  Configₙ = Choiceₙ.Config
   choice-semantics = VLChoiceₙ.Semantics
 
 data NADT : Size → 𝔼 where
   NADTAsset  : ∀ {i A} → Leaf A              → NADT i A
-  NADTChoice : ∀ {i A} → Choice F (NADT i) A → NADT (↑ i) A
+  NADTChoice : ∀ {i A} → Choiceₙ F (NADT i) A → NADT (↑ i) A
 
 mutual
-  NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant (Config F)
-  NADTVL {i} = syn NADT i with-sem semantics
+  NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
+  NADTVL {i} = Lang-⟪ NADT i , Configₙ F , semantics ⟫
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Config F) (NADT i)
+  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Configₙ F) (NADT i)
   semantics (NADTAsset a) _  = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
-  semantics (NADTChoice chc) = choice-semantics GrulerVariant F id NADTVL chc
+  semantics (NADTChoice chc) = choice-semantics GrulerVariant F NADTVL id chc
