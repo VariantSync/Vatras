@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install Nix with cached packages
-      uses: ibbem/cache-install@b5946e901c509f3478455a3f315e887e254bd36b
+      uses: rikhuijzer/cache-install@v.1.1.3
       with:
         key: nix-${{ hashFiles('.github/workflows/check.yml', 'default.nix', 'nix/**') }}
         nix_file: nix/github-workflow-dependencies.nix
