@@ -29,7 +29,7 @@ module Data.IndexedSet
 open import Data.Empty.Polymorphic using (⊥)
 open import Data.Unit.Polymorphic using (⊤; tt)
 
-open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; proj₁; proj₂)
+open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; ∄-syntax; proj₁; proj₂)
 open import Relation.Binary.PropositionalEquality using (_≗_)
 open import Relation.Nullary using (¬_)
 
@@ -42,10 +42,10 @@ module Eq = IsEquivalence isEquivalence
 ## Definitions
 
 ```agda
-Index : Set (suc c)
-Index = Set c
+Index : ∀ {ℓi} → Set (suc ℓi)
+Index {ℓi} = Set ℓi
 
-IndexedSet : Index → Set c
+IndexedSet : ∀ {ℓi} → Index → Set (c ⊔ ℓi)
 IndexedSet I = I → Carrier
 
 -- an element is within a subset, if there is an index pointing at that element
@@ -76,6 +76,29 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 
 ≗→≅ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅ B
 ≗→≅ A≗B = ≐→≅ (≗→≐ A≗B)
+```
+
+## Operations
+
+```agda
+open import Data.Sum using (_⊎_; inj₁; inj₂)
+infix 21 _⨆_
+_⨆_ : ∀ {I J} → IndexedSet I → IndexedSet J → IndexedSet (I ⊎ J)
+A ⨆ B = λ where
+  (inj₁ i) → A i
+  (inj₂ j) → B j
+
+infix 21 _⨅_
+_⨅_ : ∀ {I J} → (A : IndexedSet I) → (B : IndexedSet J) → IndexedSet (Σ[ i ∈ I ] (Σ[ j ∈ J ] (A i ≈ B j)))
+A ⨅ B = λ where
+  (i , _) → A i
+
+_∖_ : ∀ {I J} → (A : IndexedSet I) → (B : IndexedSet J) → IndexedSet (Σ[ i ∈ I ] (∄[ j ] (A i ≈ B j)))
+A ∖ B = λ where
+  (i , _) → A i
+
+⨆-sym : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} → A ⨆ B ≅ B ⨆ A
+⨆-sym = ?
 ```
 
 ## Singletons
