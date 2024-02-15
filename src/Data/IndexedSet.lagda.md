@@ -149,11 +149,8 @@ irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
 ## Indexed Sets With Index Translations
 
 ```agda
-_∈_at_ : ∀ {I} → Carrier → IndexedSet I → I → Set ℓ
-a ∈ A at i = a ≈ A i
-
 _⊆[_]_ : ∀ {I J} → IndexedSet I → (I → J) → IndexedSet J → Set (c ⊔ ℓ)
-_⊆[_]_ {I} A f B = ∀ (i : I) → A i ∈ B at f i
+_⊆[_]_ {I} A f B = ∀ (i : I) → A i ≈ B (f i)
 
 _≅[_][_]_ : ∀ {I J} → IndexedSet I → (I → J) → (J → I) → IndexedSet J → Set (c ⊔ ℓ)
 A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
@@ -163,7 +160,7 @@ A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
 
 ```agda
 ∈[]→∈ : ∀ {I} {A : IndexedSet I} {a : Carrier} {i : I}
-  → a ∈ A at i
+  → a ≈ A i
     ----------
   → a ∈ A
 ∈[]→∈ {i = i} eq = i , eq
