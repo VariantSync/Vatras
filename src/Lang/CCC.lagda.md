@@ -6,7 +6,6 @@ For termination checking, we have to use sized types (i.e., types that are bound
 We use sizes to constrain the maximum tree-depth of an expression.
 ```agda
 {-# OPTIONS --sized-types #-}
-{-# OPTIONS --allow-unsolved-metas #-}
 ```
 
 ## Module
@@ -19,7 +18,6 @@ module Lang.CCC (Dimension : 𝔽) where
 ## Imports
 ```agda
 -- -- Imports from Standard Library
-open import Data.EqIndexedSet
 open import Data.List
   using (List; []; _∷_; foldl; map)
 open import Data.List.NonEmpty
@@ -29,12 +27,15 @@ open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 
-open import Function using (id)
+open import Function using (id; _∘_; _$_)
 open import Size using (Size; ↑_; ∞)
 
 open import Framework.Variants
 open import Framework.VariabilityLanguage
 open import Framework.Construct
+
+open import Data.EqIndexedSet as ISet
+
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 import Construct.Choices as Chc
 open Chc.VLChoiceₙ using () renaming (Syntax to Choiceₙ; Semantics to chc-sem)
@@ -124,71 +125,65 @@ Idea: Show that we can embed any list of variants into a big choice.
 Maybe its smarter to do this for ADDs and then to conclude by transitivity of translations that CCC is also complete.
 
 ```agda
-  -- import Relation.Binary.PropositionalEquality as Peq
-  -- open Peq using (_≡_; refl; _≗_)
-  -- open Peq.≡-Reasoning
-  -- open import Function using (id; _∘_)
-  -- open Data.List using (map)
-  -- open import Data.List.Properties using (map-∘; map-id; map-cong)
+module Encode where
+  open import Framework.Relation.Function using (_⇔_; to; from)
+  open import Construct.Plain.Artifact as Pat using (map-children; _-<_>-)
+  open import Data.List.Properties using (map-∘; map-id; map-cong)
+  open Eq.≡-Reasoning
 
-  -- describe-variant : ∀ {i : Size} → V A → CCC i A
-  -- describe-variant x = {!!}
-  -- describe-variant (a -< vs >-) = Artifact a (map describe-variant vs)
+  V = Rose ∞
+  mkArtifact = Artifact∈ₛRose
+  open Sem V mkArtifact
 
-  ---- Proof for preservation of describe-variant
+  encode : ∀ {i} {A} → Rose i A → CCC ∞ A
+  encode (rose a) = atom (map-children encode a)
+
+  confs : ⊤ ⇔ Config CCCL
+  confs = record
+    { to = λ where tt _ → 0
+    ; from = λ _ → tt
+    }
 
   {-|
   Unfortunately, I had to flag this function as terminating.
   One solution to prove its termination is to use a sized variant (instead of using ∞).
   The problem is that the semantics ⟦_⟧ forgets the size and sets it to ∞ and hence,
-  the types of v and ⟦ describe-variant v ⟧ c are different and hence their values can never be equivalent regarding ≡.
+  the types of ⟦ encode v ⟧ c and v are different and hence their values can never be equivalent regarding ≡.
 
-  Below there is an exact copy of this function (describe-variant-preserves-i) that is proven to terminate and that relies on an exact copy of the choice calculus semantics that produces a Variant i.
-
-  So the function below indeed terminates but proving it within our framework became a _technical_ challenge (not a mathematical one) for which I found no solution yet.
+  The function below indeed terminates but proving it within our framework became a _technical_ challenge (not a mathematical one) for which I found no solution yet.
   -}
-  -- {-# TERMINATING #-}
-  -- describe-variant-preserves : ∀ {A} {c : Configuration}
-  --   → (v : V A)
-  --   → v ≡ ⟦ describe-variant v ⟧ c
-  -- describe-variant-preserves = ?
-  -- describe-variant-preserves (_ -< [] >-) = ?
-  -- describe-variant-preserves {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
-  --   begin
-  --     e ∷ es
-  --   ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
-  --     map id (e ∷ es)
-  --   ≡⟨ map-cong describe-variant-preserves (e ∷ es) ⟩
-  --     map ((flip ⟦_⟧ c) ∘ describe-variant) (e ∷ es)
-  --   ≡⟨ map-∘ {g = flip ⟦_⟧ c} {f = describe-variant} (e ∷ es) ⟩
-  --     map (flip ⟦_⟧ c) (map describe-variant (e ∷ es))
-  --   ∎)
+  {-# TERMINATING #-}
+  ccc-encode-idemp : ∀ {A} (v : Rose ∞ A) → (c : Configuration) → ⟦ encode v ⟧ c ≡ v
+  ccc-encode-idemp v@(rose (a At.-< cs >-)) c =
+    begin
+      ⟦ encode v ⟧ c
+    ≡⟨⟩
+      rose (a At.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-)
+    ≡˘⟨ Eq.cong rose $
+          Eq.cong (a At.-<_>-) (map-∘ cs) ⟩
+      rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
+    ≡⟨ Eq.cong rose $
+          Eq.cong (a At.-<_>-) (map-cong (λ x → ccc-encode-idemp x c) cs) ⟩
+      rose (a At.-< map id cs >-)
+    ≡⟨ Eq.cong rose $
+          Eq.cong (a At.-<_>-) (map-id cs) ⟩
+      v
+    ∎
 
-  -- {-|
-  -- Alternative definition of the semantics.
-  -- The function does exactly the same as ⟦_⟧ but remembers that the produced variant does not grow in size.
-  -- -}
-  -- ⟦_⟧-i : ∀ {i : Size} {A : 𝔸} → CCC i A → Configuration → Variant i A
-  -- ⟦ Artifact a es ⟧-i c = Artifactᵥ a (map (flip ⟦_⟧-i c) es)
-  -- ⟦ (D ⟨ alternatives ⟩) ⟧-i c = ⟦ choice-elimination (c D) alternatives ⟧-i c
+  preserves : ∀ {A} → (v : Rose ∞ A)
+    → Semantics (Variant-is-VL V) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
+  preserves {A} v = irrelevant-index-≅ v
+    (λ { tt → refl })
+    (ccc-encode-idemp v)
+    (to confs)
+    (from confs)
 
-  -- describe-variant-preserves-i : ∀ {i} {A} {c : Configuration}
-  --   → (v : Variant i A)
-  --   → v ≡ ⟦ describe-variant v ⟧-i c
-  -- describe-variant-preserves-i (Artifactᵥ _ []) = refl
-  -- describe-variant-preserves-i {c = c} (Artifactᵥ a (e ∷ es)) = Eq.cong (Artifactᵥ a) (
-  --   begin
-  --     e ∷ es
-  --   ≡⟨ Eq.sym (map-id (e ∷ es)) ⟩
-  --     map id (e ∷ es)
-  --   ≡⟨ map-cong describe-variant-preserves-i (e ∷ es) ⟩
-  --     map ((flip ⟦_⟧-i c) ∘ describe-variant) (e ∷ es)
-  --   ≡⟨ map-∘ {g = flip ⟦_⟧-i c} {f = describe-variant} (e ∷ es) ⟩
-  --     map (flip ⟦_⟧-i c) (map describe-variant (e ∷ es))
-  --   ∎)
-
-  -- sizeof : ∀ {i A} → CCC i A → Size
-  -- sizeof {i} _ = i
+  encoder : VariantEncoder V CCCL
+  encoder = record
+    { compile = encode
+    ; config-compiler = confs
+    ; preserves = preserves
+    }
 ```
 
 
