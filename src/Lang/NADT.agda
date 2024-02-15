@@ -24,7 +24,7 @@ data NADT : Size → 𝔼 where
 
 mutual
   NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-  NADTVL {i} = Lang-⟪ NADT i , Configₙ F , semantics ⟫
+  NADTVL {i} = ⟪ NADT i , Configₙ F , semantics ⟫
 
   semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Configₙ F) (NADT i)
   semantics (NADTAsset a) _  = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a

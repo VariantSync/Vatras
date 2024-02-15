@@ -3,8 +3,8 @@ module Framework.Compiler where
 open import Framework.Variant
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
-open import Framework.FunctionLanguage using (_⇔_; to; from; to-is-Embedding)
 open import Framework.Construct
+open import Framework.Relation.Function using (_⇔_; to; from; to-is-Embedding)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Data.Product using (_×_)

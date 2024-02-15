@@ -163,7 +163,7 @@ module Choiceₙ where
 open import Framework.Variant
 open import Framework.Definitions
 open import Framework.VariabilityLanguage as VL hiding (Config; Semantics)
-open import Framework.FunctionLanguage using (to-is-Embedding)
+open import Framework.Relation.Function using (to-is-Embedding)
 open import Framework.Construct
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)
@@ -179,7 +179,7 @@ module VLChoice₂ where
   Syntax F E A = Choice₂.Syntax F (E A)
 
   Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
-  Semantics _ _ (Lang-⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ Standard-Semantics chc (extract c) ⟧ c
+  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ Standard-Semantics chc (extract c) ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
@@ -260,7 +260,7 @@ module VLChoiceₙ where
   Syntax F E A = Choiceₙ.Syntax F (E A)
 
   Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
-  Semantics _ _ (Lang-⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choiceₙ.Standard-Semantics choice (extract c) ⟧ c
+  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choiceₙ.Standard-Semantics choice (extract c) ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫

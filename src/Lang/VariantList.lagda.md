@@ -54,7 +54,7 @@ Configuration = ℕ
 ⟦_⟧ e c = find-or-last c e
 
 VariantListL : VariabilityLanguage V
-VariantListL = Lang-⟪ VariantList , Configuration , ⟦_⟧ ⟫
+VariantListL = ⟪ VariantList , Configuration , ⟦_⟧ ⟫
 ```
 
 ## Properties
@@ -158,7 +158,7 @@ module _ {A : 𝔸} where
     → V ≅ ⟦ e ⟧
   preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
 
-open import Framework.Variability.Completeness V using (Complete)
+open import Framework.Properties.Completeness V using (Complete)
 
 VariantList-is-Complete : Complete VariantListL
 VariantList-is-Complete {A} vs =
@@ -169,9 +169,9 @@ VariantList-is-Complete {A} vs =
 ### Soundness
 
 ```agda
-open import Framework.Variability.Soundness V using (Sound)
-open import Framework.Function.Properties.Finity VariantSetoid using (soundness-from-enumerability)
-open import Framework.Function.Relation.Index VariantSetoid using (_∋_⊢_≣ⁱ_)
+open import Framework.Properties.Soundness V using (Sound)
+open import Framework.Properties.Finity V using (soundness-from-enumerability)
+open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_)
 open Data.List.NonEmpty using (length)
 open Function using (Surjective)
 

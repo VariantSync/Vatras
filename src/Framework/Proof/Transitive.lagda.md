@@ -1,18 +1,15 @@
 # Theorems to Prove Completeness
 
 ```agda
-open import Relation.Binary using (Setoid)
-open import Level using (0ℓ)
-module Framework.Function.Proof.Completeness
-  (O : Set → Setoid 0ℓ 0ℓ)
-  (P : Set)
-  (I : P → Set)
-  where
+open import Framework.Definitions using (𝕍)
+module Framework.Proof.Transitive (V : 𝕍) where
 
 open import Data.Product using (_,_; _×_; ∄-syntax)
-open import Framework.Function.Properties.Completeness O P I
-open import Framework.Function.Properties.Soundness O P I
-open import Framework.FunctionLanguage as FL using (FunctionLanguage)
+open import Framework.VariabilityLanguage using (VariabilityLanguage)
+open import Framework.Properties.Completeness V
+open import Framework.Properties.Soundness V
+open import Framework.Relation.Expressiveness V
+open import Framework.Variant V
 ```
 
 ## Conclusions
@@ -29,9 +26,7 @@ Thus, there exists an expression e₂ ∈ L₂ that also describes V.
 Since V was picked arbitrarily, L₂ can encode any set of variants.
 Thus, L₂ is complete.
 ```agda
-open FL.Comp O
-
-completeness-by-expressiveness : ∀ {L₁ L₂ : 𝕃}
+completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
   → Complete L₂
   → L₁ ≽ L₂
     -----------------------------------
@@ -40,7 +35,23 @@ completeness-by-expressiveness encode-in-L₂ L₂-to-L₁ {A} vs with encode-in
 ... | e₂ , m≅e₂ with L₂-to-L₁ e₂
 ...   | e₁ , e₂≅e₁ = e₁ , ≅-trans m≅e₂ e₂≅e₁
   where
-    open import Data.IndexedSet (O A) using (≅-sym; ≅-trans)
+    open IVSet A using (≅-sym; ≅-trans)
+```
+
+If a language `L₁` is sound and at least as expressive as another language `L₂`, then also `L₂` is sound.
+The intuition is that `L₁` can express everything `L₂` and everything expressed by `L₁` is valid.
+So also everything expressed in `L₂` must be valid.
+```agda
+soundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
+  → Sound L₁
+  → L₁ ≽ L₂
+    --------
+  → Sound L₂
+soundness-by-expressiveness L₁-sound L₂-to-L₁ {A} e₂ with L₂-to-L₁ e₂
+... | e₁ , e₂≅e₁ with L₁-sound e₁
+...   | n , m , m≅e₁ = n , m , ≅-trans m≅e₁ (≅-sym e₂≅e₁)
+  where
+    open IVSet A using (≅-trans; ≅-sym)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -51,7 +62,7 @@ Given the semantics S of the complete language L of e, we compute the set of all
 Since L₊ is complete, we can encode this list of variants in L₊, giving us an expression in e₊ in L₊ and a proof that this expression exactly describes the variants of e₋.
 Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
 ```agda
-expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : 𝕃}
+expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLanguage V}
   → Complete Lᶜ
   → Sound Lˢ
     ----------------------------------
@@ -60,7 +71,7 @@ expressiveness-by-completeness-and-soundness comp sound {A} eˢ with sound eˢ
 ... | p , m , m≅⟦eˢ⟧ with comp m
 ...   | eᶜ , m≅⟦eᶜ⟧ = eᶜ , ≅-trans (≅-sym m≅⟦eˢ⟧) m≅⟦eᶜ⟧
   where
-    open import Data.IndexedSet (O A) using (≅-sym; ≅-trans)
+    open IVSet A using (≅-sym; ≅-trans)
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
@@ -70,7 +81,7 @@ Assuming `L₋` is as expressive as `L₊`, and knowing that `L₊` is complete,
 Yet, we already know that L₋ is incomplete.
 This yields a contradiction.
 ```agda
-less-expressive-from-completeness : ∀ {L₊ L₋ : 𝕃}
+less-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage V}
   →   Complete L₊
   → Incomplete L₋
     ------------------------------
@@ -81,19 +92,19 @@ less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L�
 
 Combined with `expressiveness-by-completeness` we can even further conclude that L₊ is more expressive than L₋:
 ```agda
-more-expressive-from-completeness : ∀ {L₊ L₋ : 𝕃}
+more-expressive : ∀ {L₊ L₋ : VariabilityLanguage V}
   → Complete L₊
   → Sound L₋
   → Incomplete L₋
     ------------------------------
   → L₊ ≻ L₋
-more-expressive-from-completeness {L₊} {L₋} L₊-comp L₋-sound L₋-incomp =
+more-expressive {L₊} {L₋} L₊-comp L₋-sound L₋-incomp =
     expressiveness-by-completeness-and-soundness L₊-comp L₋-sound
   , less-expressive-from-completeness L₊-comp L₋-incomp
 ```
 
 ```agda
-complete-is-most-expressive : ∀ {L₁ : 𝕃}
+complete-is-most-expressive : ∀ {L₁ : VariabilityLanguage V}
   → Complete L₁
     ----------------
   → ∄[ L₂ ] (Sound L₂ × L₂ ≻ L₁)

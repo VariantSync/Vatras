@@ -23,7 +23,7 @@ private
 
 mutual
   2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-  2ADTVL {i} = Lang-⟪ 2ADT i , Config₂ F , semantics ⟫
+  2ADTVL {i} = ⟪ 2ADT i , Config₂ F , semantics ⟫
 
   semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Config₂ F) (2ADT i)
   semantics e c = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant (⟦ e ⟧ c)

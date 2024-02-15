@@ -9,8 +9,6 @@ open import Function using (id; _∘_)
 
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
-open import Framework.ConfigurationLanguage
-open import Framework.FunctionLanguage
 
 -- Syntactic Containment
 record _∈ₛ_ (C : ℂ) (E : 𝔼) : Set₁ where
@@ -101,7 +99,7 @@ from a language's configuration.
 TODO: We might want to have a better name for this.
 -}
 Compatible : ∀ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) → Set
-Compatible C Γ = Config Γ ⇒ VConfig C
+Compatible C Γ = Config Γ → VConfig C
 
 -- Semantic containment of variational constructs
 record _⟦∈⟧ᵥ_ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where

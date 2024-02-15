@@ -440,8 +440,9 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
 ```agda
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Variant V
-open import Framework.FunctionLanguage as FL using (_⇔_)
-open FL.Comp VariantSetoid
+open import Framework.VariabilityLanguage
+open import Framework.Relation.Expressiveness V
+open import Framework.Relation.Function  using (_⇔_)
 
 compile : ∀ {i : Size} {A : 𝔸} → WFOC i A → BCC ∞ A
 compile = proj₁ ∘ ⟶-is-total

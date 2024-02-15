@@ -13,8 +13,8 @@ open import Level using (0ℓ; _⊔_; suc)
 open import Size using (Size)
 
 open import Framework.Definitions
-open import Framework.FunctionLanguage
 open import Framework.VariabilityLanguage
+open import Framework.Relation.Function using (_⇒ₚ_; _⇔_; to; from)
 
 open import Test.Example using (Example; _called_)
 
@@ -61,7 +61,7 @@ ForAllExamplesIn ex utest = ForAllExamples utest ex
 
 test-translation : ∀ {V A}
   → (L₁ L₂ : VariabilityLanguage V)
-  → Expression L₁ A ⇒ Expression L₂ A
+  → (Expression L₁ A → Expression L₂ A)
   → Config L₁ ⇔ Config L₂
   → Config L₁
   → UnitTest (Expression L₁ A)

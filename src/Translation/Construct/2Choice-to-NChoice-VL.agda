@@ -13,10 +13,10 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
 import Data.IndexedSet
 
 open import Framework.Variant
-open import Framework.FunctionLanguage using (to-is-Embedding)
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Function using (to-is-Embedding)
 
 import Translation.Construct.2Choice-to-NChoice as 2→N
 open 2→N using (ConfContract; FnocContract)

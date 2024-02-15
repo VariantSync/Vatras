@@ -32,7 +32,7 @@ data Gruler : Size → 𝔼 where
 semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Config₂ F) (Gruler i)
 
 GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-GrulerVL {i} = Lang-⟪ Gruler i , Config₂ F , semantics ⟫
+GrulerVL {i} = ⟪ Gruler i , Config₂ F , semantics ⟫
 
 semantics (GAsset a)  _ = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
 semantics (GPComp pc)   = pc-semantics GrulerVL pc

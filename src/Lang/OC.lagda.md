@@ -107,7 +107,7 @@ except of there is an empty value at the top.
 -}
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
   OCL : ∀ {i : Size} → VariabilityLanguage (Maybe ∘ V)
-  OCL {i} = Lang-⟪ OC i , Configuration , ⟦_⟧ₒ ⟫
+  OCL {i} = ⟪ OC i , Configuration , ⟦_⟧ₒ ⟫
 
   ⟦_⟧ₒ : ∀ {i : Size} → 𝔼-Semantics (Maybe ∘ V) Configuration (OC i)
 
@@ -128,7 +128,7 @@ And now for the semantics of well-formed option calculus which just reuses the s
   ⟦ Root a es ⟧ c = cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-)
 
   WFOCL : ∀ {i : Size} → VariabilityLanguage V
-  WFOCL {i} = Lang-⟪ WFOC i , Configuration , ⟦_⟧ ⟫
+  WFOCL {i} = ⟪ WFOC i , Configuration , ⟦_⟧ ⟫
 ```
 
 ### Option calculus is unsound
@@ -166,7 +166,7 @@ As our counter example, we use the set `{0, 1}` as our variants:
 module IncompleteOnRose where
   open import Framework.Variants using (Rose; Artifact∈ₛRose)
   open import Framework.Variant (Rose ∞) ℕ
-  open import Framework.Variability.Completeness (Rose ∞) using (Incomplete)
+  open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
   open Sem (Rose ∞) Artifact∈ₛRose
 
   variant-0 = rose-leaf 0

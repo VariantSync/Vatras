@@ -50,7 +50,7 @@ module VLParallelComposition where
 
   Construct : PlainConstruct
   PSyntax Construct = Syntax
-  pcong Construct Lang-⟪ _ , _ , ⟦_⟧ ⟫ (l ∥ r) c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
+  pcong Construct ⟪ _ , _ , ⟦_⟧ ⟫ (l ∥ r) c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
 
   ParallelComposition∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
   cons ParallelComposition∈ₛGrulerVariant (l ∥ r) = l ∥ r

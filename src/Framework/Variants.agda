@@ -25,7 +25,7 @@ rose-leaf {A} a = rose (At.leaf a)
 
 -- Variants are also variability languages
 Variant-is-VL : ∀ (V : 𝕍) → VariabilityLanguage V
-Variant-is-VL V = Lang-⟪ V , ⊤ , (λ e c → e) ⟫
+Variant-is-VL V = ⟪ V , ⊤ , (λ e c → e) ⟫
 
 open import Framework.Construct
 open import Data.Maybe using (nothing; just)

@@ -66,7 +66,7 @@ Configuration = Config₂ Dimension
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
     BCCL : ∀ {i : Size} → VariabilityLanguage V
-    BCCL {i} = Lang-⟪ BCC i , Configuration , ⟦_⟧ ⟫
+    BCCL {i} = ⟪ BCC i , Configuration , ⟦_⟧ ⟫
 
     ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V Configuration (BCC i)
     ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact BCCL x
@@ -90,8 +90,7 @@ module Properties
   (mkArtifact : Artifact ∈ₛ V)
   where
   open import Framework.Variant V
-  import Framework.FunctionLanguage as FL
-  open FL.Comp VariantSetoid
+  open import Framework.Relation.Expression V
   open Sem V mkArtifact
 
   module _ {A : 𝔸} where

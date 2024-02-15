@@ -23,10 +23,8 @@ mkArtifact = Artifact∈ₛRose
 
 open import Framework.Variant Variant using (VariantSetoid)
 open import Framework.Definitions using (𝕍; 𝔽)
-open import Framework.FunctionLanguage as FL using ()
-open FL.Comp VariantSetoid using (_⋡_)
-open import Framework.Variability.Completeness Variant
-open import Framework.Variability.Soundness Variant
+open import Framework.Relation.Expressiveness Variant using (_⋡_)
+open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness)
 
 import Lang.OC as OCL
 import Lang.BCC as BCCL

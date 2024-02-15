@@ -9,11 +9,7 @@
 ## Module
 
 ```agda
-open import Level using (0ℓ)
-open import Relation.Binary using (Rel; IsEquivalence; Setoid)
-
 open import Framework.Definitions
-open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
@@ -40,6 +36,7 @@ open import Size
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
+open import Framework.VariabilityLanguage
 open import Framework.Compiler using (LanguageCompiler)
 open import Lang.VariantList V as VL
   using (VariantList; VariantListL; VariantList-is-Complete)
@@ -47,11 +44,9 @@ open import Lang.VariantList V as VL
 open import Lang.CCC Dimension as CCC-Module
   renaming (Configuration to Cᶜ)
 open CCC-Module.Sem V mkArtifact
-  -- using (CCC; CCCL; Artifact; _⟨_⟩; ⟦_⟧; compile; compile-preserves)
 
 import Framework.Variant
 open import Framework.Variants
-open import Framework.FunctionLanguage as FL
 
 open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
@@ -64,13 +59,13 @@ module Translate
   where
   open LanguageCompiler embed using (compile; preserves) renaming (conf to v-conf)
 
-  translate : ∀ {A} → VariantList A ⇒ CCC ∞ A
+  translate : ∀ {A} → VariantList A → CCC ∞ A
   translate vs =  𝔻 ⟨ map⁺ compile vs ⟩
 
-  conf : Cₗ ⇒ Cᶜ
+  conf : Cₗ → Cᶜ
   conf cₗ _ = cₗ
 
-  fnoc : Cᶜ ⇒ Cₗ
+  fnoc : Cᶜ → Cₗ
   fnoc c = c 𝔻
 ```
 
@@ -79,8 +74,8 @@ module Translate
 ```agda
   module Preservation (A : 𝔸) where
     open Framework.Variant V A
-    open import Framework.Variability.Completeness V using (Complete)
-    open import Data.IndexedSet VariantSetoid using (_≅_; irrelevant-index; _⊆[_]_; _≅[_][_]_; ≅[]→≅)
+    open import Framework.Properties.Completeness V using (Complete)
+    open IVSet using (_≅_; irrelevant-index; _⊆[_]_; _≅[_][_]_; ≅[]→≅)
 
     ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
     open import Data.Unit using (tt)
@@ -166,15 +161,15 @@ module Translate
     }
 
   open Framework.Variant V
-  open FL.Comp VariantSetoid
-  open import Framework.Variability.Completeness V
-  import Data.IndexedSet
+  open import Framework.Properties.Completeness V
+  open import Framework.Relation.Expressiveness V
+  open import Framework.Proof.Transitive V
 
   -- TODO: Relate Compilers and Expressiveness in their own module.
   CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
   CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
     where
-      open Data.IndexedSet (VariantSetoid A) using (≅[]→≅)
+      open IVSet A using (≅[]→≅)
 
   CCCL-is-complete : Complete CCCL
   CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL

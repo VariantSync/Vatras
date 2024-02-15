@@ -74,7 +74,7 @@ This allows us to avoid complex error handling and we cannot easily define a con
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
     CCCL : ∀ {i : Size} → VariabilityLanguage V
-    CCCL {i} = Lang-⟪ CCC i , Configuration , ⟦_⟧ ⟫
+    CCCL {i} = ⟪ CCC i , Configuration , ⟦_⟧ ⟫
 
     ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V (Configₙ Dimension) (CCC i)
     ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact CCCL x
@@ -93,8 +93,7 @@ module Properties
   (mkArtifact : Artifact ∈ₛ V)
   where
   open import Framework.Variant V
-  import Framework.FunctionLanguage as FL
-  open FL.Comp VariantSetoid
+  open import Framework.Relation.Expression V
   open Sem V mkArtifact
 
   module _ {A : 𝔸} where
