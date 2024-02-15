@@ -21,7 +21,6 @@ open import Framework.Variants using (Rose; Artifact∈ₛRose)
 Variant = Rose ∞
 mkArtifact = Artifact∈ₛRose
 
-open import Framework.Variant Variant using (VariantSetoid)
 open import Framework.Definitions using (𝕍; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (_⋡_)
 open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness)

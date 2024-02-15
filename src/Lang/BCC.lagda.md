@@ -82,20 +82,14 @@ open Data.List using ([_])
 open import Data.Nat using (ℕ)
 open import Data.Vec using (Vec; toList; zipWith)
 
-open import Level using (0ℓ)
-open import Relation.Binary using (Setoid; Rel; IsEquivalence)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-module Properties
-  (V : 𝕍)
-  (mkArtifact : Artifact ∈ₛ V)
-  where
+module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   open import Framework.Variant V
   open import Framework.Relation.Expression V
   open Sem V mkArtifact
 
   module _ {A : 𝔸} where
-    open Setoid (VariantSetoid A)
-
     ast-factoring : ∀ {i} {D : Dimension} {a : A} {n : ℕ}
       → (xs ys : Vec (BCC i A) n)
         -------------------------------------------------------------------------------------

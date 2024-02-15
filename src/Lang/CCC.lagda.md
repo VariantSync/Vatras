@@ -26,6 +26,7 @@ open import Data.List.NonEmpty
   renaming (map to map⁺)
 open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
@@ -85,20 +86,12 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
 
 Some transformation rules
 ```agda
-open import Level using (0ℓ)
-open import Relation.Binary using (Setoid; Rel; IsEquivalence)
-
-module Properties
-  (V : 𝕍)
-  (mkArtifact : Artifact ∈ₛ V)
-  where
+module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   open import Framework.Variant V
   open import Framework.Relation.Expression V
   open Sem V mkArtifact
 
   module _ {A : 𝔸} where
-    open Setoid (VariantSetoid A)
-
     -- unary choices are mandatory
     D⟨e⟩≣e : ∀ {e : CCC ∞ A} {D : Dimension}
         -----------------------------

@@ -8,7 +8,7 @@ open import Level using (_⊔_)
 open import Function using (_∘_)
 
 open import Relation.Nullary.Decidable using (Dec; yes; no; isYes; False; toWitnessFalse)
-open import Relation.Binary using (Setoid; DecidableEquality)
+open import Relation.Binary using (DecidableEquality)
 
 record Artifact {ℓ₁ ℓ₂} (N : Set ℓ₁) (C : Set ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
   constructor _-<_>-

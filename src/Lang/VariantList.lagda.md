@@ -10,8 +10,6 @@
 ## Module
 
 ```agda
-open import Level using (0ℓ)
-open import Relation.Binary using (Rel; IsEquivalence)
 open import Framework.Definitions
 module Lang.VariantList (V : 𝕍) where
 ```
@@ -27,16 +25,12 @@ open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
 open import Function using (_∘_)
 open import Size using (Size; ∞)
 
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
-
-open Relation.Binary using (Setoid)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 import Data.IndexedSet
-open import Util.List using (find-or-last)
-
-open import Framework.Definitions
 import Framework.Variant
 open import Framework.VariabilityLanguage
+open import Util.List using (find-or-last)
 ```
 
 ## Definitions
@@ -131,8 +125,7 @@ vl-fnoc {n} c = clampAt n c
 -- proof of preservation
 
 module _ {A : 𝔸} where
-  open Data.IndexedSet (VariantSetoid A) using (_≅_; _⊆[_]_; ≅[]→≅)
-  open Setoid (VariantSetoid A)
+  open IVSet A using (_≅_; _⊆[_]_; ≅[]→≅)
 
   preserves-∈ : ∀ {V}
     → n ⊢ V ⟶ e
@@ -176,8 +169,6 @@ open Data.List.NonEmpty using (length)
 open Function using (Surjective)
 
 module _ {A : 𝔸} where
-  open Setoid (VariantSetoid A)
-
   #' : VariantList A → ℕ
   #' = length
 

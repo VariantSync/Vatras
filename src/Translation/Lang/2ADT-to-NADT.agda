@@ -15,7 +15,6 @@ import Data.IndexedSet
 import Construct.Choices
 open Construct.Choices.Choiceₙ renaming (map to mapₙ)
 
-open import Framework.Variant using (VariantSetoid)
 open import Framework.Variants using (GrulerVariant)
 open import Lang.2ADT
 open import Lang.NADT
