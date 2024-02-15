@@ -11,7 +11,7 @@ open import Framework.VariabilityLanguage
 open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_; ≣ⁱ-IsEquivalence; ≣ⁱ-congruent; ≣ⁱ-setoid)
 open import Framework.Properties.Soundness V
 open import Framework.Relation.Expression V
-open import Framework.Variant V
+open import Data.EqIndexedSet
 open import Util.Enumerable
 
 HasEnumerableNonEmptySemantics : VariabilityLanguage V → Set₁
@@ -35,4 +35,3 @@ soundness-from-enumerability {L} L-has-finite-semantics {A} e =
       where ⟦_⟧ = Semantics L
             fin = L-has-finite-semantics e
             enumerate-configuration = enumerate fin
-            open IVSet A using (IndexedSet; _≅_; ≅-trans; ≅-sym; re-index)

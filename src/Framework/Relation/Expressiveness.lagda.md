@@ -9,7 +9,6 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym;
 open import Function using (_∘_; Injective)
 
 open import Framework.VariabilityLanguage
-open import Framework.Variant V
 open import Framework.Relation.Expression V
 open import Framework.Relation.Function using (_⇒ₚ_)
 ```

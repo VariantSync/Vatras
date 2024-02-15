@@ -40,13 +40,14 @@ import Lang.BCC as LBCC
 open LBCC F renaming (Configuration to Conf₂; _-<_>- to Artifact₂)
 open LBCC.Sem F V mkArtifact renaming (⟦_⟧ to ⟦_⟧₂)
 
+open import Data.EqIndexedSet
+
 Artifactᵥ : ∀ {A} → A → List (Rose ∞ A) → Rose ∞ A
 Artifactᵥ a cs = rose (a At.-< cs >-)
 
 open import Util.AuxProofs using (id≗toList∘fromList)
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 open Eq.≡-Reasoning
 ```
 
@@ -341,7 +342,7 @@ preservesₒ-artifact {i} {A} {c} {b} {ls} {es} {e} rs ⟶e =
         map₂ ls ++ (root-sem ∷ rs)
       ≡⟨⟩
         map₂ ls ++ (root-sem ∷ [] ++ rs)
-      ≡⟨ Eq.sym (++-assoc (map₂ ls) (root-sem ∷ []) rs) ⟩
+      ≡⟨ sym (++-assoc (map₂ ls) (root-sem ∷ []) rs) ⟩
         (map₂ ls ++ (root-sem ∷ [])) ++ rs
       -- apply induction hypothesis (root-sem preserves semantics)
       ≡⟨ Eq.cong (_++ rs)
@@ -350,7 +351,7 @@ preservesₒ-artifact {i} {A} {c} {b} {ls} {es} {e} rs ⟶e =
               (preserves-without-T-root c ⟶e)))
       ⟩
         (map₂ ls ++ (map₂ (e ∷ []))) ++ rs
-      ≡⟨ Eq.cong (_++ rs) (Eq.sym (map-++ (flip ⟦_⟧₂ c) ls (e ∷ []))) ⟩
+      ≡⟨ Eq.cong (_++ rs) (sym (map-++ (flip ⟦_⟧₂ c) ls (e ∷ []))) ⟩
         (map₂ (ls ++ e ∷ [])) ++ rs
       ∎
 
@@ -439,7 +440,6 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
 
 ```agda
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Variant V
 open import Framework.VariabilityLanguage
 open import Framework.Relation.Expressiveness V
 open import Framework.Relation.Function  using (_⇔_)
@@ -448,14 +448,11 @@ compile : ∀ {i : Size} {A : 𝔸} → WFOC i A → BCC ∞ A
 compile = proj₁ ∘ ⟶-is-total
 
 compile-preserves : ∀ {i : Size} {A : 𝔸}
-  → let open IVSet A using (_≅[_][_]_) in
-    (e : WFOC i A)
+  → (e : WFOC i A)
     ----------------------------
   → ⟦ e ⟧ ≅[ id ][ id ] ⟦ compile e ⟧₂
-compile-preserves {i} {A} e = left , Eq.sym ∘ left -- this works because id is our config translation
+compile-preserves {i} {A} e = left , sym ∘ left -- this works because id is our config translation
   where
-    open IVSet A using (_⊆[_]_)
-
     left : ⟦ e ⟧ ⊆[ id ] ⟦ compile e ⟧₂
     left c =
       let trans      = ⟶-is-total e
@@ -477,7 +474,5 @@ BCC-is-at-least-as-expressive-as-OC = expressiveness-by-translation compile comp
   where
     -- this drops the knowledge on id, id being the configuration compiler
     compile-preserves-semantics : SemanticsPreserving WFOCL BCCL compile
-    compile-preserves-semantics {A} e =
-      let open IVSet A using (≅[]→≅) in
-      ≅[]→≅ (compile-preserves e)
+    compile-preserves-semantics {A} e = ≅[]→≅ (compile-preserves e)
 ```

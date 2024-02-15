@@ -85,7 +85,6 @@ open import Data.Vec using (Vec; toList; zipWith)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  open import Framework.Variant V
   open import Framework.Relation.Expression V
   open Sem V mkArtifact
 

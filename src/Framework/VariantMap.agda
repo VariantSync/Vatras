@@ -1,5 +1,5 @@
 open import Framework.Definitions using (𝕍; 𝔸)
-module Framework.Variant (V : 𝕍) (A : 𝔸) where
+module Framework.VariantMap (V : 𝕍) (A : 𝔸) where
 
 open import Data.Fin using (Fin)
 open import Data.List using (List)
@@ -9,15 +9,7 @@ open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
 import Relation.Binary.PropositionalEquality as Eq
 
-VariantSetoid : Setoid 0ℓ 0ℓ
-VariantSetoid = Eq.setoid (V A)
-
-import Data.IndexedSet
-module IVSet = Data.IndexedSet VariantSetoid
-
-VMapWithIndex : Set → Set
-VMapWithIndex I = IndexedSet I
-  where open IVSet using (IndexedSet)
+open import Data.EqIndexedSet {V A}
 
 {-|
 Variant maps constitute the semantic domain of variability languages.
@@ -25,7 +17,7 @@ While we defined variant maps to be indexed sets with an arbitrary finite and no
 via Fin (suc n) here for convenience.
 -}
 VMap : ℕ → Set
-VMap n = VMapWithIndex (Fin (suc n))
+VMap n = IndexedSet (Fin (suc n))
 
 -- Utility functions for manipulating variant maps.
 remove-first : ∀ {n} → VMap (suc n) → VMap n

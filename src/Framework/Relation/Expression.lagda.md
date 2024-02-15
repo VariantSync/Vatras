@@ -9,9 +9,8 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym;
 open import Function using (_∘_; Injective)
 
 open import Framework.VariabilityLanguage
-open import Framework.Variant V
 
-open IVSet A using
+open import Data.EqIndexedSet using
   ( _⊆_; _≅_; _≐_
   ; ≐→≅
   ; ⊆-refl; ⊆-antisym; ⊆-trans

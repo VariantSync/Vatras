@@ -13,6 +13,8 @@ open import Framework.Definitions using (𝕍; 𝔸)
 open import Framework.VariabilityLanguage
 open import Construct.Artifact as At using (_-<_>-; map-children; map-children-preserves) renaming (Syntax to Artifact; Construct to ArtifactC)
 
+open import Data.EqIndexedSet
+
 data GrulerVariant : 𝕍 where
   asset : ∀ {A : 𝔸} (a : A) → GrulerVariant A
   _∥_   : ∀ {A : 𝔸} (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
@@ -62,8 +64,7 @@ VariantEncoder V Γ = LanguageCompiler (Variant-is-VL V) Γ
 
 
 module _ (V : 𝕍) (A : 𝔸) {Γ : VariabilityLanguage V} (encoder : VariantEncoder V Γ) where
-  open import Framework.Variant V A
-  open import Data.IndexedSet VariantSetoid
+  open import Data.EqIndexedSet
 
   private
     ⟦_⟧ = Semantics Γ
@@ -118,9 +119,6 @@ rose-encoder Γ has c = record
         → (c : Config Γ)
         → Artifact (Rose ∞) A
       ⟦_⟧ₚ = pcong ArtifactC Γ
-
-      open import Framework.Variant (Rose ∞) A using (VariantSetoid)
-      open import Data.IndexedSet VariantSetoid
 
       h : ∀ (v : Rose ∞ A) (j : Config Γ) → ⟦ t v ⟧ j ≡ v
       h (rose (a -< cs >-)) j =

@@ -12,7 +12,6 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
 
 import Data.IndexedSet
 
-open import Framework.Variant
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Framework.Compiler using (LanguageCompiler)
@@ -90,9 +89,8 @@ module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
     where
     open 2→N-T₂.Preservation confi fnoci using (convert-preserves)
 
-    module VSet = IVSet V A
-    open VSet using (_≅[_][_]_)
-    open VSet.≅[]-Reasoning
+    open import Data.EqIndexedSet as ISet
+    open ISet.≅[]-Reasoning
 
     extract₂ : Compatible (Chc.VLChoiceₙ.Construct V Q) Γ₂
     extract₂ = confi ∘ extract₁ ∘ fnoc -- proof by diagram chasing

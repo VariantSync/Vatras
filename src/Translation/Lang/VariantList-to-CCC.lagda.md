@@ -12,6 +12,7 @@
 open import Framework.Definitions
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
+open import Data.EqIndexedSet
 
 module Translation.Lang.VariantList-to-CCC
   (Dimension : 𝔽)
@@ -33,7 +34,7 @@ open import Data.Product using (_,_; proj₁)
 open import Function using (id; flip; _∘_; _$_)
 open import Size
 
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 open Eq.≡-Reasoning
 
 open import Framework.VariabilityLanguage
@@ -45,7 +46,6 @@ open import Lang.CCC Dimension as CCC-Module
   renaming (Configuration to Cᶜ)
 open CCC-Module.Sem V mkArtifact
 
-import Framework.Variant
 open import Framework.Variants
 
 open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
@@ -73,9 +73,7 @@ module Translate
 
 ```agda
   module Preservation (A : 𝔸) where
-    open Framework.Variant V A
     open import Framework.Properties.Completeness V using (Complete)
-    open IVSet using (_≅_; irrelevant-index; _⊆[_]_; _≅[_][_]_; ≅[]→≅)
 
     ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
     open import Data.Unit using (tt)
@@ -134,16 +132,16 @@ module Translate
       let ⟦⟧c = flip ⟦_⟧ c
           tail = w ∷ zs
           tail-in-ccc = map⁺ compile tail
-      in Eq.sym $
+      in sym $
       begin
         find-or-last i tail
-      ≡⟨ Eq.cong (find-or-last i) (Eq.sym (map⁺-id tail)) ⟩
+      ≡⟨ Eq.cong (find-or-last i) (sym (map⁺-id tail)) ⟩
         find-or-last i (map⁺ id tail)
       ≡˘⟨ Eq.cong (find-or-last i) (map⁺-cong (encode-idemp V A embed c) tail) ⟩
         find-or-last i (map⁺ (⟦⟧c ∘ compile) tail)
       ≡⟨ Eq.cong (find-or-last i) (map⁺-∘ tail) ⟩
         find-or-last i (map⁺ ⟦⟧c tail-in-ccc)
-      ≡⟨ Eq.sym (map-find-or-last ⟦⟧c i tail-in-ccc) ⟩
+      ≡⟨ sym (map-find-or-last ⟦⟧c i tail-in-ccc) ⟩
         ⟦⟧c (find-or-last i tail-in-ccc)
       ≡⟨⟩
         ⟦_⟧ (find-or-last i tail-in-ccc) c
@@ -160,16 +158,21 @@ module Translate
         preserves-⊆ e , preserves-⊇ e
     }
 
-open Framework.Variant V
 open import Framework.Properties.Completeness V using (Complete)
 open import Framework.Relation.Expressiveness V using (_≽_)
 open import Framework.Proof.Transitive V using (completeness-by-expressiveness)
+
+comp : ∀ (mkArtifact : Artifact ∈ₛ V) → LanguageCompiler (Variant-is-VL V) CCCL
+comp mkArtifact = record
+  { compile = {!!}
+  ; config-compiler = {!!}
+  ; preserves = {!!}
+  }
 
 CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
 CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
   where
     open Translate {!!}
-    open IVSet A using (≅[]→≅)
 
 CCCL-is-complete : Complete CCCL
 CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL

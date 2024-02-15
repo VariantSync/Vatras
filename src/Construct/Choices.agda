@@ -9,6 +9,8 @@ open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
+open import Data.EqIndexedSet as ISet
+
 open import Util.AuxProofs using (if-cong)
 
 module Choice-Fix where
@@ -160,7 +162,6 @@ module Choiceₙ where
   show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-list⁺ show-a es))) <+> "⟩"
 
 -- Show how choices can be used as constructors in variability languages.
-open import Framework.Variant
 open import Framework.Definitions
 open import Framework.VariabilityLanguage as VL hiding (Config; Semantics)
 open import Framework.Relation.Function using (to-is-Embedding)
@@ -184,8 +185,8 @@ module VLChoice₂ where
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
 
-  map-compile-preserves : ∀ {F V A} → let open IVSet V A using (_≅[_][_]_) in
-      ∀ (Γ₁ Γ₂ : VariabilityLanguage V)
+  map-compile-preserves : ∀ {F V A}
+      → (Γ₁ Γ₂ : VariabilityLanguage V)
       → (extract : Compatible (Construct V F) Γ₁)
       → (t : LanguageCompiler Γ₁ Γ₂)
       → (chc : Syntax F (Expression Γ₁) A)
@@ -210,9 +211,7 @@ module VLChoice₂ where
     ≅[]⟨⟩
       Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
     ≅[]-∎
-    where module I = IVSet V A
-          open I using (_≅[_][_]_; _⊆[_]_)
-          open I.≅[]-Reasoning
+    where open ISet.≅[]-Reasoning
 
           ⟦_⟧₁ = VL.Semantics Γ₁
           ⟦_⟧₂ = VL.Semantics Γ₂
@@ -271,8 +270,8 @@ module VLChoiceₙ where
   -- This proof is oblivious of at least
   --   - the implementation of map, we only need the preservation theorem
   --   - the Standard-Semantics, we only need the preservation theorem of t, and that the config-compiler is stable.
-  map-compile-preserves : ∀ {F V A} → let open IVSet V A using (_≅[_][_]_) in
-      ∀ (Γ₁ Γ₂ : VariabilityLanguage V)
+  map-compile-preserves : ∀ {F V A}
+      → (Γ₁ Γ₂ : VariabilityLanguage V)
       → (extract : Compatible (Construct V F) Γ₁)
       → (t : LanguageCompiler Γ₁ Γ₂)
       → (chc : Syntax F (Expression Γ₁) A)
@@ -297,9 +296,7 @@ module VLChoiceₙ where
     ≅[]⟨⟩
       Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
     ≅[]-∎
-    where module I = IVSet V A
-          open I using (_≅[_][_]_; _⊆[_]_)
-          open I.≅[]-Reasoning
+    where open ISet.≅[]-Reasoning
 
           ⟦_⟧₁ = VL.Semantics Γ₁
           ⟦_⟧₂ = VL.Semantics Γ₂

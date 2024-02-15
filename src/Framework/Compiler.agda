@@ -1,6 +1,5 @@
 module Framework.Compiler where
 
-open import Framework.Variant
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
 open import Framework.Construct
@@ -9,6 +8,8 @@ open import Framework.Relation.Function using (_⇔_; to; from; to-is-Embedding)
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Data.Product using (_×_)
 open import Function using (id; _∘_)
+
+open import Data.EqIndexedSet using (_≅_; _≅[_][_]_; ≅[]-trans)
 
 {-|
 A translated configuration is extensionally equal.
@@ -24,8 +25,8 @@ record LanguageCompiler {V} (Γ₁ Γ₂ : VariabilityLanguage V) : Set₁ where
   field
     compile         : ∀ {A} → L₁ A → L₂ A
     config-compiler : Config Γ₁ ⇔ Config Γ₂
-    preserves : ∀ {A} → let open IVSet V A using (_≅[_][_]_) in
-                ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ to config-compiler ][ from config-compiler ] ⟦ compile e ⟧₂
+    preserves : ∀ {A} (e : L₁ A)
+      → ⟦ e ⟧₁ ≅[ to config-compiler ][ from config-compiler ] ⟦ compile e ⟧₂
                 -- TODO: It might nice to have syntax
                 --   ≅[ config-compiler ]
                 -- to abbreviate
@@ -46,8 +47,7 @@ record ConstructCompiler {V} (VC₁ VC₂ : VariabilityConstruct V) (Γ : Variab
 
     stable : to-is-Embedding config-compiler
     preserves : ∀ {A} (c : C₁ (Expression Γ) A)
-      → let open IVSet V A using (_≅_) in
-        Kem₁ Γ extract c ≅ Kem₂ Γ (to config-compiler ∘ extract) (compile c)
+      → Kem₁ Γ extract c ≅ Kem₂ Γ (to config-compiler ∘ extract) (compile c)
 
 {-|
 Compiles languages below constructs.
@@ -64,8 +64,8 @@ record ConstructFunctor {V} (VC : VariabilityConstruct V) : Set₁ where
     -- Note: There also should be an extract₂ but it must be
     -- equivalent to extract₁ ∘ fnoc t.
     -- extract₂ : Config Γ₂ → construct-config
-    preserves : ∀ {A} → let open IVSet V A using (_≅[_][_]_) in
-      ∀ (Γ₁ Γ₂ : VariabilityLanguage V)
+    preserves : ∀ {A}
+      → (Γ₁ Γ₂ : VariabilityLanguage V)
       → (extract : Compatible VC Γ₁)
       → (t : LanguageCompiler Γ₁ Γ₂)
       → (c : VSyntax VC (Expression Γ₁) A)
@@ -128,8 +128,6 @@ _⊕ˡ_ {V} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
         fnoc' = fnoc L₁→L₂ ∘ fnoc L₂→L₃
 
         module _ {A : 𝔸} where
-          open IVSet V A using (_≅[_][_]_; ≅[]-trans)
-
           -- this pattern is very similar of ⊆[]-trans
           p : ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ conf' ][ fnoc' ] ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
           p e = ≅[]-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))

@@ -13,7 +13,8 @@ module Framework.Properties.Soundness (V : 𝕍) where
 open import Data.Product using (∃-syntax; Σ-syntax)
 open import Relation.Nullary.Negation  using (¬_)
 open import Framework.VariabilityLanguage
-open import Framework.Variant V
+open import Framework.VariantMap V
+open import Data.EqIndexedSet
 ```
 
 ## Definitions
@@ -21,8 +22,7 @@ open import Framework.Variant V
 ```agda
 Sound : VariabilityLanguage V → Set₁
 Sound ⟪ E , _ , ⟦_⟧ ⟫ =
-  ∀ {A} → let open IVSet A using (_≅_) in
-  ∀ (e : E A)
+  ∀ {A} (e : E A)
     --------------------------------
   → ∃[ n ] Σ[ m ∈ VMap A n ] m ≅ ⟦ e ⟧
 

@@ -165,7 +165,7 @@ As our counter example, we use the set `{0, 1}` as our variants:
 -- TODO: Can this be generalized to other types of variants as well?
 module IncompleteOnRose where
   open import Framework.Variants using (Rose; Artifact∈ₛRose)
-  open import Framework.Variant (Rose ∞) ℕ
+  open import Framework.VariantMap (Rose ∞) ℕ
   open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
   open Sem (Rose ∞) Artifact∈ₛRose
 

@@ -19,6 +19,7 @@ module Lang.CCC (Dimension : 𝔽) where
 ## Imports
 ```agda
 -- -- Imports from Standard Library
+open import Data.EqIndexedSet
 open import Data.List
   using (List; []; _∷_; foldl; map)
 open import Data.List.NonEmpty
@@ -26,7 +27,7 @@ open import Data.List.NonEmpty
   renaming (map to map⁺)
 open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
@@ -87,7 +88,6 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
 Some transformation rules
 ```agda
 module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  open import Framework.Variant V
   open import Framework.Relation.Expression V
   open Sem V mkArtifact
 
@@ -187,8 +187,8 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
   --     map (flip ⟦_⟧-i c) (map describe-variant (e ∷ es))
   --   ∎)
 
-  sizeof : ∀ {i A} → CCC i A → Size
-  sizeof {i} _ = i
+  -- sizeof : ∀ {i A} → CCC i A → Size
+  -- sizeof {i} _ = i
 ```
 
 

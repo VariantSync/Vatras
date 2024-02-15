@@ -13,7 +13,8 @@ module Framework.Properties.Completeness (V : 𝕍) where
 open import Data.Product using (Σ-syntax)
 open import Relation.Nullary.Negation using (¬_)
 open import Framework.VariabilityLanguage
-open import Framework.Variant V
+open import Framework.VariantMap V
+open import Data.EqIndexedSet
 ```
 
 ## Definitions
@@ -28,8 +29,7 @@ via Fin (suc n) here for convenience.
 -}
 Complete : VariabilityLanguage V → Set₁
 Complete ⟪ E , _ , ⟦_⟧ ⟫ =
-  ∀ {A} → let open IVSet A using (_≅_) in
-  ∀ {n} (m : VMap A n)
+  ∀ {A} {n} (m : VMap A n)
     ----------------------
   → Σ[ e ∈ E A ] m ≅ ⟦ e ⟧
 ```

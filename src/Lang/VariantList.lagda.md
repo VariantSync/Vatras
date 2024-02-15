@@ -19,17 +19,20 @@ module Lang.VariantList (V : 𝕍) where
 ```agda
 open import Data.Fin using (Fin; zero; suc; toℕ)
 open import Data.List using ([]; _∷_)
-open import Data.List.NonEmpty using (List⁺; _∷_; toList)
+open import Data.List.NonEmpty using (List⁺; _∷_; toList; length)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
-open import Function using (_∘_)
+open import Function using (_∘_; Surjective)
 open import Size using (Size; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-import Data.IndexedSet
-import Framework.Variant
 open import Framework.VariabilityLanguage
+open import Framework.Properties.Completeness V using (Complete)
+open import Framework.Properties.Soundness V using (Sound)
+open import Framework.Properties.Finity V using (soundness-from-enumerability)
+open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_)
+open import Data.EqIndexedSet as ISet
 open import Util.List using (find-or-last)
 ```
 
@@ -60,7 +63,7 @@ VariantListL = ⟪ VariantList , Configuration , ⟦_⟧ ⟫
 open import Util.AuxProofs using (clampAt)
 
 private
-  open Framework.Variant V
+  open import Framework.VariantMap V
   variable
     n : ℕ
     A : 𝔸
@@ -91,8 +94,8 @@ determinism : ∀ {e₁ e₂ : VariantList A} {V : VMap A n}
   → n ⊢ V ⟶ e₂
     -----------------
   → e₁ ≡ e₂
-determinism E-zero E-zero = Eq.refl
-determinism (E-suc l) (E-suc r) rewrite determinism l r = Eq.refl
+determinism E-zero E-zero = refl
+determinism (E-suc l) (E-suc r) rewrite determinism l r = refl
 
 -- smart constructor for totality proofs
 -- makes the implicit result expression e explicit
@@ -122,39 +125,32 @@ vl-conf i = toℕ i
 vl-fnoc : Configuration → Fin (suc n)
 vl-fnoc {n} c = clampAt n c
 
--- proof of preservation
+preserves-∈ : ∀ {V}
+  → n ⊢ V ⟶ e
+    -----------------
+  → V ⊆[ vl-conf ] ⟦ e ⟧
+preserves-∈ E-zero    zero = refl
 
-module _ {A : 𝔸} where
-  open IVSet A using (_≅_; _⊆[_]_; ≅[]→≅)
+preserves-∈ (E-suc _) zero = refl
+preserves-∈ (E-suc ⟶e) (suc i) = preserves-∈ ⟶e i
 
-  preserves-∈ : ∀ {V}
-    → n ⊢ V ⟶ e
-      -----------------
-    → V ⊆[ vl-conf ] ⟦ e ⟧
-  preserves-∈ E-zero    zero = refl
+preserves-∋ : ∀ {V}
+  → n ⊢ V ⟶ e
+    -----------------
+  → ⟦ e ⟧ ⊆[ vl-fnoc ] V
+preserves-∋ E-zero      zero   = refl
+preserves-∋ E-zero     (suc _) = refl
+preserves-∋ (E-suc  _)  zero   = refl
+preserves-∋ (E-suc ⟶e) (suc c) = preserves-∋ ⟶e c
 
-  preserves-∈ (E-suc _) zero = refl
-  preserves-∈ (E-suc ⟶e) (suc i) = preserves-∈ ⟶e i
-
-  preserves-∋ : ∀ {V}
-    → n ⊢ V ⟶ e
-      -----------------
-    → ⟦ e ⟧ ⊆[ vl-fnoc ] V
-  preserves-∋ E-zero      zero   = refl
-  preserves-∋ E-zero     (suc _) = refl
-  preserves-∋ (E-suc  _)  zero   = refl
-  preserves-∋ (E-suc ⟶e) (suc c) = preserves-∋ ⟶e c
-
-  preserves : ∀ {V}
-    → n ⊢ V ⟶ e
-      ----------
-    → V ≅ ⟦ e ⟧
-  preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
-
-open import Framework.Properties.Completeness V using (Complete)
+preserves : ∀ {V}
+  → n ⊢ V ⟶ e
+    ----------
+  → V ≅ ⟦ e ⟧
+preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
 
 VariantList-is-Complete : Complete VariantListL
-VariantList-is-Complete {A} vs =
+VariantList-is-Complete vs =
   let e , derivation = total vs
   in  e , preserves derivation
 ```
@@ -162,12 +158,6 @@ VariantList-is-Complete {A} vs =
 ### Soundness
 
 ```agda
-open import Framework.Properties.Soundness V using (Sound)
-open import Framework.Properties.Finity V using (soundness-from-enumerability)
-open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_)
-open Data.List.NonEmpty using (length)
-open Function using (Surjective)
-
 module _ {A : 𝔸} where
   #' : VariantList A → ℕ
   #' = length

@@ -7,7 +7,6 @@ open import Level using (_⊔_)
 open import Function using (id; flip; _$_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.Variant
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
 open import Framework.Construct
@@ -23,9 +22,9 @@ Syntax E A = Artifact A (E A)
 Construct : PlainConstruct
 Construct = Plain-⟪ Syntax , (λ Γ e c → map-children (flip (Semantics Γ) c) e) ⟫
 
+open import Data.EqIndexedSet as ISet
 map-children-preserves : ∀ {V : 𝕍} {Γ₁ Γ₂ : VariabilityLanguage V} {A}
-  → let open IVSet V A using (_≅_; _≅[_][_]_) in
-  ∀ (mkArtifact : Syntax ∈ₛ V)
+  → (mkArtifact : Syntax ∈ₛ V)
   → (t : LanguageCompiler Γ₁ Γ₂)
   → (a : Syntax (Expression Γ₁) A)
   → PlainConstruct-Semantics Construct mkArtifact Γ₁ a
@@ -37,9 +36,10 @@ map-children-preserves {V} {Γ₁} {Γ₂} {A} mkArtifact t (a -< cs >-) =
     ≅[]⟨ t-⊆ , t-⊇ ⟩
       (λ c → cons mkArtifact (a -< map (λ e → ⟦ e ⟧₂ c) (map (compile t) cs) >-))
     ≅[]-∎
-    where module I = IVSet V A
-          open I using (_≅[_][_]_; _⊆[_]_)
-          open I.≅[]-Reasoning
+    where
+      -- module I = IVSet V A
+          -- open I using (_≅[_][_]_; _⊆[_]_)
+          open ISet.≅[]-Reasoning
           open Eq.≡-Reasoning
 
           ⟦_⟧₁ = Semantics Γ₁

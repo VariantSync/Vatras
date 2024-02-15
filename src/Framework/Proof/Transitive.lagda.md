@@ -9,7 +9,7 @@ open import Framework.VariabilityLanguage using (VariabilityLanguage)
 open import Framework.Properties.Completeness V
 open import Framework.Properties.Soundness V
 open import Framework.Relation.Expressiveness V
-open import Framework.Variant V
+open import Data.EqIndexedSet
 ```
 
 ## Conclusions
@@ -34,8 +34,6 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
 completeness-by-expressiveness encode-in-L₂ L₂-to-L₁ {A} vs with encode-in-L₂ vs
 ... | e₂ , m≅e₂ with L₂-to-L₁ e₂
 ...   | e₁ , e₂≅e₁ = e₁ , ≅-trans m≅e₂ e₂≅e₁
-  where
-    open IVSet A using (≅-sym; ≅-trans)
 ```
 
 If a language `L₁` is sound and at least as expressive as another language `L₂`, then also `L₂` is sound.
@@ -50,8 +48,6 @@ soundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
 soundness-by-expressiveness L₁-sound L₂-to-L₁ {A} e₂ with L₂-to-L₁ e₂
 ... | e₁ , e₂≅e₁ with L₁-sound e₁
 ...   | n , m , m≅e₁ = n , m , ≅-trans m≅e₁ (≅-sym e₂≅e₁)
-  where
-    open IVSet A using (≅-trans; ≅-sym)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
@@ -70,8 +66,6 @@ expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLangua
 expressiveness-by-completeness-and-soundness comp sound {A} eˢ with sound eˢ
 ... | p , m , m≅⟦eˢ⟧ with comp m
 ...   | eᶜ , m≅⟦eᶜ⟧ = eᶜ , ≅-trans (≅-sym m≅⟦eˢ⟧) m≅⟦eᶜ⟧
-  where
-    open IVSet A using (≅-sym; ≅-trans)
 ```
 
 If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
