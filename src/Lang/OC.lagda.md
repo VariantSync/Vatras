@@ -10,7 +10,8 @@
 ## Module
 
 ```agda
-module Lang.OC where
+open import Framework.Definitions
+module Lang.OC (Option : 𝔽) where
 ```
 
 ## Imports
@@ -20,33 +21,60 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (Size; ∞; ↑_)
-open import Framework.Definitions
-open import Framework.Annotation.Name using (Option)
+open import Function using (_∘_)
+
+open import Framework.Variants
+open import Framework.VariabilityLanguage
+open import Framework.Construct
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
+import Construct.Choices as Chc
+open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to chc-sem)
+open Chc.Choice₂ using () renaming (Config to Config₂)
 ```
 
 ## Syntax
 
 ```agda
-data OC : 𝕃 where
-  Artifact : Artifactˡ OC
+data OC : Size → 𝔼 where
+  {-|
+  FIXME:
+  We do not reuse the artifact constructor here.
+  Below is a commented out variant of this type where we
+  reuse that constructor.
+  However, for some unfathomable reason then termination
+  checking fails within OC-to-BCC.agda
+  because prepending an 'OC i A' to a 'Vec (OC (↑ i) A) n'
+  is illegal then (but as of now just works).
+  I have no idea what's the reason for this.
+  Maybe reusing Artifact hides something from the Agda
+  compiler that it needs for termination checking.
+  -}
+  _-<_>- : ∀ {i A} → A → List (OC i A) → OC (↑ i) A
   _❲_❳ : ∀ {i : Size} {A : 𝔸} →
     Option → OC i A → OC (↑ i) A
 infixl 6 _❲_❳
+
+-- data OC : Size → 𝔼 where
+--   atom : ∀ {i A} → Artifact (OC i) A → OC (↑ i) A
+--   _❲_❳ : ∀ {i : Size} {A : 𝔸} →
+--     Option → OC i A → OC (↑ i) A
+-- infixl 6 _❲_❳
+-- pattern _-<_>- a cs  = atom (a At.-< cs >-)
 ```
 
 An expression is well-formed if there is an artifact at the root.
 Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbol for the empty variant in the semantic domain (which most languages do not require).
 ```agda
-data WFOC : 𝕃 where
-  Root : ∀ {i : Size} {A : Set} →
-    A → List (OC i A) → WFOC (↑ i) A
+data WFOC : Size → 𝔼 where
+  WRoot : ∀ {i A} → Artifact (OC i) A → WFOC (↑ i) A
+pattern Root a cs  = WRoot (a At.-< cs >-)
 ```
 
 Well-formedness can be forgotten, meaning that we lose the knowledge that an expression is well-formed in the type-system.
 This knowledge is useful for simplifying function definitions where well-formedness does not matter, such as `show`.
 ```agda
 forgetWF : ∀ {i : Size} {A : 𝔸} → WFOC i A → OC i A
-forgetWF (Root a es) = Artifact a es
+forgetWF (Root a es) = a -< es >-
 
 children-wf : ∀ {i : Size} {A : 𝔸} → WFOC (Size.↑_ i) A → List (OC i A)
 children-wf (Root _ es) = es
@@ -56,7 +84,7 @@ children-wf (Root _ es) = es
 
 Let's first define configurations. Configurations of option calculus tell us which options to in- or exclude. We define `true` to mean "include" and `false` to mean "exclude". Defining it the other way around would also be fine as long as we are consistent. Yet, our way of defining it is in line with if-semantics and how it is usually implemented in papers and tools.
 ```agda
-Configuration : Set
+Configuration : 𝕂
 Configuration = Option → Bool
 ```
 
@@ -73,50 +101,42 @@ open import Data.Maybe using (Maybe; just; nothing)
 open Data.List using (catMaybes; map)
 open import Function using (flip)
 
--- ⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant i A)
-⟦_⟧ₒ : ∀ {i : Size} {A : Set} → OC i A → Configuration → Maybe (Variant ∞ A)
+{-|
+Conventional Semantics of Option Calculus that dismisses all empty values
+except of there is an empty value at the top.
+-}
+module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
+  OCL : ∀ {i : Size} → VariabilityLanguage (Maybe ∘ V)
+  OCL {i} = Lang-⟪ OC i , Configuration , ⟦_⟧ₒ ⟫
 
--- recursive application of the semantics to all children of an artifact
--- ⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant i A)
-⟦_⟧ₒ-recurse : ∀ {i : Size} {A : Set} → List (OC i A) → Configuration → List (Variant ∞ A)
-⟦ es ⟧ₒ-recurse c =
-  catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
-  (map (flip ⟦_⟧ₒ c) es)
+  ⟦_⟧ₒ : ∀ {i : Size} → 𝔼-Semantics (Maybe ∘ V) Configuration (OC i)
 
-⟦ Artifact a es ⟧ₒ c = just (Artifactᵥ a (⟦ es ⟧ₒ-recurse c))
-⟦ O ❲ e ❳ ⟧ₒ c = if (c O)
-                 then (⟦ e ⟧ₒ c)
-                 else nothing
+  -- -- recursive application of the semantics to all children of an artifact
+  -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
+  ⟦_⟧ₒ-recurse : ∀ {i} → 𝔼-Semantics (List ∘ V) Configuration (List ∘ OC i)
+  ⟦ es ⟧ₒ-recurse c =
+    catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
+    (map (flip ⟦_⟧ₒ c) es)
+
+  ⟦ a -< es >- ⟧ₒ c = just (cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-))
+  ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
 ```
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
--- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → WFOC i A → Configuration → Variant i A
-⟦_⟧ : Semantics WFOC Configuration
-⟦ Root a es ⟧ c = Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
+  ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V Configuration (WFOC i)
+  ⟦ Root a es ⟧ c = cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-)
 
-WFOCL : VariabilityLanguage
-WFOCL = record
-  { expression = WFOC
-  ; configuration = Configuration
-  ; semantics = ⟦_⟧
-  }
+  WFOCL : ∀ {i : Size} → VariabilityLanguage V
+  WFOCL {i} = Lang-⟪ WFOC i , Configuration , ⟦_⟧ ⟫
 ```
 
 ### Option calculus is unsound
 
-Option calculus is unsound by construction because the following does not type check.
-The reason is that `⟦_⟧ₒ` produces a `Maybe (Variant ∞ A)` and not a `Variant ∞ A` as required by
-the framework.
+Option calculus is unsound by construction because it is not a variability language over variants V
+but over Maybe ∘ V, i.e., an option calculus expression might be configured to something else which
+is not a variant (i.e., nothing).
 TODO: Maybe we can still explicitly construct the `Unsound` predicate.
-```text
-OCL : VariabilityLanguage
-OCL = record
-  { expression = OC
-  ; configuration = Configuration
-  ; semantics = ⟦_⟧ₒ
-  }
-```
 
 ### Well-formed option calculus is sound
 
@@ -129,10 +149,9 @@ OCL = record
 
 First, we need some imports.
 ```agda
-open import Framework.Properties.Completeness using (Incomplete)
 open import Data.Fin using (zero; suc)
-open import Data.Nat using (ℕ; suc)
-open import Data.Product   using (_,_; ∃-syntax)
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.Product   using (_,_; ∃-syntax; ∄-syntax)
 open import Util.Existence using (_,_)
 open import Data.List.Relation.Unary.All using (_∷_; [])
 open import Data.Empty using (⊥)
@@ -143,37 +162,44 @@ We prove incompleteness by showing that there exists at least one set of variant
 In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
-variant-0 = leaf 0
-variant-1 = leaf 1
+-- TODO: Can this be generalized to other types of variants as well?
+module IncompleteOnRose where
+  open import Framework.Variants using (Rose; Artifact∈ₛRose)
+  open import Framework.Variant (Rose ∞) ℕ
+  open import Framework.Variability.Completeness (Rose ∞) using (Incomplete)
+  open Sem (Rose ∞) Artifact∈ₛRose
 
-variants-0-and-1 : VMap ℕ 1
-variants-0-and-1 zero = variant-0
-variants-0-and-1 (suc zero) = variant-1
+  variant-0 = rose-leaf 0
+  variant-1 = rose-leaf 1
+  -- variant-0 = cons mkArtifact (At.leaf 0)
+  -- variant-1 = cons mkArtifact (At.leaf 1)
+
+  variants-0-and-1 : VMap 1
+  variants-0-and-1 zero = variant-0
+  variants-0-and-1 (suc zero) = variant-1
 ```
 We stick to this concrete counter example instead of formulating the set of unrepresentable variants here to make the proof not more complicated than necessary.
 
 We now prove that any well-formed option calculus expression `e` cannot be configured to `0` and `1` at the same time. The reason is that the expression `e` always has a domain element at the top. This element is always included in the variant and cannot simultaneously be `0` and `1`.
 So we show that given an expression `e`, a proof that `e` can be configured to `0`, and a proof that `e` can be configured to `1`, we eventually conclude falsehood.
 ```agda
-does-not-describe-variants-0-and-1 :
-  ∀ {i : Size}
-  → (e : WFOC i ℕ)
-  → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
-  → ∃[ c ] (variant-1 ≡ ⟦ e ⟧ c)
-    ----------------------------
-  → ⊥
--- If e has 0 as root, it may be configured to 0 but never to 1.
-does-not-describe-variants-0-and-1 (Root 0       es) ∃c→v0≡⟦e⟧c ()
--- if e has a number larger than 1 at the top, it cannot be configured to yield 0.
-does-not-describe-variants-0-and-1 (Root (suc n) es) ()
+  does-not-describe-variants-0-and-1 :
+    ∀ {i : Size}
+    → (e : WFOC i ℕ)
+    → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
+    → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
+  -- If e has 0 as root, it may be configured to 0 but never to 1.
+  does-not-describe-variants-0-and-1 (Root 0 es) ∃c→v0≡⟦e⟧c ()
+  -- if e has a number larger than 1 at the top, it cannot be configured to yield 0.
+  does-not-describe-variants-0-and-1 (Root (suc n) es) ()
 ```
 
 Finally, we can conclude incompleteness by showing that assuming completeness yields a contradiction using our definition above.
 We pattern match on the assumed completeness evidence to unveil the expression `e` and the proofs that it can be configured to `0` and `1`.
 ```agda
-OC-is-incomplete : Incomplete WFOCL
-OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
-... | e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 (get e) (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
+  OC-is-incomplete : Incomplete WFOCL
+  OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
+  ... | e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 e (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
 ```
 
 **This is an important result!**
@@ -184,12 +210,15 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Utility
 
 ```agda
-oc-leaf : ∀ {i : Size} {A : Set} → A → OC (↑ i) A
-oc-leaf a = Artifact a []
+oc-leaf : ∀ {i : Size} {A : 𝔸} → A → OC (↑ i) A
+oc-leaf a = a -< [] >-
 
 -- alternative name that does not require writing tortoise shell braces
-opt : ∀ {i : Size} {A : Set} → Option → OC i A → OC (↑ i) A
+opt : ∀ {i : Size} {A : 𝔸} → Option → OC i A → OC (↑ i) A
 opt O = _❲_❳ O
+
+singleton : ∀ {i : Size} {A : 𝔸} → A → OC i A → OC (↑ i) A
+singleton a e = a -< e ∷ [] >-
 
 open import Util.Named
 
@@ -209,12 +238,13 @@ allno-oc = all-oc false called "all-no " --space intended for nicer printing lol
 open Data.String using (_++_; intersperse)
 open import Function using (_∘_)
 
-show-oc : ∀ {i : Size} → OC i String → String
-show-oc (Artifact s []) = s
-show-oc (Artifact s es@(_ ∷ _)) = s ++ "-<" ++ (intersperse ", " (map show-oc es)) ++ ">-"
-show-oc (O ❲ e ❳) = O ++ "❲" ++ show-oc e ++ "❳"
+module Show (print-opt : Option → String) where
+  show-oc : ∀ {i : Size} → OC i String → String
+  show-oc (s -< [] >-) = s
+  show-oc (s -< es@(_ ∷ _) >-) = s ++ "-<" ++ (intersperse ", " (map show-oc es)) ++ ">-"
+  show-oc (O ❲ e ❳) = print-opt O ++ "❲" ++ show-oc e ++ "❳"
 
-show-wfoc : ∀ {i : Size} → WFOC i String → String
-show-wfoc = show-oc ∘ forgetWF
+  show-wfoc : ∀ {i : Size} → WFOC i String → String
+  show-wfoc = show-oc ∘ forgetWF
 ```
 

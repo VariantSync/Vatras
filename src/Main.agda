@@ -24,7 +24,7 @@ open import Test.Examples.OC using (optex-all)
 open import Test.Experiments.CCC-to-BCC
 open import Test.Experiments.OC-to-BCC
 
-open import Framework.V2.Translation.Experiments.NChoice-to-2Choice-Experiment using (exp; all-ex)
+open import Translation.Experiments.NChoice-to-2Choice-Experiment using (exp; all-ex)
 
 {-|
 A list of programs that we want to run.
@@ -37,7 +37,7 @@ experimentsToRun =
   -- DEPRECATED: (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
   -- Run some example translations of option calculus to binary choice calculus
   setup exp-oc-to-bcc optex-all ∷
-  -- Run some example translations from b-ary to binary choices
+  -- Run some example translations from n to binary choices
   setup exp all-ex ∷
   []
 

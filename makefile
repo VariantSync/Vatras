@@ -25,6 +25,7 @@ clean:
 	rm -rf _build
 	rm -rf src/MAlonzo
 	rm -f src/Everything.agda
+	find . -name "*.agdai" -type f -delete
 
 # Don't cache src/Everything.agda as it will break everytime some file is deleted
 .PHONY: src/Everything.agda
