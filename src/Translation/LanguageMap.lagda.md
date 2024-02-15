@@ -4,6 +4,8 @@
 
 ```agda
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --allow-unsolved-metas #-}
+
 ```
 
 ## Module
@@ -22,8 +24,11 @@ Variant = Rose ∞
 mkArtifact = Artifact∈ₛRose
 
 open import Framework.Definitions using (𝕍; 𝔽)
+open import Framework.Construct
 open import Framework.Relation.Expressiveness Variant using (_⋡_)
 open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness)
+
+open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
 import Lang.OC as OCL
 import Lang.BCC as BCCL
@@ -48,6 +53,19 @@ import Translation.Lang.OC-to-BCC
 --   CCC-is-at-least-as-expressive-as-BCC;
 --   BCC→CCC-is-semantics-preserving
 --   ) public
+
+-- CCC is complete
+-- CCC ≽ VariantList
+module _
+  (Dimension : 𝔽)
+  (𝔻 : Dimension)
+  (V : 𝕍)
+  (mkArtifact : Artifact ∈ₛ V)
+  where
+  open import Translation.Lang.VariantList-to-CCC Dimension 𝔻 V mkArtifact using (
+    CCCL-is-at-least-as-expressive-as-VariantListL;
+    CCCL-is-complete
+    ) public
 ```
 
 ## Option Calculus vs Binary Choice Calculus

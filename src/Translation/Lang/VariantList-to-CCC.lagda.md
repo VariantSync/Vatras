@@ -160,18 +160,18 @@ module Translate
         preserves-⊆ e , preserves-⊇ e
     }
 
-  open Framework.Variant V
-  open import Framework.Properties.Completeness V
-  open import Framework.Relation.Expressiveness V
-  open import Framework.Proof.Transitive V
+open Framework.Variant V
+open import Framework.Properties.Completeness V using (Complete)
+open import Framework.Relation.Expressiveness V using (_≽_)
+open import Framework.Proof.Transitive V using (completeness-by-expressiveness)
 
-  -- TODO: Relate Compilers and Expressiveness in their own module.
-  CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
-  CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
-    where
-      open IVSet A using (≅[]→≅)
+CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
+CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
+  where
+    open Translate {!!}
+    open IVSet A using (≅[]→≅)
 
-  CCCL-is-complete : Complete CCCL
-  CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
+CCCL-is-complete : Complete CCCL
+CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
 ```
 
