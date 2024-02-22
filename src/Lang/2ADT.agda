@@ -1,25 +1,21 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
--- TODO: Generalize level of F
-module Lang.2ADT (F : 𝔽) where
+module Lang.2ADT (F : 𝔽) (V : 𝕍) where
 
-open import Data.Bool using (Bool)
-open import Function using (id)
-open import Size using (Size; ↑_)
-
+open import Data.Bool using (Bool; if_then_else_)
 open import Framework.VariabilityLanguage
-open import Framework.Variants using (GrulerVariant)
-open import Construct.GrulerArtifacts
-open import Construct.Choices
-open import Construct.NestedChoice F as NestedChoice using (NestedChoice)
 
-2ADT : Size → 𝔼
-2ADT i A = NestedChoice i (Leaf A)
+data 2ADT : 𝔼 where
+  leaf   : ∀ {A} → V A → 2ADT A
+  _⟨_,_⟩ : ∀ {A} → (D : F) → (l : 2ADT A) → (r : 2ADT A) → 2ADT A
 
-mutual
-  2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-  2ADTVL {i} = ⟪ 2ADT i , 2Choice.Config F , semantics ⟫
+Configuration : Set
+Configuration = F → Bool
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (2Choice.Config F) (2ADT i)
-  semantics e c = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant (NestedChoice.⟦ e ⟧ c)
+⟦_⟧ : ∀ {A} → 2ADT A → Configuration → V A
+⟦ leaf v      ⟧ _ = v
+⟦ D ⟨ l , r ⟩ ⟧ c = if c D
+                    then ⟦ l ⟧ c
+                    else ⟦ r ⟧ c
+
+2ADTVL : VariabilityLanguage V
+2ADTVL = ⟪ 2ADT , Configuration , ⟦_⟧ ⟫
