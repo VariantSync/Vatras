@@ -11,7 +11,7 @@ data 2ADT : 𝔼 where
 Configuration : Set
 Configuration = F → Bool
 
-⟦_⟧ : ∀ {A} → 2ADT A → Configuration → V A
+⟦_⟧ : 𝔼-Semantics V Configuration 2ADT
 ⟦ leaf v      ⟧ _ = v
 ⟦ D ⟨ l , r ⟩ ⟧ c = if c D
                     then ⟦ l ⟧ c
