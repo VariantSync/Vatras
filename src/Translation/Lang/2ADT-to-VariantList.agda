@@ -381,27 +381,99 @@ conf-unique-bounded = conf-bounded ∘ node
 -- conf-unique-bounded-choice-left D l r c x with c D
 -- ... | true = conf-unique-bounded l c
 
-preservation-conf : ∀ {A : 𝔸}
+
+conff : ∀ {A} → (e : 2ADT A) → TConf e → ℕ
+conff .(leaf _) (.[] is-total tleaf) = 0
+conff (D ⟨ l , _ ⟩) ((_ ∷ pl) is-total go-left  t) = conff l (pl is-total t)
+conff (D ⟨ l , r ⟩) ((_ ∷ pr) is-total go-right t) = length (tr l) + conff r (pr is-total t)
+
+ffnoc : ∀ {A} → (e : 2ADT A) → ℕ → TConf e
+ffnoc (leaf v) _ = [] is-total tleaf
+ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
+ffnoc (D ⟨ l , r ⟩) i | no _ {-left-} with ffnoc l i
+... | pl is-total tl = ((D ↣ true) ∷ pl) is-total go-left tl
+ffnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with ffnoc r (i ∸ (length (tr l)))
+... | pr is-total tr = ((D ↣ false) ∷ pr) is-total go-right tr
+
+preservation-walk-to-list-conff : ∀ {A : 𝔸}
   → (e : 2ADT A)
-  → ⟦ e ⟧₂ ⊆[ conf e ] ⟦ tr e ⟧ₗ
-preservation-conf e@(leaf v) = irrelevant-index-⊆ v (λ _ → refl) (λ _ → refl) (conf e)
-preservation-conf (D ⟨ l , r ⟩) c with c D
-... | true  =
+  → walk e ⊆[ conff e ] ⟦ tr e ⟧ₗ
+preservation-walk-to-list-conff .(leaf _) (.[] is-total tleaf) = refl
+preservation-walk-to-list-conff (D ⟨ l , r ⟩) ((_ ∷ pl) is-total go-left  t) =
   begin
-    ⟦ l ⟧₂ c
-  ≡⟨ preservation-conf l c ⟩
-    ⟦ tr l ⟧ₗ (conf l c)
-  ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conf l c)
+    walk l (pl is-total t)
+  ≡⟨ preservation-walk-to-list-conff l (pl is-total t) ⟩
+    ⟦ tr l ⟧ₗ (conff l (pl is-total t))
+  ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
+  -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
+    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-total t))
   ∎
-... | false =
+preservation-walk-to-list-conff (D ⟨ _ , r ⟩) ((_ ∷ _) is-total go-right t) = {!!} -- this should be quite similar the go-right case for ffnoc.
+
+preservation-walk-to-list-ffnoc : ∀ {A : 𝔸}
+  → (e : 2ADT A)
+  → ⟦ tr e ⟧ₗ ⊆[ ffnoc e ] walk e
+preservation-walk-to-list-ffnoc (leaf v) i = refl
+preservation-walk-to-list-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
+... | no ¬p =
   begin
-    ⟦ r ⟧₂ c
-  ≡⟨ preservation-conf r c ⟩
-    ⟦ tr r ⟧ₗ (conf r c)
-  ≡˘⟨ prepend-preserves (conf r c) (tr l) (tr r) ⟩
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + conf r c)
+    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+  ≡⟨⟩
+    find-or-last i ((tr l) ⁺++⁺ (tr r))
+  ≡⟨ append-preserves (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
+    find-or-last i (tr l)
+  ≡⟨⟩
+    ⟦ tr l ⟧ₗ i
+  ≡⟨ preservation-walk-to-list-ffnoc l i ⟩
+    walk l (path (ffnoc l i) is-total total (ffnoc l i))
   ∎
+... | yes p  =
+  begin
+    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+  ≡⟨⟩
+    find-or-last i ((tr l) ⁺++⁺ (tr r))
+  ≡⟨ {!!} ⟩
+    ⟦ tr r ⟧ₗ (i ∸ length (tr l))
+  ≡⟨ preservation-walk-to-list-ffnoc r (i ∸ length (tr l)) ⟩
+    walk r (path (ffnoc r (i ∸ length (tr l))) is-total total (ffnoc r (i ∸ length (tr l))))
+  ∎
+
+-- When equipped with walk semantics, 2ADTs are isomorphic to lists of variants,
+-- This proof is almost done and just requires some juggling with ≤ and so on.
+preservation-walk-to-list : ∀ {A : 𝔸}
+  → (e : 2ADT A)
+  → walk e ≅ ⟦ tr e ⟧ₗ
+preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conff e , preservation-walk-to-list-ffnoc e)
+
+-- Configurations can be modelled as functions or as paths.
+-- The expression is unchanged here but the configurations have to be translated.
+preservation-path-configs : ∀ {A : 𝔸}
+  → (e : UniquePaths2ADT A)
+  → ⟦ e ⟧ᵤ ≅ walk (node e)
+preservation-path-configs e = {!!}
+
+-- Killing dead branches is ok.
+preservation-dead-branch-elim : ∀ {A : 𝔸}
+  → (e : 2ADT A)
+  → ⟦ e ⟧₂ ≅ ⟦ ordinary-to-unique e ⟧ᵤ
+preservation-dead-branch-elim e = {!!}
+
+---- DEPRECATED STUFF FROM HERE ON THAT WE MIGHT NEED LATER AGAIN ----
+
+-- 2ADTs are isomorphic to Variant Lists.
+preservation : ∀ {A : 𝔸}
+  → (e : 2ADT A)
+  → ⟦ e ⟧₂ ≅ ⟦ toVariantList e ⟧ₗ
+preservation e =
+  ≅-begin
+    ⟦ e ⟧₂
+  ≅⟨ preservation-dead-branch-elim e ⟩
+    ⟦ ordinary-to-unique e ⟧ᵤ
+  ≅⟨ preservation-path-configs (ordinary-to-unique e) ⟩
+    walk (node (ordinary-to-unique e))
+  ≅⟨ preservation-walk-to-list (node (ordinary-to-unique e)) ⟩
+    ⟦ toVariantList e ⟧ₗ
+  ≅-∎
 
 -- fnoc (D ⟨ l , r ⟩) i D' with D == D' | i ≤ᵇ length (tr-unique l)
 -- ... | yes p | left? = left?
@@ -480,93 +552,24 @@ preservation-conf (D ⟨ l , r ⟩) c with c D
     --   ⟦ D ⟨ l , r ⟩ ⟧₂ c
     -- ∎
 
-conff : ∀ {A} → (e : 2ADT A) → TConf e → ℕ
-conff .(leaf _) (.[] is-total tleaf) = 0
-conff (D ⟨ l , _ ⟩) ((_ ∷ pl) is-total go-left  t) = conff l (pl is-total t)
-conff (D ⟨ l , r ⟩) ((_ ∷ pr) is-total go-right t) = length (tr l) + conff r (pr is-total t)
-
-ffnoc : ∀ {A} → (e : 2ADT A) → ℕ → TConf e
-ffnoc (leaf v) _ = [] is-total tleaf
-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
-ffnoc (D ⟨ l , r ⟩) i | no _ {-left-} with ffnoc l i
-... | pl is-total tl = ((D ↣ true) ∷ pl) is-total go-left tl
-ffnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with ffnoc r (i ∸ (length (tr l)))
-... | pr is-total tr = ((D ↣ false) ∷ pr) is-total go-right tr
-
-preservation-conff : ∀ {A : 𝔸}
+preservation-conf : ∀ {A : 𝔸}
   → (e : 2ADT A)
-  → walk e ⊆[ conff e ] ⟦ tr e ⟧ₗ
-preservation-conff .(leaf _) (.[] is-total tleaf) = refl
-preservation-conff (D ⟨ l , r ⟩) ((_ ∷ pl) is-total go-left  t) =
+  → ⟦ e ⟧₂ ⊆[ conf e ] ⟦ tr e ⟧ₗ
+preservation-conf e@(leaf v) = irrelevant-index-⊆ v (λ _ → refl) (λ _ → refl) (conf e)
+preservation-conf (D ⟨ l , r ⟩) c with c D
+... | true  =
   begin
-    walk l (pl is-total t)
-  ≡⟨ preservation-conff l (pl is-total t) ⟩
-    ⟦ tr l ⟧ₗ (conff l (pl is-total t))
-  ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
-  -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-total t))
+    ⟦ l ⟧₂ c
+  ≡⟨ preservation-conf l c ⟩
+    ⟦ tr l ⟧ₗ (conf l c)
+  ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
+    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conf l c)
   ∎
-preservation-conff (D ⟨ _ , r ⟩) ((_ ∷ _) is-total go-right t) = {!!} -- this should be quite similar the go-right case for ffnoc.
-
-preservation-ffnoc : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ tr e ⟧ₗ ⊆[ ffnoc e ] walk e
-preservation-ffnoc (leaf v) i = refl
-preservation-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
-... | no ¬p =
+... | false =
   begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
-  ≡⟨⟩
-    find-or-last i ((tr l) ⁺++⁺ (tr r))
-  ≡⟨ append-preserves (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
-    find-or-last i (tr l)
-  ≡⟨⟩
-    ⟦ tr l ⟧ₗ i
-  ≡⟨ preservation-ffnoc l i ⟩
-    walk l (path (ffnoc l i) is-total total (ffnoc l i))
+    ⟦ r ⟧₂ c
+  ≡⟨ preservation-conf r c ⟩
+    ⟦ tr r ⟧ₗ (conf r c)
+  ≡˘⟨ prepend-preserves (conf r c) (tr l) (tr r) ⟩
+    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + conf r c)
   ∎
-... | yes p  =
-  begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
-  ≡⟨⟩
-    find-or-last i ((tr l) ⁺++⁺ (tr r))
-  ≡⟨ {!!} ⟩
-    ⟦ tr r ⟧ₗ (i ∸ length (tr l))
-  ≡⟨ preservation-ffnoc r (i ∸ length (tr l)) ⟩
-    walk r (path (ffnoc r (i ∸ length (tr l))) is-total total (ffnoc r (i ∸ length (tr l))))
-  ∎
-
--- When equipped with walk semantics, 2ADTs are isomorphic to lists of variants,
--- This proof is almost done and just requires some juggling with ≤ and so on.
-preservation : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → walk e ≅ ⟦ tr e ⟧ₗ
-preservation e = ≅[]→≅ (preservation-conff e , preservation-ffnoc e)
-
--- Configurations can be modelled as functions or as paths.
--- The expression is unchanged here but the configurations have to be translated.
-preservation-unique : ∀ {A : 𝔸}
-  → (e : UniquePaths2ADT A)
-  → ⟦ e ⟧ᵤ ≅ walk (node e)
-preservation-unique e = {!!}
-
--- Killing dead branches is ok.
-preservation-paths : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ e ⟧₂ ≅ ⟦ ordinary-to-unique e ⟧ᵤ
-preservation-paths e = {!!}
-
--- 2ADTs are isomorphic to Variant Lists.
-preservation-ultimate : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ e ⟧₂ ≅ ⟦ toVariantList e ⟧ₗ
-preservation-ultimate e =
-  ≅-begin
-    ⟦ e ⟧₂
-  ≅⟨ preservation-paths e ⟩
-    ⟦ ordinary-to-unique e ⟧ᵤ
-  ≅⟨ preservation-unique (ordinary-to-unique e) ⟩
-    walk (node (ordinary-to-unique e))
-  ≅⟨ preservation (node (ordinary-to-unique e)) ⟩
-    ⟦ toVariantList e ⟧ₗ
-  ≅-∎
