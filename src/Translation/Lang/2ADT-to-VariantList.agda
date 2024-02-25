@@ -15,7 +15,7 @@ open import Data.Nat.Properties using (≤-trans; ≰⇒>; <⇒≤; m≤m+n)
 open import Data.Product using (Σ; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥-elim)
 open import Level using (0ℓ)
-open import Function using (_∘_)
+open import Function using (_∘_; _$_)
 
 open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
@@ -23,6 +23,8 @@ open import Data.List.Relation.Unary.All.Properties using (¬Any⇒All¬) renami
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
 
 open import Data.EqIndexedSet hiding (Index; _∈_)
+open Data.EqIndexedSet.≅-Reasoning
+
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (does; proof; yes; no; False; True; fromWitness; toWitness; fromWitnessFalse; toWitnessFalse)
 open import Relation.Binary using (Decidable; Symmetric)
@@ -164,14 +166,23 @@ UniquePaths2ADT = UniquePaths2ADTBelow []
 data Total : ∀ {A} → (p : Path) → (e : 2ADT A) → Set where
   -- any unique path is total for a leaf.
   tleaf : ∀ {A} {v : V A}
+      ------------------
     → Total [] (leaf v)
 
+  -- We actually dont need to store the selections here.
+  -- Total itself is already a list that tells us where to
+  -- go left or right. So we do not need to store that information
+  -- in the path, too.
+  -- Let's keep it for now because it might be easier to convert configurations as
+  -- functions to paths and vice versa later on.
   go-left : ∀ {A} {D : F} {l r : 2ADT A} {pl : Path}
     → Total pl l
+      -------------------------------------
     → Total ((D ↣ true) ∷ pl) (D ⟨ l , r ⟩)
 
   go-right : ∀ {A} {D : F} {l r : 2ADT A} {pr : Path}
     → Total pr r
+      --------------------------------------
     → Total ((D ↣ false) ∷ pr) (D ⟨ l , r ⟩)
 
 record TConf {A} (e : 2ADT A) : Set where
@@ -264,6 +275,9 @@ tr (D ⟨ l , r ⟩) = tr l ⁺++⁺ tr r
 
 tr-unique : ∀ {A : 𝔸} → UniquePaths2ADT A → VariantList A
 tr-unique = tr ∘ node
+
+toVariantList : ∀ {A : 𝔸} → 2ADT A → VariantList A
+toVariantList = tr-unique ∘ ordinary-to-unique
 
 -- leaf-count : ∀ {A : 𝔸} → 2ADT A → ℕ
 -- leaf-count (leaf _) = 1
@@ -488,11 +502,11 @@ preservation-conff (D ⟨ l , r ⟩) ((_ ∷ pl) is-total go-left  t) =
     walk l (pl is-total t)
   ≡⟨ preservation-conff l (pl is-total t) ⟩
     ⟦ tr l ⟧ₗ (conff l (pl is-total t))
-  ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩
+  ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
   -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
     ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-total t))
   ∎
-preservation-conff (D ⟨ _ , r ⟩) ((_ ∷ _) is-total go-right t) = {!!}
+preservation-conff (D ⟨ _ , r ⟩) ((_ ∷ _) is-total go-right t) = {!!} -- this should be quite similar the go-right case for ffnoc.
 
 preservation-ffnoc : ∀ {A : 𝔸}
   → (e : 2ADT A)
@@ -522,7 +536,37 @@ preservation-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
     walk r (path (ffnoc r (i ∸ length (tr l))) is-total total (ffnoc r (i ∸ length (tr l))))
   ∎
 
+-- When equipped with walk semantics, 2ADTs are isomorphic to lists of variants,
+-- This proof is almost done and just requires some juggling with ≤ and so on.
 preservation : ∀ {A : 𝔸}
   → (e : 2ADT A)
   → walk e ≅ ⟦ tr e ⟧ₗ
 preservation e = ≅[]→≅ (preservation-conff e , preservation-ffnoc e)
+
+-- Configurations can be modelled as functions or as paths.
+-- The expression is unchanged here but the configurations have to be translated.
+preservation-unique : ∀ {A : 𝔸}
+  → (e : UniquePaths2ADT A)
+  → ⟦ e ⟧ᵤ ≅ walk (node e)
+preservation-unique e = {!!}
+
+-- Killing dead branches is ok.
+preservation-paths : ∀ {A : 𝔸}
+  → (e : 2ADT A)
+  → ⟦ e ⟧₂ ≅ ⟦ ordinary-to-unique e ⟧ᵤ
+preservation-paths e = {!!}
+
+-- 2ADTs are isomorphic to Variant Lists.
+preservation-ultimate : ∀ {A : 𝔸}
+  → (e : 2ADT A)
+  → ⟦ e ⟧₂ ≅ ⟦ toVariantList e ⟧ₗ
+preservation-ultimate e =
+  ≅-begin
+    ⟦ e ⟧₂
+  ≅⟨ preservation-paths e ⟩
+    ⟦ ordinary-to-unique e ⟧ᵤ
+  ≅⟨ preservation-unique (ordinary-to-unique e) ⟩
+    walk (node (ordinary-to-unique e))
+  ≅⟨ preservation (node (ordinary-to-unique e)) ⟩
+    ⟦ toVariantList e ⟧ₗ
+  ≅-∎
