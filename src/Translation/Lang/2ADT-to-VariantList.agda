@@ -395,26 +395,26 @@ ffnoc (D ⟨ l , r ⟩) i | no _ {-left-} with ffnoc l i
 ffnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with ffnoc r (i ∸ (length (tr l)))
 ... | pr is-total tr = ((D ↣ false) ∷ pr) is-total go-right tr
 
-preservation-walk-to-list-conff : ∀ {A : 𝔸}
+preservation-walk-to-list-conf : ∀ {A : 𝔸}
   → (e : 2ADT A)
   → walk e ⊆[ conff e ] ⟦ tr e ⟧ₗ
-preservation-walk-to-list-conff .(leaf _) (.[] is-total tleaf) = refl
-preservation-walk-to-list-conff (D ⟨ l , r ⟩) ((_ ∷ pl) is-total go-left  t) =
+preservation-walk-to-list-conf .(leaf _) (.[] is-total tleaf) = refl
+preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-total go-left  t) =
   begin
     walk l (pl is-total t)
-  ≡⟨ preservation-walk-to-list-conff l (pl is-total t) ⟩
+  ≡⟨ preservation-walk-to-list-conf l (pl is-total t) ⟩
     ⟦ tr l ⟧ₗ (conff l (pl is-total t))
   ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
   -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
     ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-total t))
   ∎
-preservation-walk-to-list-conff (D ⟨ _ , r ⟩) ((_ ∷ _) is-total go-right t) = {!!} -- this should be quite similar the go-right case for ffnoc.
+preservation-walk-to-list-conf (D ⟨ _ , r ⟩) ((_ ∷ _) is-total go-right t) = {!!} -- this should be quite similar the go-right case for ffnoc.
 
-preservation-walk-to-list-ffnoc : ∀ {A : 𝔸}
+preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
   → (e : 2ADT A)
   → ⟦ tr e ⟧ₗ ⊆[ ffnoc e ] walk e
-preservation-walk-to-list-ffnoc (leaf v) i = refl
-preservation-walk-to-list-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
+preservation-walk-to-list-fnoc (leaf v) i = refl
+preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
 ... | no ¬p =
   begin
     ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
@@ -424,7 +424,7 @@ preservation-walk-to-list-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
     find-or-last i (tr l)
   ≡⟨⟩
     ⟦ tr l ⟧ₗ i
-  ≡⟨ preservation-walk-to-list-ffnoc l i ⟩
+  ≡⟨ preservation-walk-to-list-fnoc l i ⟩
     walk l (path (ffnoc l i) is-total total (ffnoc l i))
   ∎
 ... | yes p  =
@@ -434,7 +434,7 @@ preservation-walk-to-list-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
     find-or-last i ((tr l) ⁺++⁺ (tr r))
   ≡⟨ {!!} ⟩
     ⟦ tr r ⟧ₗ (i ∸ length (tr l))
-  ≡⟨ preservation-walk-to-list-ffnoc r (i ∸ length (tr l)) ⟩
+  ≡⟨ preservation-walk-to-list-fnoc r (i ∸ length (tr l)) ⟩
     walk r (path (ffnoc r (i ∸ length (tr l))) is-total total (ffnoc r (i ∸ length (tr l))))
   ∎
 
@@ -443,14 +443,41 @@ preservation-walk-to-list-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
 preservation-walk-to-list : ∀ {A : 𝔸}
   → (e : 2ADT A)
   → walk e ≅ ⟦ tr e ⟧ₗ
-preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conff e , preservation-walk-to-list-ffnoc e)
+preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
+
+path-to-fun : ∀ {A} (e : 2ADT A) → TConf e → Conf₂
+path-to-fun .(leaf _) ([] is-total tleaf) _ = true
+path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .true) ∷ p) is-total go-left t) D' with D == D'
+... | yes _ = true
+... | no  _ = path-to-fun l (p is-total t) D'
+path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .false) ∷ p) is-total go-right t) D' with D == D'
+... | yes _ = false
+... | no  _ = path-to-fun r (p is-total t) D'
+
+fun-to-path : ∀ {A} (e : 2ADT A) → Conf₂ → TConf e
+fun-to-path (leaf _) _ = [] is-total tleaf
+fun-to-path (D ⟨ _ , _ ⟩) c with c D
+fun-to-path (D ⟨ l , _ ⟩) c | true  with fun-to-path l c
+... | pl is-total tl = ((D ↣ true)  ∷ pl) is-total go-left tl
+fun-to-path (D ⟨ _ , r ⟩) c | false with fun-to-path r c
+... | pr is-total tr = ((D ↣ false) ∷ pr) is-total go-right tr
+
+preservation-path-configs-conf : ∀ {A : 𝔸}
+  → (e : UniquePaths2ADT A)
+  → ⟦ e ⟧ᵤ ⊆[ fun-to-path (node e) ] walk (node e)
+preservation-path-configs-conf = {!!}
+
+preservation-path-configs-fnoc : ∀ {A : 𝔸}
+  → (e : UniquePaths2ADT A)
+  →  walk (node e) ⊆[ path-to-fun (node e) ] ⟦ e ⟧ᵤ
+preservation-path-configs-fnoc = {!!}
 
 -- Configurations can be modelled as functions or as paths.
 -- The expression is unchanged here but the configurations have to be translated.
 preservation-path-configs : ∀ {A : 𝔸}
   → (e : UniquePaths2ADT A)
   → ⟦ e ⟧ᵤ ≅ walk (node e)
-preservation-path-configs e = {!!}
+preservation-path-configs e = ≅[]→≅ (preservation-path-configs-conf e , preservation-path-configs-fnoc e)
 
 -- Killing dead branches is ok.
 preservation-dead-branch-elim : ∀ {A : 𝔸}
