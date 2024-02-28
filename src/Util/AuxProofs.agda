@@ -7,7 +7,7 @@ open import Data.Bool using (Bool; false; true; if_then_else_)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 
-open import Data.Nat.Properties using (m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
+open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; _≗_; refl)
@@ -56,6 +56,10 @@ n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
   ≡⟨ 1+[m-n]=[1+m]-n m-1 n n<m-1 ⟩
     suc m-1 ∸ n
   ∎
+
+n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
+n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
+n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
 
 ----- Implementations of the min function.
 
