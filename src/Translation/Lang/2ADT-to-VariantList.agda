@@ -246,20 +246,23 @@ path-denotes-partial-config end = []
 path-denotes-partial-config (go-left  c-says-so p) = c-says-so ∷ path-denotes-partial-config p
 path-denotes-partial-config (go-right c-says-so p) = c-says-so ∷ path-denotes-partial-config p
 
+infix 4 _reaches_because_
 record ReachableVariant {A : 𝔸} (e : 2ADT A) (c : Conf₂) : Set where
+  constructor _reaches_because_
   field
-    what : V A
     how  : Path
+    what : V A
     that : how ~ c ⊢ e ↠ what
 
 -- Advanced semantics
-compute-path : ∀ {A} → (e : 2ADT A) → (c : Conf₂) → ∃[ Γ ] (∃[ v ] (Γ ~ c ⊢ e ↠ v)) -- use ReachableVariant here
-compute-path (leaf v) _ = [] , v , end
+compute-path : ∀ {A} → (e : 2ADT A) → (c : Conf₂) → ReachableVariant e c
+-- e∃[ Γ ] (∃[ v ] (Γ ~ c ⊢ e ↠ v)) -- use ReachableVariant here
+compute-path (leaf v) _ = [] reaches v because end
 compute-path (D ⟨ _ , _ ⟩) c with c D in eq
 compute-path (D ⟨ l , _ ⟩) c | true  with compute-path l c
-... | Γ , v , nice = D ↣ true  ∷ Γ , v , go-left  eq nice
+... | Γ reaches v because nice = D ↣ true  ∷ Γ reaches v because go-left  eq nice
 compute-path (D ⟨ _ , r ⟩) c | false with compute-path r c
-... | Γ , v , nice = D ↣ false ∷ Γ , v , go-right eq nice
+... | Γ reaches v because nice = D ↣ false ∷ Γ reaches v because go-right eq nice
 
 module Test (a b c d : F) where
   open import Data.String using (String)
