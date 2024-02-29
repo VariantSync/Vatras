@@ -28,27 +28,32 @@ open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.Choices
+
 open import Lang.CCC renaming (Configuration to CCCꟲ)
 module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
+open import Lang.FCC renaming (Configuration to FCCꟲ)
+module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
+open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → NAryChoice n D A {i} → CCC D ∞ A
-translate (artifact a cs) = a -< List.map translate cs >-
-translate {n = sucs n} (choice d (c ∷ cs)) = d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩
 
-conf : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → CCCꟲ D
+translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → FCC n D i A → CCC D ∞ A
+translate (a -< cs >-) = a -< List.map translate cs >-
+translate {n = sucs n} (d ⟨ c ∷ cs ⟩) = d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩
+
+conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → CCCꟲ D
 conf (sucs n) config d = Fin.toℕ (config d)
 
-fnoc : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → NAryChoiceConfig n D
+fnoc : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → FCCꟲ n D
 fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 
 
 preserves-⊆ : ∀ {i : Size} {D A : Set} (n : ℕ≥ 2)
-  → (expr : NAryChoice n D A {i})
+  → (expr : FCC n D i A)
   → ⟦ translate expr ⟧ₐ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
-preserves-⊆ n (artifact a cs) config =
-  ⟦ translate (artifact a cs) ⟧ₐ config
+preserves-⊆ n (a -< cs >-) config =
+  ⟦ translate (a -< cs >-) ⟧ₐ config
   ≡⟨⟩
   ⟦ a -< List.map translate cs >- ⟧ₐ config
   ≡⟨⟩
@@ -58,10 +63,10 @@ preserves-⊆ n (artifact a cs) config =
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ (fnoc n config)) cs)
   ≡⟨⟩
-  ⟦ artifact a cs ⟧ₙ (fnoc n config)
+  ⟦ a -< cs >- ⟧ₙ (fnoc n config)
   ∎
-preserves-⊆ (sucs n) (choice d (c ∷ cs)) config =
-  ⟦ translate (choice d (c ∷ cs)) ⟧ₐ config
+preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) config =
+  ⟦ translate (d ⟨ c ∷ cs ⟩) ⟧ₐ config
   ≡⟨⟩
   ⟦ d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩ ⟧ₐ config
   ≡⟨⟩
@@ -73,12 +78,12 @@ preserves-⊆ (sucs n) (choice d (c ∷ cs)) config =
   ≡⟨ preserves-⊆ (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) config ⟩
   ⟦ Vec.lookup (c ∷ cs) (fnoc (sucs n) config d) ⟧ₙ (fnoc (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (c ∷ cs) ⟧ₙ (fnoc (sucs n) config)
+  ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ (fnoc (sucs n) config)
   ∎
 
-preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NAryChoice n D A {i}) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate expr ⟧ₐ
-preserves-⊇ n (artifact a cs) config =
-  ⟦ artifact a cs ⟧ₙ config
+preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate expr ⟧ₐ
+preserves-⊇ n (a -< cs >-) config =
+  ⟦ a -< cs >- ⟧ₙ config
   ≡⟨⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n e config) cs) ⟩
@@ -88,10 +93,10 @@ preserves-⊇ n (artifact a cs) config =
   ≡⟨⟩
   ⟦ a -< List.map translate cs >- ⟧ₐ (conf n config)
   ≡⟨⟩
-  ⟦ translate (artifact a cs) ⟧ₐ (conf n config)
+  ⟦ translate (a -< cs >-) ⟧ₐ (conf n config)
   ∎
-preserves-⊇ {D} {A} (sucs n) (choice d (c ∷ cs)) config =
-  ⟦ choice d (c ∷ cs) ⟧ₙ config
+preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
+  ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ config
   ≡⟨⟩
   ⟦ Vec.lookup (c ∷ cs) (config d) ⟧ₙ config
   ≡⟨ preserves-⊇ (sucs n) (Vec.lookup (c ∷ cs) (config d)) config ⟩
@@ -105,8 +110,8 @@ preserves-⊇ {D} {A} (sucs n) (choice d (c ∷ cs)) config =
   ≡⟨⟩
   ⟦ d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩ ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ translate (choice d (c ∷ cs)) ⟧ₐ (conf (sucs n) config)
+  ⟦ translate (d ⟨ c ∷ cs ⟩) ⟧ₐ (conf (sucs n) config)
   ∎
 
-preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : NAryChoice n D A) → ⟦ translate expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D ∞ A) → ⟦ translate expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr

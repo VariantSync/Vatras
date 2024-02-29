@@ -32,6 +32,12 @@ open import Lang.CCC renaming (Configuration to CCCꟲ)
 module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
+import Lang.FCC
+module FCC n = Lang.FCC n
+open FCC renaming (Configuration to FCCꟲ)
+module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
+open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+
 mutual
   data ListChoiceLengthLimit {D A : Set} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
     [] : {i : Size} → ListChoiceLengthLimit n {i} []
@@ -88,10 +94,10 @@ mutual
   maxChoiceLengthIsLimit (d ⟨ cs ⟩) = choice (≤-trans (ℕ.m≤n⇒m≤n⊔o (ℕ≥.toℕ (maximum⁺ (List⁺.map maxChoiceLength cs))) (≤-trans (ℕ.n≤1+n (List⁺.length cs)) (ℕ.n≤1+n (suc (List⁺.length cs))))) (≤-reflexive (Eq.sym (ℕ≥.toℕ-⊔ (sucs (List⁺.length cs)) (maximum⁺ (List⁺.map maxChoiceLength cs)))))) (List⁺ChoiceLengthLimit-⊔-comm (List⁺ChoiceLengthLimit-⊔ (maximum⁺IsLimit cs)))
 
 mutual
-  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ChoiceLengthLimit n {i} expr → NAryChoice n D A
-  translate n (a -< cs >-) (artifact max-cs) = artifact a (zipWith n (translate n) cs max-cs)
+  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ChoiceLengthLimit n {i} expr → FCC n D ∞ A
+  translate n (a -< cs >-) (artifact max-cs) = a -< zipWith n (translate n) cs max-cs >-
   translate (sucs n) (d ⟨ c ∷ cs ⟩) (choice max≤n (max-c ∷ max-cs)) =
-    choice d (Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))))
+    d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
 
   -- Can probably be generalized
   zipWith : {i : Size} → {D A Result : Set} → (n : ℕ≥ 2) → ((expr : CCC D i A) → ChoiceLengthLimit n expr → Result) → (cs : List (CCC D i A)) → ListChoiceLengthLimit n cs → List Result
@@ -115,17 +121,17 @@ zipWith⇒map n f [] [] = refl
 zipWith⇒map n f (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (zipWith⇒map n f cs max-cs)
 
 
-conf : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → NAryChoiceConfig n D
+conf : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → FCCꟲ n D
 conf (sucs n) config d = ℕ≥.cappedFin (config d)
 
-fnoc : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → CCCꟲ D
+fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → CCCꟲ D
 fnoc n config d = Fin.toℕ (config d)
 
 preserves-⊆ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ⊆[ fnoc n ] ⟦ expr ⟧ₐ
 preserves-⊆ n (a -< cs >-) (artifact max-cs) config =
   ⟦ translate n (a -< cs >-) (artifact max-cs) ⟧ₙ config
   ≡⟨⟩
-  ⟦ artifact a ((zipWith n (translate n) cs max-cs)) ⟧ₙ config
+  ⟦ a -< zipWith n (translate n) cs max-cs >- ⟧ₙ config
   ≡⟨⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (zipWith n (translate n) cs max-cs))
   ≡⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
@@ -140,7 +146,7 @@ preserves-⊆ n (a -< cs >-) (artifact max-cs) config =
 preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) (choice max≤n (max-c ∷ max-cs)) config =
   ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) (choice (max≤n) (max-c ∷ max-cs)) ⟧ₙ config
   ≡⟨⟩
-  ⟦ choice d (Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) ⟧ₙ config
+  ⟦ d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩ ⟧ₙ config
   ≡⟨⟩
   ⟦ Vec.lookup (Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) (config d) ⟧ₙ config
   ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (config d)) refl ⟩
@@ -181,7 +187,7 @@ preserves-⊇ n (a -< cs >-) (artifact max-cs) config =
   ≡˘⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ (conf n config)) (zipWith n (translate n) cs max-cs))
   ≡⟨⟩
-  ⟦ artifact a (zipWith n (translate n) cs max-cs) ⟧ₙ (conf n config)
+  ⟦ a -< zipWith n (translate n) cs max-cs >- ⟧ₙ (conf n config)
   ≡⟨⟩
   ⟦ translate n (a -< cs >-) (artifact max-cs) ⟧ₙ (conf n config)
   ∎
@@ -214,7 +220,7 @@ preserves-⊇ (sucs n) (d ⟨ c ∷ cs ⟩) (choice (s≤s max≤n) (max-c ∷ m
   ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (conf (sucs n) config d)) refl ⟩
   ⟦ Vec.lookup (Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) (conf (sucs n) config d) ⟧ₙ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) ⟧ₙ (conf (sucs n) config)
+  ⟦ d ⟨ Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩ ⟧ₙ (conf (sucs n) config)
   ≡⟨⟩
   ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) (choice (s≤s max≤n) (max-c ∷ max-cs)) ⟧ₙ (conf (sucs n) config)
   ∎
