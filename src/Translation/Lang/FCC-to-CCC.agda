@@ -16,7 +16,7 @@ import Data.Vec.Properties as Vec
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
-open import Size using (Size; ↑_)
+open import Size using (Size; ↑_; ∞)
 import Util.AuxProofs as ℕ
 open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup; lookup⇒find-or-last)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
@@ -28,15 +28,19 @@ open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.Choices
+open import Lang.CCC renaming (Configuration to CCCꟲ)
+module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
+open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
-translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → NAryChoice n D A {i} → ArbitraryChoice D A
-translate (artifact a cs) = artifact a (List.map translate cs)
-translate {n = sucs n} (choice d (c ∷ cs)) = choice d (List⁺.fromVec (Vec.map translate (c ∷ cs)))
 
-conf : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → ArbitraryChoiceConfig D
+translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → NAryChoice n D A {i} → CCC D ∞ A
+translate (artifact a cs) = a -< List.map translate cs >-
+translate {n = sucs n} (choice d (c ∷ cs)) = d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩
+
+conf : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → CCCꟲ D
 conf (sucs n) config d = Fin.toℕ (config d)
 
-fnoc : {D : Set} → (n : ℕ≥ 2) → ArbitraryChoiceConfig D → NAryChoiceConfig n D
+fnoc : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → NAryChoiceConfig n D
 fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 
 
@@ -46,7 +50,7 @@ preserves-⊆ : ∀ {i : Size} {D A : Set} (n : ℕ≥ 2)
 preserves-⊆ n (artifact a cs) config =
   ⟦ translate (artifact a cs) ⟧ₐ config
   ≡⟨⟩
-  ⟦ artifact a (List.map translate cs) ⟧ₐ config
+  ⟦ a -< List.map translate cs >- ⟧ₐ config
   ≡⟨⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₐ config) (List.map translate cs))
   ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ config)} {f = translate} cs) ⟩
@@ -59,7 +63,7 @@ preserves-⊆ n (artifact a cs) config =
 preserves-⊆ (sucs n) (choice d (c ∷ cs)) config =
   ⟦ translate (choice d (c ∷ cs)) ⟧ₐ config
   ≡⟨⟩
-  ⟦ choice d (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ config
+  ⟦ d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩ ⟧ₐ config
   ≡⟨⟩
   ⟦ find-or-last (config d) (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ config
   ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = config d} (translate c ∷ Vec.map translate cs)) refl ⟩
@@ -82,7 +86,7 @@ preserves-⊇ n (artifact a cs) config =
   ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ (conf n config))} {f = translate} cs) ⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₐ (conf n config)) (List.map translate cs))
   ≡⟨⟩
-  ⟦ artifact a (List.map translate cs) ⟧ₐ (conf n config)
+  ⟦ a -< List.map translate cs >- ⟧ₐ (conf n config)
   ≡⟨⟩
   ⟦ translate (artifact a cs) ⟧ₐ (conf n config)
   ∎
@@ -99,7 +103,7 @@ preserves-⊇ {D} {A} (sucs n) (choice d (c ∷ cs)) config =
   ≡⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate c ∷ Vec.map translate cs)) refl ⟩
   ⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
+  ⟦ d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩ ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
   ⟦ translate (choice d (c ∷ cs)) ⟧ₐ (conf (sucs n) config)
   ∎
