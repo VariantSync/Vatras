@@ -28,8 +28,9 @@ open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.Choices
-open import Translation.Lang.CCC-to-FCC
-open import Translation.Lang.FCC-to-FCC
+open import Translation.Lang.CCC-to-FCC using (maxChoiceLength; maxChoiceLengthIsLimit) renaming (translate to ArbitraryChoice→NAryChoice; conf to ArbitraryChoiceConfig→NAryChoiceConfig; fnoc to ArbitraryChoiceConfig→NAryChoiceConfig⁻¹; preserves to ArbitraryChoice→NAryChoice-preserves)
+import Translation.Lang.FCC-to-FCC
+open Translation.Lang.FCC-to-FCC.DecreaseArity using () renaming (translate to NAryChoice→2AryChoice; conf to NAryChoiceConfig→2AryChoiceConfig; fnoc to NAryChoiceConfig→2AryChoiceConfig⁻¹; preserves to NAryChoice→2AryChoice-preserves)
 
 NAryChoice-map-dimension : {i : Size} → {n : ℕ≥ 2} → {D A D' : Set} → (D → D') → NAryChoice n D A {i} → NAryChoice n D' A {i}
 NAryChoice-map-dimension f (artifact a cs) = artifact a (List.map (NAryChoice-map-dimension f) cs)
@@ -39,8 +40,8 @@ NAryChoice-map-dimension f (choice d cs) = choice (f d) (Vec.map (NAryChoice-map
 2AryChoice-Fin⇒ℕ n = NAryChoice-map-dimension (λ (d , i) → d , Fin.toℕ i)
 
 
-ArbitraryChoice→2AryChoice : {D A : Set} → ArbitraryChoice D A → 2AryChoice (D × ℕ) A
-ArbitraryChoice→2AryChoice expr = 2AryChoice-Fin⇒ℕ (maxChoiceLength expr) (NAryChoice→2AryChoice (maxChoiceLength expr) (ArbitraryChoice→NAryChoice (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr)))
+translate : {D A : Set} → ArbitraryChoice D A → 2AryChoice (D × ℕ) A
+translate expr = 2AryChoice-Fin⇒ℕ (maxChoiceLength expr) (NAryChoice→2AryChoice (maxChoiceLength expr) (ArbitraryChoice→NAryChoice (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr)))
 
 
 2AryChoiceConfig-Fin⇒ℕ : {D : Set} → (n : ℕ≥ 2) → 2AryChoiceConfig (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) → 2AryChoiceConfig (D × ℕ)
@@ -116,15 +117,15 @@ ArbitraryChoice→2AryChoice expr = 2AryChoice-Fin⇒ℕ (maxChoiceLength expr) 
 2AryChoice-Fin⇒ℕ-preserves n expr = 2AryChoice-Fin⇒ℕ-preserves-⊆ n expr , 2AryChoice-Fin⇒ℕ-preserves-⊇ n expr
 
 
-ArbitraryChoiceConfig→2AryChoiceConfig : {D : Set} → ℕ≥ 2 → ArbitraryChoiceConfig D → 2AryChoiceConfig (D × ℕ)
-ArbitraryChoiceConfig→2AryChoiceConfig n = 2AryChoiceConfig-Fin⇒ℕ n ∘ NAryChoiceConfig→2AryChoiceConfig n ∘ ArbitraryChoiceConfig→NAryChoiceConfig n
+conf : {D : Set} → ℕ≥ 2 → ArbitraryChoiceConfig D → 2AryChoiceConfig (D × ℕ)
+conf n = 2AryChoiceConfig-Fin⇒ℕ n ∘ NAryChoiceConfig→2AryChoiceConfig n ∘ ArbitraryChoiceConfig→NAryChoiceConfig n
 
-ArbitraryChoiceConfig→2AryChoiceConfig⁻¹ : {D : Set} → ℕ≥ 2 → 2AryChoiceConfig (D × ℕ) → ArbitraryChoiceConfig D
-ArbitraryChoiceConfig→2AryChoiceConfig⁻¹ n = ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n ∘ NAryChoiceConfig→2AryChoiceConfig⁻¹ n ∘ 2AryChoiceConfig-Fin⇒ℕ⁻¹ n
+fnoc : {D : Set} → ℕ≥ 2 → 2AryChoiceConfig (D × ℕ) → ArbitraryChoiceConfig D
+fnoc n = ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n ∘ NAryChoiceConfig→2AryChoiceConfig⁻¹ n ∘ 2AryChoiceConfig-Fin⇒ℕ⁻¹ n
 
-ArbitraryChoice→2AryChoice-preserves : {D A : Set} → (expr : ArbitraryChoice D A) → ⟦ ArbitraryChoice→2AryChoice expr ⟧₂ ≅[ ArbitraryChoiceConfig→2AryChoiceConfig⁻¹ (maxChoiceLength expr) ][ ArbitraryChoiceConfig→2AryChoiceConfig (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
-ArbitraryChoice→2AryChoice-preserves expr =
-  ⟦ ArbitraryChoice→2AryChoice expr ⟧₂
+preserves : {D A : Set} → (expr : ArbitraryChoice D A) → ⟦ translate expr ⟧₂ ≅[ fnoc (maxChoiceLength expr) ][ conf (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
+preserves expr =
+  ⟦ translate expr ⟧₂
   ≅[]⟨⟩
   ⟦ 2AryChoice-Fin⇒ℕ (maxChoiceLength expr) (NAryChoice→2AryChoice (maxChoiceLength expr) (ArbitraryChoice→NAryChoice (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))) ⟧₂
   ≅[]⟨ 2AryChoice-Fin⇒ℕ-preserves (maxChoiceLength expr) (NAryChoice→2AryChoice (maxChoiceLength expr) (ArbitraryChoice→NAryChoice (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))) ⟩

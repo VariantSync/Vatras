@@ -29,80 +29,80 @@ open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.Choices
 
-NAryChoice→ArbitraryChoice : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → NAryChoice n D A {i} → ArbitraryChoice D A
-NAryChoice→ArbitraryChoice (artifact a cs) = artifact a (List.map NAryChoice→ArbitraryChoice cs)
-NAryChoice→ArbitraryChoice {n = sucs n} (choice d (c ∷ cs)) = choice d (List⁺.fromVec (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs)))
+translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → NAryChoice n D A {i} → ArbitraryChoice D A
+translate (artifact a cs) = artifact a (List.map translate cs)
+translate {n = sucs n} (choice d (c ∷ cs)) = choice d (List⁺.fromVec (Vec.map translate (c ∷ cs)))
+
+conf : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → ArbitraryChoiceConfig D
+conf (sucs n) config d = Fin.toℕ (config d)
+
+fnoc : {D : Set} → (n : ℕ≥ 2) → ArbitraryChoiceConfig D → NAryChoiceConfig n D
+fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 
 
-NAryChoiceConfig→ArbitraryChoiceConfig : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → ArbitraryChoiceConfig D
-NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config d = Fin.toℕ (config d)
-
-NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ : {D : Set} → (n : ℕ≥ 2) → ArbitraryChoiceConfig D → NAryChoiceConfig n D
-NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ (sucs n) config d = ℕ≥.cappedFin (config d)
-
-NAryChoice→ArbitraryChoice-preserves-⊆ : ∀ {i : Size} {D A : Set} (n : ℕ≥ 2)
+preserves-⊆ : ∀ {i : Size} {D A : Set} (n : ℕ≥ 2)
   → (expr : NAryChoice n D A {i})
-  → ⟦ NAryChoice→ArbitraryChoice expr ⟧ₐ ⊆[ NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ n ] ⟦ expr ⟧ₙ
-NAryChoice→ArbitraryChoice-preserves-⊆ n (artifact a cs) config =
-  ⟦ NAryChoice→ArbitraryChoice (artifact a cs) ⟧ₐ config
+  → ⟦ translate expr ⟧ₐ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
+preserves-⊆ n (artifact a cs) config =
+  ⟦ translate (artifact a cs) ⟧ₐ config
   ≡⟨⟩
-  ⟦ artifact a (List.map NAryChoice→ArbitraryChoice cs) ⟧ₐ config
+  ⟦ artifact a (List.map translate cs) ⟧ₐ config
   ≡⟨⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₐ config) (List.map NAryChoice→ArbitraryChoice cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ config)} {f = NAryChoice→ArbitraryChoice} cs) ⟩
-  artifact a (List.map (λ e → ⟦ NAryChoice→ArbitraryChoice e ⟧ₐ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → NAryChoice→ArbitraryChoice-preserves-⊆ n e config) cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ (NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ n config)) cs)
+  artifact a (List.map (λ e → ⟦ e ⟧ₐ config) (List.map translate cs))
+  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ config)} {f = translate} cs) ⟩
+  artifact a (List.map (λ e → ⟦ translate e ⟧ₐ config) cs)
+  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
+  artifact a (List.map (λ e → ⟦ e ⟧ₙ (fnoc n config)) cs)
   ≡⟨⟩
-  ⟦ artifact a cs ⟧ₙ (NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ n config)
+  ⟦ artifact a cs ⟧ₙ (fnoc n config)
   ∎
-NAryChoice→ArbitraryChoice-preserves-⊆ (sucs n) (choice d (c ∷ cs)) config =
-  ⟦ NAryChoice→ArbitraryChoice (choice d (c ∷ cs)) ⟧ₐ config
+preserves-⊆ (sucs n) (choice d (c ∷ cs)) config =
+  ⟦ translate (choice d (c ∷ cs)) ⟧ₐ config
   ≡⟨⟩
-  ⟦ choice d (List⁺.fromVec (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs))) ⟧ₐ config
+  ⟦ choice d (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ config
   ≡⟨⟩
-  ⟦ find-or-last (config d) (List⁺.fromVec (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs))) ⟧ₐ config
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = config d} (NAryChoice→ArbitraryChoice c ∷ Vec.map NAryChoice→ArbitraryChoice cs)) refl ⟩
-  ⟦ Vec.lookup (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ₐ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (ℕ≥.cappedFin (config d)) NAryChoice→ArbitraryChoice (c ∷ cs)) refl ⟩
-  ⟦ NAryChoice→ArbitraryChoice (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ₐ config
-  ≡⟨ NAryChoice→ArbitraryChoice-preserves-⊆ (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) config ⟩
-  ⟦ Vec.lookup (c ∷ cs) (NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ (sucs n) config d) ⟧ₙ (NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ (sucs n) config)
+  ⟦ find-or-last (config d) (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ config
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = config d} (translate c ∷ Vec.map translate cs)) refl ⟩
+  ⟦ Vec.lookup (Vec.map translate (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ₐ config
+  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (ℕ≥.cappedFin (config d)) translate (c ∷ cs)) refl ⟩
+  ⟦ translate (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ₐ config
+  ≡⟨ preserves-⊆ (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) config ⟩
+  ⟦ Vec.lookup (c ∷ cs) (fnoc (sucs n) config d) ⟧ₙ (fnoc (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (c ∷ cs) ⟧ₙ (NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ (sucs n) config)
+  ⟦ choice d (c ∷ cs) ⟧ₙ (fnoc (sucs n) config)
   ∎
 
-NAryChoice→ArbitraryChoice-preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NAryChoice n D A {i}) → ⟦ expr ⟧ₙ ⊆[ NAryChoiceConfig→ArbitraryChoiceConfig n ] ⟦ NAryChoice→ArbitraryChoice expr ⟧ₐ
-NAryChoice→ArbitraryChoice-preserves-⊇ n (artifact a cs) config =
+preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NAryChoice n D A {i}) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate expr ⟧ₐ
+preserves-⊇ n (artifact a cs) config =
   ⟦ artifact a cs ⟧ₙ config
   ≡⟨⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → NAryChoice→ArbitraryChoice-preserves-⊇ n e config) cs) ⟩
-  artifact a (List.map (λ e → ⟦ NAryChoice→ArbitraryChoice e ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig n config)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig n config))} {f = NAryChoice→ArbitraryChoice} cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig n config)) (List.map NAryChoice→ArbitraryChoice cs))
+  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n e config) cs) ⟩
+  artifact a (List.map (λ e → ⟦ translate e ⟧ₐ (conf n config)) cs)
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ (conf n config))} {f = translate} cs) ⟩
+  artifact a (List.map (λ e → ⟦ e ⟧ₐ (conf n config)) (List.map translate cs))
   ≡⟨⟩
-  ⟦ artifact a (List.map NAryChoice→ArbitraryChoice cs) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig n config)
+  ⟦ artifact a (List.map translate cs) ⟧ₐ (conf n config)
   ≡⟨⟩
-  ⟦ NAryChoice→ArbitraryChoice (artifact a cs) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig n config)
+  ⟦ translate (artifact a cs) ⟧ₐ (conf n config)
   ∎
-NAryChoice→ArbitraryChoice-preserves-⊇ {D} {A} (sucs n) (choice d (c ∷ cs)) config =
+preserves-⊇ {D} {A} (sucs n) (choice d (c ∷ cs)) config =
   ⟦ choice d (c ∷ cs) ⟧ₙ config
   ≡⟨⟩
   ⟦ Vec.lookup (c ∷ cs) (config d) ⟧ₙ config
-  ≡⟨ NAryChoice→ArbitraryChoice-preserves-⊇ (sucs n) (Vec.lookup (c ∷ cs) (config d)) config ⟩
-  ⟦ NAryChoice→ArbitraryChoice (Vec.lookup (c ∷ cs) (config d)) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (config d) NAryChoice→ArbitraryChoice (c ∷ cs)) refl ⟩
-  ⟦ Vec.lookup (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs)) (config d) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Eq.cong₂ Vec.lookup (refl {x = Vec.map NAryChoice→ArbitraryChoice (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
-  ⟦ Vec.lookup (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config)
-  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (NAryChoice→ArbitraryChoice c ∷ Vec.map NAryChoice→ArbitraryChoice cs)) refl ⟩
-  ⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs))) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config)
+  ≡⟨ preserves-⊇ (sucs n) (Vec.lookup (c ∷ cs) (config d)) config ⟩
+  ⟦ translate (Vec.lookup (c ∷ cs) (config d)) ⟧ₐ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (config d) translate (c ∷ cs)) refl ⟩
+  ⟦ Vec.lookup (Vec.map translate (c ∷ cs)) (config d) ⟧ₐ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Eq.cong₂ Vec.lookup (refl {x = Vec.map translate (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
+  ⟦ Vec.lookup (Vec.map translate (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₐ (conf (sucs n) config)
+  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate c ∷ Vec.map translate cs)) refl ⟩
+  ⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (List⁺.fromVec (Vec.map NAryChoice→ArbitraryChoice (c ∷ cs))) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config)
+  ⟦ choice d (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ NAryChoice→ArbitraryChoice (choice d (c ∷ cs)) ⟧ₐ (NAryChoiceConfig→ArbitraryChoiceConfig (sucs n) config)
+  ⟦ translate (choice d (c ∷ cs)) ⟧ₐ (conf (sucs n) config)
   ∎
 
-NAryChoice→ArbitraryChoice-preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : NAryChoice n D A) → ⟦ NAryChoice→ArbitraryChoice expr ⟧ₐ ≅[ NAryChoiceConfig→ArbitraryChoiceConfig⁻¹ n ][ NAryChoiceConfig→ArbitraryChoiceConfig n ] ⟦ expr ⟧ₙ
-NAryChoice→ArbitraryChoice-preserves n expr = NAryChoice→ArbitraryChoice-preserves-⊆ n expr , NAryChoice→ArbitraryChoice-preserves-⊇ n expr
+preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : NAryChoice n D A) → ⟦ translate expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr

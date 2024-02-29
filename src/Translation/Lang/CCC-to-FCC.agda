@@ -85,10 +85,10 @@ mutual
   maxChoiceLengthIsLimit (choice d cs) = choice (≤-trans (ℕ.m≤n⇒m≤n⊔o (ℕ≥.toℕ (maximum⁺ (List⁺.map maxChoiceLength cs))) (≤-trans (ℕ.n≤1+n (List⁺.length cs)) (ℕ.n≤1+n (suc (List⁺.length cs))))) (≤-reflexive (Eq.sym (ℕ≥.toℕ-⊔ (sucs (List⁺.length cs)) (maximum⁺ (List⁺.map maxChoiceLength cs)))))) (List⁺ChoiceLengthLimit-⊔-comm (List⁺ChoiceLengthLimit-⊔ (maximum⁺IsLimit cs)))
 
 mutual
-  ArbitraryChoice→NAryChoice : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A {i}) → ChoiceLengthLimit n {i} expr → NAryChoice n D A
-  ArbitraryChoice→NAryChoice n (artifact a cs) (artifact max-cs) = artifact a (zipWith n (ArbitraryChoice→NAryChoice n) cs max-cs)
-  ArbitraryChoice→NAryChoice (sucs n) (choice d (c ∷ cs)) (choice max≤n (max-c ∷ max-cs)) =
-    choice d (Vec.saturate max≤n (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))))
+  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A {i}) → ChoiceLengthLimit n {i} expr → NAryChoice n D A
+  translate n (artifact a cs) (artifact max-cs) = artifact a (zipWith n (translate n) cs max-cs)
+  translate (sucs n) (choice d (c ∷ cs)) (choice max≤n (max-c ∷ max-cs)) =
+    choice d (Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))))
 
   -- Can probably be generalized
   zipWith : {i : Size} → {D A Result : Set} → (n : ℕ≥ 2) → ((expr : ArbitraryChoice D A {i}) → ChoiceLengthLimit n expr → Result) → (cs : List (ArbitraryChoice D A {i})) → ListChoiceLengthLimit n cs → List Result
@@ -112,77 +112,77 @@ zipWith⇒map n f [] [] = refl
 zipWith⇒map n f (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (zipWith⇒map n f cs max-cs)
 
 
-ArbitraryChoiceConfig→NAryChoiceConfig : {D : Set} → (n : ℕ≥ 2) → ArbitraryChoiceConfig D → NAryChoiceConfig n D
-ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config d = ℕ≥.cappedFin (config d)
+conf : {D : Set} → (n : ℕ≥ 2) → ArbitraryChoiceConfig D → NAryChoiceConfig n D
+conf (sucs n) config d = ℕ≥.cappedFin (config d)
 
-ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → ArbitraryChoiceConfig D
-ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n config d = Fin.toℕ (config d)
+fnoc : {D : Set} → (n : ℕ≥ 2) → NAryChoiceConfig n D → ArbitraryChoiceConfig D
+fnoc n config d = Fin.toℕ (config d)
 
-ArbitraryChoice→NAryChoice-preserves-⊆ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A {i}) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ ArbitraryChoice→NAryChoice n expr choiceLengthLimit ⟧ₙ ⊆[ ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n ] ⟦ expr ⟧ₐ
-ArbitraryChoice→NAryChoice-preserves-⊆ n (artifact a cs) (artifact max-cs) config =
-  ⟦ ArbitraryChoice→NAryChoice n (artifact a cs) (artifact max-cs) ⟧ₙ config
+preserves-⊆ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A {i}) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ⊆[ fnoc n ] ⟦ expr ⟧ₐ
+preserves-⊆ n (artifact a cs) (artifact max-cs) config =
+  ⟦ translate n (artifact a cs) (artifact max-cs) ⟧ₙ config
   ≡⟨⟩
-  ⟦ artifact a (zipWith n (ArbitraryChoice→NAryChoice n) cs max-cs) ⟧ₙ config
+  ⟦ artifact a (zipWith n (translate n) cs max-cs) ⟧ₙ config
   ≡⟨⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (zipWith n (ArbitraryChoice→NAryChoice n) cs max-cs))
+  artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (zipWith n (translate n) cs max-cs))
   ≡⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
-  artifact a (zipWith n (λ e max-e → ⟦ ArbitraryChoice→NAryChoice n e max-e ⟧ₙ config) cs max-cs)
-  ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → ArbitraryChoice→NAryChoice-preserves-⊆ n e max-e config) cs max-cs) ⟩
-  artifact a (zipWith n (λ e max-e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n config)) cs max-cs)
-  ≡⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n config)) cs max-cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n config)) cs)
+  artifact a (zipWith n (λ e max-e → ⟦ translate n e max-e ⟧ₙ config) cs max-cs)
+  ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → preserves-⊆ n e max-e config) cs max-cs) ⟩
+  artifact a (zipWith n (λ e max-e → ⟦ e ⟧ₐ (fnoc n config)) cs max-cs)
+  ≡⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → ⟦ e ⟧ₐ (fnoc n config)) cs max-cs) ⟩
+  artifact a (List.map (λ e → ⟦ e ⟧ₐ (fnoc n config)) cs)
   ≡⟨⟩
-  ⟦ artifact a cs ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n config)
+  ⟦ artifact a cs ⟧ₐ (fnoc n config)
   ∎
-ArbitraryChoice→NAryChoice-preserves-⊆ (sucs n) (choice d (c ∷ cs)) (choice max≤n (max-c ∷ max-cs)) config =
-  ⟦ ArbitraryChoice→NAryChoice (sucs n) (choice d (c ∷ cs)) (choice (max≤n) (max-c ∷ max-cs)) ⟧ₙ config
+preserves-⊆ (sucs n) (choice d (c ∷ cs)) (choice max≤n (max-c ∷ max-cs)) config =
+  ⟦ translate (sucs n) (choice d (c ∷ cs)) (choice (max≤n) (max-c ∷ max-cs)) ⟧ₙ config
   ≡⟨⟩
-  ⟦ choice d (Vec.saturate max≤n (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)))) ⟧ₙ config
+  ⟦ choice d (Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) ⟧ₙ config
   ≡⟨⟩
-  ⟦ Vec.lookup (Vec.saturate max≤n (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)))) (config d) ⟧ₙ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate max≤n (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (config d)) refl ⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
+  ⟦ Vec.lookup (Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) (config d) ⟧ₙ config
+  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (config d)) refl ⟩
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
   ≡⟨⟩
-  ⟦ Vec.lookup (Vec.cast (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-cast₁ (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) (ℕ≥.cappedFin (Fin.toℕ (config d)))) refl ⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) (Fin.cast (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d)))) ⟧ₙ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (Fin.toℕ (config d)) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (find-or-last⇒lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c) (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) refl ⟩
-  ⟦ find-or-last (Fin.toℕ (config d)) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs) ⟧ₙ config
-  ≡⟨ map-find-or-last (λ e → ⟦ e ⟧ₙ config) (Fin.toℕ (config d)) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs) ⟩
-  find-or-last (Fin.toℕ (config d)) (⟦ ArbitraryChoice→NAryChoice (sucs n) c max-c ⟧ₙ config ∷ List.map (λ e → ⟦ e ⟧ₙ config) (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))
+  ⟦ Vec.lookup (Vec.cast (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
+  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-cast₁ (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (Fin.toℕ (config d)))) refl ⟩
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (Fin.cast (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d)))) ⟧ₙ config
+  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (Fin.toℕ (config d)) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟩
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (find-or-last⇒lookup (translate (sucs n) c max-c) (zipWith (sucs n) (translate (sucs n)) cs max-cs)) refl ⟩
+  ⟦ find-or-last (Fin.toℕ (config d)) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟧ₙ config
+  ≡⟨ map-find-or-last (λ e → ⟦ e ⟧ₙ config) (Fin.toℕ (config d)) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟩
+  find-or-last (Fin.toℕ (config d)) (⟦ translate (sucs n) c max-c ⟧ₙ config ∷ List.map (λ e → ⟦ e ⟧ₙ config) (zipWith (sucs n) (translate (sucs n)) cs max-cs))
   ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (map∘zipWith (sucs n) cs max-cs)) ⟩
-  find-or-last (Fin.toℕ (config d)) (⟦ ArbitraryChoice→NAryChoice (sucs n) c max-c ⟧ₙ config ∷ zipWith (sucs n) (λ e max-e → ⟦ ArbitraryChoice→NAryChoice (sucs n) e max-e ⟧ₙ config) cs max-cs)
-  ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ (ArbitraryChoice→NAryChoice-preserves-⊆ (sucs n) c max-c config) (zipWith-cong (sucs n) (λ e max-e → ArbitraryChoice→NAryChoice-preserves-⊆ (sucs n) e max-e config) cs max-cs)) ⟩
-  find-or-last (Fin.toℕ (config d)) (⟦ c ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config) ∷ zipWith (sucs n) (λ e max-e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)) cs max-cs)
-  ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (zipWith⇒map (sucs n) (λ e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)) cs max-cs)) ⟩
-  find-or-last (Fin.toℕ (config d)) (⟦ c ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config) ∷ List.map (λ e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)) cs)
+  find-or-last (Fin.toℕ (config d)) (⟦ translate (sucs n) c max-c ⟧ₙ config ∷ zipWith (sucs n) (λ e max-e → ⟦ translate (sucs n) e max-e ⟧ₙ config) cs max-cs)
+  ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ (preserves-⊆ (sucs n) c max-c config) (zipWith-cong (sucs n) (λ e max-e → preserves-⊆ (sucs n) e max-e config) cs max-cs)) ⟩
+  find-or-last (Fin.toℕ (config d)) (⟦ c ⟧ₐ (fnoc (sucs n) config) ∷ zipWith (sucs n) (λ e max-e → ⟦ e ⟧ₐ (fnoc (sucs n) config)) cs max-cs)
+  ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (zipWith⇒map (sucs n) (λ e → ⟦ e ⟧ₐ (fnoc (sucs n) config)) cs max-cs)) ⟩
+  find-or-last (Fin.toℕ (config d)) (⟦ c ⟧ₐ (fnoc (sucs n) config) ∷ List.map (λ e → ⟦ e ⟧ₐ (fnoc (sucs n) config)) cs)
   ≡⟨⟩
-  find-or-last (Fin.toℕ (config d)) (List⁺.map (λ e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)) (c ∷ cs))
-  ≡˘⟨ map-find-or-last (λ e → ⟦ e ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)) (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config d) (c ∷ cs) ⟩
-  ⟦ find-or-last (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config d) (c ∷ cs) ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)
+  find-or-last (Fin.toℕ (config d)) (List⁺.map (λ e → ⟦ e ⟧ₐ (fnoc (sucs n) config)) (c ∷ cs))
+  ≡˘⟨ map-find-or-last (λ e → ⟦ e ⟧ₐ (fnoc (sucs n) config)) (fnoc (sucs n) config d) (c ∷ cs) ⟩
+  ⟦ find-or-last (fnoc (sucs n) config d) (c ∷ cs) ⟧ₐ (fnoc (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (c ∷ cs) ⟧ₐ (ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ (sucs n) config)
+  ⟦ choice d (c ∷ cs) ⟧ₐ (fnoc (sucs n) config)
   ∎
 
-ArbitraryChoice→NAryChoice-preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A {i}) → (choiceLengthLimit : ChoiceLengthLimit n {i} expr) → ⟦ expr ⟧ₐ ⊆[ ArbitraryChoiceConfig→NAryChoiceConfig n ] ⟦ ArbitraryChoice→NAryChoice n expr choiceLengthLimit ⟧ₙ
-ArbitraryChoice→NAryChoice-preserves-⊇ n (artifact a cs) (artifact max-cs) config =
+preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A {i}) → (choiceLengthLimit : ChoiceLengthLimit n {i} expr) → ⟦ expr ⟧ₐ ⊆[ conf n ] ⟦ translate n expr choiceLengthLimit ⟧ₙ
+preserves-⊇ n (artifact a cs) (artifact max-cs) config =
   ⟦ artifact a cs ⟧ₐ config
   ≡⟨⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₐ config) cs)
   ≡˘⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → ⟦ e ⟧ₐ config) cs max-cs) ⟩
   artifact a (zipWith n (λ e max-e → ⟦ e ⟧ₐ config) cs max-cs)
-  ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → ArbitraryChoice→NAryChoice-preserves-⊇ n e max-e config) cs max-cs) ⟩
-  artifact a (zipWith n (λ e max-e → ⟦ ArbitraryChoice→NAryChoice n e max-e ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig n config)) cs max-cs)
+  ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → preserves-⊇ n e max-e config) cs max-cs) ⟩
+  artifact a (zipWith n (λ e max-e → ⟦ translate n e max-e ⟧ₙ (conf n config)) cs max-cs)
   ≡˘⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig n config)) (zipWith n (ArbitraryChoice→NAryChoice n) cs max-cs))
+  artifact a (List.map (λ e → ⟦ e ⟧ₙ (conf n config)) (zipWith n (translate n) cs max-cs))
   ≡⟨⟩
-  ⟦ artifact a (zipWith n (ArbitraryChoice→NAryChoice n) cs max-cs) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig n config)
+  ⟦ artifact a (zipWith n (translate n) cs max-cs) ⟧ₙ (conf n config)
   ≡⟨⟩
-  ⟦ ArbitraryChoice→NAryChoice n (artifact a cs) (artifact max-cs) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig n config)
+  ⟦ translate n (artifact a cs) (artifact max-cs) ⟧ₙ (conf n config)
   ∎
-ArbitraryChoice→NAryChoice-preserves-⊇ (sucs n) (choice d (c ∷ cs)) (choice (s≤s max≤n) (max-c ∷ max-cs)) config =
+preserves-⊇ (sucs n) (choice d (c ∷ cs)) (choice (s≤s max≤n) (max-c ∷ max-cs)) config =
   ⟦ choice d (c ∷ cs) ⟧ₐ config
   ≡⟨⟩
   ⟦ find-or-last (config d) (c ∷ cs) ⟧ₐ config
@@ -192,29 +192,29 @@ ArbitraryChoice→NAryChoice-preserves-⊇ (sucs n) (choice d (c ∷ cs)) (choic
   find-or-last (config d) (⟦ c ⟧ₐ config ∷ List.map (λ e → ⟦ e ⟧ₐ config) cs)
   ≡˘⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (zipWith⇒map (sucs n) (λ e → ⟦ e ⟧ₐ config) cs max-cs)) ⟩
   find-or-last (config d) (⟦ c ⟧ₐ config ∷ zipWith (sucs n) (λ e max-e → ⟦ e ⟧ₐ config) cs max-cs)
-  ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ (ArbitraryChoice→NAryChoice-preserves-⊇ (sucs n) c max-c config) (zipWith-cong (sucs n) (λ e max-e → ArbitraryChoice→NAryChoice-preserves-⊇ (sucs n) e max-e config) cs max-cs)) ⟩
-  find-or-last (config d) (⟦ ArbitraryChoice→NAryChoice (sucs n) c max-c ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config) ∷ zipWith (sucs n) (λ e max-e → ⟦ ArbitraryChoice→NAryChoice (sucs n) e max-e ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)) cs max-cs)
+  ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ (preserves-⊇ (sucs n) c max-c config) (zipWith-cong (sucs n) (λ e max-e → preserves-⊇ (sucs n) e max-e config) cs max-cs)) ⟩
+  find-or-last (config d) (⟦ translate (sucs n) c max-c ⟧ₙ (conf (sucs n) config) ∷ zipWith (sucs n) (λ e max-e → ⟦ translate (sucs n) e max-e ⟧ₙ (conf (sucs n) config)) cs max-cs)
   ≡˘⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (map∘zipWith (sucs n) cs max-cs)) ⟩
-  find-or-last (config d) (⟦ ArbitraryChoice→NAryChoice (sucs n) c max-c ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config) ∷ List.map (λ e → ⟦ e ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)) (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))
-  ≡˘⟨ map-find-or-last (λ e → ⟦ e ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)) (config d) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs) ⟩
-  ⟦ find-or-last (config d) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
-  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (find-or-last⇒lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c) (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) refl ⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d)) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (config d) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) (Fin.cast (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))) (ℕ≥.cappedFin (config d))) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-cast₁ (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d))) refl ⟩
-  ⟦ Vec.lookup (Vec.cast (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (ℕ≥.cappedFin (config d)) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
+  find-or-last (config d) (⟦ translate (sucs n) c max-c ⟧ₙ (conf (sucs n) config) ∷ List.map (λ e → ⟦ e ⟧ₙ (conf (sucs n) config)) (zipWith (sucs n) (translate (sucs n)) cs max-cs))
+  ≡˘⟨ map-find-or-last (λ e → ⟦ e ⟧ₙ (conf (sucs n) config)) (config d) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟩
+  ⟦ find-or-last (config d) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟧ₙ (conf (sucs n) config)
+  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (find-or-last⇒lookup (translate (sucs n) c max-c) (zipWith (sucs n) (translate (sucs n)) cs max-cs)) refl ⟩
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d)) ⟧ₙ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (config d) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟩
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (Fin.cast (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))) (ℕ≥.cappedFin (config d))) ⟧ₙ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-cast₁ (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d))) refl ⟩
+  ⟦ Vec.lookup (Vec.cast (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (config d)) ⟧ₙ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (ℕ≥.cappedFin (config d)) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))}) (ℕ≥.cappedFin-idempotent max≤n (config d))) refl ⟩
-  ⟦ Vec.lookup (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config d))) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate (s≤s max≤n) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs))) (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config d)) refl ⟩
-  ⟦ Vec.lookup (Vec.saturate (s≤s max≤n) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)))) (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config d) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (config d)) ⟧ₙ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))}) (ℕ≥.cappedFin-idempotent max≤n (config d))) refl ⟩
+  ⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (conf (sucs n) config d))) ⟧ₙ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (conf (sucs n) config d)) refl ⟩
+  ⟦ Vec.lookup (Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) (conf (sucs n) config d) ⟧ₙ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ choice d (Vec.saturate (s≤s max≤n) (ArbitraryChoice→NAryChoice (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (ArbitraryChoice→NAryChoice (sucs n)) cs max-cs)))) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
+  ⟦ choice d (Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) ⟧ₙ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ ArbitraryChoice→NAryChoice (sucs n) (choice d (c ∷ cs)) (choice (s≤s max≤n) (max-c ∷ max-cs)) ⟧ₙ (ArbitraryChoiceConfig→NAryChoiceConfig (sucs n) config)
+  ⟦ translate (sucs n) (choice d (c ∷ cs)) (choice (s≤s max≤n) (max-c ∷ max-cs)) ⟧ₙ (conf (sucs n) config)
   ∎
 
-ArbitraryChoice→NAryChoice-preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ ArbitraryChoice→NAryChoice n expr choiceLengthLimit ⟧ₙ ≅[ ArbitraryChoiceConfig→NAryChoiceConfig⁻¹ n ][ ArbitraryChoiceConfig→NAryChoiceConfig n ] ⟦ expr ⟧ₐ
-ArbitraryChoice→NAryChoice-preserves n expr choiceLengthLimit = ArbitraryChoice→NAryChoice-preserves-⊆ n expr choiceLengthLimit , ArbitraryChoice→NAryChoice-preserves-⊇ n expr choiceLengthLimit
+preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : ArbitraryChoice D A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₐ
+preserves n expr choiceLengthLimit = preserves-⊆ n expr choiceLengthLimit , preserves-⊇ n expr choiceLengthLimit
