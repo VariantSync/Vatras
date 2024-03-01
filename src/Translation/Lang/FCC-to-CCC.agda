@@ -1,5 +1,9 @@
 {-# OPTIONS --sized-types #-}
-module Translation.Lang.FCC-to-CCC where
+
+open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
+
+module Translation.Lang.FCC-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -27,8 +31,6 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
-open import Lang.Choices
-
 open import Lang.CCC renaming (Configuration to CCCꟲ)
 module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
@@ -36,6 +38,9 @@ open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 open import Lang.FCC renaming (Configuration to FCCꟲ)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+
+artifact : {A : Set} → A → List (Variant A) → Variant A
+artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → FCC n D i A → CCC D ∞ A

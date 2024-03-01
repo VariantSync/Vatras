@@ -1,6 +1,9 @@
 {-# OPTIONS --sized-types #-}
 
-module Translation.Lang.BCC-to-BCC where
+open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
+
+module Translation.Lang.BCC-to-BCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Bool.Properties using (push-function-into-if)
@@ -30,7 +33,6 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
-open import Lang.Choices
 open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
@@ -38,6 +40,9 @@ open import Construct.Artifact as Artifact using () renaming (Syntax to Artifact
 import Construct.Choices as Chc
 module Choice₂ = Chc.Choice₂
 open Choice₂ using () renaming (Syntax to Choice₂)
+
+artifact : {A : Set} → A → List (Variant A) → Variant A
+artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 map-dim : {i : Size} → {D₁ D₂ A : Set} → (D₁ → D₂) → BCC D₁ i A → BCC D₂ i A

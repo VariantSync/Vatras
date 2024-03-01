@@ -1,5 +1,9 @@
 {-# OPTIONS --sized-types #-}
-module Translation.Lang.FCC-to-BCC where
+
+open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
+
+module Translation.Lang.FCC-to-BCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Bool.Properties using (push-function-into-if)
@@ -29,8 +33,6 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
-open import Lang.Choices
-
 open import Lang.BCC renaming (Configuration to BCCꟲ)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
@@ -41,7 +43,11 @@ open FCC renaming (Configuration to FCCꟲ)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-open import Translation.Lang.FCC-to-FCC using () renaming (translate to FCC→FCC; conf to FCCꟲ→FCCꟲ; fnoc to FCCꟲ→FCCꟲ⁻¹; preserves to FCC→FCC-preserves)
+open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→FCC; conf to FCCꟲ→FCCꟲ; fnoc to FCCꟲ→FCCꟲ⁻¹; preserves to FCC→FCC-preserves)
+
+artifact : {A : Set} → A → List (Variant A) → Variant A
+artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
+
 
 module 2Ary where
   translate : {i : Size} → {D A : Set} → FCC (sucs zero) D i A → BCC D ∞ A

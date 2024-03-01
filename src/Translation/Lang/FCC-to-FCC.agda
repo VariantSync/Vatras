@@ -1,5 +1,9 @@
 {-# OPTIONS --sized-types #-}
-module Translation.Lang.FCC-to-FCC where
+
+open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
+
+module Translation.Lang.FCC-to-FCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -27,13 +31,15 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
-open import Lang.Choices
-
 import Lang.FCC
 module FCC n = Lang.FCC n
 open FCC renaming (Configuration to FCCꟲ)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+
+artifact : {A : Set} → A → List (Variant A) → Variant A
+artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
+
 
 module IncreaseArity where
   module General where
