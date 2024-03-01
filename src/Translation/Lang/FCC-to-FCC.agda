@@ -448,12 +448,17 @@ module DecreaseArity where
       ⟦ Vec.lookup cs' j ⟧ₙ config
       ∎
 
-  preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D ∞ A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+  preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
   preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
+conf : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ n D → FCCꟲ m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n)))
+conf n m = IncreaseArity.conf m ∘ DecreaseArity.conf n
+
+fnoc : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) → FCCꟲ n D
+fnoc n m = DecreaseArity.fnoc n ∘ IncreaseArity.fnoc m
 
 translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → FCC n D i A → FCC m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ∞ A
 translate (sucs n) (sucs m) expr = IncreaseArity.translate (sucs m) (DecreaseArity.translate (sucs n) expr)
 
-preserves : {D A : Set} → (n m : ℕ≥ 2) → (expr : FCC n D ∞ A) → ⟦ translate n m expr ⟧ₙ ≅[ DecreaseArity.fnoc n ∘ IncreaseArity.fnoc m ][ IncreaseArity.conf m ∘ DecreaseArity.conf n ] ⟦ expr ⟧ₙ
+preserves : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n m expr ⟧ₙ ≅[ fnoc n m ][ conf n m ] ⟦ expr ⟧ₙ
 preserves (sucs n) (sucs m) expr = ≅[]-trans (IncreaseArity.preserves (sucs m) (DecreaseArity.translate (sucs n) expr)) (DecreaseArity.preserves (sucs n) expr)
