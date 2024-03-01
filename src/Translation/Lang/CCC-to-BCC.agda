@@ -33,115 +33,49 @@ module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
 import Lang.FCC
-module FCC n = Lang.FCC n
-open FCC renaming (Configuration to FCCꟲ)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
+import Lang.BCC
+module BCC n = Lang.BCC n
+open BCC renaming (Configuration to BCCꟲ)
+module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
+open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
+
 open import Translation.Lang.CCC-to-FCC using (maxChoiceLength; maxChoiceLengthIsLimit) renaming (translate to CCC→FCC; conf to CCCꟲ→FCCꟲ; fnoc to CCCꟲ→FCCꟲ⁻¹; preserves to CCC→FCC-preserves)
-import Translation.Lang.FCC-to-FCC
-open Translation.Lang.FCC-to-FCC.DecreaseArity using () renaming (translate to FCC→BCC; conf to FCCꟲ→BCCꟲ; fnoc to FCCꟲ→BCCꟲ⁻¹; preserves to FCC→BCC-preserves)
+open import Translation.Lang.FCC-to-BCC using () renaming (translate to FCC→BCC; conf to FCCꟲ→BCCꟲ; fnoc to FCCꟲ→BCCꟲ⁻¹; preserves to FCC→BCC-preserves)
+open import Translation.Lang.BCC-to-BCC using () renaming (map-dim to BCC-map-dim; preserves to BCC-map-dim-preserves)
 
-FCC-map-dimension : {i : Size} → {n : ℕ≥ 2} → {D A D' : Set} → (D → D') → FCC n D i A → FCC n D' i A
-FCC-map-dimension f (a -< cs >-) = a -< List.map (FCC-map-dimension f) cs >-
-FCC-map-dimension f (d ⟨ cs ⟩) = f d ⟨ Vec.map (FCC-map-dimension f) cs ⟩
+Fin→ℕ : {D : Set} → (n : ℕ≥ 2) -> D × Fin (ℕ≥.toℕ (ℕ≥.pred n)) → D × ℕ
+Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 
-BCC-Fin⇒ℕ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) i A → FCC (sucs zero) (D × ℕ) i A
-BCC-Fin⇒ℕ n = FCC-map-dimension (λ (d , i) → d , Fin.toℕ i)
+Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
+Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
+translate : {D A : Set} → CCC D ∞ A → BCC (D × ℕ) ∞ A
+translate expr = BCC-map-dim (Fin→ℕ n) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)))
+  where
+  n = maxChoiceLength expr
 
-translate : {D A : Set} → CCC D ∞ A → FCC (sucs zero) (D × ℕ) ∞ A
-translate expr = BCC-Fin⇒ℕ (maxChoiceLength expr) (FCC→BCC (maxChoiceLength expr) (CCC→FCC (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr)))
+conf : {D : Set} → ℕ≥ 2 → CCCꟲ D → BCCꟲ (D × ℕ)
+conf n = (_∘ Fin→ℕ⁻¹ n) ∘ FCCꟲ→BCCꟲ n ∘ CCCꟲ→FCCꟲ n
 
+fnoc : {D : Set} → ℕ≥ 2 → BCCꟲ (D × ℕ) → CCCꟲ D
+fnoc n = CCCꟲ→FCCꟲ⁻¹ n ∘ FCCꟲ→BCCꟲ⁻¹ n ∘ (_∘ Fin→ℕ n)
 
-BCCꟲ-Fin⇒ℕ : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) → FCCꟲ (sucs zero) (D × ℕ)
-BCCꟲ-Fin⇒ℕ (sucs n) config (d , i) = config (d , ℕ≥.cappedFin i)
-
-BCCꟲ-Fin⇒ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) (D × ℕ) → FCCꟲ (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n)))
-BCCꟲ-Fin⇒ℕ⁻¹ n config (d , i) = config (d , Fin.toℕ i)
-
-BCC-Fin⇒ℕ-preserves-⊆ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) i A) → ⟦ BCC-Fin⇒ℕ n expr ⟧ₙ ⊆[ BCCꟲ-Fin⇒ℕ⁻¹ n ] ⟦ expr ⟧ₙ
-BCC-Fin⇒ℕ-preserves-⊆ n (a -< cs >-) config =
-  ⟦ BCC-Fin⇒ℕ n (a -< cs >-) ⟧ₙ config
-  ≡⟨⟩
-  ⟦ a -< List.map (FCC-map-dimension (λ (d , i) → d , Fin.toℕ i)) cs >- ⟧ₙ config
-  ≡⟨⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (List.map (FCC-map-dimension (λ (d , i) → d , Fin.toℕ i)) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-  artifact a (List.map (λ e → ⟦ FCC-map-dimension (λ (d , i) → d , Fin.toℕ i) e ⟧ₙ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → BCC-Fin⇒ℕ-preserves-⊆ n e config) cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ (BCCꟲ-Fin⇒ℕ⁻¹ n config)) cs)
-  ≡⟨⟩
-  ⟦ a -< cs >- ⟧ₙ (BCCꟲ-Fin⇒ℕ⁻¹ n config)
-  ∎
-BCC-Fin⇒ℕ-preserves-⊆ n ((d , i) ⟨ cs ⟩) config =
-  ⟦ BCC-Fin⇒ℕ n ((d , i) ⟨ cs ⟩) ⟧ₙ config
-  ≡⟨⟩
-  ⟦ (d , Fin.toℕ i) ⟨ Vec.map (BCC-Fin⇒ℕ n) cs ⟩ ⟧ₙ config
-  ≡⟨⟩
-  ⟦ Vec.lookup (Vec.map (BCC-Fin⇒ℕ n) cs) (config (d , Fin.toℕ i)) ⟧ₙ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config (d , Fin.toℕ i)) (BCC-Fin⇒ℕ n) cs) refl ⟩
-  ⟦ BCC-Fin⇒ℕ n (Vec.lookup cs (config (d , Fin.toℕ i))) ⟧ₙ config
-  ≡⟨ BCC-Fin⇒ℕ-preserves-⊆ n (Vec.lookup cs (config (d , Fin.toℕ i))) config ⟩
-  ⟦ Vec.lookup cs (config (d , Fin.toℕ i)) ⟧ₙ (BCCꟲ-Fin⇒ℕ⁻¹ n config)
-  ≡⟨⟩
-  ⟦ Vec.lookup cs (BCCꟲ-Fin⇒ℕ⁻¹ n config (d , i)) ⟧ₙ (BCCꟲ-Fin⇒ℕ⁻¹ n config)
-  ≡⟨⟩
-  ⟦ (d , i) ⟨ cs ⟩ ⟧ₙ (BCCꟲ-Fin⇒ℕ⁻¹ n config)
-  ∎
-
-
-BCC-Fin⇒ℕ-preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) i A) → ⟦ expr ⟧ₙ ⊆[ BCCꟲ-Fin⇒ℕ n ] ⟦ BCC-Fin⇒ℕ n expr ⟧ₙ
-BCC-Fin⇒ℕ-preserves-⊇ n (a -< cs >-) config =
-  ⟦ a -< cs >- ⟧ₙ config
-  ≡⟨⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → BCC-Fin⇒ℕ-preserves-⊇ n e config) cs) ⟩
-  artifact a (List.map (λ e → ⟦ FCC-map-dimension (λ (d , i) → d , Fin.toℕ i) e ⟧ₙ (BCCꟲ-Fin⇒ℕ n config)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₙ (BCCꟲ-Fin⇒ℕ n config)) (List.map (FCC-map-dimension (λ (d , i) → d , Fin.toℕ i)) cs))
-  ≡⟨⟩
-  ⟦ a -< List.map (FCC-map-dimension (λ (d , i) → d , Fin.toℕ i)) cs >- ⟧ₙ (BCCꟲ-Fin⇒ℕ n config)
-  ≡⟨⟩
-  ⟦ BCC-Fin⇒ℕ n (a -< cs >-) ⟧ₙ (BCCꟲ-Fin⇒ℕ n config)
-  ∎
-BCC-Fin⇒ℕ-preserves-⊇ (sucs n) ((d , i) ⟨ cs ⟩) config =
-  ⟦ (d , i) ⟨ cs ⟩ ⟧ₙ config
-  ≡⟨⟩
-  ⟦ Vec.lookup cs (config (d , i)) ⟧ₙ config
-  ≡˘⟨ Eq.cong₂ (⟦_⟧ₙ) {u = config} (Eq.cong₂ Vec.lookup {x = cs} refl (Eq.cong config (Eq.cong₂ _,_ refl (ℕ≥.cappedFin-toℕ i)))) refl ⟩
-  ⟦ Vec.lookup cs (config (d , ℕ≥.cappedFin (Fin.toℕ i))) ⟧ₙ config
-  ≡⟨⟩
-  ⟦ Vec.lookup cs (BCCꟲ-Fin⇒ℕ (sucs n) config (d , Fin.toℕ i)) ⟧ₙ config
-  ≡⟨ BCC-Fin⇒ℕ-preserves-⊇ (sucs n) (Vec.lookup cs (BCCꟲ-Fin⇒ℕ (sucs n) config (d , Fin.toℕ i))) config ⟩
-  ⟦ BCC-Fin⇒ℕ (sucs n) (Vec.lookup cs (BCCꟲ-Fin⇒ℕ (sucs n) config (d , Fin.toℕ i))) ⟧ₙ (BCCꟲ-Fin⇒ℕ (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (BCCꟲ-Fin⇒ℕ (sucs n) config (d , Fin.toℕ i)) (BCC-Fin⇒ℕ (sucs n)) cs) refl ⟩
-  ⟦ Vec.lookup (Vec.map (BCC-Fin⇒ℕ (sucs n)) cs) (BCCꟲ-Fin⇒ℕ (sucs n) config (d , Fin.toℕ i)) ⟧ₙ (BCCꟲ-Fin⇒ℕ (sucs n) config)
-  ≡⟨⟩
-  ⟦ (d , Fin.toℕ i) ⟨ Vec.map (BCC-Fin⇒ℕ (sucs n)) cs ⟩ ⟧ₙ (BCCꟲ-Fin⇒ℕ (sucs n) config)
-  ≡⟨⟩
-  ⟦ BCC-Fin⇒ℕ (sucs n) ((d , i) ⟨ cs ⟩) ⟧ₙ (BCCꟲ-Fin⇒ℕ (sucs n) config)
-  ∎
-
-BCC-Fin⇒ℕ-preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : FCC (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ∞ A) → ⟦ BCC-Fin⇒ℕ n expr ⟧ₙ ≅[ BCCꟲ-Fin⇒ℕ⁻¹ n ][ BCCꟲ-Fin⇒ℕ n ] ⟦ expr ⟧ₙ
-BCC-Fin⇒ℕ-preserves n expr = BCC-Fin⇒ℕ-preserves-⊆ n expr , BCC-Fin⇒ℕ-preserves-⊇ n expr
-
-
-conf : {D : Set} → ℕ≥ 2 → CCCꟲ D → FCCꟲ (sucs zero) (D × ℕ)
-conf n = BCCꟲ-Fin⇒ℕ n ∘ FCCꟲ→BCCꟲ n ∘ CCCꟲ→FCCꟲ n
-
-fnoc : {D : Set} → ℕ≥ 2 → FCCꟲ (sucs zero) (D × ℕ) → CCCꟲ D
-fnoc n = CCCꟲ→FCCꟲ⁻¹ n ∘ FCCꟲ→BCCꟲ⁻¹ n ∘ BCCꟲ-Fin⇒ℕ⁻¹ n
-
-preserves : {D A : Set} → (expr : CCC D ∞ A) → ⟦ translate expr ⟧ₙ ≅[ fnoc (maxChoiceLength expr) ][ conf (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
+preserves : {D A : Set} → (expr : CCC D ∞ A) → ⟦ translate expr ⟧₂ ≅[ fnoc (maxChoiceLength expr) ][ conf (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
 preserves expr =
-  ⟦ translate expr ⟧ₙ
+  ⟦ translate expr ⟧₂
   ≅[]⟨⟩
-  ⟦ BCC-Fin⇒ℕ (maxChoiceLength expr) (FCC→BCC (maxChoiceLength expr) (CCC→FCC (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))) ⟧ₙ
-  ≅[]⟨ BCC-Fin⇒ℕ-preserves (maxChoiceLength expr) (FCC→BCC (maxChoiceLength expr) (CCC→FCC (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))) ⟩
-  ⟦ FCC→BCC (maxChoiceLength expr) (CCC→FCC (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr)) ⟧ₙ
-  ≅[]⟨ FCC→BCC-preserves (maxChoiceLength expr) (CCC→FCC (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr)) ⟩
-  ⟦ CCC→FCC (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr) ⟧ₙ
-  ≅[]⟨ CCC→FCC-preserves (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr) ⟩
+  ⟦ BCC-map-dim (Fin→ℕ n) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr))) ⟧₂
+  ≅[]⟨ BCC-map-dim-preserves (Fin→ℕ n) (Fin→ℕ⁻¹ n) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma n i)) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr))) ⟩
+  ⟦ FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)) ⟧₂
+  ≅[]⟨ FCC→BCC-preserves n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)) ⟩
+  ⟦ CCC→FCC n expr (maxChoiceLengthIsLimit expr) ⟧ₙ
+  ≅[]⟨ CCC→FCC-preserves n expr (maxChoiceLengthIsLimit expr) ⟩
   ⟦ expr ⟧ₐ
   ≅[]-∎
+  where
+  n = maxChoiceLength expr
+  lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
+  lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
