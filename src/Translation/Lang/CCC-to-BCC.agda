@@ -59,7 +59,7 @@ Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
 Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
-translate : {D A : Set} → CCC D ∞ A → BCC (D × ℕ) ∞ A
+translate : {i : Size} → {D A : Set} → CCC D i A → BCC (D × ℕ) ∞ A
 translate expr = BCC-map-dim (Fin→ℕ n) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)))
   where
   n = maxChoiceLength expr
@@ -70,7 +70,7 @@ conf n = (_∘ Fin→ℕ⁻¹ n) ∘ FCCꟲ→BCCꟲ n ∘ CCCꟲ→FCCꟲ n
 fnoc : {D : Set} → ℕ≥ 2 → BCCꟲ (D × ℕ) → CCCꟲ D
 fnoc n = CCCꟲ→FCCꟲ⁻¹ n ∘ FCCꟲ→BCCꟲ⁻¹ n ∘ (_∘ Fin→ℕ n)
 
-preserves : {D A : Set} → (expr : CCC D ∞ A) → ⟦ translate expr ⟧₂ ≅[ fnoc (maxChoiceLength expr) ][ conf (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
+preserves : {i : Size} → {D A : Set} → (expr : CCC D i A) → ⟦ translate expr ⟧₂ ≅[ fnoc (maxChoiceLength expr) ][ conf (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
 preserves expr =
   ⟦ translate expr ⟧₂
   ≅[]⟨⟩

@@ -43,7 +43,7 @@ artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 module IncreaseArity where
   module General where
-    translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → FCC n D i A → FCC m D ∞ A
+    translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → FCC n D i A → FCC m D i A
     translate n m n≤m (a -< cs >-) = a -< List.map (translate n m n≤m) cs >-
     translate (sucs n) m n≤m (d ⟨ cs ⟩) = d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) m n≤m) cs) ⟩
 
@@ -123,10 +123,10 @@ module IncreaseArity where
       ⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
       ∎
 
-    preserves : {D A : Set} → (n m : ℕ≥ 2) → (n≤m : n ℕ≥.≤ m) → (expr : FCC n D ∞ A) → ⟦ translate n m n≤m expr ⟧ₙ ≅[ fnoc n m n≤m ][ conf n m n≤m ] ⟦ expr ⟧ₙ
+    preserves : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (n≤m : n ℕ≥.≤ m) → (expr : FCC n D i A) → ⟦ translate n m n≤m expr ⟧ₙ ≅[ fnoc n m n≤m ][ conf n m n≤m ] ⟦ expr ⟧ₙ
     preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤m expr
 
-  translate : {D A : Set} → (n : ℕ≥ 2) → FCC (sucs zero) D ∞ A → FCC n D ∞ A
+  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC (sucs zero) D i A → FCC n D i A
   translate (sucs n) = General.translate (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
 
   conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) D → FCCꟲ n D
@@ -135,7 +135,7 @@ module IncreaseArity where
   fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → FCCꟲ (sucs zero) D
   fnoc (sucs n) = General.fnoc (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
 
-  preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : FCC (sucs zero) D ∞ A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+  preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC (sucs zero) D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
   preserves (sucs n) = General.preserves (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
 
 

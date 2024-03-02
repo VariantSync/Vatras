@@ -58,14 +58,14 @@ mutual
     maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → List⁺ChoiceLengthLimit n {i} cs → ChoiceLengthLimit n {↑ i} (d ⟨ cs ⟩)
 
 mutual
-  ListChoiceLengthLimit-⊔ : {D A : Set} → {cs : List (CCC D ∞ A)} → {n₁ n₂ : ℕ≥ 2} → ListChoiceLengthLimit n₁ cs → ListChoiceLengthLimit (n₁ ⊔ n₂) cs
+  ListChoiceLengthLimit-⊔ : {i : Size} → {D A : Set} → {cs : List (CCC D i A)} → {n₁ n₂ : ℕ≥ 2} → ListChoiceLengthLimit n₁ cs → ListChoiceLengthLimit (n₁ ⊔ n₂) cs
   ListChoiceLengthLimit-⊔ [] = []
   ListChoiceLengthLimit-⊔ (c ∷ cs) = ChoiceLengthLimit-⊔ c ∷ ListChoiceLengthLimit-⊔ cs
 
-  List⁺ChoiceLengthLimit-⊔ : {D A : Set} → {cs : List⁺ (CCC D ∞ A)} → {n₁ n₂ : ℕ≥ 2} → List⁺ChoiceLengthLimit n₁ cs → List⁺ChoiceLengthLimit (n₁ ⊔ n₂) cs
+  List⁺ChoiceLengthLimit-⊔ : {i : Size} → {D A : Set} → {cs : List⁺ (CCC D i A)} → {n₁ n₂ : ℕ≥ 2} → List⁺ChoiceLengthLimit n₁ cs → List⁺ChoiceLengthLimit (n₁ ⊔ n₂) cs
   List⁺ChoiceLengthLimit-⊔ (c ∷ cs) = ChoiceLengthLimit-⊔ c ∷ ListChoiceLengthLimit-⊔ cs
 
-  ChoiceLengthLimit-⊔ : {D A : Set} → {cs : CCC D ∞ A} → {n₁ n₂ : ℕ≥ 2} → ChoiceLengthLimit n₁ cs → ChoiceLengthLimit (n₁ ⊔ n₂) cs
+  ChoiceLengthLimit-⊔ : {i : Size} → {D A : Set} → {cs : CCC D i A} → {n₁ n₂ : ℕ≥ 2} → ChoiceLengthLimit n₁ cs → ChoiceLengthLimit (n₁ ⊔ n₂) cs
   ChoiceLengthLimit-⊔ (maxArtifact max-cs) = maxArtifact (ListChoiceLengthLimit-⊔ max-cs)
   ChoiceLengthLimit-⊔ {cs = d ⟨ cs ⟩} {n₁ = n₁} {n₂ = n₂} (maxChoice max-cs≤n max-cs) = maxChoice (≤-trans (ℕ.m≤n⇒m≤n⊔o (ℕ≥.toℕ n₂) max-cs≤n) (≤-reflexive (Eq.sym (ℕ≥.toℕ-⊔ n₁ n₂)))) (List⁺ChoiceLengthLimit-⊔ max-cs)
 
@@ -82,26 +82,26 @@ maxChoiceLength : {i : Size} → {D A : Set} → CCC D i A → ℕ≥ 2
 maxChoiceLength (a -< cs >-) = maximum (List.map maxChoiceLength cs)
 maxChoiceLength (d ⟨ cs ⟩) = sucs (List⁺.length cs) ⊔ maximum⁺ (List⁺.map maxChoiceLength cs)
 
-ListChoiceLengthLimit-⊔-comm : {D A : Set} → {cs : List (CCC D ∞ A)} → {n m : ℕ≥ 2} → ListChoiceLengthLimit (n ⊔ m) cs → ListChoiceLengthLimit (m ⊔ n) cs
+ListChoiceLengthLimit-⊔-comm : {i : Size} → {D A : Set} → {cs : List (CCC D i A)} → {n m : ℕ≥ 2} → ListChoiceLengthLimit (n ⊔ m) cs → ListChoiceLengthLimit (m ⊔ n) cs
 ListChoiceLengthLimit-⊔-comm {cs = cs} {n = n} {m = m} a = Eq.subst (λ e → ListChoiceLengthLimit e cs) (ℕ≥.⊔-comm n m) a
 
-List⁺ChoiceLengthLimit-⊔-comm : {D A : Set} → {cs : List⁺ (CCC D ∞ A)} → {n m : ℕ≥ 2} → List⁺ChoiceLengthLimit (n ⊔ m) cs → List⁺ChoiceLengthLimit (m ⊔ n) cs
+List⁺ChoiceLengthLimit-⊔-comm : {i : Size} → {D A : Set} → {cs : List⁺ (CCC D i A)} → {n m : ℕ≥ 2} → List⁺ChoiceLengthLimit (n ⊔ m) cs → List⁺ChoiceLengthLimit (m ⊔ n) cs
 List⁺ChoiceLengthLimit-⊔-comm {cs = cs} {n = n} {m = m} a = Eq.subst (λ e → List⁺ChoiceLengthLimit e cs) (ℕ≥.⊔-comm n m) a
 
 mutual
-  maximumIsLimit : {D A : Set} → (cs : List (CCC D ∞ A)) → ListChoiceLengthLimit (maximum (List.map maxChoiceLength cs)) cs
+  maximumIsLimit : {i : Size} → {D A : Set} → (cs : List (CCC D i A)) → ListChoiceLengthLimit (maximum (List.map maxChoiceLength cs)) cs
   maximumIsLimit [] = []
   maximumIsLimit (c ∷ cs) = ChoiceLengthLimit-⊔ (maxChoiceLengthIsLimit c) ∷ ListChoiceLengthLimit-⊔-comm {m = maxChoiceLength c} (ListChoiceLengthLimit-⊔ (maximumIsLimit cs))
 
-  maximum⁺IsLimit : {D A : Set} (cs : List⁺ (CCC D ∞ A)) → List⁺ChoiceLengthLimit (maximum⁺ (List⁺.map maxChoiceLength cs)) cs
+  maximum⁺IsLimit : {i : Size} → {D A : Set} (cs : List⁺ (CCC D i A)) → List⁺ChoiceLengthLimit (maximum⁺ (List⁺.map maxChoiceLength cs)) cs
   maximum⁺IsLimit (c ∷ cs) = ChoiceLengthLimit-⊔ (maxChoiceLengthIsLimit c) ∷ ListChoiceLengthLimit-⊔-comm {m = maxChoiceLength c} (ListChoiceLengthLimit-⊔ (maximumIsLimit cs))
 
-  maxChoiceLengthIsLimit : {D A : Set} → (expr : CCC D ∞ A) → ChoiceLengthLimit (maxChoiceLength expr) expr
+  maxChoiceLengthIsLimit : {i : Size} → {D A : Set} → (expr : CCC D i A) → ChoiceLengthLimit (maxChoiceLength expr) expr
   maxChoiceLengthIsLimit (a -< cs >-) = maxArtifact (maximumIsLimit cs)
   maxChoiceLengthIsLimit (d ⟨ cs ⟩) = maxChoice (≤-trans (ℕ.m≤n⇒m≤n⊔o (ℕ≥.toℕ (maximum⁺ (List⁺.map maxChoiceLength cs))) (≤-trans (ℕ.n≤1+n (List⁺.length cs)) (ℕ.n≤1+n (suc (List⁺.length cs))))) (≤-reflexive (Eq.sym (ℕ≥.toℕ-⊔ (sucs (List⁺.length cs)) (maximum⁺ (List⁺.map maxChoiceLength cs)))))) (List⁺ChoiceLengthLimit-⊔-comm (List⁺ChoiceLengthLimit-⊔ (maximum⁺IsLimit cs)))
 
 mutual
-  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ChoiceLengthLimit n {i} expr → FCC n D ∞ A
+  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ChoiceLengthLimit n {i} expr → FCC n D i A
   translate n (a -< cs >-) (maxArtifact max-cs) = a -< zipWith n (translate n) cs max-cs >-
   translate (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice max≤n (max-c ∷ max-cs)) =
     d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
@@ -232,5 +232,5 @@ preserves-⊇ (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice (s≤s max≤n) (max-c �
   ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice (s≤s max≤n) (max-c ∷ max-cs)) ⟧ₙ (conf (sucs n) config)
   ∎
 
-preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D ∞ A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₐ
+preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₐ
 preserves n expr choiceLengthLimit = preserves-⊆ n expr choiceLengthLimit , preserves-⊇ n expr choiceLengthLimit
