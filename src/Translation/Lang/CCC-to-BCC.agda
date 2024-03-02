@@ -47,16 +47,17 @@ open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 open import Translation.Lang.CCC-to-FCC Variant Artifact∈ₛVariant using (maxChoiceLength; maxChoiceLengthIsLimit) renaming (translate to CCC→FCC; conf to CCCꟲ→FCCꟲ; fnoc to CCCꟲ→FCCꟲ⁻¹; preserves to CCC→FCC-preserves)
 open import Translation.Lang.FCC-to-BCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→BCC; conf to FCCꟲ→BCCꟲ; fnoc to FCCꟲ→BCCꟲ⁻¹; preserves to FCC→BCC-preserves)
+open import Translation.Lang.FCC-to-BCC Variant Artifact∈ₛVariant using (IndexedDimension) public
 open import Translation.Lang.BCC-to-BCC Variant Artifact∈ₛVariant using () renaming (map-dim to BCC-map-dim; preserves to BCC-map-dim-preserves)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-Fin→ℕ : {D : Set} → (n : ℕ≥ 2) -> D × Fin (ℕ≥.toℕ (ℕ≥.pred n)) → D × ℕ
+Fin→ℕ : {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
 Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 
-Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
+Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D n
 Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
 translate : {i : Size} → {D A : Set} → CCC D i A → BCC (D × ℕ) ∞ A

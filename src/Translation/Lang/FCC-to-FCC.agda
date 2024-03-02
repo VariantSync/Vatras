@@ -140,7 +140,10 @@ module IncreaseArity where
 
 
 module DecreaseArity where
-  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC n D i A → FCC (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ∞ A
+  IndexedDimension : Set → ℕ≥ 2 → Set
+  IndexedDimension D n = D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
+
+  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC n D i A → FCC (sucs zero) (IndexedDimension D n) ∞ A
   translate n (a -< cs >-) = a -< List.map (translate n) cs >-
   translate {i} {D} {A} (sucs n) (d ⟨ cs ⟩) = go n (ℕ.n<1+n n) cs
     module translate-Implementation where
@@ -149,12 +152,12 @@ module DecreaseArity where
     go (suc m) m≤n (c ∷ cs) = (d , Fin.opposite (Fin.fromℕ< {suc m} m≤n)) ⟨ translate (sucs n) c ∷ go m (<-trans (ℕ.n<1+n m) m≤n) cs ∷ [] ⟩
 
 
-  conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → FCCꟲ (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n)))
+  conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → FCCꟲ (sucs zero) (IndexedDimension D n)
   conf (sucs n) config (d , m) with config d Fin.≟ (Fin.inject₁ m)
   ... | yes _ = zero
   ... | no _ = suc zero
 
-  fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) → FCCꟲ n D
+  fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) (IndexedDimension D n) → FCCꟲ n D
   fnoc (sucs n) config d = go n (ℕ.n<1+n n)
     module fnoc-Implementation where
     go : (m : ℕ) → m < suc n → Fin (suc (suc n))
@@ -457,13 +460,16 @@ module DecreaseArity where
   preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
   preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-conf : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ n D → FCCꟲ m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n)))
+
+open DecreaseArity using (IndexedDimension) public
+
+conf : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ n D → FCCꟲ m (IndexedDimension D n)
 conf n m = IncreaseArity.conf m ∘ DecreaseArity.conf n
 
-fnoc : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) → FCCꟲ n D
+fnoc : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ m (IndexedDimension D n) → FCCꟲ n D
 fnoc n m = DecreaseArity.fnoc n ∘ IncreaseArity.fnoc m
 
-translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → FCC n D i A → FCC m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ∞ A
+translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → FCC n D i A → FCC m (IndexedDimension D n) ∞ A
 translate (sucs n) (sucs m) expr = IncreaseArity.translate (sucs m) (DecreaseArity.translate (sucs n) expr)
 
 preserves : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n m expr ⟧ₙ ≅[ fnoc n m ][ conf n m ] ⟦ expr ⟧ₙ

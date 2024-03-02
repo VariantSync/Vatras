@@ -44,6 +44,7 @@ module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→FCC; conf to FCCꟲ→FCCꟲ; fnoc to FCCꟲ→FCCꟲ⁻¹; preserves to FCC→FCC-preserves)
+open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension) public
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -141,13 +142,13 @@ module 2Ary where
   preserves : {i : Size} → {D A : Set} → (expr : FCC (sucs zero) D i A) → ⟦ translate expr ⟧₂ ≅[ fnoc ][ conf ] ⟦ expr ⟧ₙ
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → BCCꟲ (D × Fin (ℕ≥.toℕ (ℕ≥.pred n)))
+conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → BCCꟲ (IndexedDimension D n)
 conf n = 2Ary.conf ∘ FCCꟲ→FCCꟲ n (sucs zero)
 
-fnoc : {D : Set} → (n : ℕ≥ 2) → BCCꟲ (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) → FCCꟲ n D
+fnoc : {D : Set} → (n : ℕ≥ 2) → BCCꟲ (IndexedDimension D n) → FCCꟲ n D
 fnoc n = FCCꟲ→FCCꟲ⁻¹ n (sucs zero) ∘ 2Ary.fnoc
 
-translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC n D i A → BCC (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ∞ A
+translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC n D i A → BCC (IndexedDimension D n) ∞ A
 translate n expr = 2Ary.translate (FCC→FCC n (sucs zero) expr)
 
 preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧₂ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
