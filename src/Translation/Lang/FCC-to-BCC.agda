@@ -19,6 +19,8 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
+open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -29,17 +31,19 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.BCC renaming (Configuration to BCCꟲ)
+open Lang.BCC.Sem using (BCCL)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 import Lang.FCC
 module FCC n = Lang.FCC n
 open FCC renaming (Configuration to FCCꟲ)
+open Lang.FCC.Sem using (FCCL)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
@@ -142,6 +146,12 @@ module 2Ary where
   preserves : {i : Size} → {D A : Set} → (expr : FCC (sucs zero) D i A) → ⟦ translate expr ⟧₂ ≅[ fnoc ][ conf ] ⟦ expr ⟧ₙ
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
+  FCC→BCC : {i : Size} → {D : Set} → LanguageCompiler (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i}) (BCCL D Variant Artifact∈ₛVariant)
+  FCC→BCC .LanguageCompiler.compile = translate
+  FCC→BCC .LanguageCompiler.config-compiler .to = conf
+  FCC→BCC .LanguageCompiler.config-compiler .from = fnoc
+  FCC→BCC .LanguageCompiler.preserves e = ≅[]-sym (preserves e)
+
 conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → BCCꟲ (IndexedDimension D n)
 conf n = 2Ary.conf ∘ FCCꟲ→FCCꟲ n (sucs zero)
 
@@ -161,3 +171,9 @@ preserves n expr =
   ≅[]⟨ FCC→FCC-preserves n (sucs zero) expr ⟩
   ⟦ expr ⟧ₙ
   ≅[]-∎
+
+FCC→BCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (BCCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
+FCC→BCC n .LanguageCompiler.compile = translate n
+FCC→BCC n .LanguageCompiler.config-compiler .to = conf n
+FCC→BCC n .LanguageCompiler.config-compiler .from = fnoc n
+FCC→BCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)

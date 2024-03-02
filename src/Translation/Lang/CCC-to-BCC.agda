@@ -17,6 +17,8 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
+open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -27,11 +29,12 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.CCC renaming (Configuration to CCCꟲ)
+open Lang.CCC.Sem using (CCCL)
 module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
@@ -42,6 +45,7 @@ open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 import Lang.BCC
 module BCC n = Lang.BCC n
 open BCC renaming (Configuration to BCCꟲ)
+open Lang.BCC.Sem using (BCCL)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
@@ -88,3 +92,11 @@ preserves expr =
   n = maxChoiceLength expr
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
+
+-- Can't instantiate a LanguageCompiler because the configuration compiler depends on the expression
+
+-- CCC→BCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D Variant Artifact∈ₛVariant {i}) (BCCL (D × ℕ) Variant Artifact∈ₛVariant)
+-- CCC→BCC .LanguageCompiler.compile = translate
+-- CCC→BCC .LanguageCompiler.config-compiler .to e = conf (maxChoiceLength e)
+-- CCC→BCC .LanguageCompiler.config-compiler .from e = fnoc (maxChoiceLength e)
+-- CCC→BCC .LanguageCompiler.preserves e = ≅[]-sym (preserves e)

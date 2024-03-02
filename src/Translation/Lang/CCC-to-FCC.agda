@@ -17,6 +17,8 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
+open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -27,17 +29,19 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.CCC renaming (Configuration to CCCꟲ)
+open Lang.CCC.Sem using (CCCL)
 module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
 import Lang.FCC
 module FCC n = Lang.FCC n
 open FCC renaming (Configuration to FCCꟲ)
+open Lang.FCC.Sem using (FCCL)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
@@ -241,6 +245,15 @@ module Exact where
   preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₐ
   preserves n expr choiceLengthLimit = preserves-⊆ n expr choiceLengthLimit , preserves-⊇ n expr choiceLengthLimit
 
+  -- Can't instantiate a LanguageCompiler because the expression compiler and the configuration compiler depend on the expression
+
+  -- CCC→FCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D Variant Artifact∈ₛVariant {i}) (λ e → FCCL (maxChoiceLength e) D Variant Artifact∈ₛVariant)
+  -- CCC→FCC n .LanguageCompiler.compile e = translate (maxChoiceLength e) e (maxChoiceLengthLimit e)
+  -- CCC→FCC n .LanguageCompiler.config-compiler e .to = conf (maxChoiceLength e)
+  -- CCC→FCC n .LanguageCompiler.config-compiler e .from = fnoc (maxChoiceLength e)
+  -- CCC→FCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves (maxChoiceLength e) e (maxChoiceLengthIsLimit e))
+
+
 Fin→ℕ : {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
 Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 
@@ -271,3 +284,11 @@ preserves n expr =
   where
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
+
+-- Can't instantiate a LanguageCompiler because the configuration compiler depends on the expression
+
+-- CCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D Variant Artifact∈ₛVariant {i}) (FCCL n (D × ℕ) Variant Artifact∈ₛVariant)
+-- CCC→FCC n .LanguageCompiler.compile = translate n
+-- CCC→FCC n .LanguageCompiler.config-compiler e .to = conf n (maxChoiceLength e)
+-- CCC→FCC n .LanguageCompiler.config-compiler e .from = fnoc n (maxChoiceLength e)
+-- CCC→FCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)

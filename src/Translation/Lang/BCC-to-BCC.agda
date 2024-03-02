@@ -19,6 +19,8 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
+open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -29,11 +31,12 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩)
+open Lang.BCC.Sem using (BCCL)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 open import Construct.Artifact as Artifact using () renaming (Syntax to Artifact)
@@ -113,3 +116,9 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
 
 preserves : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : BCC D₁ i A) → ⟦ map-dim f e ⟧₂ ≅[ _∘ f ][ _∘ f⁻¹ ] ⟦ e ⟧₂
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
+
+BCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (BCCL D₁ Variant Artifact∈ₛVariant {i}) (BCCL D₂ Variant Artifact∈ₛVariant {i})
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim f
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler .to = _∘ f⁻¹
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler .from = _∘ f
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves e = ≅[]-sym (preserves f f⁻¹ is-inverse e)

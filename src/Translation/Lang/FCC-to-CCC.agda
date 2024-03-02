@@ -17,6 +17,8 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
+open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -27,15 +29,17 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
 open import Lang.CCC renaming (Configuration to CCCꟲ)
+open Lang.CCC.Sem using (CCCL)
 module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
 open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
 open import Lang.FCC renaming (Configuration to FCCꟲ)
+open Lang.FCC.Sem using (FCCL)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
@@ -120,3 +124,9 @@ preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
 
 preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
+
+FCC→CCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (CCCL D Variant Artifact∈ₛVariant)
+FCC→CCC n .LanguageCompiler.compile = translate n
+FCC→CCC n .LanguageCompiler.config-compiler .to = conf n
+FCC→CCC n .LanguageCompiler.config-compiler .from = fnoc n
+FCC→CCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
