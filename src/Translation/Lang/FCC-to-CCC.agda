@@ -43,9 +43,9 @@ artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-translate : {i : Size} → {n : ℕ≥ 2} -> {D A : Set} → FCC n D i A → CCC D ∞ A
-translate (a -< cs >-) = a -< List.map translate cs >-
-translate {n = sucs n} (d ⟨ c ∷ cs ⟩) = d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩
+translate : {i : Size} → (n : ℕ≥ 2) -> {D A : Set} → FCC n D i A → CCC D ∞ A
+translate n (a -< cs >-) = a -< List.map (translate n) cs >-
+translate (sucs n) (d ⟨ c ∷ cs ⟩) = d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩
 
 conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → CCCꟲ D
 conf (sucs n) config d = Fin.toℕ (config d)
@@ -56,67 +56,67 @@ fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 
 preserves-⊆ : ∀ {i : Size} {D A : Set} (n : ℕ≥ 2)
   → (expr : FCC n D i A)
-  → ⟦ translate expr ⟧ₐ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
+  → ⟦ translate n expr ⟧ₐ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
 preserves-⊆ n (a -< cs >-) config =
-  ⟦ translate (a -< cs >-) ⟧ₐ config
+  ⟦ translate n (a -< cs >-) ⟧ₐ config
   ≡⟨⟩
-  ⟦ a -< List.map translate cs >- ⟧ₐ config
+  ⟦ a -< List.map (translate n) cs >- ⟧ₐ config
   ≡⟨⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₐ config) (List.map translate cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ config)} {f = translate} cs) ⟩
-  artifact a (List.map (λ e → ⟦ translate e ⟧ₐ config) cs)
+  artifact a (List.map (λ e → ⟦ e ⟧ₐ config) (List.map (translate n) cs))
+  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ config)} {f = translate n} cs) ⟩
+  artifact a (List.map (λ e → ⟦ translate n e ⟧ₐ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ (fnoc n config)) cs)
   ≡⟨⟩
   ⟦ a -< cs >- ⟧ₙ (fnoc n config)
   ∎
 preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) config =
-  ⟦ translate (d ⟨ c ∷ cs ⟩) ⟧ₐ config
+  ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ₐ config
   ≡⟨⟩
-  ⟦ d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩ ⟧ₐ config
+  ⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ₐ config
   ≡⟨⟩
-  ⟦ find-or-last (config d) (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ config
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = config d} (translate c ∷ Vec.map translate cs)) refl ⟩
-  ⟦ Vec.lookup (Vec.map translate (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ₐ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (ℕ≥.cappedFin (config d)) translate (c ∷ cs)) refl ⟩
-  ⟦ translate (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ₐ config
+  ⟦ find-or-last (config d) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ₐ config
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = config d} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
+  ⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ₐ config
+  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (ℕ≥.cappedFin (config d)) (translate (sucs n)) (c ∷ cs)) refl ⟩
+  ⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ₐ config
   ≡⟨ preserves-⊆ (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) config ⟩
   ⟦ Vec.lookup (c ∷ cs) (fnoc (sucs n) config d) ⟧ₙ (fnoc (sucs n) config)
   ≡⟨⟩
   ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ (fnoc (sucs n) config)
   ∎
 
-preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate expr ⟧ₐ
+preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₐ
 preserves-⊇ n (a -< cs >-) config =
   ⟦ a -< cs >- ⟧ₙ config
   ≡⟨⟩
   artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n e config) cs) ⟩
-  artifact a (List.map (λ e → ⟦ translate e ⟧ₐ (conf n config)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ (conf n config))} {f = translate} cs) ⟩
-  artifact a (List.map (λ e → ⟦ e ⟧ₐ (conf n config)) (List.map translate cs))
+  artifact a (List.map (λ e → ⟦ translate n e ⟧ₐ (conf n config)) cs)
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ (conf n config))} {f = translate n} cs) ⟩
+  artifact a (List.map (λ e → ⟦ e ⟧ₐ (conf n config)) (List.map (translate n) cs))
   ≡⟨⟩
-  ⟦ a -< List.map translate cs >- ⟧ₐ (conf n config)
+  ⟦ a -< List.map (translate n) cs >- ⟧ₐ (conf n config)
   ≡⟨⟩
-  ⟦ translate (a -< cs >-) ⟧ₐ (conf n config)
+  ⟦ translate n (a -< cs >-) ⟧ₐ (conf n config)
   ∎
 preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
   ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ config
   ≡⟨⟩
   ⟦ Vec.lookup (c ∷ cs) (config d) ⟧ₙ config
   ≡⟨ preserves-⊇ (sucs n) (Vec.lookup (c ∷ cs) (config d)) config ⟩
-  ⟦ translate (Vec.lookup (c ∷ cs) (config d)) ⟧ₐ (conf (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (config d) translate (c ∷ cs)) refl ⟩
-  ⟦ Vec.lookup (Vec.map translate (c ∷ cs)) (config d) ⟧ₐ (conf (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Eq.cong₂ Vec.lookup (refl {x = Vec.map translate (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
-  ⟦ Vec.lookup (Vec.map translate (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₐ (conf (sucs n) config)
-  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate c ∷ Vec.map translate cs)) refl ⟩
-  ⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map translate (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
+  ⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (config d)) ⟧ₐ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (config d) (translate (sucs n)) (c ∷ cs)) refl ⟩
+  ⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (config d) ⟧ₐ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Eq.cong₂ Vec.lookup (refl {x = Vec.map (translate (sucs n)) (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
+  ⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₐ (conf (sucs n) config)
+  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
+  ⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ d ⟨ List⁺.fromVec (Vec.map translate (c ∷ cs)) ⟩ ⟧ₐ (conf (sucs n) config)
+  ⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ₐ (conf (sucs n) config)
   ≡⟨⟩
-  ⟦ translate (d ⟨ c ∷ cs ⟩) ⟧ₐ (conf (sucs n) config)
+  ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ₐ (conf (sucs n) config)
   ∎
 
-preserves : {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D ∞ A) → ⟦ translate expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
