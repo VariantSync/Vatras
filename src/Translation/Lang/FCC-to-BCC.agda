@@ -20,6 +20,7 @@ open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -177,3 +178,6 @@ FCC→BCC n .LanguageCompiler.compile = translate n
 FCC→BCC n .LanguageCompiler.config-compiler .to = conf n
 FCC→BCC n .LanguageCompiler.config-compiler .from = fnoc n
 FCC→BCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
+
+BCC≽FCC : {D : Set} → (n : ℕ≥ 2) → BCCL (IndexedDimension D n) Variant Artifact∈ₛVariant ≽ FCCL n D Variant Artifact∈ₛVariant
+BCC≽FCC n = expressiveness-from-compiler (FCC→BCC n)

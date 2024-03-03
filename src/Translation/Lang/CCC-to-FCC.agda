@@ -18,6 +18,7 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Expressiveness Variant using (expressiveness-by-translation; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -29,7 +30,7 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans; ≅[]→≅)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
@@ -292,3 +293,6 @@ preserves n expr =
 -- CCC→FCC n .LanguageCompiler.config-compiler e .to = conf n (maxChoiceLength e)
 -- CCC→FCC n .LanguageCompiler.config-compiler e .from = fnoc n (maxChoiceLength e)
 -- CCC→FCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
+
+FCC≽CCC : {D : Set} → (n : ℕ≥ 2) → FCCL n (D × ℕ) Variant Artifact∈ₛVariant ≽ CCCL D Variant Artifact∈ₛVariant
+FCC≽CCC n = expressiveness-by-translation (translate n) (≅[]→≅ ∘ ≅[]-sym ∘ preserves n)

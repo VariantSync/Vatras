@@ -18,6 +18,7 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Relation.Expressiveness Variant using (expressiveness-by-translation; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -29,7 +30,7 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans; ≅[]→≅)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
 open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
 
@@ -100,3 +101,6 @@ preserves expr =
 -- CCC→BCC .LanguageCompiler.config-compiler .to e = conf (maxChoiceLength e)
 -- CCC→BCC .LanguageCompiler.config-compiler .from e = fnoc (maxChoiceLength e)
 -- CCC→BCC .LanguageCompiler.preserves e = ≅[]-sym (preserves e)
+
+BCC≽CCC : {D : Set} → BCCL (D × ℕ) Variant Artifact∈ₛVariant ≽ CCCL D Variant Artifact∈ₛVariant
+BCC≽CCC = expressiveness-by-translation translate (≅[]→≅ ∘ ≅[]-sym ∘ preserves)

@@ -2,6 +2,7 @@
 open import Framework.Definitions
 module Framework.Relation.Expressiveness (V : 𝕍) where
 
+open import Data.EqIndexedSet using (≅[]→≅)
 open import Data.Product using (_,_; _×_; Σ-syntax; proj₁; proj₂)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Binary using (IsEquivalence; Reflexive; Symmetric; Transitive; Antisymmetric)
@@ -11,6 +12,7 @@ open import Function using (_∘_; Injective)
 open import Framework.VariabilityLanguage
 open import Framework.Relation.Expression V
 open import Framework.Relation.Function using (_⇒ₚ_)
+open import Framework.Compiler
 ```
 
 We say that a language `L₁` is as expressive as another language `L₂` **iff** for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same function.
@@ -80,4 +82,9 @@ expressiveness-by-translation : ∀ {L₁ L₂ : VariabilityLanguage V}
   → SemanticsPreserving L₁ L₂ t
   → L₂ ≽ L₁
 expressiveness-by-translation t t-pres = λ e₂ → t e₂ , t-pres e₂ -- this implementation is very similar to ⊆[]→⊆
+
+expressiveness-from-compiler : ∀ {L₁ L₂ : VariabilityLanguage V}
+  → LanguageCompiler L₁ L₂
+  → L₂ ≽ L₁
+expressiveness-from-compiler compiler = expressiveness-by-translation (LanguageCompiler.compile compiler) (λ e → ≅[]→≅ (LanguageCompiler.preserves compiler e))
 ```
