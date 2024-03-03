@@ -41,6 +41,72 @@ artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
+module map-dim where
+  map-dim : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (D₁ → D₂) → FCC n D₁ i A → FCC n D₂ i A
+  map-dim n f (a -< cs >-) = a -< List.map (map-dim n f) cs >-
+  map-dim n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (map-dim n f) cs ⟩
+
+  preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : FCC n D₁ i A) → ⟦ map-dim n f expr ⟧ₙ ⊆[ _∘ f ] ⟦ expr ⟧ₙ
+  preserves-⊆ n f f⁻¹ (a -< cs >-) config =
+    ⟦ map-dim n f (a -< cs >-) ⟧ₙ config
+    ≡⟨⟩
+    ⟦ a -< List.map (map-dim n f) cs >- ⟧ₙ config
+    ≡⟨⟩
+    artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (List.map (map-dim n f) cs))
+    ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+    artifact a (List.map (λ e → ⟦ map-dim n f e ⟧ₙ config) cs)
+    ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n f f⁻¹ e config) cs) ⟩
+    artifact a (List.map (λ e → ⟦ e ⟧ₙ (config ∘ f)) cs)
+    ≡⟨⟩
+    ⟦ a -< cs >- ⟧ₙ (config ∘ f)
+    ∎
+  preserves-⊆ n f f⁻¹ (d ⟨ cs ⟩) config =
+    ⟦ map-dim n f (d ⟨ cs ⟩) ⟧ₙ config
+    ≡⟨⟩
+    ⟦ f d ⟨ Vec.map (map-dim n f) cs ⟩ ⟧ₙ config
+    ≡⟨⟩
+    ⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config (f d)) ⟧ₙ config
+    ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config (f d)) (map-dim n f) cs) refl ⟩
+    ⟦ map-dim n f (Vec.lookup cs (config (f d))) ⟧ₙ config
+    ≡⟨ preserves-⊆ n f f⁻¹ (Vec.lookup cs (config (f d))) config ⟩
+    ⟦ Vec.lookup cs (config (f d)) ⟧ₙ (config ∘ f)
+    ≡⟨⟩
+    ⟦ d ⟨ cs ⟩ ⟧ₙ (config ∘ f)
+    ∎
+
+  preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : FCC n D₁ i A) → ⟦ expr ⟧ₙ ⊆[ _∘ f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
+  preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
+    ⟦ a -< cs >- ⟧ₙ config
+    ≡⟨⟩
+    artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
+    ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n f f⁻¹ is-inverse e config) cs) ⟩
+    artifact a (List.map (λ e → ⟦ map-dim n f e ⟧ₙ (config ∘ f⁻¹)) cs)
+    ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+    artifact a (List.map (λ e → ⟦ e ⟧ₙ (config ∘ f⁻¹)) (List.map (map-dim n f) cs))
+    ≡⟨⟩
+    ⟦ a -< List.map (map-dim n f) cs >- ⟧ₙ (config ∘ f⁻¹)
+    ≡⟨⟩
+    ⟦ map-dim n f (a -< cs >-) ⟧ₙ (config ∘ f⁻¹)
+    ∎
+  preserves-⊇ n f f⁻¹ is-inverse (d ⟨ cs ⟩) config =
+    ⟦ d ⟨ cs ⟩ ⟧ₙ config
+    ≡⟨⟩
+    ⟦ Vec.lookup cs (config d) ⟧ₙ config
+    ≡⟨ preserves-⊇ n f f⁻¹ is-inverse (Vec.lookup cs (config d)) config ⟩
+    ⟦ map-dim n f (Vec.lookup cs (config d)) ⟧ₙ (config ∘ f⁻¹)
+    ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config d) (map-dim n f) cs) refl ⟩
+    ⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config d) ⟧ₙ (config ∘ f⁻¹)
+    ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = Vec.map (map-dim n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟩
+    ⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config ((f⁻¹ ∘ f) d)) ⟧ₙ (config ∘ f⁻¹)
+    ≡⟨⟩
+    ⟦ f d ⟨ Vec.map (map-dim n f) cs ⟩ ⟧ₙ (config ∘ f⁻¹)
+    ≡⟨⟩
+    ⟦ map-dim n f (d ⟨ cs ⟩) ⟧ₙ (config ∘ f⁻¹)
+    ∎
+
+  preserves : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : FCC n D₁ i A) → ⟦ map-dim n f e ⟧ₙ ≅[ _∘ f ][ _∘ f⁻¹ ] ⟦ e ⟧ₙ
+  preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
+
 module IncreaseArity where
   module General where
     translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → FCC n D i A → FCC m D i A

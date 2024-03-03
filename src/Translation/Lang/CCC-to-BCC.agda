@@ -45,7 +45,8 @@ open BCC renaming (Configuration to BCCꟲ)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
-open import Translation.Lang.CCC-to-FCC Variant Artifact∈ₛVariant using (maxChoiceLength; maxChoiceLengthIsLimit) renaming (translate to CCC→FCC; conf to CCCꟲ→FCCꟲ; fnoc to CCCꟲ→FCCꟲ⁻¹; preserves to CCC→FCC-preserves)
+import Translation.Lang.CCC-to-FCC
+open Translation.Lang.CCC-to-FCC.Exact Variant Artifact∈ₛVariant using (maxChoiceLength; maxChoiceLengthIsLimit) renaming (translate to CCC→FCC; conf to CCCꟲ→FCCꟲ; fnoc to CCCꟲ→FCCꟲ⁻¹; preserves to CCC→FCC-preserves)
 open import Translation.Lang.FCC-to-BCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→BCC; conf to FCCꟲ→BCCꟲ; fnoc to FCCꟲ→BCCꟲ⁻¹; preserves to FCC→BCC-preserves)
 open import Translation.Lang.FCC-to-BCC Variant Artifact∈ₛVariant using (IndexedDimension) public
 open import Translation.Lang.BCC-to-BCC Variant Artifact∈ₛVariant using () renaming (map-dim to BCC-map-dim; preserves to BCC-map-dim-preserves)
