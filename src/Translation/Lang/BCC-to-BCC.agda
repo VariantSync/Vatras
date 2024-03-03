@@ -119,6 +119,6 @@ preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-�
 
 BCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (BCCL D₁ Variant Artifact∈ₛVariant {i}) (BCCL D₂ Variant Artifact∈ₛVariant {i})
 BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim f
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler .to = _∘ f⁻¹
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler .from = _∘ f
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves e = ≅[]-sym (preserves f f⁻¹ is-inverse e)
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = _∘ f⁻¹
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = _∘ f
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)

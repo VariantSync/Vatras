@@ -465,7 +465,7 @@ compile-configs = record { to = id ; from = id }
 OC→BCC : LanguageCompiler WFOCL BCCL
 OC→BCC = record
   { compile = compile
-  ; config-compiler = compile-configs
+  ; config-compiler = λ _ → compile-configs
   ; preserves = compile-preserves
   }
 

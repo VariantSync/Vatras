@@ -181,7 +181,7 @@ module Encode where
   encoder : VariantEncoder V CCCL
   encoder = record
     { compile = encode
-    ; config-compiler = confs
+    ; config-compiler = λ _ → confs
     ; preserves = preserves
     }
 ```

@@ -128,9 +128,9 @@ preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
 FCC→CCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (CCCL D Variant Artifact∈ₛVariant)
 FCC→CCC n .LanguageCompiler.compile = translate n
-FCC→CCC n .LanguageCompiler.config-compiler .to = conf n
-FCC→CCC n .LanguageCompiler.config-compiler .from = fnoc n
-FCC→CCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
+FCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
+FCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n
+FCC→CCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 CCC≽FCC : {D : Set} → (n : ℕ≥ 2) → CCCL D Variant Artifact∈ₛVariant ≽ FCCL n D Variant Artifact∈ₛVariant
 CCC≽FCC n = expressiveness-from-compiler (FCC→CCC n)

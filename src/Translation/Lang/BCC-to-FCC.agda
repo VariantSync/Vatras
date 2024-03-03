@@ -147,8 +147,8 @@ module 2Ary where
 
   BCC→FCC : {i : Size} → {D : Set} → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i})
   BCC→FCC .LanguageCompiler.compile = translate
-  BCC→FCC .LanguageCompiler.config-compiler .to = conf
-  BCC→FCC .LanguageCompiler.config-compiler .from = fnoc
+  BCC→FCC .LanguageCompiler.config-compiler expr .to = conf
+  BCC→FCC .LanguageCompiler.config-compiler expr .from = fnoc
   BCC→FCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
@@ -166,8 +166,8 @@ preserves n expr = ≅[]-trans (FCC→FCC-preserves n (2Ary.translate expr)) (2A
 
 BCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (FCCL n D Variant Artifact∈ₛVariant {i})
 BCC→FCC n .LanguageCompiler.compile = translate n
-BCC→FCC n .LanguageCompiler.config-compiler .to = conf n
-BCC→FCC n .LanguageCompiler.config-compiler .from = fnoc n
+BCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n
+BCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n
 BCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 FCC≽BCC : {D : Set} → (n : ℕ≥ 2) → FCCL n D Variant Artifact∈ₛVariant ≽ BCCL D Variant Artifact∈ₛVariant

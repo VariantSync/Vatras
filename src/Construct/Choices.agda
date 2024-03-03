@@ -174,9 +174,6 @@ module VLChoice-Fix where
   open Choice-Fix using (Config; Standard-Semantics; map; map-preserves)
   open Choice-Fix.Syntax using (dim)
 
-  open import Framework.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
-  open LanguageCompiler
-
   Syntax : ℕ≥ 2 → 𝔽 → ℂ
   Syntax n F E A = Choice-Fix.Syntax n F (E A)
 
@@ -186,81 +183,9 @@ module VLChoice-Fix where
   Construct : ∀ n (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct n V F = Variational-⟪ Syntax n F , Config n F , Semantics n V F ⟫
 
-  -- Interestingly, this proof is entirely copy and paste from VLChoice₂.map-compile-preserves.
-  -- Only minor adjustments to adapt the theorem had to be made.
-  -- Is there something useful to extract to a common definition here?
-  -- This proof is oblivious of at least
-  --   - the implementation of map, we only need the preservation theorem
-  --   - the Standard-Semantics, we only need the preservation theorem of t, and that the config-compiler is stable.
-  map-compile-preserves : ∀ {n F V A}
-      → (Γ₁ Γ₂ : VariabilityLanguage V)
-      → (extract : Compatible (Construct n V F) Γ₁)
-      → (t : LanguageCompiler Γ₁ Γ₂)
-      → (chc : Syntax n F (Expression Γ₁) A)
-      → to-is-Embedding (config-compiler t)
-      → Semantics n V F Γ₁ extract chc
-          ≅[ conf t ][ fnoc t ]
-        Semantics n V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
-  map-compile-preserves {n} {F} {V} {A} Γ₁ Γ₂ extract t chc stable =
-    ≅[]-begin
-      Semantics n V F Γ₁ extract chc
-    ≅[]⟨⟩
-      (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-    -- First compiler proof composition:
-    -- We apply the hypotheses that t preserves semantics and that its configuration compiler is stable.
-    ≅[]⟨ t-⊆ , t-⊇ ⟩
-      (λ c → ⟦ compile t (Standard-Semantics chc (extract (fnoc t c))) ⟧₂ c)
-    -- Second compiler proof composition:
-    -- We can just apply map-preserves directly.
-    -- We need a cong to apply the proof to the first compiler phase instead of the second.
-    ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (extract (fnoc t c))) ⟩
-      (λ c → ⟦ Standard-Semantics (map (compile t) chc) (extract (fnoc t c)) ⟧₂ c)
-    ≅[]⟨⟩
-      Semantics n V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
-    ≅[]-∎
-    where open ISet.≅[]-Reasoning
-
-          ⟦_⟧₁ = VL.Semantics Γ₁
-          ⟦_⟧₂ = VL.Semantics Γ₂
-
-          t-⊆ : (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-                ⊆[ conf t ]
-                (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f)
-          t-⊆ i =
-            begin
-              ⟦ Standard-Semantics chc (extract i) ⟧₁ i
-            ≡⟨ proj₁ (preserves t (Standard-Semantics chc (extract i))) i ⟩
-              ⟦ compile t (Standard-Semantics chc (extract i)) ⟧₂ (conf t i)
-            ≡˘⟨ Eq.cong (λ eq → ⟦ compile t (Standard-Semantics chc (extract eq)) ⟧₂ (conf t i)) (stable i) ⟩
-              ⟦ compile t (Standard-Semantics chc (extract (fnoc t (conf t i)))) ⟧₂ (conf t i)
-            ≡⟨⟩
-              (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f) (conf t i)
-            ∎
-
-          t-⊇ : (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f)
-                ⊆[ fnoc t ]
-                (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-          t-⊇ i =
-            begin
-              ⟦ compile t (Standard-Semantics chc (extract (fnoc t i))) ⟧₂ i
-            ≡⟨ proj₂ (preserves t (Standard-Semantics chc (extract (fnoc t i)))) i ⟩
-              ⟦ Standard-Semantics chc (extract (fnoc t i)) ⟧₁ (fnoc t i)
-            ≡⟨⟩
-              (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c) (fnoc t i)
-            ∎
-
-  cong-compiler : ∀ n V F → ConstructFunctor (Construct n V F)
-  cong-compiler _ _ _ = record
-    { map = map
-    ; preserves = map-compile-preserves
-    }
-
 module VLChoice₂ where
   open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choice₂.Syntax using (dim)
-
-  open import Framework.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
-  open LanguageCompiler
 
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choice₂.Syntax F (E A)
@@ -271,75 +196,9 @@ module VLChoice₂ where
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
 
-  map-compile-preserves : ∀ {F V A}
-      → (Γ₁ Γ₂ : VariabilityLanguage V)
-      → (extract : Compatible (Construct V F) Γ₁)
-      → (t : LanguageCompiler Γ₁ Γ₂)
-      → (chc : Syntax F (Expression Γ₁) A)
-      → to-is-Embedding (config-compiler t)
-      → Semantics V F Γ₁ extract chc
-          ≅[ conf t ][ fnoc t ]
-        Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
-  map-compile-preserves {F} {V} {A} Γ₁ Γ₂ extract t chc stable =
-    ≅[]-begin
-      Semantics V F Γ₁ extract chc
-    ≅[]⟨⟩
-      (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-    -- First compiler proof composition:
-    -- We apply the hypotheses that t preserves semantics and that its configuration compiler is stable.
-    ≅[]⟨ t-⊆ , t-⊇ ⟩
-      (λ c → ⟦ compile t (Standard-Semantics chc (extract (fnoc t c))) ⟧₂ c)
-    -- Second compiler proof composition:
-    -- We can just apply map-preserves directly.
-    -- We need a cong to apply the proof to the first compiler phase instead of the second.
-    ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (extract (fnoc t c))) ⟩
-      (λ c → ⟦ Standard-Semantics (map (compile t) chc) (extract (fnoc t c)) ⟧₂ c)
-    ≅[]⟨⟩
-      Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
-    ≅[]-∎
-    where open ISet.≅[]-Reasoning
-
-          ⟦_⟧₁ = VL.Semantics Γ₁
-          ⟦_⟧₂ = VL.Semantics Γ₂
-
-          t-⊆ : (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-                ⊆[ conf t ]
-                (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f)
-          t-⊆ i =
-            begin
-              ⟦ Standard-Semantics chc (extract i) ⟧₁ i
-            ≡⟨ proj₁ (preserves t (Standard-Semantics chc (extract i))) i ⟩
-              ⟦ compile t (Standard-Semantics chc (extract i)) ⟧₂ (conf t i)
-            ≡˘⟨ Eq.cong (λ eq → ⟦ compile t (Standard-Semantics chc (extract eq)) ⟧₂ (conf t i)) (stable i) ⟩
-              ⟦ compile t (Standard-Semantics chc (extract (fnoc t (conf t i)))) ⟧₂ (conf t i)
-            ≡⟨⟩
-              (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f) (conf t i)
-            ∎
-
-          t-⊇ : (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f)
-                ⊆[ fnoc t ]
-                (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-          t-⊇ i =
-            begin
-              ⟦ compile t (Standard-Semantics chc (extract (fnoc t i))) ⟧₂ i
-            ≡⟨ proj₂ (preserves t (Standard-Semantics chc (extract (fnoc t i)))) i ⟩
-              ⟦ Standard-Semantics chc (extract (fnoc t i)) ⟧₁ (fnoc t i)
-            ≡⟨⟩
-              (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c) (fnoc t i)
-            ∎
-
-  cong-compiler : ∀ V F → ConstructFunctor (Construct V F)
-  cong-compiler _ _ = record
-    { map = map
-    ; preserves = map-compile-preserves
-    }
-
 module VLChoiceₙ where
   open Choiceₙ using (_⟨_⟩; Config; Standard-Semantics; map; map-preserves)
   open Choiceₙ.Syntax using (dim)
-
-  open import Framework.Compiler as Comp using (LanguageCompiler; ConstructFunctor)
-  open LanguageCompiler
 
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choiceₙ.Syntax F (E A)
@@ -349,72 +208,3 @@ module VLChoiceₙ where
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
-
-  -- Interestingly, this proof is entirely copy and paste from VLChoice₂.map-compile-preserves.
-  -- Only minor adjustments to adapt the theorem had to be made.
-  -- Is there something useful to extract to a common definition here?
-  -- This proof is oblivious of at least
-  --   - the implementation of map, we only need the preservation theorem
-  --   - the Standard-Semantics, we only need the preservation theorem of t, and that the config-compiler is stable.
-  map-compile-preserves : ∀ {F V A}
-      → (Γ₁ Γ₂ : VariabilityLanguage V)
-      → (extract : Compatible (Construct V F) Γ₁)
-      → (t : LanguageCompiler Γ₁ Γ₂)
-      → (chc : Syntax F (Expression Γ₁) A)
-      → to-is-Embedding (config-compiler t)
-      → Semantics V F Γ₁ extract chc
-          ≅[ conf t ][ fnoc t ]
-        Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
-  map-compile-preserves {F} {V} {A} Γ₁ Γ₂ extract t chc stable =
-    ≅[]-begin
-      Semantics V F Γ₁ extract chc
-    ≅[]⟨⟩
-      (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-    -- First compiler proof composition:
-    -- We apply the hypotheses that t preserves semantics and that its configuration compiler is stable.
-    ≅[]⟨ t-⊆ , t-⊇ ⟩
-      (λ c → ⟦ compile t (Standard-Semantics chc (extract (fnoc t c))) ⟧₂ c)
-    -- Second compiler proof composition:
-    -- We can just apply map-preserves directly.
-    -- We need a cong to apply the proof to the first compiler phase instead of the second.
-    ≐˘[ c ]⟨ Eq.cong (λ x → ⟦ x ⟧₂ c) (map-preserves (compile t) chc (extract (fnoc t c))) ⟩
-      (λ c → ⟦ Standard-Semantics (map (compile t) chc) (extract (fnoc t c)) ⟧₂ c)
-    ≅[]⟨⟩
-      Semantics V F Γ₂ (extract ∘ fnoc t) (map (compile t) chc)
-    ≅[]-∎
-    where open ISet.≅[]-Reasoning
-
-          ⟦_⟧₁ = VL.Semantics Γ₁
-          ⟦_⟧₂ = VL.Semantics Γ₂
-
-          t-⊆ : (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-                ⊆[ conf t ]
-                (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f)
-          t-⊆ i =
-            begin
-              ⟦ Standard-Semantics chc (extract i) ⟧₁ i
-            ≡⟨ proj₁ (preserves t (Standard-Semantics chc (extract i))) i ⟩
-              ⟦ compile t (Standard-Semantics chc (extract i)) ⟧₂ (conf t i)
-            ≡˘⟨ Eq.cong (λ eq → ⟦ compile t (Standard-Semantics chc (extract eq)) ⟧₂ (conf t i)) (stable i) ⟩
-              ⟦ compile t (Standard-Semantics chc (extract (fnoc t (conf t i)))) ⟧₂ (conf t i)
-            ≡⟨⟩
-              (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f) (conf t i)
-            ∎
-
-          t-⊇ : (λ f → ⟦ compile t (Standard-Semantics chc (extract (fnoc t f))) ⟧₂ f)
-                ⊆[ fnoc t ]
-                (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c)
-          t-⊇ i =
-            begin
-              ⟦ compile t (Standard-Semantics chc (extract (fnoc t i))) ⟧₂ i
-            ≡⟨ proj₂ (preserves t (Standard-Semantics chc (extract (fnoc t i)))) i ⟩
-              ⟦ Standard-Semantics chc (extract (fnoc t i)) ⟧₁ (fnoc t i)
-            ≡⟨⟩
-              (λ c → ⟦ Standard-Semantics chc (extract c) ⟧₁ c) (fnoc t i)
-            ∎
-
-  cong-compiler : ∀ V F → ConstructFunctor (Construct V F)
-  cong-compiler _ _ = record
-    { map = map
-    ; preserves = map-compile-preserves
-    }

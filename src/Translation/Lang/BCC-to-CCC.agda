@@ -80,9 +80,9 @@ preserves expr =
 
 BCC→CCC : {i : Size} → {D : Set} → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (CCCL D Variant Artifact∈ₛVariant)
 BCC→CCC .LanguageCompiler.compile = translate
-BCC→CCC .LanguageCompiler.config-compiler .to = conf
-BCC→CCC .LanguageCompiler.config-compiler .from = fnoc
-BCC→CCC .LanguageCompiler.preserves e = ≅[]-sym (preserves e)
+BCC→CCC .LanguageCompiler.config-compiler expr .to = conf
+BCC→CCC .LanguageCompiler.config-compiler expr .from = fnoc
+BCC→CCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 CCC≽BCC : {D : Set} → CCCL D Variant Artifact∈ₛVariant ≽ BCCL D Variant Artifact∈ₛVariant
 CCC≽BCC = expressiveness-from-compiler BCC→CCC

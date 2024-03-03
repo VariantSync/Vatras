@@ -24,16 +24,19 @@ record LanguageCompiler {V} (Γ₁ Γ₂ : VariabilityLanguage V) : Set₁ where
 
   field
     compile         : ∀ {A} → L₁ A → L₂ A
-    config-compiler : Config Γ₁ ⇔ Config Γ₂
+    config-compiler : ∀ {A} → L₁ A → Config Γ₁ ⇔ Config Γ₂
     preserves : ∀ {A} (e : L₁ A)
-      → ⟦ e ⟧₁ ≅[ to config-compiler ][ from config-compiler ] ⟦ compile e ⟧₂
+      → ⟦ e ⟧₁ ≅[ to (config-compiler e) ][ from (config-compiler e) ] ⟦ compile e ⟧₂
                 -- TODO: It might nice to have syntax
                 --   ≅[ config-compiler ]
                 -- to abbreviate
                 --   ≅[ to config-compiler ][ from config-compiler ].
 
-  conf = to   config-compiler
-  fnoc = from config-compiler
+  conf : ∀ {A} → L₁ A → Config Γ₁ → Config Γ₂
+  conf e = to   (config-compiler e)
+
+  fnoc : ∀ {A} → L₁ A → Config Γ₂ → Config Γ₁
+  fnoc e = from (config-compiler e)
 
 -- Compiles a single construct to another one without altering the underlying sub expressions.
 record ConstructCompiler {V} (VC₁ VC₂ : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where
@@ -48,31 +51,6 @@ record ConstructCompiler {V} (VC₁ VC₂ : VariabilityConstruct V) (Γ : Variab
     stable : to-is-Embedding config-compiler
     preserves : ∀ {A} (c : C₁ (Expression Γ) A)
       → Kem₁ Γ extract c ≅ Kem₂ Γ (to config-compiler ∘ extract) (compile c)
-
-{-|
-Compiles languages below constructs.
-This means that an expression in a language Γ₁ of which we know that it has a specific
-syntactic construct VC at the top is compiled to Γ₂ retaining the very same construct at the top.
--}
-record ConstructFunctor {V} (VC : VariabilityConstruct V) : Set₁ where
-  open LanguageCompiler
-  field
-    map : ∀ {A} {L₁ L₂ : 𝔼}
-      → (L₁ A → L₂ A)
-      → VSyntax VC L₁ A → VSyntax VC L₂ A
-
-    -- Note: There also should be an extract₂ but it must be
-    -- equivalent to extract₁ ∘ fnoc t.
-    -- extract₂ : Config Γ₂ → construct-config
-    preserves : ∀ {A}
-      → (Γ₁ Γ₂ : VariabilityLanguage V)
-      → (extract : Compatible VC Γ₁)
-      → (t : LanguageCompiler Γ₁ Γ₂)
-      → (c : VSyntax VC (Expression Γ₁) A)
-      → to-is-Embedding (config-compiler t)
-      → VSemantics VC Γ₁ extract c
-          ≅[ conf t ][ fnoc t ]
-        VSemantics VC Γ₂ (extract ∘ fnoc t) (map (compile t) c)
 
 _⊕ᶜᶜ_ : ∀ {K₁ K₂ K₃ : 𝕂}
   → K₁ ⇔ K₂
@@ -113,7 +91,7 @@ _⊕ˡ_ : ∀ {V}
       → LanguageCompiler Γ₁ Γ₃
 _⊕ˡ_ {V} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
   { compile = compile L₂→L₃ ∘ compile L₁→L₂
-  ; config-compiler = record { to = conf'; from = fnoc' }
+  ; config-compiler = λ expr → record { to = conf' expr; from = fnoc' expr }
   ; preserves = p
   }
   where open LanguageCompiler
@@ -121,16 +99,15 @@ _⊕ˡ_ {V} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
         ⟦_⟧₁ = Semantics Γ₁
         ⟦_⟧₃ = Semantics Γ₃
 
-        conf' : Config Γ₁ → Config Γ₃
-        conf' = conf L₂→L₃ ∘ conf L₁→L₂
+        conf' : ∀ {A} → Expression Γ₁ A → Config Γ₁ → Config Γ₃
+        conf' expr = conf L₂→L₃ (compile L₁→L₂ expr) ∘ conf L₁→L₂ expr
 
-        fnoc' : Config Γ₃ → Config Γ₁
-        fnoc' = fnoc L₁→L₂ ∘ fnoc L₂→L₃
+        fnoc' : ∀ {A} → Expression Γ₁ A → Config Γ₃ → Config Γ₁
+        fnoc' expr = fnoc L₁→L₂ expr ∘ fnoc L₂→L₃ (compile L₁→L₂ expr)
 
-        module _ {A : 𝔸} where
-          -- this pattern is very similar of ⊆[]-trans
-          p : ∀ (e : L₁ A) → ⟦ e ⟧₁ ≅[ conf' ][ fnoc' ] ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
-          p e = ≅[]-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))
+        -- this pattern is very similar of ⊆[]-trans
+        p : ∀ {A : 𝔸} (e : L₁ A) → ⟦ e ⟧₁ ≅[ conf' e ][ fnoc' e ] ⟦ compile L₂→L₃ (compile L₁→L₂ e) ⟧₃
+        p e = ≅[]-trans (preserves L₁→L₂ e) (preserves L₂→L₃ (compile L₁→L₂ e))
 
 -- _⊕ᶜ_ : ∀ {K} {VC₁ VC₂ VC₃ : VariabilityConstruct K}
 --   → ConstructCompiler VC₁ VC₂

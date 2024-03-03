@@ -149,9 +149,9 @@ module 2Ary where
 
   FCC→BCC : {i : Size} → {D : Set} → LanguageCompiler (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i}) (BCCL D Variant Artifact∈ₛVariant)
   FCC→BCC .LanguageCompiler.compile = translate
-  FCC→BCC .LanguageCompiler.config-compiler .to = conf
-  FCC→BCC .LanguageCompiler.config-compiler .from = fnoc
-  FCC→BCC .LanguageCompiler.preserves e = ≅[]-sym (preserves e)
+  FCC→BCC .LanguageCompiler.config-compiler expr .to = conf
+  FCC→BCC .LanguageCompiler.config-compiler expr .from = fnoc
+  FCC→BCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → BCCꟲ (IndexedDimension D n)
 conf n = 2Ary.conf ∘ FCCꟲ→FCCꟲ n (sucs zero)
@@ -175,9 +175,9 @@ preserves n expr =
 
 FCC→BCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (BCCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
 FCC→BCC n .LanguageCompiler.compile = translate n
-FCC→BCC n .LanguageCompiler.config-compiler .to = conf n
-FCC→BCC n .LanguageCompiler.config-compiler .from = fnoc n
-FCC→BCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
+FCC→BCC n .LanguageCompiler.config-compiler expr .to = conf n
+FCC→BCC n .LanguageCompiler.config-compiler expr .from = fnoc n
+FCC→BCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 BCC≽FCC : {D : Set} → (n : ℕ≥ 2) → BCCL (IndexedDimension D n) Variant Artifact∈ₛVariant ≽ FCCL n D Variant Artifact∈ₛVariant
 BCC≽FCC n = expressiveness-from-compiler (FCC→BCC n)

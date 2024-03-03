@@ -176,7 +176,7 @@ module Redundancy (_==_ : Dimension → Dimension → Bool) where
     Redundancy-Elimination : LanguageCompiler BCCL BCCL
     Redundancy-Elimination = record
       { compile = eliminate-redundancy
-      ; config-compiler = record { to = id ; from = id }
+      ; config-compiler = λ _ → record { to = id ; from = id }
       ; preserves = {!!}
       }
 ```

@@ -11,7 +11,7 @@ open import Size using (Size; ↑_; ∞)
 
 open import Framework.Definitions using (𝕍; 𝔸)
 open import Framework.VariabilityLanguage
-open import Construct.Artifact as At using (_-<_>-; map-children; map-children-preserves) renaming (Syntax to Artifact; Construct to ArtifactC)
+open import Construct.Artifact as At using (_-<_>-; map-children) renaming (Syntax to Artifact; Construct to ArtifactC)
 
 open import Data.EqIndexedSet
 
@@ -80,7 +80,7 @@ module _ (V : 𝕍) (A : 𝔸) {Γ : VariabilityLanguage V} (encoder : VariantEn
     begin
       ⟦ compile encoder v ⟧ c
     ≡⟨ irrelevant-index (encoded-variant-is-singleton-set v) ⟩
-      ⟦ compile encoder v ⟧ (conf encoder tt)
+      ⟦ compile encoder v ⟧ (conf encoder v tt)
     ≡˘⟨ proj₁ (preserves encoder v) tt ⟩
       ⟦ v ⟧ᵥ tt
     ≡⟨⟩
@@ -94,7 +94,7 @@ rose-encoder :
   → VariantEncoder (Rose ∞) Γ
 rose-encoder Γ has c = record
   { compile = t
-  ; config-compiler = record { to = confi; from = fnoci }
+  ; config-compiler = λ _ → record { to = confi; from = fnoci }
   ; preserves = p
   }
   where

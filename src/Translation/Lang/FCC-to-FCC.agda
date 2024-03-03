@@ -112,9 +112,9 @@ module map-dim where
 
   FCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (FCCL n D₁ Variant Artifact∈ₛVariant {i}) (FCCL n D₂ Variant Artifact∈ₛVariant {i})
   FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim n f
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler .to = _∘ f⁻¹
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler .from = _∘ f
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves e = ≅[]-sym (preserves n f f⁻¹ is-inverse e)
+  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = _∘ f⁻¹
+  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = _∘ f
+  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
 
 module IncreaseArity where
   module General where
@@ -203,9 +203,9 @@ module IncreaseArity where
 
     FCC→FCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (FCCL m D Variant Artifact∈ₛVariant {i})
     FCC→FCC n m n≤m .LanguageCompiler.compile = translate n m n≤m
-    FCC→FCC n m n≤m .LanguageCompiler.config-compiler .to = conf n m n≤m
-    FCC→FCC n m n≤m .LanguageCompiler.config-compiler .from = fnoc n m n≤m
-    FCC→FCC n m n≤m .LanguageCompiler.preserves e = ≅[]-sym (preserves n m n≤m e)
+    FCC→FCC n m n≤m .LanguageCompiler.config-compiler expr .to = conf n m n≤m
+    FCC→FCC n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
+    FCC→FCC n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
   translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC (sucs zero) D i A → FCC n D i A
   translate (sucs n) = General.translate (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
@@ -221,9 +221,9 @@ module IncreaseArity where
 
   FCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i}) (FCCL n D Variant Artifact∈ₛVariant {i})
   FCC→FCC n .LanguageCompiler.compile = translate n
-  FCC→FCC n .LanguageCompiler.config-compiler .to = conf n
-  FCC→FCC n .LanguageCompiler.config-compiler .from = fnoc n
-  FCC→FCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
+  FCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n
+  FCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n
+  FCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 
 module DecreaseArity where
@@ -549,9 +549,9 @@ module DecreaseArity where
 
   FCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (FCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
   FCC→FCC n .LanguageCompiler.compile = translate n
-  FCC→FCC n .LanguageCompiler.config-compiler .to = conf n
-  FCC→FCC n .LanguageCompiler.config-compiler .from = fnoc n
-  FCC→FCC n .LanguageCompiler.preserves e = ≅[]-sym (preserves n e)
+  FCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n
+  FCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n
+  FCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 
 open DecreaseArity using (IndexedDimension) public
@@ -570,6 +570,6 @@ preserves (sucs n) (sucs m) expr = ≅[]-trans (IncreaseArity.preserves (sucs m)
 
 FCC→FCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (FCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
 FCC→FCC n m .LanguageCompiler.compile = translate n m
-FCC→FCC n m .LanguageCompiler.config-compiler .to = conf n m
-FCC→FCC n m .LanguageCompiler.config-compiler .from = fnoc n m
-FCC→FCC n m .LanguageCompiler.preserves e = ≅[]-sym (preserves n m e)
+FCC→FCC n m .LanguageCompiler.config-compiler expr .to = conf n m
+FCC→FCC n m .LanguageCompiler.config-compiler expr .from = fnoc n m
+FCC→FCC n m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m expr)
