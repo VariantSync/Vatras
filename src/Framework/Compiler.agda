@@ -82,14 +82,14 @@ _⊕ᶜᶜ_ : ∀ {K₁ K₂ K₃ : 𝕂}
     id c₁
   ∎
 
-_⊕ˡ_ : ∀ {V}
+_⊕_ : ∀ {V}
         {Γ₁ : VariabilityLanguage V}
         {Γ₂ : VariabilityLanguage V}
         {Γ₃ : VariabilityLanguage V}
       → LanguageCompiler Γ₁ Γ₂
       → LanguageCompiler Γ₂ Γ₃
       → LanguageCompiler Γ₁ Γ₃
-_⊕ˡ_ {V} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
+_⊕_ {V} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
   { compile = compile L₂→L₃ ∘ compile L₁→L₂
   ; config-compiler = λ expr → record { to = conf' expr; from = fnoc' expr }
   ; preserves = p
