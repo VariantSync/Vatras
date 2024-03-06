@@ -1,13 +1,16 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 {-|
 Utilities for lists.
 -}
 module Util.List where
 
 open import Data.Bool using (Bool; true; false)
-open import Data.Nat using (ℕ; suc; zero; NonZero; _⊔_)
+open import Data.Fin using (Fin)
+open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr)
-open import Data.List.Properties using (map-id)
-open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList) renaming (map to map⁺)
+open import Data.List.Properties using (map-id; length-++)
+open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Util.AuxProofs using (minFinFromLimit; clamp)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
@@ -24,6 +27,10 @@ empty? (_ ∷ _) = false
 max : List ℕ → ℕ
 max = foldr _⊔_ zero
 
+-- TODO: Contribute to stl
+length-⁺++⁺ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A)
+  → List⁺.length (xs ⁺++⁺ ys) ≡ List⁺.length xs + List⁺.length ys
+length-⁺++⁺ (x ∷ xs) (y ∷ ys) = length-++ (x ∷ xs)
 
 -- Selects the alternative at the given tag.
 lookup-clamped : {A : Set} → ℕ → List⁺ A → A
@@ -78,6 +85,46 @@ lookup⇒find-or-last : ∀ {A : Set} {n m : ℕ}
 lookup⇒find-or-last {n = zero} {m = m} (x ∷ []) = refl
 lookup⇒find-or-last {n = suc n} {m = zero} (x ∷ y ∷ ys) = refl
 lookup⇒find-or-last {n = suc n} {m = suc m} (x ∷ y ∷ ys) = lookup⇒find-or-last (y ∷ ys)
+
+append-preserves : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
+  → (xs ys : List⁺ A)
+  → n < List⁺.length xs
+  → find-or-last n (xs ⁺++⁺ ys) ≡ find-or-last n xs
+append-preserves {n = .zero} (x ∷ [])     (y ∷ ys) (s≤s z≤n) = refl
+append-preserves {n =  zero} (x ∷ z ∷ zs) (y ∷ ys) (s≤s le)  = refl
+append-preserves {n = suc n} (x ∷ z ∷ zs) (y ∷ ys) (s≤s (n≤zzs)) = append-preserves (z ∷ zs) (y ∷ ys) (n≤zzs)
+
+-- FIXME: Remove this macro
+{-# TERMINATING #-}
+prepend-preserves : ∀ {ℓ} {A : Set ℓ}
+  → (n : ℕ)
+  → (xs ys : List⁺ A)
+  → find-or-last (List⁺.length xs + n) (xs ⁺++⁺ ys) ≡ find-or-last n ys
+prepend-preserves n (x ∷ []) ys = refl
+prepend-preserves n (x ∷ z ∷ zs) ys = prepend-preserves n (z ∷ zs) ys
+-- prepend-preserves n (x ∷ z ∷ zs) (y ∷ ys) =
+--   begin
+--     find-or-last (length (x ∷ z ∷ zs) + n) ((x ∷ z ∷ zs) ⁺++⁺ (y ∷ ys))
+--   ≡⟨⟩
+--     find-or-last (length (x ∷ z ∷ zs) + n) (x ∷ ((z ∷ zs) ++ (y ∷ ys)))
+--   ≡⟨⟩
+--     find-or-last (length (z ∷ zs) + n) (((z ∷ zs) ⁺++⁺ (y ∷ ys)))
+--   ≡⟨ prepend-preserves n (z ∷ zs) (y ∷ ys) ⟩
+--     find-or-last n (y ∷ ys)
+--   ∎
+
+prepend-preserves' : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
+  → (xs ys : List⁺ A)
+  → List⁺.length xs ≤ n
+  → find-or-last n (xs ⁺++⁺ ys) ≡ find-or-last (n ∸ List⁺.length xs) ys
+prepend-preserves' {n = zero} xs ys ()
+prepend-preserves' {n = suc n} (x ∷ []) ys (s≤s z≤n) = refl
+prepend-preserves' {n = suc n} (x ∷ z ∷ zs) ys (s≤s smol) =
+  begin
+    find-or-last (suc n) ((x ∷ z ∷ zs) ⁺++⁺ ys)
+  ≡⟨ {!!} ⟩
+    find-or-last (suc n ∸ List⁺.length (x ∷ z ∷ zs)) ys
+  ∎
 
 -- Todo: Contribute this to Agda stdlib
 map⁺-id : ∀ {ℓ} {A : Set ℓ} → map⁺ id ≗ id {A = List⁺ A}

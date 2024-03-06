@@ -40,7 +40,8 @@ open import Lang.VariantList V
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Confₗ)
 
 -- imports for nicer holes
-open import Util.List using (find-or-last)
+open import Util.List using (find-or-last; length-⁺++⁺; append-preserves; prepend-preserves; prepend-preserves')
+open import Util.AuxProofs using (<-cong-+ˡ)
 open Data.List using (_++_; foldr)
 open Data.List.NonEmpty using (head; tail)
 
@@ -360,43 +361,6 @@ toVariantList = tr-unique ∘ ordinary-to-unique
 -- leaf-count : ∀ {A : 𝔸} → 2ADT A → ℕ
 -- leaf-count (leaf _) = 1
 -- leaf-count (D ⟨ l , r ⟩) = leaf-count l + leaf-count r
-
-open import Data.List.Properties using (length-++)
-length-⁺++⁺ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A)
-  → length (xs ⁺++⁺ ys) ≡ length xs + length ys
-length-⁺++⁺ (x ∷ xs) (y ∷ ys) = length-++ (x ∷ xs)
-
-<-cong : ∀ {m n} (a : ℕ) → m < n → a + m < a + n
-<-cong zero x = x
-<-cong (suc a) x = s≤s (<-cong a x)
-
-append-preserves : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
-  → (xs ys : List⁺ A)
-  → n < length xs
-  → find-or-last n (xs ⁺++⁺ ys) ≡ find-or-last n xs
-append-preserves {n = .zero} (x ∷ [])     (y ∷ ys) (s≤s z≤n) = refl
-append-preserves {n =  zero} (x ∷ z ∷ zs) (y ∷ ys) (s≤s le)  = refl
-append-preserves {n = suc n} (x ∷ z ∷ zs) (y ∷ ys) (s≤s (n≤zzs)) = append-preserves (z ∷ zs) (y ∷ ys) (n≤zzs)
-
--- FIXME: Remove this macro
-{-# TERMINATING #-}
-prepend-preserves : ∀ {ℓ} {A : Set ℓ}
-  → (n : ℕ)
-  → (xs ys : List⁺ A)
-  → find-or-last (length xs + n) (xs ⁺++⁺ ys) ≡ find-or-last n ys
-prepend-preserves n (x ∷ []) ys = refl
-prepend-preserves zero (x ∷ z ∷ zs) ys = prepend-preserves zero (z ∷ zs) ys
-prepend-preserves (suc n) (x ∷ z ∷ zs) ys = prepend-preserves (suc n) (z ∷ zs) ys
--- prepend-preserves n (x ∷ z ∷ zs) (y ∷ ys) =
---   begin
---     find-or-last (length (x ∷ z ∷ zs) + n) ((x ∷ z ∷ zs) ⁺++⁺ (y ∷ ys))
---   ≡⟨⟩
---     find-or-last (length (x ∷ z ∷ zs) + n) (x ∷ ((z ∷ zs) ++ (y ∷ ys)))
---   ≡⟨⟩
---     find-or-last (length (z ∷ zs) + n) (((z ∷ zs) ⁺++⁺ (y ∷ ys)))
---   ≡⟨ prepend-preserves n (z ∷ zs) (y ∷ ys) ⟩
---     find-or-last n (y ∷ ys)
---   ∎
 
 conf : ∀ {A} → 2ADT A → Conf₂ → ℕ
 conf (leaf v) c = 0
