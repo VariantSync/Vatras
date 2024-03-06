@@ -105,11 +105,15 @@ a ∈? ((x ↣ v) ∷ xs) with a == x
 
 -- Turns an ¬ Any to a All ¬.
 -- TODO: Reuse ¬Any⇒All¬ from the standard library.
-flip : ∀ {b} → (as : Path) → ¬ b ∈ as → All (different (b ↣ true)) as
-flip [] _ = []
-flip (a ∷ as) nope =
+∉→All-different : ∀ {D} → (as : Path) → D ∉ as → All (different (D ↣ true)) as
+∉→All-different [] _ = []
+∉→All-different (a ∷ as) nope =
     fromWitnessFalse (λ x → nope (here (fromWitness x)))
-  ∷ flip as λ x → nope (there x)
+  ∷ ∉→All-different as λ x → nope (there x)
+
+All-different→∉ : ∀ {D} (b : Bool) (as : Path) → All (different (D ↣ b)) as → D ∉ as
+All-different→∉ b (a ∷ as) (pa ∷ pas) (here D-is-a) = toWitnessFalse pa (toWitness D-is-a)
+All-different→∉ b (a ∷ as) (pa ∷ pas) (there D∈as)  = All-different→∉ b as pas D∈as
 
 Unique : Path → Set
 Unique = AllPairs different
@@ -164,33 +168,33 @@ UniquePaths2ADT : 𝔼
 UniquePaths2ADT = UniquePaths2ADTBelow []
 
 -- A path is total if it brings us from the root to a leaf
-data Total : ∀ {A} → (p : Path) → (e : 2ADT A) → Set where
+data _starts-at_ : ∀ {A} → (p : Path) → (e : 2ADT A) → Set where
   -- any unique path is total for a leaf.
   tleaf : ∀ {A} {v : V A}
       ------------------
-    → Total [] (leaf v)
+    → _starts-at_ [] (leaf v)
 
   -- We actually dont need to store the selections here.
-  -- Total itself is already a list that tells us where to
+  -- _starts-at_ itself is already a list that tells us where to
   -- go left or right. So we do not need to store that information
   -- in the path, too.
   -- Let's keep it for now because it might be easier to convert configurations as
   -- functions to paths and vice versa later on.
   walk-left : ∀ {A} {D : F} {l r : 2ADT A} {pl : Path}
-    → Total pl l
+    → _starts-at_ pl l
       -------------------------------------
-    → Total ((D ↣ true) ∷ pl) (D ⟨ l , r ⟩)
+    → _starts-at_ ((D ↣ true) ∷ pl) (D ⟨ l , r ⟩)
 
   walk-right : ∀ {A} {D : F} {l r : 2ADT A} {pr : Path}
-    → Total pr r
+    → _starts-at_ pr r
       --------------------------------------
-    → Total ((D ↣ false) ∷ pr) (D ⟨ l , r ⟩)
+    → _starts-at_ ((D ↣ false) ∷ pr) (D ⟨ l , r ⟩)
 
 record TConf {A} (e : 2ADT A) : Set where
   constructor _is-total_
   field
     path : Path
-    total : Total path e
+    total : _starts-at_ path e
 open TConf public
 
 -- semantics by walking a path
@@ -202,82 +206,113 @@ walk (leaf v) ([] is-total tleaf) = v
 walk (D ⟨ l , _ ⟩) ((.(D ↣ true ) ∷ pl) is-total walk-left  t) = walk l (pl is-total t)
 walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-total walk-right t) = walk r (pr is-total t)
 
--- We have to somehow add the context to the Conf₂
-semwpr : ∀ {A} (Γ : Path) → 2ADT A → Conf₂ → V A
-semwpr Γ (leaf v) c = v
-semwpr Γ (D ⟨ l , r ⟩) c with D ∈? Γ
-... | yes D∈Γ = if getValue D∈Γ
-                then semwpr Γ l c
-                else semwpr Γ r c
-... | no  D∉Γ = if c D
-                then semwpr ((D ↣ true)  ∷ Γ) l c
-                else semwpr ((D ↣ false) ∷ Γ) r c
-
 matches : Conf₂ → Selection → Set
 matches c (f ↣ val) = c f ≡ val
 
-infix 10 _~_⊢_↠_ -- \rr-
-data _~_⊢_↠_ : ∀ {A} → Path → Conf₂ → 2ADT A → V A → Set where
+-- infix 10 _~_⊢_↠_ -- \rr-
+infix 10 _⊢_⊑_ -- \squb=
+data _⊢_⊑_ : ∀ {A} → 2ADT A → Path → Conf₂ → Set where
   end : ∀ {A} {v : V A} {c : Conf₂}
-    -- → All (matches c) Γ -- maybe this is not an axiom but a theorem
       ------------------
-    → [] ~ c ⊢ leaf v ↠ v
+    → leaf v ⊢ [] ⊑ c
 
-  go-left : ∀ {A} {v : V A} {Γ : Path} {c : Conf₂} {D : F} {l r : 2ADT A}
+  go-left : ∀ {A} {Γ : Path} {c : Conf₂} {D : F} {l r : 2ADT A}
     → c D ≡ true
-    → Γ ~ c ⊢ l ↠ v
+    → l ⊢ Γ ⊑ c
       --------------------------
-    → (D ↣ true ∷ Γ) ~ c ⊢ D ⟨ l , r ⟩ ↠ v
+    → D ⟨ l , r ⟩ ⊢ (D ↣ true ∷ Γ) ⊑ c
 
-  go-right : ∀ {A} {v : V A} {Γ : Path} {c : Conf₂} {D : F} {l r : 2ADT A}
+  go-right : ∀ {A} {Γ : Path} {c : Conf₂} {D : F} {l r : 2ADT A}
     → c D ≡ false
-    → Γ ~ c ⊢ r ↠ v
+    → r ⊢ Γ ⊑ c
       --------------------------
-    → (D ↣ false ∷ Γ) ~ c ⊢ D ⟨ l , r ⟩ ↠ v
+    → D ⟨ l , r ⟩ ⊢ (D ↣ false ∷ Γ) ⊑ c
+
+_⊑_ : Path → Conf₂ → Set
+p ⊑ c = All (matches c) p
+
+infix 4 _reaches_because_
+record ReachableVariant (A : 𝔸) (c : Conf₂) : Set where
+  constructor _reaches_because_
+  field
+    how  : Path
+    what : V A
+    that : how ⊑ c
+    -- tttt : _starts-at_ how e
+open ReachableVariant public
+
+-- this evaluates an expression given a configuration and records that evaluation in terms of a path (as a side-effect)
+⟦_⟧-recorded : ∀ {A} → (e : 2ADT A) → (c : Conf₂) → ReachableVariant A c
+⟦ leaf v ⟧-recorded c = [] reaches v because []
+⟦ D ⟨ _ , _ ⟩ ⟧-recorded c with c D in match
+⟦ D ⟨ l , _ ⟩ ⟧-recorded c | true  with ⟦ l ⟧-recorded c
+... | p reaches v because proof = (D ↣  true) ∷ p reaches v because match ∷ proof
+⟦ D ⟨ _ , r ⟩ ⟧-recorded c | false with ⟦ r ⟧-recorded c
+... | p reaches v because proof = (D ↣ false) ∷ p reaches v because match ∷ proof
 
 {-
 If we start with an empty environment. Then any selection we will put into the environment
 afterwards will be dictated by the configuration function c.
 Γ hence denotes a partial configuration which can be extended to become c.
 -}
-path-denotes-partial-config : ∀ {A} {Γ : Path} {c : Conf₂} {e : 2ADT A} {v : V A}
-  → Γ ~ c ⊢ e ↠ v
-  → All (matches c) Γ
+path-denotes-partial-config : ∀ {A} {Γ : Path} {c : Conf₂} {e : 2ADT A}
+  → e ⊢ Γ ⊑ c
+  → Γ ⊑ c
 path-denotes-partial-config end = []
 path-denotes-partial-config (go-left  c-says-so p) = c-says-so ∷ path-denotes-partial-config p
 path-denotes-partial-config (go-right c-says-so p) = c-says-so ∷ path-denotes-partial-config p
 
-infix 4 _reaches_because_
-record ReachableVariant {A : 𝔸} (e : 2ADT A) (c : Conf₂) : Set where
-  constructor _reaches_because_
-  field
-    how  : Path
-    what : V A
-    that : how ~ c ⊢ e ↠ what
 
--- Advanced semantics
-compute-path : ∀ {A} → (e : 2ADT A) → (c : Conf₂) → ReachableVariant e c
--- e∃[ Γ ] (∃[ v ] (Γ ~ c ⊢ e ↠ v)) -- use ReachableVariant here
-compute-path (leaf v) _ = [] reaches v because end
-compute-path (D ⟨ _ , _ ⟩) c with c D in eq
-compute-path (D ⟨ l , _ ⟩) c | true  with compute-path l c
-... | Γ reaches v because nice = D ↣ true  ∷ Γ reaches v because go-left  eq nice
-compute-path (D ⟨ _ , r ⟩) c | false with compute-path r c
-... | Γ reaches v because nice = D ↣ false ∷ Γ reaches v because go-right eq nice
+-- Conf₂ → Path
+conf-to-path : ∀ {A} (e : 2ADT A) (c : Conf₂) → ∃[ p ] (e ⊢ p ⊑ c)
+conf-to-path (leaf v) _ = [] , end
+conf-to-path (D ⟨ _ , _ ⟩) c with c D in eq
+conf-to-path (D ⟨ l , _ ⟩) c | true  with conf-to-path l c
+... | Γ , nice = D ↣ true  ∷ Γ , go-left  eq nice
+conf-to-path (D ⟨ _ , r ⟩) c | false with conf-to-path r c
+... | Γ , nice = D ↣ false ∷ Γ , go-right eq nice
 
-module Test (a b c d : F) where
-  open import Data.String using (String)
-  module _ (with-a dead wout-a : V String) where
-    e : 2ADT String
-    e = a ⟨ a ⟨ leaf with-a , leaf dead ⟩ , leaf wout-a ⟩
+get-variant : ∀ {A} {e : 2ADT A} {c : Conf₂} {p : Path} → e ⊢ p ⊑ c → V A
+get-variant (end {v = v}) = v
+get-variant (go-left _ pl) = get-variant pl
+get-variant (go-right _ pr) = get-variant pr
 
-    all-yes : Conf₂
-    all-yes _ = true
 
-    -- this shows that a path might contain duplicates
-    -- however, these will never conflict
-    _ : ((a ↣ true) ∷ (a ↣ true) ∷ []) ~ all-yes ⊢ e ↠ with-a
-    _ = go-left refl (go-left refl end)
+path-to-conf : (p : Path) → ∃[ c ] (p ⊑ c)
+path-to-conf [] = (λ _ → true) , []
+path-to-conf ((D ↣ b) ∷ ps) = check-D , matches-head ∷ {!proj₂ rec!}
+  where
+    rec : ∃[ c ] (ps ⊑ c)
+    rec = path-to-conf ps
+
+    check-D : Conf₂
+    check-D D' with D == D'
+    ... | yes eq = b
+    ... | no neq = proj₁ rec D'
+
+    matches-head : matches check-D (D ↣ b)
+    matches-head with D == D
+    ... | yes eq = refl
+    ... | no neq = ⊥-elim (neq refl)
+
+Live : Path → Set
+Live = Unique
+
+
+
+-- module Test (a b c d : F) where
+--   open import Data.String using (String)
+--   module _ (with-a dead wout-a : V String) where
+--     e : 2ADT String
+--     e = a ⟨ a ⟨ leaf with-a , leaf dead ⟩ , leaf wout-a ⟩
+
+--     all-yes : Conf₂
+--     all-yes _ = true
+
+--     -- this shows that a path might contain duplicates
+--     -- however, these will never conflict
+--     _ : ((a ↣ true) ∷ (a ↣ true) ∷ []) ~ all-yes ⊢ e ↠ with-a
+--     _ = go-left refl (go-left refl end)
 
 
 
@@ -328,7 +363,7 @@ ordinary-to-unique' {A} above u (D ⟨ l , r ⟩) with D ∈? above
     -- newlist b = above ∷ʳ (D ↣ b)
 
     uuu : ∀ (b : Bool) → Unique (newlist b)
-    uuu _ = flip above D∉above ∷ u
+    uuu _ = ∉→All-different above D∉above ∷ u
     -- uuu : ∀ (b : Bool) → Unique (above ∷ʳ (D ↣ b))
     -- uuu = uuuu above u D∉above
 
@@ -403,7 +438,7 @@ conf-bounded (D ⟨ l , r ⟩) c with c D in eq
     rb = conf-bounded r c
 
     gox : length trl + conf r c < length trl + length trr
-    gox = <-cong (length trl) rb
+    gox = <-cong-+ˡ (length trl) rb
 
     go : length trl + conf r c < length (trl ⁺++⁺ trr)
     go rewrite length-⁺++⁺ trl trr = gox
@@ -424,181 +459,290 @@ conf-unique-bounded = conf-bounded ∘ node
 -- ... | true = conf-unique-bounded l c
 
 
-conff : ∀ {A} → (e : 2ADT A) → TConf e → ℕ
-conff .(leaf _) (.[] is-total tleaf) = 0
-conff (D ⟨ l , _ ⟩) ((_ ∷ pl) is-total walk-left  t) = conff l (pl is-total t)
-conff (D ⟨ l , r ⟩) ((_ ∷ pr) is-total walk-right t) = length (tr l) + conff r (pr is-total t)
+module WalkToList where
+  conff : ∀ {A} → (e : 2ADT A) → TConf e → ℕ
+  conff .(leaf _) (.[] is-total tleaf) = 0
+  conff (D ⟨ l , _ ⟩) ((_ ∷ pl) is-total walk-left  t) = conff l (pl is-total t)
+  conff (D ⟨ l , r ⟩) ((_ ∷ pr) is-total walk-right t) = length (tr l) + conff r (pr is-total t)
 
-ffnoc : ∀ {A} → (e : 2ADT A) → ℕ → TConf e
-ffnoc (leaf v) _ = [] is-total tleaf
-ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
-ffnoc (D ⟨ l , r ⟩) i | no _ {-left-} with ffnoc l i
-... | pl is-total tl = ((D ↣ true) ∷ pl) is-total walk-left tl
-ffnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with ffnoc r (i ∸ (length (tr l)))
-... | pr is-total tr = ((D ↣ false) ∷ pr) is-total walk-right tr
+  ffnoc : ∀ {A} → (e : 2ADT A) → ℕ → TConf e
+  ffnoc (leaf v) _ = [] is-total tleaf
+  ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
+  ffnoc (D ⟨ l , r ⟩) i | no _ {-left-} with ffnoc l i
+  ... | pl is-total tl = ((D ↣ true) ∷ pl) is-total walk-left tl
+  ffnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with ffnoc r (i ∸ (length (tr l)))
+  ... | pr is-total tr = ((D ↣ false) ∷ pr) is-total walk-right tr
 
-preservation-walk-to-list-conf : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → walk e ⊆[ conff e ] ⟦ tr e ⟧ₗ
-preservation-walk-to-list-conf .(leaf _) (.[] is-total tleaf) = refl
-preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-total walk-left  t) =
-  begin
-    walk l (pl is-total t)
-  ≡⟨ preservation-walk-to-list-conf l (pl is-total t) ⟩
-    ⟦ tr l ⟧ₗ (conff l (pl is-total t))
-  ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
-  -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-total t))
-  ∎
-preservation-walk-to-list-conf (D ⟨ _ , r ⟩) ((_ ∷ _) is-total walk-right t) = {!!} -- this should be quite similar the walk-right case for ffnoc.
+  preservation-walk-to-list-conf : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → walk e ⊆[ conff e ] ⟦ tr e ⟧ₗ
+  preservation-walk-to-list-conf .(leaf _) (.[] is-total tleaf) = refl
+  preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-total walk-left  t) =
+    begin
+      walk l (pl is-total t)
+    ≡⟨ preservation-walk-to-list-conf l (pl is-total t) ⟩
+      ⟦ tr l ⟧ₗ (conff l (pl is-total t))
+    ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
+    -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
+      ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-total t))
+    ∎
+  preservation-walk-to-list-conf (D ⟨ _ , r ⟩) ((_ ∷ _) is-total walk-right t) = {!!} -- this should be quite similar the walk-right case for ffnoc.
 
-preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ tr e ⟧ₗ ⊆[ ffnoc e ] walk e
-preservation-walk-to-list-fnoc (leaf v) i = refl
-preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
-... | no ¬p =
-  begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
-  ≡⟨⟩
-    find-or-last i ((tr l) ⁺++⁺ (tr r))
-  ≡⟨ append-preserves (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
-    find-or-last i (tr l)
-  ≡⟨⟩
-    ⟦ tr l ⟧ₗ i
-  ≡⟨ preservation-walk-to-list-fnoc l i ⟩
-    walk l (path (ffnoc l i) is-total total (ffnoc l i))
-  ∎
-... | yes p  =
-  begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
-  ≡⟨⟩
-    find-or-last i ((tr l) ⁺++⁺ (tr r))
-  ≡⟨ {!!} ⟩
-    ⟦ tr r ⟧ₗ (i ∸ length (tr l))
-  ≡⟨ preservation-walk-to-list-fnoc r (i ∸ length (tr l)) ⟩
-    walk r (path (ffnoc r (i ∸ length (tr l))) is-total total (ffnoc r (i ∸ length (tr l))))
-  ∎
+  preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → ⟦ tr e ⟧ₗ ⊆[ ffnoc e ] walk e
+  preservation-walk-to-list-fnoc (leaf v) i = refl
+  preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
+  ... | no ¬p =
+    begin
+      ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+    ≡⟨⟩
+      find-or-last i ((tr l) ⁺++⁺ (tr r))
+    ≡⟨ append-preserves (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
+      find-or-last i (tr l)
+    ≡⟨⟩
+      ⟦ tr l ⟧ₗ i
+    ≡⟨ preservation-walk-to-list-fnoc l i ⟩
+      walk l (path (ffnoc l i) is-total total (ffnoc l i))
+    ∎
+  ... | yes p  =
+    begin
+      ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+    ≡⟨⟩
+      find-or-last i ((tr l) ⁺++⁺ (tr r))
+    ≡⟨ {!prepend-preserves !} ⟩
+      find-or-last (i ∸ length (tr l)) (tr r)
+    ≡⟨⟩
+      ⟦ tr r ⟧ₗ (i ∸ length (tr l))
+    ≡⟨ preservation-walk-to-list-fnoc r (i ∸ length (tr l)) ⟩
+      walk r (path (ffnoc r (i ∸ length (tr l))) is-total total (ffnoc r (i ∸ length (tr l))))
+    ∎
 
--- When equipped with walk semantics, 2ADTs are isomorphic to lists of variants,
--- This proof is almost done and just requires some juggling with ≤ and so on.
-preservation-walk-to-list : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → walk e ≅ ⟦ tr e ⟧ₗ
-preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
+  -- When equipped with walk semantics, 2ADTs are isomorphic to lists of variants,
+  -- This proof is almost done and just requires some juggling with ≤ and so on.
+  preservation-walk-to-list : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → walk e ≅ ⟦ tr e ⟧ₗ
+  preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
 
-path-to-fun : ∀ {A} (e : 2ADT A) → TConf e → Conf₂
-path-to-fun .(leaf _) ([] is-total tleaf) _ = true
-path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .true) ∷ p) is-total walk-left t) D' with D == D'
-... | yes _ = true
-... | no  _ = path-to-fun l (p is-total t) D'
-path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .false) ∷ p) is-total walk-right t) D' with D == D'
-... | yes _ = false
-... | no  _ = path-to-fun r (p is-total t) D'
+{-
+If we walk a path (with walk semantics), this yields the same variant
+as long as the path does not contain conflicts.
+However, there might be conflicting paths: Paths that end in dead branches.
+Hence, in a 2ADT without dead branches, walking a path randomly is always fine.
+-}
+module NoConflictWalk where
+  fun-to-path : ∀ {A} (e : 2ADT A) → Conf₂ → TConf e
+  fun-to-path (leaf _) _ = [] is-total tleaf
+  fun-to-path (D ⟨ _ , _ ⟩) c with c D
+  fun-to-path (D ⟨ l , _ ⟩) c | true  with fun-to-path l c
+  ... | pl is-total tl = ((D ↣ true)  ∷ pl) is-total walk-left tl
+  fun-to-path (D ⟨ _ , r ⟩) c | false with fun-to-path r c
+  ... | pr is-total tr = ((D ↣ false) ∷ pr) is-total walk-right tr
 
-fun-to-path : ∀ {A} (e : 2ADT A) → Conf₂ → TConf e
-fun-to-path (leaf _) _ = [] is-total tleaf
-fun-to-path (D ⟨ _ , _ ⟩) c with c D
-fun-to-path (D ⟨ l , _ ⟩) c | true  with fun-to-path l c
-... | pl is-total tl = ((D ↣ true)  ∷ pl) is-total walk-left tl
-fun-to-path (D ⟨ _ , r ⟩) c | false with fun-to-path r c
-... | pr is-total tr = ((D ↣ false) ∷ pr) is-total walk-right tr
+  path-to-fun : ∀ {A} (e : 2ADT A) → TConf e → Conf₂
+  path-to-fun .(leaf _) ([] is-total tleaf) _ = true
+  path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .true) ∷ p) is-total walk-left t) D' with D == D'
+  ... | yes _ = true
+  ... | no  _ = path-to-fun l (p is-total t) D'
+  path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .false) ∷ p) is-total walk-right t) D' with D == D'
+  ... | yes _ = false
+  ... | no  _ = path-to-fun r (p is-total t) D'
 
-preservation-path-configs-conf : ∀ {A : 𝔸}
-  → {above : Path}
-  → (e : UniquePaths2ADTBelow above A)
-  → ⟦ e ⟧ᵤ ⊆[ fun-to-path (node e) ] walk (node e)
-preservation-path-configs-conf (leaf _ ⊚ _) _ = refl
-preservation-path-configs-conf ((D ⟨ _ , _ ⟩) ⊚ ochc _ _ _) c with c D
-preservation-path-configs-conf ((D ⟨ l , r ⟩) ⊚ ochc x u-l u-r) c | true  with fun-to-path l c
-... | pl is-total tl = {!!}
---preservation-path-configs-conf (l ⊚ u-l) c
-preservation-path-configs-conf ((D ⟨ l , r ⟩) ⊚ ochc x u-l u-r) c | false = {!!}
+  path-to-fun-abstieg-l : ∀ {A}
+    → {above : Path}
+    → (D : F)
+    → (l r : 2ADT A)
+    → D ∉ above
+    → UniquePaths ((D ↣ true) ∷ above) l
+    → (p : Path)
+    → (t : _starts-at_ p l)
+    → ⟦ l ⟧₂ (path-to-fun (D ⟨ l , r ⟩) ((D ↣ true ∷ p) is-total walk-left t))
+    ≡ ⟦ l ⟧₂ (path-to-fun      l        (            p  is-total           t))
+  path-to-fun-abstieg-l D (leaf x) _ _ _ _ _ = refl
+  path-to-fun-abstieg-l D (D' ⟨ a , b ⟩) r D∉above (ochc D'∉above u-a u-b) (.(D' ↣ true) ∷ pl) (walk-left t) with D == D'
+  path-to-fun-abstieg-l D (D' ⟨ a , b ⟩) r D∉above (ochc D'∉above u-a u-b) (.(D' ↣ true) ∷ pl) (walk-left t) | yes D≡D' = ⊥-elim (D'∉above (here (fromWitness (sym D≡D'))))
+  path-to-fun-abstieg-l D (D' ⟨ a , b ⟩) r D∉above (ochc D'∉above u-a u-b) (.(D' ↣ true) ∷ pl) (walk-left t) | no  D≢D' with D' == D'
+  ... | yes D'≡D' = {!!}
+  ... | no  D'≢D' = {!!}
 
-preservation-path-configs-fnoc : ∀ {A : 𝔸}
-  → (e : UniquePaths2ADT A)
-  → walk (node e) ⊆[ path-to-fun (node e) ] ⟦ e ⟧ᵤ
-preservation-path-configs-fnoc = {!!}
+    -- with path-to-fun (D ⟨ D' ⟨ a , b ⟩ , r ⟩) (((D ↣ true) ∷ (D' ↣ true) ∷ pl) is-total walk-left (walk-left t)) D'
+    -- begin
+    --   ⟦ D' ⟨ a , b ⟩ ⟧₂ (path-to-fun (D ⟨ D' ⟨ a , b ⟩ , r ⟩) (((D ↣ true) ∷ (D' ↣ true) ∷ pl) is-total walk-left (walk-left t)))
+    -- ≡⟨ {!!} ⟩
+    --   ⟦ D' ⟨ a , b ⟩ ⟧₂ (path-to-fun (D' ⟨ a , b ⟩) (((D' ↣ true) ∷ pl) is-total walk-left t))
+    -- ∎
+  path-to-fun-abstieg-l D (D' ⟨ a , b ⟩) r D∉above (ochc D'∉above u-a u-b) .((D' ↣ false) ∷ _) (walk-right t) = {!!}
 
--- Configurations can be modelled as functions or as paths.
--- The expression is unchanged here but the configurations have to be translated.
-preservation-path-configs : ∀ {A : 𝔸}
-  → (e : UniquePaths2ADT A)
-  → ⟦ e ⟧ᵤ ≅ walk (node e)
-preservation-path-configs e = ≅[]→≅ (preservation-path-configs-conf e , preservation-path-configs-fnoc e)
+  --- TODO: Define this recusively?
+  path-to-fun' : ∀ {A} (e : 2ADT A) → TConf e → Conf₂
+  path-to-fun' _ (p is-total t) D with D ∈? p
+  ... | yes D∈p = getValue D∈p
+  ... | no  D∉p = true
 
--- record PathConfig (p : Path) : Set where
---   field
---     fun : Conf₂
---     matches : ∀ (D : F) (sel : D ∈ p) → fun D ≡ getValue sel
--- open PathConfig
+-- TODO: Reformulate Uniqueness as:
+  Undead : ∀ {A} (e : 2ADT A) → Set
+  Undead e = ∀ (p : Path) → p starts-at e → Unique p
 
--- conf-dead : ∀ (p : Path) (u : Unique p) → (c : Conf₂) → PathConfig p
--- conf-dead [] _ c = record { fun = c ; matches = λ where D () }
--- conf-dead ((D ↣ b) ∷ p) u c = record { fun = adapt ; matches = adapt-match }
---   where
---     rec = conf-dead p c
+    -- → D ∉ above
+    -- → UniquePaths ((D ↣ true) ∷ above) l
+    -- → (ax1 : D ∉ p) -- We should be able to compute this from UniquePaths
+    -- → (ax2 : Unique p) -- We should be able to compute this from UniquePaths
+  path-to-fun'-step-l : ∀ {A} {above : Path}
+    → (D : F) (l r : 2ADT A)
+    → Undead (D ⟨ l , r ⟩)
+    → (p : Path)
+    → (t : p starts-at l)
+    →   ⟦ l ⟧₂ (path-to-fun' (D ⟨ l , r ⟩) ((D ↣ true ∷ p) is-total walk-left t))
+      ≡ ⟦ l ⟧₂ (path-to-fun' l (p is-total t))
+  path-to-fun'-step-l D l r undead p t with D ∈? p
+  ... | yes D∈p = ⊥-elim (D∉p D∈p)
+    where
+      allu : Unique (D ↣ true ∷ p)
+      allu = undead (D ↣ true ∷ p) (walk-left t)
 
---     adapt : Conf₂
---     adapt D' with D == D'
---     ... | yes eq = b
---     ... | no neq = fun (rec) D'
+      D∉p : D ∉ p
+      D∉p with allu
+      ... | All≠D ∷ _ = All-different→∉ true p All≠D
+  ... | no  D∉p = {!!}
+    where
+      ppp : ((D ↣ true) ∷ p) starts-at (D ⟨ l , r ⟩)
+      ppp = walk-left t
 
---     adapt-match : ∀ (D' : F) (sel : D' ∈ ((D ↣ b) ∷ p)) → adapt D' ≡ getValue sel
---     adapt-match D' _ with D == D'
---     adapt-match D' sel | yes eq rewrite eq with sel
---     ... | here p = refl
---     ... | there px = {!!}
---     adapt-match D' sel | no neq with sel
---     ... | here p rewrite (toWitness p) = ⊥-elim (neq refl)
---     ... | there px = matches rec D' px
+      pppu : Unique ((D ↣ true) ∷ p)
+      pppu = undead ((D ↣ true) ∷ p) ppp
 
--- preservation-dead-branch-elim-conf' : ∀ {A : 𝔸}
---   → (u : Unique above)
---   → (e : UniquePaths2ADTBelow above A)
---   → ⟦ e ⟧₂ ⊆[ id ] ⟦ ordinary-to-unique' above u e ⟧ᵤ
--- preservation-dead-branch-elim-conf' = {!!}
+  path-to-fun'-head : ∀ {A}
+    → (D : F)
+    → (l r : 2ADT A)
+    → (b : Bool)
+    → (p : Path)
+    → (t : _starts-at_ ((D ↣ b) ∷ p) (D ⟨ l , r ⟩))
+    → path-to-fun' (D ⟨ l , r ⟩) (((D ↣ b) ∷ p) is-total t) D ≡ b
+  path-to-fun'-head = {!!}
 
-preservation-dead-branch-elim-conf : ∀ {A : 𝔸}
-  -- this path cannot be arbitrary.
-  -- It has to be linked to a partial configuration somehow.
-  -- We need a lemma
-  --   (is : D ∈? above) → getValue is ≡ c D
-  -- otherwise we could not have reached that leaf.
-  → (above : Path)
-  → (u : Unique above)
-  -- Das Hilfslemma ist noch zu allgemein, da above immer noch magisch aus dem Nichts kommt.
-  -- Nichts sagt, dass above tatsächlich ein Pfad war, den wir verfolgt haben. Brauchen wir hier auch schon Total?
-  → (∀ (D : F) (fixed : D ∈ above) → (c : Conf₂) → c D ≡ getValue fixed )
-  → (e : 2ADT A)
-  → ⟦ e ⟧₂ ⊆[ id ] ⟦ ordinary-to-unique' above u e ⟧ᵤ
-preservation-dead-branch-elim-conf _ _ _ (leaf v) c = refl
-preservation-dead-branch-elim-conf above _ _ (D ⟨ _ , _ ⟩) _ with D ∈? above
-preservation-dead-branch-elim-conf above u lem (D ⟨ l , r ⟩) c | yes p rewrite (lem D p c) with getValue p
-... | true  = preservation-dead-branch-elim-conf above u lem l c
-... | false = preservation-dead-branch-elim-conf above u lem r c
-preservation-dead-branch-elim-conf above u lem (D ⟨ l , r ⟩) c | no ¬p with c D
-... | true  = preservation-dead-branch-elim-conf ((D ↣  true) ∷ above) (flip above ¬p ∷ u) lem-step l c
-  where
-    lem-step : ∀ (D' : F) (fixed : D' ∈ ((D ↣ true) ∷ above)) (c : Conf₂) → c D' ≡ getValue fixed
-    lem-step D' fixed c with D == D'
-    ... | yes D≡D' rewrite D≡D' = {!!}
-    ... | no  D≢D' = lem D' {!!} c
-... | false = preservation-dead-branch-elim-conf ((D ↣ false) ∷ above) (flip above ¬p ∷ u) {!!} r c
+  path-to-fun-l : ∀ {A}
+    → (D : F)
+    → (l r : 2ADT A)
+    → (b : Bool)
+    → (p : Path)
+    → (t : _starts-at_ ((D ↣ b) ∷ p) (D ⟨ l , r ⟩))
+    → path-to-fun (D ⟨ l , r ⟩) (((D ↣ b) ∷ p) is-total t) D ≡ b
+  path-to-fun-l D l r .true p (walk-left t) with D == D
+  ... | yes D≡D = refl
+  ... | no  D≢D = ⊥-elim (D≢D refl)
+  path-to-fun-l D l r .false p (walk-right t) with D == D
+  ... | yes D≡D = refl
+  ... | no  D≢D = ⊥-elim (D≢D refl)
 
-preservation-dead-branch-elim-fnoc : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ ordinary-to-unique e ⟧ᵤ ⊆[ id ] ⟦ e ⟧₂
-preservation-dead-branch-elim-fnoc = {!!}
+  preservation-path-configs-conf : ∀ {A : 𝔸}
+    → {above : Path}
+    → (e : 2ADT A)
+    → (u : UniquePaths above e)
+    → ⟦ e ⊚ u ⟧ᵤ ⊆[ fun-to-path e ] walk e
+  preservation-path-configs-conf (leaf _) _ _ = refl
+  preservation-path-configs-conf (D ⟨ _ , _ ⟩) _ c with c D
+  preservation-path-configs-conf (_ ⟨ l , _ ⟩) (ochc _ u-l _) c | true  with fun-to-path l c in eq
+  ... | pl is-total tl =
+    begin
+      ⟦ l ⟧₂ c
+    ≡⟨⟩
+      ⟦ l ⊚ u-l ⟧ᵤ c
+    ≡⟨ preservation-path-configs-conf l u-l c ⟩
+      walk l (fun-to-path l c)
+    ≡⟨ Eq.cong (walk l) eq ⟩
+      walk l (pl is-total tl)
+    ∎
+  preservation-path-configs-conf (_ ⟨ _ , r ⟩) (ochc _ _ u-r) c | false with fun-to-path r c in eq
+  ... | _ rewrite (sym eq) = preservation-path-configs-conf r u-r c
 
--- Killing dead branches is ok.
-preservation-dead-branch-elim : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ e ⟧₂ ≅ ⟦ ordinary-to-unique e ⟧ᵤ
-preservation-dead-branch-elim e = ≅[]→≅ (preservation-dead-branch-elim-conf [] [] lem-base e , preservation-dead-branch-elim-fnoc e)
-  where
-    lem-base : ∀ (D : F) (fixed : D ∈ []) (c : Conf₂) → c D ≡ getValue fixed
-    lem-base D () c
+  preservation-path-configs-fnoc : ∀ {A : 𝔸}
+    → {above : Path}
+    → (e : 2ADT A)
+    → (u : UniquePaths above e)
+    → walk e ⊆[ path-to-fun' e ] ⟦ e ⊚ u ⟧ᵤ
+  preservation-path-configs-fnoc (leaf v) oleaf (.[] is-total tleaf) = refl
+  preservation-path-configs-fnoc (D ⟨ l , r ⟩) (ochc D-u u-l u-r) c@((.(D ↣ true ) ∷ p) is-total walk-left t)
+    rewrite path-to-fun'-head D l r true p (walk-left t) =
+    begin
+      walk l (p is-total t)
+    ≡⟨ preservation-path-configs-fnoc l u-l (p is-total t) ⟩
+      ⟦ l ⟧₂ (path-to-fun' l (p is-total t))
+    ≡⟨ {!!} ⟩ --path-to-fun'-step-l D l r D-u u-l p {!!} {!!} t ⟩
+      ⟦ l ⟧₂ (path-to-fun' (D ⟨ l , r ⟩) ((D ↣ true ∷ p) is-total walk-left t))
+    ∎
+    -- rewrite path-to-fun-l D l r true p (walk-left t) =
+    --   begin
+    --     walk l (p is-total t)
+    --   ≡⟨ preservation-path-configs-fnoc l u-l (p is-total t) ⟩
+    --     ⟦ l ⟧₂ (path-to-fun l (p is-total t))
+    --   ≡˘⟨ path-to-fun-abstieg-l D l r D-u u-l p t ⟩
+    --     ⟦ l ⟧₂ (path-to-fun (D ⟨ l , r ⟩) c)
+    --   ∎
+--     where
+--       lem : path-to-fun l (p is-total t) ≡ (λ D' → path-to-fun (D ⟨ l , r ⟩) (((D ↣ true) ∷ p) is-total walk-left t) D')
+--       lem = {!!}
+
+  -- ... | yes eq = {!!}
+  -- ... | no neq = {!!}
+  preservation-path-configs-fnoc (D ⟨ l , r ⟩) (ochc D-u u-l u-r) ((.(D ↣ false) ∷ p) is-total walk-right t) = {!!}
+
+  -- Configurations can be modelled as functions or as paths.
+  -- The expression is unchanged here but the configurations have to be translated.
+  preservation-path-configs : ∀ {A : 𝔸}
+    → (e : UniquePaths2ADT A)
+    → ⟦ e ⟧ᵤ ≅ walk (node e)
+  preservation-path-configs e = ≅[]→≅ (preservation-path-configs-conf (node e) (unique e) , preservation-path-configs-fnoc (node e) (unique e))
+
+module DeadBranchElim where
+  preserves-l : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → ⟦ e ⟧₂ ⊆[ id ] ⟦ e ⟧₂
+  preserves-l (leaf _) _ = refl
+  preserves-l (D ⟨ l , r ⟩) c with c D
+  ... | x = {!!}
+
+-- !what (⟦ D ⟨ l , r ⟩ ⟧-recorded c)!
+  preservation-dead-branch-elim-conf : ∀ {A : 𝔸}
+    -- this path cannot be arbitrary.
+    -- It has to be linked to a partial configuration somehow.
+    -- We need a lemma
+    --   (is : D ∈? above) → getValue is ≡ c D
+    -- otherwise we could not have reached that leaf.
+    → (above : Path)
+    → (u : Unique above)
+    -- Das Hilfslemma ist noch zu allgemein, da above immer noch magisch aus dem Nichts kommt.
+    -- Nichts sagt, dass above tatsächlich ein Pfad war, den wir verfolgt haben. Brauchen wir hier auch schon _starts-at_?
+    → (∀ (D : F) (fixed : D ∈ above) → (c : Conf₂) → c D ≡ getValue fixed )
+    → (e : 2ADT A)
+    → ⟦ e ⟧₂ ⊆[ id ] ⟦ ordinary-to-unique' above u e ⟧ᵤ
+  preservation-dead-branch-elim-conf _ _ _ (leaf v) c = refl
+  preservation-dead-branch-elim-conf above _ _ (D ⟨ _ , _ ⟩) _ with D ∈? above
+  preservation-dead-branch-elim-conf above u lem (D ⟨ l , r ⟩) c | yes p rewrite (lem D p c) with getValue p
+  ... | true  = preservation-dead-branch-elim-conf above u lem l c
+  ... | false = preservation-dead-branch-elim-conf above u lem r c
+  preservation-dead-branch-elim-conf above u lem (D ⟨ l , r ⟩) c | no ¬p with c D
+  ... | true  = preservation-dead-branch-elim-conf ((D ↣  true) ∷ above) (∉→All-different above ¬p ∷ u) lem-step l c
+    where
+      lem-step : ∀ (D' : F) (fixed : D' ∈ ((D ↣ true) ∷ above)) (c : Conf₂) → c D' ≡ getValue fixed
+      lem-step D' fixed c with D == D'
+      ... | yes D≡D' rewrite D≡D' = {!!}
+      ... | no  D≢D' = lem D' {!!} c
+  ... | false = preservation-dead-branch-elim-conf ((D ↣ false) ∷ above) (∉→All-different above ¬p ∷ u) {!!} r c
+
+  preservation-dead-branch-elim-fnoc : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → ⟦ ordinary-to-unique e ⟧ᵤ ⊆[ id ] ⟦ e ⟧₂
+  preservation-dead-branch-elim-fnoc = {!!}
+
+  -- Killing dead branches is ok.
+  preservation-dead-branch-elim : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → ⟦ e ⟧₂ ≅ ⟦ ordinary-to-unique e ⟧ᵤ
+  preservation-dead-branch-elim e = ≅[]→≅ (preservation-dead-branch-elim-conf [] [] lem-base e , preservation-dead-branch-elim-fnoc e)
+    where
+      lem-base : ∀ (D : F) (fixed : D ∈ []) (c : Conf₂) → c D ≡ getValue fixed
+      lem-base D () c
 
 -- 2ADTs are isomorphic to Variant Lists.
 preservation : ∀ {A : 𝔸}
@@ -607,11 +751,11 @@ preservation : ∀ {A : 𝔸}
 preservation e =
   ≅-begin
     ⟦ e ⟧₂
-  ≅⟨ preservation-dead-branch-elim e ⟩
+  ≅⟨ DeadBranchElim.preservation-dead-branch-elim e ⟩
     ⟦ ordinary-to-unique e ⟧ᵤ
-  ≅⟨ preservation-path-configs (ordinary-to-unique e) ⟩
+  ≅⟨ NoConflictWalk.preservation-path-configs (ordinary-to-unique e) ⟩
     walk (node (ordinary-to-unique e))
-  ≅⟨ preservation-walk-to-list (node (ordinary-to-unique e)) ⟩
+  ≅⟨ WalkToList.preservation-walk-to-list (node (ordinary-to-unique e)) ⟩ -- conceptually done
     ⟦ toVariantList e ⟧ₗ
   ≅-∎
 
