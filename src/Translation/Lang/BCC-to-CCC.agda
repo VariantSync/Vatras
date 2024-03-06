@@ -17,7 +17,7 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
-open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
@@ -51,38 +51,15 @@ module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 import Translation.Lang.BCC-to-FCC
-open Translation.Lang.BCC-to-FCC.2Ary Variant Artifact∈ₛVariant using () renaming (translate to BCC→FCC; conf to BCCꟲ→FCCꟲ; fnoc to BCCꟲ→FCCꟲ⁻¹; preserves to BCC→FCC-preserves)
-open import Translation.Lang.FCC-to-CCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→CCC; conf to FCCꟲ→CCCꟲ; fnoc to FCCꟲ→CCCꟲ⁻¹; preserves to FCC→CCC-preserves)
+open Translation.Lang.BCC-to-FCC.2Ary Variant Artifact∈ₛVariant using (BCC→FCC)
+open import Translation.Lang.FCC-to-CCC Variant Artifact∈ₛVariant using (FCC→CCC)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-translate : {i : Size} → {D A : Set} → BCC D i A → CCC D ∞ A
-translate expr = FCC→CCC (sucs zero) (BCC→FCC expr)
-
-conf : {D : Set} → BCCꟲ D → CCCꟲ D
-conf = FCCꟲ→CCCꟲ (sucs zero) ∘ BCCꟲ→FCCꟲ
-
-fnoc : {D : Set} → CCCꟲ D → BCCꟲ D
-fnoc = BCCꟲ→FCCꟲ⁻¹ ∘ FCCꟲ→CCCꟲ⁻¹ (sucs zero)
-
-preserves : {i : Size} → {D A : Set} → (expr : BCC D i A) → ⟦ translate expr ⟧ₐ ≅[ fnoc ][ conf ] ⟦ expr ⟧₂
-preserves expr =
-  ⟦ translate expr ⟧ₐ
-  ≅[]⟨⟩
-  ⟦ FCC→CCC (sucs zero) (BCC→FCC expr) ⟧ₐ
-  ≅[]⟨ FCC→CCC-preserves (sucs zero) (BCC→FCC expr) ⟩
-  ⟦ BCC→FCC expr ⟧ₙ
-  ≅[]⟨ BCC→FCC-preserves expr ⟩
-  ⟦ expr ⟧₂
-  ≅[]-∎
-
 BCC→CCC : {i : Size} → {D : Set} → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (CCCL D Variant Artifact∈ₛVariant)
-BCC→CCC .LanguageCompiler.compile = translate
-BCC→CCC .LanguageCompiler.config-compiler expr .to = conf
-BCC→CCC .LanguageCompiler.config-compiler expr .from = fnoc
-BCC→CCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
+BCC→CCC = BCC→FCC ⊕ FCC→CCC (sucs zero)
 
 CCC≽BCC : {D : Set} → CCCL D Variant Artifact∈ₛVariant ≽ BCCL D Variant Artifact∈ₛVariant
 CCC≽BCC = expressiveness-from-compiler BCC→CCC

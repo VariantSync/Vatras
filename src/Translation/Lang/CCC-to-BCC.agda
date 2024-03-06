@@ -17,7 +17,7 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
-open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
@@ -50,55 +50,16 @@ open Lang.BCC.Sem using (BCCL)
 module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
-import Translation.Lang.CCC-to-FCC
-open Translation.Lang.CCC-to-FCC.Exact Variant Artifact∈ₛVariant using (maxChoiceLength; maxChoiceLengthIsLimit) renaming (translate to CCC→FCC; conf to CCCꟲ→FCCꟲ; fnoc to CCCꟲ→FCCꟲ⁻¹; preserves to CCC→FCC-preserves)
-open import Translation.Lang.FCC-to-BCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→BCC; conf to FCCꟲ→BCCꟲ; fnoc to FCCꟲ→BCCꟲ⁻¹; preserves to FCC→BCC-preserves)
-open import Translation.Lang.FCC-to-BCC Variant Artifact∈ₛVariant using (IndexedDimension) public
-open import Translation.Lang.BCC-to-BCC Variant Artifact∈ₛVariant using () renaming (map-dim to BCC-map-dim; preserves to BCC-map-dim-preserves)
+open import Translation.Lang.CCC-to-FCC Variant Artifact∈ₛVariant using (CCC→FCC)
+import Translation.Lang.FCC-to-BCC
+open Translation.Lang.FCC-to-BCC.2Ary Variant Artifact∈ₛVariant using (FCC→BCC)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-Fin→ℕ : {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
-Fin→ℕ n (d , i) = (d , Fin.toℕ i)
-
-Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D n
-Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
-
-translate : {i : Size} → {D A : Set} → CCC D i A → BCC (D × ℕ) ∞ A
-translate expr = BCC-map-dim (Fin→ℕ n) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)))
-  where
-  n = maxChoiceLength expr
-
-conf : {D : Set} → ℕ≥ 2 → CCCꟲ D → BCCꟲ (D × ℕ)
-conf n = (_∘ Fin→ℕ⁻¹ n) ∘ FCCꟲ→BCCꟲ n ∘ CCCꟲ→FCCꟲ n
-
-fnoc : {D : Set} → ℕ≥ 2 → BCCꟲ (D × ℕ) → CCCꟲ D
-fnoc n = CCCꟲ→FCCꟲ⁻¹ n ∘ FCCꟲ→BCCꟲ⁻¹ n ∘ (_∘ Fin→ℕ n)
-
-preserves : {i : Size} → {D A : Set} → (expr : CCC D i A) → ⟦ translate expr ⟧₂ ≅[ fnoc (maxChoiceLength expr) ][ conf (maxChoiceLength expr) ] ⟦ expr ⟧ₐ
-preserves expr =
-  ⟦ translate expr ⟧₂
-  ≅[]⟨⟩
-  ⟦ BCC-map-dim (Fin→ℕ n) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr))) ⟧₂
-  ≅[]⟨ BCC-map-dim-preserves (Fin→ℕ n) (Fin→ℕ⁻¹ n) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma n i)) (FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr))) ⟩
-  ⟦ FCC→BCC n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)) ⟧₂
-  ≅[]⟨ FCC→BCC-preserves n (CCC→FCC n expr (maxChoiceLengthIsLimit expr)) ⟩
-  ⟦ CCC→FCC n expr (maxChoiceLengthIsLimit expr) ⟧ₙ
-  ≅[]⟨ CCC→FCC-preserves n expr (maxChoiceLengthIsLimit expr) ⟩
-  ⟦ expr ⟧ₐ
-  ≅[]-∎
-  where
-  n = maxChoiceLength expr
-  lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
-  lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
-
 CCC→BCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D Variant Artifact∈ₛVariant {i}) (BCCL (D × ℕ) Variant Artifact∈ₛVariant)
-CCC→BCC .LanguageCompiler.compile = translate
-CCC→BCC .LanguageCompiler.config-compiler expr .to = conf (maxChoiceLength expr)
-CCC→BCC .LanguageCompiler.config-compiler expr .from = fnoc (maxChoiceLength expr)
-CCC→BCC .LanguageCompiler.preserves e = ≅[]-sym (preserves e)
+CCC→BCC = CCC→FCC (sucs zero) ⊕ FCC→BCC
 
 BCC≽CCC : {D : Set} → BCCL (D × ℕ) Variant Artifact∈ₛVariant ≽ CCCL D Variant Artifact∈ₛVariant
 BCC≽CCC = expressiveness-from-compiler CCC→BCC

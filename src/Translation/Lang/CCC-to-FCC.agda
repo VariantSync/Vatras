@@ -47,9 +47,10 @@ module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 import Translation.Lang.FCC-to-FCC
-open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→FCC; conf to FCCꟲ→FCCꟲ; fnoc to FCCꟲ→FCCꟲ⁻¹; preserves to FCC→FCC-preserves)
-open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension)
+open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (FCC→FCC)
 open Translation.Lang.FCC-to-FCC.map-dim Variant Artifact∈ₛVariant using () renaming (map-dim to FCC-map-dim; preserves to FCC-map-dim-preserves)
+open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension)
+module FCC→FCC {i} {D} n m = LanguageCompiler (FCC→FCC {i} {D} n m)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -262,22 +263,22 @@ Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D
 Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
 translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → FCC n (D × ℕ) ∞ A
-translate n expr = FCC-map-dim n (Fin→ℕ (Exact.maxChoiceLength expr)) (FCC→FCC (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)))
+translate (sucs n) expr = FCC-map-dim (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)))
 
-conf : {D : Set} → (n m : ℕ≥ 2) → CCCꟲ D → FCCꟲ n (D × ℕ)
-conf n m = (_∘ Fin→ℕ⁻¹ m) ∘ FCCꟲ→FCCꟲ m n ∘ Exact.conf m
+conf : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → CCCꟲ D → FCCꟲ n (D × ℕ)
+conf n expr = (_∘ Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) ∘ FCC→FCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
 
-fnoc : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ n (D × ℕ) → CCCꟲ D
-fnoc n m = Exact.fnoc m ∘ FCCꟲ→FCCꟲ⁻¹ m n ∘ (_∘ Fin→ℕ m)
+fnoc : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → FCCꟲ n (D × ℕ) → CCCꟲ D
+fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ FCC→FCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (_∘ Fin→ℕ (Exact.maxChoiceLength expr))
 
-preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n (Exact.maxChoiceLength expr) ][ conf n (Exact.maxChoiceLength expr) ] ⟦ expr ⟧ₐ
-preserves n expr =
-  ⟦ translate n expr ⟧ₙ
+preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n expr ][ conf n expr ] ⟦ expr ⟧ₐ
+preserves (sucs n) expr =
+  ⟦ translate (sucs n) expr ⟧ₙ
   ≅[]⟨⟩
-  ⟦ FCC-map-dim n (Fin→ℕ (Exact.maxChoiceLength expr)) (FCC→FCC (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟧ₙ
-  ≅[]⟨ FCC-map-dim-preserves n (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (FCC→FCC (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
-  ⟦ FCC→FCC (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ⟧ₙ
-  ≅[]⟨ FCC→FCC-preserves (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ⟩
+  ⟦ FCC-map-dim (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟧ₙ
+  ≅[]⟨ FCC-map-dim-preserves (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
+  ⟦ FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ⟧ₙ
+  ≅[]⟨ ≅[]-sym (FCC→FCC.preserves (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
   ⟦ Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr) ⟧ₙ
   ≅[]⟨ Exact.preserves (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr) ⟩
   ⟦ expr ⟧ₐ
@@ -288,8 +289,8 @@ preserves n expr =
 
 CCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D Variant Artifact∈ₛVariant {i}) (FCCL n (D × ℕ) Variant Artifact∈ₛVariant)
 CCC→FCC n .LanguageCompiler.compile = translate n
-CCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n (Exact.maxChoiceLength expr)
-CCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n (Exact.maxChoiceLength expr)
+CCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n expr
+CCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
 CCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 FCC≽CCC : {D : Set} → (n : ℕ≥ 2) → FCCL n (D × ℕ) Variant Artifact∈ₛVariant ≽ CCCL D Variant Artifact∈ₛVariant

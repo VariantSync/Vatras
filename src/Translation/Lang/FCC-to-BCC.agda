@@ -19,7 +19,7 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
-open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
@@ -48,7 +48,7 @@ open Lang.FCC.Sem using (FCCL)
 module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
 open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using () renaming (translate to FCC→FCC; conf to FCCꟲ→FCCꟲ; fnoc to FCCꟲ→FCCꟲ⁻¹; preserves to FCC→FCC-preserves)
+open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (FCC→FCC)
 open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension) public
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
@@ -153,31 +153,9 @@ module 2Ary where
   FCC→BCC .LanguageCompiler.config-compiler expr .from = fnoc
   FCC→BCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
-conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → BCCꟲ (IndexedDimension D n)
-conf n = 2Ary.conf ∘ FCCꟲ→FCCꟲ n (sucs zero)
-
-fnoc : {D : Set} → (n : ℕ≥ 2) → BCCꟲ (IndexedDimension D n) → FCCꟲ n D
-fnoc n = FCCꟲ→FCCꟲ⁻¹ n (sucs zero) ∘ 2Ary.fnoc
-
-translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC n D i A → BCC (IndexedDimension D n) ∞ A
-translate n expr = 2Ary.translate (FCC→FCC n (sucs zero) expr)
-
-preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧₂ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
-preserves n expr =
-  ⟦ translate n expr ⟧₂
-  ≅[]⟨⟩
-  ⟦ 2Ary.translate (FCC→FCC n (sucs zero) expr) ⟧₂
-  ≅[]⟨ 2Ary.preserves (FCC→FCC n (sucs zero) expr) ⟩
-  ⟦ FCC→FCC n (sucs zero) expr ⟧ₙ
-  ≅[]⟨ FCC→FCC-preserves n (sucs zero) expr ⟩
-  ⟦ expr ⟧ₙ
-  ≅[]-∎
 
 FCC→BCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (BCCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
-FCC→BCC n .LanguageCompiler.compile = translate n
-FCC→BCC n .LanguageCompiler.config-compiler expr .to = conf n
-FCC→BCC n .LanguageCompiler.config-compiler expr .from = fnoc n
-FCC→BCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
+FCC→BCC n = FCC→FCC n (sucs zero) ⊕ 2Ary.FCC→BCC
 
 BCC≽FCC : {D : Set} → (n : ℕ≥ 2) → BCCL (IndexedDimension D n) Variant Artifact∈ₛVariant ≽ FCCL n D Variant Artifact∈ₛVariant
 BCC≽FCC n = expressiveness-from-compiler (FCC→BCC n)

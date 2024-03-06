@@ -17,7 +17,7 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
-open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -207,23 +207,8 @@ module IncreaseArity where
     FCC→FCC n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
     FCC→FCC n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
-  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC (sucs zero) D i A → FCC n D i A
-  translate (sucs n) = General.translate (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
-
-  conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) D → FCCꟲ n D
-  conf (sucs n) = General.conf (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
-
-  fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → FCCꟲ (sucs zero) D
-  fnoc (sucs n) = General.fnoc (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
-
-  preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC (sucs zero) D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
-  preserves (sucs n) = General.preserves (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
-
   FCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i}) (FCCL n D Variant Artifact∈ₛVariant {i})
-  FCC→FCC n .LanguageCompiler.compile = translate n
-  FCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n
-  FCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n
-  FCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
+  FCC→FCC (sucs n) = General.FCC→FCC (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
 
 
 module DecreaseArity where
@@ -556,20 +541,5 @@ module DecreaseArity where
 
 open DecreaseArity using (IndexedDimension) public
 
-conf : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ n D → FCCꟲ m (IndexedDimension D n)
-conf n m = IncreaseArity.conf m ∘ DecreaseArity.conf n
-
-fnoc : {D : Set} → (n m : ℕ≥ 2) → FCCꟲ m (IndexedDimension D n) → FCCꟲ n D
-fnoc n m = DecreaseArity.fnoc n ∘ IncreaseArity.fnoc m
-
-translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → FCC n D i A → FCC m (IndexedDimension D n) ∞ A
-translate (sucs n) (sucs m) expr = IncreaseArity.translate (sucs m) (DecreaseArity.translate (sucs n) expr)
-
-preserves : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n m expr ⟧ₙ ≅[ fnoc n m ][ conf n m ] ⟦ expr ⟧ₙ
-preserves (sucs n) (sucs m) expr = ≅[]-trans (IncreaseArity.preserves (sucs m) (DecreaseArity.translate (sucs n) expr)) (DecreaseArity.preserves (sucs n) expr)
-
 FCC→FCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (FCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
-FCC→FCC n m .LanguageCompiler.compile = translate n m
-FCC→FCC n m .LanguageCompiler.config-compiler expr .to = conf n m
-FCC→FCC n m .LanguageCompiler.config-compiler expr .from = fnoc n m
-FCC→FCC n m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m expr)
+FCC→FCC n m = DecreaseArity.FCC→FCC n ⊕ IncreaseArity.FCC→FCC m

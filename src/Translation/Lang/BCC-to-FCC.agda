@@ -19,7 +19,7 @@ open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans
 open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
-open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
@@ -49,7 +49,7 @@ module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
 open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 import Translation.Lang.FCC-to-FCC
-open Translation.Lang.FCC-to-FCC.IncreaseArity Variant Artifact∈ₛVariant using () renaming (translate to FCC→FCC; conf to FCCꟲ→FCCꟲ; fnoc to FCCꟲ→FCCꟲ⁻¹; preserves to FCC→FCC-preserves)
+open Translation.Lang.FCC-to-FCC.IncreaseArity Variant Artifact∈ₛVariant using (FCC→FCC)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -152,23 +152,8 @@ module 2Ary where
   BCC→FCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → BCC D i A → FCC n D i A
-translate n = FCC→FCC n ∘ 2Ary.translate
-
-conf : {D : Set} → (n : ℕ≥ 2) → BCCꟲ D → FCCꟲ n D
-conf n = FCCꟲ→FCCꟲ n ∘ 2Ary.conf
-
-fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → BCCꟲ D
-fnoc n  = 2Ary.fnoc ∘ FCCꟲ→FCCꟲ⁻¹ n
-
-preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (e : BCC D i A) → ⟦ translate n e ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ e ⟧₂
-preserves n expr = ≅[]-trans (FCC→FCC-preserves n (2Ary.translate expr)) (2Ary.preserves expr)
-
 BCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (FCCL n D Variant Artifact∈ₛVariant {i})
-BCC→FCC n .LanguageCompiler.compile = translate n
-BCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n
-BCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n
-BCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
+BCC→FCC n = 2Ary.BCC→FCC ⊕ FCC→FCC n
 
 FCC≽BCC : {D : Set} → (n : ℕ≥ 2) → FCCL n D Variant Artifact∈ₛVariant ≽ BCCL D Variant Artifact∈ₛVariant
 FCC≽BCC n = expressiveness-from-compiler (BCC→FCC n)
