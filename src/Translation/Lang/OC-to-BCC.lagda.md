@@ -469,10 +469,6 @@ OC→BCC = record
   ; preserves = compile-preserves
   }
 
-BCC-is-at-least-as-expressive-as-OC : BCCL ≽ WFOCL
-BCC-is-at-least-as-expressive-as-OC = expressiveness-by-translation compile compile-preserves-semantics
-  where
-    -- this drops the knowledge on id, id being the configuration compiler
-    compile-preserves-semantics : SemanticsPreserving WFOCL BCCL compile
-    compile-preserves-semantics {A} e = ≅[]→≅ (compile-preserves e)
+BCC≽OC : BCCL ≽ WFOCL
+BCC≽OC = expressiveness-from-compiler OC→BCC
 ```

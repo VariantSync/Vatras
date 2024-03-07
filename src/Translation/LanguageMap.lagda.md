@@ -83,6 +83,6 @@ module _ (F : 𝔽) where
   OC-is-less-expressive-than-BCC = less-expressive-from-completeness {!!} OC-is-incomplete
 
 open Translation.Lang.OC-to-BCC using (
-  BCC-is-at-least-as-expressive-as-OC
+  2CC≽OC
   ) public
 ```
