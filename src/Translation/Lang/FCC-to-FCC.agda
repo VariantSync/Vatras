@@ -40,11 +40,14 @@ artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module map-dim where
+  FCCꟲ-map-dim : {D₁ D₂ : Set} → (n : ℕ≥ 2) → (D₂ → D₁) → FCCꟲ n D₁ → FCCꟲ n D₂
+  FCCꟲ-map-dim n f config = config ∘ f
+
   map-dim : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (D₁ → D₂) → FCC n D₁ i A → FCC n D₂ i A
   map-dim n f (a -< cs >-) = a -< List.map (map-dim n f) cs >-
   map-dim n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (map-dim n f) cs ⟩
 
-  preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : FCC n D₁ i A) → ⟦ map-dim n f expr ⟧ₙ ⊆[ _∘ f ] ⟦ expr ⟧ₙ
+  preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : FCC n D₁ i A) → ⟦ map-dim n f expr ⟧ₙ ⊆[ FCCꟲ-map-dim n f ] ⟦ expr ⟧ₙ
   preserves-⊆ n f f⁻¹ (a -< cs >-) config =
     ⟦ map-dim n f (a -< cs >-) ⟧ₙ config
     ≡⟨⟩
@@ -72,7 +75,7 @@ module map-dim where
     ⟦ d ⟨ cs ⟩ ⟧ₙ (config ∘ f)
     ∎
 
-  preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : FCC n D₁ i A) → ⟦ expr ⟧ₙ ⊆[ _∘ f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
+  preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : FCC n D₁ i A) → ⟦ expr ⟧ₙ ⊆[ FCCꟲ-map-dim n f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
   preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
     ⟦ a -< cs >- ⟧ₙ config
     ≡⟨⟩
@@ -102,13 +105,13 @@ module map-dim where
     ⟦ map-dim n f (d ⟨ cs ⟩) ⟧ₙ (config ∘ f⁻¹)
     ∎
 
-  preserves : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : FCC n D₁ i A) → ⟦ map-dim n f e ⟧ₙ ≅[ _∘ f ][ _∘ f⁻¹ ] ⟦ e ⟧ₙ
+  preserves : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : FCC n D₁ i A) → ⟦ map-dim n f e ⟧ₙ ≅[ FCCꟲ-map-dim n f ][ FCCꟲ-map-dim n f⁻¹ ] ⟦ e ⟧ₙ
   preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
   FCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (FCCL n D₁ {i}) (FCCL n D₂ {i})
   FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim n f
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = _∘ f⁻¹
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = _∘ f
+  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = FCCꟲ-map-dim n f⁻¹
+  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = FCCꟲ-map-dim n f
   FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
 
 module IncreaseArity where

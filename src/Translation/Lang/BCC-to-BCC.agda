@@ -20,7 +20,7 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩)
+open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩) renaming (Configuration to BCCꟲ)
 module BCC-Sem1 D = Lang.BCC.Sem D Variant Artifact∈ₛVariant
 open BCC-Sem1 using (BCCL)
 module BCC-Sem2 {D} = Lang.BCC.Sem D Variant Artifact∈ₛVariant
@@ -30,11 +30,14 @@ artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
+BCCꟲ-map-dim : {D₁ D₂ : Set} → (D₂ → D₁) → BCCꟲ D₁ → BCCꟲ D₂
+BCCꟲ-map-dim f config = config ∘ f
+
 map-dim : {i : Size} → {D₁ D₂ A : Set} → (D₁ → D₂) → BCC D₁ i A → BCC D₂ i A
 map-dim f (a -< cs >-) = a -< List.map (map-dim f) cs >-
 map-dim f (d ⟨ l , r ⟩) = f d ⟨ map-dim f l , map-dim f r ⟩
 
-preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : BCC D₁ i A) → ⟦ map-dim f expr ⟧₂ ⊆[ _∘ f ] ⟦ expr ⟧₂
+preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : BCC D₁ i A) → ⟦ map-dim f expr ⟧₂ ⊆[ BCCꟲ-map-dim f ] ⟦ expr ⟧₂
 preserves-⊆ f f⁻¹ (a -< cs >-) config =
   ⟦ map-dim f (a -< cs >-) ⟧₂ config
   ≡⟨⟩
@@ -64,7 +67,7 @@ preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
   ⟦ d ⟨ l , r ⟩ ⟧₂ (config ∘ f)
   ∎
 
-preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : BCC D₁ i A) → ⟦ expr ⟧₂ ⊆[ _∘ f⁻¹ ] ⟦ map-dim f expr ⟧₂
+preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : BCC D₁ i A) → ⟦ expr ⟧₂ ⊆[ BCCꟲ-map-dim f⁻¹ ] ⟦ map-dim f expr ⟧₂
 preserves-⊇ f f⁻¹ is-inverse (a -< cs >-) config =
   ⟦ a -< cs >- ⟧₂ config
   ≡⟨⟩
@@ -96,11 +99,11 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
   ⟦ map-dim f (d ⟨ l , r ⟩) ⟧₂ (config ∘ f⁻¹)
   ∎
 
-preserves : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : BCC D₁ i A) → ⟦ map-dim f e ⟧₂ ≅[ _∘ f ][ _∘ f⁻¹ ] ⟦ e ⟧₂
+preserves : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : BCC D₁ i A) → ⟦ map-dim f e ⟧₂ ≅[ BCCꟲ-map-dim f ][ BCCꟲ-map-dim f⁻¹ ] ⟦ e ⟧₂
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
 
 BCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (BCCL D₁ {i}) (BCCL D₂ {i})
 BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim f
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = _∘ f⁻¹
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = _∘ f
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = BCCꟲ-map-dim f⁻¹
+BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = BCCꟲ-map-dim f
 BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)

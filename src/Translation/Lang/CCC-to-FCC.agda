@@ -42,7 +42,7 @@ open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 import Translation.Lang.FCC-to-FCC
 open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (FCC→FCC)
-open Translation.Lang.FCC-to-FCC.map-dim Variant Artifact∈ₛVariant using (FCC-map-dim)
+open Translation.Lang.FCC-to-FCC.map-dim Variant Artifact∈ₛVariant using (FCC-map-dim; FCCꟲ-map-dim)
 module FCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (FCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension)
 module FCC→FCC {i} {D} n m = LanguageCompiler (FCC→FCC {i} {D} n m)
@@ -264,10 +264,10 @@ translate (sucs n) expr = FCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoi
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
 
 conf : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → CCCꟲ D → FCCꟲ n (D × ℕ)
-conf n expr = (_∘ Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) ∘ FCC→FCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
+conf n expr = (FCCꟲ-map-dim n (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr))) ∘ FCC→FCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
 
 fnoc : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → FCCꟲ n (D × ℕ) → CCCꟲ D
-fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ FCC→FCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (_∘ Fin→ℕ (Exact.maxChoiceLength expr))
+fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ FCC→FCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (FCCꟲ-map-dim n (Fin→ℕ (Exact.maxChoiceLength expr)))
 
 preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n expr ][ conf n expr ] ⟦ expr ⟧ₐ
 preserves (sucs n) expr =
