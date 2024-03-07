@@ -1,52 +1,43 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
 module Translation.Lang.FCC-to-BCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
-open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.Bool.Properties using (push-function-into-if)
-open import Data.Empty using (⊥-elim)
+open import Data.Bool using (true; false; if_then_else_)
+open import Data.Bool.Properties as Bool
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin; zero; suc)
-import Data.Fin.Properties as Fin
-open import Data.List as List using (List; []; _∷_)
-open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
+open import Data.List as List using (List)
 import Data.List.Properties as List
-open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; s≤s; z≤n; _+_; _∸_)
-open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans; <-trans)
+open import Data.Nat using (zero; suc)
 open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
-open import Function using (id; _∘_)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
-open import Relation.Nullary.Decidable using (yes; no)
-open import Size using (Size; ↑_; ∞)
-import Util.AuxProofs as ℕ
-open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup; lookup⇒find-or-last)
-open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
-import Util.Vec as Vec
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Size using (Size; ∞)
+open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
-open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
-open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.BCC renaming (Configuration to BCCꟲ)
-open Lang.BCC.Sem using (BCCL)
-module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
-open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
+open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩) renaming (Configuration to BCCꟲ)
+module BCC-Sem-1 D = Lang.BCC.Sem D Variant Artifact∈ₛVariant
+open BCC-Sem-1 using (BCCL)
+module BCC-Sem-2 {D} = Lang.BCC.Sem D Variant Artifact∈ₛVariant
+open BCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 import Lang.FCC
 module FCC n = Lang.FCC n
-open FCC renaming (Configuration to FCCꟲ)
-open Lang.FCC.Sem using (FCCL)
-module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
-open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
+module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
+open FCC-Sem-1 using (FCCL)
+module FCC-Sem-2 {n} {D} = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
+open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (FCC→FCC)
 open import Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension) public
@@ -90,7 +81,7 @@ module 2Ary where
     ⟦ d ⟨ translate l , translate r ⟩ ⟧₂ config
     ≡⟨⟩
     ⟦ if config d then translate l else translate r ⟧₂ config
-    ≡⟨ push-function-into-if (λ e → ⟦ e ⟧₂ config) (config d) ⟩
+    ≡⟨ Bool.push-function-into-if (λ e → ⟦ e ⟧₂ config) (config d) ⟩
     (if config d then ⟦ translate l ⟧₂ config else ⟦ translate r ⟧₂ config)
     ≡⟨ Eq.cong₂ (if_then_else_ (config d)) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
     (if config d then ⟦ l ⟧ₙ (fnoc config) else ⟦ r ⟧ₙ (fnoc config))
@@ -131,7 +122,7 @@ module 2Ary where
     (if conf config d then ⟦ l ⟧ₙ config else ⟦ r ⟧ₙ config)
     ≡⟨ Eq.cong₂ (if_then_else_ (conf config d)) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
     (if conf config d then ⟦ translate l ⟧₂ (conf config) else ⟦ translate r ⟧₂ (conf config))
-    ≡˘⟨ push-function-into-if (λ e → ⟦ e ⟧₂ (conf config)) (conf config d) ⟩
+    ≡˘⟨ Bool.push-function-into-if (λ e → ⟦ e ⟧₂ (conf config)) (conf config d) ⟩
     ⟦ if conf config d then translate l else translate r ⟧₂ (conf config)
     ≡⟨⟩
     ⟦ d ⟨ translate l , translate r ⟩ ⟧₂ (conf config)
@@ -147,15 +138,15 @@ module 2Ary where
   preserves : {i : Size} → {D A : Set} → (expr : FCC (sucs zero) D i A) → ⟦ translate expr ⟧₂ ≅[ fnoc ][ conf ] ⟦ expr ⟧ₙ
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  FCC→BCC : {i : Size} → {D : Set} → LanguageCompiler (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i}) (BCCL D Variant Artifact∈ₛVariant)
+  FCC→BCC : {i : Size} → {D : Set} → LanguageCompiler (FCCL (sucs zero) D {i}) (BCCL D)
   FCC→BCC .LanguageCompiler.compile = translate
   FCC→BCC .LanguageCompiler.config-compiler expr .to = conf
   FCC→BCC .LanguageCompiler.config-compiler expr .from = fnoc
   FCC→BCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-FCC→BCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (BCCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) Variant Artifact∈ₛVariant)
+FCC→BCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D {i}) (BCCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 FCC→BCC n = FCC→FCC n (sucs zero) ⊕ 2Ary.FCC→BCC
 
-BCC≽FCC : {D : Set} → (n : ℕ≥ 2) → BCCL (IndexedDimension D n) Variant Artifact∈ₛVariant ≽ FCCL n D Variant Artifact∈ₛVariant
+BCC≽FCC : {D : Set} → (n : ℕ≥ 2) → BCCL (IndexedDimension D n) ≽ FCCL n D
 BCC≽FCC n = expressiveness-from-compiler (FCC→BCC n)

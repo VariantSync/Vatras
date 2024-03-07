@@ -1,52 +1,41 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
 module Translation.Lang.BCC-to-FCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
-open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.Bool.Properties using (push-function-into-if)
-open import Data.Empty using (⊥-elim)
+open import Data.Bool using (true; false; if_then_else_)
+open import Data.Bool.Properties as Bool
 import Data.EqIndexedSet as IndexedSet
-open import Data.Fin as Fin using (Fin; zero; suc)
-import Data.Fin.Properties as Fin
-open import Data.List as List using (List; []; _∷_)
-open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
+open import Data.Fin using (zero; suc)
+open import Data.List as List using (List)
 import Data.List.Properties as List
-open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; s≤s; z≤n; _+_; _∸_)
-open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans; <-trans)
-open import Data.Product using (_×_) renaming (_,_ to _and_)
+open import Data.Nat using (zero)
+open import Data.Product using () renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
-open import Function using (id; _∘_)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
-open import Relation.Nullary.Decidable using (yes; no)
-open import Size using (Size; ↑_; ∞)
-open import Util.AuxProofs as ℕ using (if-cong)
-open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup; lookup⇒find-or-last)
-open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
-import Util.Vec as Vec
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Size using (Size)
+open import Util.Nat.AtLeast using (ℕ≥; sucs)
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
-open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
-open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.FCC renaming (Configuration to FCCꟲ)
-open Lang.FCC.Sem using (FCCL)
-module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
-open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
+module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
+open FCC-Sem-1 using (FCCL)
+module FCC-Sem-2 {n} {D} = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
+open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-open import Lang.BCC renaming (Configuration to BCCꟲ)
-module BCCModule {D} = Lang.BCC D
-open BCCModule using (_-<_>-; _⟨_,_⟩)
-open Lang.BCC.Sem using (BCCL)
-module BCCSem {A} = Lang.BCC.Sem A Variant Artifact∈ₛVariant
-open BCCSem using () renaming (⟦_⟧ to ⟦_⟧₂)
+open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩) renaming (Configuration to BCCꟲ)
+module BCC-Sem-1 D = Lang.BCC.Sem D Variant Artifact∈ₛVariant
+open BCC-Sem-1 using (BCCL)
+module BCC-Sem-2 {D} = Lang.BCC.Sem D Variant Artifact∈ₛVariant
+open BCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 import Translation.Lang.FCC-to-FCC
 open Translation.Lang.FCC-to-FCC.IncreaseArity Variant Artifact∈ₛVariant using (FCC→FCC)
@@ -127,7 +116,7 @@ module 2Ary where
     ⟦ if config d then l else r ⟧₂ config
     ≡⟨ preserves-⊇ (if config d then l else r) config ⟩
     ⟦ translate (if config d then l else r) ⟧ₙ (conf config)
-    ≡⟨ Eq.cong₂ ⟦_⟧ₙ (push-function-into-if (translate) (config d)) refl ⟩
+    ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Bool.push-function-into-if (translate) (config d)) refl ⟩
     ⟦ if config d then translate l else translate r ⟧ₙ (conf config)
     ≡⟨ Eq.cong₂ ⟦_⟧ₙ lemma refl ⟩
     ⟦ Vec.lookup (translate l ∷ translate r ∷ []) (conf config d) ⟧ₙ (conf config)
@@ -145,15 +134,15 @@ module 2Ary where
   preserves : {i : Size} → {D A : Set} → (e : BCC D i A) → ⟦ translate e ⟧ₙ ≅[ fnoc ][ conf ] ⟦ e ⟧₂
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  BCC→FCC : {i : Size} → {D : Set} → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (FCCL (sucs zero) D Variant Artifact∈ₛVariant {i})
+  BCC→FCC : {i : Size} → {D : Set} → LanguageCompiler (BCCL D {i}) (FCCL (sucs zero) D {i})
   BCC→FCC .LanguageCompiler.compile = translate
   BCC→FCC .LanguageCompiler.config-compiler expr .to = conf
   BCC→FCC .LanguageCompiler.config-compiler expr .from = fnoc
   BCC→FCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-BCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (BCCL D Variant Artifact∈ₛVariant {i}) (FCCL n D Variant Artifact∈ₛVariant {i})
+BCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (BCCL D {i}) (FCCL n D {i})
 BCC→FCC n = 2Ary.BCC→FCC ⊕ FCC→FCC n
 
-FCC≽BCC : {D : Set} → (n : ℕ≥ 2) → FCCL n D Variant Artifact∈ₛVariant ≽ BCCL D Variant Artifact∈ₛVariant
+FCC≽BCC : {D : Set} → (n : ℕ≥ 2) → FCCL n D ≽ BCCL D
 FCC≽BCC n = expressiveness-from-compiler (BCC→FCC n)

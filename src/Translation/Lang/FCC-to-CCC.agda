@@ -1,48 +1,40 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.Construct using (_∈ₛ_; cons; snoc; id-l)
+open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
 module Translation.Lang.FCC-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
-open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
-open import Data.Fin as Fin using (Fin; zero; suc)
-import Data.Fin.Properties as Fin
+open import Data.Fin as Fin using (Fin)
 open import Data.List as List using (List; []; _∷_)
-open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
+import Data.List.NonEmpty as List⁺
 import Data.List.Properties as List
-open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; s≤s; z≤n; _+_; _∸_)
-open import Data.Nat.Properties as ℕ using (≤-refl; ≤-reflexive; ≤-trans; <-trans)
-open import Data.Product using (_×_; _,_)
+open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
-open import Function using (id; _∘_)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
-open import Relation.Nullary.Decidable using (yes; no)
-open import Size using (Size; ↑_; ∞)
-import Util.AuxProofs as ℕ
-open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup; lookup⇒find-or-last)
-open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
-import Util.Vec as Vec
+open import Relation.Binary.PropositionalEquality as Eq using (refl)
+open import Size using (Size; ∞)
+open import Util.List using (find-or-last; lookup⇒find-or-last)
+open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym; ≅[]-trans)
-open IndexedSet.≅[]-Reasoning using (step-≅[]; _≅[]⟨⟩_; _≅[]-∎)
-open IndexedSet.⊆-Reasoning using (step-⊆; _⊆-∎)
+open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.CCC renaming (Configuration to CCCꟲ)
-open Lang.CCC.Sem using (CCCL)
-module CCCSem {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
-open CCCSem using () renaming (⟦_⟧ to ⟦_⟧ₐ)
+open import Lang.CCC using (CCC; _-<_>-; _⟨_⟩) renaming (Configuration to CCCꟲ)
+module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+open CCC-Sem-1 using (CCCL)
+module CCC-Sem-2 {D} = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+open CCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
-open import Lang.FCC renaming (Configuration to FCCꟲ)
-open Lang.FCC.Sem using (FCCL)
-module FCCSem {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
-open FCCSem using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
+module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
+open FCC-Sem-1 using (FCCL)
+module FCC-Sem-2 {n} {D} = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
+open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -126,11 +118,11 @@ preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
 preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-FCC→CCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D Variant Artifact∈ₛVariant {i}) (CCCL D Variant Artifact∈ₛVariant)
+FCC→CCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D {i}) (CCCL D)
 FCC→CCC n .LanguageCompiler.compile = translate n
 FCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
 FCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n
 FCC→CCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
-CCC≽FCC : {D : Set} → (n : ℕ≥ 2) → CCCL D Variant Artifact∈ₛVariant ≽ FCCL n D Variant Artifact∈ₛVariant
+CCC≽FCC : {D : Set} → (n : ℕ≥ 2) → CCCL D ≽ FCCL n D
 CCC≽FCC n = expressiveness-from-compiler (FCC→CCC n)
