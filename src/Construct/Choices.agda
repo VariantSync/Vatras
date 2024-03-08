@@ -13,7 +13,7 @@ open import Data.EqIndexedSet as ISet
 
 open import Util.AuxProofs using (if-cong)
 
-module Choice-Fix where
+module NChoice where
   open import Data.Fin using (Fin)
   open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥)
   open import Data.Vec using (Vec; lookup; toList) renaming (map to map-vec)
@@ -29,8 +29,8 @@ module Choice-Fix where
   Config n Q = Q → Fin (ℕ≥.toℕ n)
 
   -- choice-elimination
-  Standard-Semantics : ∀ {n : ℕ≥ 2} {A : Set} {Q : Set} → Syntax n Q A → Config n Q → A
-  Standard-Semantics (D ⟨ alternatives ⟩) c = lookup alternatives (c D)
+  ⟦_⟧ : ∀ {n : ℕ≥ 2} {A : Set} {Q : Set} → Syntax n Q A → Config n Q → A
+  ⟦_⟧ (D ⟨ alternatives ⟩) c = lookup alternatives (c D)
 
   map : ∀ {n : ℕ≥ 2} {Q : Set} {A : Set} {B : Set}
     → (A → B)
@@ -49,22 +49,22 @@ module Choice-Fix where
     → (f : A → B)
     → (chc : Syntax n Q A)
     → (c : Config n Q)
-    → Standard-Semantics (map f chc) c ≡ f (Standard-Semantics chc c)
+    → ⟦ map f chc ⟧ c ≡ f (⟦ chc ⟧ c)
   map-preserves {n} f (D ⟨ es ⟩) c =
     begin
-      Standard-Semantics (map {n} f (D ⟨ es ⟩)) c
+      ⟦ map {n} f (D ⟨ es ⟩) ⟧ c
     ≡⟨⟩
       lookup (map-vec f es) (c D)
     ≡⟨ lookup-map (c D) f es ⟩
       f (lookup es (c D))
     ≡⟨⟩
-      f (Standard-Semantics {n} (D ⟨ es ⟩) c)
+      f (⟦_⟧ {n} (D ⟨ es ⟩) c) -- TODO implicit argument
     ∎
 
   show : ∀ {n : ℕ≥ 2} {Q : Set} {A : Set} → (Q → String) → (A → String) → Syntax n Q A → String
   show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-vec show-a es))) <+> "⟩"
 
-module Choice₂ where
+module 2Choice where
   record Syntax (Q : Set) (A : Set) : Set where
     constructor _⟨_,_⟩
     field
@@ -76,8 +76,8 @@ module Choice₂ where
   Config Q = Q → Bool
 
   -- choice-elimination
-  Standard-Semantics : ∀ {A : Set} {Q : Set} → Syntax Q A → Config Q → A
-  Standard-Semantics (D ⟨ l , r ⟩) c = if c D then l else r
+  ⟦_⟧ : ∀ {A : Set} {Q : Set} → Syntax Q A → Config Q → A
+  ⟦_⟧ (D ⟨ l , r ⟩) c = if c D then l else r
 
   map : ∀ {Q : Set} {A : Set} {B : Set}
     → (A → B)
@@ -96,16 +96,16 @@ module Choice₂ where
     → (f : A → B)
     → (chc : Syntax Q A)
     → (c : Config Q)
-    → Standard-Semantics (map f chc) c ≡ f (Standard-Semantics chc c)
+    → ⟦ map f chc ⟧ c ≡ f (⟦ chc ⟧ c)
   map-preserves f (D ⟨ l , r ⟩) c =
     begin
-      Standard-Semantics (map f (D ⟨ l , r ⟩)) c
+      ⟦ map f (D ⟨ l , r ⟩) ⟧ c
     ≡⟨⟩
       (if c D then f l else f r)
     ≡⟨ if-cong (c D) f ⟩
       f (if c D then l else r)
     ≡⟨⟩
-      f (Standard-Semantics (D ⟨ l , r ⟩) c)
+      f (⟦ D ⟨ l , r ⟩ ⟧ c)
     ∎
 
   show : ∀ {Q : Set} {A : Set} → (Q → String) → (A → String) → Syntax Q A → String
@@ -115,7 +115,7 @@ open import Data.Nat using (ℕ)
 open import Data.List.NonEmpty using (List⁺; toList) renaming (map to map-list⁺)
 open import Util.List using (find-or-last; map-find-or-last)
 
-module Choiceₙ where
+module Choice where
   record Syntax (Q : Set) (A : Set) : Set where
     constructor _⟨_⟩
     field
@@ -126,8 +126,8 @@ module Choiceₙ where
   Config Q = Q → ℕ
 
   -- choice-elimination
-  Standard-Semantics : ∀ {Q : Set} {A : Set} → Syntax Q A → Config Q → A
-  Standard-Semantics (D ⟨ alternatives ⟩) c = find-or-last (c D) alternatives
+  ⟦_⟧ : ∀ {Q : Set} {A : Set} → Syntax Q A → Config Q → A
+  ⟦_⟧ (D ⟨ alternatives ⟩) c = find-or-last (c D) alternatives
 
   map : ∀ {Q : Set} {A : Set} {B : Set}
     → (A → B)
@@ -146,16 +146,16 @@ module Choiceₙ where
     → (f : A → B)
     → (chc : Syntax Q A)
     → (c : Config Q) -- todo: use ≐ here?
-    → Standard-Semantics (map f chc) c ≡ f (Standard-Semantics chc c)
+    → ⟦ map f chc ⟧ c ≡ f (⟦ chc ⟧ c)
   map-preserves f (D ⟨ as ⟩) c =
     begin
-      Standard-Semantics (map f (D ⟨ as ⟩)) c
+      ⟦ map f (D ⟨ as ⟩) ⟧ c
     ≡⟨⟩
       find-or-last (c D) (map-list⁺ f as)
     ≡˘⟨ map-find-or-last f (c D) as ⟩
       f (find-or-last (c D) as)
     ≡⟨⟩
-      f (Standard-Semantics (D ⟨ as ⟩) c)
+      f (⟦ D ⟨ as ⟩ ⟧ c)
     ∎
 
   show : ∀ {Q : Set} {A : Set} → (Q → String) → (A → String) → Syntax Q A → String
@@ -169,42 +169,42 @@ open import Framework.Construct
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (id)
 
-module VLChoice-Fix where
+module VLNChoice where
   open import Util.Nat.AtLeast using (ℕ≥)
-  open Choice-Fix using (Config; Standard-Semantics; map; map-preserves)
-  open Choice-Fix.Syntax using (dim)
+  open NChoice using (Config; map; map-preserves)
+  open NChoice.Syntax using (dim)
 
   Syntax : ℕ≥ 2 → 𝔽 → ℂ
-  Syntax n F E A = Choice-Fix.Syntax n F (E A)
+  Syntax n F E A = NChoice.Syntax n F (E A)
 
   Semantics : ∀ (n : ℕ≥ 2) (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config n F) (Syntax n F)
-  Semantics _ _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ Standard-Semantics chc (extract c) ⟧ c
+  Semantics _ _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ NChoice.⟦ chc ⟧ (extract c) ⟧ c
 
   Construct : ∀ n (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct n V F = Variational-⟪ Syntax n F , Config n F , Semantics n V F ⟫
 
-module VLChoice₂ where
-  open Choice₂ using (_⟨_,_⟩; Config; Standard-Semantics; map; map-preserves)
-  open Choice₂.Syntax using (dim)
+module VL2Choice where
+  open 2Choice using (_⟨_,_⟩; Config; map; map-preserves)
+  open 2Choice.Syntax using (dim)
 
   Syntax : 𝔽 → ℂ
-  Syntax F E A = Choice₂.Syntax F (E A)
+  Syntax F E A = 2Choice.Syntax F (E A)
 
   Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
-  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ Standard-Semantics chc (extract c) ⟧ c
+  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ 2Choice.⟦ chc ⟧ (extract c) ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
 
-module VLChoiceₙ where
-  open Choiceₙ using (_⟨_⟩; Config; Standard-Semantics; map; map-preserves)
-  open Choiceₙ.Syntax using (dim)
+module VLChoice where
+  open Choice using (_⟨_⟩; Config; map; map-preserves)
+  open Choice.Syntax using (dim)
 
   Syntax : 𝔽 → ℂ
-  Syntax F E A = Choiceₙ.Syntax F (E A)
+  Syntax F E A = Choice.Syntax F (E A)
 
   Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
-  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choiceₙ.Standard-Semantics choice (extract c) ⟧ c
+  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choice.⟦ choice ⟧ (extract c) ⟧ c
 
   Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
   Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫

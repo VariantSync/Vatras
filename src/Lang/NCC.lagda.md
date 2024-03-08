@@ -12,7 +12,7 @@
 ```agda
 open import Framework.Definitions
 open import Util.Nat.AtLeast using (ℕ≥)
-module Lang.FCC (n : ℕ≥ 2) (Dimension : 𝔽) where
+module Lang.NCC (n : ℕ≥ 2) (Dimension : 𝔽) where
 ```
 
 ## Imports
@@ -29,36 +29,34 @@ open import Framework.Variants
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-import Construct.Choices as Chc
-open Chc.VLChoice-Fix using () renaming (Syntax to Choice-Fix; Semantics to chc-sem)
-open Chc.Choice-Fix using () renaming (Config to Config-Fix)
+open import Construct.Choices
 ```
 
 ## Syntax
 
 ```agda
-data FCC : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (FCC i) A → FCC (↑ i) A
-   chc  : ∀ {i A} → Choice-Fix n Dimension (FCC i) A → FCC (↑ i) A
+data NCC : Size → 𝔼 where
+   atom : ∀ {i A} → Artifact (NCC i) A → NCC (↑ i) A
+   chc  : ∀ {i A} → VLNChoice.Syntax n Dimension (NCC i) A → NCC (↑ i) A
 
-pattern _-<_>- a cs  = atom (a At.-< cs >-)
-pattern _⟨_⟩ D cs = chc  (D Chc.Choice-Fix.⟨ cs ⟩)
+pattern _-<_>- a cs = atom (a At.-< cs >-)
+pattern _⟨_⟩ D cs = chc (D NChoice.⟨ cs ⟩)
 ```
 
 ## Semantics
 
 ```agda
 Configuration : 𝕂
-Configuration = Config-Fix n Dimension
+Configuration = NChoice.Config n Dimension
 
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
-    FCCL : ∀ {i : Size} → VariabilityLanguage V
-    FCCL {i} = ⟪ FCC i , Configuration , ⟦_⟧ ⟫
+    NCCL : ∀ {i : Size} → VariabilityLanguage V
+    NCCL {i} = ⟪ NCC i , Configuration , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V Configuration (FCC i)
-    ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact FCCL x
-    ⟦ chc  x ⟧ = chc-sem n V Dimension FCCL id x
+    ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V Configuration (NCC i)
+    ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact NCCL x
+    ⟦ chc  x ⟧ = VLNChoice.Semantics n V Dimension NCCL id x
 ```
 
 ## Utility
@@ -68,7 +66,7 @@ open Data.List using (concatMap) renaming (_++_ to _++l_)
 import Data.Vec as Vec
 
 -- get all dimensions used in a binary CC expression
-dims : ∀ {i : Size} {A : Set} → FCC i A → List Dimension
+dims : ∀ {i : Size} {A : Set} → NCC i A → List Dimension
 dims (_ -< es >-) = concatMap dims es
 dims (D ⟨ cs ⟩) = D ∷ concatMap dims (Vec.toList cs)
 ```
@@ -80,13 +78,13 @@ open import Data.String using (String; _++_; intersperse)
 module Pretty (show-D : Dimension → String) where
   open import Show.Lines
 
-  show : ∀ {i} → FCC i String → String
+  show : ∀ {i} → NCC i String → String
   show (a -< [] >-) = a
   show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
   show (D ⟨ cs ⟩) = show-D D ++ "⟨" ++ (intersperse ", " (mapl show (Vec.toList cs))) ++ "⟩"
 
 
-  pretty : ∀ {i : Size} → FCC i String → Lines
+  pretty : ∀ {i : Size} → NCC i String → Lines
   pretty (a -< [] >-) = > a
   pretty (a -< es@(_ ∷ _) >-) = do
     > a ++ "-<"

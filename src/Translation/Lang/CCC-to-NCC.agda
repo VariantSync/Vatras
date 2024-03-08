@@ -3,7 +3,7 @@
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.CCC-to-FCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.CCC-to-NCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -28,24 +28,24 @@ open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; step-≅[]˘; _≅[]⟨⟩_; _≅[]-∎)
 
-open import Lang.CCC using (CCC; _-<_>-; _⟨_⟩) renaming (Configuration to CCCꟲ)
-module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+open import Lang.CCC as CCC using (CCC; _-<_>-; _⟨_⟩)
+module CCC-Sem-1 D = CCC.Sem D Variant Artifact∈ₛVariant
 open CCC-Sem-1 using (CCCL)
-module CCC-Sem-2 {A} = Lang.CCC.Sem A Variant Artifact∈ₛVariant
+module CCC-Sem-2 {A} = CCC.Sem A Variant Artifact∈ₛVariant
 open CCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
-open import Lang.FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
-module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-1 using (FCCL)
-module FCC-Sem-2 {n} {A} = Lang.FCC.Sem n A Variant Artifact∈ₛVariant
-open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
+module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-1 using (NCCL)
+module NCC-Sem-2 {n} {A} = NCC.Sem n A Variant Artifact∈ₛVariant
+open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-import Translation.Lang.FCC-to-FCC
-open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (FCC→FCC)
-open Translation.Lang.FCC-to-FCC.map-dim Variant Artifact∈ₛVariant using (FCC-map-dim; FCCꟲ-map-dim)
-module FCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (FCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
-open Translation.Lang.FCC-to-FCC Variant Artifact∈ₛVariant using (IndexedDimension)
-module FCC→FCC {i} {D} n m = LanguageCompiler (FCC→FCC {i} {D} n m)
+import Translation.Lang.NCC-to-NCC
+open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
+open Translation.Lang.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCCꟲ-map-dim)
+module NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
+open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
+module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -108,7 +108,7 @@ module Exact where
     maxChoiceLengthIsLimit (d ⟨ cs ⟩) = maxChoice (≤-trans (ℕ.m≤n⇒m≤n⊔o (ℕ≥.toℕ (maximum⁺ (List⁺.map maxChoiceLength cs))) (≤-trans (ℕ.n≤1+n (List⁺.length cs)) (ℕ.n≤1+n (suc (List⁺.length cs))))) (≤-reflexive (Eq.sym (ℕ≥.toℕ-⊔ (sucs (List⁺.length cs)) (maximum⁺ (List⁺.map maxChoiceLength cs)))))) (List⁺ChoiceLengthLimit-⊔-comm (List⁺ChoiceLengthLimit-⊔ (maximum⁺IsLimit cs)))
 
   mutual
-    translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ChoiceLengthLimit n {i} expr → FCC n D i A
+    translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ChoiceLengthLimit n {i} expr → NCC n D i A
     translate n (a -< cs >-) (maxArtifact max-cs) = a -< zipWith n (translate n) cs max-cs >-
     translate (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice max≤n (max-c ∷ max-cs)) =
       d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
@@ -135,10 +135,10 @@ module Exact where
   zipWith⇒map n f (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (zipWith⇒map n f cs max-cs)
 
 
-  conf : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → FCCꟲ n D
+  conf : {D : Set} → (n : ℕ≥ 2) → CCC.Configuration D → NCC.Configuration n D
   conf (sucs n) config d = ℕ≥.cappedFin (config d)
 
-  fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → CCCꟲ D
+  fnoc : {D : Set} → (n : ℕ≥ 2) → NCC.Configuration n D → CCC.Configuration D
   fnoc n config d = Fin.toℕ (config d)
 
   preserves-⊆ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → (choiceLengthLimit : ChoiceLengthLimit n expr) → ⟦ translate n expr choiceLengthLimit ⟧ₙ ⊆[ fnoc n ] ⟦ expr ⟧ₐ
@@ -244,11 +244,11 @@ module Exact where
 
   -- Can't instantiate a LanguageCompiler because the expression compiler depends on the expression
 
-  -- CCC→FCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (λ e → FCCL (maxChoiceLength e) D)
-  -- CCC→FCC n .LanguageCompiler.compile expr = translate (maxChoiceLength expr) expr (maxChoiceLengthLimit expr)
-  -- CCC→FCC n .LanguageCompiler.config-compiler expr .to = conf (maxChoiceLength expr)
-  -- CCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc (maxChoiceLength expr)
-  -- CCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))
+  -- CCC→NCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (λ e → NCCL (maxChoiceLength e) D)
+  -- CCC→NCC n .LanguageCompiler.compile expr = translate (maxChoiceLength expr) expr (maxChoiceLengthLimit expr)
+  -- CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf (maxChoiceLength expr)
+  -- CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc (maxChoiceLength expr)
+  -- CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))
 
 
 Fin→ℕ : {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
@@ -257,26 +257,26 @@ Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 Fin→ℕ⁻¹ : {D : Set} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D n
 Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
-translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → FCC n (D × ℕ) ∞ A
-translate (sucs n) expr = FCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)))
+translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → NCC n (D × ℕ) ∞ A
+translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)))
   where
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
 
-conf : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → CCCꟲ D → FCCꟲ n (D × ℕ)
-conf n expr = (FCCꟲ-map-dim n (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr))) ∘ FCC→FCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
+conf : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → CCC.Configuration D → NCC.Configuration n (D × ℕ)
+conf n expr = (NCCꟲ-map-dim n (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr))) ∘ NCC→NCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
 
-fnoc : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → FCCꟲ n (D × ℕ) → CCCꟲ D
-fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ FCC→FCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (FCCꟲ-map-dim n (Fin→ℕ (Exact.maxChoiceLength expr)))
+fnoc : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → NCC.Configuration n (D × ℕ) → CCC.Configuration D
+fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ NCC→NCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (NCCꟲ-map-dim n (Fin→ℕ (Exact.maxChoiceLength expr)))
 
 preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : CCC D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n expr ][ conf n expr ] ⟦ expr ⟧ₐ
 preserves (sucs n) expr =
   ⟦ translate (sucs n) expr ⟧ₙ
   ≅[]⟨⟩
-  ⟦ FCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟧ₙ
-  ≅[]˘⟨ FCC-map-dim.preserves (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
-  ⟦ FCC→FCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ⟧ₙ
-  ≅[]˘⟨ (FCC→FCC.preserves (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
+  ⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟧ₙ
+  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
+  ⟦ NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ⟧ₙ
+  ≅[]˘⟨ (NCC→NCC.preserves (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
   ⟦ Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr) ⟧ₙ
   ≅[]⟨ Exact.preserves (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr) ⟩
   ⟦ expr ⟧ₐ
@@ -285,11 +285,11 @@ preserves (sucs n) expr =
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
 
-CCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (FCCL n (D × ℕ))
-CCC→FCC n .LanguageCompiler.compile = translate n
-CCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n expr
-CCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
-CCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
+CCC→NCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
+CCC→NCC n .LanguageCompiler.compile = translate n
+CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n expr
+CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
+CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
-FCC≽CCC : {D : Set} → (n : ℕ≥ 2) → FCCL n (D × ℕ) ≽ CCCL D
-FCC≽CCC n = expressiveness-from-compiler (CCC→FCC n)
+NCC≽CCC : {D : Set} → (n : ℕ≥ 2) → NCCL n (D × ℕ) ≽ CCCL D
+NCC≽CCC n = expressiveness-from-compiler (CCC→NCC n)

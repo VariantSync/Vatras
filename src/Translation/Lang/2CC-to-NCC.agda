@@ -3,7 +3,7 @@
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.BCC-to-FCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2CC-to-NCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.Bool.Properties as Bool
@@ -25,41 +25,41 @@ open import Util.Nat.AtLeast using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
-module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-1 using (FCCL)
-module FCC-Sem-2 {n} {D} = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
+module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-1 using (NCCL)
+module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩) renaming (Configuration to BCCꟲ)
-module BCC-Sem-1 D = Lang.BCC.Sem D Variant Artifact∈ₛVariant
-open BCC-Sem-1 using (BCCL)
-module BCC-Sem-2 {D} = Lang.BCC.Sem D Variant Artifact∈ₛVariant
-open BCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧₂)
+open import Lang.2CC as 2CC using (2CC; _-<_>-; _⟨_,_⟩)
+module 2CC-Sem-1 D = 2CC.Sem D Variant Artifact∈ₛVariant
+open 2CC-Sem-1 using (2CCL)
+module 2CC-Sem-2 {D} = 2CC.Sem D Variant Artifact∈ₛVariant
+open 2CC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧₂)
 
-import Translation.Lang.FCC-to-FCC
-open Translation.Lang.FCC-to-FCC.IncreaseArity Variant Artifact∈ₛVariant using (FCC→FCC)
+import Translation.Lang.NCC-to-NCC
+open Translation.Lang.NCC-to-NCC.IncreaseArity Variant Artifact∈ₛVariant using (NCC→NCC)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module 2Ary where
-  translate : {i : Size} → {D A : Set} → BCC D i A → FCC (sucs zero) D i A
+  translate : {i : Size} → {D A : Set} → 2CC D i A → NCC (sucs zero) D i A
   translate (a -< cs >-) = a -< List.map translate cs >-
   translate (d ⟨ l , r ⟩) = d ⟨ translate l ∷ translate r ∷ [] ⟩
 
-  conf : {D : Set} → BCCꟲ D → FCCꟲ (sucs zero) D
+  conf : {D : Set} → 2CC.Configuration D → NCC.Configuration (sucs zero) D
   conf config d with config d
   ... | true = zero
   ... | false = suc zero
 
-  fnoc : {D : Set} → FCCꟲ (sucs zero) D → BCCꟲ D
+  fnoc : {D : Set} → NCC.Configuration (sucs zero) D → 2CC.Configuration D
   fnoc config d with config d
   ... | zero = true
   ... | suc zero = false
 
-  preserves-⊆ : {i : Size} → {D A : Set} → (expr : BCC D i A) → ⟦ translate expr ⟧ₙ ⊆[ fnoc ] ⟦ expr ⟧₂
+  preserves-⊆ : {i : Size} → {D A : Set} → (expr : 2CC D i A) → ⟦ translate expr ⟧ₙ ⊆[ fnoc ] ⟦ expr ⟧₂
   preserves-⊆ (a -< cs >-) config =
     ⟦ translate (a -< cs >-) ⟧ₙ config
     ≡⟨⟩
@@ -94,7 +94,7 @@ module 2Ary where
     ... | zero = refl
     ... | suc zero = refl
 
-  preserves-⊇ : {i : Size} → {D A : Set} → (expr : BCC D i A) → ⟦ expr ⟧₂ ⊆[ conf ] ⟦ translate expr ⟧ₙ
+  preserves-⊇ : {i : Size} → {D A : Set} → (expr : 2CC D i A) → ⟦ expr ⟧₂ ⊆[ conf ] ⟦ translate expr ⟧ₙ
   preserves-⊇ (a -< cs >-) config =
     ⟦ a -< cs >- ⟧₂ config
     ≡⟨⟩
@@ -131,18 +131,18 @@ module 2Ary where
     ... | true = refl
     ... | false = refl
 
-  preserves : {i : Size} → {D A : Set} → (e : BCC D i A) → ⟦ translate e ⟧ₙ ≅[ fnoc ][ conf ] ⟦ e ⟧₂
+  preserves : {i : Size} → {D A : Set} → (e : 2CC D i A) → ⟦ translate e ⟧ₙ ≅[ fnoc ][ conf ] ⟦ e ⟧₂
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  BCC→FCC : {i : Size} → {D : Set} → LanguageCompiler (BCCL D {i}) (FCCL (sucs zero) D {i})
-  BCC→FCC .LanguageCompiler.compile = translate
-  BCC→FCC .LanguageCompiler.config-compiler expr .to = conf
-  BCC→FCC .LanguageCompiler.config-compiler expr .from = fnoc
-  BCC→FCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
+  2CC→NCC : {i : Size} → {D : Set} → LanguageCompiler (2CCL D {i}) (NCCL (sucs zero) D {i})
+  2CC→NCC .LanguageCompiler.compile = translate
+  2CC→NCC .LanguageCompiler.config-compiler expr .to = conf
+  2CC→NCC .LanguageCompiler.config-compiler expr .from = fnoc
+  2CC→NCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-BCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (BCCL D {i}) (FCCL n D {i})
-BCC→FCC n = 2Ary.BCC→FCC ⊕ FCC→FCC n
+2CC→NCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL D {i}) (NCCL n D {i})
+2CC→NCC n = 2Ary.2CC→NCC ⊕ NCC→NCC n
 
-FCC≽BCC : {D : Set} → (n : ℕ≥ 2) → FCCL n D ≽ BCCL D
-FCC≽BCC n = expressiveness-from-compiler (BCC→FCC n)
+NCC≽2CC : {D : Set} → (n : ℕ≥ 2) → NCCL n D ≽ 2CCL D
+NCC≽2CC n = expressiveness-from-compiler (2CC→NCC n)

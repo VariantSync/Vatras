@@ -1,6 +1,6 @@
 open import Framework.Definitions
 
-module Translation.Construct.2Choice-to-NChoice-VL where
+module Translation.Construct.2Choice-to-Choice-VL where
 
 open import Data.Bool using (Bool)
 open import Data.Nat using (ℕ)
@@ -17,19 +17,17 @@ open import Framework.Construct
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Relation.Function using (to-is-Embedding)
 
-import Translation.Construct.2Choice-to-NChoice as 2→N
-open 2→N using (ConfContract; FnocContract)
+import Translation.Construct.2Choice-to-Choice as 2Choice-to-Choice
+open 2Choice-to-Choice using (ConfContract; FnocContract)
 
-open import Construct.Choices as Chc
-open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂; map to map₂)
-open Chc.Choiceₙ using () renaming (Config to Configₙ; map to mapₙ)
+open import Construct.Choices
 
 module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
   (Γ₁ Γ₂ : VariabilityLanguage V)
-  (extract₁ : Compatible (Chc.VLChoice₂.Construct V Q) Γ₁)
+  (extract₁ : Compatible (VL2Choice.Construct V Q) Γ₁)
   (t : LanguageCompiler Γ₁ Γ₂)
-  (confi : Config₂ Q → Configₙ Q)
-  (fnoci : Configₙ Q → Config₂ Q)
+  (confi : 2Choice.Config Q → Choice.Config Q)
+  (fnoci : Choice.Config Q → 2Choice.Config Q)
   where
   private
     L₁   = Expression Γ₁
@@ -38,16 +36,11 @@ module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
     ⟦_⟧₂ = Semantics  Γ₂
     open LanguageCompiler t
 
-  open VariabilityConstruct (Chc.VLChoice₂.Construct V Q) using ()
-    renaming (VSyntax to 2Choice; VSemantics to Sem₂)
-  open VariabilityConstruct (Chc.VLChoiceₙ.Construct V Q) using ()
-    renaming (VSyntax to NChoice; VSemantics to Semₙ)
-
   -- TODO: Generalize to any setoids over L₁ or L₂.
-  module 2→N-T₁ = 2→N.Translate {Q} (Eq.setoid (L₁ A))
-  open 2→N-T₁ using () renaming (convert to convert₁)
-  module 2→N-T₂ = 2→N.Translate {Q} (Eq.setoid (L₂ A))
-  open 2→N-T₂ using () renaming (convert to convert₂)
+  module 2Choice-to-Choice-T₁ = 2Choice-to-Choice.Translate {Q} (Eq.setoid (L₁ A))
+  open 2Choice-to-Choice-T₁ using () renaming (convert to convert₁)
+  module 2Choice-to-Choice-T₂ = 2Choice-to-Choice.Translate {Q} (Eq.setoid (L₂ A))
+  open 2Choice-to-Choice-T₂ using () renaming (convert to convert₂)
 
   {-|
   Composition of two compilers:
@@ -55,14 +48,14 @@ module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
   Second, we convert the binary choice to an n-ary choice via convert, not changing any data.
   The order of these steps does not matter, as proven by `convert-comm` below.
   -}
-  compile-convert : 2Choice L₁ A → NChoice L₂ A
-  compile-convert = convert₂ ∘ map₂ compile
+  compile-convert : VL2Choice.Syntax Q L₁ A → VLChoice.Syntax Q L₂ A
+  compile-convert = convert₂ ∘ 2Choice.map compile
 
   {-|
   The same compiler as compile-convert, but the steps are executed in the other order.
   -}
-  convert-compile : 2Choice L₁ A → NChoice L₂ A
-  convert-compile = mapₙ compile ∘ convert₁
+  convert-compile : VL2Choice.Syntax Q L₁ A → VLChoice.Syntax Q L₂ A
+  convert-compile = Choice.map compile ∘ convert₁
 
   {-|
   Proof that the following square commutes.

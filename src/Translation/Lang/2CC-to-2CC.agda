@@ -3,7 +3,7 @@
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.BCC-to-BCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2CC-to-2CC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (if_then_else_)
 open import Data.Bool.Properties as Bool
@@ -20,24 +20,24 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.BCC using (BCC; _-<_>-; _⟨_,_⟩) renaming (Configuration to BCCꟲ)
-module BCC-Sem1 D = Lang.BCC.Sem D Variant Artifact∈ₛVariant
-open BCC-Sem1 using (BCCL)
-module BCC-Sem2 {D} = Lang.BCC.Sem D Variant Artifact∈ₛVariant
-open BCC-Sem2 using () renaming (⟦_⟧ to ⟦_⟧₂)
+open import Lang.2CC as 2CC using (2CC; _-<_>-; _⟨_,_⟩)
+module 2CC-Sem1 D = 2CC.Sem D Variant Artifact∈ₛVariant
+open 2CC-Sem1 using (2CCL)
+module 2CC-Sem2 {D} = 2CC.Sem D Variant Artifact∈ₛVariant
+open 2CC-Sem2 using () renaming (⟦_⟧ to ⟦_⟧₂)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-BCCꟲ-map-dim : {D₁ D₂ : Set} → (D₂ → D₁) → BCCꟲ D₁ → BCCꟲ D₂
-BCCꟲ-map-dim f config = config ∘ f
+2CCꟲ-map-dim : {D₁ D₂ : Set} → (D₂ → D₁) → 2CC.Configuration D₁ → 2CC.Configuration D₂
+2CCꟲ-map-dim f config = config ∘ f
 
-map-dim : {i : Size} → {D₁ D₂ A : Set} → (D₁ → D₂) → BCC D₁ i A → BCC D₂ i A
+map-dim : {i : Size} → {D₁ D₂ A : Set} → (D₁ → D₂) → 2CC D₁ i A → 2CC D₂ i A
 map-dim f (a -< cs >-) = a -< List.map (map-dim f) cs >-
 map-dim f (d ⟨ l , r ⟩) = f d ⟨ map-dim f l , map-dim f r ⟩
 
-preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : BCC D₁ i A) → ⟦ map-dim f expr ⟧₂ ⊆[ BCCꟲ-map-dim f ] ⟦ expr ⟧₂
+preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : 2CC D₁ i A) → ⟦ map-dim f expr ⟧₂ ⊆[ 2CCꟲ-map-dim f ] ⟦ expr ⟧₂
 preserves-⊆ f f⁻¹ (a -< cs >-) config =
   ⟦ map-dim f (a -< cs >-) ⟧₂ config
   ≡⟨⟩
@@ -67,7 +67,7 @@ preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
   ⟦ d ⟨ l , r ⟩ ⟧₂ (config ∘ f)
   ∎
 
-preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : BCC D₁ i A) → ⟦ expr ⟧₂ ⊆[ BCCꟲ-map-dim f⁻¹ ] ⟦ map-dim f expr ⟧₂
+preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : 2CC D₁ i A) → ⟦ expr ⟧₂ ⊆[ 2CCꟲ-map-dim f⁻¹ ] ⟦ map-dim f expr ⟧₂
 preserves-⊇ f f⁻¹ is-inverse (a -< cs >-) config =
   ⟦ a -< cs >- ⟧₂ config
   ≡⟨⟩
@@ -99,11 +99,11 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
   ⟦ map-dim f (d ⟨ l , r ⟩) ⟧₂ (config ∘ f⁻¹)
   ∎
 
-preserves : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : BCC D₁ i A) → ⟦ map-dim f e ⟧₂ ≅[ BCCꟲ-map-dim f ][ BCCꟲ-map-dim f⁻¹ ] ⟦ e ⟧₂
+preserves : {i : Size} → {D₁ D₂ A : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : 2CC D₁ i A) → ⟦ map-dim f e ⟧₂ ≅[ 2CCꟲ-map-dim f ][ 2CCꟲ-map-dim f⁻¹ ] ⟦ e ⟧₂
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
 
-BCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (BCCL D₁ {i}) (BCCL D₂ {i})
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim f
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = BCCꟲ-map-dim f⁻¹
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = BCCꟲ-map-dim f
-BCC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)
+2CC-map-dim : {i : Size} → {D₁ D₂ : Set} → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (2CCL D₁ {i}) (2CCL D₂ {i})
+2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim f
+2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2CCꟲ-map-dim f⁻¹
+2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2CCꟲ-map-dim f
+2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)

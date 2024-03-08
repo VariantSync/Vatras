@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 
-module Test.Experiments.OC-to-BCC where
+module Test.Experiments.OC-to-2CC where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (_∷_; [])
@@ -23,14 +23,14 @@ Variant = Rose ∞
 mkArtifact = Artifact∈ₛRose
 
 open import Lang.OC Feature as OCL renaming (Configuration to Conf-oc)
-open import Lang.BCC Feature as BCCL
+open import Lang.2CC Feature as 2CCL
 open OCL.Sem Variant mkArtifact renaming (⟦_⟧ to ⟦_⟧-oc)
 open OCL.Show id
-open BCCL.Sem Variant mkArtifact
-open BCCL.Redundancy _==_
-open BCCL.Pretty id
+open 2CCL.Sem Variant mkArtifact
+open 2CCL.Redundancy _==_
+open 2CCL.Pretty id
 
-open import Translation.Lang.OC-to-BCC Feature using (compile; compile-configs)
+open import Translation.Lang.OC-to-2CC Feature using (compile; compile-configs)
 
 open import Show.Lines
 open import Util.Named
@@ -42,30 +42,30 @@ open import Test.Examples.OC
 
 open import Test.UnitTest
 
-OC→BCC-Test : UnitTest Conf-oc
-OC→BCC-Test c = ForAllExamplesIn optex-all (test-translation WFOCL BCCL compile compile-configs c)
+OC→2CC-Test : UnitTest Conf-oc
+OC→2CC-Test c = ForAllExamplesIn optex-all (test-translation WFOCL 2CCL compile compile-configs c)
 
-OC→BCC-Test-conffnoc : UnitTest Conf-oc
-OC→BCC-Test-conffnoc c = ForAllExamplesIn optex-all (test-translation-fnoc∘conf≡id WFOCL BCCL compile-configs c)
+OC→2CC-Test-conffnoc : UnitTest Conf-oc
+OC→2CC-Test-conffnoc c = ForAllExamplesIn optex-all (test-translation-fnoc∘conf≡id WFOCL 2CCL compile-configs c)
 
 -- agda computes this value automatically!
 -- Better: When we add a new example to optex-all, the test wont compile before we adapted it. So we can never forget to test it.
-OC→BCC-Test-allyes : RunTest OC→BCC-Test (get allyes-oc)
-OC→BCC-Test-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
+OC→2CC-Test-allyes : RunTest OC→2CC-Test (get allyes-oc)
+OC→2CC-Test-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
 
-OC→BCC-Test-allno : RunTest OC→BCC-Test (get allno-oc)
-OC→BCC-Test-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
+OC→2CC-Test-allno : RunTest OC→2CC-Test (get allno-oc)
+OC→2CC-Test-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
-OC→BCC-Test-conffnoc-allyes : RunTest OC→BCC-Test-conffnoc (get allyes-oc)
-OC→BCC-Test-conffnoc-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
+OC→2CC-Test-conffnoc-allyes : RunTest OC→2CC-Test-conffnoc (get allyes-oc)
+OC→2CC-Test-conffnoc-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
 
-OC→BCC-Test-conffnoc-allno : RunTest OC→BCC-Test-conffnoc (get allno-oc)
-OC→BCC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
+OC→2CC-Test-conffnoc-allno : RunTest OC→2CC-Test-conffnoc (get allno-oc)
+OC→2CC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 -- Translate an option calculus expression.
 -- Then configure it with an all-yes and an all-no config and print the resulting variants.
 exp-oc-to-bcc : Experiment (WFOC ∞ String)
-getName exp-oc-to-bcc = "Translate OC to BCC"
+getName exp-oc-to-bcc = "Translate OC to 2CC"
 get     exp-oc-to-bcc ex@(name ≔ oc) = do
   let --trans-result   = translate oc
       --bcc            = expr trans-result

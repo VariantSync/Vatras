@@ -13,7 +13,7 @@
 open import Framework.Definitions
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-module Translation.Lang.OC-to-BCC (F : 𝔽) where
+module Translation.Lang.OC-to-2CC (F : 𝔽) where
 
 open import Framework.Variants using (Rose; rose; Artifact∈ₛRose)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
@@ -33,12 +33,12 @@ open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Function using (id; _∘_; flip)
 
 open import Framework.VariabilityLanguage
-import Lang.OC as LOC
-open LOC F renaming (Configuration to Confₒ; _-<_>- to Artifactₒ)
-open LOC.Sem F V mkArtifact
-import Lang.BCC as LBCC
-open LBCC F renaming (Configuration to Conf₂; _-<_>- to Artifact₂)
-open LBCC.Sem F V mkArtifact renaming (⟦_⟧ to ⟦_⟧₂)
+import Lang.OC as OC
+open OC F renaming (_-<_>- to Artifactₒ)
+open OC.Sem F V mkArtifact
+import Lang.2CC as 2CC
+open 2CC F renaming (_-<_>- to Artifact₂)
+open 2CC.Sem F V mkArtifact renaming (⟦_⟧ to ⟦_⟧₂)
 
 open import Data.EqIndexedSet
 
@@ -88,7 +88,7 @@ record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
   constructor _-<_≪_>- --\T
   field
     parent    : A
-    siblingsL : List (BCC ∞ A)
+    siblingsL : List (2CC ∞ A)
     siblingsR : Vec (OC i A) work
 open Zip public
 infix 4 _-<_≪_>-
@@ -97,7 +97,7 @@ infix 4 _-<_≪_>-
 Zip-is-𝔼 : ℕ → Size → 𝔼
 Zip-is-𝔼 = Zip
 
-⟦_⟧ₜ : ∀ {w i} → 𝔼-Semantics V Confₒ (Zip w i)
+⟦_⟧ₜ : ∀ {w i} → 𝔼-Semantics V (OC.Configuration F) (Zip w i)
 ⟦ a -< ls ≪ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
@@ -111,24 +111,24 @@ data _⊢_⟶ₒ_ :
   ∀ {n : ℕ} {A : 𝔸}
   → (i : Size) -- We have to make sizes explicit here because otherwise, Agda sometimes infers ∞ which makes termination checking fail.
   → Zip n i A
-  → BCC ∞ A
+  → 2CC ∞ A
   → Set
 infix 3 _⊢_⟶ₒ_
 data _⊢_⟶ₒ_ where
   {-|
   We finished translating a subtree. All work is done.
-  We thus wrap up the zipper to the OC→BCCd subtree it represents.
+  We thus wrap up the zipper to the OC→2CCd subtree it represents.
   -}
   T-done :
     ∀ {i  : Size}
       {A  : 𝔸}
       {a  : A}
-      {ls : List (BCC ∞ A)}
+      {ls : List (2CC ∞ A)}
       --------------------------------------
     → i ⊢ a -< ls ≪ [] >- ⟶ₒ Artifact₂ a ls
 
   {-|
-  If the next expression to OC→BCC is an artifact,
+  If the next expression to OC→2CC is an artifact,
   we recursively proceed all its children (obtaining e₁)
   an then proceed with the remaining expressions (obtaining e₂).
   -}
@@ -137,19 +137,19 @@ data _⊢_⟶ₒ_ where
       {n   : ℕ    }
       {A   : 𝔸}
       {a b : A     }
-      {ls  : List (BCC ∞    A)  }
+      {ls  : List (2CC ∞    A)  }
       {es  : List (OC    i  A)  }
       {rs  : Vec  (OC (↑ i) A) n}
-      {e₁  : BCC ∞ A}
-      {e₂  : BCC ∞ A}
+      {e₁  : 2CC ∞ A}
+      {e₂  : 2CC ∞ A}
     →   i ⊢ b -< [] ≪ (fromList es) >-       ⟶ₒ e₁
     → ↑ i ⊢ a -< ls ∷ʳ e₁ ≪ rs >-            ⟶ₒ e₂
       ---------------------------------------------
     → ↑ i ⊢ a -< ls ≪ Artifactₒ b es ∷ rs >- ⟶ₒ e₂
 
   {-|
-  If the next expression to OC→BCC is an option,
-  we OC→BCC the current subtree once with the option picked (obtaining eᵒ⁻ʸ)
+  If the next expression to OC→2CC is an option,
+  we OC→2CC the current subtree once with the option picked (obtaining eᵒ⁻ʸ)
   and once without the option picked (obtaining eᵒ⁻ʸ).
   We can then put both results into a binary choice, where going left
   means picking the option, and going right means not picking the option.
@@ -161,10 +161,10 @@ data _⊢_⟶ₒ_ where
       {a   : A     }
       {O   : Option}
       {e   : OC i A}
-      {ls  : List (BCC ∞ A)    }
+      {ls  : List (2CC ∞ A)    }
       {rs  : Vec (OC (↑ i) A) n}
-      {eᵒ⁻ʸ : BCC ∞ A}
-      {eᵒ⁻ⁿ : BCC ∞ A}
+      {eᵒ⁻ʸ : 2CC ∞ A}
+      {eᵒ⁻ⁿ : 2CC ∞ A}
     → ↑ i ⊢ a -< ls ≪ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ
     → ↑ i ⊢ a -< ls ≪     rs >-       ⟶ₒ eᵒ⁻ⁿ
       ----------------------------------------------------
@@ -173,7 +173,7 @@ data _⊢_⟶ₒ_ where
 data _⟶_  :
   ∀ {i : Size} {A : 𝔸}
   → WFOC i A
-  → BCC ∞ A
+  → 2CC ∞ A
   → Set
 infix 4 _⟶_
 data _⟶_ where
@@ -182,7 +182,7 @@ data _⟶_ where
       {A  : 𝔸}
       {a  : A}
       {es : List (OC i A)}
-      {e  : BCC ∞ A}
+      {e  : 2CC ∞ A}
     → i ⊢ a -< [] ≪ (fromList es) >- ⟶ₒ e
       ------------------------------------
     → Root a es ⟶ e
@@ -190,9 +190,9 @@ data _⟶_ where
 
 ## Determinism
 
-Every OC expression is OC→BCCd to at most one BCC expression.
+Every OC expression is OC→2CCd to at most one 2CC expression.
 ```agda
-⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : BCC ∞ A}
+⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : 2CC ∞ A}
   → i ⊢ z ⟶ₒ b
   → i ⊢ z ⟶ₒ b'
     ------------
@@ -207,7 +207,7 @@ Every OC expression is OC→BCCd to at most one BCC expression.
       r₁≡r₂ = ⟶ₒ-is-deterministic ⟶r₁ ⟶r₂
    in Eq.cong₂ (O ⟨_,_⟩) l₁≡l₂ r₁≡r₂
 
-⟶-is-deterministic : ∀ {i} {A} {e : WFOC i A} {b b' : BCC ∞ A}
+⟶-is-deterministic : ∀ {i} {A} {e : WFOC i A} {b b' : 2CC ∞ A}
   → e ⟶ b
   → e ⟶ b'
     -------
@@ -217,7 +217,7 @@ Every OC expression is OC→BCCd to at most one BCC expression.
 
 ## Totality (i.e., Progress)
 
-Every OC expression is OC→BCCd to at least one BCC expression.
+Every OC expression is OC→2CCd to at least one 2CC expression.
 Since we have already proven determinism, the proof for totality and thus a translation is unique.
 ```agda
 Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set
@@ -267,18 +267,18 @@ Theorems:
 ```agda
 preservesₒ :
   ∀ {n} {i} {A}
-    {b : BCC ∞ A}
+    {b : 2CC ∞ A}
     {z : Zip n i A}
-  → (c : Confₒ)
+  → (c : OC.Configuration F)
   → i ⊢ z ⟶ₒ b
     -------------------
   → ⟦ z ⟧ₜ c ≡ ⟦ b ⟧₂ c
 
 preserves :
   ∀ {i} {A}
-    {b : BCC ∞ A}
+    {b : 2CC ∞ A}
     {e : WFOC i A}
-  → (c : Confₒ)
+  → (c : OC.Configuration F)
   → e ⟶ b
     ------------------
   → ⟦ e ⟧ c ≡ ⟦ b ⟧₂ c
@@ -300,8 +300,8 @@ Agda fails to see that "preserves" directly unpacks this constructor again and c
 Since Agda fails here, we have to avoid the re- and unpacking below T-root and thus introduce this auxiliary function.
 -}
 preserves-without-T-root :
-  ∀ {i} {A} {b : A} {es : List (OC i A)} {e : BCC ∞ A}
-  → (c : Confₒ)
+  ∀ {i} {A} {b : A} {es : List (OC i A)} {e : 2CC ∞ A}
+  → (c : OC.Configuration F)
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ------------------------------------------
   → ⟦ Root b es ⟧ c ≡ ⟦ e ⟧₂ c
@@ -327,9 +327,9 @@ The concrete formulas are a bit convoluted here because they are partially norma
 preservesₒ-artifact :
   ∀ {i} {A} {c}
     {b   : A}
-    {ls  : List (BCC ∞ A)}
+    {ls  : List (2CC ∞ A)}
     {es  : List (OC i A)}
-    {e   : BCC ∞ A}
+    {e   : 2CC ∞ A}
   → (rs  : List (V A))
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ----------------------------------------------------------------
@@ -368,7 +368,7 @@ So we show Agda that ⟦_⟧ₒ never does so.
 This theorem has no real meaning and is rather a technical necessity.
 -}
 preservesₒ-option-size :
-  ∀ {n} {i} {A} {c} {a : A} {ls : List (BCC ∞ A)} {rs : Vec (OC (↑ i) A) n}
+  ∀ {n} {i} {A} {c} {a : A} {ls : List (2CC ∞ A)} {rs : Vec (OC (↑ i) A) n}
   → (e : OC i A)
     -----------------------------------------------------------------------------------------------------
   →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } {A} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
@@ -444,7 +444,7 @@ open import Framework.VariabilityLanguage
 open import Framework.Relation.Expressiveness V
 open import Framework.Relation.Function  using (_⇔_)
 
-compile : ∀ {i : Size} {A : 𝔸} → WFOC i A → BCC ∞ A
+compile : ∀ {i : Size} {A : 𝔸} → WFOC i A → 2CC ∞ A
 compile = proj₁ ∘ ⟶-is-total
 
 compile-preserves : ∀ {i : Size} {A : 𝔸}
@@ -459,16 +459,16 @@ compile-preserves {i} {A} e = left , sym ∘ left -- this works because id is ou
           derivation = proj₂ trans
        in preserves c derivation
 
-compile-configs : Confₒ ⇔ Conf₂
+compile-configs : OC.Configuration F ⇔ 2CC.Configuration F
 compile-configs = record { to = id ; from = id }
 
-OC→BCC : LanguageCompiler WFOCL BCCL
-OC→BCC = record
+OC→2CC : LanguageCompiler WFOCL 2CCL
+OC→2CC = record
   { compile = compile
   ; config-compiler = λ _ → compile-configs
   ; preserves = compile-preserves
   }
 
-BCC≽OC : BCCL ≽ WFOCL
-BCC≽OC = expressiveness-from-compiler OC→BCC
+2CC≽OC : 2CCL ≽ WFOCL
+2CC≽OC = expressiveness-from-compiler OC→2CC
 ```

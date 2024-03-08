@@ -3,7 +3,7 @@
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.FCC-to-FCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC-to-NCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -29,25 +29,25 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
-module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-1 using (FCCL)
-module FCC-Sem-2 {n} {D} = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
+module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-1 using (NCCL)
+module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module map-dim where
-  FCCꟲ-map-dim : {D₁ D₂ : Set} → (n : ℕ≥ 2) → (D₂ → D₁) → FCCꟲ n D₁ → FCCꟲ n D₂
-  FCCꟲ-map-dim n f config = config ∘ f
+  NCCꟲ-map-dim : {D₁ D₂ : Set} → (n : ℕ≥ 2) → (D₂ → D₁) → NCC.Configuration n D₁ → NCC.Configuration n D₂
+  NCCꟲ-map-dim n f config = config ∘ f
 
-  map-dim : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (D₁ → D₂) → FCC n D₁ i A → FCC n D₂ i A
+  map-dim : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (D₁ → D₂) → NCC n D₁ i A → NCC n D₂ i A
   map-dim n f (a -< cs >-) = a -< List.map (map-dim n f) cs >-
   map-dim n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (map-dim n f) cs ⟩
 
-  preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : FCC n D₁ i A) → ⟦ map-dim n f expr ⟧ₙ ⊆[ FCCꟲ-map-dim n f ] ⟦ expr ⟧ₙ
+  preserves-⊆ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → (expr : NCC n D₁ i A) → ⟦ map-dim n f expr ⟧ₙ ⊆[ NCCꟲ-map-dim n f ] ⟦ expr ⟧ₙ
   preserves-⊆ n f f⁻¹ (a -< cs >-) config =
     ⟦ map-dim n f (a -< cs >-) ⟧ₙ config
     ≡⟨⟩
@@ -75,7 +75,7 @@ module map-dim where
     ⟦ d ⟨ cs ⟩ ⟧ₙ (config ∘ f)
     ∎
 
-  preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : FCC n D₁ i A) → ⟦ expr ⟧ₙ ⊆[ FCCꟲ-map-dim n f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
+  preserves-⊇ : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (expr : NCC n D₁ i A) → ⟦ expr ⟧ₙ ⊆[ NCCꟲ-map-dim n f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
   preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
     ⟦ a -< cs >- ⟧ₙ config
     ≡⟨⟩
@@ -105,31 +105,31 @@ module map-dim where
     ⟦ map-dim n f (d ⟨ cs ⟩) ⟧ₙ (config ∘ f⁻¹)
     ∎
 
-  preserves : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : FCC n D₁ i A) → ⟦ map-dim n f e ⟧ₙ ≅[ FCCꟲ-map-dim n f ][ FCCꟲ-map-dim n f⁻¹ ] ⟦ e ⟧ₙ
+  preserves : {i : Size} → {D₁ D₂ A : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → (e : NCC n D₁ i A) → ⟦ map-dim n f e ⟧ₙ ≅[ NCCꟲ-map-dim n f ][ NCCꟲ-map-dim n f⁻¹ ] ⟦ e ⟧ₙ
   preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
-  FCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (FCCL n D₁ {i}) (FCCL n D₂ {i})
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim n f
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = FCCꟲ-map-dim n f⁻¹
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = FCCꟲ-map-dim n f
-  FCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
+  NCC-map-dim : {i : Size} → {D₁ D₂ : Set} → (n : ℕ≥ 2) → (f : D₁ → D₂) → (f⁻¹ : D₂ → D₁) → f⁻¹ ∘ f ≗ id → LanguageCompiler (NCCL n D₁ {i}) (NCCL n D₂ {i})
+  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim n f
+  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCCꟲ-map-dim n f⁻¹
+  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCCꟲ-map-dim n f
+  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
 
 module IncreaseArity where
   module General where
-    translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → FCC n D i A → FCC m D i A
+    translate : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → NCC n D i A → NCC m D i A
     translate n m n≤m (a -< cs >-) = a -< List.map (translate n m n≤m) cs >-
     translate (sucs n) m n≤m (d ⟨ cs ⟩) = d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) m n≤m) cs) ⟩
 
 
-    conf : {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → FCCꟲ n D → FCCꟲ m D
+    conf : {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → NCC.Configuration n D → NCC.Configuration m D
     conf (sucs n) (sucs m) n≤m config d = Fin.inject≤ (config d) n≤m
 
-    fnoc : {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → FCCꟲ m D → FCCꟲ n D
+    fnoc : {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → NCC.Configuration m D → NCC.Configuration n D
     fnoc (sucs n) (sucs m) n≤m config d = ℕ≥.cappedFin (Fin.toℕ (config d))
 
     preserves-⊆ : ∀ {i : Size} {D A : Set} (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
-      → (expr : FCC n D i A)
+      → (expr : NCC n D i A)
       → ⟦ translate n m n≤m expr ⟧ₙ ⊆[ fnoc n m n≤m ] ⟦ expr ⟧ₙ
     preserves-⊆ n m n≤m (a -< cs >-) config =
       ⟦ translate n m n≤m (a -< cs >-) ⟧ₙ config
@@ -162,7 +162,7 @@ module IncreaseArity where
       ⟦ d ⟨ cs ⟩ ⟧ₙ (fnoc (sucs n) (sucs m) n≤m config)
       ∎
 
-    preserves-⊇ : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (n≤m : n ℕ≥.≤ m) → (expr : FCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n m n≤m ] ⟦ translate n m n≤m expr ⟧ₙ
+    preserves-⊇ : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (n≤m : n ℕ≥.≤ m) → (expr : NCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n m n≤m ] ⟦ translate n m n≤m expr ⟧ₙ
     preserves-⊇ n m n≤m (a -< cs >-) config =
       artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
       ≡⟨ Eq.cong₂ artifact Eq.refl (List.map-cong (λ e → preserves-⊇ n m n≤m e config) cs) ⟩
@@ -196,38 +196,38 @@ module IncreaseArity where
       ⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
       ∎
 
-    preserves : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (n≤m : n ℕ≥.≤ m) → (expr : FCC n D i A) → ⟦ translate n m n≤m expr ⟧ₙ ≅[ fnoc n m n≤m ][ conf n m n≤m ] ⟦ expr ⟧ₙ
+    preserves : {i : Size} → {D A : Set} → (n m : ℕ≥ 2) → (n≤m : n ℕ≥.≤ m) → (expr : NCC n D i A) → ⟦ translate n m n≤m expr ⟧ₙ ≅[ fnoc n m n≤m ][ conf n m n≤m ] ⟦ expr ⟧ₙ
     preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤m expr
 
-    FCC→FCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → LanguageCompiler (FCCL n D {i}) (FCCL m D {i})
-    FCC→FCC n m n≤m .LanguageCompiler.compile = translate n m n≤m
-    FCC→FCC n m n≤m .LanguageCompiler.config-compiler expr .to = conf n m n≤m
-    FCC→FCC n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
-    FCC→FCC n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
+    NCC→NCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → n ℕ≥.≤ m → LanguageCompiler (NCCL n D {i}) (NCCL m D {i})
+    NCC→NCC n m n≤m .LanguageCompiler.compile = translate n m n≤m
+    NCC→NCC n m n≤m .LanguageCompiler.config-compiler expr .to = conf n m n≤m
+    NCC→NCC n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
+    NCC→NCC n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
-  FCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL (sucs zero) D {i}) (FCCL n D {i})
-  FCC→FCC (sucs n) = General.FCC→FCC (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
+  NCC→NCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL (sucs zero) D {i}) (NCCL n D {i})
+  NCC→NCC (sucs n) = General.NCC→NCC (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
 
 
 module DecreaseArity where
   IndexedDimension : Set → ℕ≥ 2 → Set
   IndexedDimension D n = D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
 
-  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → FCC n D i A → FCC (sucs zero) (IndexedDimension D n) ∞ A
+  translate : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → NCC n D i A → NCC (sucs zero) (IndexedDimension D n) ∞ A
   translate n (a -< cs >-) = a -< List.map (translate n) cs >-
   translate {i} {D} {A} (sucs n) (d ⟨ cs ⟩) = go n (ℕ.n<1+n n) cs
     module translate-Implementation where
-    go : {i : Size} → (m : ℕ) → (m≤n : m < suc n) → Vec (FCC (sucs n) D i A) (suc (suc m)) → FCC (sucs zero) (D × Fin (suc n)) ∞ A
+    go : {i : Size} → (m : ℕ) → (m≤n : m < suc n) → Vec (NCC (sucs n) D i A) (suc (suc m)) → NCC (sucs zero) (D × Fin (suc n)) ∞ A
     go zero m≤n (l ∷ r ∷ []) = (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩
     go (suc m) m≤n (c ∷ cs) = (d , Fin.opposite (Fin.fromℕ< {suc m} m≤n)) ⟨ translate (sucs n) c ∷ go m (<-trans (ℕ.n<1+n m) m≤n) cs ∷ [] ⟩
 
 
-  conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → FCCꟲ (sucs zero) (IndexedDimension D n)
+  conf : {D : Set} → (n : ℕ≥ 2) → NCC.Configuration n D → NCC.Configuration (sucs zero) (IndexedDimension D n)
   conf (sucs n) config (d , m) with config d Fin.≟ (Fin.inject₁ m)
   ... | yes _ = zero
   ... | no _ = suc zero
 
-  fnoc : {D : Set} → (n : ℕ≥ 2) → FCCꟲ (sucs zero) (IndexedDimension D n) → FCCꟲ n D
+  fnoc : {D : Set} → (n : ℕ≥ 2) → NCC.Configuration (sucs zero) (IndexedDimension D n) → NCC.Configuration n D
   fnoc (sucs n) config d = go n (ℕ.n<1+n n)
     module fnoc-Implementation where
     go : (m : ℕ) → m < suc n → Fin (suc (suc n))
@@ -237,7 +237,7 @@ module DecreaseArity where
     go (suc m) m<n | suc zero = go m (<-trans (ℕ.n<1+n m) m<n)
 
   -- TODO move out of top-level
-  config≡0 : {D : Set} → {d : D} → {n : ℕ} → (config : FCCꟲ (sucs zero) (D × Fin (suc n))) → (j : Fin (suc n)) → fnoc (sucs n) config d ≡ Fin.inject₁ j → config (d , j) ≡ zero
+  config≡0 : {D : Set} → {d : D} → {n : ℕ} → (config : NCC.Configuration (sucs zero) (D × Fin (suc n))) → (j : Fin (suc n)) → fnoc (sucs n) config d ≡ Fin.inject₁ j → config (d , j) ≡ zero
   config≡0 {d = d} {n = n} config j config≡j = go' n (ℕ.n<1+n n) config≡j
     where
     open fnoc-Implementation
@@ -248,7 +248,7 @@ module DecreaseArity where
     go' zero m<n go≡j | suc zero = ⊥-elim (Fin.toℕ-inject₁-≢ j (Eq.trans (Eq.sym (Fin.toℕ-fromℕ (suc n))) (Eq.cong Fin.toℕ go≡j)))
     go' (suc m) m<n go≡j | suc zero = go' m (<-trans (ℕ.n<1+n m) m<n) go≡j
 
-  config≡1 : {D : Set} → {d : D} → {n : ℕ} → (config : FCCꟲ (sucs zero) (D × Fin (suc n))) → (j : Fin (suc n)) → j Fin.< fnoc (sucs n) config d → config (d , j) ≡ suc zero
+  config≡1 : {D : Set} → {d : D} → {n : ℕ} → (config : NCC.Configuration (sucs zero) (D × Fin (suc n))) → (j : Fin (suc n)) → j Fin.< fnoc (sucs n) config d → config (d , j) ≡ suc zero
   config≡1 {d = d} {n = n} config j config<j = go' n (ℕ.n<1+n n) config<j (λ k<opposite-n → ⊥-elim (ℕ.n≮0 (≤-trans k<opposite-n (≤-reflexive (Eq.trans (Fin.opposite-prop (Fin.fromℕ< (ℕ.n<1+n n))) (Eq.trans (Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< (ℕ.n<1+n n))) (ℕ.n∸n≡0 n)))))))
     where
     open fnoc-Implementation
@@ -273,7 +273,7 @@ module DecreaseArity where
     go' zero m<n j<go ∀config≡1 | suc zero | no j≢m = ∀config≡1 (ℕ.≤∧≢⇒< (≤-trans (ℕ.≤-pred (Fin.toℕ<n j)) (≤-reflexive (Eq.sym (Eq.trans (Fin.opposite-prop (Fin.fromℕ< m<n)) (Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< m<n)))))) (j≢m ∘ Fin.toℕ-injective))
     go' (suc m) m<n j<go ∀config≡1 | suc zero | no j≢m = go' m (<-trans (ℕ.n<1+n m) m<n) j<go (extend-∀config≡1 {m = m} m<n config-opposite-m ∀config≡1)
 
-  preserves-⊆ : {i : Size} {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₙ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
+  preserves-⊆ : {i : Size} {D A : Set} → (n : ℕ≥ 2) → (expr : NCC n D i A) → ⟦ translate n expr ⟧ₙ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
   preserves-⊆ (sucs n) (a -< cs >-) config =
     ⟦ translate (sucs n) (a -< cs >-) ⟧ₙ config
     ≡⟨⟩
@@ -301,7 +301,7 @@ module DecreaseArity where
       : {i : Size}
       → (m : ℕ)
       → (m≤n : m < suc n)
-      → (cs' : Vec (FCC (sucs n) D i A) (suc (suc m)))
+      → (cs' : Vec (NCC (sucs n) D i A) (suc (suc m)))
       → (j : Fin (suc (suc m)))
       → m + Fin.toℕ (fnoc (sucs n) config d) ≡ Fin.toℕ j + n
       → ⟦ go n d cs m m≤n cs' ⟧ₙ config ≡ ⟦ Vec.lookup cs' j ⟧ₙ (fnoc (sucs n) config)
@@ -389,7 +389,7 @@ module DecreaseArity where
       ⟦ Vec.lookup cs' j ⟧ₙ (fnoc (sucs n) config)
       ∎
 
-  preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₙ
+  preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₙ
   preserves-⊇ (sucs n) (a -< cs >-) config =
     ⟦ a -< cs >- ⟧ₙ config
     ≡⟨⟩
@@ -411,12 +411,12 @@ module DecreaseArity where
     where
     open translate-Implementation
 
-    config≡0' : {D : Set} → {d : D} → {n : ℕ} → (config : FCCꟲ (sucs n) D) → (j : Fin (suc n)) → config d ≡ (Fin.inject₁ j) → conf (sucs n) config (d , j) ≡ zero
+    config≡0' : {D : Set} → {d : D} → {n : ℕ} → (config : NCC.Configuration (sucs n) D) → (j : Fin (suc n)) → config d ≡ (Fin.inject₁ j) → conf (sucs n) config (d , j) ≡ zero
     config≡0' {d = d} config j config-d≡j with config d Fin.≟ (Fin.inject₁ j)
     ... | yes _ = refl
     ... | no config-d≢j = ⊥-elim (config-d≢j config-d≡j)
 
-    config≡1' : {D : Set} → {d : D} → {n : ℕ} → (config : FCCꟲ (sucs n) D) → (j : Fin (suc n)) → config d ≢ (Fin.inject₁ j) → conf (sucs n) config (d , j) ≡ suc zero
+    config≡1' : {D : Set} → {d : D} → {n : ℕ} → (config : NCC.Configuration (sucs n) D) → (j : Fin (suc n)) → config d ≢ (Fin.inject₁ j) → conf (sucs n) config (d , j) ≡ suc zero
     config≡1' {d = d} config j config-d≢j with config d Fin.≟ (Fin.inject₁ j)
     ... | yes config-d≡j = ⊥-elim (config-d≢j config-d≡j)
     ... | no _ = refl
@@ -425,7 +425,7 @@ module DecreaseArity where
       : {i : Size}
       → (m : ℕ)
       → (m≤n : m < suc n)
-      → (cs' : Vec (FCC (sucs n) D i A) (suc (suc m)))
+      → (cs' : Vec (NCC (sucs n) D i A) (suc (suc m)))
       → (j : Fin (suc (suc m)))
       → m + Fin.toℕ (config d) ≡ Fin.toℕ j + n
       → ⟦ go n d cs m m≤n cs' ⟧ₙ (conf (sucs n) config) ≡ ⟦ Vec.lookup cs' j ⟧ₙ config
@@ -527,17 +527,17 @@ module DecreaseArity where
       ⟦ Vec.lookup cs' j ⟧ₙ config
       ∎
 
-  preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+  preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NCC n D i A) → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
   preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-  FCC→FCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D {i}) (FCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
-  FCC→FCC n .LanguageCompiler.compile = translate n
-  FCC→FCC n .LanguageCompiler.config-compiler expr .to = conf n
-  FCC→FCC n .LanguageCompiler.config-compiler expr .from = fnoc n
-  FCC→FCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
+  NCC→NCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+  NCC→NCC n .LanguageCompiler.compile = translate n
+  NCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n
+  NCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n
+  NCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
 
 open DecreaseArity using (IndexedDimension) public
 
-FCC→FCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → LanguageCompiler (FCCL n D {i}) (FCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
-FCC→FCC n m = DecreaseArity.FCC→FCC n ⊕ IncreaseArity.FCC→FCC m
+NCC→NCC : {i : Size} → {D : Set} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→NCC n m = DecreaseArity.NCC→NCC n ⊕ IncreaseArity.NCC→NCC m

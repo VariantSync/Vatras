@@ -10,8 +10,7 @@ open import Level using (0ℓ)
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
 open import Framework.Construct
-import Construct.Choices as Chc
-open Chc.VLChoice₂ renaming (Syntax to 2Choice)
+open import Construct.Choices
 
 open import Construct.NestedChoice using (NestedChoice)
 ```
@@ -132,7 +131,7 @@ postulate
   -- When levels are generalized, we do not have to specifically use 0ℓ here.
   embed : ∀ {V F A} {i}
     → (Γ : VariabilityLanguage V)
-    → 2Choice F ∈ₛ Expression Γ
+    → VL2Choice.Syntax F ∈ₛ Expression Γ
     → NestedChoice F i (Expression Γ A)
     → Expression Γ A
 ```

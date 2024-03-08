@@ -12,25 +12,25 @@ open Eq.≡-Reasoning
 
 import Data.IndexedSet
 
-import Construct.Choices
-open Construct.Choices.Choiceₙ renaming (map to mapₙ)
+open import Construct.Choices
+open import Construct.NestedChoice using (value; choice)
 
 open import Framework.Variants using (GrulerVariant)
 open import Lang.2ADT
 open import Lang.NADT
 
-import Translation.Construct.2Choice-to-NChoice {F} as 2→N
-open 2→N.Translate using (convert)
+import Translation.Construct.2Choice-to-Choice {F} as 2Choice-to-Choice
+open 2Choice-to-Choice.Translate using (convert)
 
 compile : ∀ {i} → 2ADT F i A → NADT F i A
 compile (value a)      = NADTAsset a
-compile (choice {i} c) = NADTChoice (mapₙ compile (convert (Eq.setoid (2ADT F i A)) c))
+compile (choice {i} c) = NADTChoice (Choice.map compile (convert (Eq.setoid (2ADT F i A)) c))
 
 module Preservation where
   -- open Data.IndexedSet (VariantSetoid GrulerVariant A) using () renaming (_≅_ to _≋_)
 
   -- TODO: Prove Preservation of compile
-  -- open 2→N.Translate.Preservation 2ADTVL NADTVL compile conf' fnoc' using (preserves-conf; preserves-fnoc)
+  -- open 2Choice-to-Choice.Translate.Preservation 2ADTVL NADTVL compile conf' fnoc' using (preserves-conf; preserves-fnoc)
 
   -- preserves-l : ∀ (e : 2ADT A) → Conf-Preserves 2ADTVL NADTVL e (compile e) conf'
   -- preserves-l (value _) _ = refl

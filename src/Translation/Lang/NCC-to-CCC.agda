@@ -3,7 +3,7 @@
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.FCC-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -24,35 +24,35 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.CCC using (CCC; _-<_>-; _⟨_⟩) renaming (Configuration to CCCꟲ)
-module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+open import Lang.CCC as CCC using (CCC; _-<_>-; _⟨_⟩)
+module CCC-Sem-1 D = CCC.Sem D Variant Artifact∈ₛVariant
 open CCC-Sem-1 using (CCCL)
-module CCC-Sem-2 {D} = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+module CCC-Sem-2 {D} = CCC.Sem D Variant Artifact∈ₛVariant
 open CCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₐ)
 
-open import Lang.FCC using (FCC; _-<_>-; _⟨_⟩) renaming (Configuration to FCCꟲ)
-module FCC-Sem-1 n D = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-1 using (FCCL)
-module FCC-Sem-2 {n} {D} = Lang.FCC.Sem n D Variant Artifact∈ₛVariant
-open FCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
+module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-1 using (NCCL)
+module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
+open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-translate : {i : Size} → (n : ℕ≥ 2) -> {D A : Set} → FCC n D i A → CCC D ∞ A
+translate : {i : Size} → (n : ℕ≥ 2) -> {D A : Set} → NCC n D i A → CCC D ∞ A
 translate n (a -< cs >-) = a -< List.map (translate n) cs >-
 translate (sucs n) (d ⟨ c ∷ cs ⟩) = d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩
 
-conf : {D : Set} → (n : ℕ≥ 2) → FCCꟲ n D → CCCꟲ D
+conf : {D : Set} → (n : ℕ≥ 2) → NCC.Configuration n D → CCC.Configuration D
 conf (sucs n) config d = Fin.toℕ (config d)
 
-fnoc : {D : Set} → (n : ℕ≥ 2) → CCCꟲ D → FCCꟲ n D
+fnoc : {D : Set} → (n : ℕ≥ 2) → CCC.Configuration D → NCC.Configuration n D
 fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 
 
 preserves-⊆ : ∀ {i : Size} {D A : Set} (n : ℕ≥ 2)
-  → (expr : FCC n D i A)
+  → (expr : NCC n D i A)
   → ⟦ translate n expr ⟧ₐ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
 preserves-⊆ n (a -< cs >-) config =
   ⟦ translate n (a -< cs >-) ⟧ₐ config
@@ -83,7 +83,7 @@ preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) config =
   ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ (fnoc (sucs n) config)
   ∎
 
-preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₐ
+preserves-⊇ : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NCC n D i A) → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₐ
 preserves-⊇ n (a -< cs >-) config =
   ⟦ a -< cs >- ⟧ₙ config
   ≡⟨⟩
@@ -115,14 +115,14 @@ preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
   ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ₐ (conf (sucs n) config)
   ∎
 
-preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : FCC n D i A) → ⟦ translate n expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+preserves : {i : Size} → {D A : Set} → (n : ℕ≥ 2) → (expr : NCC n D i A) → ⟦ translate n expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-FCC→CCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (FCCL n D {i}) (CCCL D)
-FCC→CCC n .LanguageCompiler.compile = translate n
-FCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
-FCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n
-FCC→CCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
+NCC→CCC : {i : Size} → {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (CCCL D)
+NCC→CCC n .LanguageCompiler.compile = translate n
+NCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
+NCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n
+NCC→CCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
-CCC≽FCC : {D : Set} → (n : ℕ≥ 2) → CCCL D ≽ FCCL n D
-CCC≽FCC n = expressiveness-from-compiler (FCC→CCC n)
+CCC≽NCC : {D : Set} → (n : ℕ≥ 2) → CCCL D ≽ NCCL n D
+CCC≽NCC n = expressiveness-from-compiler (NCC→CCC n)
