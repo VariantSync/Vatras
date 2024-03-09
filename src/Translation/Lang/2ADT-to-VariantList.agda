@@ -72,6 +72,11 @@ same (A ↣ _) (B ↣ _) = True (A == B)
 is : F → Selection → Set
 is A (B ↣ _) = True (A == B)
 
+==-isYes-refl : ∀ (D : F) → isYes (D == D) ≡ true
+==-isYes-refl D with D == D
+... | yes refl = refl
+... | no D≠D = ⊥-elim (D≠D refl)
+
 -- Checks whether a feature is assigned somewhere in a path.
 _∈_ : F → Path → Set
 a ∈ as = Any (is a) as
