@@ -108,7 +108,8 @@ module Exact where
     maximum⁺IsLimit : ∀ {i : Size} {D A : Set}
       → (cs : List⁺ (CCC D i A))
       → List⁺ChoiceLengthLimit (maximum⁺ (List⁺.map maxChoiceLength cs)) cs
-    maximum⁺IsLimit (c ∷ cs) = ChoiceLengthLimit-respects-≤ (ℕ≥.m≤m⊔n (maxChoiceLength c) (maximum (List.map maxChoiceLength cs))) (maxChoiceLengthIsLimit c) ∷ ListChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (maxChoiceLength c) (maximum (List.map maxChoiceLength cs))) (maximumIsLimit cs)
+    maximum⁺IsLimit (c ∷ cs) with maximumIsLimit (c ∷ cs)
+    ... | max-c ∷ max-cs = max-c ∷ max-cs
 
     maxChoiceLengthIsLimit : ∀ {i : Size} {D A : Set}
       → (expr : CCC D i A)
