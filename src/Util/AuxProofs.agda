@@ -111,6 +111,13 @@ if-cong : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂} {a b : A}
 if-cong false _ = refl
 if-cong true  _ = refl
 
+if-swap : ∀ {A : Set} (x y : Bool) (a b : A)
+  → (if x then a else (if y then a else b))
+  ≡ (if y then a else (if x then a else b))
+if-swap false _ _ _ = refl
+if-swap true false _ _ = refl
+if-swap true true _ _ = refl
+
 ----- Properties of Vectors
 
 module Vec where
