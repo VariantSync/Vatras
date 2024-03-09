@@ -64,3 +64,9 @@ _⊔_ (sucs n) (sucs m) = sucs (n ℕ.⊔ m)
 
 toℕ-⊔ : ∀ {k : ℕ} → (n m : ℕ≥ k) → toℕ (n ⊔ m) ≡ toℕ n ℕ.⊔ toℕ m
 toℕ-⊔ {k} (sucs n) (sucs m) = ℕ.mono-≤-distrib-⊔ (ℕ.+-monoʳ-≤ k) n m
+
+m≤m⊔n : ∀ {k : ℕ} → (m n : ℕ≥ k) → m ≤ (m ⊔ n)
+m≤m⊔n (sucs m) (sucs n) = lift≤ (ℕ.m≤m⊔n m n)
+
+m≤n⊔m : ∀ {k : ℕ} → (n m : ℕ≥ k) → m ≤ (n ⊔ m)
+m≤n⊔m (sucs m) (sucs n) = lift≤ (ℕ.m≤n⊔m m n)
