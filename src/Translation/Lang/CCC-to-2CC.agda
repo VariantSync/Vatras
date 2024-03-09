@@ -25,8 +25,8 @@ import Translation.Lang.NCC-to-2CC
 open Translation.Lang.NCC-to-2CC.2Ary Variant Artifact∈ₛVariant using (NCC→2CC)
 
 
-CCC→2CC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (2CCL (D × ℕ))
+CCC→2CC : ∀ {i : Size} {D : Set} → LanguageCompiler (CCCL D {i}) (2CCL (D × ℕ))
 CCC→2CC = CCC→NCC (sucs zero) ⊕ NCC→2CC
 
-2CC≽CCC : {D : Set} → 2CCL (D × ℕ) ≽ CCCL D
+2CC≽CCC : ∀ {D : Set} → 2CCL (D × ℕ) ≽ CCCL D
 2CC≽CCC = expressiveness-from-compiler CCC→2CC
