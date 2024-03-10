@@ -311,8 +311,8 @@ Undead2ADT-VL = ⟪ Undead2ADT , Conf₂ , ⟦_⟧ᵤ ⟫
 kill-dead-below : ∀ {A}
   → (defined : Path)
   → 2ADT A
-  → Undead2ADT A
-kill-dead-below _ (leaf v) = (leaf v) ⊚ undead-leaf
+  → 2ADT A
+kill-dead-below _ (leaf v) = leaf v
 kill-dead-below defined (D ⟨ l , r ⟩) with D ∈? defined
 --- The current choice was already encountered above this choice.
 --- This means, this choice is dominated (see choice domination).
@@ -324,47 +324,43 @@ kill-dead-below defined (D ⟨ l , r ⟩) with D ∈? defined
   else kill-dead-below defined r
 -- The current choice was not encountered before. We follow both paths recursively,
 -- adding our choice information to each path.
-... | no D∉defined = (D ⟨ node rec-l , node rec-r ⟩) ⊚ u
-  where
-    update-env : ∀ (b : Bool) → Path
-    update-env b = (D ↣ b) ∷ defined
+... | no D∉defined = D ⟨ kill-dead-below (D ↣ true ∷ defined) l , kill-dead-below (D ↣ false ∷ defined) r ⟩
+  -- where
+  --   D∉left-branches : ∀ {A}
+  --    → (e : 2ADT A)
+  --    → (def : Path)
+  --    → (pe : Path)
+  --    → (pl' : Path)
+  --    → pe  starts-at (node (kill-dead-below def e))
+  --    → pl' starts-at l'
+  --    → pl' endswith pe
+  --    → D ∉ pe
+  --   D∉left-branches = {!!}
 
-    rec-l = kill-dead-below (update-env true) l
-    rec-r = kill-dead-below (update-env false) r
+  --   D∉l' : ∀ (p : Path) → p starts-at l' → D ∉ p
+  --   D∉l' p t = D∉left-branches l (D ↣ true ∷ defined) ? p ? t (match p)
 
-    u : Undead (D ⟨ node rec-l , node rec-r ⟩)
-    u = undead-choice (undead rec-l) (undead rec-r) {!!} {!!}
+kill-dead-correct : ∀ {A}
+  → (defined : Path)
+  → (e : 2ADT A)
+  → Undead (kill-dead-below defined e)
+kill-dead-correct _ (leaf v) = undead-leaf
+kill-dead-correct defined (D ⟨ _ , _ ⟩) with D ∈? defined
+kill-dead-correct defined (_ ⟨ l , r ⟩) | yes D∈defined with getValue D∈defined
+... | true  = kill-dead-correct defined l
+... | false = kill-dead-correct defined r
+kill-dead-correct defined (D ⟨ l , r ⟩) | no  D∉defined =
+  undead-choice
+  (kill-dead-correct (D ↣ true  ∷ defined) l)
+  (kill-dead-correct (D ↣ false ∷ defined) r)
+  {!!}
+  {!!}
 
 kill-dead : ∀ {A}
   → 2ADT A
   → Undead2ADT A
-kill-dead = kill-dead-below []
+kill-dead e = kill-dead-below [] e ⊚ kill-dead-correct [] e
 
--- ordinary-to-unique' : ∀ {A}
---   → (above : Path)
---   → Unique above
---   → 2ADT A
---   → UniquePaths2ADTBelow above A
--- ordinary-to-unique' _ _ (leaf v) = leaf v ⊚ oleaf
--- ordinary-to-unique' {A} above u (D ⟨ l , r ⟩) with D ∈? above
--- --- The current choice was already encountered above this choice.
--- --- This means, this choice is dominated (see choice domination).
--- --- This in turn means, that one of the choice's alternatives is dead because it cannot
--- --- be selected anymore.
--- ... | yes D∈above =
---   if getValue D∈above
---   then ordinary-to-unique' above u l
---   else ordinary-to-unique' above u r
--- -- The current choice was not encountered before. We follow both paths recursively,
--- -- adding our choice information to each path.
--- ... | no  D∉above = (D ⟨ node rec-l , node rec-r ⟩) ⊚ ochc D∉above (unique rec-l) (unique rec-r)
---   where
---     uuuu : ∀ (xs : Path) → Unique xs → ¬ (D ∈ xs) → (b : Bool) → Unique (xs ∷ʳ (D ↣ b))
---     uuuu [] u notin b = [] ∷ []
---     uuuu (x ∷ xs) (ux ∷ uxs) notin b = All-++⁺ first second ∷ uuuu xs uxs (∉-tail notin) b
---       where
---         first : All (different x) xs
---         first = ux
 
 --         second : All (different x) (D ↣ b ∷ [])
 --         second = (∉-head notin b) ∷ []
