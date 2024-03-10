@@ -9,6 +9,10 @@
 
 ## Module
 
+It's required that arity is at least one to have a semantic. However, we require
+that the arity is at least two, otherwise there is this annoying one-arity
+language in the NCC language family which is incomplete.
+
 ```agda
 open import Framework.Definitions
 open import Util.Nat.AtLeast using (ℕ≥)

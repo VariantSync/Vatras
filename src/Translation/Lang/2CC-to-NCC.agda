@@ -149,6 +149,7 @@ module 2Ary where
   2CC→NCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
+-- A generalization which translates to an arbitrary n instead of 2.
 2CC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL D {i}) (NCCL n D {i})
 2CC→NCC n = 2Ary.2CC→NCC ⊕ NCC→NCC n
 

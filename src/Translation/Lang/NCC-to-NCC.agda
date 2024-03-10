@@ -145,6 +145,9 @@ module map-dim where
   NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
 
 module IncreaseArity where
+  -- Increasing the arity is straight forward, just duplicate one element (we choose the last one to be consistent with the saturation semantic of `CCC`, see `find-or-last`) until the arity difference is zero.
+  -- For symmetry, this module provides a translation from the 2-ary `NCC`, because, for simplicity of the proof, DecreaseArity translates to the 2-ary `NCC`.
+  -- However, the proof of the generalizaton is almost identical so we proof the generalization in a submodule and specialize the result.
   module General where
     translate : ∀ {i : Size} {D A : Set}
       → (n m : ℕ≥ 2)
@@ -153,7 +156,6 @@ module IncreaseArity where
       → NCC m D i A
     translate n m n≤m (a -< cs >-) = a -< List.map (translate n m n≤m) cs >-
     translate (sucs n) m n≤m (d ⟨ cs ⟩) = d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) m n≤m) cs) ⟩
-
 
     conf : ∀ {D : Set}
       → (n m : ℕ≥ 2)
@@ -264,6 +266,13 @@ module IncreaseArity where
 
 
 module DecreaseArity where
+  -- To simplify the implementation and the proof, we constrain the translation to result in 2-ary `NCC` expressions.
+  -- The idea of the translation is to represent the each alternative vector as a `List` of alternatives where each `c ∷ cs` is represented by an alternative `d ⟨ c ∷ cs ∷ [] ⟩`.
+  -- However, this requires that each dimension `d` in this list of alternatives can be configured independently.
+  -- Otherwise only the first, or last alternative can be selected by configuring `d`.
+  -- The solution is to extend the dimension `d` by an index (`IndexedDimension`) which numbers the list of alternatives.
+  -- Note that the last choice in the list of alternatives holds two alternatives, so there will be one less dimension index than there are alternatives.
+
   IndexedDimension : Set → ℕ≥ 2 → Set
   IndexedDimension D n = D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
 
@@ -277,7 +286,6 @@ module DecreaseArity where
     go : {i : Size} → (m : ℕ) → (m≤n : m < suc n) → Vec (NCC (sucs n) D i A) (suc (suc m)) → NCC (sucs zero) (D × Fin (suc n)) ∞ A
     go zero m≤n (l ∷ r ∷ []) = (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩
     go (suc m) m≤n (c ∷ cs) = (d , Fin.opposite (Fin.fromℕ< {suc m} m≤n)) ⟨ translate (sucs n) c ∷ go m (<-trans (ℕ.n<1+n m) m≤n) cs ∷ [] ⟩
-
 
   conf : ∀ {D : Set}
     → (n : ℕ≥ 2)
@@ -376,6 +384,18 @@ module DecreaseArity where
     where
     open translate-Implementation
 
+    -- The key to this lemma, which is an induction over `m`, is to introduce a
+    -- number `j` which enables stating the invariant provided as the last
+    -- argument:
+    --   `m + Fin.toℕ (fnoc (sucs n) config d) ≡ Fin.toℕ j + n`
+    -- It states that the alternative which is `j` choices deep is selected. At
+    -- the start of the induction (`m ≡ n`), `j` is determined by the
+    -- configuration, specifically `fnoc (sucs n) config d`. In each step of the
+    -- induction both `m` and `j` are decreased so the invariant is obeyed.
+    -- Hence, as base cases of the induction, we have the cases where `m ≡ zero`
+    -- or `j ≡ zero`. In all cases we can inspect `j` to conclude if the first
+    -- (`j ≡ zero`) or second (`j > zero`) alternative is chosen, which is all
+    -- that is needed to conclude the proof.
     lemma
       : {i : Size}
       → (m : ℕ)
@@ -511,6 +531,18 @@ module DecreaseArity where
     ... | yes config-d≡j = ⊥-elim (config-d≢j config-d≡j)
     ... | no _ = refl
 
+    -- The key to this lemma, which is an induction over `m`, is to introduce a
+    -- number `j` which enables stating the invariant provided as the last
+    -- argument:
+    --   `m + Fin.toℕ (config d) ≡ Fin.toℕ j + n`
+    -- It states that the alternative which is `j` choices deep is selected. At
+    -- the start of the induction (`m ≡ n`), `j` is determined by the
+    -- configuration, specifically `config d`. In each step of the
+    -- induction both `m` and `j` are decreased so the invariant is obeyed.
+    -- Hence, as base cases of the induction, we have the cases where `m ≡ zero`
+    -- or `j ≡ zero`. In all cases we can inspect `j` to conclude if the first
+    -- (`j ≡ zero`) or second (`j > zero`) alternative is chosen, which is all
+    -- that is needed to conclude the proof
     lemma
       : {i : Size}
       → (m : ℕ)
@@ -632,5 +664,7 @@ module DecreaseArity where
 
 open DecreaseArity using (IndexedDimension) public
 
+-- The conclude translations between different arity `NCC` expressions, we provide a version that is capable of translating abitrary arity `NCC` expressions.
+-- It's a simple composition of decreasing the arity to 2 and increasing it to the desired arity.
 NCC→NCC : ∀ {i : Size} {D : Set} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→NCC n m = DecreaseArity.NCC→NCC n ⊕ IncreaseArity.NCC→NCC m

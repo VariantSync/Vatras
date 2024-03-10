@@ -9,6 +9,9 @@ open import Data.Fin as Fin using (Fin; zero; suc)
 import Data.List as List
 open import Data.List.NonEmpty using (List⁺; _∷_)
 
+-- A natural number greater than `n`.
+-- Hereby, `sucs` represents `n` consecutive `suc`s.
+-- See `toℕ` for the semantics of `sucs`.
 data ℕ≥ (n : ℕ) : Set where
   sucs : ℕ → ℕ≥ n
 
@@ -27,6 +30,7 @@ n < m = toℕ n ℕ.< toℕ m
 lift≤ : {k n m : ℕ} → n ℕ.≤ m → sucs {k} n ≤ sucs {k} m
 lift≤ {k} n≤m = ℕ.+-monoʳ-≤ k n≤m
 
+-- Convert a natural number into a finite number by using the maximum number for too big numbers.
 -- TODO same as AuxProof.clamp
 cappedFin : {n : ℕ≥ 1} → ℕ → Fin (toℕ n)
 cappedFin {sucs zero} m = zero

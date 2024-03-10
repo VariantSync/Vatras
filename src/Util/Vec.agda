@@ -10,6 +10,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 import Util.List as List
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
+-- Duplicates the last element of a vector to increase its length.
 saturate : ∀ {A : Set} {n : ℕ≥ 1} {m : ℕ}
   → ℕ≥.toℕ n ≤ m
   → Vec A (ℕ≥.toℕ n)
