@@ -33,14 +33,15 @@ open Eq.≡-Reasoning
 
 open import Framework.VariabilityLanguage
 open import Lang.2ADT F V
-  using (2ADT; leaf; _⟨_,_⟩)
+  using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
   renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)
 open import Lang.VariantList V
-  using (VariantList)
+  using (VariantList; VariantListL)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Confₗ)
+open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-by-translation)
 
 -- imports for nicer holes
-open import Util.List using (find-or-last; length-⁺++⁺; append-preserves; prepend-preserves; prepend-preserves')
+open import Util.List using (find-or-last; ⁺++⁺-length; ⁺++⁺-length-≤; append-preserves; prepend-preserves-+; prepend-preserves-∸)
 open import Util.AuxProofs using (<-cong-+ˡ; if-cong)
 open import Util.Suffix
 open Data.List using (_++_; foldr)
@@ -124,11 +125,22 @@ All-different→∉ : ∀ {D} (b : Bool) (as : Path) → All (different (D ↣ b
 All-different→∉ b (a ∷ as) (pa ∷ pas) (here D-is-a) = toWitnessFalse pa (toWitness D-is-a)
 All-different→∉ b (a ∷ as) (pa ∷ pas) (there D∈as)  = All-different→∉ b as pas D∈as
 
+{-
+All features mentioned in the path are unique (i.e., no feature is mentioned more than once).
+This means that there cannot be conflicts in the path.
+-}
 Unique : Path → Set
 Unique = AllPairs different
 
--- A path is starts at a node if it leads to a leaf.
--- This relation can be seen as a type system for paths within a particular tree.
+{-
+A path is starts at a node if it leads to a leaf.
+This relation can be seen as a type system for paths within a particular tree.
+Note: The symmetry between the rules walk-left and walk-right causes many
+      proofs to have quite some redundancy as well because we have to match
+      on these rules a lot.
+      However, we cannot merge the rules into a single rule
+      because we have to recurse on either the left or right alternative (not both).
+-}
 data _starts-at_ : ∀ {A} → (p : Path) → (e : 2ADT A) → Set where
   tleaf : ∀ {A} {v : V A}
       ------------------
@@ -144,6 +156,17 @@ data _starts-at_ : ∀ {A} → (p : Path) → (e : 2ADT A) → Set where
       --------------------------------------
     → ((D ↣ false) ∷ pr) starts-at (D ⟨ l , r ⟩)
 
+{-
+An expression does not contain a feature name
+if all paths do not contain that feature name.
+-}
+_∉'_ : ∀{A} → F → 2ADT A → Set
+D ∉' e = ∀ (p : Path) → p starts-at e → D ∉ p
+
+{-
+A path serves as a configuration for an expression e
+if it starts at that expression and ends at a leaf.
+-}
 record PathConfig {A} (e : 2ADT A) : Set where
   constructor _is-valid_
   field
@@ -151,17 +174,16 @@ record PathConfig {A} (e : 2ADT A) : Set where
     valid : path starts-at e
 open PathConfig public
 
--- semantics by walking a path
--- this may walk illegally by choosing different alternatives for the same choice within a path
--- For example in D ⟨ D ⟨ 1 , dead ⟩ , 2 ⟩ we can reach dead via (D ↣ true ∷ D ↣ false ∷ []).
--- This method behaves well though when the path is undead.
+{-
+Alternative semantics of 2ADTs by walking a path.
+This walk may be illegal by choosing different alternatives for the same choice within a path.
+For example in D ⟨ D ⟨ 1 , dead ⟩ , 2 ⟩ we can reach 'dead' via (D ↣ true ∷ D ↣ false ∷ []).
+However, walking like this is fine as long as the path is unique as we will later prove.
+-}
 walk : ∀ {A} → (e : 2ADT A) → PathConfig e → V A
 walk (leaf v) ([] is-valid tleaf) = v
 walk (D ⟨ l , _ ⟩) ((.(D ↣ true ) ∷ pl) is-valid walk-left  t) = walk l (pl is-valid t)
 walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-valid walk-right t) = walk r (pr is-valid t)
-
-matches : Conf₂ → Selection → Set
-matches c (f ↣ val) = c f ≡ val
 
 {-
 An expression a is a sub-expression of b
@@ -170,95 +192,36 @@ iff all valid paths from a lead to paths from b.
 _subexprof_ : ∀ {A} → 2ADT A → 2ADT A → Set
 a subexprof b = ∀ (pa : Path) → pa starts-at a → ∃[ pb ] ((pb starts-at b) × (pb endswith pa))
 
--- -- Relation for describing that a path is a partial configuration
--- infix 10 _⊢_⊑_ -- \squb=
--- data _⊢_⊑_ : ∀ {A} → 2ADT A → Path → Conf₂ → Set where
---   end : ∀ {A} {v : V A} {c : Conf₂}
---       ------------------
---     → leaf v ⊢ [] ⊑ c
+{-
+A configuration matches a selection
+if the configuration returns the same
+result for the given feature as dictated
+by the selection.
+-}
+matches : Conf₂ → Selection → Set
+matches c (f ↣ val) = c f ≡ val
 
---   go-left : ∀ {A} {Γ : Path} {c : Conf₂} {D : F} {l r : 2ADT A}
---     → c D ≡ true
---     → l ⊢ Γ ⊑ c
---       --------------------------
---     → D ⟨ l , r ⟩ ⊢ (D ↣ true ∷ Γ) ⊑ c
-
---   go-right : ∀ {A} {Γ : Path} {c : Conf₂} {D : F} {l r : 2ADT A}
---     → c D ≡ false
---     → r ⊢ Γ ⊑ c
---       --------------------------
---     → D ⟨ l , r ⟩ ⊢ (D ↣ false ∷ Γ) ⊑ c
-
+{-
+Predicate that tells whether a path matches a configuration.
+This essentially makes the given path a partial configuration.
+-}
 _⊑_ : Path → Conf₂ → Set
 p ⊑ c = All (matches c) p
 
-infix 4 _reaches_because_
-record ReachableVariant (A : 𝔸) (c : Conf₂) : Set where
-  constructor _reaches_because_
-  field
-    how  : Path
-    what : V A
-    that : how ⊑ c
-    -- tttt : _starts-at_ how e
-open ReachableVariant public
-
--- this evaluates an expression given a configuration and records that evaluation in terms of a path (as a side-effect)
-⟦_⟧-recorded : ∀ {A} → (e : 2ADT A) → (c : Conf₂) → ReachableVariant A c
-⟦ leaf v ⟧-recorded c = [] reaches v because []
-⟦ D ⟨ _ , _ ⟩ ⟧-recorded c with c D in match
-⟦ D ⟨ l , _ ⟩ ⟧-recorded c | true  with ⟦ l ⟧-recorded c
-... | p reaches v because proof = (D ↣  true) ∷ p reaches v because match ∷ proof
-⟦ D ⟨ _ , r ⟩ ⟧-recorded c | false with ⟦ r ⟧-recorded c
-... | p reaches v because proof = (D ↣ false) ∷ p reaches v because match ∷ proof
-
 {-
-If we start with an empty environment. Then any selection we will put into the environment
-afterwards will be dictated by the configuration function c.
-Γ hence denotes a partial configuration which can be extended to become c.
+If we make a lookup in a path for a certain feature,
+any matching configuration will yield the same result.
 -}
--- path-denotes-partial-config : ∀ {A} {Γ : Path} {c : Conf₂} {e : 2ADT A}
---   → e ⊢ Γ ⊑ c
---   → Γ ⊑ c
--- path-denotes-partial-config end = []
--- path-denotes-partial-config (go-left  c-says-so p) = c-says-so ∷ path-denotes-partial-config p
--- path-denotes-partial-config (go-right c-says-so p) = c-says-so ∷ path-denotes-partial-config p
-
-
--- Conf₂ → Path
--- conf-to-path : ∀ {A} (e : 2ADT A) (c : Conf₂) → ∃[ p ] (e ⊢ p ⊑ c)
--- conf-to-path (leaf v) _ = [] , end
--- conf-to-path (D ⟨ _ , _ ⟩) c with c D in eq
--- conf-to-path (D ⟨ l , _ ⟩) c | true  with conf-to-path l c
--- ... | Γ , nice = D ↣ true  ∷ Γ , go-left  eq nice
--- conf-to-path (D ⟨ _ , r ⟩) c | false with conf-to-path r c
--- ... | Γ , nice = D ↣ false ∷ Γ , go-right eq nice
-
--- get-variant : ∀ {A} {e : 2ADT A} {c : Conf₂} {p : Path} → e ⊢ p ⊑ c → V A
--- get-variant (end {v = v}) = v
--- get-variant (go-left _ pl) = get-variant pl
--- get-variant (go-right _ pr) = get-variant pr
-
-
--- path-to-conf : (p : Path) → ∃[ c ] (p ⊑ c)
--- path-to-conf [] = (λ _ → true) , []
--- path-to-conf ((D ↣ b) ∷ ps) = check-D , matches-head ∷ {!proj₂ rec!}
---   where
---     rec : ∃[ c ] (ps ⊑ c)
---     rec = path-to-conf ps
-
---     check-D : Conf₂
---     check-D D' with D == D'
---     ... | yes eq = b
---     ... | no neq = proj₁ rec D'
-
---     matches-head : matches check-D (D ↣ b)
---     matches-head with D == D
---     ... | yes eq = refl
---     ... | no neq = ⊥-elim (neq refl)
+lookup-partial : ∀ {p} {c} {D}
+  → p ⊑ c
+  → (has : D ∈ p)
+  → getValue has ≡ c D
+lookup-partial (refl ∷ px) (here D-is-f) rewrite toWitness D-is-f = refl
+lookup-partial (refl ∷ px) (there has) = lookup-partial px has
 
 {-
 A 2ADT is undead if it does not contain any dead branches.
-This is the case iff any path from the root to a leaf does not contain
+This is the case if any path from the root to a leaf does not contain
 a feature name twice.
 -}
 Undead : ∀ {A} (e : 2ADT A) → Set
@@ -268,6 +231,7 @@ Undead e = ∀ (p : Path) → p starts-at e → Unique p
 A leaf node is always undead.
 -}
 undead-leaf : ∀ {A} {v : V A}
+    ---------------
   → Undead (leaf v)
 undead-leaf .[] tleaf = []
 
@@ -276,6 +240,7 @@ If a choice is undead, so is its left alternative.
 -}
 undead-left : ∀ {A} {D} {l r : 2ADT A}
   → Undead (D ⟨ l , r ⟩)
+    --------------------
   → Undead l
 undead-left {D = D} u-chc p t with u-chc (D ↣ true ∷ p) (walk-left t)
 ... | _ ∷ u-p = u-p
@@ -285,18 +250,26 @@ If a choice is undead, so is its right alternative.
 -}
 undead-right : ∀ {A} {D} {l r : 2ADT A}
   → Undead (D ⟨ l , r ⟩)
+    --------------------
   → Undead r
 undead-right {D = D} u-chc p t with u-chc (D ↣ false ∷ p) (walk-right t)
 ... | _ ∷ u-p = u-p
 
+{-
+If two expressions l and r are undead and do
+not contain the feature name D,
+then the choice D ⟨ l , r ⟩ is undead, too.
+-}
 undead-choice : ∀ {A} {D} {l r : 2ADT A}
   → Undead l
   → Undead r
-  → (∀ (p : Path) → p starts-at l → D ∉ p)
-  → (∀ (p : Path) → p starts-at r → D ∉ p)
+    -- It might be handy to introduce a new predicate for containment of feature names in expressions D ∈ l later.
+  → D ∉' l
+  → D ∉' r
+    --------------------------------------
   → Undead (D ⟨ l , r ⟩)
-undead-choice u-l u-r D∉lp D∉rp (.(_ ↣ true ) ∷ p) (walk-left  t) = ∉→All-different p (D∉lp p t) ∷ (u-l p t)
-undead-choice u-l u-r D∉lp D∉rp (.(_ ↣ false) ∷ p) (walk-right t) = ∉→All-different p (D∉rp p t) ∷ (u-r p t)
+undead-choice u-l u-r D∉l D∉r (.(_ ↣ true ) ∷ p) (walk-left  t) = ∉→All-different p (D∉l p t) ∷ (u-l p t)
+undead-choice u-l u-r D∉l D∉r (.(_ ↣ false) ∷ p) (walk-right t) = ∉→All-different p (D∉r p t) ∷ (u-r p t)
 
 record Undead2ADT (A : 𝔸) : Set where
   constructor _⊚_ -- \oo
@@ -311,6 +284,10 @@ open Undead2ADT public
 Undead2ADT-VL : VariabilityLanguage V
 Undead2ADT-VL = ⟪ Undead2ADT , Conf₂ , ⟦_⟧ᵤ ⟫
 
+{-
+Kills all dead branches within a given expression,
+assuming that some features were already defined.
+-}
 kill-dead-below : ∀ {A}
   → (defined : Path)
   → 2ADT A
@@ -329,14 +306,18 @@ kill-dead-below defined (D ⟨ l , r ⟩) with D ∈? defined
 -- adding our choice information to each path.
 ... | no D∉defined = D ⟨ kill-dead-below (D ↣ true ∷ defined) l , kill-dead-below (D ↣ false ∷ defined) r ⟩
 
+{-
+If a feature name was already defined,
+then any path starting at an expression,
+in which dead branches were eliminated accordingly,
+does not contain that feature name.
+-}
 kill-dead-eliminates-defined-features : ∀ {A}
   → (defined : Path)
   → (D : F)
   → D ∈ defined
   → (e : 2ADT A)
-  → (p : Path)
-  → p starts-at kill-dead-below defined e
-  → D ∉ p
+  → D ∉' kill-dead-below defined e
 kill-dead-eliminates-defined-features _ _ _ (leaf _) .[] tleaf ()
 kill-dead-eliminates-defined-features defined _ _ (D' ⟨ _ , _ ⟩) _ _ _ with D' ∈? defined
 kill-dead-eliminates-defined-features defined D D-def (D' ⟨ l , r ⟩) p t D∈p | yes D'-def with getValue D'-def
@@ -355,6 +336,11 @@ kill-dead-eliminates-defined-features _ _       _     (D' ⟨ _ , _ ⟩) ((.D' �
 kill-dead-eliminates-defined-features defined D D-def (D' ⟨ _ , r ⟩) ((.D' ↣ false) ∷ p) (walk-right t) (there D∈p)
   | no ¬D'-def | no D≠D'  = kill-dead-eliminates-defined-features (D' ↣ false ∷ defined) D (there D-def) r p t D∈p
 
+{-
+Proof that kill-dead is correct,
+which means that the resulting tree
+is undead.
+-}
 kill-dead-correct : ∀ {A}
   → (defined : Path)
   → (e : 2ADT A)
@@ -371,92 +357,69 @@ kill-dead-correct defined (D ⟨ l , r ⟩) | no  D∉defined =
   (kill-dead-eliminates-defined-features (D ↣ true  ∷ defined) D (here (is-refl D true )) l)
   (kill-dead-eliminates-defined-features (D ↣ false ∷ defined) D (here (is-refl D false)) r)
 
+{-
+Dead branch elimination of 2ADTs.
+-}
 kill-dead : ∀ {A}
   → 2ADT A
   → Undead2ADT A
 kill-dead e = kill-dead-below [] e ⊚ kill-dead-correct [] e
 
--- This translates a 2ADT to a VariantList
--- This is correct only if the 2ADT is undead
+{-
+This translates a 2ADT to a VariantList.
+This is correct only if the 2ADT is undead.
+Otherwise, also dead variants will be part of
+the resulting list.
+-}
 tr : ∀ {A : 𝔸} → 2ADT A → VariantList A
 tr (leaf v) = v ∷ []
 tr (D ⟨ l , r ⟩) = tr l ⁺++⁺ tr r
 
-tr-undead : ∀ {A : 𝔸} → Undead2ADT A → VariantList A
-tr-undead = tr ∘ node
-
 toVariantList : ∀ {A : 𝔸} → 2ADT A → VariantList A
-toVariantList = tr-undead ∘ kill-dead
+toVariantList = tr ∘ node ∘ kill-dead
 
--- DEPRECATED: JUST HERE FOR COPY AND PASTA
-conf : ∀ {A} → 2ADT A → Conf₂ → ℕ
-conf (leaf v) c = 0
-conf (D ⟨ l , r ⟩) c with c D
-... | true = conf l c
-... | false = length (tr l) + conf r c
+{-
+This module proves that dead branch elimination preserves semantics.
+-}
+module DeadBranchElim where
+  kill-dead-preserves-below-partial-configs : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → (defined : Path)
+    → (c : Conf₂)
+    → defined ⊑ c
+    → ⟦ e ⟧₂ c ≡ ⟦ kill-dead-below defined e ⟧₂ c
+  kill-dead-preserves-below-partial-configs (leaf _) _ _ _ = refl
+  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c with D ∈? def
+  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | yes D∈def
+    rewrite lookup-partial def⊑c D∈def
+    with c D
+  ... | true  = kill-dead-preserves-below-partial-configs l def c def⊑c
+  ... | false = kill-dead-preserves-below-partial-configs r def c def⊑c
+  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | no D∉def
+    with c D in eq
+  ... | true  = kill-dead-preserves-below-partial-configs l ((D ↣  true) ∷ def) c (eq ∷ def⊑c)
+  ... | false = kill-dead-preserves-below-partial-configs r ((D ↣ false) ∷ def) c (eq ∷ def⊑c)
 
--- conf-unique : ∀ {A} {above : Path} → UniquePaths2ADTBelow above A → Conf₂ → ℕ
--- conf-unique (leaf v ⊚ _) c = 0
--- conf-unique ((D ⟨ l , r ⟩) ⊚ ochc u-l u-r) c =
---   let
---     rec-l = l ⊚ u-l
---     rec-r = r ⊚ u-r
---   in
---     if c D
---     then conf-unique rec-l c
---     else length (tr' rec-l) + conf-unique rec-r c
+  -- Killing dead branches is ok.
+  kill-dead-preserves : ∀ {A : 𝔸}
+    → (e : 2ADT A)
+    → ⟦ e ⟧₂ ≅ ⟦ kill-dead e ⟧ᵤ
+  kill-dead-preserves e = ≐→≅ (λ c → kill-dead-preserves-below-partial-configs e [] c [])
 
--- conf-unique : ∀ {A} → Undead2ADT A → Conf₂ → ℕ
--- conf-unique = conf ∘ node
-
--- TODO: Rewrite for conff
-conf-bounded : ∀ {A}
-  → (e : 2ADT A)
-  → (c : Conf₂)
-  → conf e c < length (tr e)
-conf-bounded (leaf v) c = s≤s z≤n
-conf-bounded (D ⟨ l , r ⟩) c with c D in eq
-... | true = ≤-trans (conf-bounded l c) foo
-  where
-    foo : length (tr l) ≤ length (tr l ⁺++⁺ tr r)
-    foo rewrite length-⁺++⁺ (tr l) (tr r)
-      = m≤m+n (length (tr l)) (length (tr r))
-... | false = go
-  where
-    trl = tr l
-    trr = tr r
-
-    rb : conf r c < length trr
-    rb = conf-bounded r c
-
-    gox : length trl + conf r c < length trl + length trr
-    gox = <-cong-+ˡ (length trl) rb
-
-    go : length trl + conf r c < length (trl ⁺++⁺ trr)
-    go rewrite length-⁺++⁺ trl trr = gox
-
--- conf-unique-bounded : ∀ {A}
---   → (e : UniquePaths2ADT A)
---   → (c : Conf₂)
---   → conf-unique e c < length (tr-unique e)
--- conf-unique-bounded = conf-bounded ∘ node
-
--- conf-unique-bounded-choice-left : ∀ {A}
---   → (D : F)
---   → (l r : 2ADT A)
---   → (c : Conf₂)
---   → c D ≡ true
---   → conf-unique (D ⟨ l , r ⟩) c < length (tr-unique l)
--- conf-unique-bounded-choice-left D l r c x with c D
--- ... | true = conf-unique-bounded l c
-
-
+{-
+This module proves that 'tr' preserves walk-semantics.
+This means that when we evaluate 2ADTs by just walking "randomly"
+down them, then simply converting a 2ADT to a variant list by
+gathering all variants in leafs from left to right preserves semantics.
+-}
 module WalkToList where
+  -- Converts a path to in the input 2ADT to the index in the resulting list.
   conff : ∀ {A} → (e : 2ADT A) → PathConfig e → ℕ
   conff .(leaf _) (.[] is-valid tleaf) = 0
   conff (D ⟨ l , _ ⟩) ((_ ∷ pl) is-valid walk-left  t) = conff l (pl is-valid t)
   conff (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) = length (tr l) + conff r (pr is-valid t)
 
+  -- Converts an index from the resulting list back to a path in the input 2ADT.
   ffnoc : ∀ {A} → (e : 2ADT A) → ℕ → PathConfig e
   ffnoc (leaf v) _ = [] is-valid tleaf
   ffnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
@@ -465,20 +428,53 @@ module WalkToList where
   ffnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with ffnoc r (i ∸ (length (tr l)))
   ... | pr is-valid tr = ((D ↣ false) ∷ pr) is-valid walk-right tr
 
+  -- The index of a path will never be out of bounds.
+  conff-bounded : ∀ {A}
+    → (e : 2ADT A)
+    → (c : PathConfig e)
+    → conff e c < length (tr e)
+  conff-bounded (leaf v) (.[] is-valid tleaf) = s≤s z≤n
+  conff-bounded (D ⟨ l , r ⟩) ((.D ↣ true  ∷ p) is-valid walk-left  t) = ≤-trans (conff-bounded l (p is-valid t)) (⁺++⁺-length-≤ (tr l) (tr r))
+  conff-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
+    where
+      c = p is-valid t
+
+      -- get this by induction
+      rb : conff r c < length (tr r)
+      rb = conff-bounded r c
+
+      -- add (length (tr l)) to both sides on the left
+      gox : length (tr l) + conff r c < length (tr l) + length (tr r)
+      gox = <-cong-+ˡ (length (tr l)) rb
+
+      -- use the sum rule for ⁺++⁺ on the right hand side
+      go : length (tr l) + conff r c < length (tr l ⁺++⁺ tr r)
+      go rewrite ⁺++⁺-length (tr l) (tr r) = gox
+
   preservation-walk-to-list-conf : ∀ {A : 𝔸}
     → (e : 2ADT A)
     → walk e ⊆[ conff e ] ⟦ tr e ⟧ₗ
   preservation-walk-to-list-conf .(leaf _) (.[] is-valid tleaf) = refl
-  preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left  t) =
+  preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left t) =
+    let c = pl is-valid t
+    in
     begin
-      walk l (pl is-valid t)
-    ≡⟨ preservation-walk-to-list-conf l (pl is-valid t) ⟩
-      ⟦ tr l ⟧ₗ (conff l (pl is-valid t))
-    ≡˘⟨ append-preserves (tr l) (tr r) {!!} ⟩ -- we need a version of conf-bounded for conff here.
-    -- ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
-      ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l (pl is-valid t))
+      walk l c
+    ≡⟨ preservation-walk-to-list-conf l c ⟩
+      ⟦ tr l ⟧ₗ (conff l c)
+    ≡˘⟨ append-preserves (tr l) (tr r) (conff-bounded l c) ⟩
+      ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conff l c)
     ∎
-  preservation-walk-to-list-conf (D ⟨ _ , r ⟩) ((_ ∷ _) is-valid walk-right t) = {!!} -- this should be quite similar the walk-right case for ffnoc.
+  preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) =
+    let c = pr is-valid t
+    in
+    begin
+      walk r c
+    ≡⟨ preservation-walk-to-list-conf r c ⟩
+      ⟦ tr r ⟧ₗ (conff r c)
+    ≡˘⟨ prepend-preserves-+ (conff r c) (tr l) (tr r) ⟩
+      ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + (conff r c))
+    ∎
 
   preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
     → (e : 2ADT A)
@@ -497,12 +493,12 @@ module WalkToList where
     ≡⟨ preservation-walk-to-list-fnoc l i ⟩
       walk l (path (ffnoc l i) is-valid valid (ffnoc l i))
     ∎
-  ... | yes p  =
+  ... | yes len[tr-l]≤i  =
     begin
       ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
     ≡⟨⟩
       find-or-last i ((tr l) ⁺++⁺ (tr r))
-    ≡⟨ {!prepend-preserves !} ⟩
+    ≡⟨ prepend-preserves-∸ (tr l) (tr r) len[tr-l]≤i ⟩
       find-or-last (i ∸ length (tr l)) (tr r)
     ≡⟨⟩
       ⟦ tr r ⟧ₗ (i ∸ length (tr l))
@@ -510,18 +506,17 @@ module WalkToList where
       walk r (path (ffnoc r (i ∸ length (tr l))) is-valid valid (ffnoc r (i ∸ length (tr l))))
     ∎
 
-  -- When equipped with walk semantics, 2ADTs are isomorphic to lists of variants,
-  -- This proof is almost done and just requires some juggling with ≤ and so on.
   preservation-walk-to-list : ∀ {A : 𝔸}
     → (e : 2ADT A)
     → walk e ≅ ⟦ tr e ⟧ₗ
   preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
 
 {-
-If we walk a path (with walk semantics), this yields the same variant
-as long as the path does not contain conflicts.
-However, there might be conflicting paths: Paths that end in dead branches.
-Hence, in a 2ADT without dead branches, walking a path randomly is always fine.
+Walk semantics are equivalent to ordinary 2ADT semantics
+as long as the 2ADT does not contain any dead branches.
+This means that configurations can be modelled as functions or as paths.
+Interestingly, we obtain a compiler that does not change the input
+expression but only translates configurations.
 -}
 module NoConflictWalk where
   {-
@@ -781,39 +776,13 @@ module NoConflictWalk where
     rewrite path-to-fun-step-r D l r u p t
     = refl
 
-  -- Configurations can be modelled as functions or as paths.
-  -- The expression is unchanged here but the configurations have to be translated.
   preservation-path-configs : ∀ {A : 𝔸}
     → (e : Undead2ADT A)
     → ⟦ e ⟧ᵤ ≅ walk (node e)
   preservation-path-configs e = ≅[]→≅ (preservation-path-configs-conf (node e) (undead e) , preservation-path-configs-fnoc (node e) (undead e))
 
-module DeadBranchElim where
-  kill-dead-preserves-below-partial-configs : ∀ {A : 𝔸}
-    → (e : 2ADT A)
-    → (defined : Path)
-    → (c : Conf₂)
-    → defined ⊑ c
-    → ⟦ e ⟧₂ c ≡ ⟦ kill-dead-below defined e ⟧₂ c
-  kill-dead-preserves-below-partial-configs (leaf _) _ _ _ = refl
-  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c with D ∈? def
-  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | yes D∈def
-    rewrite lookup-partial def⊑c D∈def
-    with c D
-  ... | true  = kill-dead-preserves-below-partial-configs l def c def⊑c
-  ... | false = kill-dead-preserves-below-partial-configs r def c def⊑c
-  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | no D∉def
-    with c D in eq
-  ... | true  = kill-dead-preserves-below-partial-configs l ((D ↣  true) ∷ def) c (eq ∷ def⊑c)
-  ... | false = kill-dead-preserves-below-partial-configs r ((D ↣ false) ∷ def) c (eq ∷ def⊑c)
-
-  -- Killing dead branches is ok.
-  kill-dead-preserves : ∀ {A : 𝔸}
-    → (e : 2ADT A)
-    → ⟦ e ⟧₂ ≅ ⟦ kill-dead e ⟧ᵤ
-  kill-dead-preserves e = ≐→≅ (λ c → kill-dead-preserves-below-partial-configs e [] c [])
-
 -- 2ADTs are isomorphic to Variant Lists.
+-- TODO: Construct compilers and make use of ⊕.
 preservation : ∀ {A : 𝔸}
   → (e : 2ADT A)
   → ⟦ e ⟧₂ ≅ ⟦ toVariantList e ⟧ₗ
@@ -828,103 +797,5 @@ preservation e =
     ⟦ toVariantList e ⟧ₗ
   ≅-∎
 
----- DEPRECATED STUFF FROM HERE ON THAT WE MIGHT NEED LATER AGAIN ----
-
--- fnoc (D ⟨ l , r ⟩) i D' with D == D' | i ≤ᵇ length (tr-unique l)
--- ... | yes p | left? = left?
--- ... | no ¬p | true  = fnoc l i D'
--- ... | no ¬p | false = fnoc l (i ∸ (length (tr-unique l))) D'
-
--- preservation-fnoc : ∀ {A : 𝔸}
---   → (D : F) (l r : 2ADT A)
---   → ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ ⊆[ fnoc (D ⟨ l , r ⟩) ] ⟦ D ⟨ l , r ⟩ ⟧₂
--- preservation-fnoc D l r i = ?
-
--- We need this indirection that splits up a UniquePaths2ADTBelow for termination checking.
--- fnoc-unique' : ∀ {A} {above : Path} → (e : 2ADT A) → UniquePaths above e → ℕ → Conf₂
--- fnoc-unique' (leaf x) _ _ _ = true -- don't care
--- fnoc-unique' (D ⟨ l , r ⟩) (ochc u-l u-r) i D' = {!!}
-
--- find-path-to : ∀ {A} {above : Path} → (e : 2ADT A) → UniquePaths above e → ℕ → Σ Path Unique
--- find-path-to (leaf v) u i = [] , []
--- find-path-to (D ⟨ l , r ⟩) (ochc u-l u-r) i with length (tr l) ≤ᵇ i
--- ... | false {-left-} =
---   let
---     ll = find-path-to l u-l i
---   in
---     (D ↣ true) ∷ proj₁ ll , {!u-l!} ∷ {!!}
--- ... | true  = {!!}
-
--- fnoc-unique' : ∀ {A} {above : Path} → (e : 2ADT A) → UniquePaths above e → ℕ → Conf₂
--- fnoc-unique' (leaf x) _ _ _ = true -- don't care
--- fnoc-unique' (D ⟨ l , r ⟩) (ochc u-l u-r) i D' with i ≤ᵇ length (tr l) | D == D'
--- ... | true  | yes p = true
--- ... | false | yes p = false
--- ... | true  | no ¬p = fnoc-unique' l u-l i D'
--- ... | false | no ¬p = fnoc-unique' l u-l (i ∸ (length (tr l))) D'
--- fnoc-unique' (D ⟨ l , r ⟩) (ochc u-l u-r) i D' with D == D' | i ≤ᵇ length (tr l)
--- ... | yes p | left? = left?
--- ... | no ¬p | true  = fnoc-unique' l u-l i D'
--- ... | no ¬p | false = fnoc-unique' l u-l (i ∸ (length (tr l))) D'
-
--- fnoc-unique : ∀ {A} {above : Path} → UniquePaths2ADTBelow above A → ℕ → Conf₂
--- fnoc-unique (e ⊚ u) = fnoc-unique' e u
-
--- fnoc (leaf _) _ _ = true -- dont care
--- fnoc (D ⟨ l , r ⟩) i D' with D == D' | i ≤ᵇ length (tr l)
--- ... | yes p | left? = left?
--- ... | no ¬p | true  = fnoc l i D'
--- ... | no ¬p | false = fnoc l (i ∸ (length (tr l))) D'
-
--- fnoc (leaf _) _ = dont-care
---   where
---     dont-care = λ _ → true -- does not matter what we return here
--- fnoc (D ⟨ l , r ⟩) i D' =
---   let sm = i ≤ᵇ length (tr l) in
---   if does (D == D')
---   then sm
---   else if sm
---         then fnoc l i D'
---         else fnoc l (i ∸ (length (tr l))) D'
-
--- mutual
-  -- preservation-fnoc-unique : ∀ {A : 𝔸} {above : Path}
-  --     → (e : UniquePaths2ADTBelow above A)
-  --     → ⟦ tr (node e) ⟧ₗ ⊆[ fnoc-unique e ] ⟦ e ⟧ᵤ
-  -- preservation-fnoc-unique (leaf _ ⊚ _) _ = refl
-  -- preservation-fnoc-unique ((D ⟨ l , r ⟩) ⊚ u) i with i ≤ᵇ length (tr l)
-  -- ... | false = {!!}
-  -- ... | true  = {!!}
-    -- begin
-    --   ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
-    -- ≡⟨⟩
-    --   (find-or-last i ((tr l) ⁺++⁺ (tr r)))
-    -- ≡⟨⟩
-    --   (find-or-last i (List⁺.head (tr l) ∷ tail (tr l) ++ List⁺.head (tr r) ∷ tail (tr r)))
-    -- ≡⟨ {!!} ⟩
-    --   (if c D then ⟦ l ⟧₂ c else ⟦ r ⟧₂ c)
-    -- ≡⟨⟩
-    --   ⟦ D ⟨ l , r ⟩ ⟧₂ c
-    -- ∎
-
-preservation-conf : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ e ⟧₂ ⊆[ conf e ] ⟦ tr e ⟧ₗ
-preservation-conf e@(leaf v) = irrelevant-index-⊆ v (λ _ → refl) (λ _ → refl) (conf e)
-preservation-conf (D ⟨ l , r ⟩) c with c D
-... | true  =
-  begin
-    ⟦ l ⟧₂ c
-  ≡⟨ preservation-conf l c ⟩
-    ⟦ tr l ⟧ₗ (conf l c)
-  ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conf l c)
-  ∎
-... | false =
-  begin
-    ⟦ r ⟧₂ c
-  ≡⟨ preservation-conf r c ⟩
-    ⟦ tr r ⟧ₗ (conf r c)
-  ≡˘⟨ prepend-preserves (conf r c) (tr l) (tr r) ⟩
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + conf r c)
-  ∎
+VariantList≽2ADT : VariantListL ≽ 2ADTL
+VariantList≽2ADT = expressiveness-by-translation toVariantList preservation

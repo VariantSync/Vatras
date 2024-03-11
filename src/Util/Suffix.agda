@@ -7,9 +7,18 @@ open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
--- TODO: Replace with "Suffix" from stl
+-- TODO: Replace with "Suffix" from stl?
+{-
+This relation relates a list with all of it suffixes.
+This relation is a partial order because it is
+  - reflexive (by definition),
+  - antisymmetric (yet to prove),
+  - and transitive (to prove).
+-}
 data _endswith_ {ℓ} {A : Set ℓ} : List A → List A → Set where
-  match : ∀ (p : List A) → p endswith p -- reflexive
+  match : ∀ (p : List A)
+      ------------
+    → p endswith p -- reflexive
 
   later : ∀ {p q : List A} {a : A}
     → p endswith q

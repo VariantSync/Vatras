@@ -8,6 +8,7 @@ module Util.List where
 open import Data.Bool using (Bool; true; false)
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
+open import Data.Nat.Properties using (m≤m+n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr)
 open import Data.List.Properties using (map-id; length-++)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
@@ -28,9 +29,12 @@ max : List ℕ → ℕ
 max = foldr _⊔_ zero
 
 -- TODO: Contribute to stl
-length-⁺++⁺ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A)
+⁺++⁺-length : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A)
   → List⁺.length (xs ⁺++⁺ ys) ≡ List⁺.length xs + List⁺.length ys
-length-⁺++⁺ (x ∷ xs) (y ∷ ys) = length-++ (x ∷ xs)
+⁺++⁺-length (x ∷ xs) (y ∷ ys) = length-++ (x ∷ xs)
+
+⁺++⁺-length-≤ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A) → List⁺.length xs ≤ List⁺.length (xs ⁺++⁺ ys)
+⁺++⁺-length-≤ xs ys rewrite ⁺++⁺-length xs ys = m≤m+n (List⁺.length xs) (List⁺.length ys)
 
 -- Selects the alternative at the given tag.
 lookup-clamped : {A : Set} → ℕ → List⁺ A → A
@@ -94,35 +98,39 @@ append-preserves {n = .zero} (x ∷ [])     (y ∷ ys) (s≤s z≤n) = refl
 append-preserves {n =  zero} (x ∷ z ∷ zs) (y ∷ ys) (s≤s le)  = refl
 append-preserves {n = suc n} (x ∷ z ∷ zs) (y ∷ ys) (s≤s (n≤zzs)) = append-preserves (z ∷ zs) (y ∷ ys) (n≤zzs)
 
--- FIXME: Remove this macro
-{-# TERMINATING #-}
-prepend-preserves : ∀ {ℓ} {A : Set ℓ}
+prepend-preserves-+ : ∀ {ℓ} {A : Set ℓ}
   → (n : ℕ)
   → (xs ys : List⁺ A)
   → find-or-last (List⁺.length xs + n) (xs ⁺++⁺ ys) ≡ find-or-last n ys
-prepend-preserves n (x ∷ []) ys = refl
-prepend-preserves n (x ∷ z ∷ zs) ys = prepend-preserves n (z ∷ zs) ys
--- prepend-preserves n (x ∷ z ∷ zs) (y ∷ ys) =
---   begin
---     find-or-last (length (x ∷ z ∷ zs) + n) ((x ∷ z ∷ zs) ⁺++⁺ (y ∷ ys))
---   ≡⟨⟩
---     find-or-last (length (x ∷ z ∷ zs) + n) (x ∷ ((z ∷ zs) ++ (y ∷ ys)))
---   ≡⟨⟩
---     find-or-last (length (z ∷ zs) + n) (((z ∷ zs) ⁺++⁺ (y ∷ ys)))
---   ≡⟨ prepend-preserves n (z ∷ zs) (y ∷ ys) ⟩
---     find-or-last n (y ∷ ys)
---   ∎
+prepend-preserves-+ n (x ∷ xs) ys = ind n x xs ys
+  where
+    -- We need this indirection for termination checking.
+    -- We have to unpack the first list into two parameters.
+    ind : ∀ {ℓ} {A : Set ℓ}
+      → (n : ℕ)
+      → (x : A)
+      → (xs : List A)
+      → (ys : List⁺ A)
+      → find-or-last (List⁺.length (x ∷ xs) + n) ((x ∷ xs) ⁺++⁺ ys) ≡ find-or-last n ys
+    ind n x [] ys = refl
+    ind n x (z ∷ zs) ys = ind n z zs ys
 
-prepend-preserves' : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
+prepend-preserves-∸ : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
   → (xs ys : List⁺ A)
   → List⁺.length xs ≤ n
   → find-or-last n (xs ⁺++⁺ ys) ≡ find-or-last (n ∸ List⁺.length xs) ys
-prepend-preserves' {n = zero} xs ys ()
-prepend-preserves' {n = suc n} (x ∷ []) ys (s≤s z≤n) = refl
-prepend-preserves' {n = suc n} (x ∷ z ∷ zs) ys (s≤s smol) =
+prepend-preserves-∸ {n = zero} xs ys ()
+prepend-preserves-∸ {n = suc n} (x ∷ []) ys (s≤s z≤n) = refl
+prepend-preserves-∸ {n = suc n} (x ∷ z ∷ zs) ys (s≤s smol) =
   begin
     find-or-last (suc n) ((x ∷ z ∷ zs) ⁺++⁺ ys)
-  ≡⟨ {!!} ⟩
+  ≡⟨⟩
+    find-or-last n ((z ∷ zs) ⁺++⁺ ys)
+  ≡⟨ prepend-preserves-∸ (z ∷ zs) ys smol ⟩
+    find-or-last (n ∸ List⁺.length (z ∷ zs)) ys
+  ≡⟨⟩
+    find-or-last (suc n ∸ suc (List⁺.length (z ∷ zs))) ys
+  ≡⟨⟩
     find-or-last (suc n ∸ List⁺.length (x ∷ z ∷ zs)) ys
   ∎
 
