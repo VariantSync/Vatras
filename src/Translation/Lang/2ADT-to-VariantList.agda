@@ -73,6 +73,9 @@ same (A ↣ _) (B ↣ _) = True (A == B)
 is : F → Selection → Set
 is A (B ↣ _) = True (A == B)
 
+is-refl : ∀ (D : F) → (b : Bool) → is D (D ↣ b)
+is-refl _ _ = fromWitness refl
+
 ==-isYes-refl : ∀ (D : F) → isYes (D == D) ≡ true
 ==-isYes-refl D with D == D
 ... | yes refl = refl
