@@ -18,8 +18,8 @@ open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
-open import Function using (_∘_)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Function using (_∘_; id)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
 open import Size using (Size; ↑_; ∞)
 open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
@@ -338,28 +338,37 @@ Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 Fin→ℕ⁻¹ : ∀ {D : 𝔽} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D n
 Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
+Fin→ℕ⁻¹-Fin→ℕ : ∀ {D : 𝔽} → (n : ℕ≥ 2) → Fin→ℕ⁻¹ {D} n ∘ Fin→ℕ {D} n ≗ id
+Fin→ℕ⁻¹-Fin→ℕ (sucs n) (d , i) = Eq.cong₂ _,_ refl (ℕ≥.cappedFin-toℕ i)
+
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC n (D × ℕ) ∞ A
-translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)))
-  where
-  lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
-  lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
+translate (sucs n) expr =
+  NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉)
+    (NCC→NCC.compile ⌈ expr ⌉ (sucs n)
+      (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)))
 
 conf : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → CCC.Configuration D
   → NCC.Configuration n (D × ℕ)
-conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)) ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ∘ Exact.conf ⌈ expr ⌉
+conf n expr =
+  NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)
+  ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))
+  ∘ Exact.conf ⌈ expr ⌉
 
 fnoc : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC.Configuration n (D × ℕ)
   → CCC.Configuration D
-fnoc n expr = Exact.fnoc ⌈ expr ⌉ ∘ NCC→NCC.fnoc ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ∘ (NCC-map-config n (Fin→ℕ ⌈ expr ⌉))
+fnoc n expr =
+  Exact.fnoc ⌈ expr ⌉
+  ∘ NCC→NCC.fnoc ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))
+  ∘ (NCC-map-config n (Fin→ℕ ⌈ expr ⌉))
 
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
@@ -368,17 +377,14 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
 preserves (sucs n) expr =
   NCC.⟦ translate (sucs n) expr ⟧
   ≅[]⟨⟩
-  NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
-  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
-  NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ⟧
+    NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
+  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+    NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ⟧
   ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
-  NCC.⟦ Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟧
+    NCC.⟦ Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟧
   ≅[]⟨ Exact.preserves ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟩
     CCC.⟦ expr ⟧
   ≅[]-∎
-  where
-  lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
-  lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
 
 CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
 CCC→NCC n .LanguageCompiler.compile = translate n
