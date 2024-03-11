@@ -64,7 +64,7 @@ module Exact where
   -- The saturated semantics of `CCC` (see `find-or-last`) ensures that, by reusing the last element, the semantic of the expression doesn't change.
   -- Such a saturated `CCC` expression can then be translated into a `NCC` expression by converting the alternative lists into vectors.
   -- However, the arity of the `NCC` language is the length of these vectors, which depends on the length of the alternative lists in the unsaturated `CCC` expression.
-  -- Hence, we need to calculate the maximum choice length (`maxChoiceLength``) and a proof (`ChoiceLenghtLimit`) that all choice lengths are smaller than that (`maxChoiceLengthIsLimit).
+  -- Hence, we need to calculate the maximum choice length (`⌈_⌉`) and a proof (`ChoiceLenghtLimit`) that all choice lengths are smaller than that (`maxChoiceLengthIsLimit).
 
   maximum : List (ℕ≥ 2) → ℕ≥ 2
   maximum [] = sucs zero
@@ -73,11 +73,13 @@ module Exact where
   maximum⁺ : List⁺ (ℕ≥ 2) → ℕ≥ 2
   maximum⁺ (n ∷ ns) = maximum (n ∷ ns)
 
-  -- calculcates `maximum number of alternatives ⊔ 2` to ensure that it is ≥ 2
-  maxChoiceLength : ∀ {i : Size} {D A : Set} → CCC D i A → ℕ≥ 2
-  maxChoiceLength (a -< cs >-) = maximum (List.map maxChoiceLength cs)
-  maxChoiceLength (d ⟨ c ∷ [] ⟩) = maxChoiceLength c
-  maxChoiceLength (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = sucs (List.length cs) ⊔ maximum⁺ (List⁺.map maxChoiceLength (c₁ ∷ c₂ ∷ cs))
+  -- Calculcates the `maximum number of alternatives ⊔ 2`.
+  -- We want to translate into `NCC` which has an arity of at leat 2 so we
+  -- ensure that the result is ≥ 2
+  ⌈_⌉ : ∀ {i : Size} {D A : Set} → CCC D i A → ℕ≥ 2
+  ⌈ a -< cs >- ⌉ = maximum (List.map ⌈_⌉ cs)
+  ⌈ d ⟨ c ∷ [] ⟩ ⌉ = ⌈_⌉ c
+  ⌈ d ⟨ c₁ ∷ c₂ ∷ cs ⟩ ⌉ = sucs (List.length cs) ⊔ maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs))
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
@@ -117,20 +119,20 @@ module Exact where
     -- Proof that `maxChoiceLength` calculates a correct choice lenght limit.
     maxChoiceLengthIsLimit : ∀ {i : Size} {D A : Set}
       → (expr : CCC D i A)
-      → ChoiceLengthLimit (maxChoiceLength expr) expr
+      → ChoiceLengthLimit ⌈ expr ⌉ expr
     maxChoiceLengthIsLimit (a -< cs >-) = maxArtifact (maximumIsLimit cs)
-    maxChoiceLengthIsLimit (d ⟨ c ∷ [] ⟩) = maxChoice (≤-trans (ℕ.n≤1+n 1) (ℕ≥.≤-toℕ (maxChoiceLength c))) (maxChoiceLengthIsLimit c ∷ [])
-    maxChoiceLengthIsLimit (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = maxChoice (ℕ≥.m≤m⊔n (sucs (List.length cs)) (maximum⁺ (List⁺.map maxChoiceLength (c₁ ∷ c₂ ∷ cs)))) (List⁺ChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (sucs (List.length cs)) (maximum⁺ (List⁺.map maxChoiceLength (c₁ ∷ c₂ ∷ cs)))) (maximum⁺IsLimit (c₁ ∷ c₂ ∷ cs)))
+    maxChoiceLengthIsLimit (d ⟨ c ∷ [] ⟩) = maxChoice (≤-trans (ℕ.n≤1+n 1) (ℕ≥.≤-toℕ ⌈ c ⌉)) (maxChoiceLengthIsLimit c ∷ [])
+    maxChoiceLengthIsLimit (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = maxChoice (ℕ≥.m≤m⊔n (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (List⁺ChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (maximum⁺IsLimit (c₁ ∷ c₂ ∷ cs)))
 
     maximumIsLimit : ∀ {i : Size} {D A : Set}
       → (cs : List (CCC D i A))
-      → ListChoiceLengthLimit (maximum (List.map maxChoiceLength cs)) cs
+      → ListChoiceLengthLimit (maximum (List.map ⌈_⌉ cs)) cs
     maximumIsLimit [] = []
-    maximumIsLimit (c ∷ cs) = ChoiceLengthLimit-respects-≤ (ℕ≥.m≤m⊔n (maxChoiceLength c) (maximum (List.map maxChoiceLength cs))) (maxChoiceLengthIsLimit c) ∷ ListChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (maxChoiceLength c) (maximum (List.map maxChoiceLength cs))) (maximumIsLimit cs)
+    maximumIsLimit (c ∷ cs) = ChoiceLengthLimit-respects-≤ (ℕ≥.m≤m⊔n ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (maxChoiceLengthIsLimit c) ∷ ListChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (maximumIsLimit cs)
 
     maximum⁺IsLimit : ∀ {i : Size} {D A : Set}
       → (cs : List⁺ (CCC D i A))
-      → List⁺ChoiceLengthLimit (maximum⁺ (List⁺.map maxChoiceLength cs)) cs
+      → List⁺ChoiceLengthLimit (maximum⁺ (List⁺.map ⌈_⌉ cs)) cs
     maximum⁺IsLimit (c ∷ cs) with maximumIsLimit (c ∷ cs)
     ... | max-c ∷ max-cs = max-c ∷ max-cs
 
@@ -314,17 +316,19 @@ module Exact where
 
   -- Can't instantiate a LanguageCompiler because the expression compiler depends on the expression
 
-  -- CCC→NCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (λ e → NCCL (maxChoiceLength e) D)
+  -- CCC→NCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (λ e → NCCL ⌈ e ⌉ D)
   -- --                                                                ^^^^^^ this unrepresentable in our framework
-  -- CCC→NCC n .LanguageCompiler.compile expr = translate (maxChoiceLength expr) expr (maxChoiceLengthLimit expr)
-  -- CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf (maxChoiceLength expr)
-  -- CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc (maxChoiceLength expr)
-  -- CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves (maxChoiceLength expr) expr (maxChoiceLengthIsLimit expr))
+  -- CCC→NCC n .LanguageCompiler.compile expr = translate ⌈ expr ⌉ expr (maxChoiceLengthLimit expr)
+  -- CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf ⌈ expr ⌉
+  -- CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc ⌈ expr ⌉
+  -- CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves ⌈ expr ⌉ expr (maxChoiceLengthIsLimit expr))
 
   -- Having the output language depend on the input expression brings along a lot of complications and problems.
   -- Introducing such complications can be avoided by generalizing `translate` to translate into an arbitrary ary `NCCL` by composing it with `NCC→NCC`.
   -- This is implemented in the rest of this file.
 
+
+open Exact using (⌈_⌉)
 
 -- Gets rid of the `maxChoiceLength` in the `IndexedDimension`, here `n`.
 Fin→ℕ : ∀ {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
@@ -337,7 +341,7 @@ translate : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC n (D × ℕ) ∞ A
-translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)))
+translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)))
   where
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
@@ -347,14 +351,14 @@ conf : ∀ {i : Size} {D A : Set}
   → CCC D i A
   → CCC.Configuration D
   → NCC.Configuration n (D × ℕ)
-conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr))) ∘ NCC→NCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
+conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)) ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf ⌈ expr ⌉
 
 fnoc : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC.Configuration n (D × ℕ)
   → CCC.Configuration D
-fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ NCC→NCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (NCC-map-config n (Fin→ℕ (Exact.maxChoiceLength expr)))
+fnoc n expr = Exact.fnoc ⌈ expr ⌉ ∘ NCC→NCC.fnoc ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (NCC-map-config n (Fin→ℕ ⌈ expr ⌉))
 
 preserves : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
@@ -363,12 +367,12 @@ preserves : ∀ {i : Size} {D A : Set}
 preserves (sucs n) expr =
   NCC.⟦ translate (sucs n) expr ⟧
   ≅[]⟨⟩
-  NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟧
-  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ (Exact.maxChoiceLength expr)) (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr)) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma (Exact.maxChoiceLength expr) i)) (NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
-  NCC.⟦ NCC→NCC.compile (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ⟧
-  ≅[]˘⟨ (NCC→NCC.preserves (Exact.maxChoiceLength expr) (sucs n) (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
-  NCC.⟦ Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr) ⟧
-  ≅[]⟨ Exact.preserves (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr) ⟩
+  NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr))) ⟧
+  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
+  NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)) ⟧
+  ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
+  NCC.⟦ Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr) ⟧
+  ≅[]⟨ Exact.preserves ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr) ⟩
     CCC.⟦ expr ⟧
   ≅[]-∎
   where
