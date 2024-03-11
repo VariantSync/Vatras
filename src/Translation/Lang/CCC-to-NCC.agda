@@ -64,7 +64,7 @@ module Exact where
   -- The saturated semantics of `CCC` (see `find-or-last`) ensures that, by reusing the last element, the semantic of the expression doesn't change.
   -- Such a saturated `CCC` expression can then be translated into a `NCC` expression by converting the alternative lists into vectors.
   -- However, the arity of the `NCC` language is the length of these vectors, which depends on the length of the alternative lists in the unsaturated `CCC` expression.
-  -- Hence, we need to calculate the maximum choice length (`⌈_⌉`) and a proof (`ChoiceLenghtLimit`) that all choice lengths are smaller than that (`maxChoiceLengthIsLimit).
+  -- Hence, we need to calculate the maximum choice length (`⌈_⌉`) and a proof (`NumberOfAlternatives≤`) that all choice lengths are smaller than that (`numberOfAlternatives≤⌈_⌉`).
 
   maximum : List (ℕ≥ 2) → ℕ≥ 2
   maximum [] = sucs zero
@@ -83,64 +83,64 @@ module Exact where
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
-    data ChoiceLengthLimit {D A : Set} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
-      maxArtifact : {i : Size} → {a : A} → {cs : List (CCC D i A)} → ListChoiceLengthLimit n {i} cs → ChoiceLengthLimit n {↑ i} (a -< cs >-)
-      maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → List⁺ChoiceLengthLimit n {i} cs → ChoiceLengthLimit n {↑ i} (d ⟨ cs ⟩)
+    data NumberOfAlternatives≤ {D A : Set} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
+      maxArtifact : {i : Size} → {a : A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
+      maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → NumberOfAlternatives≤-List⁺ n {i} cs → NumberOfAlternatives≤ n {↑ i} (d ⟨ cs ⟩)
 
-    data ListChoiceLengthLimit {D A : Set} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
-      [] : {i : Size} → ListChoiceLengthLimit n {i} []
-      _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → ChoiceLengthLimit n {i} c → ListChoiceLengthLimit n {i} cs → ListChoiceLengthLimit n {i} (c ∷ cs)
+    data NumberOfAlternatives≤-List {D A : Set} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
+      [] : {i : Size} → NumberOfAlternatives≤-List n {i} []
+      _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List n {i} (c ∷ cs)
 
-    data List⁺ChoiceLengthLimit {D A : Set} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set where
-      _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → ChoiceLengthLimit n {i} c → ListChoiceLengthLimit n {i} cs → List⁺ChoiceLengthLimit n {i} (c ∷ cs)
-
-  mutual
-    ChoiceLengthLimit-respects-≤ : ∀ {i : Size} {D A : Set} {cs : CCC D i A} {n₁ n₂ : ℕ≥ 2}
-      → n₁ ℕ≥.≤ n₂
-      → ChoiceLengthLimit n₁ cs
-      → ChoiceLengthLimit n₂ cs
-    ChoiceLengthLimit-respects-≤ n₁≤n₂ (maxArtifact max-cs) = maxArtifact (ListChoiceLengthLimit-respects-≤ n₁≤n₂ max-cs)
-    ChoiceLengthLimit-respects-≤ {cs = d ⟨ cs ⟩} {n₁ = n₁} {n₂ = n₂} n₁≤n₂ (maxChoice max-cs≤n max-cs) = maxChoice (≤-trans max-cs≤n n₁≤n₂) (List⁺ChoiceLengthLimit-respects-≤ n₁≤n₂ max-cs)
-
-    ListChoiceLengthLimit-respects-≤ : ∀ {i : Size} {D A : Set} {cs : List (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
-      → n₁ ℕ≥.≤ n₂
-      → ListChoiceLengthLimit n₁ cs
-      → ListChoiceLengthLimit n₂ cs
-    ListChoiceLengthLimit-respects-≤ n₁≤n₂ [] = []
-    ListChoiceLengthLimit-respects-≤ n₁≤n₂ (c ∷ cs) = ChoiceLengthLimit-respects-≤ n₁≤n₂ c ∷ ListChoiceLengthLimit-respects-≤ n₁≤n₂ cs
-
-    List⁺ChoiceLengthLimit-respects-≤ : ∀ {i : Size} {D A : Set} {cs : List⁺ (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
-      → n₁ ℕ≥.≤ n₂
-      → List⁺ChoiceLengthLimit n₁ cs
-      → List⁺ChoiceLengthLimit n₂ cs
-    List⁺ChoiceLengthLimit-respects-≤ n₁≤n₂ (c ∷ cs) = ChoiceLengthLimit-respects-≤ n₁≤n₂ c ∷ ListChoiceLengthLimit-respects-≤ n₁≤n₂ cs
+    data NumberOfAlternatives≤-List⁺ {D A : Set} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set where
+      _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List⁺ n {i} (c ∷ cs)
 
   mutual
-    -- Proof that `maxChoiceLength` calculates a correct choice lenght limit.
-    maxChoiceLengthIsLimit : ∀ {i : Size} {D A : Set}
+    NumberOfAlternatives≤-respects-≤ : ∀ {i : Size} {D A : Set} {cs : CCC D i A} {n₁ n₂ : ℕ≥ 2}
+      → n₁ ℕ≥.≤ n₂
+      → NumberOfAlternatives≤ n₁ cs
+      → NumberOfAlternatives≤ n₂ cs
+    NumberOfAlternatives≤-respects-≤ n₁≤n₂ (maxArtifact max-cs) = maxArtifact (NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ max-cs)
+    NumberOfAlternatives≤-respects-≤ {cs = d ⟨ cs ⟩} {n₁ = n₁} {n₂ = n₂} n₁≤n₂ (maxChoice max-cs≤n max-cs) = maxChoice (≤-trans max-cs≤n n₁≤n₂) (NumberOfAlternatives≤-List⁺-respects-≤ n₁≤n₂ max-cs)
+
+    NumberOfAlternatives≤-List-respects-≤ : ∀ {i : Size} {D A : Set} {cs : List (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
+      → n₁ ℕ≥.≤ n₂
+      → NumberOfAlternatives≤-List n₁ cs
+      → NumberOfAlternatives≤-List n₂ cs
+    NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ [] = []
+    NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ (c ∷ cs) = NumberOfAlternatives≤-respects-≤ n₁≤n₂ c ∷ NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ cs
+
+    NumberOfAlternatives≤-List⁺-respects-≤ : ∀ {i : Size} {D A : Set} {cs : List⁺ (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
+      → n₁ ℕ≥.≤ n₂
+      → NumberOfAlternatives≤-List⁺ n₁ cs
+      → NumberOfAlternatives≤-List⁺ n₂ cs
+    NumberOfAlternatives≤-List⁺-respects-≤ n₁≤n₂ (c ∷ cs) = NumberOfAlternatives≤-respects-≤ n₁≤n₂ c ∷ NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ cs
+
+  mutual
+    -- Proof that `⌈_⌉` calculates a correct choice lenght limit.
+    numberOfAlternatives≤⌈_⌉ : ∀ {i : Size} {D A : Set}
       → (expr : CCC D i A)
-      → ChoiceLengthLimit ⌈ expr ⌉ expr
-    maxChoiceLengthIsLimit (a -< cs >-) = maxArtifact (maximumIsLimit cs)
-    maxChoiceLengthIsLimit (d ⟨ c ∷ [] ⟩) = maxChoice (≤-trans (ℕ.n≤1+n 1) (ℕ≥.≤-toℕ ⌈ c ⌉)) (maxChoiceLengthIsLimit c ∷ [])
-    maxChoiceLengthIsLimit (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = maxChoice (ℕ≥.m≤m⊔n (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (List⁺ChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (maximum⁺IsLimit (c₁ ∷ c₂ ∷ cs)))
+      → NumberOfAlternatives≤ ⌈ expr ⌉ expr
+    numberOfAlternatives≤⌈_⌉ (a -< cs >-) = maxArtifact (numberOfAlternatives≤⌈_⌉-List cs)
+    numberOfAlternatives≤⌈_⌉ (d ⟨ c ∷ [] ⟩) = maxChoice (≤-trans (ℕ.n≤1+n 1) (ℕ≥.≤-toℕ ⌈ c ⌉)) (numberOfAlternatives≤⌈_⌉ c ∷ [])
+    numberOfAlternatives≤⌈_⌉ (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = maxChoice (ℕ≥.m≤m⊔n (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (NumberOfAlternatives≤-List⁺-respects-≤ (ℕ≥.m≤n⊔m (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (numberOfAlternatives≤⌈_⌉-List⁺ (c₁ ∷ c₂ ∷ cs)))
 
-    maximumIsLimit : ∀ {i : Size} {D A : Set}
+    numberOfAlternatives≤⌈_⌉-List : ∀ {i : Size} {D A : Set}
       → (cs : List (CCC D i A))
-      → ListChoiceLengthLimit (maximum (List.map ⌈_⌉ cs)) cs
-    maximumIsLimit [] = []
-    maximumIsLimit (c ∷ cs) = ChoiceLengthLimit-respects-≤ (ℕ≥.m≤m⊔n ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (maxChoiceLengthIsLimit c) ∷ ListChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (maximumIsLimit cs)
+      → NumberOfAlternatives≤-List (maximum (List.map ⌈_⌉ cs)) cs
+    numberOfAlternatives≤⌈_⌉-List [] = []
+    numberOfAlternatives≤⌈_⌉-List (c ∷ cs) = NumberOfAlternatives≤-respects-≤ (ℕ≥.m≤m⊔n ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (numberOfAlternatives≤⌈_⌉ c) ∷ NumberOfAlternatives≤-List-respects-≤ (ℕ≥.m≤n⊔m ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (numberOfAlternatives≤⌈_⌉-List cs)
 
-    maximum⁺IsLimit : ∀ {i : Size} {D A : Set}
+    numberOfAlternatives≤⌈_⌉-List⁺ : ∀ {i : Size} {D A : Set}
       → (cs : List⁺ (CCC D i A))
-      → List⁺ChoiceLengthLimit (maximum⁺ (List⁺.map ⌈_⌉ cs)) cs
-    maximum⁺IsLimit (c ∷ cs) with maximumIsLimit (c ∷ cs)
+      → NumberOfAlternatives≤-List⁺ (maximum⁺ (List⁺.map ⌈_⌉ cs)) cs
+    numberOfAlternatives≤⌈_⌉-List⁺ (c ∷ cs) with numberOfAlternatives≤⌈_⌉-List (c ∷ cs)
     ... | max-c ∷ max-cs = max-c ∷ max-cs
 
   mutual
     translate : ∀ {i : Size} {D A : Set}
       → (n : ℕ≥ 2)
       → (expr : CCC D i A)
-      → ChoiceLengthLimit n {i} expr
+      → NumberOfAlternatives≤ n {i} expr
       → NCC n D i A
     translate n (a -< cs >-) (maxArtifact max-cs) = a -< zipWith n (translate n) cs max-cs >-
     translate (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice max≤n (max-c ∷ max-cs)) =
@@ -149,18 +149,18 @@ module Exact where
     -- TODO Can probably be generalized
     zipWith : ∀ {i : Size} {D A Result : Set}
       → (n : ℕ≥ 2)
-      → ((expr : CCC D i A) → ChoiceLengthLimit n expr → Result)
+      → ((expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result)
       → (cs : List (CCC D i A))
-      → ListChoiceLengthLimit n cs
+      → NumberOfAlternatives≤-List n cs
       → List Result
     zipWith n f [] [] = []
     zipWith n f (c ∷ cs) (max-c ∷ max-cs) = f c max-c ∷ zipWith n f cs max-cs
 
     length-zipWith : ∀ {i : Size} {D A Result : Set}
       → (n : ℕ≥ 2)
-      → {f : (expr : CCC D i A) → ChoiceLengthLimit n expr → Result}
+      → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
       → (cs : List (CCC D i A))
-      → (max-cs : ListChoiceLengthLimit n cs)
+      → (max-cs : NumberOfAlternatives≤-List n cs)
       → List.length (zipWith {i} n f cs max-cs) ≡ List.length cs
     length-zipWith n [] [] = refl
     length-zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong suc (length-zipWith n cs max-cs)
@@ -168,19 +168,19 @@ module Exact where
   map∘zipWith : ∀ {i : Size} {D A Result₁ Result₂ : Set}
     → (n : ℕ≥ 2)
     → {g : Result₁ → Result₂}
-    → {f : (expr : CCC D i A) → ChoiceLengthLimit n expr → Result₁}
+    → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result₁}
     → (cs : List (CCC D i A))
-    → (max-cs : ListChoiceLengthLimit n cs)
+    → (max-cs : NumberOfAlternatives≤-List n cs)
     → List.map g (zipWith n f cs max-cs) ≡ zipWith n (λ e max-e → g (f e max-e)) cs max-cs
   map∘zipWith n [] [] = refl
   map∘zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (map∘zipWith n cs max-cs)
 
   zipWith-cong : ∀ {i : Size} {D A Result : Set}
     → (n : ℕ≥ 2)
-    → {f g : (expr : CCC D i A) → ChoiceLengthLimit n expr → Result}
-    → ((e : CCC D i A) → (max-e : ChoiceLengthLimit n e) → f e max-e ≡ g e max-e)
+    → {f g : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
+    → ((e : CCC D i A) → (max-e : NumberOfAlternatives≤ n e) → f e max-e ≡ g e max-e)
     → (cs : List (CCC D i A))
-    → (max-cs : ListChoiceLengthLimit n cs)
+    → (max-cs : NumberOfAlternatives≤-List n cs)
     → zipWith n f cs max-cs ≡ zipWith n g cs max-cs
   zipWith-cong n f≗g [] [] = refl
   zipWith-cong n f≗g (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ (f≗g c max-c) (zipWith-cong n f≗g cs max-cs)
@@ -189,7 +189,7 @@ module Exact where
     → (n : ℕ≥ 2)
     → (f : (expr : CCC D i A) → Result)
     → (cs : List (CCC D i A))
-    → (max-cs : ListChoiceLengthLimit n cs)
+    → (max-cs : NumberOfAlternatives≤-List n cs)
     → zipWith n (λ e max-e → f e) cs max-cs ≡ List.map f cs
   zipWith⇒map n f [] [] = refl
   zipWith⇒map n f (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (zipWith⇒map n f cs max-cs)
@@ -204,7 +204,7 @@ module Exact where
   preserves-⊆ : ∀ {i : Size} {D A : Set}
     → (n : ℕ≥ 2)
     → (expr : CCC D i A)
-    → (choiceLengthLimit : ChoiceLengthLimit n expr)
+    → (choiceLengthLimit : NumberOfAlternatives≤ n expr)
     → NCC.⟦ translate n expr choiceLengthLimit ⟧ ⊆[ fnoc n ] CCC.⟦ expr ⟧
   preserves-⊆ n (a -< cs >-) (maxArtifact max-cs) config =
       NCC.⟦ translate n (a -< cs >-) (maxArtifact max-cs) ⟧ config
@@ -256,7 +256,7 @@ module Exact where
   preserves-⊇ : ∀ {i : Size} {D A : Set}
     → (n : ℕ≥ 2)
     → (expr : CCC D i A)
-    → (choiceLengthLimit : ChoiceLengthLimit n {i} expr)
+    → (choiceLengthLimit : NumberOfAlternatives≤ n {i} expr)
     → CCC.⟦ expr ⟧ ⊆[ conf n ] NCC.⟦ translate n expr choiceLengthLimit ⟧
   preserves-⊇ n (a -< cs >-) (maxArtifact max-cs) config =
       CCC.⟦ a -< cs >- ⟧ config
@@ -310,7 +310,7 @@ module Exact where
   preserves : ∀ {i : Size} {D A : Set}
     → (n : ℕ≥ 2)
     → (expr : CCC D i A)
-    → (choiceLengthLimit : ChoiceLengthLimit n expr)
+    → (choiceLengthLimit : NumberOfAlternatives≤ n expr)
     → NCC.⟦ translate n expr choiceLengthLimit ⟧ ≅[ fnoc n ][ conf n ] CCC.⟦ expr ⟧
   preserves n expr choiceLengthLimit = preserves-⊆ n expr choiceLengthLimit , preserves-⊇ n expr choiceLengthLimit
 
@@ -318,19 +318,19 @@ module Exact where
 
   -- CCC→NCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (λ e → NCCL ⌈ e ⌉ D)
   -- --                                                                ^^^^^^ this unrepresentable in our framework
-  -- CCC→NCC n .LanguageCompiler.compile expr = translate ⌈ expr ⌉ expr (maxChoiceLengthLimit expr)
+  -- CCC→NCC n .LanguageCompiler.compile expr = translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)
   -- CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf ⌈ expr ⌉
   -- CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc ⌈ expr ⌉
-  -- CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves ⌈ expr ⌉ expr (maxChoiceLengthIsLimit expr))
+  -- CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))
 
   -- Having the output language depend on the input expression brings along a lot of complications and problems.
   -- Introducing such complications can be avoided by generalizing `translate` to translate into an arbitrary ary `NCCL` by composing it with `NCC→NCC`.
   -- This is implemented in the rest of this file.
 
 
-open Exact using (⌈_⌉)
+open Exact using (⌈_⌉; numberOfAlternatives≤⌈_⌉)
 
--- Gets rid of the `maxChoiceLength` in the `IndexedDimension`, here `n`.
+-- Gets rid of the `⌈_⌉` in the `IndexedDimension`, here `n`.
 Fin→ℕ : ∀ {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
 Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 
@@ -341,7 +341,7 @@ translate : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC n (D × ℕ) ∞ A
-translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)))
+translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)))
   where
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
@@ -351,14 +351,14 @@ conf : ∀ {i : Size} {D A : Set}
   → CCC D i A
   → CCC.Configuration D
   → NCC.Configuration n (D × ℕ)
-conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)) ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf ⌈ expr ⌉
+conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)) ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ∘ Exact.conf ⌈ expr ⌉
 
 fnoc : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC.Configuration n (D × ℕ)
   → CCC.Configuration D
-fnoc n expr = Exact.fnoc ⌈ expr ⌉ ∘ NCC→NCC.fnoc ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (NCC-map-config n (Fin→ℕ ⌈ expr ⌉))
+fnoc n expr = Exact.fnoc ⌈ expr ⌉ ∘ NCC→NCC.fnoc ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ∘ (NCC-map-config n (Fin→ℕ ⌈ expr ⌉))
 
 preserves : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
@@ -367,12 +367,12 @@ preserves : ∀ {i : Size} {D A : Set}
 preserves (sucs n) expr =
   NCC.⟦ translate (sucs n) expr ⟧
   ≅[]⟨⟩
-  NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr))) ⟧
-  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
-  NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr)) ⟧
-  ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr))) ⟩
-  NCC.⟦ Exact.translate ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr) ⟧
-  ≅[]⟨ Exact.preserves ⌈ expr ⌉ expr (Exact.maxChoiceLengthIsLimit expr) ⟩
+  NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
+  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (λ where (d , i) → Eq.cong₂ _,_ refl (lemma ⌈ expr ⌉ i)) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+  NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ⟧
+  ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+  NCC.⟦ Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟧
+  ≅[]⟨ Exact.preserves ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟩
     CCC.⟦ expr ⟧
   ≅[]-∎
   where
