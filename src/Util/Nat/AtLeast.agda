@@ -30,6 +30,9 @@ n < m = toℕ n ℕ.< toℕ m
 lift≤ : {k n m : ℕ} → n ℕ.≤ m → sucs {k} n ≤ sucs {k} m
 lift≤ {k} n≤m = ℕ.+-monoʳ-≤ k n≤m
 
+≤-toℕ : {n : ℕ} → (m : ℕ≥ n) → n ℕ.≤ toℕ m
+≤-toℕ (sucs m) = ℕ.m≤n⇒m≤n+o m (ℕ.≤-reflexive refl)
+
 -- Convert a natural number into a finite number by using the maximum number for too big numbers.
 -- TODO same as AuxProof.clamp
 cappedFin : {n : ℕ≥ 1} → ℕ → Fin (toℕ n)

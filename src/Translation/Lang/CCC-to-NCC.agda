@@ -73,10 +73,11 @@ module Exact where
   maximum⁺ : List⁺ (ℕ≥ 2) → ℕ≥ 2
   maximum⁺ (n ∷ ns) = maximum (n ∷ ns)
 
-  -- calculcates the maximum + 2 to ensure that it is ≥ 2
+  -- calculcates `maximum number of alternatives ⊔ 2` to ensure that it is ≥ 2
   maxChoiceLength : ∀ {i : Size} {D A : Set} → CCC D i A → ℕ≥ 2
   maxChoiceLength (a -< cs >-) = maximum (List.map maxChoiceLength cs)
-  maxChoiceLength (d ⟨ cs ⟩) = sucs (List⁺.length cs) ⊔ maximum⁺ (List⁺.map maxChoiceLength cs)
+  maxChoiceLength (d ⟨ c ∷ [] ⟩) = maxChoiceLength c
+  maxChoiceLength (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = sucs (List.length cs) ⊔ maximum⁺ (List⁺.map maxChoiceLength (c₁ ∷ c₂ ∷ cs))
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
@@ -118,7 +119,8 @@ module Exact where
       → (expr : CCC D i A)
       → ChoiceLengthLimit (maxChoiceLength expr) expr
     maxChoiceLengthIsLimit (a -< cs >-) = maxArtifact (maximumIsLimit cs)
-    maxChoiceLengthIsLimit (d ⟨ cs ⟩) = maxChoice (ℕ.m+n≤o⇒n≤o 2 (ℕ≥.m≤m⊔n (sucs (List⁺.length cs)) (maximum⁺ (List⁺.map maxChoiceLength cs)))) (List⁺ChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (sucs (List⁺.length cs)) (maximum⁺ (List⁺.map maxChoiceLength cs))) (maximum⁺IsLimit cs))
+    maxChoiceLengthIsLimit (d ⟨ c ∷ [] ⟩) = maxChoice (≤-trans (ℕ.n≤1+n 1) (ℕ≥.≤-toℕ (maxChoiceLength c))) (maxChoiceLengthIsLimit c ∷ [])
+    maxChoiceLengthIsLimit (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = maxChoice (ℕ≥.m≤m⊔n (sucs (List.length cs)) (maximum⁺ (List⁺.map maxChoiceLength (c₁ ∷ c₂ ∷ cs)))) (List⁺ChoiceLengthLimit-respects-≤ (ℕ≥.m≤n⊔m (sucs (List.length cs)) (maximum⁺ (List⁺.map maxChoiceLength (c₁ ∷ c₂ ∷ cs)))) (maximum⁺IsLimit (c₁ ∷ c₂ ∷ cs)))
 
     maximumIsLimit : ∀ {i : Size} {D A : Set}
       → (cs : List (CCC D i A))
