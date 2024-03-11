@@ -9,7 +9,7 @@ open import Data.List using (List; []; _∷_)
 open import Data.String using (String)
 open import Size using (∞)
 open import Framework.Variants using (Rose; rose-leaf)
-open import Framework.Variant (Rose ∞) using (VMap)
+open import Framework.VariantMap (Rose ∞) using (VMap)
 
 open import Test.Example
 
