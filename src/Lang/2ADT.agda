@@ -17,5 +17,5 @@ Configuration = F → Bool
                     then ⟦ l ⟧ c
                     else ⟦ r ⟧ c
 
-2ADTVL : VariabilityLanguage V
-2ADTVL = ⟪ 2ADT , Configuration , ⟦_⟧ ⟫
+2ADTL : VariabilityLanguage V
+2ADTL = ⟪ 2ADT , Configuration , ⟦_⟧ ⟫
