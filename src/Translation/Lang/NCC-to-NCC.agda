@@ -40,12 +40,12 @@ artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module map-dim where
-  NCCꟲ-map-dim : ∀ {D₁ D₂ : Set}
+  NCC-map-config : ∀ {D₁ D₂ : Set}
     → (n : ℕ≥ 2)
     → (D₂ → D₁)
     → NCC.Configuration n D₁
     → NCC.Configuration n D₂
-  NCCꟲ-map-dim n f config = config ∘ f
+  NCC-map-config n f config = config ∘ f
 
   map-dim : ∀ {i : Size} {D₁ D₂ A : Set}
     → (n : ℕ≥ 2)
@@ -60,7 +60,7 @@ module map-dim where
     → (f : D₁ → D₂)
     → (f⁻¹ : D₂ → D₁)
     → (expr : NCC n D₁ i A)
-    → ⟦ map-dim n f expr ⟧ₙ ⊆[ NCCꟲ-map-dim n f ] ⟦ expr ⟧ₙ
+    → ⟦ map-dim n f expr ⟧ₙ ⊆[ NCC-map-config n f ] ⟦ expr ⟧ₙ
   preserves-⊆ n f f⁻¹ (a -< cs >-) config =
       ⟦ map-dim n f (a -< cs >-) ⟧ₙ config
     ≡⟨⟩
@@ -94,7 +94,7 @@ module map-dim where
     → (f⁻¹ : D₂ → D₁)
     → f⁻¹ ∘ f ≗ id
     → (expr : NCC n D₁ i A)
-    → ⟦ expr ⟧ₙ ⊆[ NCCꟲ-map-dim n f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
+    → ⟦ expr ⟧ₙ ⊆[ NCC-map-config n f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
   preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
       ⟦ a -< cs >- ⟧ₙ config
     ≡⟨⟩
@@ -130,7 +130,7 @@ module map-dim where
     → (f⁻¹ : D₂ → D₁)
     → f⁻¹ ∘ f ≗ id
     → (e : NCC n D₁ i A)
-    → ⟦ map-dim n f e ⟧ₙ ≅[ NCCꟲ-map-dim n f ][ NCCꟲ-map-dim n f⁻¹ ] ⟦ e ⟧ₙ
+    → ⟦ map-dim n f e ⟧ₙ ≅[ NCC-map-config n f ][ NCC-map-config n f⁻¹ ] ⟦ e ⟧ₙ
   preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
   NCC-map-dim : ∀ {i : Size} {D₁ D₂ : Set}
@@ -140,8 +140,8 @@ module map-dim where
     → f⁻¹ ∘ f ≗ id
     → LanguageCompiler (NCCL n D₁ {i}) (NCCL n D₂ {i})
   NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim n f
-  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCCꟲ-map-dim n f⁻¹
-  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCCꟲ-map-dim n f
+  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCC-map-config n f⁻¹
+  NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCC-map-config n f
   NCC-map-dim n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
 
 module IncreaseArity where

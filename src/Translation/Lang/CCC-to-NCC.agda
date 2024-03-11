@@ -42,7 +42,7 @@ open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
 import Translation.Lang.NCC-to-NCC
 open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open Translation.Lang.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCCꟲ-map-dim)
+open Translation.Lang.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCC-map-config)
 module NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
@@ -338,14 +338,14 @@ conf : ∀ {i : Size} {D A : Set}
   → CCC D i A
   → CCC.Configuration D
   → NCC.Configuration n (D × ℕ)
-conf n expr = (NCCꟲ-map-dim n (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr))) ∘ NCC→NCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
+conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ (Exact.maxChoiceLength expr))) ∘ NCC→NCC.conf (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ Exact.conf (Exact.maxChoiceLength expr)
 
 fnoc : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC.Configuration n (D × ℕ)
   → CCC.Configuration D
-fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ NCC→NCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (NCCꟲ-map-dim n (Fin→ℕ (Exact.maxChoiceLength expr)))
+fnoc n expr = Exact.fnoc (Exact.maxChoiceLength expr) ∘ NCC→NCC.fnoc (Exact.maxChoiceLength expr) n (Exact.translate (Exact.maxChoiceLength expr) expr (Exact.maxChoiceLengthIsLimit expr)) ∘ (NCC-map-config n (Fin→ℕ (Exact.maxChoiceLength expr)))
 
 preserves : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)

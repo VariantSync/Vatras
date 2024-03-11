@@ -30,11 +30,11 @@ artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-2CCꟲ-map-dim : ∀ {D₁ D₂ : Set}
+2CC-map-config : ∀ {D₁ D₂ : Set}
   → (D₂ → D₁)
   → 2CC.Configuration D₁
   → 2CC.Configuration D₂
-2CCꟲ-map-dim f config = config ∘ f
+2CC-map-config f config = config ∘ f
 
 map-dim : ∀ {i : Size} {D₁ D₂ A : Set}
   → (D₁ → D₂)
@@ -47,7 +47,7 @@ preserves-⊆ : ∀ {i : Size} {D₁ D₂ A : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → (expr : 2CC D₁ i A)
-  → ⟦ map-dim f expr ⟧₂ ⊆[ 2CCꟲ-map-dim f ] ⟦ expr ⟧₂
+  → ⟦ map-dim f expr ⟧₂ ⊆[ 2CC-map-config f ] ⟦ expr ⟧₂
 preserves-⊆ f f⁻¹ (a -< cs >-) config =
     ⟦ map-dim f (a -< cs >-) ⟧₂ config
   ≡⟨⟩
@@ -82,7 +82,7 @@ preserves-⊇ : ∀ {i : Size} {D₁ D₂ A : Set}
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
   → (expr : 2CC D₁ i A)
-  → ⟦ expr ⟧₂ ⊆[ 2CCꟲ-map-dim f⁻¹ ] ⟦ map-dim f expr ⟧₂
+  → ⟦ expr ⟧₂ ⊆[ 2CC-map-config f⁻¹ ] ⟦ map-dim f expr ⟧₂
 preserves-⊇ f f⁻¹ is-inverse (a -< cs >-) config =
     ⟦ a -< cs >- ⟧₂ config
   ≡⟨⟩
@@ -119,7 +119,7 @@ preserves : ∀ {i : Size} {D₁ D₂ A : Set}
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
   → (e : 2CC D₁ i A)
-  → ⟦ map-dim f e ⟧₂ ≅[ 2CCꟲ-map-dim f ][ 2CCꟲ-map-dim f⁻¹ ] ⟦ e ⟧₂
+  → ⟦ map-dim f e ⟧₂ ≅[ 2CC-map-config f ][ 2CC-map-config f⁻¹ ] ⟦ e ⟧₂
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
 
 2CC-map-dim : ∀ {i : Size} {D₁ D₂ : Set}
@@ -128,6 +128,6 @@ preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-�
   → f⁻¹ ∘ f ≗ id
   → LanguageCompiler (2CCL D₁ {i}) (2CCL D₂ {i})
 2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.compile = map-dim f
-2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2CCꟲ-map-dim f⁻¹
-2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2CCꟲ-map-dim f
+2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2CC-map-config f⁻¹
+2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2CC-map-config f
 2CC-map-dim f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)
