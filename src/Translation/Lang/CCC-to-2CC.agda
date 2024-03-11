@@ -8,6 +8,7 @@ module Translation.Lang.CCC-to-2CC (Variant : Set → Set) (Artifact∈ₛVarian
 open import Data.Nat using (ℕ; zero)
 open import Data.Product using (_×_)
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
+open import Framework.Definitions using (𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Size using (Size)
 open import Util.Nat.AtLeast using (sucs)
@@ -25,8 +26,8 @@ import Translation.Lang.NCC-to-2CC
 open Translation.Lang.NCC-to-2CC.2Ary Variant Artifact∈ₛVariant using (NCC→2CC)
 
 
-CCC→2CC : ∀ {i : Size} {D : Set} → LanguageCompiler (CCCL D {i}) (2CCL (D × ℕ))
+CCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (CCCL D {i}) (2CCL (D × ℕ))
 CCC→2CC = CCC→NCC (sucs zero) ⊕ NCC→2CC
 
-2CC≽CCC : ∀ {D : Set} → 2CCL (D × ℕ) ≽ CCCL D
+2CC≽CCC : ∀ {D : 𝔽} → 2CCL (D × ℕ) ≽ CCCL D
 2CC≽CCC = expressiveness-from-compiler CCC→2CC

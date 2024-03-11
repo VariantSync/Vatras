@@ -17,6 +17,7 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
+open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -38,7 +39,7 @@ module NCC where
   open NCC-Sem-2 using (⟦_⟧) public
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-artifact : {A : Set} → A → List (Variant A) → Variant A
+artifact : {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
@@ -50,7 +51,7 @@ module map-dim where
     → NCC.Configuration n D₂
   NCC-map-config n f config = config ∘ f
 
-  map-dim : ∀ {i : Size} {D₁ D₂ A : Set}
+  map-dim : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (D₁ → D₂)
     → NCC n D₁ i A
@@ -58,7 +59,7 @@ module map-dim where
   map-dim n f (a -< cs >-) = a -< List.map (map-dim n f) cs >-
   map-dim n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (map-dim n f) cs ⟩
 
-  preserves-⊆ : ∀ {i : Size} {D₁ D₂ A : Set}
+  preserves-⊆ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (f : D₁ → D₂)
     → (f⁻¹ : D₂ → D₁)
@@ -91,7 +92,7 @@ module map-dim where
       NCC.⟦ d ⟨ cs ⟩ ⟧ (config ∘ f)
     ∎
 
-  preserves-⊇ : ∀ {i : Size} {D₁ D₂ A : Set}
+  preserves-⊇ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (f : D₁ → D₂)
     → (f⁻¹ : D₂ → D₁)
@@ -127,7 +128,7 @@ module map-dim where
       NCC.⟦ map-dim n f (d ⟨ cs ⟩) ⟧ (config ∘ f⁻¹)
     ∎
 
-  preserves : ∀ {i : Size} {D₁ D₂ A : Set}
+  preserves : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (f : D₁ → D₂)
     → (f⁻¹ : D₂ → D₁)
@@ -152,7 +153,7 @@ module IncreaseArity where
   -- For symmetry, this module provides a translation from the 2-ary `NCC`, because, for simplicity of the proof, DecreaseArity translates to the 2-ary `NCC`.
   -- However, the proof of the generalizaton is almost identical so we proof the generalization in a submodule and specialize the result.
   module General where
-    translate : ∀ {i : Size} {D A : Set}
+    translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (n m : ℕ≥ 2)
       → n ℕ≥.≤ m
       → NCC n D i A
@@ -160,21 +161,21 @@ module IncreaseArity where
     translate n m n≤m (a -< cs >-) = a -< List.map (translate n m n≤m) cs >-
     translate (sucs n) m n≤m (d ⟨ cs ⟩) = d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) m n≤m) cs) ⟩
 
-    conf : ∀ {D : Set}
+    conf : ∀ {D : 𝔽}
       → (n m : ℕ≥ 2)
       → n ℕ≥.≤ m
       → NCC.Configuration n D
       → NCC.Configuration m D
     conf (sucs n) (sucs m) n≤m config d = Fin.inject≤ (config d) n≤m
 
-    fnoc : ∀ {D : Set}
+    fnoc : ∀ {D : 𝔽}
       → (n m : ℕ≥ 2)
       → n ℕ≥.≤ m
       → NCC.Configuration m D
       → NCC.Configuration n D
     fnoc (sucs n) (sucs m) n≤m config d = ℕ≥.cappedFin (Fin.toℕ (config d))
 
-    preserves-⊆ : ∀ {i : Size} {D A : Set}
+    preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
       → (expr : NCC n D i A)
@@ -210,7 +211,7 @@ module IncreaseArity where
         NCC.⟦ d ⟨ cs ⟩ ⟧ (fnoc (sucs n) (sucs m) n≤m config)
       ∎
 
-    preserves-⊇ : ∀ {i : Size} {D A : Set}
+    preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
       → (expr : NCC n D i A)
@@ -248,14 +249,14 @@ module IncreaseArity where
         NCC.⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ (conf (sucs n) (sucs m) n≤m config)
       ∎
 
-    preserves : ∀ {i : Size} {D A : Set}
+    preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
       → (expr : NCC n D i A)
       → NCC.⟦ translate n m n≤m expr ⟧ ≅[ fnoc n m n≤m ][ conf n m n≤m ] NCC.⟦ expr ⟧
     preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤m expr
 
-    NCC→NCC : ∀ {i : Size} {D : Set}
+    NCC→NCC : ∀ {i : Size} {D : 𝔽}
       → (n m : ℕ≥ 2)
       → n ℕ≥.≤ m
       → LanguageCompiler (NCCL n D {i}) (NCCL m D {i})
@@ -264,7 +265,7 @@ module IncreaseArity where
     NCC→NCC n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
     NCC→NCC n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
-  NCC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL (sucs zero) D {i}) (NCCL n D {i})
+  NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL (sucs zero) D {i}) (NCCL n D {i})
   NCC→NCC (sucs n) = General.NCC→NCC (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
 
 
@@ -279,7 +280,7 @@ module DecreaseArity where
   IndexedDimension : Set → ℕ≥ 2 → Set
   IndexedDimension D n = D × Fin (ℕ≥.toℕ (ℕ≥.pred n))
 
-  translate : ∀ {i : Size} {D A : Set}
+  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → NCC n D i A
     → NCC (sucs zero) (IndexedDimension D n) ∞ A
@@ -290,7 +291,7 @@ module DecreaseArity where
     go zero m≤n (l ∷ r ∷ []) = (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩
     go (suc m) m≤n (c ∷ cs) = (d , Fin.opposite (Fin.fromℕ< {suc m} m≤n)) ⟨ translate (sucs n) c ∷ go m (<-trans (ℕ.n<1+n m) m≤n) cs ∷ [] ⟩
 
-  conf : ∀ {D : Set}
+  conf : ∀ {D : 𝔽}
     → (n : ℕ≥ 2)
     → NCC.Configuration n D
     → NCC.Configuration (sucs zero) (IndexedDimension D n)
@@ -299,7 +300,7 @@ module DecreaseArity where
   ... | no _ = suc zero
 
   module ConfLemmas where
-    config≡0' : ∀ {D : Set} {d : D} {n : ℕ}
+    config≡0' : ∀ {D : 𝔽} {d : D} {n : ℕ}
       → (config : NCC.Configuration (sucs n) D)
       → (j : Fin (suc n))
       → config d ≡ (Fin.inject₁ j)
@@ -308,7 +309,7 @@ module DecreaseArity where
     ... | yes _ = refl
     ... | no config-d≢j = ⊥-elim (config-d≢j config-d≡j)
 
-    config≡1' : ∀ {D : Set} {d : D} {n : ℕ}
+    config≡1' : ∀ {D : 𝔽} {d : D} {n : ℕ}
       → (config : NCC.Configuration (sucs n) D)
       → (j : Fin (suc n))
       → config d ≢ (Fin.inject₁ j)
@@ -317,7 +318,7 @@ module DecreaseArity where
     ... | yes config-d≡j = ⊥-elim (config-d≢j config-d≡j)
     ... | no _ = refl
 
-  fnoc : ∀ {D : Set}
+  fnoc : ∀ {D : 𝔽}
     → (n : ℕ≥ 2)
     → NCC.Configuration (sucs zero) (IndexedDimension D n)
     → NCC.Configuration n D
@@ -330,7 +331,7 @@ module DecreaseArity where
     go (suc m) m<n | suc zero = go m (<-trans (ℕ.n<1+n m) m<n)
 
   module FnocLemmas where
-    config≡0 : ∀ {D : Set} {d : D} {n : ℕ}
+    config≡0 : ∀ {D : 𝔽} {d : D} {n : ℕ}
       → (config : NCC.Configuration (sucs zero) (D × Fin (suc n)))
       → (j : Fin (suc n))
       → fnoc (sucs n) config d ≡ Fin.inject₁ j
@@ -345,7 +346,7 @@ module DecreaseArity where
       go' zero m<n go≡j | suc zero = ⊥-elim (Fin.toℕ-inject₁-≢ j (Eq.trans (Eq.sym (Fin.toℕ-fromℕ (suc n))) (Eq.cong Fin.toℕ go≡j)))
       go' (suc m) m<n go≡j | suc zero = go' m (<-trans (ℕ.n<1+n m) m<n) go≡j
 
-    config≡1 : ∀ {D : Set} {d : D} {n : ℕ}
+    config≡1 : ∀ {D : 𝔽} {d : D} {n : ℕ}
       → (config : NCC.Configuration (sucs zero) (D × Fin (suc n)))
       → (j : Fin (suc n))
       → j Fin.< fnoc (sucs n) config d
@@ -379,7 +380,7 @@ module DecreaseArity where
       go' zero m<n j<go ∀config≡1 | suc zero | no j≢m = ∀config≡1 (ℕ.≤∧≢⇒< (≤-trans (ℕ.≤-pred (Fin.toℕ<n j)) (≤-reflexive (Eq.sym (Eq.trans (Fin.opposite-prop (Fin.fromℕ< m<n)) (Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< m<n)))))) (j≢m ∘ Fin.toℕ-injective))
       go' (suc m) m<n j<go ∀config≡1 | suc zero | no j≢m = go' m (<-trans (ℕ.n<1+n m) m<n) j<go (extend-∀config≡1 {m = m} m<n config-opposite-m ∀config≡1)
 
-  preserves-⊆ : ∀ {i : Size} {D A : Set}
+  preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (expr : NCC n D i A)
     → NCC.⟦ translate n expr ⟧ ⊆[ fnoc n ] NCC.⟦ expr ⟧
@@ -510,7 +511,7 @@ module DecreaseArity where
         NCC.⟦ Vec.lookup cs' j ⟧ (fnoc (sucs n) config)
       ∎
 
-  preserves-⊇ : ∀ {i : Size} {D A : Set}
+  preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (expr : NCC n D i A)
     → NCC.⟦ expr ⟧ ⊆[ conf n ] NCC.⟦ translate n expr ⟧
@@ -653,13 +654,13 @@ module DecreaseArity where
         NCC.⟦ Vec.lookup cs' j ⟧ config
       ∎
 
-  preserves : ∀ {i : Size} {D A : Set}
+  preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (expr : NCC n D i A)
     → NCC.⟦ translate n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
   preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-  NCC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+  NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
   NCC→NCC n .LanguageCompiler.compile = translate n
   NCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n
   NCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n
@@ -670,5 +671,5 @@ open DecreaseArity using (IndexedDimension) public
 
 -- The conclude translations between different arity `NCC` expressions, we provide a version that is capable of translating abitrary arity `NCC` expressions.
 -- It's a simple composition of decreasing the arity to 2 and increasing it to the desired arity.
-NCC→NCC : ∀ {i : Size} {D : Set} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→NCC n m = DecreaseArity.NCC→NCC n ⊕ IncreaseArity.NCC→NCC m

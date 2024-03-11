@@ -15,6 +15,7 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (_∘_)
@@ -54,7 +55,7 @@ module NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (N
 open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
 
-artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
@@ -76,40 +77,40 @@ module Exact where
   -- Calculcates the `maximum number of alternatives ⊔ 2`.
   -- We want to translate into `NCC` which has an arity of at leat 2 so we
   -- ensure that the result is ≥ 2
-  ⌈_⌉ : ∀ {i : Size} {D A : Set} → CCC D i A → ℕ≥ 2
+  ⌈_⌉ : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → CCC D i A → ℕ≥ 2
   ⌈ a -< cs >- ⌉ = maximum (List.map ⌈_⌉ cs)
   ⌈ d ⟨ c ∷ [] ⟩ ⌉ = ⌈_⌉ c
   ⌈ d ⟨ c₁ ∷ c₂ ∷ cs ⟩ ⌉ = sucs (List.length cs) ⊔ maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs))
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
-    data NumberOfAlternatives≤ {D A : Set} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
+    data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
       maxArtifact : {i : Size} → {a : A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
       maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → NumberOfAlternatives≤-List⁺ n {i} cs → NumberOfAlternatives≤ n {↑ i} (d ⟨ cs ⟩)
 
-    data NumberOfAlternatives≤-List {D A : Set} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
+    data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
       [] : {i : Size} → NumberOfAlternatives≤-List n {i} []
       _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List n {i} (c ∷ cs)
 
-    data NumberOfAlternatives≤-List⁺ {D A : Set} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set where
+    data NumberOfAlternatives≤-List⁺ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set where
       _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List⁺ n {i} (c ∷ cs)
 
   mutual
-    NumberOfAlternatives≤-respects-≤ : ∀ {i : Size} {D A : Set} {cs : CCC D i A} {n₁ n₂ : ℕ≥ 2}
+    NumberOfAlternatives≤-respects-≤ : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {cs : CCC D i A} {n₁ n₂ : ℕ≥ 2}
       → n₁ ℕ≥.≤ n₂
       → NumberOfAlternatives≤ n₁ cs
       → NumberOfAlternatives≤ n₂ cs
     NumberOfAlternatives≤-respects-≤ n₁≤n₂ (maxArtifact max-cs) = maxArtifact (NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ max-cs)
     NumberOfAlternatives≤-respects-≤ {cs = d ⟨ cs ⟩} {n₁ = n₁} {n₂ = n₂} n₁≤n₂ (maxChoice max-cs≤n max-cs) = maxChoice (≤-trans max-cs≤n n₁≤n₂) (NumberOfAlternatives≤-List⁺-respects-≤ n₁≤n₂ max-cs)
 
-    NumberOfAlternatives≤-List-respects-≤ : ∀ {i : Size} {D A : Set} {cs : List (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
+    NumberOfAlternatives≤-List-respects-≤ : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {cs : List (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
       → n₁ ℕ≥.≤ n₂
       → NumberOfAlternatives≤-List n₁ cs
       → NumberOfAlternatives≤-List n₂ cs
     NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ [] = []
     NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ (c ∷ cs) = NumberOfAlternatives≤-respects-≤ n₁≤n₂ c ∷ NumberOfAlternatives≤-List-respects-≤ n₁≤n₂ cs
 
-    NumberOfAlternatives≤-List⁺-respects-≤ : ∀ {i : Size} {D A : Set} {cs : List⁺ (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
+    NumberOfAlternatives≤-List⁺-respects-≤ : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {cs : List⁺ (CCC D i A)} {n₁ n₂ : ℕ≥ 2}
       → n₁ ℕ≥.≤ n₂
       → NumberOfAlternatives≤-List⁺ n₁ cs
       → NumberOfAlternatives≤-List⁺ n₂ cs
@@ -117,27 +118,27 @@ module Exact where
 
   mutual
     -- Proof that `⌈_⌉` calculates a correct choice lenght limit.
-    numberOfAlternatives≤⌈_⌉ : ∀ {i : Size} {D A : Set}
+    numberOfAlternatives≤⌈_⌉ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (expr : CCC D i A)
       → NumberOfAlternatives≤ ⌈ expr ⌉ expr
     numberOfAlternatives≤⌈_⌉ (a -< cs >-) = maxArtifact (numberOfAlternatives≤⌈_⌉-List cs)
     numberOfAlternatives≤⌈_⌉ (d ⟨ c ∷ [] ⟩) = maxChoice (≤-trans (ℕ.n≤1+n 1) (ℕ≥.≤-toℕ ⌈ c ⌉)) (numberOfAlternatives≤⌈_⌉ c ∷ [])
     numberOfAlternatives≤⌈_⌉ (d ⟨ c₁ ∷ c₂ ∷ cs ⟩) = maxChoice (ℕ≥.m≤m⊔n (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (NumberOfAlternatives≤-List⁺-respects-≤ (ℕ≥.m≤n⊔m (sucs (List.length cs)) (maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs)))) (numberOfAlternatives≤⌈_⌉-List⁺ (c₁ ∷ c₂ ∷ cs)))
 
-    numberOfAlternatives≤⌈_⌉-List : ∀ {i : Size} {D A : Set}
+    numberOfAlternatives≤⌈_⌉-List : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (cs : List (CCC D i A))
       → NumberOfAlternatives≤-List (maximum (List.map ⌈_⌉ cs)) cs
     numberOfAlternatives≤⌈_⌉-List [] = []
     numberOfAlternatives≤⌈_⌉-List (c ∷ cs) = NumberOfAlternatives≤-respects-≤ (ℕ≥.m≤m⊔n ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (numberOfAlternatives≤⌈_⌉ c) ∷ NumberOfAlternatives≤-List-respects-≤ (ℕ≥.m≤n⊔m ⌈ c ⌉ (maximum (List.map ⌈_⌉ cs))) (numberOfAlternatives≤⌈_⌉-List cs)
 
-    numberOfAlternatives≤⌈_⌉-List⁺ : ∀ {i : Size} {D A : Set}
+    numberOfAlternatives≤⌈_⌉-List⁺ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (cs : List⁺ (CCC D i A))
       → NumberOfAlternatives≤-List⁺ (maximum⁺ (List⁺.map ⌈_⌉ cs)) cs
     numberOfAlternatives≤⌈_⌉-List⁺ (c ∷ cs) with numberOfAlternatives≤⌈_⌉-List (c ∷ cs)
     ... | max-c ∷ max-cs = max-c ∷ max-cs
 
   mutual
-    translate : ∀ {i : Size} {D A : Set}
+    translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
       → (n : ℕ≥ 2)
       → (expr : CCC D i A)
       → NumberOfAlternatives≤ n {i} expr
@@ -147,7 +148,7 @@ module Exact where
       d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
 
     -- TODO Can probably be generalized
-    zipWith : ∀ {i : Size} {D A Result : Set}
+    zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
       → (n : ℕ≥ 2)
       → ((expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result)
       → (cs : List (CCC D i A))
@@ -156,7 +157,7 @@ module Exact where
     zipWith n f [] [] = []
     zipWith n f (c ∷ cs) (max-c ∷ max-cs) = f c max-c ∷ zipWith n f cs max-cs
 
-    length-zipWith : ∀ {i : Size} {D A Result : Set}
+    length-zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
       → (n : ℕ≥ 2)
       → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
       → (cs : List (CCC D i A))
@@ -165,7 +166,7 @@ module Exact where
     length-zipWith n [] [] = refl
     length-zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong suc (length-zipWith n cs max-cs)
 
-  map∘zipWith : ∀ {i : Size} {D A Result₁ Result₂ : Set}
+  map∘zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result₁ Result₂ : Set}
     → (n : ℕ≥ 2)
     → {g : Result₁ → Result₂}
     → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result₁}
@@ -175,7 +176,7 @@ module Exact where
   map∘zipWith n [] [] = refl
   map∘zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (map∘zipWith n cs max-cs)
 
-  zipWith-cong : ∀ {i : Size} {D A Result : Set}
+  zipWith-cong : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
     → (n : ℕ≥ 2)
     → {f g : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
     → ((e : CCC D i A) → (max-e : NumberOfAlternatives≤ n e) → f e max-e ≡ g e max-e)
@@ -185,7 +186,7 @@ module Exact where
   zipWith-cong n f≗g [] [] = refl
   zipWith-cong n f≗g (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ (f≗g c max-c) (zipWith-cong n f≗g cs max-cs)
 
-  zipWith⇒map : ∀ {i : Size} {D A Result : Set}
+  zipWith⇒map : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
     → (n : ℕ≥ 2)
     → (f : (expr : CCC D i A) → Result)
     → (cs : List (CCC D i A))
@@ -195,13 +196,13 @@ module Exact where
   zipWith⇒map n f (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (zipWith⇒map n f cs max-cs)
 
 
-  conf : ∀ {D : Set} → (n : ℕ≥ 2) → CCC.Configuration D → NCC.Configuration n D
+  conf : ∀ {D : 𝔽} → (n : ℕ≥ 2) → CCC.Configuration D → NCC.Configuration n D
   conf (sucs n) config d = ℕ≥.cappedFin (config d)
 
-  fnoc : ∀ {D : Set} → (n : ℕ≥ 2) → NCC.Configuration n D → CCC.Configuration D
+  fnoc : ∀ {D : 𝔽} → (n : ℕ≥ 2) → NCC.Configuration n D → CCC.Configuration D
   fnoc n config d = Fin.toℕ (config d)
 
-  preserves-⊆ : ∀ {i : Size} {D A : Set}
+  preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (expr : CCC D i A)
     → (choiceLengthLimit : NumberOfAlternatives≤ n expr)
@@ -253,7 +254,7 @@ module Exact where
       CCC.⟦ d ⟨ c ∷ cs ⟩ ⟧ (fnoc (sucs n) config)
     ∎
 
-  preserves-⊇ : ∀ {i : Size} {D A : Set}
+  preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (expr : CCC D i A)
     → (choiceLengthLimit : NumberOfAlternatives≤ n {i} expr)
@@ -307,7 +308,7 @@ module Exact where
       NCC.⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice (s≤s max≤n) (max-c ∷ max-cs)) ⟧ (conf (sucs n) config)
     ∎
 
-  preserves : ∀ {i : Size} {D A : Set}
+  preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (n : ℕ≥ 2)
     → (expr : CCC D i A)
     → (choiceLengthLimit : NumberOfAlternatives≤ n expr)
@@ -316,7 +317,7 @@ module Exact where
 
   -- Can't instantiate a LanguageCompiler because the expression compiler depends on the expression
 
-  -- CCC→NCC : {i : Size} → {D : Set} → LanguageCompiler (CCCL D {i}) (λ e → NCCL ⌈ e ⌉ D)
+  -- CCC→NCC : {i : Size} → {D : 𝔽} → LanguageCompiler (CCCL D {i}) (λ e → NCCL ⌈ e ⌉ D)
   -- --                                                                ^^^^^^ this unrepresentable in our framework
   -- CCC→NCC n .LanguageCompiler.compile expr = translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)
   -- CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf ⌈ expr ⌉
@@ -331,13 +332,13 @@ module Exact where
 open Exact using (⌈_⌉; numberOfAlternatives≤⌈_⌉)
 
 -- Gets rid of the `⌈_⌉` in the `IndexedDimension`, here `n`.
-Fin→ℕ : ∀ {D : Set} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
+Fin→ℕ : ∀ {D : 𝔽} → (n : ℕ≥ 2) -> IndexedDimension D n → D × ℕ
 Fin→ℕ n (d , i) = (d , Fin.toℕ i)
 
-Fin→ℕ⁻¹ : ∀ {D : Set} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D n
+Fin→ℕ⁻¹ : ∀ {D : 𝔽} → (n : ℕ≥ 2) -> D × ℕ → IndexedDimension D n
 Fin→ℕ⁻¹ n (d , i) = (d , ℕ≥.cappedFin {ℕ≥.pred n} i)
 
-translate : ∀ {i : Size} {D A : Set}
+translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC n (D × ℕ) ∞ A
@@ -346,21 +347,21 @@ translate (sucs n) expr = NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) 
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
 
-conf : ∀ {i : Size} {D A : Set}
+conf : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → CCC.Configuration D
   → NCC.Configuration n (D × ℕ)
 conf n expr = (NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)) ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ∘ Exact.conf ⌈ expr ⌉
 
-fnoc : ∀ {i : Size} {D A : Set}
+fnoc : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → NCC.Configuration n (D × ℕ)
   → CCC.Configuration D
 fnoc n expr = Exact.fnoc ⌈ expr ⌉ ∘ NCC→NCC.fnoc ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ∘ (NCC-map-config n (Fin→ℕ ⌈ expr ⌉))
 
-preserves : ∀ {i : Size} {D A : Set}
+preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → (expr : CCC D i A)
   → NCC.⟦ translate n expr ⟧ ≅[ fnoc n expr ][ conf n expr ] CCC.⟦ expr ⟧
@@ -379,11 +380,11 @@ preserves (sucs n) expr =
   lemma : (n : ℕ≥ 2) → (i : Fin (ℕ≥.toℕ (ℕ≥.pred n))) → ℕ≥.cappedFin {ℕ≥.pred n} (Fin.toℕ i) ≡ i
   lemma (sucs n) i = ℕ≥.cappedFin-toℕ i
 
-CCC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
+CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
 CCC→NCC n .LanguageCompiler.compile = translate n
 CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n expr
 CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
 CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
-NCC≽CCC : ∀ {D : Set} → (n : ℕ≥ 2) → NCCL n (D × ℕ) ≽ CCCL D
+NCC≽CCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → NCCL n (D × ℕ) ≽ CCCL D
 NCC≽CCC n = expressiveness-from-compiler (CCC→NCC n)

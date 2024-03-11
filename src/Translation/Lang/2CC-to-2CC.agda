@@ -12,6 +12,7 @@ open import Data.List as List using (List)
 import Data.List.Properties as List
 open import Data.Product using () renaming (_,_ to _and_)
 open import Framework.Compiler using (LanguageCompiler)
+open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
@@ -30,24 +31,24 @@ module 2CC where
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
 
-artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-2CC-map-config : ∀ {D₁ D₂ : Set}
+2CC-map-config : ∀ {D₁ D₂ : 𝔽}
   → (D₂ → D₁)
   → 2CC.Configuration D₁
   → 2CC.Configuration D₂
 2CC-map-config f config = config ∘ f
 
-map-dim : ∀ {i : Size} {D₁ D₂ A : Set}
+map-dim : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (D₁ → D₂)
   → 2CC D₁ i A
   → 2CC D₂ i A
 map-dim f (a -< cs >-) = a -< List.map (map-dim f) cs >-
 map-dim f (d ⟨ l , r ⟩) = f d ⟨ map-dim f l , map-dim f r ⟩
 
-preserves-⊆ : ∀ {i : Size} {D₁ D₂ A : Set}
+preserves-⊆ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → (expr : 2CC D₁ i A)
@@ -81,7 +82,7 @@ preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
     2CC.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
   ∎
 
-preserves-⊇ : ∀ {i : Size} {D₁ D₂ A : Set}
+preserves-⊇ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
@@ -118,7 +119,7 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     2CC.⟦ map-dim f (d ⟨ l , r ⟩) ⟧ (config ∘ f⁻¹)
   ∎
 
-preserves : ∀ {i : Size} {D₁ D₂ A : Set}
+preserves : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
@@ -126,7 +127,7 @@ preserves : ∀ {i : Size} {D₁ D₂ A : Set}
   → 2CC.⟦ map-dim f e ⟧ ≅[ 2CC-map-config f ][ 2CC-map-config f⁻¹ ] 2CC.⟦ e ⟧
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
 
-2CC-map-dim : ∀ {i : Size} {D₁ D₂ : Set}
+2CC-map-dim : ∀ {i : Size} {D₁ D₂ : 𝔽}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id

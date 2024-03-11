@@ -16,6 +16,7 @@ open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
+open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -40,26 +41,26 @@ open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 open import Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
 open import Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension) public
 
-artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module 2Ary where
-  translate : ∀ {i : Size} {D A : Set} → NCC (sucs zero) D i A → 2CC D ∞ A
+  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → NCC (sucs zero) D i A → 2CC D ∞ A
   translate (a -< cs >-) = a -< List.map translate cs >-
   translate (d ⟨ l ∷ r ∷ [] ⟩) = d ⟨ translate l , translate r ⟩
 
-  conf : ∀ {D : Set} → NCC.Configuration (sucs zero) D → 2CC.Configuration D
+  conf : ∀ {D : 𝔽} → NCC.Configuration (sucs zero) D → 2CC.Configuration D
   conf config d with config d
   ... | zero = true
   ... | suc zero = false
 
-  fnoc : ∀ {D : Set} → 2CC.Configuration D → NCC.Configuration (sucs zero) D
+  fnoc : ∀ {D : 𝔽} → 2CC.Configuration D → NCC.Configuration (sucs zero) D
   fnoc config d with config d
   ... | true = zero
   ... | false = suc zero
 
-  preserves-⊆ : ∀ {i : Size} {D A : Set}
+  preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (expr : NCC (sucs zero) D i A)
     → ⟦ translate expr ⟧₂ ⊆[ fnoc ] ⟦ expr ⟧ₙ
   preserves-⊆ (a -< cs >-) config =
@@ -93,12 +94,12 @@ module 2Ary where
       ⟦ d ⟨ l ∷ r ∷ [] ⟩ ⟧ₙ (fnoc config)
     ∎
     where
-    lemma : ∀ {A : Set} {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (fnoc config d)
+    lemma : ∀ {A : 𝔸} {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (fnoc config d)
     lemma with config d
     ... | true = refl
     ... | false = refl
 
-  preserves-⊇ : ∀ {i : Size} {D A : Set}
+  preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (expr : NCC (sucs zero) D i A)
     → ⟦ expr ⟧ₙ ⊆[ conf ] ⟦ translate expr ⟧₂
   preserves-⊇ (a -< cs >-) config =
@@ -132,25 +133,25 @@ module 2Ary where
       ⟦ translate (d ⟨ l ∷ r ∷ [] ⟩) ⟧₂ (conf config)
     ∎
     where
-    lemma : {A : Set} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if conf config d then a else b)
+    lemma : {A : 𝔸} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if conf config d then a else b)
     lemma with config d
     ... | zero = refl
     ... | suc zero = refl
 
-  preserves : ∀ {i : Size} {D A : Set}
+  preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (expr : NCC (sucs zero) D i A)
     → ⟦ translate expr ⟧₂ ≅[ fnoc ][ conf ] ⟦ expr ⟧ₙ
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  NCC→2CC : ∀ {i : Size} {D : Set} → LanguageCompiler (NCCL (sucs zero) D {i}) (2CCL D)
+  NCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (NCCL (sucs zero) D {i}) (2CCL D)
   NCC→2CC .LanguageCompiler.compile = translate
   NCC→2CC .LanguageCompiler.config-compiler expr .to = conf
   NCC→2CC .LanguageCompiler.config-compiler expr .from = fnoc
   NCC→2CC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-NCC→2CC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (2CCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→2CC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (2CCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→2CC n = NCC→NCC n (sucs zero) ⊕ 2Ary.NCC→2CC
 
-2CC≽NCC : ∀ {D : Set} → (n : ℕ≥ 2) → 2CCL (IndexedDimension D n) ≽ NCCL n D
+2CC≽NCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → 2CCL (IndexedDimension D n) ≽ NCCL n D
 2CC≽NCC n = expressiveness-from-compiler (NCC→2CC n)

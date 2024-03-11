@@ -16,6 +16,7 @@ open import Data.Product using () renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
+open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -46,12 +47,12 @@ open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 import Translation.Lang.NCC-to-NCC
 open Translation.Lang.NCC-to-NCC.IncreaseArity Variant Artifact∈ₛVariant using (NCC→NCC)
 
-artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module 2Ary where
-  translate : ∀ {i : Size} {D A : Set}
+  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔽}
     → 2CC D i A
     → NCC (sucs zero) D i A
   translate (a -< cs >-) = a -< List.map translate cs >-
@@ -67,7 +68,7 @@ module 2Ary where
   ... | zero = true
   ... | suc zero = false
 
-  preserves-⊆ : ∀ {i : Size} {D A : Set}
+  preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔽}
     → (expr : 2CC D i A)
     → NCC.⟦ translate expr ⟧ ⊆[ fnoc ] 2CC.⟦ expr ⟧
   preserves-⊆ (a -< cs >-) config =
@@ -104,7 +105,7 @@ module 2Ary where
     ... | zero = refl
     ... | suc zero = refl
 
-  preserves-⊇ : ∀ {i : Size} {D A : Set}
+  preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (expr : 2CC D i A)
     → 2CC.⟦ expr ⟧ ⊆[ conf ] NCC.⟦ translate expr ⟧
   preserves-⊇ (a -< cs >-) config =
@@ -143,7 +144,7 @@ module 2Ary where
     ... | true = refl
     ... | false = refl
 
-  preserves : ∀ {i : Size} {D A : Set}
+  preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (e : 2CC D i A)
     → NCC.⟦ translate e ⟧ ≅[ fnoc ][ conf ] 2CC.⟦ e ⟧
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
