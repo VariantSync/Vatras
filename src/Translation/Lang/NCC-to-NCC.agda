@@ -29,11 +29,14 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
-module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
-open NCC-Sem-1 using (NCCL)
-module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
-open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+import Lang.NCC
+module NCC where
+  open Lang.NCC public
+  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
+  open NCC-Sem-1 using (NCCL) public
+  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
+  open NCC-Sem-2 using (⟦_⟧) public
+open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 artifact : {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -60,32 +63,32 @@ module map-dim where
     → (f : D₁ → D₂)
     → (f⁻¹ : D₂ → D₁)
     → (expr : NCC n D₁ i A)
-    → ⟦ map-dim n f expr ⟧ₙ ⊆[ NCC-map-config n f ] ⟦ expr ⟧ₙ
+    → NCC.⟦ map-dim n f expr ⟧ ⊆[ NCC-map-config n f ] NCC.⟦ expr ⟧
   preserves-⊆ n f f⁻¹ (a -< cs >-) config =
-      ⟦ map-dim n f (a -< cs >-) ⟧ₙ config
+      NCC.⟦ map-dim n f (a -< cs >-) ⟧ config
     ≡⟨⟩
-      ⟦ a -< List.map (map-dim n f) cs >- ⟧ₙ config
+      NCC.⟦ a -< List.map (map-dim n f) cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (List.map (map-dim n f) cs))
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (map-dim n f) cs))
     ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-      artifact a (List.map (λ e → ⟦ map-dim n f e ⟧ₙ config) cs)
+      artifact a (List.map (λ e → NCC.⟦ map-dim n f e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n f f⁻¹ e config) cs) ⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ (config ∘ f)) cs)
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ (config ∘ f)) cs)
     ≡⟨⟩
-      ⟦ a -< cs >- ⟧ₙ (config ∘ f)
+      NCC.⟦ a -< cs >- ⟧ (config ∘ f)
     ∎
   preserves-⊆ n f f⁻¹ (d ⟨ cs ⟩) config =
-      ⟦ map-dim n f (d ⟨ cs ⟩) ⟧ₙ config
+      NCC.⟦ map-dim n f (d ⟨ cs ⟩) ⟧ config
     ≡⟨⟩
-      ⟦ f d ⟨ Vec.map (map-dim n f) cs ⟩ ⟧ₙ config
+      NCC.⟦ f d ⟨ Vec.map (map-dim n f) cs ⟩ ⟧ config
     ≡⟨⟩
-      ⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config (f d)) ⟧ₙ config
-    ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config (f d)) (map-dim n f) cs) refl ⟩
-      ⟦ map-dim n f (Vec.lookup cs (config (f d))) ⟧ₙ config
+      NCC.⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config (f d)) ⟧ config
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config (f d)) (map-dim n f) cs) refl ⟩
+      NCC.⟦ map-dim n f (Vec.lookup cs (config (f d))) ⟧ config
     ≡⟨ preserves-⊆ n f f⁻¹ (Vec.lookup cs (config (f d))) config ⟩
-      ⟦ Vec.lookup cs (config (f d)) ⟧ₙ (config ∘ f)
+      NCC.⟦ Vec.lookup cs (config (f d)) ⟧ (config ∘ f)
     ≡⟨⟩
-      ⟦ d ⟨ cs ⟩ ⟧ₙ (config ∘ f)
+      NCC.⟦ d ⟨ cs ⟩ ⟧ (config ∘ f)
     ∎
 
   preserves-⊇ : ∀ {i : Size} {D₁ D₂ A : Set}
@@ -94,34 +97,34 @@ module map-dim where
     → (f⁻¹ : D₂ → D₁)
     → f⁻¹ ∘ f ≗ id
     → (expr : NCC n D₁ i A)
-    → ⟦ expr ⟧ₙ ⊆[ NCC-map-config n f⁻¹ ] ⟦ map-dim n f expr ⟧ₙ
+    → NCC.⟦ expr ⟧ ⊆[ NCC-map-config n f⁻¹ ] NCC.⟦ map-dim n f expr ⟧
   preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
-      ⟦ a -< cs >- ⟧ₙ config
+      NCC.⟦ a -< cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n f f⁻¹ is-inverse e config) cs) ⟩
-      artifact a (List.map (λ e → ⟦ map-dim n f e ⟧ₙ (config ∘ f⁻¹)) cs)
+      artifact a (List.map (λ e → NCC.⟦ map-dim n f e ⟧ (config ∘ f⁻¹)) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ (config ∘ f⁻¹)) (List.map (map-dim n f) cs))
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ (config ∘ f⁻¹)) (List.map (map-dim n f) cs))
     ≡⟨⟩
-      ⟦ a -< List.map (map-dim n f) cs >- ⟧ₙ (config ∘ f⁻¹)
+      NCC.⟦ a -< List.map (map-dim n f) cs >- ⟧ (config ∘ f⁻¹)
     ≡⟨⟩
-      ⟦ map-dim n f (a -< cs >-) ⟧ₙ (config ∘ f⁻¹)
+      NCC.⟦ map-dim n f (a -< cs >-) ⟧ (config ∘ f⁻¹)
     ∎
   preserves-⊇ n f f⁻¹ is-inverse (d ⟨ cs ⟩) config =
-      ⟦ d ⟨ cs ⟩ ⟧ₙ config
+      NCC.⟦ d ⟨ cs ⟩ ⟧ config
     ≡⟨⟩
-      ⟦ Vec.lookup cs (config d) ⟧ₙ config
+      NCC.⟦ Vec.lookup cs (config d) ⟧ config
     ≡⟨ preserves-⊇ n f f⁻¹ is-inverse (Vec.lookup cs (config d)) config ⟩
-      ⟦ map-dim n f (Vec.lookup cs (config d)) ⟧ₙ (config ∘ f⁻¹)
-    ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config d) (map-dim n f) cs) refl ⟩
-      ⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config d) ⟧ₙ (config ∘ f⁻¹)
-    ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = Vec.map (map-dim n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟩
-      ⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config ((f⁻¹ ∘ f) d)) ⟧ₙ (config ∘ f⁻¹)
+      NCC.⟦ map-dim n f (Vec.lookup cs (config d)) ⟧ (config ∘ f⁻¹)
+    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) (map-dim n f) cs) refl ⟩
+      NCC.⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config d) ⟧ (config ∘ f⁻¹)
+    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = Vec.map (map-dim n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟩
+      NCC.⟦ Vec.lookup (Vec.map (map-dim n f) cs) (config ((f⁻¹ ∘ f) d)) ⟧ (config ∘ f⁻¹)
     ≡⟨⟩
-      ⟦ f d ⟨ Vec.map (map-dim n f) cs ⟩ ⟧ₙ (config ∘ f⁻¹)
+      NCC.⟦ f d ⟨ Vec.map (map-dim n f) cs ⟩ ⟧ (config ∘ f⁻¹)
     ≡⟨⟩
-      ⟦ map-dim n f (d ⟨ cs ⟩) ⟧ₙ (config ∘ f⁻¹)
+      NCC.⟦ map-dim n f (d ⟨ cs ⟩) ⟧ (config ∘ f⁻¹)
     ∎
 
   preserves : ∀ {i : Size} {D₁ D₂ A : Set}
@@ -130,7 +133,7 @@ module map-dim where
     → (f⁻¹ : D₂ → D₁)
     → f⁻¹ ∘ f ≗ id
     → (e : NCC n D₁ i A)
-    → ⟦ map-dim n f e ⟧ₙ ≅[ NCC-map-config n f ][ NCC-map-config n f⁻¹ ] ⟦ e ⟧ₙ
+    → NCC.⟦ map-dim n f e ⟧ ≅[ NCC-map-config n f ][ NCC-map-config n f⁻¹ ] NCC.⟦ e ⟧
   preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
   NCC-map-dim : ∀ {i : Size} {D₁ D₂ : Set}
@@ -175,81 +178,81 @@ module IncreaseArity where
       → (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
       → (expr : NCC n D i A)
-      → ⟦ translate n m n≤m expr ⟧ₙ ⊆[ fnoc n m n≤m ] ⟦ expr ⟧ₙ
+      → NCC.⟦ translate n m n≤m expr ⟧ ⊆[ fnoc n m n≤m ] NCC.⟦ expr ⟧
     preserves-⊆ n m n≤m (a -< cs >-) config =
-        ⟦ translate n m n≤m (a -< cs >-) ⟧ₙ config
+        NCC.⟦ translate n m n≤m (a -< cs >-) ⟧ config
       ≡⟨⟩
-        ⟦ a -< List.map (translate n m n≤m) cs >- ⟧ₙ config
+        NCC.⟦ a -< List.map (translate n m n≤m) cs >- ⟧ config
       ≡⟨⟩
-        artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (List.map (translate n m n≤m) cs))
+        artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (translate n m n≤m) cs))
       ≡˘⟨ Eq.cong₂ artifact Eq.refl (List.map-∘ cs) ⟩
-        artifact a (List.map (λ e → ⟦ translate n m n≤m e ⟧ₙ config) cs)
+        artifact a (List.map (λ e → NCC.⟦ translate n m n≤m e ⟧ config) cs)
       ≡⟨ Eq.cong₂ artifact Eq.refl (List.map-cong (λ e → preserves-⊆ n m n≤m e config) cs) ⟩
-        artifact a (List.map (λ e → ⟦ e ⟧ₙ (fnoc n m n≤m config)) cs)
+        artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc n m n≤m config)) cs)
       ≡⟨⟩
-        ⟦ a -< cs >- ⟧ₙ (fnoc n m n≤m config)
+        NCC.⟦ a -< cs >- ⟧ (fnoc n m n≤m config)
       ∎
     preserves-⊆ (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) config =
-        ⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ₙ config
+        NCC.⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ config
       ≡⟨⟩
-        ⟦ d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs) ⟩ ⟧ₙ config
+        NCC.⟦ d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs) ⟩ ⟧ config
       ≡⟨⟩
-        ⟦ Vec.lookup (Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs)) (config d) ⟧ₙ config
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (Vec.saturate-map n≤m (translate (sucs n) (sucs m) n≤m) cs) refl) refl ⟩
-        ⟦ Vec.lookup (Vec.map (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) (config d) ⟧ₙ config
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config d) (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) refl ⟩
-        ⟦ (translate (sucs n) (sucs m) n≤m) (Vec.lookup (Vec.saturate n≤m cs) (config d)) ⟧ₙ config
+        NCC.⟦ Vec.lookup (Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs)) (config d) ⟧ config
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (Vec.saturate-map n≤m (translate (sucs n) (sucs m) n≤m) cs) refl) refl ⟩
+        NCC.⟦ Vec.lookup (Vec.map (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) (config d) ⟧ config
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) refl ⟩
+        NCC.⟦ (translate (sucs n) (sucs m) n≤m) (Vec.lookup (Vec.saturate n≤m cs) (config d)) ⟧ config
       ≡⟨ preserves-⊆ (sucs n) (sucs m) n≤m (Vec.lookup (Vec.saturate n≤m cs) (config d)) config ⟩
-        ⟦ Vec.lookup (Vec.saturate n≤m cs) (config d) ⟧ₙ (fnoc (sucs n) (sucs m) n≤m config)
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate n≤m cs (config d)) refl ⟩
-        ⟦ Vec.lookup cs (fnoc (sucs n) (sucs m) n≤m config d) ⟧ₙ (fnoc (sucs n) (sucs m) n≤m config)
+        NCC.⟦ Vec.lookup (Vec.saturate n≤m cs) (config d) ⟧ (fnoc (sucs n) (sucs m) n≤m config)
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-saturate n≤m cs (config d)) refl ⟩
+        NCC.⟦ Vec.lookup cs (fnoc (sucs n) (sucs m) n≤m config d) ⟧ (fnoc (sucs n) (sucs m) n≤m config)
       ≡⟨⟩
-        ⟦ d ⟨ cs ⟩ ⟧ₙ (fnoc (sucs n) (sucs m) n≤m config)
+        NCC.⟦ d ⟨ cs ⟩ ⟧ (fnoc (sucs n) (sucs m) n≤m config)
       ∎
 
     preserves-⊇ : ∀ {i : Size} {D A : Set}
       → (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
       → (expr : NCC n D i A)
-      → ⟦ expr ⟧ₙ ⊆[ conf n m n≤m ] ⟦ translate n m n≤m expr ⟧ₙ
+      → NCC.⟦ expr ⟧ ⊆[ conf n m n≤m ] NCC.⟦ translate n m n≤m expr ⟧
     preserves-⊇ n m n≤m (a -< cs >-) config =
-        artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
+        artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
       ≡⟨ Eq.cong₂ artifact Eq.refl (List.map-cong (λ e → preserves-⊇ n m n≤m e config) cs) ⟩
-        artifact a (List.map (λ e → ⟦ translate n m n≤m e ⟧ₙ (conf n m n≤m config)) cs)
+        artifact a (List.map (λ e → NCC.⟦ translate n m n≤m e ⟧ (conf n m n≤m config)) cs)
       ≡⟨ Eq.cong₂ artifact Eq.refl (List.map-∘ cs) ⟩
-        ⟦ a -< List.map (translate n m n≤m) cs >- ⟧ₙ (conf n m n≤m config)
+        NCC.⟦ a -< List.map (translate n m n≤m) cs >- ⟧ (conf n m n≤m config)
       ≡⟨⟩
-        artifact a (List.map (λ e → ⟦ e ⟧ₙ (conf n m n≤m config)) (List.map (translate n m n≤m) cs))
+        artifact a (List.map (λ e → NCC.⟦ e ⟧ (conf n m n≤m config)) (List.map (translate n m n≤m) cs))
       ∎
     preserves-⊇ (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) config =
-        ⟦ d ⟨ cs ⟩ ⟧ₙ config
+        NCC.⟦ d ⟨ cs ⟩ ⟧ config
       ≡⟨⟩
-        ⟦ Vec.lookup cs (config d) ⟧ₙ config
-      ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = cs}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
-        ⟦ Vec.lookup cs (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₙ config
-      ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (refl {x = cs}) (Eq.cong ℕ≥.cappedFin (Fin.toℕ-inject≤ (config d) n≤m))) refl ⟩
-        ⟦ Vec.lookup cs (ℕ≥.cappedFin (Fin.toℕ (Fin.inject≤ (config d) n≤m))) ⟧ₙ config
-      ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-saturate n≤m cs (Fin.inject≤ (config d) n≤m)) refl ⟩
-        ⟦ Vec.lookup (Vec.saturate n≤m cs) (Fin.inject≤ (config d) n≤m) ⟧ₙ config
+        NCC.⟦ Vec.lookup cs (config d) ⟧ config
+      ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = cs}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
+        NCC.⟦ Vec.lookup cs (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ config
+      ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = cs}) (Eq.cong ℕ≥.cappedFin (Fin.toℕ-inject≤ (config d) n≤m))) refl ⟩
+        NCC.⟦ Vec.lookup cs (ℕ≥.cappedFin (Fin.toℕ (Fin.inject≤ (config d) n≤m))) ⟧ config
+      ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-saturate n≤m cs (Fin.inject≤ (config d) n≤m)) refl ⟩
+        NCC.⟦ Vec.lookup (Vec.saturate n≤m cs) (Fin.inject≤ (config d) n≤m) ⟧ config
       ≡⟨⟩
-        ⟦ Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d) ⟧ₙ config
+        NCC.⟦ Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d) ⟧ config
       ≡⟨ preserves-⊇ (sucs n) (sucs m) n≤m (Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d)) config ⟩
-        ⟦ (translate (sucs n) (sucs m) n≤m) (Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d)) ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
-      ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (conf (sucs n) (sucs m) n≤m config d) (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) refl ⟩
-        ⟦ Vec.lookup (Vec.map (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) (conf (sucs n) (sucs m) n≤m config d) ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
-      ≡˘⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup (Vec.saturate-map n≤m (translate (sucs n) (sucs m) n≤m) cs) refl) refl ⟩
-        ⟦ Vec.lookup (Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs)) (conf (sucs n) (sucs m) n≤m config d) ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
+        NCC.⟦ (translate (sucs n) (sucs m) n≤m) (Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d)) ⟧ (conf (sucs n) (sucs m) n≤m config)
+      ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (conf (sucs n) (sucs m) n≤m config d) (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) refl ⟩
+        NCC.⟦ Vec.lookup (Vec.map (translate (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) (conf (sucs n) (sucs m) n≤m config d) ⟧ (conf (sucs n) (sucs m) n≤m config)
+      ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (Vec.saturate-map n≤m (translate (sucs n) (sucs m) n≤m) cs) refl) refl ⟩
+        NCC.⟦ Vec.lookup (Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs)) (conf (sucs n) (sucs m) n≤m config d) ⟧ (conf (sucs n) (sucs m) n≤m config)
       ≡⟨⟩
-        ⟦ d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs) ⟩ ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
+        NCC.⟦ d ⟨ Vec.saturate n≤m (Vec.map (translate (sucs n) (sucs m) n≤m) cs) ⟩ ⟧ (conf (sucs n) (sucs m) n≤m config)
       ≡⟨⟩
-        ⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ₙ (conf (sucs n) (sucs m) n≤m config)
+        NCC.⟦ translate (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) ⟧ (conf (sucs n) (sucs m) n≤m config)
       ∎
 
     preserves : ∀ {i : Size} {D A : Set}
       → (n m : ℕ≥ 2)
       → (n≤m : n ℕ≥.≤ m)
       → (expr : NCC n D i A)
-      → ⟦ translate n m n≤m expr ⟧ₙ ≅[ fnoc n m n≤m ][ conf n m n≤m ] ⟦ expr ⟧ₙ
+      → NCC.⟦ translate n m n≤m expr ⟧ ≅[ fnoc n m n≤m ][ conf n m n≤m ] NCC.⟦ expr ⟧
     preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤m expr
 
     NCC→NCC : ∀ {i : Size} {D : Set}
@@ -379,26 +382,26 @@ module DecreaseArity where
   preserves-⊆ : ∀ {i : Size} {D A : Set}
     → (n : ℕ≥ 2)
     → (expr : NCC n D i A)
-    → ⟦ translate n expr ⟧ₙ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
+    → NCC.⟦ translate n expr ⟧ ⊆[ fnoc n ] NCC.⟦ expr ⟧
   preserves-⊆ (sucs n) (a -< cs >-) config =
-      ⟦ translate (sucs n) (a -< cs >-) ⟧ₙ config
+      NCC.⟦ translate (sucs n) (a -< cs >-) ⟧ config
     ≡⟨⟩
-      ⟦ a -< List.map (translate (sucs n)) cs >- ⟧ₙ config
+      NCC.⟦ a -< List.map (translate (sucs n)) cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (List.map (translate (sucs n)) cs))
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (translate (sucs n)) cs))
     ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-      artifact a (List.map (λ e → ⟦ translate (sucs n) e ⟧ₙ config) cs)
+      artifact a (List.map (λ e → NCC.⟦ translate (sucs n) e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ (sucs n) e config) cs) ⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ (fnoc (sucs n) config)) cs)
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc (sucs n) config)) cs)
     ≡⟨⟩
-      ⟦ a -< cs >- ⟧ₙ (fnoc (sucs n) config)
+      NCC.⟦ a -< cs >- ⟧ (fnoc (sucs n) config)
     ∎
   preserves-⊆ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
-      ⟦ translate (sucs n) (d ⟨ cs ⟩) ⟧ₙ config
+      NCC.⟦ translate (sucs n) (d ⟨ cs ⟩) ⟧ config
     ≡⟨ lemma n (ℕ.n<1+n n) cs (fnoc (sucs n) config d) (ℕ.+-comm n (Fin.toℕ (fnoc (sucs n) config d))) ⟩
-      ⟦ Vec.lookup cs (fnoc (sucs n) config d) ⟧ₙ (fnoc (sucs n) config)
+      NCC.⟦ Vec.lookup cs (fnoc (sucs n) config d) ⟧ (fnoc (sucs n) config)
     ≡⟨⟩
-      ⟦ d ⟨ cs ⟩ ⟧ₙ (fnoc (sucs n) config)
+      NCC.⟦ d ⟨ cs ⟩ ⟧ (fnoc (sucs n) config)
     ∎
     where
     open translate-Implementation
@@ -422,25 +425,25 @@ module DecreaseArity where
       → (cs' : Vec (NCC (sucs n) D i A) (suc (suc m)))
       → (j : Fin (suc (suc m)))
       → m + Fin.toℕ (fnoc (sucs n) config d) ≡ Fin.toℕ j + n
-      → ⟦ go n d cs m m≤n cs' ⟧ₙ config ≡ ⟦ Vec.lookup cs' j ⟧ₙ (fnoc (sucs n) config)
+      → NCC.⟦ go n d cs m m≤n cs' ⟧ config ≡ NCC.⟦ Vec.lookup cs' j ⟧ (fnoc (sucs n) config)
     lemma zero m≤n (l ∷ r ∷ []) zero m+config-d≡j+n =
-        ⟦ go n d cs zero m≤n (l ∷ r ∷ []) ⟧ₙ config
+        NCC.⟦ go n d cs zero m≤n (l ∷ r ∷ []) ⟧ config
       ≡⟨⟩
-        ⟦ (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ₙ config
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ config
       ≡⟨⟩
-        ⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (config (d , Fin.opposite (Fin.fromℕ< {zero} m≤n))) ⟧ₙ config
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (FnocLemmas.config≡0 config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (Eq.trans m+config-d≡j+n (Eq.trans (Eq.sym (Fin.toℕ-fromℕ n)) (Eq.trans (Eq.cong Fin.toℕ (Eq.cong Fin.opposite (Eq.sym (Fin.fromℕ<-toℕ zero m≤n)))) (Eq.sym (Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))))))))) refl ⟩
-        ⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) zero ⟧ₙ config
+        NCC.⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (config (d , Fin.opposite (Fin.fromℕ< {zero} m≤n))) ⟧ config
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (FnocLemmas.config≡0 config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (Eq.trans m+config-d≡j+n (Eq.trans (Eq.sym (Fin.toℕ-fromℕ n)) (Eq.trans (Eq.cong Fin.toℕ (Eq.cong Fin.opposite (Eq.sym (Fin.fromℕ<-toℕ zero m≤n)))) (Eq.sym (Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))))))))) refl ⟩
+        NCC.⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) zero ⟧ config
       ≡⟨⟩
-        ⟦ translate (sucs n) l ⟧ₙ config
+        NCC.⟦ translate (sucs n) l ⟧ config
       ≡⟨ preserves-⊆ (sucs n) l config ⟩
-        ⟦ l ⟧ₙ (fnoc (sucs n) config)
+        NCC.⟦ l ⟧ (fnoc (sucs n) config)
       ∎
     lemma zero m≤n (l ∷ r ∷ []) (suc zero) m+config-d≡j+n =
-        ⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ₙ config
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ config
       ≡⟨⟩
-        ⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (config (d , Fin.opposite (Fin.fromℕ< m≤n))) ⟧ₙ config
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (FnocLemmas.config≡1 config (Fin.opposite (Fin.fromℕ< m≤n))
+        NCC.⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (config (d , Fin.opposite (Fin.fromℕ< m≤n))) ⟧ config
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (FnocLemmas.config≡1 config (Fin.opposite (Fin.fromℕ< m≤n))
         (let module ≤ = ℕ.≤-Reasoning in
           ≤.begin-strict
             Fin.toℕ (Fin.opposite (Fin.fromℕ< m≤n))
@@ -454,13 +457,13 @@ module DecreaseArity where
             Fin.toℕ (fnoc (sucs n) config d)
           ≤.∎
         ))) refl ⟩
-        ⟦ translate (sucs n) r ⟧ₙ config
+        NCC.⟦ translate (sucs n) r ⟧ config
       ≡⟨ preserves-⊆ (sucs n) r config ⟩
-        ⟦ r ⟧ₙ (fnoc (sucs n) config)
+        NCC.⟦ r ⟧ (fnoc (sucs n) config)
       ∎
     lemma (suc m) m≤n (c ∷ cs') zero m+config-d≡j+n =
-        ⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ [] ⟩ ⟧ₙ config
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ []} refl (FnocLemmas.config≡0 config (Fin.opposite (Fin.fromℕ< {suc m} m≤n)) (Fin.toℕ-injective (
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ [] ⟩ ⟧ config
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ []} refl (FnocLemmas.config≡0 config (Fin.opposite (Fin.fromℕ< {suc m} m≤n)) (Fin.toℕ-injective (
             Fin.toℕ (fnoc (sucs n) config d)
           ≡˘⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (fnoc (sucs n) config d)) ⟩
             suc m + Fin.toℕ (fnoc (sucs n) config d) ∸ suc m
@@ -474,13 +477,13 @@ module DecreaseArity where
             Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
           ∎
         )))) refl ⟩
-        ⟦ translate (sucs n) c ⟧ₙ config
+        NCC.⟦ translate (sucs n) c ⟧ config
       ≡⟨ preserves-⊆ (sucs n) c config ⟩
-        ⟦ c ⟧ₙ (fnoc (sucs n) config)
+        NCC.⟦ c ⟧ (fnoc (sucs n) config)
       ∎
     lemma (suc m) (s≤s m≤n) (c ∷ cs') (suc j) m+config-d≡j+n =
-        ⟦ (d , Fin.opposite (Fin.fromℕ< (s≤s m≤n))) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ [] ⟩ ⟧ₙ config
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ []} refl (FnocLemmas.config≡1 config (Fin.opposite (Fin.fromℕ< (s≤s m≤n)))
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< (s≤s m≤n))) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ [] ⟩ ⟧ config
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ []} refl (FnocLemmas.config≡1 config (Fin.opposite (Fin.fromℕ< (s≤s m≤n)))
         (let module ≤ = ℕ.≤-Reasoning in
           ≤.begin-strict
             Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
@@ -502,32 +505,32 @@ module DecreaseArity where
             Fin.toℕ (fnoc (sucs n) config d)
           ≤.∎
         ))) refl ⟩
-        ⟦ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ⟧ₙ config
+        NCC.⟦ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ⟧ config
       ≡⟨ lemma m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' j (ℕ.suc-injective m+config-d≡j+n) ⟩
-        ⟦ Vec.lookup cs' j ⟧ₙ (fnoc (sucs n) config)
+        NCC.⟦ Vec.lookup cs' j ⟧ (fnoc (sucs n) config)
       ∎
 
   preserves-⊇ : ∀ {i : Size} {D A : Set}
     → (n : ℕ≥ 2)
     → (expr : NCC n D i A)
-    → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₙ
+    → NCC.⟦ expr ⟧ ⊆[ conf n ] NCC.⟦ translate n expr ⟧
   preserves-⊇ (sucs n) (a -< cs >-) config =
-      ⟦ a -< cs >- ⟧ₙ config
+      NCC.⟦ a -< cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ (sucs n) e config) cs) ⟩
-      artifact a (List.map (λ z → ⟦ translate (sucs n) z ⟧ₙ (conf (sucs n) config)) cs)
+      artifact a (List.map (λ z → NCC.⟦ translate (sucs n) z ⟧ (conf (sucs n) config)) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ (conf (sucs n) config)) (List.map (translate (sucs n)) cs))
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ (conf (sucs n) config)) (List.map (translate (sucs n)) cs))
     ≡⟨⟩
-      ⟦ translate (sucs n) (a -< cs >-) ⟧ₙ (conf (sucs n) config)
+      NCC.⟦ translate (sucs n) (a -< cs >-) ⟧ (conf (sucs n) config)
     ∎
   preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
-      ⟦ d ⟨ cs ⟩ ⟧ₙ config
+      NCC.⟦ d ⟨ cs ⟩ ⟧ config
     ≡⟨⟩
-      ⟦ Vec.lookup cs (config d) ⟧ₙ config
+      NCC.⟦ Vec.lookup cs (config d) ⟧ config
     ≡˘⟨ lemma n (ℕ.n<1+n n) cs (config d) (ℕ.+-comm n (Fin.toℕ (config d))) ⟩
-      ⟦ translate (sucs n) (d ⟨ cs ⟩) ⟧ₙ (conf (sucs n) config)
+      NCC.⟦ translate (sucs n) (d ⟨ cs ⟩) ⟧ (conf (sucs n) config)
     ∎
     where
     open translate-Implementation
@@ -551,14 +554,14 @@ module DecreaseArity where
       → (cs' : Vec (NCC (sucs n) D i A) (suc (suc m)))
       → (j : Fin (suc (suc m)))
       → m + Fin.toℕ (config d) ≡ Fin.toℕ j + n
-      → ⟦ go n d cs m m≤n cs' ⟧ₙ (conf (sucs n) config) ≡ ⟦ Vec.lookup cs' j ⟧ₙ config
+      → NCC.⟦ go n d cs m m≤n cs' ⟧ (conf (sucs n) config) ≡ NCC.⟦ Vec.lookup cs' j ⟧ config
     lemma zero m≤n (l ∷ r ∷ []) zero m+config-d≡j+n =
-        ⟦ go n d cs zero m≤n (l ∷ r ∷ []) ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ go n d cs zero m≤n (l ∷ r ∷ []) ⟧ (conf (sucs n) config)
       ≡⟨⟩
-        ⟦ (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ (conf (sucs n) config)
       ≡⟨⟩
-        ⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (conf (sucs n) config (d , Fin.opposite (Fin.fromℕ< {zero} m≤n))) ⟧ₙ (conf (sucs n) config)
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (ConfLemmas.config≡0' config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (
+        NCC.⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (conf (sucs n) config (d , Fin.opposite (Fin.fromℕ< {zero} m≤n))) ⟧ (conf (sucs n) config)
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (ConfLemmas.config≡0' config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (
             Fin.toℕ (config d)
           ≡⟨ m+config-d≡j+n ⟩
             n
@@ -570,17 +573,17 @@ module DecreaseArity where
             Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
           ∎
         )))) refl ⟩
-        ⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) zero ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) zero ⟧ (conf (sucs n) config)
       ≡⟨⟩
-        ⟦ translate (sucs n) l ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ translate (sucs n) l ⟧ (conf (sucs n) config)
       ≡˘⟨ preserves-⊇ (sucs n) l config ⟩
-        ⟦ l ⟧ₙ config
+        NCC.⟦ l ⟧ config
       ∎
     lemma zero m≤n (l ∷ r ∷ []) (suc zero) m+config-d≡j+n =
-        ⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) l ∷ translate (sucs n) r ∷ [] ⟩ ⟧ (conf (sucs n) config)
       ≡⟨⟩
-        ⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (conf (sucs n) config (d , Fin.opposite (Fin.fromℕ< m≤n))) ⟧ₙ (conf (sucs n) config)
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (ConfLemmas.config≡1' config (Fin.opposite (Fin.fromℕ< m≤n)) (λ config-d≡opposite-m → ℕ.1+n≢n (
+        NCC.⟦ Vec.lookup (translate (sucs n) l ∷ translate (sucs n) r ∷ []) (conf (sucs n) config (d , Fin.opposite (Fin.fromℕ< m≤n))) ⟧ (conf (sucs n) config)
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) l ∷ translate (sucs n) r ∷ []} refl (ConfLemmas.config≡1' config (Fin.opposite (Fin.fromℕ< m≤n)) (λ config-d≡opposite-m → ℕ.1+n≢n (
             suc n
           ≡˘⟨ m+config-d≡j+n ⟩
             Fin.toℕ (config d)
@@ -596,13 +599,13 @@ module DecreaseArity where
             n
           ∎
         )))) refl ⟩
-        ⟦ translate (sucs n) r ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ translate (sucs n) r ⟧ (conf (sucs n) config)
       ≡˘⟨ preserves-⊇ (sucs n) r config ⟩
-        ⟦ r ⟧ₙ config
+        NCC.⟦ r ⟧ config
       ∎
     lemma (suc m) m≤n (c ∷ cs') zero m+config-d≡j+n =
-        ⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ [] ⟩ ⟧ₙ (conf (sucs n) config)
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ []} refl (ConfLemmas.config≡0' config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ [] ⟩ ⟧ (conf (sucs n) config)
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ []} refl (ConfLemmas.config≡0' config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (
             Fin.toℕ (config d)
           ≡˘⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (config d)) ⟩
             suc m + Fin.toℕ (config d) ∸ suc m
@@ -616,13 +619,13 @@ module DecreaseArity where
             Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
           ∎
         )))) refl ⟩
-        ⟦ translate (sucs n) c ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ translate (sucs n) c ⟧ (conf (sucs n) config)
       ≡˘⟨ preserves-⊇ (sucs n) c config ⟩
-        ⟦ c ⟧ₙ config
+        NCC.⟦ c ⟧ config
       ∎
     lemma (suc m) (s≤s m≤n) (c ∷ cs') (suc j) m+config-d≡j+n =
-        ⟦ (d , Fin.opposite (Fin.fromℕ< (s≤s m≤n))) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ [] ⟩ ⟧ₙ (conf (sucs n) config)
-      ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ []} refl (ConfLemmas.config≡1' config (Fin.opposite (Fin.fromℕ< (s≤s m≤n)))
+        NCC.⟦ (d , Fin.opposite (Fin.fromℕ< (s≤s m≤n))) ⟨ translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ [] ⟩ ⟧ (conf (sucs n) config)
+      ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = translate (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ []} refl (ConfLemmas.config≡1' config (Fin.opposite (Fin.fromℕ< (s≤s m≤n)))
         (λ config-d≡opposite-m → (ℕ.<⇒≢ (ℕ.m≤n⇒m≤o+n (Fin.toℕ j) (ℕ.m∸n≢0⇒n<m (ℕ.m>n⇒m∸n≢0 (ℕ.n∸1+m<n∸m m≤n))))) (
             n ∸ suc m
           ≡˘⟨ Eq.cong₂ _∸_ {x = n} refl (Eq.cong suc (Fin.toℕ-fromℕ< m≤n)) ⟩
@@ -645,15 +648,15 @@ module DecreaseArity where
             Fin.toℕ j + (n ∸ m)
           ∎
         )))) refl ⟩
-        ⟦ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ⟧ₙ (conf (sucs n) config)
+        NCC.⟦ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ⟧ (conf (sucs n) config)
       ≡⟨ lemma m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' j (ℕ.suc-injective m+config-d≡j+n) ⟩
-        ⟦ Vec.lookup cs' j ⟧ₙ config
+        NCC.⟦ Vec.lookup cs' j ⟧ config
       ∎
 
   preserves : ∀ {i : Size} {D A : Set}
     → (n : ℕ≥ 2)
     → (expr : NCC n D i A)
-    → ⟦ translate n expr ⟧ₙ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+    → NCC.⟦ translate n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
   preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
   NCC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))

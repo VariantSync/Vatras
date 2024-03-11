@@ -25,17 +25,23 @@ open import Util.Nat.AtLeast using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
-module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
-open NCC-Sem-1 using (NCCL)
-module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
-open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+import Lang.NCC
+module NCC where
+  open Lang.NCC public
+  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
+  open NCC-Sem-1 using (NCCL) public
+  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
+  open NCC-Sem-2 using (⟦_⟧) public
+open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-open import Lang.2CC as 2CC using (2CC; _-<_>-; _⟨_,_⟩)
-module 2CC-Sem-1 D = 2CC.Sem D Variant Artifact∈ₛVariant
-open 2CC-Sem-1 using (2CCL)
-module 2CC-Sem-2 {D} = 2CC.Sem D Variant Artifact∈ₛVariant
-open 2CC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧₂)
+import Lang.2CC
+module 2CC where
+  open Lang.2CC public
+  module 2CC-Sem-1 D = Lang.2CC.Sem D Variant Artifact∈ₛVariant
+  open 2CC-Sem-1 using (2CCL) public
+  module 2CC-Sem-2 {D} = Lang.2CC.Sem D Variant Artifact∈ₛVariant
+  open 2CC-Sem-2 using (⟦_⟧) public
+open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
 import Translation.Lang.NCC-to-NCC
 open Translation.Lang.NCC-to-NCC.IncreaseArity Variant Artifact∈ₛVariant using (NCC→NCC)
@@ -63,34 +69,34 @@ module 2Ary where
 
   preserves-⊆ : ∀ {i : Size} {D A : Set}
     → (expr : 2CC D i A)
-    → ⟦ translate expr ⟧ₙ ⊆[ fnoc ] ⟦ expr ⟧₂
+    → NCC.⟦ translate expr ⟧ ⊆[ fnoc ] 2CC.⟦ expr ⟧
   preserves-⊆ (a -< cs >-) config =
-      ⟦ translate (a -< cs >-) ⟧ₙ config
+      NCC.⟦ translate (a -< cs >-) ⟧ config
     ≡⟨⟩
-      ⟦ a -< List.map translate cs >- ⟧ₙ config
+      NCC.⟦ a -< List.map translate cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ config) (List.map translate cs))
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map translate cs))
     ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-      artifact a (List.map (λ e → ⟦ translate e ⟧ₙ config) cs)
+      artifact a (List.map (λ e → NCC.⟦ translate e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ e config) cs) ⟩
-      artifact a (List.map (λ e → ⟦ e ⟧₂ (fnoc config)) cs)
+      artifact a (List.map (λ e → 2CC.⟦ e ⟧ (fnoc config)) cs)
     ≡⟨⟩
-      ⟦ a -< cs >- ⟧₂ (fnoc config)
+      2CC.⟦ a -< cs >- ⟧ (fnoc config)
     ∎
   preserves-⊆ (d ⟨ l , r ⟩) config =
-      ⟦ translate (d ⟨ l , r ⟩) ⟧ₙ config
+      NCC.⟦ translate (d ⟨ l , r ⟩) ⟧ config
     ≡⟨⟩
-      ⟦ d ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ₙ config
+      NCC.⟦ d ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ config
     ≡⟨⟩
-      ⟦ Vec.lookup (translate l ∷ translate r ∷ []) (config d) ⟧ₙ config
-    ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Vec.lookup-map (config d) translate (l ∷ r ∷ [])) refl ⟩
-      ⟦ translate (Vec.lookup (l ∷ r ∷ []) (config d)) ⟧ₙ config
+      NCC.⟦ Vec.lookup (translate l ∷ translate r ∷ []) (config d) ⟧ config
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) translate (l ∷ r ∷ [])) refl ⟩
+      NCC.⟦ translate (Vec.lookup (l ∷ r ∷ []) (config d)) ⟧ config
     ≡⟨ preserves-⊆ (Vec.lookup (l ∷ r ∷ []) (config d)) config ⟩
-      ⟦ Vec.lookup (l ∷ r ∷ []) (config d) ⟧₂ (fnoc config)
-    ≡⟨ Eq.cong₂ ⟦_⟧₂ lemma refl ⟩
-      ⟦ if (fnoc config d) then l else r ⟧₂ (fnoc config)
+      2CC.⟦ Vec.lookup (l ∷ r ∷ []) (config d) ⟧ (fnoc config)
+    ≡⟨ Eq.cong₂ 2CC.⟦_⟧ lemma refl ⟩
+      2CC.⟦ if (fnoc config d) then l else r ⟧ (fnoc config)
     ≡⟨⟩
-      ⟦ d ⟨ l , r ⟩ ⟧₂ (fnoc config)
+      2CC.⟦ d ⟨ l , r ⟩ ⟧ (fnoc config)
     ∎
     where
     lemma : {A : Set} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if fnoc config d then a else b)
@@ -100,36 +106,36 @@ module 2Ary where
 
   preserves-⊇ : ∀ {i : Size} {D A : Set}
     → (expr : 2CC D i A)
-    → ⟦ expr ⟧₂ ⊆[ conf ] ⟦ translate expr ⟧ₙ
+    → 2CC.⟦ expr ⟧ ⊆[ conf ] NCC.⟦ translate expr ⟧
   preserves-⊇ (a -< cs >-) config =
-      ⟦ a -< cs >- ⟧₂ config
+      2CC.⟦ a -< cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → ⟦ e ⟧₂ config) cs)
+      artifact a (List.map (λ e → 2CC.⟦ e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ e config) cs) ⟩
-      artifact a (List.map (λ e → ⟦ translate e ⟧ₙ (conf config)) cs)
+      artifact a (List.map (λ e → NCC.⟦ translate e ⟧ (conf config)) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-      artifact a (List.map (λ e → ⟦ e ⟧ₙ (conf config)) (List.map translate cs))
+      artifact a (List.map (λ e → NCC.⟦ e ⟧ (conf config)) (List.map translate cs))
     ≡⟨⟩
-      ⟦ a -< List.map translate cs >- ⟧ₙ (conf config)
+      NCC.⟦ a -< List.map translate cs >- ⟧ (conf config)
     ≡⟨⟩
-      ⟦ translate (a -< cs >-) ⟧ₙ (conf config)
+      NCC.⟦ translate (a -< cs >-) ⟧ (conf config)
     ∎
   preserves-⊇ (d ⟨ l , r ⟩) config =
-      ⟦ d ⟨ l , r ⟩ ⟧₂ config
+      2CC.⟦ d ⟨ l , r ⟩ ⟧ config
     ≡⟨⟩
-      ⟦ if config d then l else r ⟧₂ config
+      2CC.⟦ if config d then l else r ⟧ config
     ≡⟨⟩
-      ⟦ if config d then l else r ⟧₂ config
+      2CC.⟦ if config d then l else r ⟧ config
     ≡⟨ preserves-⊇ (if config d then l else r) config ⟩
-      ⟦ translate (if config d then l else r) ⟧ₙ (conf config)
-    ≡⟨ Eq.cong₂ ⟦_⟧ₙ (Bool.push-function-into-if (translate) (config d)) refl ⟩
-      ⟦ if config d then translate l else translate r ⟧ₙ (conf config)
-    ≡⟨ Eq.cong₂ ⟦_⟧ₙ lemma refl ⟩
-      ⟦ Vec.lookup (translate l ∷ translate r ∷ []) (conf config d) ⟧ₙ (conf config)
+      NCC.⟦ translate (if config d then l else r) ⟧ (conf config)
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Bool.push-function-into-if (translate) (config d)) refl ⟩
+      NCC.⟦ if config d then translate l else translate r ⟧ (conf config)
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ lemma refl ⟩
+      NCC.⟦ Vec.lookup (translate l ∷ translate r ∷ []) (conf config d) ⟧ (conf config)
     ≡⟨⟩
-      ⟦ d ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ₙ (conf config)
+      NCC.⟦ d ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ (conf config)
     ≡⟨⟩
-      ⟦ translate (d ⟨ l , r ⟩) ⟧ₙ (conf config)
+      NCC.⟦ translate (d ⟨ l , r ⟩) ⟧ (conf config)
     ∎
     where
     lemma : {A : Set} → {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (conf config d)
@@ -139,7 +145,7 @@ module 2Ary where
 
   preserves : ∀ {i : Size} {D A : Set}
     → (e : 2CC D i A)
-    → ⟦ translate e ⟧ₙ ≅[ fnoc ][ conf ] ⟦ e ⟧₂
+    → NCC.⟦ translate e ⟧ ≅[ fnoc ][ conf ] 2CC.⟦ e ⟧
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
   2CC→NCC : ∀ {i : Size} {D : Set} → LanguageCompiler (2CCL D {i}) (NCCL (sucs zero) D {i})

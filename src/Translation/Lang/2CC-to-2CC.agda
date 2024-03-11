@@ -20,11 +20,15 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.2CC as 2CC using (2CC; _-<_>-; _⟨_,_⟩)
-module 2CC-Sem1 D = 2CC.Sem D Variant Artifact∈ₛVariant
-open 2CC-Sem1 using (2CCL)
-module 2CC-Sem2 {D} = 2CC.Sem D Variant Artifact∈ₛVariant
-open 2CC-Sem2 using () renaming (⟦_⟧ to ⟦_⟧₂)
+import Lang.2CC
+module 2CC where
+  open Lang.2CC public
+  module 2CC-Sem-1 D = Lang.2CC.Sem D Variant Artifact∈ₛVariant
+  open 2CC-Sem-1 using (2CCL) public
+  module 2CC-Sem-2 {D} = Lang.2CC.Sem D Variant Artifact∈ₛVariant
+  open 2CC-Sem-2 using (⟦_⟧) public
+open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
+
 
 artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -47,34 +51,34 @@ preserves-⊆ : ∀ {i : Size} {D₁ D₂ A : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → (expr : 2CC D₁ i A)
-  → ⟦ map-dim f expr ⟧₂ ⊆[ 2CC-map-config f ] ⟦ expr ⟧₂
+  → 2CC.⟦ map-dim f expr ⟧ ⊆[ 2CC-map-config f ] 2CC.⟦ expr ⟧
 preserves-⊆ f f⁻¹ (a -< cs >-) config =
-    ⟦ map-dim f (a -< cs >-) ⟧₂ config
+    2CC.⟦ map-dim f (a -< cs >-) ⟧ config
   ≡⟨⟩
-    ⟦ a -< List.map (map-dim f) cs >- ⟧₂ config
+    2CC.⟦ a -< List.map (map-dim f) cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → ⟦ e ⟧₂ config) (List.map (map-dim f) cs))
+    artifact a (List.map (λ e → 2CC.⟦ e ⟧ config) (List.map (map-dim f) cs))
   ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-    artifact a (List.map (λ e → ⟦ map-dim f e ⟧₂ config) cs)
+    artifact a (List.map (λ e → 2CC.⟦ map-dim f e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ f f⁻¹ e config) cs) ⟩
-    artifact a (List.map (λ e → ⟦ e ⟧₂ (config ∘ f)) cs)
+    artifact a (List.map (λ e → 2CC.⟦ e ⟧ (config ∘ f)) cs)
   ≡⟨⟩
-    ⟦ a -< cs >- ⟧₂ (config ∘ f)
+    2CC.⟦ a -< cs >- ⟧ (config ∘ f)
   ∎
 preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
-    ⟦ map-dim f (d ⟨ l , r ⟩) ⟧₂ config
+    2CC.⟦ map-dim f (d ⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
-    ⟦ f d ⟨ map-dim f l , map-dim f r ⟩ ⟧₂ config
+    2CC.⟦ f d ⟨ map-dim f l , map-dim f r ⟩ ⟧ config
   ≡⟨⟩
-    ⟦ if config (f d) then map-dim f l else map-dim f r ⟧₂ config
-  ≡˘⟨ Eq.cong₂ ⟦_⟧₂ (Bool.push-function-into-if (map-dim f) (config (f d))) refl ⟩
-    ⟦ map-dim f (if config (f d) then l else r) ⟧₂ config
+    2CC.⟦ if config (f d) then map-dim f l else map-dim f r ⟧ config
+  ≡˘⟨ Eq.cong₂ 2CC.⟦_⟧ (Bool.push-function-into-if (map-dim f) (config (f d))) refl ⟩
+    2CC.⟦ map-dim f (if config (f d) then l else r) ⟧ config
   ≡⟨ preserves-⊆ f f⁻¹ (if config (f d) then l else r) config ⟩
-    ⟦ if config (f d) then l else r ⟧₂ (config ∘ f)
+    2CC.⟦ if config (f d) then l else r ⟧ (config ∘ f)
   ≡⟨⟩
-    ⟦ if config (f d) then l else r ⟧₂ (config ∘ f)
+    2CC.⟦ if config (f d) then l else r ⟧ (config ∘ f)
   ≡⟨⟩
-    ⟦ d ⟨ l , r ⟩ ⟧₂ (config ∘ f)
+    2CC.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
   ∎
 
 preserves-⊇ : ∀ {i : Size} {D₁ D₂ A : Set}
@@ -82,36 +86,36 @@ preserves-⊇ : ∀ {i : Size} {D₁ D₂ A : Set}
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
   → (expr : 2CC D₁ i A)
-  → ⟦ expr ⟧₂ ⊆[ 2CC-map-config f⁻¹ ] ⟦ map-dim f expr ⟧₂
+  → 2CC.⟦ expr ⟧ ⊆[ 2CC-map-config f⁻¹ ] 2CC.⟦ map-dim f expr ⟧
 preserves-⊇ f f⁻¹ is-inverse (a -< cs >-) config =
-    ⟦ a -< cs >- ⟧₂ config
+    2CC.⟦ a -< cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → ⟦ e ⟧₂ config) cs)
+    artifact a (List.map (λ e → 2CC.⟦ e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ f f⁻¹ is-inverse e config) cs) ⟩
-    artifact a (List.map (λ e → ⟦ map-dim f e ⟧₂ (config ∘ f⁻¹)) cs)
+    artifact a (List.map (λ e → 2CC.⟦ map-dim f e ⟧ (config ∘ f⁻¹)) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-    artifact a (List.map (λ e → ⟦ e ⟧₂ (config ∘ f⁻¹)) (List.map (map-dim f) cs))
+    artifact a (List.map (λ e → 2CC.⟦ e ⟧ (config ∘ f⁻¹)) (List.map (map-dim f) cs))
   ≡⟨⟩
-    ⟦ a -< List.map (map-dim f) cs >- ⟧₂ (config ∘ f⁻¹)
+    2CC.⟦ a -< List.map (map-dim f) cs >- ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
-    ⟦ map-dim f (a -< cs >-) ⟧₂ (config ∘ f⁻¹)
+    2CC.⟦ map-dim f (a -< cs >-) ⟧ (config ∘ f⁻¹)
   ∎
 preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
-    ⟦ d ⟨ l , r ⟩ ⟧₂ config
+    2CC.⟦ d ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
-    ⟦ if config d then l else r ⟧₂ config
+    2CC.⟦ if config d then l else r ⟧ config
   ≡⟨⟩
-    ⟦ if config d then l else r ⟧₂ config
+    2CC.⟦ if config d then l else r ⟧ config
   ≡⟨ preserves-⊇ f f⁻¹ is-inverse (if config d then l else r) config ⟩
-    ⟦ map-dim f (if config d then l else r) ⟧₂ (config ∘ f⁻¹)
-  ≡⟨ Eq.cong₂ ⟦_⟧₂ (push-function-into-if (map-dim f) (config d)) refl ⟩
-    ⟦ if config d then map-dim f l else map-dim f r ⟧₂ (config ∘ f⁻¹)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧₂ (Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (map-dim f l)) (map-dim f r)) refl ⟩
-    ⟦ if config (f⁻¹ (f d)) then map-dim f l else map-dim f r ⟧₂ (config ∘ f⁻¹)
+    2CC.⟦ map-dim f (if config d then l else r) ⟧ (config ∘ f⁻¹)
+  ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (push-function-into-if (map-dim f) (config d)) refl ⟩
+    2CC.⟦ if config d then map-dim f l else map-dim f r ⟧ (config ∘ f⁻¹)
+  ≡˘⟨ Eq.cong₂ 2CC.⟦_⟧ (Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (map-dim f l)) (map-dim f r)) refl ⟩
+    2CC.⟦ if config (f⁻¹ (f d)) then map-dim f l else map-dim f r ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
-    ⟦ f d ⟨ map-dim f l , map-dim f r ⟩ ⟧₂ (config ∘ f⁻¹)
+    2CC.⟦ f d ⟨ map-dim f l , map-dim f r ⟩ ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
-    ⟦ map-dim f (d ⟨ l , r ⟩) ⟧₂ (config ∘ f⁻¹)
+    2CC.⟦ map-dim f (d ⟨ l , r ⟩) ⟧ (config ∘ f⁻¹)
   ∎
 
 preserves : ∀ {i : Size} {D₁ D₂ A : Set}
@@ -119,7 +123,7 @@ preserves : ∀ {i : Size} {D₁ D₂ A : Set}
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
   → (e : 2CC D₁ i A)
-  → ⟦ map-dim f e ⟧₂ ≅[ 2CC-map-config f ][ 2CC-map-config f⁻¹ ] ⟦ e ⟧₂
+  → 2CC.⟦ map-dim f e ⟧ ≅[ 2CC-map-config f ][ 2CC-map-config f⁻¹ ] 2CC.⟦ e ⟧
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
 
 2CC-map-dim : ∀ {i : Size} {D₁ D₂ : Set}

@@ -24,17 +24,23 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.CCC as CCC using (CCC; _-<_>-; _⟨_⟩)
-module CCC-Sem-1 D = CCC.Sem D Variant Artifact∈ₛVariant
-open CCC-Sem-1 using (CCCL)
-module CCC-Sem-2 {D} = CCC.Sem D Variant Artifact∈ₛVariant
-open CCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₐ)
+import Lang.CCC
+module CCC where
+  open Lang.CCC public
+  module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+  open CCC-Sem-1 using (CCCL) public
+  module CCC-Sem-2 {D} = Lang.CCC.Sem D Variant Artifact∈ₛVariant
+  open CCC-Sem-2 using (⟦_⟧) public
+open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 
-open import Lang.NCC as NCC using (NCC; _-<_>-; _⟨_⟩)
-module NCC-Sem-1 n D = NCC.Sem n D Variant Artifact∈ₛVariant
-open NCC-Sem-1 using (NCCL)
-module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
-open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
+import Lang.NCC
+module NCC where
+  open Lang.NCC public
+  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
+  open NCC-Sem-1 using (NCCL) public
+  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
+  open NCC-Sem-2 using (⟦_⟧) public
+open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 artifact : ∀ {A : Set} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -63,75 +69,75 @@ fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 preserves-⊆ : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → (expr : NCC n D i A)
-  → ⟦ translate n expr ⟧ₐ ⊆[ fnoc n ] ⟦ expr ⟧ₙ
+  → CCC.⟦ translate n expr ⟧ ⊆[ fnoc n ] NCC.⟦ expr ⟧
 preserves-⊆ n (a -< cs >-) config =
-    ⟦ translate n (a -< cs >-) ⟧ₐ config
+    CCC.⟦ translate n (a -< cs >-) ⟧ config
   ≡⟨⟩
-    ⟦ a -< List.map (translate n) cs >- ⟧ₐ config
+    CCC.⟦ a -< List.map (translate n) cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → ⟦ e ⟧ₐ config) (List.map (translate n) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ config)} {f = translate n} cs) ⟩
-    artifact a (List.map (λ e → ⟦ translate n e ⟧ₐ config) cs)
+    artifact a (List.map (λ e → CCC.⟦ e ⟧ config) (List.map (translate n) cs))
+  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ config)} {f = translate n} cs) ⟩
+    artifact a (List.map (λ e → CCC.⟦ translate n e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
-    artifact a (List.map (λ e → ⟦ e ⟧ₙ (fnoc n config)) cs)
+    artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc n config)) cs)
   ≡⟨⟩
-    ⟦ a -< cs >- ⟧ₙ (fnoc n config)
+    NCC.⟦ a -< cs >- ⟧ (fnoc n config)
   ∎
 preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) config =
-    ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ₐ config
+    CCC.⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ config
   ≡⟨⟩
-    ⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ₐ config
+    CCC.⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ config
   ≡⟨⟩
-    ⟦ find-or-last (config d) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ₐ config
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = config d} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
-    ⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ₐ config
-  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (ℕ≥.cappedFin (config d)) (translate (sucs n)) (c ∷ cs)) refl ⟩
-    ⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ₐ config
+    CCC.⟦ find-or-last (config d) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ config
+  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (lookup⇒find-or-last {m = config d} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
+    CCC.⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ config
+  ≡⟨ Eq.cong₂ CCC.⟦_⟧ (Vec.lookup-map (ℕ≥.cappedFin (config d)) (translate (sucs n)) (c ∷ cs)) refl ⟩
+    CCC.⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ config
   ≡⟨ preserves-⊆ (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) config ⟩
-    ⟦ Vec.lookup (c ∷ cs) (fnoc (sucs n) config d) ⟧ₙ (fnoc (sucs n) config)
+    NCC.⟦ Vec.lookup (c ∷ cs) (fnoc (sucs n) config d) ⟧ (fnoc (sucs n) config)
   ≡⟨⟩
-    ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ (fnoc (sucs n) config)
+    NCC.⟦ d ⟨ c ∷ cs ⟩ ⟧ (fnoc (sucs n) config)
   ∎
 
 preserves-⊇ : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → (expr : NCC n D i A)
-  → ⟦ expr ⟧ₙ ⊆[ conf n ] ⟦ translate n expr ⟧ₐ
+  → NCC.⟦ expr ⟧ ⊆[ conf n ] CCC.⟦ translate n expr ⟧
 preserves-⊇ n (a -< cs >-) config =
-    ⟦ a -< cs >- ⟧ₙ config
+    NCC.⟦ a -< cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → ⟦ e ⟧ₙ config) cs)
+    artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n e config) cs) ⟩
-    artifact a (List.map (λ e → ⟦ translate n e ⟧ₐ (conf n config)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → ⟦ e ⟧ₐ (conf n config))} {f = translate n} cs) ⟩
-    artifact a (List.map (λ e → ⟦ e ⟧ₐ (conf n config)) (List.map (translate n) cs))
+    artifact a (List.map (λ e → CCC.⟦ translate n e ⟧ (conf n config)) cs)
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ (conf n config))} {f = translate n} cs) ⟩
+    artifact a (List.map (λ e → CCC.⟦ e ⟧ (conf n config)) (List.map (translate n) cs))
   ≡⟨⟩
-    ⟦ a -< List.map (translate n) cs >- ⟧ₐ (conf n config)
+    CCC.⟦ a -< List.map (translate n) cs >- ⟧ (conf n config)
   ≡⟨⟩
-    ⟦ translate n (a -< cs >-) ⟧ₐ (conf n config)
+    CCC.⟦ translate n (a -< cs >-) ⟧ (conf n config)
   ∎
 preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
-    ⟦ d ⟨ c ∷ cs ⟩ ⟧ₙ config
+    NCC.⟦ d ⟨ c ∷ cs ⟩ ⟧ config
   ≡⟨⟩
-    ⟦ Vec.lookup (c ∷ cs) (config d) ⟧ₙ config
+    NCC.⟦ Vec.lookup (c ∷ cs) (config d) ⟧ config
   ≡⟨ preserves-⊇ (sucs n) (Vec.lookup (c ∷ cs) (config d)) config ⟩
-    ⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (config d)) ⟧ₐ (conf (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Vec.lookup-map (config d) (translate (sucs n)) (c ∷ cs)) refl ⟩
-    ⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (config d) ⟧ₐ (conf (sucs n) config)
-  ≡˘⟨ Eq.cong₂ ⟦_⟧ₐ (Eq.cong₂ Vec.lookup (refl {x = Vec.map (translate (sucs n)) (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
-    ⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ₐ (conf (sucs n) config)
-  ≡⟨ Eq.cong₂ ⟦_⟧ₐ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
-    ⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ₐ (conf (sucs n) config)
+    CCC.⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (config d)) ⟧ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (Vec.lookup-map (config d) (translate (sucs n)) (c ∷ cs)) refl ⟩
+    CCC.⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (config d) ⟧ (conf (sucs n) config)
+  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = Vec.map (translate (sucs n)) (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
+    CCC.⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ (conf (sucs n) config)
+  ≡⟨ Eq.cong₂ CCC.⟦_⟧ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
+    CCC.⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ (conf (sucs n) config)
   ≡⟨⟩
-    ⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ₐ (conf (sucs n) config)
+    CCC.⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ (conf (sucs n) config)
   ≡⟨⟩
-    ⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ₐ (conf (sucs n) config)
+    CCC.⟦ translate (sucs n) (d ⟨ c ∷ cs ⟩) ⟧ (conf (sucs n) config)
   ∎
 
 preserves : ∀ {i : Size} {D A : Set}
   → (n : ℕ≥ 2)
   → (expr : NCC n D i A)
-  → ⟦ translate n expr ⟧ₐ ≅[ fnoc n ][ conf n ] ⟦ expr ⟧ₙ
+  → CCC.⟦ translate n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
 NCC→CCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (CCCL D)
