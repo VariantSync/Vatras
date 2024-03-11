@@ -15,7 +15,7 @@ parseFileNames() {
 
   while read -r message
   do
-    "$@" $(echo "$message" | sed 's/^\([^\]*\):\([0-9]*\),\([0-9]*\)-\([0-9]*\)\\n.*/\1 \2 \3 \4/') "$(echo "$message" | sed 's/^[^\]*\\n//')"
+    "$@" $(echo "$message" | sed 's/^\([^\]*\):\([0-9]*\),\([0-9]*\)-\([0-9]*\).*\\n.*/\1 \2 \3 \4/') "$(echo "$message" | sed 's/^[^\]*\\n//')"
   done < <(
     echo "$messages" |
       sed "s|^$projectDir/||; s|\\\\n$projectDir/|\\n|g"
