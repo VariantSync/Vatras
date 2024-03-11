@@ -328,20 +328,32 @@ kill-dead-below defined (D ⟨ l , r ⟩) with D ∈? defined
 -- The current choice was not encountered before. We follow both paths recursively,
 -- adding our choice information to each path.
 ... | no D∉defined = D ⟨ kill-dead-below (D ↣ true ∷ defined) l , kill-dead-below (D ↣ false ∷ defined) r ⟩
-  -- where
-  --   D∉left-branches : ∀ {A}
-  --    → (e : 2ADT A)
-  --    → (def : Path)
-  --    → (pe : Path)
-  --    → (pl' : Path)
-  --    → pe  starts-at (node (kill-dead-below def e))
-  --    → pl' starts-at l'
-  --    → pl' endswith pe
-  --    → D ∉ pe
-  --   D∉left-branches = {!!}
 
-  --   D∉l' : ∀ (p : Path) → p starts-at l' → D ∉ p
-  --   D∉l' p t = D∉left-branches l (D ↣ true ∷ defined) ? p ? t (match p)
+kill-dead-eliminates-defined-features : ∀ {A}
+  → (defined : Path)
+  → (D : F)
+  → D ∈ defined
+  → (e : 2ADT A)
+  → (p : Path)
+  → p starts-at kill-dead-below defined e
+  → D ∉ p
+kill-dead-eliminates-defined-features _ _ _ (leaf _) .[] tleaf ()
+kill-dead-eliminates-defined-features defined _ _ (D' ⟨ _ , _ ⟩) _ _ _ with D' ∈? defined
+kill-dead-eliminates-defined-features defined D D-def (D' ⟨ l , r ⟩) p t D∈p | yes D'-def with getValue D'-def
+... | true  = kill-dead-eliminates-defined-features defined D D-def l p t D∈p
+... | false = kill-dead-eliminates-defined-features defined D D-def r p t D∈p
+kill-dead-eliminates-defined-features _ D _ (D' ⟨ _ , _ ⟩) _ _ _
+  | no ¬D'-def with D == D'
+kill-dead-eliminates-defined-features _ _ D-def (_  ⟨ _ , _ ⟩) _ _ _
+  | no ¬D'-def | yes refl = ⊥-elim (¬D'-def D-def)
+kill-dead-eliminates-defined-features _ _       _     (D' ⟨ _ , _ ⟩) ((.D' ↣ true) ∷ _) (walk-left _) (here D=D')
+  | no _       | no D≠D'  = ⊥-elim (D≠D' (toWitness D=D'))
+kill-dead-eliminates-defined-features defined D D-def (D' ⟨ l , _ ⟩) ((.D' ↣ true) ∷ p) (walk-left t) (there D∈p)
+  | no ¬D'-def | no D≠D'  = kill-dead-eliminates-defined-features (D' ↣ true ∷ defined) D (there D-def) l p t D∈p
+kill-dead-eliminates-defined-features _ _       _     (D' ⟨ _ , _ ⟩) ((.D' ↣ false) ∷ _) (walk-right _) (here D=D')
+  | no _       | no D≠D'  = ⊥-elim (D≠D' (toWitness D=D'))
+kill-dead-eliminates-defined-features defined D D-def (D' ⟨ _ , r ⟩) ((.D' ↣ false) ∷ p) (walk-right t) (there D∈p)
+  | no ¬D'-def | no D≠D'  = kill-dead-eliminates-defined-features (D' ↣ false ∷ defined) D (there D-def) r p t D∈p
 
 kill-dead-correct : ∀ {A}
   → (defined : Path)
@@ -356,34 +368,13 @@ kill-dead-correct defined (D ⟨ l , r ⟩) | no  D∉defined =
   undead-choice
   (kill-dead-correct (D ↣ true  ∷ defined) l)
   (kill-dead-correct (D ↣ false ∷ defined) r)
-  {!!}
-  {!!}
+  (kill-dead-eliminates-defined-features (D ↣ true  ∷ defined) D (here (is-refl D true )) l)
+  (kill-dead-eliminates-defined-features (D ↣ false ∷ defined) D (here (is-refl D false)) r)
 
 kill-dead : ∀ {A}
   → 2ADT A
   → Undead2ADT A
 kill-dead e = kill-dead-below [] e ⊚ kill-dead-correct [] e
-
-
---         second : All (different x) (D ↣ b ∷ [])
---         second = (∉-head notin b) ∷ []
-
---     newlist : ∀ (b : Bool) → Path
---     newlist b = (D ↣ b) ∷ above
---     -- newlist : ∀ (b : Bool) → Path
---     -- newlist b = above ∷ʳ (D ↣ b)
-
---     uuu : ∀ (b : Bool) → Unique (newlist b)
---     uuu _ = ∉→All-different above D∉above ∷ u
---     -- uuu : ∀ (b : Bool) → Unique (above ∷ʳ (D ↣ b))
---     -- uuu = uuuu above u D∉above
-
---     rec-l : UniquePaths2ADTBelow (newlist true) A
---     rec-l = ordinary-to-unique' (newlist true) (uuu true) l
-
---     rec-r : UniquePaths2ADTBelow (newlist false) A
---     rec-r = ordinary-to-unique' (newlist false) (uuu false) r
-
 
 -- This translates a 2ADT to a VariantList
 -- This is correct only if the 2ADT is undead
