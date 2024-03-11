@@ -789,56 +789,29 @@ module NoConflictWalk where
   preservation-path-configs e = ≅[]→≅ (preservation-path-configs-conf (node e) (undead e) , preservation-path-configs-fnoc (node e) (undead e))
 
 module DeadBranchElim where
-  -- preserves-l : ∀ {A : 𝔸}
-  --   → (e : 2ADT A)
-  --   → ⟦ e ⟧₂ ⊆[ id ] ⟦ e ⟧₂
-  -- preserves-l (leaf _) _ = refl
-  -- preserves-l (D ⟨ l , r ⟩) c with c D
-  -- ... | x = {!!}
-
-  preservation-dead-branch-elim-conf : ∀ {A : 𝔸}
+  kill-dead-preserves-below-partial-configs : ∀ {A : 𝔸}
     → (e : 2ADT A)
-    → ⟦ e ⟧₂ ⊆[ id ] ⟦ kill-dead e ⟧ᵤ
-  preservation-dead-branch-elim-conf = {!!}
--- !what (⟦ D ⟨ l , r ⟩ ⟧-recorded c)!
-  -- preservation-dead-branch-elim-conf : ∀ {A : 𝔸}
-  --   -- this path cannot be arbitrary.
-  --   -- It has to be linked to a partial configuration somehow.
-  --   -- We need a lemma
-  --   --   (is : D ∈? above) → getValue is ≡ c D
-  --   -- otherwise we could not have reached that leaf.
-  --   → (above : Path)
-  --   → (u : Unique above)
-  --   -- Das Hilfslemma ist noch zu allgemein, da above immer noch magisch aus dem Nichts kommt.
-  --   -- Nichts sagt, dass above tatsächlich ein Pfad war, den wir verfolgt haben. Brauchen wir hier auch schon _starts-at_?
-  --   → (∀ (D : F) (fixed : D ∈ above) → (c : Conf₂) → c D ≡ getValue fixed )
-  --   → (e : 2ADT A)
-  --   → ⟦ e ⟧₂ ⊆[ id ] ⟦ kill-dead e ⟧ᵤ
-  -- preservation-dead-branch-elim-conf = {!!}
-  -- preservation-dead-branch-elim-conf _ _ _ (leaf v) c = refl
-  -- preservation-dead-branch-elim-conf above _ _ (D ⟨ _ , _ ⟩) _ with D ∈? above
-  -- preservation-dead-branch-elim-conf above u lem (D ⟨ l , r ⟩) c | yes p rewrite (lem D p c) with getValue p
-  -- ... | true  = preservation-dead-branch-elim-conf above u lem l c
-  -- ... | false = preservation-dead-branch-elim-conf above u lem r c
-  -- preservation-dead-branch-elim-conf above u lem (D ⟨ l , r ⟩) c | no ¬p with c D
-  -- ... | true  = preservation-dead-branch-elim-conf ((D ↣  true) ∷ above) (∉→All-different above ¬p ∷ u) lem-step l c
-  --   where
-  --     lem-step : ∀ (D' : F) (fixed : D' ∈ ((D ↣ true) ∷ above)) (c : Conf₂) → c D' ≡ getValue fixed
-  --     lem-step D' fixed c with D == D'
-  --     ... | yes D≡D' rewrite D≡D' = {!!}
-  --     ... | no  D≢D' = lem D' {!!} c
-  -- ... | false = preservation-dead-branch-elim-conf ((D ↣ false) ∷ above) (∉→All-different above ¬p ∷ u) {!!} r c
-
-  preservation-dead-branch-elim-fnoc : ∀ {A : 𝔸}
-    → (e : 2ADT A)
-    → ⟦ kill-dead e ⟧ᵤ ⊆[ id ] ⟦ e ⟧₂
-  preservation-dead-branch-elim-fnoc = {!!}
+    → (defined : Path)
+    → (c : Conf₂)
+    → defined ⊑ c
+    → ⟦ e ⟧₂ c ≡ ⟦ kill-dead-below defined e ⟧₂ c
+  kill-dead-preserves-below-partial-configs (leaf _) _ _ _ = refl
+  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c with D ∈? def
+  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | yes D∈def
+    rewrite lookup-partial def⊑c D∈def
+    with c D
+  ... | true  = kill-dead-preserves-below-partial-configs l def c def⊑c
+  ... | false = kill-dead-preserves-below-partial-configs r def c def⊑c
+  kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | no D∉def
+    with c D in eq
+  ... | true  = kill-dead-preserves-below-partial-configs l ((D ↣  true) ∷ def) c (eq ∷ def⊑c)
+  ... | false = kill-dead-preserves-below-partial-configs r ((D ↣ false) ∷ def) c (eq ∷ def⊑c)
 
   -- Killing dead branches is ok.
-  preservation-dead-branch-elim : ∀ {A : 𝔸}
+  kill-dead-preserves : ∀ {A : 𝔸}
     → (e : 2ADT A)
     → ⟦ e ⟧₂ ≅ ⟦ kill-dead e ⟧ᵤ
-  preservation-dead-branch-elim e = ≅[]→≅ {f = id} (preservation-dead-branch-elim-conf e , preservation-dead-branch-elim-fnoc e)
+  kill-dead-preserves e = ≐→≅ (λ c → kill-dead-preserves-below-partial-configs e [] c [])
 
 -- 2ADTs are isomorphic to Variant Lists.
 preservation : ∀ {A : 𝔸}
@@ -847,7 +820,7 @@ preservation : ∀ {A : 𝔸}
 preservation e =
   ≅-begin
     ⟦ e ⟧₂
-  ≅⟨ DeadBranchElim.preservation-dead-branch-elim e ⟩ -- todo
+  ≅⟨ DeadBranchElim.kill-dead-preserves e ⟩ -- todo
     ⟦ kill-dead e ⟧ᵤ
   ≅⟨ NoConflictWalk.preservation-path-configs (kill-dead e) ⟩ -- done
     walk (node (kill-dead e))
