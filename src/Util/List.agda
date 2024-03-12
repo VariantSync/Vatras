@@ -90,19 +90,19 @@ lookup⇒find-or-last {n = zero} {m = m} (x ∷ []) = refl
 lookup⇒find-or-last {n = suc n} {m = zero} (x ∷ y ∷ ys) = refl
 lookup⇒find-or-last {n = suc n} {m = suc m} (x ∷ y ∷ ys) = lookup⇒find-or-last (y ∷ ys)
 
-append-preserves : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
+find-or-last-append : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
   → (xs ys : List⁺ A)
   → n < List⁺.length xs
   → find-or-last n (xs ⁺++⁺ ys) ≡ find-or-last n xs
-append-preserves {n = .zero} (x ∷ [])     (y ∷ ys) (s≤s z≤n) = refl
-append-preserves {n =  zero} (x ∷ z ∷ zs) (y ∷ ys) (s≤s le)  = refl
-append-preserves {n = suc n} (x ∷ z ∷ zs) (y ∷ ys) (s≤s (n≤zzs)) = append-preserves (z ∷ zs) (y ∷ ys) (n≤zzs)
+find-or-last-append {n = .zero} (x ∷ [])     (y ∷ ys) (s≤s z≤n) = refl
+find-or-last-append {n =  zero} (x ∷ z ∷ zs) (y ∷ ys) (s≤s le)  = refl
+find-or-last-append {n = suc n} (x ∷ z ∷ zs) (y ∷ ys) (s≤s (n≤zzs)) = find-or-last-append (z ∷ zs) (y ∷ ys) (n≤zzs)
 
-prepend-preserves-+ : ∀ {ℓ} {A : Set ℓ}
+find-or-last-prepend-+ : ∀ {ℓ} {A : Set ℓ}
   → (n : ℕ)
   → (xs ys : List⁺ A)
   → find-or-last (List⁺.length xs + n) (xs ⁺++⁺ ys) ≡ find-or-last n ys
-prepend-preserves-+ n (x ∷ xs) ys = ind n x xs ys
+find-or-last-prepend-+ n (x ∷ xs) ys = ind n x xs ys
   where
     -- We need this indirection for termination checking.
     -- We have to unpack the first list into two parameters.
@@ -115,18 +115,18 @@ prepend-preserves-+ n (x ∷ xs) ys = ind n x xs ys
     ind n x [] ys = refl
     ind n x (z ∷ zs) ys = ind n z zs ys
 
-prepend-preserves-∸ : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
+find-or-last-prepend-∸ : ∀ {ℓ} {A : Set ℓ} {n : ℕ}
   → (xs ys : List⁺ A)
   → List⁺.length xs ≤ n
   → find-or-last n (xs ⁺++⁺ ys) ≡ find-or-last (n ∸ List⁺.length xs) ys
-prepend-preserves-∸ {n = zero} xs ys ()
-prepend-preserves-∸ {n = suc n} (x ∷ []) ys (s≤s z≤n) = refl
-prepend-preserves-∸ {n = suc n} (x ∷ z ∷ zs) ys (s≤s smol) =
+find-or-last-prepend-∸ {n = zero} xs ys ()
+find-or-last-prepend-∸ {n = suc n} (x ∷ []) ys (s≤s z≤n) = refl
+find-or-last-prepend-∸ {n = suc n} (x ∷ z ∷ zs) ys (s≤s smol) =
   begin
     find-or-last (suc n) ((x ∷ z ∷ zs) ⁺++⁺ ys)
   ≡⟨⟩
     find-or-last n ((z ∷ zs) ⁺++⁺ ys)
-  ≡⟨ prepend-preserves-∸ (z ∷ zs) ys smol ⟩
+  ≡⟨ find-or-last-prepend-∸ (z ∷ zs) ys smol ⟩
     find-or-last (n ∸ List⁺.length (z ∷ zs)) ys
   ≡⟨⟩
     find-or-last (suc n ∸ suc (List⁺.length (z ∷ zs))) ys

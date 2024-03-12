@@ -37,7 +37,7 @@ open import Lang.2ADT.Path F V _==_
 open import Translation.Lang.2ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ)
 open import Translation.Lang.2ADT.WalkSemantics F V _==_ as Walk using ()
 
-open import Util.List using (find-or-last; ⁺++⁺-length; ⁺++⁺-length-≤; append-preserves; prepend-preserves-+; prepend-preserves-∸)
+open import Util.List using (find-or-last; ⁺++⁺-length; ⁺++⁺-length-≤; find-or-last-append; find-or-last-prepend-+; find-or-last-prepend-∸)
 open import Util.AuxProofs using (<-cong-+ˡ)
 
 {-
@@ -102,7 +102,7 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left 
     walk l c
   ≡⟨ preservation-walk-to-list-conf l c ⟩
     ⟦ tr l ⟧ₗ (conf l c)
-  ≡˘⟨ append-preserves (tr l) (tr r) (conf-bounded l c) ⟩
+  ≡˘⟨ find-or-last-append (tr l) (tr r) (conf-bounded l c) ⟩
     ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conf l c)
   ∎
 preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) =
@@ -112,7 +112,7 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right
     walk r c
   ≡⟨ preservation-walk-to-list-conf r c ⟩
     ⟦ tr r ⟧ₗ (conf r c)
-  ≡˘⟨ prepend-preserves-+ (conf r c) (tr l) (tr r) ⟩
+  ≡˘⟨ find-or-last-prepend-+ (conf r c) (tr l) (tr r) ⟩
     ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + (conf r c))
   ∎
 
@@ -126,7 +126,7 @@ preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
     ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
   ≡⟨⟩
     find-or-last i ((tr l) ⁺++⁺ (tr r))
-  ≡⟨ append-preserves (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
+  ≡⟨ find-or-last-append (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
     find-or-last i (tr l)
   ≡⟨⟩
     ⟦ tr l ⟧ₗ i
@@ -138,7 +138,7 @@ preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
     ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
   ≡⟨⟩
     find-or-last i ((tr l) ⁺++⁺ (tr r))
-  ≡⟨ prepend-preserves-∸ (tr l) (tr r) len[tr-l]≤i ⟩
+  ≡⟨ find-or-last-prepend-∸ (tr l) (tr r) len[tr-l]≤i ⟩
     find-or-last (i ∸ length (tr l)) (tr r)
   ≡⟨⟩
     ⟦ tr r ⟧ₗ (i ∸ length (tr l))
