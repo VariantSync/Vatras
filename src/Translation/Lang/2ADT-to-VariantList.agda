@@ -24,11 +24,13 @@ open Data.EqIndexedSet.≅-Reasoning
 
 open import Framework.VariabilityLanguage
 open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-by-translation)
+open import Framework.Properties.Soundness V using (Sound)
+open import Framework.Proof.Transitive V using (soundness-by-expressiveness)
 open import Lang.2ADT F V
   using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
   renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)
 open import Lang.VariantList V
-  using (VariantList; VariantListL)
+  using (VariantList; VariantListL; VariantList-is-Sound)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Confₗ)
 
 open import Lang.2ADT.Path F V _==_
@@ -173,3 +175,6 @@ preservation e =
 
 VariantList≽2ADT : VariantListL ≽ 2ADTL
 VariantList≽2ADT = expressiveness-by-translation toVariantList preservation
+
+2ADT-is-sound : Sound 2ADTL
+2ADT-is-sound = soundness-by-expressiveness VariantList-is-Sound VariantList≽2ADT
