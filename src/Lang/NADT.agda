@@ -2,7 +2,7 @@
 
 open import Framework.Definitions
 -- TODO: Generalize level of F
-module Lang.NADT (F : 𝔽) where
+module Lang.NADT (F : 𝔽) (V : 𝕍) where
 
 open import Data.Nat using (ℕ)
 open import Function using (id)
@@ -15,13 +15,13 @@ open import Construct.GrulerArtifacts
 open import Construct.Choices
 
 data NADT : Size → 𝔼 where
-  NADTAsset  : ∀ {i A} → Leaf A                       → NADT i A
+  NADTAsset  : ∀ {i A} → Leaf (V A)                   → NADT i A
   NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT i) A → NADT (↑ i) A
 
 mutual
-  NADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
+  NADTVL : ∀ {i : Size} → VariabilityLanguage V
   NADTVL {i} = ⟪ NADT i , Choice.Config F , semantics ⟫
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Choice.Config F) (NADT i)
-  semantics (NADTAsset a) _  = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
-  semantics (NADTChoice chc) = VLChoice.Semantics GrulerVariant F NADTVL id chc
+  semantics : ∀ {i : Size} → 𝔼-Semantics V (Choice.Config F) (NADT i)
+  semantics (NADTAsset (leaf v)) _ = v
+  semantics (NADTChoice chc)       = VLChoice.Semantics V F NADTVL id chc

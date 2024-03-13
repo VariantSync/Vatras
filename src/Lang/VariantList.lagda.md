@@ -1,12 +1,5 @@
 # Lists of Variants are Also Variability Languages
 
-## Options
-
-```agda
-{-# OPTIONS --sized-types #-}
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
 ## Module
 
 ```agda
@@ -23,7 +16,6 @@ open import Data.List.NonEmpty using (List⁺; _∷_; toList; length)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
 open import Function using (_∘_; Surjective)
-open import Size using (Size; ∞)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
