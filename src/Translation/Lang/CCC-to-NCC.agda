@@ -48,11 +48,11 @@ module NCC where
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 
-import Translation.Lang.NCC-to-NCC
-open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open Translation.Lang.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCC-map-config)
+import Translation.Lang.NCC.NCC-to-NCC
+open Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
+open Translation.Lang.NCC.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCC-map-config)
 module NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
-open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
+open Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A

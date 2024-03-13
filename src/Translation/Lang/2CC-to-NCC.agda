@@ -44,8 +44,8 @@ module 2CC where
   open 2CC-Sem-2 using (⟦_⟧) public
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
-import Translation.Lang.NCC-to-NCC
-open Translation.Lang.NCC-to-NCC.IncreaseArity Variant Artifact∈ₛVariant using (NCC→NCC)
+import Translation.Lang.NCC.NCC-to-NCC
+open Translation.Lang.NCC.NCC-to-NCC.IncreaseArity Variant Artifact∈ₛVariant using (NCC→NCC)
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)

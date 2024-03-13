@@ -38,8 +38,8 @@ open NCC-Sem-1 using (NCCL)
 module NCC-Sem-2 {n} {D} = NCC.Sem n D Variant Artifact∈ₛVariant
 open NCC-Sem-2 using () renaming (⟦_⟧ to ⟦_⟧ₙ)
 
-open import Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open import Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension) public
+open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
+open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension) public
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
