@@ -1,0 +1,22 @@
+name: Check the Agda files
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Nix with cached packages
+      uses: rikhuijzer/cache-install@v.1.1.3
+      with:
+        key: nix-${{ hashFiles('.github/workflows/check.yml', 'default.nix', 'nix/**') }}
+        nix_file: nix/github-workflow-dependencies.nix
+    - name: Check Agda files
+      run: nix-shell --run './scripts/check-all.sh github-action'

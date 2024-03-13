@@ -30,6 +30,7 @@ open import Data.Empty.Polymorphic using (⊥)
 open import Data.Unit.Polymorphic using (⊤; tt)
 
 open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; proj₁; proj₂)
+open import Relation.Binary.PropositionalEquality using (_≗_; subst)
 open import Relation.Nullary using (¬_)
 
 open import Function using (id; _∘_; Congruent; Surjective) --IsSurjection)
@@ -69,6 +70,27 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 ≐→≅ A≐B =
     (λ i → (i ,      A≐B i))
   , (λ i → (i , sym (A≐B i)))
+
+≗→≐ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≐ B
+≗→≐ A≗B i = Eq.reflexive (A≗B i)
+
+≗→≅ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅ B
+≗→≅ A≗B = ≐→≅ (≗→≐ A≗B)
+```
+
+## Singletons
+
+```agda
+{-|
+An indexed set contains only a single element if all indices point to the same element.
+-}
+Singleton : ∀ {I} → IndexedSet I → Set (c ⊔ ℓ)
+Singleton A = ∃[ x ] ∀ i → A i ≈ x
+
+irrelevant-index : ∀ {I} {A : IndexedSet I}
+  → Singleton A
+  → ∀ {i j} → A i ≈ A j
+irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
 ```
 
 ## Properties
@@ -127,11 +149,8 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 ## Indexed Sets With Index Translations
 
 ```agda
-_∈_at_ : ∀ {I} → Carrier → IndexedSet I → I → Set ℓ
-a ∈ A at i = a ≈ A i
-
 _⊆[_]_ : ∀ {I J} → IndexedSet I → (I → J) → IndexedSet J → Set (c ⊔ ℓ)
-_⊆[_]_ {I} A f B = ∀ (i : I) → A i ∈ B at f i
+_⊆[_]_ {I} A f B = ∀ (i : I) → A i ≈ B (f i)
 
 _≅[_][_]_ : ∀ {I J} → IndexedSet I → (I → J) → (J → I) → IndexedSet J → Set (c ⊔ ℓ)
 A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
@@ -141,7 +160,7 @@ A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
 
 ```agda
 ∈[]→∈ : ∀ {I} {A : IndexedSet I} {a : Carrier} {i : I}
-  → a ∈ A at i
+  → a ≈ A i
     ----------
   → a ∈ A
 ∈[]→∈ {i = i} eq = i , eq
@@ -151,6 +170,7 @@ A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
     -----------
   → A ⊆ B
 ⊆[]→⊆ A⊆[f]B i = ∈[]→∈ (A⊆[f]B i)
+-- ⊆[]→⊆ {f = f} A⊆[f]B = λ i → f i , A⊆[f]B i -- equivalent definition
 
 -- verbose name
 -- TODO: eta-reducing e here makes Agda have an internal error when importing ⊆[]→⊆.
@@ -170,6 +190,9 @@ syntax ≅[]→≅ e = ≅-by-index-translation e
 ≐→≅[] {J} {A} {B} A≐B =
     (λ i →      A≐B i )
   , (λ i → sym (A≐B i))
+
+≗→≅[] : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅[ id ][ id ] B
+≗→≅[] = ≐→≅[] ∘ ≗→≐
 
 irrelevant-index-⊆ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J}
   → (x : Carrier)
@@ -234,6 +257,9 @@ irrelevant-index-≅ x const-A const-B =
 ≅[]-trans {A = A} {C = C} (A⊆B , B⊆A) (B⊆C , C⊆B) =
   ⊆[]-trans {C = C} A⊆B B⊆C ,
   ⊆[]-trans {C = A} C⊆B B⊆A
+
+⊆→≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} → (f : I → J) → (f⁻¹ : J → I) → f ∘ f⁻¹ ≗ id → A ⊆[ f ] B → A ≅[ f ][ f⁻¹ ] B
+⊆→≅ {A = A} {B = B} f f⁻¹ f∘f⁻¹ A⊆B = A⊆B , (λ i → Eq.sym (subst (λ j → A (f⁻¹ i) ≈ B j) (f∘f⁻¹ i) (A⊆B (f⁻¹ i))))
 ```
 
 ## Equational Reasoning

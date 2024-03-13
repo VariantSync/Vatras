@@ -14,60 +14,75 @@ module Translation.LanguageMap where
 
 ## Imports
 
-### Languages
-
 ```agda
-open import Lang.OC
-     using (OC; WFOC; WFOCL; ⟦_⟧; ⟦_⟧ₒ; OC-is-incomplete)
-  renaming (Configuration to Confₒ)
-open import Lang.BCC
-     using (BCC; BCCL)
-  renaming ( ⟦_⟧ to ⟦_⟧₂
-           ; Configuration to Conf₂
-           )
-```
+open import Size using (∞)
 
-### Properties and Relations
+open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
+Variant = Rose ∞
+mkArtifact = Artifact∈ₛRose
 
-```agda
-open import Framework.Properties.Completeness
-open import Framework.Properties.Conclude.Completeness
-open import Relations.Semantic
-```
+open import Framework.Definitions using (𝕍; 𝔽)
+open import Framework.Construct
+open import Framework.Compiler
+open import Framework.Relation.Expressiveness Variant using (_⋡_)
+open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness)
 
-### Translations
-```agda
+open import Construct.Artifact as At using () renaming (Syntax to Artifact)
+
+import Lang.OC
+import Lang.2CC
+import Lang.CCC
+
 -- DONE
-import Translation.OC-to-BCC
-import Translation.BCC-to-CCC
+import Translation.Lang.OC-to-2CC
+-- import Translation.Lang.2CC-to-CCC
 
 -- IN PROGRESS
-import Translation.CCC-to-BCC
+-- import Translation.Lang.CCC-to-2CC
 ```
 
 ## Core Choice Calculus vs Binary Choice Calculus
 
 ```agda
-open Translation.CCC-to-BCC using (
-  -- TODO: Still unproven
-  -- BCC-is-at-least-as-expressive-as-CCC
-  ) public
+-- open Translation.CCC-to-2CC using (
+--   -- TODO: Still unproven
+--   -- 2CC-is-at-least-as-expressive-as-CCC
+--   ) public
 
-open Translation.BCC-to-CCC using (
-  CCC-is-at-least-as-expressive-as-BCC;
-  BCC→CCC-is-semantics-preserving
-  ) public
+-- open Translation.2CC-to-CCC using (
+--   CCC-is-at-least-as-expressive-as-2CC;
+--   2CC→CCC-is-semantics-preserving
+--   ) public
+
+-- For any type of variant that we can encode in CCC:
+-- - CCC is complete
+-- - CCC ≽ VariantList
+-- We only assume the existence of an annotation language F, which
+-- contains at least one expression D : F, no matter how it looks.
+module CCC-Props (F : 𝔽) (D : F) where
+  open Lang.CCC.Sem F Variant mkArtifact
+  open Lang.CCC.Encode F using (encoder)
+
+  import Translation.Lang.VariantList-to-CCC F D Variant mkArtifact as VL→CCC
+  open VL→CCC.Translate encoder using (
+    CCCL-is-at-least-as-expressive-as-VariantListL;
+    CCCL-is-complete
+    ) public
 ```
 
 ## Option Calculus vs Binary Choice Calculus
 
 ```agda
-{- TODO: Substitute completeness proof of BCC here. -}
-OC-is-less-expressive-than-BCC : WFOCL is-less-expressive-than BCCL
-OC-is-less-expressive-than-BCC = less-expressive-from-completeness {!!} OC-is-incomplete
+module _ (F : 𝔽) where
+  open Lang.OC.Sem  F Variant mkArtifact using (WFOCL)
+  open Lang.2CC.Sem F Variant mkArtifact using (2CCL)
+  open Lang.OC.IncompleteOnRose F using (OC-is-incomplete)
 
-open Translation.OC-to-BCC using (
-  BCC-is-at-least-as-expressive-as-OC;
-  OC→BCC-is-semantics-preserving
+  {- TODO: Substitute completeness proof of 2CC here. -}
+  OC-is-less-expressive-than-2CC : WFOCL ⋡ 2CCL
+  OC-is-less-expressive-than-2CC = less-expressive-from-completeness {!!} OC-is-incomplete
+
+open Translation.Lang.OC-to-2CC using (
+  2CC≽OC
   ) public
 ```
