@@ -1,6 +1,7 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --sized-types #-}
 
-module Framework.V2.Lang.FST where
+module Lang.FST where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat; reverse)
@@ -17,14 +18,13 @@ open import Relation.Nullary.Decidable using (yes; no; _because_; False)
 open import Relation.Binary using (DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.V2.Definitions
-open import Framework.V2.Variants using (artifact)
-open import Framework.V2.Annotation.Name using (Name)
-open import Framework.V2.Constructs.Artifact
-open import Framework.V2.Lang.FeatureAlgebra
+open import Framework.Definitions
+open import Framework.Annotation.Name using (Name)
+open import Framework.Composition.FeatureAlgebra
+open import Construct.Artifact
 
 Conf : (N : 𝔽) → Set
-Conf N = Config N Bool
+Conf N = N → Bool
 
 module TODO-MOVE-TO-AUX-OR-USE-STL where
   ≠-sym : ∀ {ℓ} {A : Set ℓ} (a b : A)

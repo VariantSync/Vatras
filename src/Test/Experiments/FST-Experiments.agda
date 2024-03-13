@@ -1,7 +1,8 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --sized-types #-}
 
-open import Framework.V2.Definitions
-module Framework.V2.Experiment.FST-Experiments where
+open import Framework.Definitions
+module Test.Experiments.FST-Experiments where
 
 open import Data.Bool using (true; false)
 open import Data.List using (List; _∷_; []; map; [_])
@@ -20,7 +21,7 @@ open import Show.Lines
 open import Util.ShowHelpers
 open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
-open import Framework.V2.Lang.FST as FSTModule using (Conf)
+open import Lang.FST as FSTModule using (Conf)
 
 module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
   open FSTModule.Defs {A}

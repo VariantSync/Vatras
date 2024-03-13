@@ -1,4 +1,7 @@
-module Framework.V2.Lang.FeatureAlgebra where
+{-
+This module implements the feature algebra by Apel et al.
+-}
+module Framework.Composition.FeatureAlgebra where
 
 open import Data.Product using (proj₁; proj₂; _×_; _,_)
 open import Algebra.Structures using (IsMonoid)

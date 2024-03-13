@@ -25,7 +25,7 @@ open import Test.Experiments.CCC-to-2CC
 open import Test.Experiments.OC-to-2CC
 
 open import Translation.Experiments.Choice-to-2Choice-Experiment using (exp; all-ex)
-import Framework.V2.Experiment.FST-Experiments as FSTs
+import Test.Experiments.FST-Experiments as FSTs
 open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
 
 {-|
