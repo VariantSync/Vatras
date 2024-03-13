@@ -295,7 +295,12 @@ preservation-path-configs-fnoc (D ⟨ l , r ⟩) u ((.(D ↣ false) ∷ p) is-va
 
 preservation : ∀ {A : 𝔸}
   → (e : Undead2ADT A)
-  → ⟦ e ⟧ᵤ ≅ walk (node e)
-preservation e = ≅[]→≅ (
+  → ⟦ e ⟧ᵤ ≅[ fun-to-path (node e) ][ path-to-fun (node e) ] walk (node e)
+preservation e =
     preservation-path-configs-conf (node e) (undead e)
-  , preservation-path-configs-fnoc (node e) (undead e))
+  , preservation-path-configs-fnoc (node e) (undead e)
+
+-- We cannot construct a LanguageCompiler because
+-- we cannot construct a VariabilityLanguage for 2ADT with walk semantics because
+-- configurations for walk semantics (PathConfig) depend on the input expression
+-- which currently, cannot be modelled within our framework.

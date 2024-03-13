@@ -6,7 +6,7 @@ module Translation.Lang.2ADT.DeadElim
   (_==_ : DecidableEquality F)
   where
 
-open import Function using (_∘_)
+open import Function using (id; _∘_)
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥-elim)
@@ -21,8 +21,9 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 open Eq.≡-Reasoning
 
 open import Framework.VariabilityLanguage
-open import Data.EqIndexedSet using (_≅_; ≐→≅)
-open import Lang.2ADT F V using (2ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
+open import Framework.Compiler
+open import Data.EqIndexedSet using (_≅[_][_]_; ≐→≅[])
+open import Lang.2ADT F V
 open import Lang.2ADT.Path F V _==_
 
 {-
@@ -87,8 +88,8 @@ open Undead2ADT public
 ⟦_⟧ᵤ : 𝔼-Semantics V Configuration Undead2ADT
 ⟦_⟧ᵤ = ⟦_⟧ ∘ node
 
-Undead2ADT-VL : VariabilityLanguage V
-Undead2ADT-VL = ⟪ Undead2ADT , Configuration , ⟦_⟧ᵤ ⟫
+Undead2ADTL : VariabilityLanguage V
+Undead2ADTL = ⟪ Undead2ADT , Configuration , ⟦_⟧ᵤ ⟫
 
 {-
 Kills all dead branches within a given expression,
@@ -191,5 +192,12 @@ kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | no D
 
 kill-dead-preserves : ∀ {A : 𝔸}
   → (e : 2ADT A)
-  → ⟦ e ⟧ ≅ ⟦ kill-dead e ⟧ᵤ
-kill-dead-preserves e = ≐→≅ (λ c → kill-dead-preserves-below-partial-configs e [] c [])
+  → ⟦ e ⟧ ≅[ id ][ id ] ⟦ kill-dead e ⟧ᵤ
+kill-dead-preserves e = ≐→≅[] (λ c → kill-dead-preserves-below-partial-configs e [] c [])
+
+kill-dead-compiler : LanguageCompiler 2ADTL Undead2ADTL
+kill-dead-compiler = record
+  { compile = kill-dead
+  ; config-compiler = λ _ → record { to = id ; from = id }
+  ; preserves = kill-dead-preserves
+  }

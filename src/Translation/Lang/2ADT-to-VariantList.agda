@@ -20,10 +20,11 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
 open import Data.EqIndexedSet hiding (Index; _∈_)
-open Data.EqIndexedSet.≅-Reasoning
+open Data.EqIndexedSet.≅[]-Reasoning
 
 open import Framework.VariabilityLanguage
-open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-by-translation)
+open import Framework.Compiler
+open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Framework.Properties.Soundness V using (Sound)
 open import Framework.Proof.Transitive V using (soundness-by-expressiveness)
 open import Lang.2ADT F V
@@ -34,7 +35,7 @@ open import Lang.VariantList V
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Confₗ)
 
 open import Lang.2ADT.Path F V _==_
-open import Translation.Lang.2ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ)
+open import Translation.Lang.2ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ; Undead2ADT; Undead2ADTL)
 open import Translation.Lang.2ADT.WalkSemantics F V _==_ as Walk using ()
 
 open import Util.List using (find-or-last; ⁺++⁺-length; ⁺++⁺-length-≤; find-or-last-append; find-or-last-prepend-+; find-or-last-prepend-∸)
@@ -50,8 +51,11 @@ tr : ∀ {A : 𝔸} → 2ADT A → VariantList A
 tr (leaf v) = v ∷ []
 tr (D ⟨ l , r ⟩) = tr l ⁺++⁺ tr r
 
+tr-undead : ∀ {A : 𝔸} → Undead2ADT A → VariantList A
+tr-undead = tr ∘ node
+
 toVariantList : ∀ {A : 𝔸} → 2ADT A → VariantList A
-toVariantList = tr ∘ node ∘ kill-dead
+toVariantList = tr-undead ∘ kill-dead
 
 -- Converts a path to in the input 2ADT to the index in the resulting list.
 conf : ∀ {A} → (e : 2ADT A) → PathConfig e → ℕ
@@ -154,27 +158,42 @@ gathering all variants in leafs from left to right preserves semantics.
 -}
 preservation-walk-to-list : ∀ {A : 𝔸}
   → (e : 2ADT A)
-  → walk e ≅ ⟦ tr e ⟧ₗ
-preservation-walk-to-list e = ≅[]→≅ (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
+  → walk e ≅[ conf e ][ fnoc e ] ⟦ tr e ⟧ₗ
+preservation-walk-to-list e = (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
 
--- 2ADTs are isomorphic to Variant Lists.
--- TODO: Construct compilers and make use of ⊕.
-preservation : ∀ {A : 𝔸}
-  → (e : 2ADT A)
-  → ⟦ e ⟧₂ ≅ ⟦ toVariantList e ⟧ₗ
-preservation e =
-  ≅-begin
-    ⟦ e ⟧₂
-  ≅⟨ DeadElim.kill-dead-preserves e ⟩
-    ⟦ kill-dead e ⟧ᵤ
-  ≅⟨ Walk.preservation (kill-dead e) ⟩
-    walk (node (kill-dead e))
-  ≅⟨ preservation-walk-to-list (node (kill-dead e)) ⟩
-    ⟦ toVariantList e ⟧ₗ
-  ≅-∎
+conf-undead-to-list : ∀ {A} → Undead2ADT A → Conf₂ → ℕ
+conf-undead-to-list e = conf (node e) ∘ Walk.fun-to-path (node e)
+
+fnoc-undead-to-list : ∀ {A} → Undead2ADT A → ℕ → Conf₂
+fnoc-undead-to-list e = Walk.path-to-fun (node e) ∘ fnoc (node e)
+
+preservation-undead-to-list : ∀ {A : 𝔸}
+  → (e : Undead2ADT A)
+  → ⟦ e ⟧ᵤ ≅[ conf-undead-to-list e ][ fnoc-undead-to-list e ] ⟦ tr-undead e ⟧ₗ
+preservation-undead-to-list e =
+  ≅[]-begin
+    ⟦ e ⟧ᵤ
+  ≅[]⟨ Walk.preservation e ⟩
+    walk (node e)
+  ≅[]⟨ preservation-walk-to-list (node e) ⟩
+    ⟦ tr-undead e ⟧ₗ
+  ≅[]-∎
+
+Undead2ADT→VariantList : LanguageCompiler Undead2ADTL VariantListL
+Undead2ADT→VariantList = record
+  { compile = tr-undead
+  ; config-compiler = λ e → record
+    { to = conf-undead-to-list e
+    ; from = fnoc-undead-to-list e
+    }
+  ; preserves = preservation-undead-to-list
+  }
+
+2ADT→VariantList : LanguageCompiler 2ADTL VariantListL
+2ADT→VariantList = DeadElim.kill-dead-compiler ⊕ Undead2ADT→VariantList
 
 VariantList≽2ADT : VariantListL ≽ 2ADTL
-VariantList≽2ADT = expressiveness-by-translation toVariantList preservation
+VariantList≽2ADT = expressiveness-from-compiler 2ADT→VariantList
 
 2ADT-is-sound : Sound 2ADTL
 2ADT-is-sound = soundness-by-expressiveness VariantList-is-Sound VariantList≽2ADT
