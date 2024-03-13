@@ -1,5 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-module Translation.Construct.2Choice-to-NChoice {Q : Set} where
+module Translation.Construct.2Choice-to-Choice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true)
 open import Data.List using (List; _∷_; [])
@@ -15,11 +15,10 @@ import Data.IndexedSet
 
 open import Framework.Definitions using (𝔽)
 open import Framework.Compiler using (ConstructCompiler)
-open import Construct.Choices as Chc
-open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂)
-open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
-open Chc.VLChoice₂ using () renaming (Construct to C₂)
-open Chc.VLChoiceₙ using () renaming (Construct to Cₙ)
+open import Construct.Choices
+
+open 2Choice using (_⟨_,_⟩)
+open Choice using (_⟨_⟩)
 
 {-|
 ConfContract and FnocContract define the requirements we have on translated configurations
@@ -31,13 +30,13 @@ To simplify things, we fix these two numbers to be 0 for true, and 1 for false. 
 `D < l ,  r       >` lines up with
 `D < l :: r :: [] >`
 -}
-record ConfContract (f : Q) (conf : Config₂ Q → Configₙ Q) : Set where
+record ConfContract (f : Q) (conf : 2Choice.Config Q → Choice.Config Q) : Set where
   field
-    false→1 : ∀ (c : Config₂ Q)
+    false→1 : ∀ (c : 2Choice.Config Q)
       → c f ≡ false
       → (conf c) f ≡ 1
 
-    true→0 : ∀ (c : Config₂ Q)
+    true→0 : ∀ (c : 2Choice.Config Q)
       → c f ≡ true
       → (conf c) f ≡ 0
 open ConfContract
@@ -51,23 +50,23 @@ that we can associate each natural numbers with the boolean values true and fals
 such that the association is inverse to ConfContract.
 Hence, we associate 0 with true and all other numbers with false.
 -}
-record FnocContract (f : Q) (fnoc : Configₙ Q → Config₂ Q) : Set where
+record FnocContract (f : Q) (fnoc : Choice.Config Q → 2Choice.Config Q) : Set where
   field
-    suc→false : ∀ {n} (c : Configₙ Q)
+    suc→false : ∀ {n} (c : Choice.Config Q)
       → c f ≡ suc n
       → (fnoc c) f ≡ false
 
-    zero→true : ∀ (c : Configₙ Q)
+    zero→true : ∀ (c : Choice.Config Q)
       → c f ≡ zero
       → (fnoc c) f ≡ true
 open FnocContract
 
-default-conf : Config₂ Q → Configₙ Q
+default-conf : 2Choice.Config Q → Choice.Config Q
 default-conf cb f with cb f
 ... | false = 1
 ... | true  = 0
 
-default-fnoc : Configₙ Q → Config₂ Q
+default-fnoc : Choice.Config Q → 2Choice.Config Q
 default-fnoc cn f with cn f
 ... | zero    = true
 ... | (suc _) = false
@@ -88,34 +87,34 @@ module Translate (S : Setoid 0ℓ 0ℓ) where
   --       However, that might not be possible because it would require to abstract
   --       arbitrary requirements on the configuration compiler.
   --       Maybe this could be done via type parameters but lets see whether it pays off.
-  convert : 2Choice Q Carrier → NChoice Q Carrier
+  convert : 2Choice.Syntax Q Carrier → Choice.Syntax Q Carrier
   convert (D ⟨ l , r ⟩) = D ⟨ l ∷ r ∷ [] ⟩
 
   module Preservation
-    (conf : Config₂ Q → Configₙ Q)
-    (fnoc : Configₙ Q → Config₂ Q)
-    (chc : 2Choice Q Carrier)
+    (conf : 2Choice.Config Q → Choice.Config Q)
+    (fnoc : Choice.Config Q → 2Choice.Config Q)
+    (chc : 2Choice.Syntax Q Carrier)
     where
     open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
-        ConfContract (2Choice.dim chc) conf
-      → ⟦ chc ⟧₂ ⊆[ conf ] ⟦ convert chc ⟧ₙ
-    preserves-conf conv c with c (2Choice.dim chc) in eq
+        ConfContract (2Choice.Syntax.dim chc) conf
+      → 2Choice.⟦ chc ⟧ ⊆[ conf ] Choice.⟦ convert chc ⟧
+    preserves-conf conv c with c (2Choice.Syntax.dim chc) in eq
     ... | false rewrite false→1 conv c eq = ≈-Eq.refl
     ... | true  rewrite true→0  conv c eq = ≈-Eq.refl
 
     preserves-fnoc :
-        FnocContract (2Choice.dim chc) fnoc
-      → ⟦ convert chc ⟧ₙ ⊆[ fnoc ] ⟦ chc ⟧₂
-    preserves-fnoc vnoc c with c (2Choice.dim chc) in eq
+        FnocContract (2Choice.Syntax.dim chc) fnoc
+      → Choice.⟦ convert chc ⟧ ⊆[ fnoc ] 2Choice.⟦ chc ⟧
+    preserves-fnoc vnoc c with c (2Choice.Syntax.dim chc) in eq
     ... | zero  rewrite zero→true vnoc c eq = ≈-Eq.refl
     ... | suc _ rewrite suc→false vnoc c eq = ≈-Eq.refl
 
     convert-preserves :
-        ConfContract (2Choice.dim chc) conf
-      → FnocContract (2Choice.dim chc) fnoc
-      → ⟦ chc ⟧₂ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧ₙ
+        ConfContract (2Choice.Syntax.dim chc) conf
+      → FnocContract (2Choice.Syntax.dim chc) fnoc
+      → 2Choice.⟦ chc ⟧ ≅[ conf ][ fnoc ] Choice.⟦ convert chc ⟧
     convert-preserves conv vnoc = preserves-conf conv and preserves-fnoc vnoc
 
   -- compiler : ∀ (F : 𝔽) → ConstructCompiler (C₂ F) (Cₙ F)

@@ -16,21 +16,19 @@ open import Framework.Definitions
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Framework.Annotation.IndexedName using (IndexedName)
-import Construct.Choices as Chc
-open Chc.Choiceₙ using () renaming (Config to Configₙ)
-open Chc.Choice₂ using (_⟨_,_⟩) renaming (Config to Config₂)
-open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to Choice₂-sem)
+open import Construct.Choices
+open 2Choice using (_⟨_,_⟩)
 
-import Translation.Construct.NChoice-to-2Choice as NChoice-to-2Choice
-open NChoice-to-2Choice using (NestedChoice; value; choice; evalConfig)
-module NChoice-to-2Choice-explicit Q = NChoice-to-2Choice {Q}
-open NChoice-to-2Choice-explicit using (2Config)
+import Translation.Construct.Choice-to-2Choice as Choice-to-2Choice
+open Choice-to-2Choice using (NestedChoice; value; choice; evalConfig)
+module Choice-to-2Choice-explicit Q = Choice-to-2Choice {Q}
+open Choice-to-2Choice-explicit using (2Config)
 
 2Choice : 𝔽 → ℂ
-2Choice F E A = Choice₂ (IndexedName F) E A
+2Choice F E A = VL2Choice.Syntax (IndexedName F) E A
 
 2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (2Config F) (2Choice F)
-2Choice-sem V F Γ fnoc cons conf = Choice₂-sem V (IndexedName F) Γ (proj₁ ∘ fnoc) cons conf
+2Choice-sem V F Γ fnoc cons conf = VL2Choice.Semantics V (IndexedName F) Γ (proj₁ ∘ fnoc) cons conf
 
 ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
 ChoiceConstructor V F = Variational-⟪ 2Choice F , 2Config F , 2Choice-sem V F ⟫
@@ -43,14 +41,12 @@ module Embed
 
   extr = extract constr
 
-  open NChoice-to-2Choice.Translate {F} (Eq.setoid (Expression Γ A))
+  open Choice-to-2Choice.Translate {F} (Eq.setoid (Expression Γ A))
   open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
 
   embed : ∀ {i} → NestedChoice i (Expression Γ A) → Expression Γ A
   embed (value v) = v
-  embed (choice c) = cons (make constr) (map embed c)
-    where
-    open Chc.Choice₂ using (map)
+  embed (choice c) = cons (make constr) (2Choice.map embed c)
 
   embed-preserves : ∀ {i}
     → (e : NestedChoice i (Expression Γ A))

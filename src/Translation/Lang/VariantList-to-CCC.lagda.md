@@ -152,7 +152,7 @@ module Translate
   VariantList→CCC : LanguageCompiler VariantListL CCCL
   VariantList→CCC = record
     { compile = translate
-    ; config-compiler = record { to = conf ; from = fnoc }
+    ; config-compiler = λ _ → record { to = conf ; from = fnoc }
     ; preserves = λ {A} e →
       let open Preservation A in
         preserves-⊆ e , preserves-⊇ e

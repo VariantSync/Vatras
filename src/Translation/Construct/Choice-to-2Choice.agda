@@ -1,5 +1,5 @@
 {-# OPTIONS --sized-types #-}
-module Translation.Construct.NChoice-to-2Choice {Q : Set} where
+module Translation.Construct.Choice-to-2Choice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)
 open import Data.List using (List; _∷_; [])
@@ -24,9 +24,10 @@ open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Util.AuxProofs using (true≢false; n≡ᵇn; n<m→m≡ᵇn)
 open import Framework.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
-import Construct.Choices as Chc
-open Chc.Choice₂ using (_⟨_,_⟩) renaming (Syntax to 2Choice; Standard-Semantics to ⟦_⟧₂; Config to Config₂; show to show-2choice)
-open Chc.Choiceₙ using (_⟨_⟩) renaming (Syntax to NChoice; Standard-Semantics to ⟦_⟧ₙ; Config to Configₙ)
+open import Construct.Choices
+
+open Choice using (_⟨_⟩)
+open 2Choice using (_⟨_,_⟩)
 
 open import Data.String using (String)
 
@@ -40,13 +41,13 @@ There needs to be at least one true alternative.
 In particular, `default-fnoc'` needs to pattern match on `i` to proof to the
 termination checker that it wont search for a non-existing true alternative.
 |-}
-at-least-true-once : Config₂ I → Set
+at-least-true-once : 2Choice.Config I → Set
 at-least-true-once c = ∀ (D : Q) → Σ[ i ∈ ℕ ] (c (D ∙ i) ≡ true)
 
-NConfig = Configₙ Q
-2Config = Σ (Config₂ I) at-least-true-once
+NConfig = Choice.Config Q
+2Config = Σ (2Choice.Config I) at-least-true-once
 
-evalConfig : 2Config → Config₂ I
+evalConfig : 2Config → 2Choice.Config I
 evalConfig = proj₁
 
 record ConfContract (D : Q) (conf : NConfig → 2Config) : Set where
@@ -118,7 +119,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
   convert' D l []       n = value l
   convert' D l (r ∷ rs) n = choice ((D ∙ n) ⟨ value l , convert' D r rs (suc n) ⟩)
 
-  convert : NChoice Q Carrier → NestedChoice ∞ Carrier
+  convert : Choice.Syntax Q Carrier → NestedChoice ∞ Carrier
   convert (D ⟨ c ∷ cs ⟩) = convert' D c cs zero
 
   module Preservation
@@ -128,10 +129,10 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
     open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
-      ∀ (chc : NChoice Q Carrier)
-      → ConfContract (NChoice.dim chc) conf
+      ∀ (chc : Choice.Syntax Q Carrier)
+      → ConfContract (Choice.Syntax.dim chc) conf
         -----------------------------------
-      → ⟦ chc ⟧ₙ ⊆[ conf ] ⟦ convert chc ⟧
+      → Choice.⟦ chc ⟧ ⊆[ conf ] ⟦ convert chc ⟧
     preserves-conf (D ⟨ l ∷ rs ⟩) confContract c
       = induction l rs
                   (c D) 0
@@ -168,10 +169,10 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
           = induction r rs n (suc m) n+m≡cD
 
     preserves-fnoc :
-      ∀ (chc : NChoice Q Carrier)
-      → FnocContract (NChoice.dim chc) fnoc
+      ∀ (chc : Choice.Syntax Q Carrier)
+      → FnocContract (Choice.Syntax.dim chc) fnoc
         -----------------------------------
-      → ⟦ convert chc ⟧ ⊆[ fnoc ] ⟦ chc ⟧ₙ
+      → ⟦ convert chc ⟧ ⊆[ fnoc ] Choice.⟦ chc ⟧
     preserves-fnoc (D ⟨ l ∷ rs ⟩) fnocContract c
       = induction l rs
                   zero (fnoc c D)
@@ -218,18 +219,18 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
             ... | yes refl = selected
 
     convert-preserves :
-      ∀ (chc : NChoice Q Carrier)
-      → ConfContract (NChoice.dim chc) conf
-      → FnocContract (NChoice.dim chc) fnoc
+      ∀ (chc : Choice.Syntax Q Carrier)
+      → ConfContract (Choice.Syntax.dim chc) conf
+      → FnocContract (Choice.Syntax.dim chc) fnoc
         ------------------------------------------
-      → ⟦ chc ⟧ₙ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧
+      → Choice.⟦ chc ⟧ ≅[ conf ][ fnoc ] ⟦ convert chc ⟧
     convert-preserves chc conv vnoc = preserves-conf chc conv and preserves-fnoc chc vnoc
 
 default-conf : NConfig → 2Config
 default-conf c .proj₁ (D ∙ i) = c D ≡ᵇ i
 default-conf c .proj₂ D = c D and n≡ᵇn (c D)
 
-default-fnoc' : (D : Q) → (c : Config₂ I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
+default-fnoc' : (D : Q) → (c : 2Choice.Config I) → (n i : ℕ) → c (D ∙ (n + i)) ≡ true → ℕ
 default-fnoc' D c n i p with c (D ∙ n) ≟ᵇ true
 ... | yes cn≡true = n
 -- Impossible case because `at-least-true-once` guarantees at least one true

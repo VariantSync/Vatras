@@ -21,10 +21,10 @@ open import Lang.OC using (WFOC)
 open import Test.Examples.CCC using (cccex-all)
 open import Test.Examples.OC using (optex-all)
 
-open import Test.Experiments.CCC-to-BCC
-open import Test.Experiments.OC-to-BCC
+open import Test.Experiments.CCC-to-2CC
+open import Test.Experiments.OC-to-2CC
 
-open import Translation.Experiments.NChoice-to-2Choice-Experiment using (exp; all-ex)
+open import Translation.Experiments.Choice-to-2Choice-Experiment using (exp; all-ex)
 
 {-|
 A list of programs that we want to run.

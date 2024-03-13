@@ -27,9 +27,6 @@ open import Framework.Variants
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-import Construct.Choices as Chc
-open Chc.VLChoice₂ using () renaming (Syntax to Choice₂; Semantics to chc-sem)
-open Chc.Choice₂ using () renaming (Config to Config₂)
 ```
 
 ## Syntax
@@ -42,7 +39,7 @@ data OC : Size → 𝔼 where
   Below is a commented out variant of this type where we
   reuse that constructor.
   However, for some unfathomable reason then termination
-  checking fails within OC-to-BCC.agda
+  checking fails within OC-to-2CC.agda
   because prepending an 'OC i A' to a 'Vec (OC (↑ i) A) n'
   is illegal then (but as of now just works).
   I have no idea what's the reason for this.
@@ -141,7 +138,7 @@ TODO: Maybe we can still explicitly construct the `Unsound` predicate.
 ### Well-formed option calculus is sound
 
 ```agda
--- TODO (Probably prove via soundness-by-expressiveness (done) and soundness of BCC (todo))
+-- TODO (Probably prove via soundness-by-expressiveness (done) and soundness of 2CC (todo))
 ```
 
 

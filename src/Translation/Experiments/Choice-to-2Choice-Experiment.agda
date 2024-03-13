@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Definitions
-module Translation.Experiments.NChoice-to-2Choice-Experiment where
+module Translation.Experiments.Choice-to-2Choice-Experiment where
 
 open import Data.Nat using (ℕ)
 open import Data.Nat.Show renaming (show to show-ℕ)
@@ -13,27 +13,13 @@ open import Function using (id)
 
 import Relation.Binary.PropositionalEquality as Eq
 
-open import Construct.Choices as Chc
-open Chc.Choice₂
-  using (_⟨_,_⟩)
-  renaming
-    (Syntax to 2Choice
-    ; Standard-Semantics to ⟦_⟧₂
-    ; Config to Config₂
-    ; show to show-2choice
-    )
-open Chc.Choiceₙ
-  using (_⟨_⟩)
-  renaming
-    (Syntax to NChoice
-    ; Standard-Semantics to ⟦_⟧ₙ
-    ; Config to Configₙ
-    ; show to show-nchoice
-    )
+open import Construct.Choices
+open 2Choice using (_⟨_,_⟩)
+open Choice using (_⟨_⟩)
 
 open import Framework.Annotation.IndexedName
-open import Translation.Construct.NChoice-to-2Choice as N→2
-module Trans = N→2.Translate
+open import Translation.Construct.Choice-to-2Choice as Choice-to-2Choice
+module Trans = Choice-to-2Choice.Translate
 
 open import Util.Named
 open import Test.Example
@@ -41,24 +27,24 @@ open import Test.Experiment
 open import Show.Lines
 open import Data.String using (String; _<+>_)
 
-exp : Experiment (NChoice String ℕ)
+exp : Experiment (Choice.Syntax String ℕ)
 getName exp = "Check N → 2 Choice trans"
 get exp (name ≔ e) = do
  let open Trans (Eq.setoid ℕ) using (convert; show-nested-choice)
- >         name <+> "=" <+> show-nchoice id show-ℕ e
+ >         name <+> "=" <+> Choice.show id show-ℕ e
  > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ (convert e)
 
-un-ex : Example (NChoice String ℕ)
+un-ex : Example (Choice.Syntax String ℕ)
 un-ex = "e₁" ≔ "D" ⟨ 0 ∷ [] ⟩
 
-bi-ex : Example (NChoice String ℕ)
+bi-ex : Example (Choice.Syntax String ℕ)
 bi-ex = "e₂" ≔ "D" ⟨ 0 ∷ 1 ∷ [] ⟩
 
-tri-ex : Example (NChoice String ℕ)
+tri-ex : Example (Choice.Syntax String ℕ)
 tri-ex = "e₃" ≔ "D" ⟨ 0 ∷ 1 ∷ 2 ∷ [] ⟩
 
-many-ex : Example (NChoice String ℕ)
+many-ex : Example (Choice.Syntax String ℕ)
 many-ex = "e₄" ≔ "D" ⟨ 0 ∷ 1 ∷ 2 ∷ 3 ∷ 4 ∷ 5 ∷ 6 ∷ 7 ∷ 8 ∷ [] ⟩
 
-all-ex : List (Example (NChoice String ℕ))
+all-ex : List (Example (Choice.Syntax String ℕ))
 all-ex = un-ex ∷ bi-ex ∷ tri-ex ∷ many-ex ∷ []

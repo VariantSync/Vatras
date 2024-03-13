@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 
-module Test.Experiments.CCC-to-BCC where
+module Test.Experiments.CCC-to-2CC where
 
 open import Data.Bool
   using (Bool)
@@ -25,12 +25,12 @@ open import Framework.Annotation.Name using (Dimension)
 -- open import Lang.CCC
 --   renaming (Configuration to Configurationₙ;
 --             ⟦_⟧ to ⟦_⟧ₙ)
--- open import Lang.BCC
+-- open import Lang.2CC
 --   renaming (Configuration to Configuration₂;
 --             ⟦_⟧ to ⟦_⟧₂)
 
 -- open import Framework.Definitions using (ℂ)
--- open import Translation.CCC-to-BCC  using (CCC→BCC)
+-- open import Translation.CCC-to-2CC  using (CCC→2CC)
 -- open import Framework.Proof.Translation using (expr; conf; fnoc)
 
 -- open import Util.ShowHelpers
@@ -48,23 +48,23 @@ open import Framework.Annotation.Name using (Dimension)
 -- all-n : ℕ → Named Configurationₙ
 -- all-n n = (λ _ → n) called ("all-" ++ show-nat n)
 
--- CCC→BCC-Test : UnitTest ℕ
--- CCC→BCC-Test n = ForAllExamplesIn cccex-all (test-translation CCC→BCC (get (all-n n)))
+-- CCC→2CC-Test : UnitTest ℕ
+-- CCC→2CC-Test n = ForAllExamplesIn cccex-all (test-translation CCC→2CC (get (all-n n)))
 
--- CCC→BCC-Test-fnoc∘conf : UnitTest ℕ
--- CCC→BCC-Test-fnoc∘conf n = ForAllExamplesIn cccex-all (test-translation-fnoc∘conf≡id CCC→BCC (get (all-n n)))
+-- CCC→2CC-Test-fnoc∘conf : UnitTest ℕ
+-- CCC→2CC-Test-fnoc∘conf n = ForAllExamplesIn cccex-all (test-translation-fnoc∘conf≡id CCC→2CC (get (all-n n)))
 
--- CCC→BCC-Test-all0 : RunTest CCC→BCC-Test 0
--- CCC→BCC-Test-all0 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
+-- CCC→2CC-Test-all0 : RunTest CCC→2CC-Test 0
+-- CCC→2CC-Test-all0 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
 
--- CCC→BCC-Test-all1 : RunTest CCC→BCC-Test 1
--- CCC→BCC-Test-all1 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
+-- CCC→2CC-Test-all1 : RunTest CCC→2CC-Test 1
+-- CCC→2CC-Test-all1 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
 
--- CCC→BCC-Test-fnoc∘conf-all0 : RunTest CCC→BCC-Test-fnoc∘conf 0
--- CCC→BCC-Test-fnoc∘conf-all0 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
+-- CCC→2CC-Test-fnoc∘conf-all0 : RunTest CCC→2CC-Test-fnoc∘conf 0
+-- CCC→2CC-Test-fnoc∘conf-all0 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
 
--- CCC→BCC-Test-fnoc∘conf-all1 : RunTest CCC→BCC-Test-fnoc∘conf 1
--- CCC→BCC-Test-fnoc∘conf-all1 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
+-- CCC→2CC-Test-fnoc∘conf-all1 : RunTest CCC→2CC-Test-fnoc∘conf 1
+-- CCC→2CC-Test-fnoc∘conf-all1 = refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ (refl ∷ [])))))
 
 -- -- Print all values of a configuration for a list of given dimensions:
 -- show-nary-config : Configurationₙ → List Dimension → String
@@ -76,15 +76,15 @@ open import Framework.Annotation.Name using (Dimension)
 -- -- Convert a given named choice calculus formula to binary normal form and back and print all intermediate results.
 -- -- Do so for two configurations, one configuration that always selects 0, and one that always selects 1.
 -- exp-to-binary-and-back : Experiment (CCC ∞ String)
--- getName exp-to-binary-and-back = "CCC to BCC and back"
+-- getName exp-to-binary-and-back = "CCC to 2CC and back"
 -- get     exp-to-binary-and-back ex@(cc called name) =
 --   let
 --     conf-vals : List ℕ
 --     conf-vals = 0 ∷ 1 ∷ 2 ∷ []
 
---     translation-result = CCC→BCC cc
+--     translation-result = CCC→2CC cc
 
---     expr-named : Named (BCC ∞ String)
+--     expr-named : Named (2CC ∞ String)
 --     expr-named = expr translation-result called "toCC₂ " ++ name
 
 --     conf-named : Named Configurationₙ → Named Configuration₂
@@ -105,7 +105,7 @@ open import Framework.Annotation.Name using (Dimension)
 --     show-all-n           : ℕ  → String
 --     show-all-n           = λ n → show-named (λ c → show-nary-config   c (Lang.CCC.dims              cc))                          (all-n n)
 --     show-conf-all-n      : ℕ  → String
---     show-conf-all-n      = λ n → show-named (λ c → show-binary-config c (Lang.BCC.dims (get expr-named)))             (conf-named (all-n n))
+--     show-conf-all-n      = λ n → show-named (λ c → show-binary-config c (Lang.2CC.dims (get expr-named)))             (conf-named (all-n n))
 --     show-fnoc-conf-all-n : ℕ  → String
 --     show-fnoc-conf-all-n = λ n → show-named (λ c → show-nary-config   c (Lang.CCC.dims              cc))  (fnoc-named (conf-named (all-n n)))
 --   in do
@@ -114,7 +114,7 @@ open import Framework.Annotation.Name using (Dimension)
 --     lines (mapl eval-all-n conf-vals)
 --     linebreak
 
---     > show-named Lang.BCC.show expr-named
+--     > show-named Lang.2CC.show expr-named
 --     >∷ mapl (show-conf-all-n) conf-vals
 --     lines (mapl eval-forth-all-n conf-vals)
 --     linebreak

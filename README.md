@@ -63,7 +63,7 @@ The library is organized as follows:
   Definitions for expressiveness and other relations are in the [Relation](src/Framework/Relation) sub-directory.
   Theorems for proving completeness, soundness, and expressiveness based on their relationships (Section 4.5) are within the [Proof](src/Framework/Proof) sub-directory.
 - [src/Lang](src/Lang) contains instantiations of particular variability languages.
-- [src/Translation](src/Translation) contains translations between variability languages, such as the translation of option calculus to binary choice calculus in [OC-to-BCC.lagda.md](src/Translation/OC-to-BCC.lagda.md) (Section 5.3 in our paper).
+- [src/Translation](src/Translation) contains translations between variability languages, such as the translation of option calculus to binary choice calculus in [OC-to-2CC.lagda.md](src/Translation/OC-to-2CC.lagda.md) (Section 5.3 in our paper).
 - [src/Test](src/Test) contains definitions of unit tests for translations and some experiments that are run, when running the library.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.3-blue.svg

@@ -12,18 +12,14 @@ open import Framework.VariabilityLanguage
 open import Framework.Variants using (GrulerVariant)
 open import Construct.GrulerArtifacts
 open import Construct.Choices
-open import Construct.NestedChoice F public
-
-private
-  Choice₂ = VLChoice₂.Syntax
-  Config₂ = Choice₂.Config
+open import Construct.NestedChoice F as NestedChoice using (NestedChoice)
 
 2ADT : Size → 𝔼
 2ADT i A = NestedChoice i (Leaf A)
 
 mutual
   2ADTVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-  2ADTVL {i} = ⟪ 2ADT i , Config₂ F , semantics ⟫
+  2ADTVL {i} = ⟪ 2ADT i , 2Choice.Config F , semantics ⟫
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (Config₂ F) (2ADT i)
-  semantics e c = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant (⟦ e ⟧ c)
+  semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (2Choice.Config F) (2ADT i)
+  semantics e c = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant (NestedChoice.⟦ e ⟧ c)

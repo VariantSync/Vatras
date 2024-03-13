@@ -37,9 +37,7 @@ open import Framework.Construct
 open import Data.EqIndexedSet as ISet
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-import Construct.Choices as Chc
-open Chc.VLChoiceₙ using () renaming (Syntax to Choiceₙ; Semantics to chc-sem)
-open Chc.Choiceₙ using () renaming (Config to Configₙ)
+open import Construct.Choices
 ```
 
 ## Syntax
@@ -47,10 +45,10 @@ open Chc.Choiceₙ using () renaming (Config to Configₙ)
 ```agda
 data CCC : Size → 𝔼 where
    atom : ∀ {i A} → Artifact (CCC i) A → CCC (↑ i) A
-   chc  : ∀ {i A} → Choiceₙ Dimension (CCC i) A → CCC (↑ i) A
+   chc  : ∀ {i A} → VLChoice.Syntax Dimension (CCC i) A → CCC (↑ i) A
 
 pattern _-<_>- a cs = atom (a At.-< cs >-)
-pattern _⟨_⟩ D cs   = chc  (D Chc.Choiceₙ.⟨ cs ⟩)
+pattern _⟨_⟩ D cs    = chc  (D Choice.⟨ cs ⟩)
 ```
 
 ## Semantics
@@ -67,7 +65,7 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 First, we define configurations as functions that evaluate dimensions by tags:
 ```agda
 Configuration : 𝕂
-Configuration = Configₙ Dimension
+Configuration = Choice.Config Dimension
 ```
 
 We can now define the semantics.
@@ -79,9 +77,9 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
     CCCL : ∀ {i : Size} → VariabilityLanguage V
     CCCL {i} = ⟪ CCC i , Configuration , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V (Configₙ Dimension) (CCC i)
+    ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V (Choice.Config Dimension) (CCC i)
     ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact CCCL x
-    ⟦ chc  x ⟧ = chc-sem V Dimension CCCL id x
+    ⟦ chc  x ⟧ = VLChoice.Semantics V Dimension CCCL id x
 ```
 
 ## Properties
@@ -181,7 +179,7 @@ module Encode where
   encoder : VariantEncoder V CCCL
   encoder = record
     { compile = encode
-    ; config-compiler = confs
+    ; config-compiler = λ _ → confs
     ; preserves = preserves
     }
 ```

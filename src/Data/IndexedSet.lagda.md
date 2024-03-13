@@ -30,7 +30,7 @@ open import Data.Empty.Polymorphic using (⊥)
 open import Data.Unit.Polymorphic using (⊤; tt)
 
 open import Data.Product using (_×_; _,_; ∃-syntax; Σ-syntax; proj₁; proj₂)
-open import Relation.Binary.PropositionalEquality using (_≗_)
+open import Relation.Binary.PropositionalEquality using (_≗_; subst)
 open import Relation.Nullary using (¬_)
 
 open import Function using (id; _∘_; Congruent; Surjective) --IsSurjection)
@@ -254,6 +254,9 @@ irrelevant-index-≅ x const-A const-B =
 ≅[]-trans {A = A} {C = C} (A⊆B , B⊆A) (B⊆C , C⊆B) =
   ⊆[]-trans {C = C} A⊆B B⊆C ,
   ⊆[]-trans {C = A} C⊆B B⊆A
+
+⊆→≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} → (f : I → J) → (f⁻¹ : J → I) → f ∘ f⁻¹ ≗ id → A ⊆[ f ] B → A ≅[ f ][ f⁻¹ ] B
+⊆→≅ {A = A} {B = B} f f⁻¹ f∘f⁻¹ A⊆B = A⊆B , (λ i → Eq.sym (subst (λ j → A (f⁻¹ i) ≈ B j) (f∘f⁻¹ i) (A⊆B (f⁻¹ i))))
 ```
 
 ## Equational Reasoning
