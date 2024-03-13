@@ -191,6 +191,9 @@ syntax ≅[]→≅ e = ≅-by-index-translation e
     (λ i →      A≐B i )
   , (λ i → sym (A≐B i))
 
+≗→≅[] : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅[ id ][ id ] B
+≗→≅[] = ≐→≅[] ∘ ≗→≐
+
 irrelevant-index-⊆ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J}
   → (x : Carrier)
   → (∀ i → A i ≈ x)
