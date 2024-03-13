@@ -44,8 +44,7 @@ module 2CC where
   open 2CC-Sem-2 using (⟦_⟧) public
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
-import Translation.Lang.NCC.NCC-to-NCC
-open Translation.Lang.NCC.NCC-to-NCC.IncreaseArity Variant Artifact∈ₛVariant using (NCC→NCC)
+open import Translation.Lang.NCC.Grow Variant Artifact∈ₛVariant using (growFrom2Compiler)
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
@@ -158,7 +157,7 @@ module 2Ary where
 
 -- A generalization which translates to an arbitrary n instead of 2.
 2CC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL D {i}) (NCCL n D {i})
-2CC→NCC n = 2Ary.2CC→NCC ⊕ NCC→NCC n
+2CC→NCC n = 2Ary.2CC→NCC ⊕ growFrom2Compiler n
 
 NCC≽2CC : ∀ {D : Set} → (n : ℕ≥ 2) → NCCL n D ≽ 2CCL D
 NCC≽2CC n = expressiveness-from-compiler (2CC→NCC n)
