@@ -5,7 +5,7 @@ module Translation.Lang.2ADT-to-NADT {F : 𝔽} {A : 𝔸} where
 
 open import Data.Nat using (ℕ)
 open import Level using (0ℓ)
-open import Size using (∞; ↑_)
+open import Size using (Size; ∞; ↑_)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
@@ -13,6 +13,7 @@ open Eq.≡-Reasoning
 import Data.IndexedSet
 
 open import Construct.Choices
+open import Construct.GrulerArtifacts as GL using ()
 open import Construct.NestedChoice using (value; choice)
 
 open import Framework.Variants using (GrulerVariant)
@@ -22,9 +23,11 @@ open import Lang.NADT
 import Translation.Construct.2Choice-to-Choice {F} as 2Choice-to-Choice
 open 2Choice-to-Choice.Translate using (convert)
 
-compile : ∀ {i} → 2ADT F i A → NADT F i A
-compile (value a)      = NADTAsset a
-compile (choice {i} c) = NADTChoice (Choice.map compile (convert (Eq.setoid (2ADT F i A)) c))
+{-# TERMINATING #-}
+-- TODO: Fix termination checking and also get rid of complicated constructor stuff.
+compile : ∀ {V : 𝕍} → 2ADT F V A → NADT F V ∞ A
+compile (leaf a)      = NADTAsset (GL.leaf a)
+compile {V} (D ⟨ l , r ⟩) = NADTChoice (Choice.map compile (convert (Eq.setoid (2ADT F V A)) (D 2Choice.⟨ l , r ⟩)))
 
 module Preservation where
   -- open Data.IndexedSet (VariantSetoid GrulerVariant A) using () renaming (_≅_ to _≋_)
