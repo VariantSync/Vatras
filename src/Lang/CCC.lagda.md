@@ -142,17 +142,8 @@ module Encode where
     ; from = λ _ → tt
     }
 
-  {-|
-  Unfortunately, I had to flag this function as terminating.
-  One solution to prove its termination is to use a sized variant (instead of using ∞).
-  The problem is that the semantics ⟦_⟧ forgets the size and sets it to ∞ and hence,
-  the types of ⟦ encode v ⟧ c and v are different and hence their values can never be equivalent regarding ≡.
-
-  The function below indeed terminates but proving it within our framework became a _technical_ challenge (not a mathematical one) for which I found no solution yet.
-  -}
-  {-# TERMINATING #-}
   ccc-encode-idemp : ∀ {A} (v : Rose ∞ A) → (c : Configuration) → ⟦ encode v ⟧ c ≡ v
-  ccc-encode-idemp v@(rose (a At.-< cs >-)) c =
+  ccc-encode-idemp {A} v@(rose (a At.-< cs >-)) c =
     begin
       ⟦ encode v ⟧ c
     ≡⟨⟩
@@ -161,12 +152,13 @@ module Encode where
           Eq.cong (a At.-<_>-) (map-∘ cs) ⟩
       rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
     ≡⟨ Eq.cong rose $
-          Eq.cong (a At.-<_>-) (map-cong (λ x → ccc-encode-idemp x c) cs) ⟩
-      rose (a At.-< map id cs >-)
-    ≡⟨ Eq.cong rose $
-          Eq.cong (a At.-<_>-) (map-id cs) ⟩
+          Eq.cong (a At.-<_>-) (go cs) ⟩
       v
     ∎
+    where
+    go : (cs' : List (Rose ∞ A)) → map (λ c' → ⟦ encode c' ⟧ c) cs' ≡ cs'
+    go [] = refl
+    go (c' ∷ cs') = Eq.cong₂ _∷_ (ccc-encode-idemp c' c) (go cs')
 
   preserves : ∀ {A} → (v : Rose ∞ A)
     → Semantics (Variant-is-VL V) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧

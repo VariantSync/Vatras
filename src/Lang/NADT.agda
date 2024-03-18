@@ -2,7 +2,7 @@
 
 open import Framework.Definitions
 -- TODO: Generalize level of F
-module Lang.NADT (F : 𝔽) (V : 𝕍) where
+module Lang.NADT (V : 𝕍) (F : 𝔽) where
 
 open import Data.Nat using (ℕ)
 open import Function using (id)
@@ -15,7 +15,7 @@ open import Construct.GrulerArtifacts
 open import Construct.Choices
 
 data NADT : Size → 𝔼 where
-  NADTAsset  : ∀ {i A} → Leaf (V A)                   → NADT i A
+  NADTAsset  : ∀ {i A} → Leaf (V A)                   → NADT (↑ i) A
   NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT i) A → NADT (↑ i) A
 
 mutual
