@@ -16,6 +16,7 @@ module Translation.LanguageMap where
 
 ```agda
 open import Size using (∞)
+open import Relation.Nullary.Negation using (¬_)
 
 open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
 Variant = Rose ∞
@@ -24,7 +25,7 @@ mkArtifact = Artifact∈ₛRose
 open import Framework.Definitions using (𝕍; 𝔽)
 open import Framework.Construct
 open import Framework.Compiler
-open import Framework.Relation.Expressiveness Variant using (_⋡_)
+open import Framework.Relation.Expressiveness Variant using (_⋡_; compiler-cannot-exist)
 open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness)
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
@@ -81,6 +82,9 @@ module _ (F : 𝔽) where
   {- TODO: Substitute completeness proof of 2CC here. -}
   OC-is-less-expressive-than-2CC : WFOCL ⋡ 2CCL
   OC-is-less-expressive-than-2CC = less-expressive-from-completeness {!!} OC-is-incomplete
+
+  2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler 2CCL WFOCL)
+  2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-2CC
 
 open Translation.Lang.OC-to-2CC using (
   2CC≽OC
