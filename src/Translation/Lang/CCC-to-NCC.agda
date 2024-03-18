@@ -47,17 +47,14 @@ module NCC where
   open NCC-Sem-2 using (⟦_⟧) public
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-
-import Translation.Lang.NCC-to-NCC
-open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open Translation.Lang.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCC-map-config)
-module NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
-open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
+open import Framework.Annotation.IndexedDimension
+open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
+open import Translation.Lang.NCC.Rename Variant Artifact∈ₛVariant using (NCC-rename; NCC-map-config)
+module NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
-
 
 module Exact where
   -- Idea of this translation:
@@ -78,8 +75,8 @@ module Exact where
   -- We want to translate into `NCC` which has an arity of at leat 2 so we
   -- ensure that the result is ≥ 2
   ⌈_⌉ : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → CCC D i A → ℕ≥ 2
-  ⌈ a -< cs >- ⌉ = maximum (List.map ⌈_⌉ cs)
-  ⌈ d ⟨ c ∷ [] ⟩ ⌉ = ⌈_⌉ c
+  ⌈ a -< cs >-         ⌉ = maximum (List.map ⌈_⌉ cs)
+  ⌈ d ⟨ c ∷ [] ⟩       ⌉ = ⌈ c ⌉
   ⌈ d ⟨ c₁ ∷ c₂ ∷ cs ⟩ ⌉ = sucs (List.length cs) ⊔ maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs))
 
   mutual
@@ -346,7 +343,7 @@ translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → CCC D i A
   → NCC n (D × ℕ) ∞ A
 translate (sucs n) expr =
-  NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉)
+  NCC-rename.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉)
     (NCC→NCC.compile ⌈ expr ⌉ (sucs n)
       (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)))
 
@@ -377,8 +374,8 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
 preserves (sucs n) expr =
   NCC.⟦ translate (sucs n) expr ⟧
   ≅[]⟨⟩
-    NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
-  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+    NCC.⟦ NCC-rename.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
+  ≅[]˘⟨ NCC-rename.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
     NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ⟧
   ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
     NCC.⟦ Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟧

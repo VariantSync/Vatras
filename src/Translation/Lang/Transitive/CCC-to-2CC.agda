@@ -3,7 +3,7 @@
 open import Framework.Construct using (_∈ₛ_)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
-module Translation.Lang.CCC-to-2CC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.Transitive.CCC-to-2CC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Nat using (ℕ; zero)
 open import Data.Product using (_×_)
