@@ -14,7 +14,7 @@ open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Definitions
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
-open import Framework.Variants using (Variant-is-VL)
+open import Framework.Variants using (VariantEncoder)
 open import Function using (id)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
 open import Size using (Size; ∞)
@@ -40,11 +40,11 @@ module CCC where
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 
 
-translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → LanguageCompiler (Variant-is-VL Variant) (CCCL F) → NADT F i A → CCC F ∞ A
+translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder Variant (CCCL F) → NADT F i A → CCC F ∞ A
 translate Variant→CCC (NADTAsset (leaf v)) = LanguageCompiler.compile Variant→CCC v
 translate Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) = f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
 
-preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : LanguageCompiler (Variant-is-VL Variant) (CCCL F)) → (expr : NADT F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
+preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder Variant (CCCL F)) → (expr : NADT F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
 preserves-≗ {A = A} Variant→CCC (NADTAsset (leaf v)) config =
     CCC.⟦ translate Variant→CCC (NADTAsset (leaf v)) ⟧ config
   ≡⟨⟩
@@ -68,14 +68,14 @@ preserves-≗ Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) config 
     NADT.⟦ NADTChoice (f Choice.⟨ alternatives ⟩) ⟧ config
   ∎
 
-preserves : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : LanguageCompiler (Variant-is-VL Variant) (CCCL F)) → (expr : NADT F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≅[ id ][ id ] NADT.⟦ expr ⟧
+preserves : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder Variant (CCCL F)) → (expr : NADT F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≅[ id ][ id ] NADT.⟦ expr ⟧
 preserves Variant→CCC expr = ≗→≅[] (preserves-≗ Variant→CCC expr)
 
-NADT→CCC : ∀ {i : Size} {F : 𝔽} → LanguageCompiler (Variant-is-VL Variant) (CCCL F) → LanguageCompiler (NADTL F) (CCCL F)
+NADT→CCC : ∀ {i : Size} {F : 𝔽} → VariantEncoder Variant (CCCL F) → LanguageCompiler (NADTL F) (CCCL F)
 NADT→CCC Variant→CCC .LanguageCompiler.compile = translate Variant→CCC
 NADT→CCC Variant→CCC .LanguageCompiler.config-compiler expr .to = id
 NADT→CCC Variant→CCC .LanguageCompiler.config-compiler expr .from = id
 NADT→CCC Variant→CCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves Variant→CCC expr)
 
-CCC≽NADT : ∀ {F : 𝔽} → LanguageCompiler (Variant-is-VL Variant) (CCCL F) → CCCL F ≽ NADTL F
+CCC≽NADT : ∀ {F : 𝔽} → VariantEncoder Variant (CCCL F) → CCCL F ≽ NADTL F
 CCC≽NADT Variant→CCC = expressiveness-from-compiler (NADT→CCC Variant→CCC)
