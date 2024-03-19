@@ -5,7 +5,9 @@ open import Framework.Definitions
 module Lang.FST (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.List using (List; []; _∷_; foldr; map; filterᵇ; concat; reverse)
+open import Data.List using (List; []; _∷_; _∷ʳ_; _++_; foldr; map; filterᵇ; concat; reverse)
+open import Data.List.Properties using (++-identityʳ)
+open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
 open import Data.Product using (Σ; ∃-syntax; _×_; _,_; proj₁; proj₂)
@@ -29,25 +31,10 @@ Conf : Set
 Conf = F → Bool
 
 module TODO-MOVE-TO-AUX-OR-USE-STL where
-  ≠-sym : ∀ {ℓ} {A : Set ℓ} (a b : A)
-    → ¬ (a ≡ b)
-    → ¬ (b ≡ a)
-  ≠-sym a b a≠b refl = a≠b refl
-
-  ≠→False : ∀ {ℓ} {A : Set ℓ} {a b : A}
-    → (_≟_ : DecidableEquality A)
-    → ¬ (a ≡ b)
-    → False (a ≟ b)
-  ≠→False {a = a} {b = b} _≟_ a≠b with a ≟ b
-  ... | yes a≡b = ⊥-elim (a≠b a≡b)
-  ... | no    _ = tt
-
-  False-sym : ∀ {ℓ} {A : Set ℓ} {a b : A}
-    → (_≟_ : DecidableEquality A)
-    → False (a ≟ b)
-    → False (b ≟ a)
-  False-sym {a = a} {b = b} _≟_ _ with a ≟ b
-  ... | no ¬p = ≠→False _≟_ (≠-sym a b ¬p)
+  lem : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
+    → (xs ++ y ∷ []) ++ ys ≡ (xs ++ (y ∷ ys))
+  lem y ys [] = refl
+  lem y ys (x ∷ xs) = Eq.cong (x ∷_) (lem y ys xs)
 open TODO-MOVE-TO-AUX-OR-USE-STL
 
 data FST : 𝔼 where
@@ -77,8 +64,38 @@ a ≉ b = ¬ (a ≈ b)
 ≉-sym : ∀ {A} → (a b : FST A) → a ≉ b → b ≉ a
 ≉-sym a b a≉b b≈a = a≉b (≈-sym b a b≈a)
 
+_∈_ : ∀ {A} → FST A → List (FST A) → Set
+x ∈ xs = Any (x ≈_) xs
+
 _∉_ : ∀ {A} → FST A → List (FST A) → Set
 x ∉ xs = All (x ≉_) xs
+
+_⊑_ : ∀ {A} → (xs ys : List (FST A)) → Set --\squb=
+xs ⊑ ys = All (_∈ ys) xs
+
+_⋢_ : ∀ {A} → (xs ys : List (FST A)) → Set --\squb=n
+xs ⋢ ys = Any (_∉ ys) xs
+
+Disjoint : ∀ {A} → (xs ys : List (FST A)) → Set --\squb=n
+Disjoint xs ys = All (_∉ ys) xs
+
+-- identity of proofs
+open import Axioms.Extensionality using (extensionality)
+≉-deterministic : ∀ {A} (x y : FST A)
+  → (p₁ : x ≉ y)
+  → (p₂ : x ≉ y)
+  → p₁ ≡ p₂
+≉-deterministic (pnode a _) (pnode b _) p₁ p₂ = extensionality λ where refl → refl
+
+∉-deterministic : ∀ {A} {x : FST A} (ys : List (FST A))
+  → (p₁ : x ∉ ys)
+  → (p₂ : x ∉ ys)
+  → p₁ ≡ p₂
+∉-deterministic [] [] [] = refl
+∉-deterministic {_} {x} (y ∷ ys) (x≉y₁ ∷ pa) (x≉y₂ ∷ pb)
+  rewrite ≉-deterministic x y x≉y₁ x≉y₂
+  rewrite ∉-deterministic ys pa pb
+  = refl
 
 map-≉ : ∀ {A} {b xs} (ys : List (FST A)) (z : FST A)
   → pnode b xs ≉ z
@@ -90,6 +107,35 @@ map-∉ : ∀ {A} {b : A} {cs cs' xs : List (FST A)}
   → pnode b cs' ∉ xs
 map-∉ [] = []
 map-∉ {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-≉ cs' x px ∷ map-∉ pxs
+
+disjoint-[]ˡ : ∀ {A} (xs : List (FST A)) → Disjoint [] xs
+disjoint-[]ˡ _ = []
+
+disjoint-[]ʳ : ∀ {A} (xs : List (FST A)) → Disjoint xs []
+disjoint-[]ʳ [] = []
+disjoint-[]ʳ (x ∷ xs) = [] ∷ (disjoint-[]ʳ xs)
+
+disjoint-grow : ∀ {A} (r : FST A) (rs ls : List (FST A))
+  → Disjoint ls rs
+  → r ∉ ls
+  → Disjoint ls (r ∷ rs)
+disjoint-grow r rs [] _ _ = []
+disjoint-grow r rs (l ∷ ls) (l∉rs ∷ d-ls-rs) (r≉l ∷ r∉ls)
+  = (≉-sym r l r≉l ∷ l∉rs) ∷ disjoint-grow r rs ls d-ls-rs r∉ls
+
+disjoint-shiftʳ : ∀ {A} (r : FST A) (rs ls : List (FST A))
+  → Disjoint ls (r ∷ rs)
+  → Disjoint ls (rs ++ r ∷ [])
+disjoint-shiftʳ r rs [] x = []
+disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
+  = step l r rs l≉r l∉rs ∷ disjoint-shiftʳ r rs ls d-ls-rrs
+  where
+    step : ∀ {A} (x y : FST A) (zs : List (FST A))
+      → x ≉ y
+      → x ∉ zs
+      → x ∉ (zs ++ y ∷ [])
+    step x y [] x≉y _ = x≉y ∷ []
+    step x y (z ∷ zs) x≉y (x≉z ∷ x∉zs) = x≉z ∷ step x y zs x≉y x∉zs
 
 -- the syntax used in the paper for paths
 infixr 5 _．_
@@ -207,6 +253,27 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
     UniqueR cs = Unique cs × All UniqueNode cs
 
   mutual
+    UniqueNode-deterministic : ∀ {x : FST A}
+      → (a : UniqueNode x)
+      → (b : UniqueNode x)
+      → a ≡ b
+    UniqueNode-deterministic {pnode _ cs} (unq a) (unq b) = Eq.cong unq (UniqueR-deterministic cs a b)
+
+    UniqueR-deterministic : ∀ (xs : List (FST A))
+      → (ua : UniqueR xs)
+      → (ub : UniqueR xs)
+      → ua ≡ ub
+    UniqueR-deterministic [] ([] , []) ([] , []) = refl
+    UniqueR-deterministic (x ∷ xs) (a-x∉xs ∷ a-u-xs , a-ur-x ∷ a-ur-xs) (b-x∉xs ∷ b-u-xs , b-ur-x ∷ b-ur-xs)
+      with UniqueR-deterministic xs (a-u-xs , a-ur-xs) (b-u-xs , b-ur-xs)
+    ... | eq
+      rewrite (Eq.cong proj₁ eq)
+      rewrite (Eq.cong proj₂ eq)
+      rewrite UniqueNode-deterministic a-ur-x b-ur-x
+      rewrite ∉-deterministic xs a-x∉xs b-x∉xs
+      = refl
+
+  mutual
     ↝-preserves-unique : ∀ {ls rs e : List (FST A)}
       → ls + rs ↝ e
       → UniqueR ls
@@ -249,6 +316,30 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       trees : List (FST A)
       valid : UniqueR trees
   open FSF public
+
+  ⟶-append-strange : ∀ (l : FST A) (rs : List (FST A))
+    → l ∉ rs
+    → l + rs ⟶ rs ∷ʳ l
+  ⟶-append-strange l [] _ = base
+  ⟶-append-strange l (r ∷ rs) (l≠r ∷ l∉rs) = skip l≠r (⟶-append-strange l rs l∉rs)
+
+  ↝-append-strangers : ∀ (ls rs : List (FST A))
+    → Unique ls
+    → Disjoint ls rs
+    → ls + rs ↝ rs ++ ls
+  ↝-append-strangers [] rs _ _ rewrite ++-identityʳ rs = impose-nothing
+  ↝-append-strangers (l ∷ ls) rs (l∉ls ∷ u-ls) (l∉rs ∷ d-ls-rs)
+    rewrite (Eq.sym (lem l ls rs))
+    with ⟶-append-strange l rs l∉rs
+  ... | x
+    = impose-step x (↝-append-strangers ls (rs ++ l ∷ []) u-ls
+        (disjoint-shiftʳ l rs ls (disjoint-grow l rs ls d-ls-rs l∉ls)))
+
+  impose-nothing-r :
+    ∀ (ls : List (FST A))
+    → Unique ls
+    → ls + [] ↝ ls
+  impose-nothing-r ls u-ls = ↝-append-strangers ls [] u-ls (disjoint-[]ʳ ls)
 
   forget-uniqueness : FSF → List (FST A)
   forget-uniqueness = trees
@@ -307,17 +398,33 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   ⊕-all : List FSF → FSF
   ⊕-all = foldr _⊕_ 𝟘
 
-  ⟦_⟧ : SPL → Conf → Rose ∞ A
-  ⟦ r ◀ features ⟧ c = rose (r -< toVariants (⊕-all (map impl (select c features))) >-)
-
   l-id : LeftIdentity _≡_ 𝟘 _⊕_
   l-id _ = refl
 
   r-id : RightIdentity _≡_ 𝟘 _⊕_
-  r-id = {!!}
-  -- r-id ([] ⊚ ([] , [])) = refl
-  -- r-id (.(pnode _ _) ∷ [] , [] ∷ [] , unq x ∷ []) = refl
-  -- r-id (x ∷ y ∷ zs , u-x ∷ u-y ∷ u-zs , ur-x ∷ ur-y ∷ ur-zs) = {!!}
+  r-id (xs ⊚ (u-xs , ur-xs))
+    -- Let's see what ⊕ does
+    with ↝-total xs []
+    -- it computes some result 'e' and a derivation 'deriv'
+  ... | (e , deriv)
+    -- However, we know by impose-nothing-r that we can derive
+    -- 'xs' itself as result.
+    -- By determinism, we know that there can only be one derivation
+    -- so e = xs.
+    -- (We can't do a rewrite here for some reason so we stick to good old "with".)
+    with ↝-deterministic deriv (impose-nothing-r xs u-xs)
+  ... | refl = Eq.cong (xs ⊚_) (help xs (u-xs , ur-xs) deriv)
+    where
+      -- lastly, we have to prove that the typing is also unique but that is actually
+      -- irrelevant. Maybe we can avoid this proof somehow?
+      -- Its never needed and just an artifical problem.
+      -- Maybe we shouldnt prove for _≡_ but rather for a new eq relation
+      -- that is weaker and ignores the typing.
+      help : ∀ (ls : List (FST A))
+        → (ur-ls : UniqueR ls)
+        → (deriv : ls + [] ↝ ls)
+        → ↝-preserves-unique deriv ur-ls ([] , []) ≡ ur-ls
+      help ls ur-ls deriv = UniqueR-deterministic ls (↝-preserves-unique deriv ur-ls ([] , [])) ur-ls
 
   assoc : Associative _≡_ _⊕_
   assoc x y z = {!!}
@@ -344,6 +451,10 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
     }
     where
       open import Data.Product using (_,_)
+
+  -- Semantics
+  ⟦_⟧ : SPL → Conf → Rose ∞ A
+  ⟦ r ◀ features ⟧ c = rose (r -< toVariants (⊕-all (map impl (select c features))) >-)
 
   -- We could avoid wrap and unwrap by defining our own intermediate tree structure
   -- that does not reuse Artifact constructor.
