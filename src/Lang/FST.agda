@@ -17,7 +17,7 @@ open import Size using (∞)
 
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (yes; no; _because_; False)
-open import Relation.Binary using (DecidableEquality; Rel)
+open import Relation.Binary using (Decidable; DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Framework.Annotation.Name using (Name)
@@ -65,6 +65,32 @@ toVariant {A} = induction step
   step : A → List (Rose ∞ A) → Rose ∞ A
   step a cs = rose (a -< cs >-)
 
+_≈_ : ∀ {A} → Rel (FST A) 0ℓ
+(pnode a _) ≈ (pnode b _) = a ≡ b
+
+≈-sym : ∀ {A} → (a b : FST A) → a ≈ b → b ≈ a
+≈-sym (pnode a _) (pnode .a _) refl = refl
+
+_≉_ : ∀ {A} → Rel (FST A) 0ℓ
+a ≉ b = ¬ (a ≈ b)
+
+≉-sym : ∀ {A} → (a b : FST A) → a ≉ b → b ≉ a
+≉-sym a b a≉b b≈a = a≉b (≈-sym b a b≈a)
+
+_∉_ : ∀ {A} → FST A → List (FST A) → Set
+x ∉ xs = All (x ≉_) xs
+
+map-≉ : ∀ {A} {b xs} (ys : List (FST A)) (z : FST A)
+  → pnode b xs ≉ z
+  → pnode b ys ≉ z
+map-≉ ys (pnode z zs) z≉z refl = z≉z refl
+
+map-∉ : ∀ {A} {b : A} {cs cs' xs : List (FST A)}
+  → pnode b cs  ∉ xs
+  → pnode b cs' ∉ xs
+map-∉ [] = []
+map-∉ {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-≉ cs' x px ∷ map-∉ pxs
+
 -- the syntax used in the paper for paths
 infixr 5 _．_
 _．_ : ∀ {A} → A → (cs : List (FST A)) → List (FST A)
@@ -86,11 +112,14 @@ mutual
         ----------------------------------------------
       → pnode a as + pnode a bs ∷ rs ⟶ pnode a cs ∷ rs
 
-    skip : ∀ {A} {a b : A} {as bs rs cs : List (FST A)}
-      → ¬ (a ≡ b)
-      → pnode a as + rs ⟶ cs
+    -- In the original work, skipped nodes were added to the left.
+    -- We add to the right here because it fits nicer with list construction _∷_
+    -- Otherwise, we would have to backtrack when we found no match in rs.
+    skip : ∀ {A} {a r : FST A} {rs cs : List (FST A)}
+      → a ≉ r
+      → a + rs ⟶ cs
         ----------------------------------------------
-      → pnode a as + pnode b bs ∷ rs ⟶ pnode b bs ∷ cs
+      → a + r ∷ rs ⟶ r ∷ cs
 
   -- This is basically just a fold on lists. Maybe we can simplify it accordingly.
   infix 4 _+_↝_
@@ -133,6 +162,9 @@ mutual
 ⟶-return {e = e} ⟶e = e , ⟶e
 
 module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
+  _==_ : Decidable (_≈_ {A})
+  _==_ (pnode a _) (pnode b _) = a ≟ b
+
   childs : FST A → List (FST A)
   childs (pnode a as) = as
 
@@ -154,29 +186,13 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       let cs , ⟶cs = ⟶-total (pnode a as) rs ↝-total-as
       in ⟶-return (skip a≠b ⟶cs)
 
-  pdifferent : Rel (FST A) 0ℓ
-  pdifferent (pnode a _) (pnode b _) = False (a ≟ b)
-
-  map-pdifferent : ∀ {b xs} (ys : List (FST A)) (z : FST A)
-    → pdifferent (pnode b xs) z
-    → pdifferent (pnode b ys) z
-  map-pdifferent {b} _ (pnode z _) l with z ≟ b
-  ... | yes _ = l
-  ... | no  _ = l
-
-  map-all-pdifferent : ∀ {b cs cs' xs}
-    → All (pdifferent (pnode b cs )) xs
-    → All (pdifferent (pnode b cs')) xs
-  map-all-pdifferent [] = []
-  map-all-pdifferent {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-pdifferent cs' x px ∷ map-all-pdifferent pxs
-
   Unique : List (FST A) → Set
-  Unique = AllPairs pdifferent
+  Unique = AllPairs _≉_
 
   unique-ignores-children : ∀ {a as bs rs}
     → Unique (pnode a as ∷ rs)
     → Unique (pnode a bs ∷ rs)
-  unique-ignores-children (x ∷ xs) = map-all-pdifferent x ∷ xs
+  unique-ignores-children (x ∷ xs) = map-∉ x ∷ xs
 
   drop-second-Unique : ∀ {x y zs}
     → Unique (x ∷ y ∷ zs)
@@ -217,13 +233,13 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
         u-cs = proj₁ ur-cs
         un-cs = proj₂ ur-cs
 
-        ind : ∀ {a ls rs cs b bs}
+        ind : ∀ {a ls b bs cs rs}
           → ¬ (a ≡ b)
           → Unique (pnode b bs ∷ rs)
           → pnode a ls + rs ⟶ cs
-          → All (pdifferent (pnode b bs)) cs
-        ind a≠b _     base     = False-sym _≟_ (≠→False _≟_ a≠b) ∷ []
-        ind a≠b u-rs (merge _) = False-sym _≟_ (≠→False _≟_ a≠b) ∷ head (drop-second-Unique u-rs)
+          → All (_≉_ (pnode b bs)) cs
+        ind {a} {ls} {b} {bs} a≠b _ base = ≉-sym (pnode a ls) (pnode b bs) a≠b ∷ []
+        ind {a} {_} {b} {bs} {pnode .a cs ∷ _} a≠b u-rs (merge _) = ≉-sym (pnode a cs) (pnode b bs) a≠b ∷ head (drop-second-Unique u-rs)
         ind a≠b ((b≠b' ∷ u-r) ∷ _ ∷ u-rs) (skip a≠b' ⟶cs) = b≠b' ∷ ind a≠b (u-r ∷ u-rs) ⟶cs
 
   -- Feature Structure Forest
