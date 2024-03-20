@@ -37,20 +37,16 @@ module TODO-MOVE-TO-AUX-OR-USE-STL where
   lem y ys (x ∷ xs) = Eq.cong (x ∷_) (lem y ys xs)
 open TODO-MOVE-TO-AUX-OR-USE-STL
 
-data FST : 𝔼 where
-  pnode : ∀ {A : 𝔸} → A → List (FST A) → FST A
+FST : 𝔼
+FST = Rose ∞
+
+pattern pnode a cs = rose (a -< cs >-)
 
 induction : ∀ {A : 𝔸} {B : Set} → (A → List B → B) → FST A → B
 induction {A} {B} f n = go n [] where
   go : FST A → List B → B
   go (pnode a []) bs = f a (reverse bs)
   go (pnode a (c ∷ cs)) bs = go (pnode a cs) (go c [] ∷ bs)
-
-toVariant : ∀ {A} → FST A → Rose ∞ A
-toVariant {A} = induction step
-  module toVariant-implementation where
-  step : A → List (Rose ∞ A) → Rose ∞ A
-  step a cs = rose (a -< cs >-)
 
 _≈_ : ∀ {A} → Rel (FST A) 0ℓ
 (pnode a _) ≈ (pnode b _) = a ≡ b
@@ -222,7 +218,9 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
           _  , ↪e  = ↪-total ls e'
       in ↪-return (impose-step ↝e' ↪e)
 
-    ↝-total : ∀ (l : FST A) (rs : List (FST A)) → ((rs' : List (FST A)) → ∃[ e ] (childs l + rs' ↪ e)) → ∃[ e ] (l ⊙ rs ↝ e)
+    ↝-total : ∀ (l : FST A) (rs : List (FST A))
+      → ((rs' : List (FST A)) → ∃[ e ] (childs l + rs' ↪ e))
+      → ∃[ e ] (l ⊙ rs ↝ e)
     ↝-total l [] _ = ↝-return base
     ↝-total (pnode a as) (pnode b bs ∷ rs) ↪-total-as with a ≟ b
     ... | yes refl =
@@ -344,9 +342,6 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   forget-uniqueness : FSF → List (FST A)
   forget-uniqueness = trees
 
-  toVariants : FSF → List (Rose ∞ A)
-  toVariants = map toVariant ∘ trees
-
   {-
   A feature is a named feature structure tree.
   All features in a product line are required to have
@@ -454,7 +449,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
   -- Semantics
   ⟦_⟧ : SPL → Conf → Rose ∞ A
-  ⟦ r ◀ features ⟧ c = rose (r -< toVariants (⊕-all (map impl (select c features))) >-)
+  ⟦ r ◀ features ⟧ c = rose (r -< forget-uniqueness (⊕-all (map impl (select c features))) >-)
 
   -- We could avoid wrap and unwrap by defining our own intermediate tree structure
   -- that does not reuse Artifact constructor.
