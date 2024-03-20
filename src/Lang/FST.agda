@@ -248,39 +248,39 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   drop-second-Unique ((_ ∷ pxs) ∷ _ ∷ zs) = pxs ∷ zs
 
   mutual
-    data UniqueNode : FST A → Set where
-      unq : ∀ {a cs} → UniqueR cs → UniqueNode (a -< cs >-)
+    data DescendantsUnique : FST A → Set where
+      unq : ∀ {a cs} → WellFormed cs → DescendantsUnique (a -< cs >-)
 
-    UniqueR : List (FST A) → Set
-    UniqueR cs = Unique cs × All UniqueNode cs
+    WellFormed : List (FST A) → Set
+    WellFormed cs = Unique cs × All DescendantsUnique cs
 
   mutual
-    UniqueNode-deterministic : ∀ {x : FST A}
-      → (a : UniqueNode x)
-      → (b : UniqueNode x)
+    DescendantsUnique-deterministic : ∀ {x : FST A}
+      → (a : DescendantsUnique x)
+      → (b : DescendantsUnique x)
       → a ≡ b
-    UniqueNode-deterministic {_ -< cs >- } (unq a) (unq b) = Eq.cong unq (UniqueR-deterministic cs a b)
+    DescendantsUnique-deterministic {_ -< cs >- } (unq a) (unq b) = Eq.cong unq (WellFormed-deterministic cs a b)
 
-    UniqueR-deterministic : ∀ (xs : List (FST A))
-      → (ua : UniqueR xs)
-      → (ub : UniqueR xs)
+    WellFormed-deterministic : ∀ (xs : List (FST A))
+      → (ua : WellFormed xs)
+      → (ub : WellFormed xs)
       → ua ≡ ub
-    UniqueR-deterministic [] ([] , []) ([] , []) = refl
-    UniqueR-deterministic (x ∷ xs) (a-x∉xs ∷ a-u-xs , a-ur-x ∷ a-ur-xs) (b-x∉xs ∷ b-u-xs , b-ur-x ∷ b-ur-xs)
-      with UniqueR-deterministic xs (a-u-xs , a-ur-xs) (b-u-xs , b-ur-xs)
+    WellFormed-deterministic [] ([] , []) ([] , []) = refl
+    WellFormed-deterministic (x ∷ xs) (a-x∉xs ∷ a-u-xs , a-ur-x ∷ a-ur-xs) (b-x∉xs ∷ b-u-xs , b-ur-x ∷ b-ur-xs)
+      with WellFormed-deterministic xs (a-u-xs , a-ur-xs) (b-u-xs , b-ur-xs)
     ... | eq
       rewrite (Eq.cong proj₁ eq)
       rewrite (Eq.cong proj₂ eq)
-      rewrite UniqueNode-deterministic a-ur-x b-ur-x
+      rewrite DescendantsUnique-deterministic a-ur-x b-ur-x
       rewrite ∉-deterministic xs a-x∉xs b-x∉xs
       = refl
 
   mutual
     ↪-preserves-unique : ∀ {ls rs e : List (FST A)}
       → ls + rs ↪ e
-      → UniqueR ls
-      → UniqueR rs
-      → UniqueR e
+      → WellFormed ls
+      → WellFormed rs
+      → WellFormed e
     ↪-preserves-unique impose-nothing ur-ls ur-rs = ur-rs
     ↪-preserves-unique {a -< as >- ∷ ls} {rs} (impose-step {e' = e'} ↝e' ↪e) (u-l ∷ u-ls , unq ur-as ∷ ur-ls) ur-rs =
       let ur-e' = ↝-preserves-unique a as rs e' ↝e' ur-as ur-rs
@@ -289,9 +289,9 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
     ↝-preserves-unique : ∀ (a : A) (ls rs : List (FST A)) (e : List (FST A))
       → a -< ls >- ⊙ rs ↝ e
-      → UniqueR ls
-      → UniqueR rs
-      → UniqueR e
+      → WellFormed ls
+      → WellFormed rs
+      → WellFormed e
     ↝-preserves-unique _ _ _ _ base ur-ls _ = [] ∷ [] , (unq ur-ls) ∷ []
     ↝-preserves-unique a ls (.a -< bs >- ∷ rs) e@(.a -< cs >- ∷ rs) (merge ↪e) ur-ls (u-rs , (unq ur-bs) ∷ un-rs)
       = unique-ignores-children u-rs , unq (↪-preserves-unique ↪e ur-ls ur-bs) ∷ un-rs
@@ -316,7 +316,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
     constructor _⊚_
     field
       trees : List (FST A)
-      valid : UniqueR trees
+      valid : WellFormed trees
   open FSF public
 
   ↝-append-strange : ∀ (l : FST A) (rs : List (FST A))
@@ -421,10 +421,10 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       -- Maybe we shouldnt prove for _≡_ but rather for a new eq relation
       -- that is weaker and ignores the typing.
       help : ∀ (ls : List (FST A))
-        → (ur-ls : UniqueR ls)
+        → (ur-ls : WellFormed ls)
         → (deriv : ls + [] ↪ ls)
         → ↪-preserves-unique deriv ur-ls ([] , []) ≡ ur-ls
-      help ls ur-ls deriv = UniqueR-deterministic ls (↪-preserves-unique deriv ur-ls ([] , [])) ur-ls
+      help ls ur-ls deriv = WellFormed-deterministic ls (↪-preserves-unique deriv ur-ls ([] , [])) ur-ls
 
   assoc : Associative _≡_ _⊕_
   assoc x y z = {!!}
