@@ -25,7 +25,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Framework.Annotation.Name using (Name)
 open import Framework.Variants using (Rose; rose)
 open import Framework.Composition.FeatureAlgebra
-open import Construct.Artifact
+open import Construct.Artifact as At using ()
 
 Conf : Set
 Conf = F → Bool
@@ -40,29 +40,33 @@ open TODO-MOVE-TO-AUX-OR-USE-STL
 FST : 𝔼
 FST = Rose ∞
 
-pattern pnode a cs = rose (a -< cs >-)
+pattern _-<_>- a cs = rose (a At.-< cs >-)
 
 induction : ∀ {A : 𝔸} {B : Set} → (A → List B → B) → FST A → B
 induction {A} {B} f n = go n [] where
   go : FST A → List B → B
-  go (pnode a []) bs = f a (reverse bs)
-  go (pnode a (c ∷ cs)) bs = go (pnode a cs) (go c [] ∷ bs)
+  go (a -< [] >-) bs = f a (reverse bs)
+  go (a -< c ∷ cs >-) bs = go (a -< cs >-) (go c [] ∷ bs)
 
+infix 15 _≈_
 _≈_ : ∀ {A} → Rel (FST A) 0ℓ
-(pnode a _) ≈ (pnode b _) = a ≡ b
+(a -< _ >-) ≈ (b -< _ >-) = a ≡ b
 
 ≈-sym : ∀ {A} → (a b : FST A) → a ≈ b → b ≈ a
-≈-sym (pnode a _) (pnode .a _) refl = refl
+≈-sym (a -< _ >-) (.a -< _ >-) refl = refl
 
+infix 15 _≉_
 _≉_ : ∀ {A} → Rel (FST A) 0ℓ
 a ≉ b = ¬ (a ≈ b)
 
 ≉-sym : ∀ {A} → (a b : FST A) → a ≉ b → b ≉ a
 ≉-sym a b a≉b b≈a = a≉b (≈-sym b a b≈a)
 
+infix 15 _∈_
 _∈_ : ∀ {A} → FST A → List (FST A) → Set
 x ∈ xs = Any (x ≈_) xs
 
+infix 15 _∉_
 _∉_ : ∀ {A} → FST A → List (FST A) → Set
 x ∉ xs = All (x ≉_) xs
 
@@ -81,7 +85,7 @@ open import Axioms.Extensionality using (extensionality)
   → (p₁ : x ≉ y)
   → (p₂ : x ≉ y)
   → p₁ ≡ p₂
-≉-deterministic (pnode a _) (pnode b _) p₁ p₂ = extensionality λ where refl → refl
+≉-deterministic (a -< _ >-) (b -< _ >-) p₁ p₂ = extensionality λ where refl → refl
 
 ∉-deterministic : ∀ {A} {x : FST A} (ys : List (FST A))
   → (p₁ : x ∉ ys)
@@ -94,13 +98,13 @@ open import Axioms.Extensionality using (extensionality)
   = refl
 
 map-≉ : ∀ {A} {b xs} (ys : List (FST A)) (z : FST A)
-  → pnode b xs ≉ z
-  → pnode b ys ≉ z
-map-≉ ys (pnode z zs) z≉z refl = z≉z refl
+  → b -< xs >- ≉ z
+  → b -< ys >- ≉ z
+map-≉ ys (z -< zs >-) z≉z refl = z≉z refl
 
 map-∉ : ∀ {A} {b : A} {cs cs' xs : List (FST A)}
-  → pnode b cs  ∉ xs
-  → pnode b cs' ∉ xs
+  → b -< cs  >- ∉ xs
+  → b -< cs' >- ∉ xs
 map-∉ [] = []
 map-∉ {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-≉ cs' x px ∷ map-∉ pxs
 
@@ -136,7 +140,7 @@ disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
 -- the syntax used in the paper for paths
 infixr 5 _．_
 _．_ : ∀ {A} → A → (cs : List (FST A)) → List (FST A)
-a ． cs = pnode a cs ∷ []
+a ． cs = a -< cs >- ∷ []
 
 -- helper function when branching in paths
 branches : ∀ {A} → List (List (FST A)) → List (FST A)
@@ -152,7 +156,7 @@ mutual
     merge : ∀ {A} {a : A} {as bs rs cs : List (FST A)}
       → as + bs ↪ cs
         ----------------------------------------------
-      → pnode a as ⊙ pnode a bs ∷ rs ↝ pnode a cs ∷ rs
+      → a -< as >- ⊙ a -< bs >- ∷ rs ↝ a -< cs >- ∷ rs
 
     -- In the original work, skipped nodes were added to the left.
     -- We add to the right here because it fits nicer with list construction _∷_
@@ -205,16 +209,16 @@ mutual
 
 module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   _==_ : Decidable (_≈_ {A})
-  _==_ (pnode a _) (pnode b _) = a ≟ b
+  (a -< _ >-) == (b -< _ >-) = a ≟ b
 
   childs : FST A → List (FST A)
-  childs (pnode a as) = as
+  childs (a -< as >-) = as
 
   mutual
     ↪-total : ∀ (ls rs : List (FST A)) → ∃[ e ] (ls + rs ↪ e)
     ↪-total [] rs = ↪-return impose-nothing
-    ↪-total (pnode a as ∷ ls) rs =
-      let e' , ↝e' = ↝-total (pnode a as) rs (↪-total as)
+    ↪-total (a -< as >- ∷ ls) rs =
+      let e' , ↝e' = ↝-total (a -< as >-) rs (↪-total as)
           _  , ↪e  = ↪-total ls e'
       in ↪-return (impose-step ↝e' ↪e)
 
@@ -222,20 +226,20 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       → ((rs' : List (FST A)) → ∃[ e ] (childs l + rs' ↪ e))
       → ∃[ e ] (l ⊙ rs ↝ e)
     ↝-total l [] _ = ↝-return base
-    ↝-total (pnode a as) (pnode b bs ∷ rs) ↪-total-as with a ≟ b
+    ↝-total (a -< as >-) (b -< bs >- ∷ rs) ↪-total-as with a ≟ b
     ... | yes refl =
       let cs , ↪cs = ↪-total-as bs
       in ↝-return (merge ↪cs)
     ... | no  a≠b =
-      let cs , ↝cs = ↝-total (pnode a as) rs ↪-total-as
+      let cs , ↝cs = ↝-total (a -< as >-) rs ↪-total-as
       in ↝-return (skip a≠b ↝cs)
 
   Unique : List (FST A) → Set
   Unique = AllPairs _≉_
 
   unique-ignores-children : ∀ {a as bs rs}
-    → Unique (pnode a as ∷ rs)
-    → Unique (pnode a bs ∷ rs)
+    → Unique (a -< as >- ∷ rs)
+    → Unique (a -< bs >- ∷ rs)
   unique-ignores-children (x ∷ xs) = map-∉ x ∷ xs
 
   drop-second-Unique : ∀ {x y zs}
@@ -245,7 +249,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
   mutual
     data UniqueNode : FST A → Set where
-      unq : ∀ {a cs} → UniqueR cs → UniqueNode (pnode a cs)
+      unq : ∀ {a cs} → UniqueR cs → UniqueNode (a -< cs >-)
 
     UniqueR : List (FST A) → Set
     UniqueR cs = Unique cs × All UniqueNode cs
@@ -255,7 +259,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       → (a : UniqueNode x)
       → (b : UniqueNode x)
       → a ≡ b
-    UniqueNode-deterministic {pnode _ cs} (unq a) (unq b) = Eq.cong unq (UniqueR-deterministic cs a b)
+    UniqueNode-deterministic {_ -< cs >- } (unq a) (unq b) = Eq.cong unq (UniqueR-deterministic cs a b)
 
     UniqueR-deterministic : ∀ (xs : List (FST A))
       → (ua : UniqueR xs)
@@ -278,20 +282,20 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       → UniqueR rs
       → UniqueR e
     ↪-preserves-unique impose-nothing ur-ls ur-rs = ur-rs
-    ↪-preserves-unique {pnode a as ∷ ls} {rs} (impose-step {e' = e'} ↝e' ↪e) (u-l ∷ u-ls , unq ur-as ∷ ur-ls) ur-rs =
+    ↪-preserves-unique {a -< as >- ∷ ls} {rs} (impose-step {e' = e'} ↝e' ↪e) (u-l ∷ u-ls , unq ur-as ∷ ur-ls) ur-rs =
       let ur-e' = ↝-preserves-unique a as rs e' ↝e' ur-as ur-rs
           ur-e  = ↪-preserves-unique ↪e (u-ls , ur-ls) ur-e'
        in ur-e
 
     ↝-preserves-unique : ∀ (a : A) (ls rs : List (FST A)) (e : List (FST A))
-      → pnode a ls ⊙ rs ↝ e
+      → a -< ls >- ⊙ rs ↝ e
       → UniqueR ls
       → UniqueR rs
       → UniqueR e
     ↝-preserves-unique _ _ _ _ base ur-ls _ = [] ∷ [] , (unq ur-ls) ∷ []
-    ↝-preserves-unique a ls (pnode .a bs ∷ rs) e@(pnode .a cs ∷ rs) (merge ↪e) ur-ls (u-rs , (unq ur-bs) ∷ un-rs)
+    ↝-preserves-unique a ls (.a -< bs >- ∷ rs) e@(.a -< cs >- ∷ rs) (merge ↪e) ur-ls (u-rs , (unq ur-bs) ∷ un-rs)
       = unique-ignores-children u-rs , unq (↪-preserves-unique ↪e ur-ls ur-bs) ∷ un-rs
-    ↝-preserves-unique a ls (pnode b bs ∷ rs) (pnode .b .bs ∷ cs) (skip a≠b ↝cs) u-ls (u-r ∷ u-rs , ur-bs ∷ ur-rs)
+    ↝-preserves-unique a ls (b -< bs >- ∷ rs) (.b -< .bs >- ∷ cs) (skip a≠b ↝cs) u-ls (u-r ∷ u-rs , ur-bs ∷ ur-rs)
       = ind a≠b (u-r ∷ u-rs) ↝cs ∷ u-cs , ur-bs ∷ un-cs
       where
         ur-cs = ↝-preserves-unique a ls rs cs ↝cs u-ls (u-rs , ur-rs)
@@ -300,11 +304,11 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
         ind : ∀ {a ls b bs cs rs}
           → ¬ (a ≡ b)
-          → Unique (pnode b bs ∷ rs)
-          → pnode a ls ⊙ rs ↝ cs
-          → All (_≉_ (pnode b bs)) cs
-        ind {a} {ls} {b} {bs} a≠b _ base = ≉-sym (pnode a ls) (pnode b bs) a≠b ∷ []
-        ind {a} {_} {b} {bs} {pnode .a cs ∷ _} a≠b u-rs (merge _) = ≉-sym (pnode a cs) (pnode b bs) a≠b ∷ head (drop-second-Unique u-rs)
+          → Unique (b -< bs >- ∷ rs)
+          → a -< ls >- ⊙ rs ↝ cs
+          → All (_≉_ (b -< bs >-)) cs
+        ind {a} {ls} {b} {bs} a≠b _ base = ≉-sym (a -< ls >-) (b -< bs >-) a≠b ∷ []
+        ind {a} {_} {b} {bs} {.a -< cs >- ∷ _} a≠b u-rs (merge _) = ≉-sym (a -< cs >-) (b -< bs >-) a≠b ∷ head (drop-second-Unique u-rs)
         ind a≠b ((b≠b' ∷ u-r) ∷ _ ∷ u-rs) (skip a≠b' ↝cs) = b≠b' ∷ ind a≠b (u-r ∷ u-rs) ↝cs
 
   -- Feature Structure Forest
@@ -449,15 +453,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
   -- Semantics
   ⟦_⟧ : SPL → Conf → Rose ∞ A
-  ⟦ r ◀ features ⟧ c = rose (r -< forget-uniqueness (⊕-all (map impl (select c features))) >-)
-
-  -- We could avoid wrap and unwrap by defining our own intermediate tree structure
-  -- that does not reuse Artifact constructor.
-  -- unwrap : Rose A → Artifact A (Rose A)
-  -- unwrap (artifact a) = a
-
-  -- wrap : Artifact A (Rose A) → Rose A
-  -- wrap a = artifact a
+  ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊕-all (map impl (select c features))) >-
 
   open import Data.String using (String; _<+>_)
   open import Show.Lines
