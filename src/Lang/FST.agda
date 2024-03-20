@@ -371,11 +371,12 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       features : List Feature
   open SPL public
 
-  select : Conf → List Feature → List Feature
-  select c = filterᵇ (c ∘ name)
-
-  -- forget-names : ∀ {N} → SPL N → List FSF
-  -- forget-names = map impl
+  select : Conf → List Feature → List FSF
+  select _ [] = []
+  select c (f ∷ fs) =
+    if c (name f)
+    then impl f ∷ select c fs
+    else          select c fs
 
   names : SPL → List F
   names = map name ∘ features
@@ -453,7 +454,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
   -- Semantics
   ⟦_⟧ : SPL → Conf → Rose ∞ A
-  ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊕-all (map impl (select c features))) >-
+  ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊕-all (select c features)) >-
 
   open import Data.String using (String; _<+>_)
   open import Show.Lines
