@@ -118,6 +118,16 @@ more-expressive-by-completeness : ∀ {L₊ L₋ : VariabilityLanguage V}
 more-expressive-by-completeness L₊-comp L₋-sound L₋-incomp =
     expressiveness-by-completeness-and-soundness L₊-comp L₋-sound
   , less-expressive-from-completeness L₊-comp L₋-incomp
+
+more-expressive-by-soundness : ∀ {L₊ L₋ : VariabilityLanguage V}
+  → Sound L₊
+  → Complete L₋
+  → Unsound L₋
+    -----------
+  → L₋ ≻ L₊
+more-expressive-by-soundness L₊-sound L₋-comp L₋-unsound =
+    expressiveness-by-completeness-and-soundness L₋-comp L₊-sound
+  , less-expressive-from-soundness L₊-sound L₋-unsound
 ```
 
 ```agda
