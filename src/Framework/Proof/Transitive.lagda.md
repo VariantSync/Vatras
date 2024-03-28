@@ -79,7 +79,7 @@ less-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage V}
   →   Complete L₊
   → Incomplete L₋
     ------------------------------
-  → L₋ is-less-expressive-than L₊
+  → L₋ ⋡ L₊
 less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
     L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
 ```
