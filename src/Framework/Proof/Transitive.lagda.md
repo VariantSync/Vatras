@@ -67,10 +67,9 @@ unsoundness-by-expressiveness M-unsound L≽M M-sound = M-unsound (soundness-by-
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
 
 **Proof sketch:**
-Given an arbitrary expression e of our target language L, we have to show that there exists an expression e₊ in our complete language L₊ that is variant-equivalent to e.
-Given the semantics S of the complete language L of e, we compute the set of all variants described by e, as a list (THIS IS STILL LEFT TODO).
-Since L₊ is complete, we can encode this list of variants in L₊, giving us an expression in e₊ in L₊ and a proof that this expression exactly describes the variants of e₋.
-Now we conclude from this proof that e₊ is variant-equivalent to e₋ (TODO).
+Given an arbitrary expression eˢ of our target language Lˢ, we have to show that there exists an expression e₊ in our complete language Lᶜ that is variant-equivalent to eˢ.
+By soundness of Lˢ we can compute the variant map of eˢ.
+By completeness of Lᶜ, we can encode any variant map as an expression eᶜ ∈ Lᶜ.
 ```agda
 expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLanguage V}
   → Complete Lᶜ
