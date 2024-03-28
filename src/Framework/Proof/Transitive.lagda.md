@@ -55,6 +55,13 @@ soundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
 soundness-by-expressiveness L₁-sound L₂-to-L₁ {A} e₂ with L₂-to-L₁ e₂
 ... | e₁ , e₂≅e₁ with L₁-sound e₁
 ...   | n , m , m≅e₁ = n , m , ≅-trans m≅e₁ (≅-sym e₂≅e₁)
+
+unsoundness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
+  → Unsound L₂
+  → L₁ ≽ L₂
+    -----------------------------------
+  → Unsound L₁
+unsoundness-by-expressiveness L₂-unsound L₁≽L₂ L₂-sound = L₂-unsound (soundness-by-expressiveness L₂-sound L₁≽L₂)
 ```
 
 Conversely, we can conclude that any complete language is at least as expressive as any other variability language.
