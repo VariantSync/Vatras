@@ -34,6 +34,13 @@ completeness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
 completeness-by-expressiveness encode-in-L₂ L₂-to-L₁ {A} vs with encode-in-L₂ vs
 ... | e₂ , m≅e₂ with L₂-to-L₁ e₂
 ...   | e₁ , e₂≅e₁ = e₁ , ≅-trans m≅e₂ e₂≅e₁
+
+incompleteness-by-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
+  → Incomplete L₁
+  → L₁ ≽ L₂
+    -----------------------------------
+  → Incomplete L₂
+incompleteness-by-expressiveness L₁-incomp L₁≽L₂ L₂-comp = L₁-incomp (completeness-by-expressiveness L₂-comp L₁≽L₂)
 ```
 
 If a language `L₁` is sound and at least as expressive as another language `L₂`, then also `L₂` is sound.
