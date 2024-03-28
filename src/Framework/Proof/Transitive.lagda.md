@@ -137,4 +137,10 @@ complete-is-most-expressive : ∀ {L : VariabilityLanguage V}
   → ∄[ M ] (Sound M × M ≻ L)
 complete-is-most-expressive L-comp (M , M-sound , M≽L , L⋡M) =
   L⋡M (expressiveness-by-completeness-and-soundness L-comp M-sound)
+
+complete-is-most-expressive' : ∀ {L : VariabilityLanguage V}
+  → Sound L
+    ----------------
+  → ∄[ M ] (Complete M × L ≻ M)
+complete-is-most-expressive' {L} L-sound (M , M-comp , L≻M) = complete-is-most-expressive M-comp (L , L-sound , L≻M)
 ```
