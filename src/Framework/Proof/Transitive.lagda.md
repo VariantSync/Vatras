@@ -97,6 +97,16 @@ less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L�
     L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
 ```
 
+```agda
+less-expressive-from-soundness : ∀ {L₊ L₋ : VariabilityLanguage V}
+  →   Sound L₊
+  → Unsound L₋
+    ------------------------------
+  → L₊ ⋡ L₋
+less-expressive-from-soundness L₊-sound L₋-unsound L₋≽L₊ =
+    L₋-unsound (soundness-by-expressiveness L₊-sound L₋≽L₊)
+```
+
 Combined with `expressiveness-by-completeness` we can even further conclude that L₊ is more expressive than L₋:
 ```agda
 more-expressive : ∀ {L₊ L₋ : VariabilityLanguage V}
