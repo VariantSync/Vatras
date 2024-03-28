@@ -81,53 +81,53 @@ expressiveness-by-completeness-and-soundness comp sound eˢ with sound eˢ
 ...   | eᶜ , v≅⟦eᶜ⟧ = eᶜ , ≅-trans (≅-sym v≅⟦eˢ⟧) v≅⟦eᶜ⟧
 ```
 
-If a language `L₊` is complete and another language `L₋` is incomplete then `L₋` less expressive than `L₊`.
+If a language `L` is complete and another language `M` is incomplete then `M` less expressive than `L`.
 
 **Proof sketch:**
-Assuming `L₋` is as expressive as `L₊`, and knowing that `L₊` is complete, we can conclude that also `L₋` is complete (via `completeness-by-exoressiveness` above).
-Yet, we already know that L₋ is incomplete.
+Assuming `M` is as expressive as `L`, and knowing that `L` is complete, we can conclude that also `M` is complete (via `completeness-by-exoressiveness` above).
+Yet, we already know that M is incomplete.
 This yields a contradiction.
 ```agda
-less-expressive-from-completeness : ∀ {L₊ L₋ : VariabilityLanguage V}
-  →   Complete L₊
-  → Incomplete L₋
+less-expressive-from-completeness : ∀ {L M : VariabilityLanguage V}
+  →   Complete L
+  → Incomplete M
     ------------------------------
-  → L₋ ⋡ L₊
-less-expressive-from-completeness L₊-comp L₋-incomp L₋-as-expressive-as-L₊ =
-    L₋-incomp (completeness-by-expressiveness L₊-comp L₋-as-expressive-as-L₊)
+  → M ⋡ L
+less-expressive-from-completeness L-comp M-incomp M-as-expressive-as-L =
+    M-incomp (completeness-by-expressiveness L-comp M-as-expressive-as-L)
 ```
 
 ```agda
-less-expressive-from-soundness : ∀ {L₊ L₋ : VariabilityLanguage V}
-  →   Sound L₊
-  → Unsound L₋
+less-expressive-from-soundness : ∀ {L M : VariabilityLanguage V}
+  →   Sound L
+  → Unsound M
     ------------------------------
-  → L₊ ⋡ L₋
-less-expressive-from-soundness L₊-sound L₋-unsound L₋≽L₊ =
-    L₋-unsound (soundness-by-expressiveness L₊-sound L₋≽L₊)
+  → L ⋡ M
+less-expressive-from-soundness L-sound M-unsound M≽L =
+    M-unsound (soundness-by-expressiveness L-sound M≽L)
 ```
 
-Combined with `expressiveness-by-completeness` we can even further conclude that L₊ is more expressive than L₋:
+Combined with `expressiveness-by-completeness` we can even further conclude that L is more expressive than M:
 ```agda
-more-expressive-by-completeness : ∀ {L₊ L₋ : VariabilityLanguage V}
-  → Complete L₊
-  → Sound L₋
-  → Incomplete L₋
+more-expressive-by-completeness : ∀ {L M : VariabilityLanguage V}
+  → Complete L
+  → Sound M
+  → Incomplete M
     -------------
-  → L₊ ≻ L₋
-more-expressive-by-completeness L₊-comp L₋-sound L₋-incomp =
-    expressiveness-by-completeness-and-soundness L₊-comp L₋-sound
-  , less-expressive-from-completeness L₊-comp L₋-incomp
+  → L ≻ M
+more-expressive-by-completeness L-comp M-sound M-incomp =
+    expressiveness-by-completeness-and-soundness L-comp M-sound
+  , less-expressive-from-completeness L-comp M-incomp
 
-more-expressive-by-soundness : ∀ {L₊ L₋ : VariabilityLanguage V}
-  → Sound L₊
-  → Complete L₋
-  → Unsound L₋
+more-expressive-by-soundness : ∀ {L M : VariabilityLanguage V}
+  → Sound L
+  → Complete M
+  → Unsound M
     -----------
-  → L₋ ≻ L₊
-more-expressive-by-soundness L₊-sound L₋-comp L₋-unsound =
-    expressiveness-by-completeness-and-soundness L₋-comp L₊-sound
-  , less-expressive-from-soundness L₊-sound L₋-unsound
+  → M ≻ L
+more-expressive-by-soundness L-sound M-comp M-unsound =
+    expressiveness-by-completeness-and-soundness M-comp L-sound
+  , less-expressive-from-soundness L-sound M-unsound
 ```
 
 ```agda
