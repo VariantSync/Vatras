@@ -23,8 +23,9 @@ open import Relation.Binary using (Decidable; DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Framework.Annotation.Name using (Name)
-open import Framework.Variants using (Rose; rose)
+open import Framework.Variants using (Rose; rose; rose-leaf)
 open import Framework.Composition.FeatureAlgebra
+open import Framework.VariabilityLanguage
 open import Construct.Artifact as At using ()
 
 Conf : Set
@@ -41,6 +42,7 @@ FST : 𝔼
 FST = Rose ∞
 
 pattern _-<_>- a cs = rose (a At.-< cs >-)
+fst-leaf = rose-leaf
 
 induction : ∀ {A : 𝔸} {B : Set} → (A → List B → B) → FST A → B
 induction {A} {B} f n = go n [] where
@@ -473,3 +475,21 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       show-Feature feature = do
         > show-F (name feature) <+> "∷"
         indent 2 (show-FSF (forget-uniqueness (impl feature)))
+
+-- Our framework does not allow constraints on the atom type A.
+-- This demonstrates that FSTs are not totally generic.
+-- DecidableEquality is a reasonable constraint though - or rather it is an axiom.
+-- Maybe we could avoid this constraint by not comparing atoms A
+-- but equipping each node with an additional ID and compare that instead?
+-- That would allow merging nodes with unequal atoms though.
+-- Maybe assuming decidable equality as an axiom here is just fine?
+-- Not having decidable equality is far from practical.
+module Framework (mkDec : (A : 𝔸) → DecidableEquality A) where
+  FSTL-𝔼 : 𝔼
+  FSTL-𝔼 A = Impose.SPL (mkDec A)
+
+  FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf FSTL-𝔼
+  FSTL-Sem {A} = Impose.⟦_⟧ (mkDec A)
+
+  FSTL : VariabilityLanguage (Rose ∞)
+  FSTL = ⟪ FSTL-𝔼 , Conf ,  FSTL-Sem ⟫
