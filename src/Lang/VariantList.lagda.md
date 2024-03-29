@@ -117,6 +117,12 @@ vl-conf i = toℕ i
 vl-fnoc : Configuration → Fin (suc n)
 vl-fnoc {n} c = clampAt n c
 
+-- vl-conf is inverse to vl-fnoc w.r.t. semantic equivalence of configurations.
+inverse : ∀ {A} (c : Configuration) (e : VariantList A) → VariantListL ∋ e ⊢ vl-conf {length e} (vl-fnoc c) ≣ⁱ c
+inverse zero e = refl
+inverse (suc c) (_ ∷ []) = refl
+inverse (suc c) (_ ∷ y ∷ ys) = inverse c (y ∷ ys)
+
 preserves-∈ : ∀ {V}
   → n ⊢ V ⟶ e
     -----------------
@@ -158,10 +164,7 @@ module _ {A : 𝔸} where
   pick-conf _ = vl-conf
 
   pick-conf-surjective : ∀ (e : VariantList A) → Surjective _≡_ (VariantListL ∋ e ⊢_≣ⁱ_) (pick-conf e)
-  pick-conf-surjective _ zero = zero , refl
-  pick-conf-surjective (_ ∷ []) (suc y) = vl-fnoc (suc y) , refl
-  pick-conf-surjective (e ∷ f ∷ es) (suc y) with pick-conf-surjective (f ∷ es) y
-  ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
+  pick-conf-surjective e y = vl-fnoc y , inverse y e
 
 VariantList-is-Sound : Sound VariantListL
 VariantList-is-Sound = soundness-from-enumerability (λ e → record
@@ -169,5 +172,4 @@ VariantList-is-Sound = soundness-from-enumerability (λ e → record
   ; enumerate = pick-conf e
   ; enumerate-is-surjective = pick-conf-surjective e
   })
-
 ```
