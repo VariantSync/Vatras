@@ -212,7 +212,7 @@ oc-leaf a = a -< [] >-
 
 -- alternative name that does not require writing tortoise shell braces
 opt : ∀ {i : Size} {A : 𝔸} → Option → OC i A → OC (↑ i) A
-opt O = _❲_❳ O
+opt = _❲_❳
 
 singleton : ∀ {i : Size} {A : 𝔸} → A → OC i A → OC (↑ i) A
 singleton a e = a -< e ∷ [] >-
