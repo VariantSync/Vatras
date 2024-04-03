@@ -25,18 +25,20 @@ open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
 Variant = Rose ∞
 mkArtifact = Artifact∈ₛRose
 
-open import Framework.Definitions using (𝕍; 𝔽)
+open import Framework.Annotation.IndexedDimension
 open import Framework.Construct
 open import Framework.Compiler
+open import Framework.Definitions using (𝕍; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (_≽_; _⋡_; compiler-cannot-exist)
-open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness; completeness-by-expressiveness)
+open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
 open import Framework.Properties.Completeness Variant using (Complete)
+open import Framework.Properties.Soundness Variant using (Sound)
 open import Util.Nat.AtLeast using (ℕ≥)
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
 open import Lang.All
-open VariantList using (VariantListL; VariantList-is-Complete)
+open VariantList using (VariantListL; VariantList-is-Complete; VariantList-is-Sound)
 open CCC using (CCCL)
 open NCC using (NCCL)
 open 2CC using (2CCL)
@@ -80,7 +82,10 @@ module _ {F : 𝔽} (D : F) where
   open Translation.Lang.VariantList-to-CCC.Translate F D Variant mkArtifact CCC-Rose-encoder using (VariantList→CCC; CCC≽VariantList) public
 
 open import Translation.Lang.2ADT-to-NADT Variant mkArtifact using (2ADT→NADT; NADT≽2ADT) public
-open import Translation.Lang.NADT-to-CCC Variant mkArtifact using (NADT→CCC; CCC≽NADT) public
+open import Translation.Lang.NADT-to-CCC Variant mkArtifact using (NADT→CCC) public
+module _ {F : 𝔽} where
+  open import Translation.Lang.NADT-to-CCC Variant mkArtifact using () renaming (CCC≽NADT to CCC≽NADT')
+  CCC≽NADT = CCC≽NADT' {F} CCC-Rose-encoder
 ```
 
 ## Option Calculus vs Binary Choice Calculus
@@ -113,4 +118,27 @@ module _ {F : 𝔽} (D : F) where
 
   2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler (2CCL (F × ℕ)) (WFOCL F))
   2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-2CC
+```
+
+```agda
+2ADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (2ADTL Variant F)
+2ADT-is-sound _==_ = soundness-by-expressiveness VariantList-is-Sound (VariantList≽2ADT _==_)
+
+2CC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (2CCL F)
+2CC-is-sound _==_ = soundness-by-expressiveness (2ADT-is-sound _==_) 2ADT≽2CC
+
+-- TODO proof `DecidableEquality (IndexedDimension F n)` from `DecidableEquality F`
+NCC-is-sound : ∀ {F : 𝔽} (n : ℕ≥ 2) (_==_ : DecidableEquality (IndexedDimension F n)) → Sound (NCCL n F)
+NCC-is-sound n _==_ = soundness-by-expressiveness (2CC-is-sound _==_) (2CC≽NCC n)
+
+-- TODO proof `DecidableEquality (F × ℕ)` from `DecidableEquality F`
+CCC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality (F × ℕ)) → Sound (CCCL F)
+CCC-is-sound _==_ = soundness-by-expressiveness (2CC-is-sound _==_) 2CC≽CCC
+
+-- TODO proof `DecidableEquality (F × ℕ)` from `DecidableEquality F`
+NADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality (F × ℕ)) → Sound (NADTL Variant F)
+NADT-is-sound _==_ = soundness-by-expressiveness (CCC-is-sound _==_) CCC≽NADT
+
+OC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (WFOCL F)
+OC-is-sound _==_ = soundness-by-expressiveness (2CC-is-sound _==_) 2CC≽OC
 ```
