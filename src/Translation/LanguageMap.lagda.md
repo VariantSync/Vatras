@@ -17,23 +17,26 @@ module Translation.LanguageMap where
 ```agda
 import Data.Fin as Fin
 open import Data.Nat as ℕ using (ℕ)
-open import Data.Product using (_×_)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Function using (_∘_; id)
 open import Size using (∞)
 open import Relation.Binary using (DecidableEquality)
+open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
 open import Relation.Nullary.Negation using (¬_)
 
 open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
 Variant = Rose ∞
 mkArtifact = Artifact∈ₛRose
 
+open import Framework.Annotation.IndexedDimension
 open import Framework.Construct
 open import Framework.Compiler
 open import Framework.Definitions using (𝕍; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (_≽_; _⋡_; compiler-cannot-exist)
+open import Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _⋡_; _≋_; compiler-cannot-exist)
 open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
 open import Framework.Properties.Completeness Variant using (Complete)
 open import Framework.Properties.Soundness Variant using (Sound)
-open import Util.Nat.AtLeast using (ℕ≥)
+open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Util.AuxProofs using (decidableEquality-×)
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
@@ -48,6 +51,8 @@ open 2ADT using (2ADTL)
 open OC using (WFOCL)
 
 open CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
+open import Translation.Lang.NCC.Rename Variant mkArtifact using (NCC-rename≽NCC)
+open import Translation.Lang.2CC.Rename Variant mkArtifact using (2CC-rename; 2CC-rename≽2CC)
 ```
 
 
@@ -93,6 +98,46 @@ module _ {F : 𝔽} where
 ```agda
 module _ {F : 𝔽} where
   open import Translation.Lang.OC-to-2CC F using (OC→2CC; 2CC≽OC) public
+```
+
+```agda
+module _ {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where
+  private
+    f-Fin : ∀ (n : ℕ≥ 2) → IndexedDimension F n → F
+    f-Fin n (D , k) = f (D , Fin.toℕ k)
+
+    f⁻¹-Fin : ∀ (n : ℕ≥ 2) → F → IndexedDimension F n
+    f⁻¹-Fin (sucs n) D with f⁻¹ D
+    ... | D' , k = D' , ℕ≥.cappedFin k
+
+    f⁻¹-Fin∘f-Fin≗id : ∀ (n : ℕ≥ 2) → f⁻¹-Fin n ∘ f-Fin n ≗ id
+    f⁻¹-Fin∘f-Fin≗id (sucs n) (D , k) = Eq.cong₂ _,_
+      (Eq.cong proj₁ (f⁻¹∘f≗id (D , Fin.toℕ k)))
+      (Eq.trans (Eq.cong (ℕ≥.cappedFin ∘ proj₂) (f⁻¹∘f≗id (D , Fin.toℕ k))) (ℕ≥.cappedFin-toℕ k))
+
+  CCC≋NCC : ∀ (n : ℕ≥ 2) → CCCL F ≋ NCCL n F
+  CCC≋NCC n = CCC≽NCC n , ≽-trans (NCC-rename≽NCC n f f⁻¹ f⁻¹∘f≗id) (NCC≽CCC n)
+
+  NCC≋NCC : ∀ (n m : ℕ≥ 2) → NCCL n F ≋ NCCL m F
+  NCC≋NCC n m = ≽-trans (NCC-rename≽NCC n (f-Fin m) (f⁻¹-Fin m) (f⁻¹-Fin∘f-Fin≗id m)) (NCC≽NCC m n) , ≽-trans (NCC-rename≽NCC m (f-Fin n) (f⁻¹-Fin n) (f⁻¹-Fin∘f-Fin≗id n)) (NCC≽NCC n m)
+
+  NCC≋2CC : ∀ (n : ℕ≥ 2) → NCCL n F ≋ 2CCL F
+  NCC≋2CC n = NCC≽2CC n , ≽-trans (2CC-rename≽2CC (f-Fin n) (f⁻¹-Fin n) (f⁻¹-Fin∘f-Fin≗id n)) (2CC≽NCC n)
+
+  CCC≋2CC : CCCL F ≋ 2CCL F
+  CCC≋2CC = CCC≽2CC , ≽-trans (2CC-rename≽2CC f f⁻¹ f⁻¹∘f≗id) 2CC≽CCC
+
+  2CC≋2ADT : 2CCL F ≋ 2ADTL Variant F
+  2CC≋2ADT = {!2CC≽2ADT!} , 2ADT≽2CC
+
+  2ADT≋NADT : 2ADTL Variant (F × ℕ) ≋ NADTL Variant F
+  2ADT≋NADT = ≽-trans 2ADT≽2CC (≽-trans 2CC≽CCC CCC≽NADT) , ≽-trans NADT≽2ADT {!2ADT-rename≽2ADT!}
+
+  2ADT≋VariantList : DecidableEquality F → F → 2ADTL Variant (F × ℕ) ≋ VariantListL
+  2ADT≋VariantList _==_ D = ≽-trans 2ADT≽2CC (≽-trans 2CC≽CCC (CCC≽VariantList D)) , VariantList≽2ADT (decidableEquality-× _==_ ℕ._≟_)
+
+  VariantList≋CCC : DecidableEquality F → (F × ℕ) → VariantListL ≋ CCCL (F × ℕ)
+  VariantList≋CCC _==_ D = ≽-trans (VariantList≽2ADT (decidableEquality-× (decidableEquality-× _==_ ℕ._≟_) ℕ._≟_)) (≽-trans 2ADT≽2CC 2CC≽CCC) , CCC≽VariantList D
 ```
 
 ```agda

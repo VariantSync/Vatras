@@ -22,6 +22,7 @@ open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
+open import Framework.Relation.Expressiveness Variant using (_≽_; expressiveness-from-compiler)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -143,3 +144,11 @@ NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.compile = rename n f
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCC-map-config n f⁻¹
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCC-map-config n f
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves n f f⁻¹ is-inverse expr)
+
+NCC-rename≽NCC : ∀ {i : Size} {D₁ D₂ : Set}
+  → (n : ℕ≥ 2)
+  → (f : D₁ → D₂)
+  → (f⁻¹ : D₂ → D₁)
+  → f⁻¹ ∘ f ≗ id
+  → NCCL {i} n D₂ ≽ NCCL {i} n D₁
+NCC-rename≽NCC n f f⁻¹ is-inverse = expressiveness-from-compiler (NCC-rename n f f⁻¹ is-inverse)
