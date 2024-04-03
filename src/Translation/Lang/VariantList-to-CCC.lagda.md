@@ -161,10 +161,10 @@ module Translate
   open import Framework.Relation.Expressiveness V using (_≽_)
   open import Framework.Proof.Transitive V using (completeness-by-expressiveness)
 
-  CCCL-is-at-least-as-expressive-as-VariantListL : CCCL Dimension ≽ VariantListL
-  CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
+  CCC≽VariantList : CCCL Dimension ≽ VariantListL
+  CCC≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
 
-  CCCL-is-complete : Complete (CCCL Dimension)
-  CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
+  CCC-is-complete : Complete (CCCL Dimension)
+  CCC-is-complete = completeness-by-expressiveness VariantList-is-Complete CCC≽VariantList
 ```
 

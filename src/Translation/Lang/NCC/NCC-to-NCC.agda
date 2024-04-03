@@ -27,6 +27,7 @@ open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
+open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -47,3 +48,6 @@ open import Translation.Lang.NCC.Grow Variant Artifact∈ₛVariant using (growF
 
 NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→NCC n m = shrinkTo2Compiler n ⊕ growFrom2Compiler m
+
+NCC≽NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ≽ NCCL {i} n D
+NCC≽NCC n m = expressiveness-from-compiler (NCC→NCC n m)
