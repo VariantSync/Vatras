@@ -33,12 +33,9 @@ open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Function using (id; _∘_; flip)
 
 open import Framework.VariabilityLanguage
-import Lang.OC as OC
-open OC F renaming (_-<_>- to Artifactₒ)
-open OC.Sem F V mkArtifact
-import Lang.2CC as 2CC
-open 2CC F renaming (_-<_>- to Artifact₂)
-open 2CC.Sem F V mkArtifact renaming (⟦_⟧ to ⟦_⟧₂)
+open import Lang.All.Generic V mkArtifact
+open OC renaming (_-<_>- to Artifactₒ)
+open 2CC renaming (_-<_>- to Artifact₂; ⟦_⟧ to ⟦_⟧₂)
 
 open import Data.EqIndexedSet
 
@@ -88,8 +85,8 @@ record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
   constructor _-<_≪_>- --\T
   field
     parent    : A
-    siblingsL : List (2CC ∞ A)
-    siblingsR : Vec (OC i A) work
+    siblingsL : List (2CC F ∞ A)
+    siblingsR : Vec (OC F i A) work
 open Zip public
 infix 4 _-<_≪_>-
 
@@ -111,7 +108,7 @@ data _⊢_⟶ₒ_ :
   ∀ {n : ℕ} {A : 𝔸}
   → (i : Size) -- We have to make sizes explicit here because otherwise, Agda sometimes infers ∞ which makes termination checking fail.
   → Zip n i A
-  → 2CC ∞ A
+  → 2CC F ∞ A
   → Set
 infix 3 _⊢_⟶ₒ_
 data _⊢_⟶ₒ_ where
@@ -123,7 +120,7 @@ data _⊢_⟶ₒ_ where
     ∀ {i  : Size}
       {A  : 𝔸}
       {a  : A}
-      {ls : List (2CC ∞ A)}
+      {ls : List (2CC F ∞ A)}
       --------------------------------------
     → i ⊢ a -< ls ≪ [] >- ⟶ₒ Artifact₂ a ls
 
@@ -137,11 +134,11 @@ data _⊢_⟶ₒ_ where
       {n   : ℕ    }
       {A   : 𝔸}
       {a b : A     }
-      {ls  : List (2CC ∞    A)  }
-      {es  : List (OC    i  A)  }
-      {rs  : Vec  (OC (↑ i) A) n}
-      {e₁  : 2CC ∞ A}
-      {e₂  : 2CC ∞ A}
+      {ls  : List (2CC F ∞    A)  }
+      {es  : List (OC F    i  A)  }
+      {rs  : Vec  (OC F (↑ i) A) n}
+      {e₁  : 2CC F ∞ A}
+      {e₂  : 2CC F ∞ A}
     →   i ⊢ b -< [] ≪ (fromList es) >-       ⟶ₒ e₁
     → ↑ i ⊢ a -< ls ∷ʳ e₁ ≪ rs >-            ⟶ₒ e₂
       ---------------------------------------------
@@ -160,11 +157,11 @@ data _⊢_⟶ₒ_ where
       {A   : 𝔸     }
       {a   : A     }
       {O   : Option}
-      {e   : OC i A}
-      {ls  : List (2CC ∞ A)    }
-      {rs  : Vec (OC (↑ i) A) n}
-      {eᵒ⁻ʸ : 2CC ∞ A}
-      {eᵒ⁻ⁿ : 2CC ∞ A}
+      {e   : OC F i A}
+      {ls  : List (2CC F    ∞  A)  }
+      {rs  : Vec (OC   F (↑ i) A) n}
+      {eᵒ⁻ʸ : 2CC F ∞ A}
+      {eᵒ⁻ⁿ : 2CC F ∞ A}
     → ↑ i ⊢ a -< ls ≪ e ∷ rs >-       ⟶ₒ eᵒ⁻ʸ
     → ↑ i ⊢ a -< ls ≪     rs >-       ⟶ₒ eᵒ⁻ⁿ
       ----------------------------------------------------
@@ -172,8 +169,8 @@ data _⊢_⟶ₒ_ where
 
 data _⟶_  :
   ∀ {i : Size} {A : 𝔸}
-  → WFOC i A
-  → 2CC ∞ A
+  → WFOC F i A
+  → 2CC  F ∞ A
   → Set
 infix 4 _⟶_
 data _⟶_ where
@@ -181,8 +178,8 @@ data _⟶_ where
     ∀ {i  : Size}
       {A  : 𝔸}
       {a  : A}
-      {es : List (OC i A)}
-      {e  : 2CC ∞ A}
+      {es : List (OC F i A)}
+      {e  : 2CC F ∞ A}
     → i ⊢ a -< [] ≪ (fromList es) >- ⟶ₒ e
       ------------------------------------
     → Root a es ⟶ e
@@ -192,7 +189,7 @@ data _⟶_ where
 
 Every OC expression is OC→2CCd to at most one 2CC expression.
 ```agda
-⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : 2CC ∞ A}
+⟶ₒ-is-deterministic : ∀ {n} {i} {A} {z : Zip n i A} {b b' : 2CC F ∞ A}
   → i ⊢ z ⟶ₒ b
   → i ⊢ z ⟶ₒ b'
     ------------
@@ -207,7 +204,7 @@ Every OC expression is OC→2CCd to at most one 2CC expression.
       r₁≡r₂ = ⟶ₒ-is-deterministic ⟶r₁ ⟶r₂
    in Eq.cong₂ (O ⟨_,_⟩) l₁≡l₂ r₁≡r₂
 
-⟶-is-deterministic : ∀ {i} {A} {e : WFOC i A} {b b' : 2CC ∞ A}
+⟶-is-deterministic : ∀ {i} {A} {e : WFOC F i A} {b b' : 2CC F ∞ A}
   → e ⟶ b
   → e ⟶ b'
     -------
@@ -223,7 +220,7 @@ Since we have already proven determinism, the proof for totality and thus a tran
 Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set
 Totalₒ {i = i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
 
-Total : ∀ {i} {A} → (e : WFOC i A) → Set
+Total : ∀ {i} {A} → (e : WFOC F i A) → Set
 Total {i} e = ∃[ b ] (e ⟶ b)
 
 -- Smart constructor for Totalₒ that does not require naming the expression explicitly.
@@ -253,7 +250,7 @@ totalₒ {b = b} r = b , r
 ...  | _ , ⟶eᵒ⁻ʸ | _ , ⟶eᵒ⁻ⁿ = totalₒ (T-option ⟶eᵒ⁻ʸ ⟶eᵒ⁻ⁿ)
 
 ⟶-is-total : ∀ {i} {A}
-  → (e : WFOC i A)
+  → (e : WFOC F i A)
     --------------
   → Total e
 ⟶-is-total (Root a es) =
@@ -267,7 +264,7 @@ Theorems:
 ```agda
 preservesₒ :
   ∀ {n} {i} {A}
-    {b : 2CC ∞ A}
+    {b : 2CC F ∞ A}
     {z : Zip n i A}
   → (c : OC.Configuration F)
   → i ⊢ z ⟶ₒ b
@@ -276,8 +273,8 @@ preservesₒ :
 
 preserves :
   ∀ {i} {A}
-    {b : 2CC ∞ A}
-    {e : WFOC i A}
+    {b : 2CC F ∞ A}
+    {e : WFOC F i A}
   → (c : OC.Configuration F)
   → e ⟶ b
     ------------------
@@ -300,7 +297,7 @@ Agda fails to see that "preserves" directly unpacks this constructor again and c
 Since Agda fails here, we have to avoid the re- and unpacking below T-root and thus introduce this auxiliary function.
 -}
 preserves-without-T-root :
-  ∀ {i} {A} {b : A} {es : List (OC i A)} {e : 2CC ∞ A}
+  ∀ {i} {A} {b : A} {es : List (OC F i A)} {e : 2CC F ∞ A}
   → (c : OC.Configuration F)
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ------------------------------------------
@@ -327,9 +324,9 @@ The concrete formulas are a bit convoluted here because they are partially norma
 preservesₒ-artifact :
   ∀ {i} {A} {c}
     {b   : A}
-    {ls  : List (2CC ∞ A)}
-    {es  : List (OC i A)}
-    {e   : 2CC ∞ A}
+    {ls  : List (2CC F ∞ A)}
+    {es  : List (OC F i A)}
+    {e   : 2CC F ∞ A}
   → (rs  : List (V A))
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ----------------------------------------------------------------
@@ -368,11 +365,11 @@ So we show Agda that ⟦_⟧ₒ never does so.
 This theorem has no real meaning and is rather a technical necessity.
 -}
 preservesₒ-option-size :
-  ∀ {n} {i} {A} {c} {a : A} {ls : List (2CC ∞ A)} {rs : Vec (OC (↑ i) A) n}
-  → (e : OC i A)
+  ∀ {n} {i} {A} {c} {a : A} {ls : List (2CC F ∞ A)} {rs : Vec (OC F (↑ i) A) n}
+  → (e : OC F i A)
     -----------------------------------------------------------------------------------------------------
-  →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } {A} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
-    ≡ Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {↑ i} {A} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+  →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+    ≡ Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {↑ i} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
 preservesₒ-option-size (Artifactₒ _ _) = refl
 preservesₒ-option-size (_ ❲ _ ❳)       = refl
 ```
@@ -444,11 +441,11 @@ open import Framework.VariabilityLanguage
 open import Framework.Relation.Expressiveness V
 open import Framework.Relation.Function  using (_⇔_)
 
-compile : ∀ {i : Size} {A : 𝔸} → WFOC i A → 2CC ∞ A
+compile : ∀ {i : Size} {A : 𝔸} → WFOC F i A → 2CC F ∞ A
 compile = proj₁ ∘ ⟶-is-total
 
 compile-preserves : ∀ {i : Size} {A : 𝔸}
-  → (e : WFOC i A)
+  → (e : WFOC F i A)
     ----------------------------
   → ⟦ e ⟧ ≅[ id ][ id ] ⟦ compile e ⟧₂
 compile-preserves {i} {A} e = left , sym ∘ left -- this works because id is our config translation
@@ -462,13 +459,13 @@ compile-preserves {i} {A} e = left , sym ∘ left -- this works because id is ou
 compile-configs : OC.Configuration F ⇔ 2CC.Configuration F
 compile-configs = record { to = id ; from = id }
 
-OC→2CC : LanguageCompiler WFOCL 2CCL
+OC→2CC : LanguageCompiler (WFOCL F) (2CCL F)
 OC→2CC = record
   { compile = compile
   ; config-compiler = λ _ → compile-configs
   ; preserves = compile-preserves
   }
 
-2CC≽OC : 2CCL ≽ WFOCL
+2CC≽OC : 2CCL F ≽ (WFOCL F)
 2CC≽OC = expressiveness-from-compiler OC→2CC
 ```

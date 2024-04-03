@@ -25,13 +25,7 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.2CC
-module 2CC where
-  open Lang.2CC public
-  module 2CC-Sem-1 D = Lang.2CC.Sem D Variant Artifact∈ₛVariant
-  open 2CC-Sem-1 using (2CCL) public
-  module 2CC-Sem-2 {D} = Lang.2CC.Sem D Variant Artifact∈ₛVariant
-  open 2CC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
@@ -133,7 +127,7 @@ preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-�
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (2CCL D₁ {i}) (2CCL D₂ {i})
+  → LanguageCompiler (2CCL {i} D₁) (2CCL {i} D₂)
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.compile = rename f
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2CC-map-config f⁻¹
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2CC-map-config f

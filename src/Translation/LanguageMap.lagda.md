@@ -30,9 +30,9 @@ open import Framework.Proof.Transitive Variant using (less-expressive-from-compl
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
-import Lang.OC
-import Lang.2CC
-import Lang.CCC
+open import Lang.All
+open OC using (WFOCL)
+open 2CC using (2CCL)
 
 -- DONE
 import Translation.Lang.OC-to-2CC
@@ -61,8 +61,7 @@ import Translation.Lang.OC-to-2CC
 -- We only assume the existence of an annotation language F, which
 -- contains at least one expression D : F, no matter how it looks.
 module CCC-Props (F : 𝔽) (D : F) where
-  open Lang.CCC.Sem F Variant mkArtifact
-  open Lang.CCC.Encode F using (encoder)
+  open CCC.Encode using (encoder)
 
   import Translation.Lang.VariantList-to-CCC F D Variant mkArtifact as VL→CCC
   open VL→CCC.Translate encoder using (
@@ -75,15 +74,13 @@ module CCC-Props (F : 𝔽) (D : F) where
 
 ```agda
 module _ (F : 𝔽) where
-  open Lang.OC.Sem  F Variant mkArtifact using (WFOCL)
-  open Lang.2CC.Sem F Variant mkArtifact using (2CCL)
-  open Lang.OC.IncompleteOnRose F using (OC-is-incomplete)
+  open OC.IncompleteOnRose using (OC-is-incomplete)
 
   {- TODO: Substitute completeness proof of 2CC here. -}
-  OC-is-less-expressive-than-2CC : WFOCL ⋡ 2CCL
+  OC-is-less-expressive-than-2CC : WFOCL F ⋡ 2CCL F
   OC-is-less-expressive-than-2CC = less-expressive-from-completeness {!!} OC-is-incomplete
 
-  2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler 2CCL WFOCL)
+  2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler (2CCL F) (WFOCL F))
   2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-2CC
 
 open Translation.Lang.OC-to-2CC using (

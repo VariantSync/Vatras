@@ -34,13 +34,7 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 artifact : {A : 𝔸} → A → List (Variant A) → Variant A
@@ -144,7 +138,7 @@ NCC-rename : ∀ {i : Size} {D₁ D₂ : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (NCCL n D₁ {i}) (NCCL n D₂ {i})
+  → LanguageCompiler (NCCL {i} n D₁) (NCCL {i} n D₂)
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.compile = rename n f
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCC-map-config n f⁻¹
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCC-map-config n f
