@@ -15,7 +15,8 @@ module Translation.LanguageMap where
 ## Imports
 
 ```agda
-open import Data.Nat using (ℕ)
+import Data.Fin as Fin
+open import Data.Nat as ℕ using (ℕ)
 open import Data.Product using (_×_)
 open import Size using (∞)
 open import Relation.Binary using (DecidableEquality)
@@ -25,7 +26,6 @@ open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
 Variant = Rose ∞
 mkArtifact = Artifact∈ₛRose
 
-open import Framework.Annotation.IndexedDimension
 open import Framework.Construct
 open import Framework.Compiler
 open import Framework.Definitions using (𝕍; 𝔽)
@@ -34,6 +34,7 @@ open import Framework.Proof.Transitive Variant using (less-expressive-from-compl
 open import Framework.Properties.Completeness Variant using (Complete)
 open import Framework.Properties.Soundness Variant using (Sound)
 open import Util.Nat.AtLeast using (ℕ≥)
+open import Util.AuxProofs using (decidableEquality-×)
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
@@ -127,16 +128,13 @@ module _ {F : 𝔽} (D : F) where
 2CC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (2CCL F)
 2CC-is-sound _==_ = soundness-by-expressiveness (2ADT-is-sound _==_) 2ADT≽2CC
 
--- TODO proof `DecidableEquality (IndexedDimension F n)` from `DecidableEquality F`
-NCC-is-sound : ∀ {F : 𝔽} (n : ℕ≥ 2) (_==_ : DecidableEquality (IndexedDimension F n)) → Sound (NCCL n F)
-NCC-is-sound n _==_ = soundness-by-expressiveness (2CC-is-sound _==_) (2CC≽NCC n)
+NCC-is-sound : ∀ {F : 𝔽} (n : ℕ≥ 2) (_==_ : DecidableEquality F) → Sound (NCCL n F)
+NCC-is-sound n _==_ = soundness-by-expressiveness (2CC-is-sound (decidableEquality-× _==_ Fin._≟_)) (2CC≽NCC n)
 
--- TODO proof `DecidableEquality (F × ℕ)` from `DecidableEquality F`
-CCC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality (F × ℕ)) → Sound (CCCL F)
-CCC-is-sound _==_ = soundness-by-expressiveness (2CC-is-sound _==_) 2CC≽CCC
+CCC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (CCCL F)
+CCC-is-sound _==_ = soundness-by-expressiveness (2CC-is-sound (decidableEquality-× _==_ ℕ._≟_)) 2CC≽CCC
 
--- TODO proof `DecidableEquality (F × ℕ)` from `DecidableEquality F`
-NADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality (F × ℕ)) → Sound (NADTL Variant F)
+NADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (NADTL Variant F)
 NADT-is-sound _==_ = soundness-by-expressiveness (CCC-is-sound _==_) CCC≽NADT
 
 OC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (WFOCL F)
