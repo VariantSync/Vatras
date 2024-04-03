@@ -72,8 +72,6 @@ module Translate
 
 ```agda
   module Preservation (A : 𝔸) where
-    open import Framework.Properties.Completeness V using (Complete)
-
     ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
     open import Data.Unit using (tt)
 
@@ -157,14 +155,8 @@ module Translate
         preserves-⊆ e , preserves-⊇ e
     }
 
-  open import Framework.Properties.Completeness V using (Complete)
   open import Framework.Relation.Expressiveness V using (_≽_)
-  open import Framework.Proof.Transitive V using (completeness-by-expressiveness)
 
   CCC≽VariantList : CCCL Dimension ≽ VariantListL
   CCC≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
-
-  CCC-is-complete : Complete (CCCL Dimension)
-  CCC-is-complete = completeness-by-expressiveness VariantList-is-Complete CCC≽VariantList
 ```
-
