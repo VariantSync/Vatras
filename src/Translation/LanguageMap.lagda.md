@@ -76,7 +76,7 @@ open import Translation.Lang.Transitive.2CC-to-CCC Variant mkArtifact using (2CC
 
 ```agda
 open import Translation.Lang.2CC-to-2ADT Variant mkArtifact using (2CC→2ADT; 2ADT≽2CC) public
--- open import Translation.Lang.2ADT-to-2CC Variant mkArtifact using () public
+open import Translation.Lang.2ADT-to-2CC Variant mkArtifact using (2ADT→2CC; 2CC≽2ADT) public
 
 module _ {F : 𝔽} (_==_ : DecidableEquality F) where
   open import Translation.Lang.2ADT.DeadElim F Variant _==_ using (kill-dead-compiler) public
@@ -128,7 +128,7 @@ module _ {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f�
   CCC≋2CC = CCC≽2CC , ≽-trans (2CC-rename≽2CC f f⁻¹ f⁻¹∘f≗id) 2CC≽CCC
 
   2CC≋2ADT : 2CCL F ≋ 2ADTL Variant F
-  2CC≋2ADT = {!2CC≽2ADT!} , 2ADT≽2CC
+  2CC≋2ADT = 2CC≽2ADT (CCC-Rose-encoder ⊕ (CCC→2CC ⊕ 2CC-rename f f⁻¹ f⁻¹∘f≗id)) , 2ADT≽2CC
 
   2ADT≋NADT : 2ADTL Variant (F × ℕ) ≋ NADTL Variant F
   2ADT≋NADT = ≽-trans 2ADT≽2CC (≽-trans 2CC≽CCC CCC≽NADT) , ≽-trans NADT≽2ADT {!2ADT-rename≽2ADT!}

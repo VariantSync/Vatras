@@ -7,7 +7,7 @@ module Translation.Lang.2CC-to-2ADT (Variant : Set → Set) (Artifact∈ₛVaria
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Bool as Bool using (if_then_else_)
-open import Data.Bool.Properties as Bool
+import Data.Bool.Properties as Bool
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 import Data.List.Properties as List
 open import Framework.Compiler using (LanguageCompiler)
