@@ -53,6 +53,7 @@ open OC using (WFOCL)
 open CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 open import Translation.Lang.NCC.Rename Variant mkArtifact using (NCC-rename≽NCC)
 open import Translation.Lang.2CC.Rename Variant mkArtifact using (2CC-rename; 2CC-rename≽2CC)
+open import Translation.Lang.2ADT.Rename Variant mkArtifact using (2ADT-rename≽2ADT)
 ```
 
 
@@ -131,7 +132,7 @@ module _ {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f�
   2CC≋2ADT = 2CC≽2ADT (CCC-Rose-encoder ⊕ (CCC→2CC ⊕ 2CC-rename f f⁻¹ f⁻¹∘f≗id)) , 2ADT≽2CC
 
   2ADT≋NADT : 2ADTL Variant (F × ℕ) ≋ NADTL Variant F
-  2ADT≋NADT = ≽-trans 2ADT≽2CC (≽-trans 2CC≽CCC CCC≽NADT) , ≽-trans NADT≽2ADT {!2ADT-rename≽2ADT!}
+  2ADT≋NADT = ≽-trans 2ADT≽2CC (≽-trans 2CC≽CCC CCC≽NADT) , ≽-trans NADT≽2ADT (2ADT-rename≽2ADT f f⁻¹ f⁻¹∘f≗id)
 
   2ADT≋VariantList : DecidableEquality F → F → 2ADTL Variant (F × ℕ) ≋ VariantListL
   2ADT≋VariantList _==_ D = ≽-trans 2ADT≽2CC (≽-trans 2CC≽CCC (CCC≽VariantList D)) , VariantList≽2ADT (decidableEquality-× _==_ ℕ._≟_)

@@ -102,8 +102,6 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     2CC.⟦ d ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
     2CC.⟦ if config d then l else r ⟧ config
-  ≡⟨⟩
-    2CC.⟦ if config d then l else r ⟧ config
   ≡⟨ preserves-⊇ f f⁻¹ is-inverse (if config d then l else r) config ⟩
     2CC.⟦ rename f (if config d then l else r) ⟧ (config ∘ f⁻¹)
   ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (push-function-into-if (rename f) (config d)) refl ⟩
