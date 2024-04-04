@@ -53,52 +53,73 @@ open OC using (WFOCL)
 open CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 open import Translation.Lang.NCC.Rename Variant mkArtifact using (NCC-rename≽NCC)
 open import Translation.Lang.2CC.Rename Variant mkArtifact using (2CC-rename; 2CC-rename≽2CC)
-open import Translation.Lang.2ADT.Rename Variant mkArtifact using (2ADT-rename≽2ADT)
+open import Translation.Lang.2ADT.Rename Variant mkArtifact as VariantList-to-CCC
+
+import Translation.Lang.CCC-to-NCC Variant mkArtifact as CCC-to-NCC
+import Translation.Lang.NCC-to-CCC Variant mkArtifact as NCC-to-CCC
+import Translation.Lang.NCC.Grow Variant mkArtifact as Grow
+import Translation.Lang.NCC.ShrinkTo2 Variant mkArtifact as ShrinkTo2
+import Translation.Lang.NCC.NCC-to-NCC Variant mkArtifact as NCC-to-NCC
+import Translation.Lang.NCC-to-2CC Variant mkArtifact as NCC-to-2CC
+import Translation.Lang.2CC-to-NCC Variant mkArtifact as 2CC-to-NCC
+import Translation.Lang.Transitive.CCC-to-2CC Variant mkArtifact as CCC-to-2CC
+import Translation.Lang.Transitive.2CC-to-CCC Variant mkArtifact as 2CC-to-CCC
+import Translation.Lang.2CC-to-2ADT Variant mkArtifact as 2CC-to-2ADT
+import Translation.Lang.2ADT-to-2CC Variant mkArtifact as 2ADT-to-2CC
+import Translation.Lang.2ADT.DeadElim as DeadElim
+import Translation.Lang.2ADT-to-VariantList as 2ADT-to-VariantList
+import Translation.Lang.VariantList-to-CCC as VariantList-to-CCC
+import Translation.Lang.2ADT-to-NADT Variant mkArtifact as 2ADT-to-NADT
+import Translation.Lang.NADT-to-CCC Variant mkArtifact as NADT-to-CCC
+import Translation.Lang.OC-to-2CC as OC-to-2CC
 ```
 
 
 ## Core Choice Calculus vs Binary Choice Calculus
 
 ```agda
-open import Translation.Lang.CCC-to-NCC Variant mkArtifact using (CCC→NCC; NCC≽CCC) public
-open import Translation.Lang.NCC-to-CCC Variant mkArtifact using (NCC→CCC; CCC≽NCC) public
+open CCC-to-NCC using (CCC→NCC; NCC≽CCC) public
+open NCC-to-CCC using (NCC→CCC; CCC≽NCC) public
 
-open import Translation.Lang.NCC.Grow Variant mkArtifact using (growCompiler) public
-open import Translation.Lang.NCC.ShrinkTo2 Variant mkArtifact using (shrinkTo2Compiler) public
+open Grow using (growCompiler) public
+open ShrinkTo2 using (shrinkTo2Compiler) public
 -- Generalization of the grow and shrink
-open import Translation.Lang.NCC.NCC-to-NCC Variant mkArtifact using (NCC→NCC; NCC≽NCC) public
+open NCC-to-NCC using (NCC→NCC; NCC≽NCC) public
 
-open import Translation.Lang.NCC-to-2CC Variant mkArtifact using (NCC→2CC; 2CC≽NCC) public
-open import Translation.Lang.2CC-to-NCC Variant mkArtifact using (2CC→NCC; NCC≽2CC) public
+open NCC-to-2CC using (NCC→2CC; 2CC≽NCC) public
+open 2CC-to-NCC using (2CC→NCC; NCC≽2CC) public
 
-open import Translation.Lang.Transitive.CCC-to-2CC Variant mkArtifact using (CCC→2CC; 2CC≽CCC) public
-open import Translation.Lang.Transitive.2CC-to-CCC Variant mkArtifact using (2CC→CCC; CCC≽2CC) public
+open CCC-to-2CC using (CCC→2CC; 2CC≽CCC) public
+open 2CC-to-CCC using (2CC→CCC; CCC≽2CC) public
 ```
 
+
+## Choices vs Algebraic Decision Trees
+
 ```agda
-open import Translation.Lang.2CC-to-2ADT Variant mkArtifact using (2CC→2ADT; 2ADT≽2CC) public
-open import Translation.Lang.2ADT-to-2CC Variant mkArtifact using (2ADT→2CC; 2CC≽2ADT) public
+open 2CC-to-2ADT using (2CC→2ADT; 2ADT≽2CC) public
+open 2ADT-to-2CC using (2ADT→2CC; 2CC≽2ADT) public
 
 module _ {F : 𝔽} (_==_ : DecidableEquality F) where
-  open import Translation.Lang.2ADT.DeadElim F Variant _==_ using (kill-dead-compiler) public
+  open DeadElim F Variant _==_ using (kill-dead-compiler) public
 
-  open import Translation.Lang.2ADT-to-VariantList F Variant _==_ using (2ADT→VariantList; VariantList≽2ADT) public
+  open 2ADT-to-VariantList F Variant _==_ using (2ADT→VariantList; VariantList≽2ADT) public
 
-import Translation.Lang.VariantList-to-CCC
 module _ {F : 𝔽} (D : F) where
-  open Translation.Lang.VariantList-to-CCC.Translate F D Variant mkArtifact CCC-Rose-encoder using (VariantList→CCC; CCC≽VariantList) public
+  open VariantList-to-CCC.Translate F D Variant mkArtifact CCC-Rose-encoder using (VariantList→CCC; CCC≽VariantList) public
 
-open import Translation.Lang.2ADT-to-NADT Variant mkArtifact using (2ADT→NADT; NADT≽2ADT) public
-open import Translation.Lang.NADT-to-CCC Variant mkArtifact using (NADT→CCC) public
-module _ {F : 𝔽} where
-  open import Translation.Lang.NADT-to-CCC Variant mkArtifact using () renaming (CCC≽NADT to CCC≽NADT')
-  CCC≽NADT = CCC≽NADT' {F} CCC-Rose-encoder
+open 2ADT-to-NADT using (2ADT→NADT; NADT≽2ADT) public
+open NADT-to-CCC using (NADT→CCC) public
+CCC≽NADT : ∀ {F : 𝔽} → CCCL F ≽ NADTL Variant F
+CCC≽NADT {F} = NADT-to-CCC.CCC≽NADT {F} CCC-Rose-encoder
 ```
 
+
 ## Option Calculus vs Binary Choice Calculus
+
 ```agda
 module _ {F : 𝔽} where
-  open import Translation.Lang.OC-to-2CC F using (OC→2CC; 2CC≽OC) public
+  open OC-to-2CC F using (OC→2CC; 2CC≽OC) public
 ```
 
 ```agda
