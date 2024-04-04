@@ -26,22 +26,8 @@ open import Util.Nat.AtLeast using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-import Lang.2CC
-module 2CC where
-  open Lang.2CC public
-  module 2CC-Sem-1 D = Lang.2CC.Sem D Variant Artifact∈ₛVariant
-  open 2CC-Sem-1 using (2CCL) public
-  module 2CC-Sem-2 {D} = Lang.2CC.Sem D Variant Artifact∈ₛVariant
-  open 2CC-Sem-2 using (⟦_⟧) public
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
 open import Translation.Lang.NCC.Grow Variant Artifact∈ₛVariant using (growFrom2Compiler)
@@ -148,7 +134,7 @@ module 2Ary where
     → NCC.⟦ translate e ⟧ ≅[ fnoc ][ conf ] 2CC.⟦ e ⟧
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  2CC→NCC : ∀ {i : Size} {D : Set} → LanguageCompiler (2CCL D {i}) (NCCL (sucs zero) D {i})
+  2CC→NCC : ∀ {i : Size} {D : Set} → LanguageCompiler (2CCL {i} D) (NCCL {i} (sucs zero) D)
   2CC→NCC .LanguageCompiler.compile = translate
   2CC→NCC .LanguageCompiler.config-compiler expr .to = conf
   2CC→NCC .LanguageCompiler.config-compiler expr .from = fnoc
@@ -156,7 +142,7 @@ module 2Ary where
 
 
 -- A generalization which translates to an arbitrary n instead of 2.
-2CC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL D {i}) (NCCL n D {i})
+2CC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL {i} D) (NCCL {i} n D)
 2CC→NCC n = 2Ary.2CC→NCC ⊕ growFrom2Compiler n
 
 NCC≽2CC : ∀ {D : Set} → (n : ℕ≥ 2) → NCCL n D ≽ 2CCL D

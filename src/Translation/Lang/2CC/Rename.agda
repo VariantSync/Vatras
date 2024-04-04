@@ -17,6 +17,7 @@ import Data.List.Properties as List
 open import Data.Product using () renaming (_,_ to _and_)
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Definitions using (𝔸; 𝔽)
+open import Framework.Relation.Expressiveness Variant using (_≽_; expressiveness-from-compiler)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
@@ -25,13 +26,7 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.2CC
-module 2CC where
-  open Lang.2CC public
-  module 2CC-Sem-1 D = Lang.2CC.Sem D Variant Artifact∈ₛVariant
-  open 2CC-Sem-1 using (2CCL) public
-  module 2CC-Sem-2 {D} = Lang.2CC.Sem D Variant Artifact∈ₛVariant
-  open 2CC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
 artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
@@ -107,8 +102,6 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     2CC.⟦ d ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
     2CC.⟦ if config d then l else r ⟧ config
-  ≡⟨⟩
-    2CC.⟦ if config d then l else r ⟧ config
   ≡⟨ preserves-⊇ f f⁻¹ is-inverse (if config d then l else r) config ⟩
     2CC.⟦ rename f (if config d then l else r) ⟧ (config ∘ f⁻¹)
   ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (push-function-into-if (rename f) (config d)) refl ⟩
@@ -133,8 +126,15 @@ preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-�
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (2CCL D₁ {i}) (2CCL D₂ {i})
+  → LanguageCompiler (2CCL {i} D₁) (2CCL {i} D₂)
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.compile = rename f
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2CC-map-config f⁻¹
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2CC-map-config f
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)
+
+2CC-rename≽2CC : ∀ {i : Size} {D₁ D₂ : Set}
+  → (f : D₁ → D₂)
+  → (f⁻¹ : D₂ → D₁)
+  → f⁻¹ ∘ f ≗ id
+  → 2CCL {i} D₂ ≽ 2CCL {i} D₁
+2CC-rename≽2CC f f⁻¹ is-inverse = expressiveness-from-compiler (2CC-rename f f⁻¹ is-inverse)

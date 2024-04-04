@@ -5,7 +5,7 @@ open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
 {-
-This module defines a compiler from NCC to NCC where the input at output expression
+This module defines a compiler from NCC to NCC where the input and output expression
 can have any arities, in particular different ones.
 This compiler is a simple composition of the ShrinkTo2 and Grow compiler.
 This means, given an n-ary expression,
@@ -27,6 +27,7 @@ open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
+open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
@@ -39,17 +40,14 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Translation.Lang.NCC.ShrinkTo2 Variant Artifact∈ₛVariant using (shrinkTo2Compiler)
 open import Translation.Lang.NCC.Grow Variant Artifact∈ₛVariant using (growFrom2Compiler)
 
-NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→NCC n m = shrinkTo2Compiler n ⊕ growFrom2Compiler m
+
+NCC≽NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ≽ NCCL {i} n D
+NCC≽NCC n m = expressiveness-from-compiler (NCC→NCC n m)

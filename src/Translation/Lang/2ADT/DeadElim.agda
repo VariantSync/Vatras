@@ -23,7 +23,7 @@ open Eq.≡-Reasoning
 open import Framework.VariabilityLanguage
 open import Framework.Compiler
 open import Data.EqIndexedSet using (_≅[_][_]_; ≐→≅[])
-open import Lang.2ADT F V
+open import Lang.2ADT
 open import Lang.2ADT.Path F V _==_
 
 {-
@@ -31,7 +31,7 @@ A 2ADT is undead if it does not contain any dead branches.
 This is the case if any path from the root to a leaf does not contain
 a feature name twice.
 -}
-Undead : ∀ {A} (e : 2ADT A) → Set
+Undead : ∀ {A} (e : 2ADT V F A) → Set
 Undead e = ∀ (p : Path) → p starts-at e → Unique p
 
 {-
@@ -45,7 +45,7 @@ undead-leaf .[] tleaf = []
 {-
 If a choice is undead, so is its left alternative.
 -}
-undead-left : ∀ {A} {D} {l r : 2ADT A}
+undead-left : ∀ {A} {D} {l r : 2ADT V F A}
   → Undead (D ⟨ l , r ⟩)
     --------------------
   → Undead l
@@ -55,7 +55,7 @@ undead-left {D = D} u-chc p t with u-chc (D ↣ true ∷ p) (walk-left t)
 {-
 If a choice is undead, so is its right alternative.
 -}
-undead-right : ∀ {A} {D} {l r : 2ADT A}
+undead-right : ∀ {A} {D} {l r : 2ADT V F A}
   → Undead (D ⟨ l , r ⟩)
     --------------------
   → Undead r
@@ -67,7 +67,7 @@ If two expressions l and r are undead and do
 not contain the feature name D,
 then the choice D ⟨ l , r ⟩ is undead, too.
 -}
-undead-choice : ∀ {A} {D} {l r : 2ADT A}
+undead-choice : ∀ {A} {D} {l r : 2ADT V F A}
   → Undead l
   → Undead r
     -- It might be handy to introduce a new predicate for containment of feature names in expressions D ∈ l later.
@@ -81,15 +81,15 @@ undead-choice u-l u-r D∉l D∉r (.(_ ↣ false) ∷ p) (walk-right t) = ∉→
 record Undead2ADT (A : 𝔸) : Set where
   constructor _⊚_ -- \oo
   field
-    node   : 2ADT A
+    node   : 2ADT V F A
     undead : Undead node
 open Undead2ADT public
 
-⟦_⟧ᵤ : 𝔼-Semantics V Configuration Undead2ADT
+⟦_⟧ᵤ : 𝔼-Semantics V (Configuration F) Undead2ADT
 ⟦_⟧ᵤ = ⟦_⟧ ∘ node
 
 Undead2ADTL : VariabilityLanguage V
-Undead2ADTL = ⟪ Undead2ADT , Configuration , ⟦_⟧ᵤ ⟫
+Undead2ADTL = ⟪ Undead2ADT , Configuration F , ⟦_⟧ᵤ ⟫
 
 {-
 Kills all dead branches within a given expression,
@@ -97,8 +97,8 @@ assuming that some features were already defined.
 -}
 kill-dead-below : ∀ {A}
   → (defined : Path)
-  → 2ADT A
-  → 2ADT A
+  → 2ADT V F A
+  → 2ADT V F A
 kill-dead-below _ (leaf v) = leaf v
 kill-dead-below defined (D ⟨ l , r ⟩) with D ∈? defined
 --- The current choice was already encountered above this choice.
@@ -123,7 +123,7 @@ kill-dead-eliminates-defined-features : ∀ {A}
   → (defined : Path)
   → (D : F)
   → D ∈ defined
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → D ∉' kill-dead-below defined e
 kill-dead-eliminates-defined-features _ _ _ (leaf _) .[] tleaf ()
 kill-dead-eliminates-defined-features defined _ _ (D' ⟨ _ , _ ⟩) _ _ _ with D' ∈? defined
@@ -150,7 +150,7 @@ is undead.
 -}
 kill-dead-correct : ∀ {A}
   → (defined : Path)
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → Undead (kill-dead-below defined e)
 kill-dead-correct _ (leaf v) = undead-leaf
 kill-dead-correct defined (D ⟨ _ , _ ⟩) with D ∈? defined
@@ -168,14 +168,14 @@ kill-dead-correct defined (D ⟨ l , r ⟩) | no  D∉defined =
 Dead branch elimination of 2ADTs.
 -}
 kill-dead : ∀ {A}
-  → 2ADT A
+  → 2ADT V F A
   → Undead2ADT A
 kill-dead e = kill-dead-below [] e ⊚ kill-dead-correct [] e
 
 kill-dead-preserves-below-partial-configs : ∀ {A : 𝔸}
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → (defined : Path)
-  → (c : Configuration)
+  → (c : Configuration F)
   → defined ⊑ c
   → ⟦ e ⟧ c ≡ ⟦ kill-dead-below defined e ⟧ c
 kill-dead-preserves-below-partial-configs (leaf _) _ _ _ = refl
@@ -191,11 +191,11 @@ kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | no D
 ... | false = kill-dead-preserves-below-partial-configs r ((D ↣ false) ∷ def) c (eq ∷ def⊑c)
 
 kill-dead-preserves : ∀ {A : 𝔸}
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → ⟦ e ⟧ ≅[ id ][ id ] ⟦ kill-dead e ⟧ᵤ
 kill-dead-preserves e = ≐→≅[] (λ c → kill-dead-preserves-below-partial-configs e [] c [])
 
-kill-dead-compiler : LanguageCompiler 2ADTL Undead2ADTL
+kill-dead-compiler : LanguageCompiler (2ADTL V F) Undead2ADTL
 kill-dead-compiler = record
   { compile = kill-dead
   ; config-compiler = λ _ → record { to = id ; from = id }

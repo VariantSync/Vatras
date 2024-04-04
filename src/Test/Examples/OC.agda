@@ -8,12 +8,13 @@ open import Size using (Size; ↑_; ∞)
 
 -- open import Framework.Annotation.Name using (Option)
 open import Framework.Definitions using (𝔸; 𝔽)
-open import Lang.OC String
+open import Lang.All
+open OC
 
 open import Test.Example
 
 OCExample : Set
-OCExample = Example (WFOC ∞ String)
+OCExample = Example (WFOC String ∞ String)
 
 optex-unary : OCExample
 optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "lol") ])

@@ -13,23 +13,24 @@ open import Size
 
 open import Construct.Plain.Artifact using (leaf; leaves⁺)
 
-open import Lang.CCC String -- use strings as dimensions
+open import Lang.All
+open CCC -- use strings as dimensions
 open import Test.Example
 
 CCCExample : Set
-CCCExample = Example (CCC ∞ String)
+CCCExample = Example (CCC String ∞ String)
 
 -- some smart constructors
-ccA : ∀ {i : Size} {A : Set} → List⁺ (CCC i A) → CCC (↑ i) A
+ccA : ∀ {i : Size} {A : Set} → List⁺ (CCC String i A) → CCC String (↑ i) A
 ccA es = "A" ⟨ es ⟩
 
-cc-leaves : ∀ {i : Size} {A : Set} → String → List⁺ A → CCC (↑ ↑ i) A
+cc-leaves : ∀ {i : Size} {A : Set} → String → List⁺ A → CCC String (↑ ↑ i) A
 cc-leaves D es = D ⟨ map⁺ atom (leaves⁺ es) ⟩
 
-ccA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CCC (↑ ↑ i) A
+ccA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CCC String (↑ ↑ i) A
 ccA-leaves = cc-leaves "A"
 
-cc-leaf : ∀ {i : Size} {A : Set} → A → CCC (↑ i) A
+cc-leaf : ∀ {i : Size} {A : Set} → A → CCC String (↑ i) A
 cc-leaf a = atom (leaf a)
 
 -- examples

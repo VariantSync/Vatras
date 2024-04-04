@@ -39,12 +39,11 @@ open Eq.≡-Reasoning
 
 open import Framework.VariabilityLanguage
 open import Framework.Compiler using (LanguageCompiler)
-open import Lang.VariantList V as VL
+open import Lang.All.Generic V mkArtifact
+open VariantList
   using (VariantList; VariantListL; VariantList-is-Complete)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Cₗ)
-open import Lang.CCC Dimension as CCC-Module
-  renaming (Configuration to Cᶜ)
-open CCC-Module.Sem V mkArtifact
+open CCC renaming (Configuration to Cᶜ)
 
 open import Framework.Variants
 
@@ -55,17 +54,17 @@ open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 
 ```agda
 module Translate
-  (embed : LanguageCompiler (Variant-is-VL V) CCCL)
+  (embed : LanguageCompiler (Variant-is-VL V) (CCCL Dimension))
   where
   open LanguageCompiler embed using (compile; preserves) renaming (conf to v-conf)
 
-  translate : ∀ {A} → VariantList A → CCC ∞ A
+  translate : ∀ {A} → VariantList A → CCC Dimension ∞ A
   translate vs =  𝔻 ⟨ map⁺ compile vs ⟩
 
-  conf : Cₗ → Cᶜ
+  conf : Cₗ → Cᶜ Dimension
   conf cₗ _ = cₗ
 
-  fnoc : Cᶜ → Cₗ
+  fnoc : Cᶜ Dimension → Cₗ
   fnoc c = c 𝔻
 ```
 
@@ -73,8 +72,6 @@ module Translate
 
 ```agda
   module Preservation (A : 𝔸) where
-    open import Framework.Properties.Completeness V using (Complete)
-
     ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
     open import Data.Unit using (tt)
 
@@ -149,7 +146,7 @@ module Translate
         ⟦ find-or-last i tail-in-ccc ⟧ c
       ∎
 
-  VariantList→CCC : LanguageCompiler VariantListL CCCL
+  VariantList→CCC : LanguageCompiler VariantListL (CCCL Dimension)
   VariantList→CCC = record
     { compile = translate
     ; config-compiler = λ _ → record { to = conf ; from = fnoc }
@@ -158,14 +155,8 @@ module Translate
         preserves-⊆ e , preserves-⊇ e
     }
 
-  open import Framework.Properties.Completeness V using (Complete)
   open import Framework.Relation.Expressiveness V using (_≽_)
-  open import Framework.Proof.Transitive V using (completeness-by-expressiveness)
 
-  CCCL-is-at-least-as-expressive-as-VariantListL : CCCL ≽ VariantListL
-  CCCL-is-at-least-as-expressive-as-VariantListL {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
-
-  CCCL-is-complete : Complete CCCL
-  CCCL-is-complete = completeness-by-expressiveness VariantList-is-Complete CCCL-is-at-least-as-expressive-as-VariantListL
+  CCC≽VariantList : CCCL Dimension ≽ VariantListL
+  CCC≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
 ```
-

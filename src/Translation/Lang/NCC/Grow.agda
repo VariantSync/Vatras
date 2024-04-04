@@ -36,13 +36,7 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 artifact : {A : 𝔸} → A → List (Variant A) → Variant A
@@ -157,11 +151,11 @@ preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤
 growCompiler : ∀ {i : Size} {D : 𝔽}
   → (n m : ℕ≥ 2)
   → n ℕ≥.≤ m
-  → LanguageCompiler (NCCL n D {i}) (NCCL m D {i})
+  → LanguageCompiler (NCCL {i} n D) (NCCL {i} m D)
 growCompiler n m n≤m .LanguageCompiler.compile = grow n m n≤m
 growCompiler n m n≤m .LanguageCompiler.config-compiler expr .to = conf n m n≤m
 growCompiler n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
 growCompiler n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
-growFrom2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL (sucs zero) D {i}) (NCCL n D {i})
+growFrom2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} (sucs zero) D) (NCCL {i} n D)
 growFrom2Compiler (sucs n) = growCompiler (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)

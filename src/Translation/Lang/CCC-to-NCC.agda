@@ -29,22 +29,8 @@ open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; step-≅[]˘; _≅[]⟨⟩_; _≅[]-∎)
 
-import Lang.CCC
-module CCC where
-  open Lang.CCC public
-  module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
-  open CCC-Sem-1 using (CCCL) public
-  module CCC-Sem-2 {D} = Lang.CCC.Sem D Variant Artifact∈ₛVariant
-  open CCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
-
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Framework.Annotation.IndexedDimension
@@ -383,7 +369,7 @@ preserves (sucs n) expr =
     CCC.⟦ expr ⟧
   ≅[]-∎
 
-CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
+CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL {i} D) (NCCL n (D × ℕ))
 CCC→NCC n .LanguageCompiler.compile = translate n
 CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n expr
 CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
