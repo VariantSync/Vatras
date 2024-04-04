@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.CCC-to-NCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.CCC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -15,7 +16,6 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (_∘_; id)
@@ -39,7 +39,7 @@ open import Translation.Lang.NCC.Rename Variant Artifact∈ₛVariant using (NCC
 module NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 module Exact where
@@ -68,7 +68,7 @@ module Exact where
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
     data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
-      maxArtifact : {i : Size} → {a : A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
+      maxArtifact : {i : Size} → {a : atoms A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
       maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → NumberOfAlternatives≤-List⁺ n {i} cs → NumberOfAlternatives≤ n {↑ i} (d ⟨ cs ⟩)
 
     data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where

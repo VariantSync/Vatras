@@ -5,7 +5,7 @@ open import Framework.Definitions
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.2ADT-to-NADT (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2ADT-to-NADT (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (if_then_else_; true; false)
 import Data.Bool.Properties as Bool
@@ -42,7 +42,7 @@ open NADT using (NADT; NADTL; NADTAsset; NADTChoice)
 import Translation.Construct.2Choice-to-Choice as 2Choice-to-Choice
 open 2Choice-to-Choice.Translate using (convert)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 

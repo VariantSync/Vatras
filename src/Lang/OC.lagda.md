@@ -19,7 +19,7 @@ module Lang.OC where
 ```agda
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List using (List; []; _∷_)
-open import Data.String using (String)
+open import Data.String as String using (String)
 open import Size using (Size; ∞; ↑_)
 open import Function using (_∘_)
 
@@ -46,7 +46,7 @@ data OC (Option : 𝔽) : Size → 𝔼 where
   Maybe reusing Artifact hides something from the Agda
   compiler that it needs for termination checking.
   -}
-  _-<_>- : ∀ {i A} → A → List (OC Option i A) → OC Option (↑ i) A
+  _-<_>- : ∀ {i A} → atoms A → List (OC Option i A) → OC Option (↑ i) A
   _❲_❳ : ∀ {i : Size} {A : 𝔸} →
     Option → OC Option i A → OC Option (↑ i) A
 infixl 6 _❲_❳
@@ -144,7 +144,7 @@ And now for the semantics of well-formed option calculus which just reuses the s
 
 ```agda
 open import Data.Fin using (zero; suc)
-open import Data.Nat using (ℕ; zero; suc)
+open import Data.Nat as ℕ using (ℕ; zero; suc)
 open import Data.Product   using (_,_; ∃-syntax; ∄-syntax)
 open import Util.Existence using (_,_)
 open import Data.List.Relation.Unary.All using (_∷_; [])
@@ -163,12 +163,12 @@ As our counter example, we use the set `{0, 1}` as our variants:
   -- TODO: Can this be generalized to other types of variants as well?
   module IncompleteOnRose where
     open import Framework.Variants using (Rose; Artifact∈ₛRose)
-    open import Framework.VariantMap (Rose ∞) ℕ
+    open import Framework.VariantMap (Rose ∞) (ℕ , ℕ._≟_)
     open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
     open Sem (Rose ∞) Artifact∈ₛRose
 
-    variant-0 = rose-leaf 0
-    variant-1 = rose-leaf 1
+    variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
+    variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
     -- variant-0 = cons mkArtifact (At.leaf 0)
     -- variant-1 = cons mkArtifact (At.leaf 1)
 
@@ -183,7 +183,7 @@ So we show that given an expression `e`, a proof that `e` can be configured to `
 ```agda
     does-not-describe-variants-0-and-1 :
       ∀ {i : Size}
-      → (e : WFOC Option i ℕ)
+      → (e : WFOC Option i (ℕ , ℕ._≟_))
       → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
       → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
     -- If e has 0 as root, it may be configured to 0 but never to 1.
@@ -208,14 +208,14 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Utility
 
 ```agda
-  oc-leaf : ∀ {i : Size} {A : 𝔸} → A → OC Option (↑ i) A
+  oc-leaf : ∀ {i : Size} {A : 𝔸} → atoms A → OC Option (↑ i) A
   oc-leaf a = a -< [] >-
 
   -- alternative name that does not require writing tortoise shell braces
   opt : ∀ {i : Size} {A : 𝔸} → Option → OC Option i A → OC Option (↑ i) A
   opt O = _❲_❳ O
 
-  singleton : ∀ {i : Size} {A : 𝔸} → A → OC Option i A → OC Option (↑ i) A
+  singleton : ∀ {i : Size} {A : 𝔸} → atoms A → OC Option i A → OC Option (↑ i) A
   singleton a e = a -< e ∷ [] >-
 
   open import Util.Named
@@ -233,15 +233,15 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Show
 
 ```agda
-open Data.String using (_++_; intersperse)
+open String using (_++_; intersperse)
 open import Function using (_∘_)
 
 module Show (Option : 𝔽) (print-opt : Option → String) where
-  show-oc : ∀ {i : Size} → OC Option i String → String
+  show-oc : ∀ {i : Size} → OC Option i (String , String._≟_) → String
   show-oc (s -< [] >-) = s
   show-oc (s -< es@(_ ∷ _) >-) = s ++ "-<" ++ (intersperse ", " (map show-oc es)) ++ ">-"
   show-oc (O ❲ e ❳) = print-opt O ++ "❲" ++ show-oc e ++ "❳"
 
-  show-wfoc : ∀ {i : Size} → WFOC Option i String → String
+  show-wfoc : ∀ {i : Size} → WFOC Option i (String , String._≟_) → String
   show-wfoc = show-oc ∘ forgetWF
 ```

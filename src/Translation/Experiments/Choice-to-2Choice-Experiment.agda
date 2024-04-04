@@ -30,7 +30,7 @@ open import Data.String using (String; _<+>_)
 exp : Experiment (Choice.Syntax String ℕ)
 getName exp = "Check N → 2 Choice trans"
 get exp (name ≔ e) = do
- let open Trans (Eq.setoid ℕ) using (convert; show-nested-choice)
+ let open Trans ℕ using (convert; show-nested-choice)
  >         name <+> "=" <+> Choice.show id show-ℕ e
  > phantom name <+> "⇝" <+> show-nested-choice id show-ℕ (convert e)
 

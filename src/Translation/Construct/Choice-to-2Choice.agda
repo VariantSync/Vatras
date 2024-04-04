@@ -17,10 +17,8 @@ open import Size using (Size; ↑_; ∞)
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≢_)
 import Relation.Binary.PropositionalEquality as Eq
 
-import Data.IndexedSet
+import Data.EqIndexedSet
 open import Util.List using (find-or-last)
-
-open import Relation.Binary using (Setoid; IsEquivalence)
 
 open import Util.AuxProofs using (true≢false; n≡ᵇn; n<m→m≡ᵇn)
 open import Framework.Annotation.IndexedName using (IndexedName; _∙_; show-IndexedName)
@@ -105,31 +103,28 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
       → fnoc c D ≢ i
 open FnocContract
 
-module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
-  open Setoid S
-  module ≈-Eq = IsEquivalence isEquivalence
-
-  show-nested-choice : ∀ {i} → (Q → String) → (Carrier → String) → NestedChoice i Carrier → String
+module Translate (A : Set) where
+  show-nested-choice : ∀ {i} → (Q → String) → (A → String) → NestedChoice i A → String
   show-nested-choice show-q = NestedChoice.show-nested-choice (show-IndexedName show-q)
 
-  ⟦_⟧ : ∀ {i : Size} → NestedChoice i Carrier → 2Config → Carrier
+  ⟦_⟧ : ∀ {i : Size} → NestedChoice i A → 2Config → A
   ⟦ chc ⟧ c = ⟦ chc ⟧ₒ (evalConfig c)
 
-  convert' : Q → Carrier → List Carrier → ℕ → NestedChoice ∞ Carrier
+  convert' : Q → A → List A → ℕ → NestedChoice ∞ A
   convert' D l []       n = value l
   convert' D l (r ∷ rs) n = choice ((D ∙ n) ⟨ value l , convert' D r rs (suc n) ⟩)
 
-  convert : Choice.Syntax Q Carrier → NestedChoice ∞ Carrier
+  convert : Choice.Syntax Q A → NestedChoice ∞ A
   convert (D ⟨ c ∷ cs ⟩) = convert' D c cs zero
 
   module Preservation
       (conf : NConfig → 2Config)
       (fnoc : 2Config → NConfig)
       where
-    open Data.IndexedSet S using (_⊆[_]_; _≅[_][_]_; _≅_)
+    open Data.EqIndexedSet using (_⊆[_]_; _≅[_][_]_; _≅_)
 
     preserves-conf :
-      ∀ (chc : Choice.Syntax Q Carrier)
+      ∀ (chc : Choice.Syntax Q A)
       → ConfContract (Choice.Syntax.dim chc) conf
         -----------------------------------
       → Choice.⟦ chc ⟧ ⊆[ conf ] ⟦ convert chc ⟧
@@ -149,17 +144,17 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
         Hence, we introduce `n` which decreases each iteration such that we have
         `n + m ≡ c D`.
         -}
-        induction : (l : Carrier) → (rs : List Carrier)
+        induction : (l : A) → (rs : List A)
                   → (n m : ℕ)
                   → n + m ≡ c D
-                  → find-or-last n (l ∷ rs) ≈ ⟦ convert' D l rs m ⟧ (conf c)
+                  → find-or-last n (l ∷ rs) ≡ ⟦ convert' D l rs m ⟧ (conf c)
         -- Only one alternative left
-        induction l [] n m n+m≡cD = ≈-Eq.refl
+        induction l [] n m n+m≡cD = refl
         -- Select the current alternative (numbered `m`) because
         -- `c D = 0 + m = m`
         induction l (r ∷ rs) zero m m≡cD
           rewrite select-n confContract c (Eq.sym m≡cD)
-          = ≈-Eq.refl
+          = refl
         -- Ignore the current alternative (numbered `m`) and select one of the
         -- later alternatives (numbered `> m`) because `c D = suc n + m` and
         -- thus `c D > m`
@@ -169,7 +164,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
           = induction r rs n (suc m) n+m≡cD
 
     preserves-fnoc :
-      ∀ (chc : Choice.Syntax Q Carrier)
+      ∀ (chc : Choice.Syntax Q A)
       → FnocContract (Choice.Syntax.dim chc) fnoc
         -----------------------------------
       → ⟦ convert chc ⟧ ⊆[ fnoc ] Choice.⟦ chc ⟧
@@ -186,13 +181,13 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
         to  fulfill FnocContract we also need to remember (in `ps`) that all
         alternatives with an index `< n` where not selected.
         -}
-        induction : (l : Carrier) → (rs : List Carrier)
+        induction : (l : A) → (rs : List A)
                   → (n m : ℕ)
                   → fnoc c D ≡ n + m
                   → (∀ (j : ℕ) → j < n → evalConfig c (D ∙ j) ≡ false)
-                  → ⟦ convert' D l rs n ⟧ c ≈ find-or-last m (l ∷ rs)
+                  → ⟦ convert' D l rs n ⟧ c ≡ find-or-last m (l ∷ rs)
         -- Only one alternative left
-        induction l [] n m p ps = ≈-Eq.refl
+        induction l [] n m p ps = refl
         induction l (r ∷ rs) n m p ps with evalConfig c (D ∙ n) in selected
         -- Select the current alternative because it is the first one where
         -- `config-without-proof c (D ∙ n)` is true
@@ -200,7 +195,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
           rewrite correct fnocContract c n selected ps
           rewrite Nat.+-comm n m
           rewrite Eq.sym (Nat.+-cancelʳ-≡ n zero m p)
-          = ≈-Eq.refl
+          = refl
         -- Impossible case: `config-without-proof c (D ∙ n)` is `false` hence
         -- `incorrect` guarantees `fnoc c D ≢ n` but we have
         -- `fnoc c D ≡ n + 0 = n`
@@ -219,7 +214,7 @@ module Translate {ℓ₂} (S : Setoid Level.zero ℓ₂) where
             ... | yes refl = selected
 
     convert-preserves :
-      ∀ (chc : Choice.Syntax Q Carrier)
+      ∀ (chc : Choice.Syntax Q A)
       → ConfContract (Choice.Syntax.dim chc) conf
       → FnocContract (Choice.Syntax.dim chc) fnoc
         ------------------------------------------

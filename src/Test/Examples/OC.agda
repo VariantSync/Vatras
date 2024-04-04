@@ -3,7 +3,8 @@
 module Test.Examples.OC where
 
 open import Data.List using (List; []; _∷_; [_])
-open import Data.String using (String)
+open import Data.String as String using (String)
+open import Data.Product using (_,_)
 open import Size using (Size; ↑_; ∞)
 
 -- open import Framework.Annotation.Name using (Option)
@@ -14,7 +15,7 @@ open OC
 open import Test.Example
 
 OCExample : Set
-OCExample = Example (WFOC String ∞ String)
+OCExample = Example (WFOC String ∞ (String , String._≟_))
 
 optex-unary : OCExample
 optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "lol") ])

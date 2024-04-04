@@ -5,8 +5,8 @@ module Test.Experiments.OC-to-2CC where
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (_∷_; [])
 open import Data.Nat using (_+_)
-open import Data.Product using (proj₁; proj₂)
-open import Data.String using (String; _++_; unlines; _==_)
+open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.String as String using (String; _++_; unlines; _==_)
 
 open import Size using (Size; ∞)
 open import Function using (id)
@@ -65,7 +65,7 @@ OC→2CC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 -- Translate an option calculus expression.
 -- Then configure it with an all-yes and an all-no config and print the resulting variants.
-exp-oc-to-bcc : Experiment (WFOC Feature ∞ String)
+exp-oc-to-bcc : Experiment (WFOC Feature ∞ (String , String._≟_))
 getName exp-oc-to-bcc = "Translate OC to 2CC"
 get     exp-oc-to-bcc ex@(name ≔ oc) = do
   let --trans-result   = translate oc

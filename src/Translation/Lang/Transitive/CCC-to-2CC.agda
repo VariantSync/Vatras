@@ -1,14 +1,14 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_)
+open import Framework.Definitions using (𝔽; 𝕍)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
-module Translation.Lang.Transitive.CCC-to-2CC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.Transitive.CCC-to-2CC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Nat using (ℕ; zero)
 open import Data.Product using (_×_)
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
-open import Framework.Definitions using (𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Size using (Size)
 open import Util.Nat.AtLeast using (sucs)

@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.2CC-to-2ADT (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2CC-to-2ADT (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Bool as Bool using (if_then_else_)
@@ -11,7 +12,6 @@ import Data.Bool.Properties as Bool
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 import Data.List.Properties as List
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id)
@@ -25,11 +25,11 @@ open import Lang.All.Generic Variant Artifact∈ₛVariant
 open 2CC using (2CC; 2CCL)
 open 2ADT using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → A → List (2ADT Variant D A) → 2ADT Variant D A
+push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (2ADT Variant D A) → 2ADT Variant D A
 push-down-artifact {A = A} a cs = go cs []
   module push-down-artifact-Implementation where
   go : ∀ {i : Size} {D : 𝔽} → List (2ADT Variant D A) → List (Variant A) → 2ADT Variant D A
@@ -44,7 +44,7 @@ translate (a 2CC.-< cs >-) = push-down-artifact a (List.map translate cs)
 translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
 
 ⟦push-down-artifact⟧ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-  → (a : A)
+  → (a : atoms A)
   → (cs : List (2ADT Variant D A))
   → (config : 2ADT.Configuration D)
   → 2ADT.⟦ push-down-artifact a cs ⟧ config ≡ artifact a (List.map (λ e → 2ADT.⟦ e ⟧ config) cs)

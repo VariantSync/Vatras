@@ -39,7 +39,7 @@ open 2CC renaming (_-<_>- to Artifact₂; ⟦_⟧ to ⟦_⟧₂)
 
 open import Data.EqIndexedSet
 
-Artifactᵥ : ∀ {A} → A → List (Rose ∞ A) → Rose ∞ A
+Artifactᵥ : ∀ {A} → atoms A → List (Rose ∞ A) → Rose ∞ A
 Artifactᵥ a cs = rose (a At.-< cs >-)
 
 open import Util.AuxProofs using (id≗toList∘fromList)
@@ -84,7 +84,7 @@ record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
   -- However, in Agda, using ⦇ and ⦈ is forbidden.
   constructor _-<_≪_>- --\T
   field
-    parent    : A
+    parent    : atoms A
     siblingsL : List (2CC F ∞ A)
     siblingsR : Vec (OC F i A) work
 open Zip public
@@ -119,7 +119,7 @@ data _⊢_⟶ₒ_ where
   T-done :
     ∀ {i  : Size}
       {A  : 𝔸}
-      {a  : A}
+      {a  : atoms A}
       {ls : List (2CC F ∞ A)}
       --------------------------------------
     → i ⊢ a -< ls ≪ [] >- ⟶ₒ Artifact₂ a ls
@@ -133,7 +133,7 @@ data _⊢_⟶ₒ_ where
     ∀ {i   : Size  }
       {n   : ℕ    }
       {A   : 𝔸}
-      {a b : A     }
+      {a b : atoms A}
       {ls  : List (2CC F ∞    A)  }
       {es  : List (OC F    i  A)  }
       {rs  : Vec  (OC F (↑ i) A) n}
@@ -155,7 +155,7 @@ data _⊢_⟶ₒ_ where
     ∀ {i   : Size  }
       {n   : ℕ     }
       {A   : 𝔸     }
-      {a   : A     }
+      {a   : atoms A}
       {O   : Option}
       {e   : OC F i A}
       {ls  : List (2CC F    ∞  A)  }
@@ -177,7 +177,7 @@ data _⟶_ where
   T-root :
     ∀ {i  : Size}
       {A  : 𝔸}
-      {a  : A}
+      {a  : atoms A}
       {es : List (OC F i A)}
       {e  : 2CC F ∞ A}
     → i ⊢ a -< [] ≪ (fromList es) >- ⟶ₒ e
@@ -297,7 +297,7 @@ Agda fails to see that "preserves" directly unpacks this constructor again and c
 Since Agda fails here, we have to avoid the re- and unpacking below T-root and thus introduce this auxiliary function.
 -}
 preserves-without-T-root :
-  ∀ {i} {A} {b : A} {es : List (OC F i A)} {e : 2CC F ∞ A}
+  ∀ {i} {A} {b : atoms A} {es : List (OC F i A)} {e : 2CC F ∞ A}
   → (c : OC.Configuration F)
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ------------------------------------------
@@ -323,7 +323,7 @@ The concrete formulas are a bit convoluted here because they are partially norma
 -}
 preservesₒ-artifact :
   ∀ {i} {A} {c}
-    {b   : A}
+    {b   : atoms A}
     {ls  : List (2CC F ∞ A)}
     {es  : List (OC F i A)}
     {e   : 2CC F ∞ A}
@@ -365,7 +365,7 @@ So we show Agda that ⟦_⟧ₒ never does so.
 This theorem has no real meaning and is rather a technical necessity.
 -}
 preservesₒ-option-size :
-  ∀ {n} {i} {A} {c} {a : A} {ls : List (2CC F ∞ A)} {rs : Vec (OC F (↑ i) A) n}
+  ∀ {n} {i} {A} {c} {a : atoms A} {ls : List (2CC F ∞ A)} {rs : Vec (OC F (↑ i) A) n}
   → (e : OC F i A)
     -----------------------------------------------------------------------------------------------------
   →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))

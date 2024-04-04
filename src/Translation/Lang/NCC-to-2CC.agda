@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.NCC-to-2CC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC-to-2CC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.Bool.Properties as Bool
@@ -16,7 +17,6 @@ open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -32,7 +32,7 @@ open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Framework.Annotation.IndexedDimension
 open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
@@ -85,7 +85,7 @@ module 2Ary where
       NCC.⟦ d ⟨ l ∷ r ∷ [] ⟩ ⟧ (fnoc config)
     ∎
     where
-    lemma : ∀ {A : 𝔸} {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (fnoc config d)
+    lemma : ∀ {A : Set} {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (fnoc config d)
     lemma with config d
     ... | true = refl
     ... | false = refl
@@ -124,7 +124,7 @@ module 2Ary where
       2CC.⟦ translate (d ⟨ l ∷ r ∷ [] ⟩) ⟧ (conf config)
     ∎
     where
-    lemma : {A : 𝔸} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if conf config d then a else b)
+    lemma : {A : Set} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if conf config d then a else b)
     lemma with config d
     ... | zero = refl
     ... | suc zero = refl

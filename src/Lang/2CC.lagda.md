@@ -21,6 +21,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
+open import Data.Product using (_,_)
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
@@ -91,7 +92,7 @@ Some transformation rules:
     open Sem V mkArtifact
 
     module _ {A : 𝔸} where
-      ast-factoring : ∀ {i} {D : Dimension} {a : A} {n : ℕ}
+      ast-factoring : ∀ {i} {D : Dimension} {a : atoms A} {n : ℕ}
         → (xs ys : Vec (2CC Dimension i A) n)
           -------------------------------------------------------------------------------------
         → 2CCL Dimension ⊢
@@ -189,7 +190,7 @@ Some transformation rules:
   open Data.List using (concatMap) renaming (_++_ to _++l_)
 
   -- get all dimensions used in a binary CC expression
-  dims : ∀ {i : Size} {A : Set} → 2CC Dimension i A → List Dimension
+  dims : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → List Dimension
   dims (_ -< es >-) = concatMap dims es
   dims (D ⟨ l , r ⟩) = D ∷ (dims l ++l dims r)
 ```
@@ -197,17 +198,17 @@ Some transformation rules:
 ## Show
 
 ```agda
-  open import Data.String using (String; _++_; intersperse)
+  open import Data.String as String using (String; _++_; intersperse)
   module Pretty (show-D : Dimension → String) where
     open import Show.Lines
 
-    show : ∀ {i} → 2CC Dimension i String → String
+    show : ∀ {i} → 2CC Dimension i (String , String._≟_) → String
     show (a -< [] >-) = a
     show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
     show (D ⟨ l , r ⟩) = show-D D ++ "⟨" ++ (show l) ++ ", " ++ (show r) ++ "⟩"
 
 
-    pretty : ∀ {i : Size} → 2CC Dimension i String → Lines
+    pretty : ∀ {i : Size} → 2CC Dimension i (String , String._≟_) → Lines
     pretty (a -< [] >-) = > a
     pretty (a -< es@(_ ∷ _) >-) = do
       > a ++ "-<"
