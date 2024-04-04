@@ -123,6 +123,26 @@ module _ {F : 𝔽} where
 
 ## Expressiveness
 
+We need to require that there exists an injection between `F × ℕ` and the
+annotation language `F : 𝔽`to obtain expressiveness proofs which are independent
+of the annotation language `F`. Without this restriction some expressiveness
+theorems would sound like
+  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n (F × ℕ) ≽ CCCL F`
+whereas we would like to obtain
+  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n F ≽ CCCL F`
+so we can also get
+  `NCC≋CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n F ≋ CCCL F`
+
+The intuition behind this restriction is that we may need to extend the set of
+annotations `F` by new annotations. For example, when labeling the individual
+choices in `NCC n` with new annotations while translating to `NCC 2` in
+`Translation.Lang.NCC.ShrinkTo2`. For practical applications, expressiveness
+theorems like
+  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n (F × ℕ) ≽ CCCL F`
+make the changes in the feature model explicit. For theoretical results however,
+it is easier to assume that the set of annotations `F` is infinite, which is
+equivalent to the restriction used here (except if `F` is empty).
+
 ```agda
 module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where
   private
