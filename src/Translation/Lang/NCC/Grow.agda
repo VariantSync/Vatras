@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.Definitions using (𝕍)
+open import Framework.Definitions using (𝕍; atoms)
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
@@ -39,7 +39,7 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-artifact : {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 -- Increasing the arity is straightforward. We have to duplicate one element (we choose the last one to be consistent with the saturation semantic of `CCC`, see `find-or-last`) until the arity difference is zero.

@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_)
+open import Framework.Definitions
 open import Construct.Artifact using () renaming (Syntax to Artifact)
 
-module Translation.Lang.NADT-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NADT-to-CCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Construct.Choices
 open import Construct.GrulerArtifacts using (leaf)
@@ -11,7 +12,6 @@ import Data.EqIndexedSet as IndexedSet
 import Data.List.NonEmpty as List⁺
 open import Data.Product using (proj₂)
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Framework.Variants using (VariantEncoder)

@@ -9,20 +9,20 @@ open import Data.List using ([]; _∷_; map)
 open import Function using (id; _∘_; flip)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Definitions using (𝕍; 𝔸)
+open import Framework.Definitions using (𝕍; 𝔸; atoms)
 open import Framework.VariabilityLanguage
 open import Construct.Artifact as At using (_-<_>-; map-children) renaming (Syntax to Artifact; Construct to ArtifactC)
 
 open import Data.EqIndexedSet
 
 data GrulerVariant : 𝕍 where
-  asset : ∀ {A : 𝔸} (a : A) → GrulerVariant A
+  asset : ∀ {A : 𝔸} (a : atoms A) → GrulerVariant A
   _∥_   : ∀ {A : 𝔸} (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
 
 data Rose : Size → 𝕍 where
   rose : ∀ {i} {A : 𝔸} → Artifact (Rose i) A → Rose (↑ i) A
 
-rose-leaf : ∀ {A : 𝔸} → A → Rose ∞ A
+rose-leaf : ∀ {A : 𝔸} → atoms A → Rose ∞ A
 rose-leaf {A} a = rose (At.leaf a)
 
 -- Variants are also variability languages
@@ -46,7 +46,7 @@ RoseVL : VariabilityLanguage (Rose ∞)
 RoseVL = Variant-is-VL (Rose ∞)
 
 open import Data.String using (String; _++_; intersperse)
-show-rose : ∀ {i} {A} → (A → String) → Rose i A → String
+show-rose : ∀ {i} {A} → (atoms A → String) → Rose i A → String
 show-rose show-a (rose (a -< [] >-)) = show-a a
 show-rose show-a (rose (a -< es@(_ ∷ _) >-)) = show-a a ++ "-<" ++ (intersperse ", " (map (show-rose show-a) es)) ++ ">-"
 

@@ -187,7 +187,7 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
   -- get all dimensions used in a CCC Dimension expression
   open Data.List using (concatMap)
 
-  dims : ∀ {i : Size} {A : Set} → CCC Dimension i A → List Dimension
+  dims : ∀ {i : Size} {A : 𝔸} → CCC Dimension i A → List Dimension
   dims (_ -< es >-) = concatMap dims es
   dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
 ```
@@ -195,10 +195,10 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
 ## Show
 
 ```agda
-  open import Data.String using (String; _++_)
+  open import Data.String as String using (String; _++_)
 
-  show : ∀ {i} → (Dimension → String) → CCC Dimension i String → String
+  show : ∀ {i} → (Dimension → String) → CCC Dimension i (String , String._≟_) → String
   show _ (a -< [] >-) = a
   show show-D (a -< es@(_ ∷ _) >- ) = a ++ "-<" ++ (foldl _++_ "" (map (show show-D) es)) ++ ">-"
-  show show-D (D ⟨ es ⟩) = show-D D ++ "⟨" ++ (Data.String.intersperse ", " (toList (map⁺ (show show-D) es))) ++ "⟩"
+  show show-D (D ⟨ es ⟩) = show-D D ++ "⟨" ++ (String.intersperse ", " (toList (map⁺ (show show-D) es))) ++ "⟩"
 ```

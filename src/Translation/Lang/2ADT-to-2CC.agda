@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.2ADT-to-2CC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2ADT-to-2CC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Bool as Bool using (if_then_else_)
@@ -12,7 +13,6 @@ open import Data.Product using (proj₂)
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 import Data.List.Properties as List
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Framework.Variants using (VariantEncoder)
@@ -27,7 +27,7 @@ open import Lang.All.Generic Variant Artifact∈ₛVariant
 open 2CC using (2CC; 2CCL)
 open 2ADT using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 

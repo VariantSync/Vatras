@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.NCC-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC-to-CCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -14,7 +15,6 @@ open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (refl)
@@ -29,7 +29,7 @@ open import Lang.All.Generic Variant Artifact∈ₛVariant
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 

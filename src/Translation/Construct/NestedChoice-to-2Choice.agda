@@ -41,7 +41,7 @@ module Embed
 
   extr = extract constr
 
-  open Choice-to-2Choice.Translate {F} (Eq.setoid (Expression Γ A))
+  open Choice-to-2Choice.Translate {F} (Expression Γ A)
   open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
 
   embed : ∀ {i} → NestedChoice i (Expression Γ A) → Expression Γ A

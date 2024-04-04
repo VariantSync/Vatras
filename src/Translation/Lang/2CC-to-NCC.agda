@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.2CC-to-NCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2CC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.Bool.Properties as Bool
@@ -16,7 +17,6 @@ open import Data.Product using () renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -32,12 +32,12 @@ open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 
 open import Translation.Lang.NCC.Grow Variant Artifact∈ₛVariant using (growFrom2Compiler)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 module 2Ary where
-  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔽}
+  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → 2CC D i A
     → NCC (sucs zero) D i A
   translate (a -< cs >-) = a -< List.map translate cs >-
@@ -53,7 +53,7 @@ module 2Ary where
   ... | zero = true
   ... | suc zero = false
 
-  preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔽}
+  preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → (expr : 2CC D i A)
     → NCC.⟦ translate expr ⟧ ⊆[ fnoc ] 2CC.⟦ expr ⟧
   preserves-⊆ (a -< cs >-) config =

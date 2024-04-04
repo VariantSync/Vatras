@@ -26,6 +26,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.List
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
+open import Data.Product using (_,_)
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
@@ -74,7 +75,7 @@ module _ {n : ℕ≥ 2} {Dimension : 𝔽} where
   import Data.Vec as Vec
 
   -- get all dimensions used in a binary CC expression
-  dims : ∀ {i : Size} {A : Set} → NCC n Dimension i A → List Dimension
+  dims : ∀ {i : Size} {A : 𝔸} → NCC n Dimension i A → List Dimension
   dims (_ -< es >-) = concatMap dims es
   dims (D ⟨ cs ⟩) = D ∷ concatMap dims (Vec.toList cs)
 ```
@@ -82,17 +83,17 @@ module _ {n : ℕ≥ 2} {Dimension : 𝔽} where
 ## Show
 
 ```agda
-  open import Data.String using (String; _++_; intersperse)
+  open import Data.String as String using (String; _++_; intersperse)
   module Pretty (show-D : Dimension → String) where
     open import Show.Lines
 
-    show : ∀ {i} → NCC n Dimension i String → String
+    show : ∀ {i} → NCC n Dimension i (String , String._≟_) → String
     show (a -< [] >-) = a
     show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
     show (D ⟨ cs ⟩) = show-D D ++ "⟨" ++ (intersperse ", " (mapl show (Vec.toList cs))) ++ "⟩"
 
 
-    pretty : ∀ {i : Size} → NCC n Dimension i String → Lines
+    pretty : ∀ {i : Size} → NCC n Dimension i (String , String._≟_) → Lines
     pretty (a -< [] >-) = > a
     pretty (a -< es@(_ ∷ _) >-) = do
       > a ++ "-<"

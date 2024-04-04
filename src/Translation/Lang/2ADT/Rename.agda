@@ -1,6 +1,6 @@
 {-# OPTIONS --sized-types #-}
 
-open import Framework.Definitions using (𝕍)
+open import Framework.Definitions using (𝕍; atoms)
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
@@ -29,7 +29,7 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open import Lang.All.Generic Variant Artifact∈ₛVariant
 open 2ADT using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 2ADT-map-config : ∀ {D₁ D₂ : 𝔽}

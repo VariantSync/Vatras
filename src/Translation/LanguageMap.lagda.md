@@ -143,6 +143,8 @@ make the changes in the feature model explicit. For theoretical results however,
 it is easier to assume that the set of annotations `F` is infinite, which is
 equivalent to the restriction used here (except if `F` is empty).
 
+A witness of these preconditions can be faund in `Util.String`.
+
 ```agda
 module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where
   private
