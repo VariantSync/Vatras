@@ -12,6 +12,7 @@ open import Framework.VariabilityLanguage
 ## Equivalence of Indices
 
 Two indices are equivalent for an expression when they produce the same output for all expressions.
+We can actually generalize this to index equivalence on indexed sets (TODO).
 ```agda
 𝕃 = VariabilityLanguage V
 

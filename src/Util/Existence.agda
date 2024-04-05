@@ -3,7 +3,8 @@
 module Util.Existence where
 
 open import Agda.Primitive using (Level; _⊔_)
-open import Data.Product using (Σ)
+open import Data.Product using (Σ; ∄)
+open import Relation.Nullary.Negation using (¬_)
 open import Size using (Size; SizeUniv)
 
 -- Existence of sizes
@@ -27,3 +28,8 @@ open Eq using (_≡_; refl)
 
 ,-injectiveʳ : ∀ {A : Set} {i j : Size} {a b : A} → (i , a) ≡ (j , b) → a ≡ b
 ,-injectiveʳ refl = refl
+
+infix 2 ¬Σ-syntax
+¬Σ-syntax : ∀ {a b} (A : Set a) → (A → Set b) → Set (a ⊔ b)
+¬Σ-syntax _ p = ∄ p
+syntax ¬Σ-syntax A (λ x → B) = ∄[ x ∈ A ] B

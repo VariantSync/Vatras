@@ -213,7 +213,7 @@ Another way is to enrich the annotation language, for example using propositiona
 
   -- alternative name that does not require writing tortoise shell braces
   opt : ∀ {i : Size} {A : 𝔸} → Option → OC Option i A → OC Option (↑ i) A
-  opt O = _❲_❳ O
+  opt = _❲_❳
 
   singleton : ∀ {i : Size} {A : 𝔸} → atoms A → OC Option i A → OC Option (↑ i) A
   singleton a e = a -< e ∷ [] >-

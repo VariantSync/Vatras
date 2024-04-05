@@ -1,4 +1,4 @@
-{-# OPTIONS --sized-types --guardedness #-}
+{-# OPTIONS --sized-types --guardedness --allow-unsolved-metas #-}
 
 module Main where
 
@@ -25,6 +25,8 @@ open import Test.Experiments.CCC-to-2CC
 open import Test.Experiments.OC-to-2CC
 
 open import Translation.Experiments.Choice-to-2Choice-Experiment using (exp; all-ex)
+import Test.Experiments.FST-Experiments as FSTs
+open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
 
 {-|
 A list of programs that we want to run.
@@ -39,6 +41,7 @@ experimentsToRun =
   setup exp-oc-to-bcc optex-all ∷
   -- Run some example translations from n to binary choices
   setup exp all-ex ∷
+  setup toy-calculator-experiment ex-all ∷
   []
 
 {-|
