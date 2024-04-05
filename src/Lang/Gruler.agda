@@ -23,7 +23,7 @@ private
   pc-semantics = PlainConstruct-Semantics VLParallelComposition.Construct VLParallelComposition.ParallelComposition∈ₛGrulerVariant
 
 data Gruler : Size → 𝔼 where
-  GAsset  : ∀ {i A} → Leaf A                           → Gruler i A
+  GAsset  : ∀ {i A} → Leaf (atoms A)                   → Gruler i A
   GPComp  : ∀ {i A} → ParallelComposition (Gruler i A) → Gruler (↑ i) A
   GChoice : ∀ {i A} → VL2Choice.Syntax F (Gruler i) A  → Gruler (↑ i) A
 
@@ -42,7 +42,7 @@ gruler-has-leaf {i} = record
   ; snoc = snoc'
   ; id-l = λ _ → refl
   }
-  where snoc' : ∀ {A} → Gruler i A → Maybe (Leaf A)
+  where snoc' : ∀ {A} → Gruler i A → Maybe (Leaf (atoms A))
         snoc' (GAsset A)  = just A
         snoc' _ = nothing
 

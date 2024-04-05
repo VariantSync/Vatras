@@ -9,6 +9,9 @@ open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_
 open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.List.Properties using (length-++)
+open import Data.Product using (_×_; _,_)
+open import Relation.Binary using (DecidableEquality)
+open import Relation.Nullary.Decidable using (yes; no)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; _≗_; refl)
@@ -144,3 +147,9 @@ module Vec where
       toList (fromList (x ∷ xs))
     ∎
 open Vec public
+
+decidableEquality-× : {A B : Set} → DecidableEquality A → DecidableEquality B → DecidableEquality (A × B)
+decidableEquality-× _==A_ _==B_ (a₁ , b₁) (a₂ , b₂) with a₁ ==A a₂ with b₁ ==B b₂
+... | yes refl | yes refl = yes refl
+... | yes refl | no b₁≢b₂ = no λ eq → b₁≢b₂ (Eq.cong (λ where (a , b) → b) eq)
+... | no a₁≢a₂ | _ = no λ eq → a₁≢a₂ (Eq.cong (λ where (a , b) → a) eq)

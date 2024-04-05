@@ -3,8 +3,9 @@ open import Framework.Definitions
 module Framework.Relation.Expressiveness (V : 𝕍) where
 
 open import Data.EqIndexedSet using (≅[]→≅)
+open import Data.Empty using (⊥)
 open import Data.Product using (_,_; _×_; Σ-syntax; proj₁; proj₂)
-open import Relation.Nullary.Negation using (¬_)
+open import Relation.Nullary.Negation using (¬_; contraposition)
 open import Relation.Binary using (IsEquivalence; Reflexive; Symmetric; Transitive; Antisymmetric)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; trans)
 open import Function using (_∘_; Injective)
@@ -87,4 +88,10 @@ expressiveness-from-compiler : ∀ {L₁ L₂ : VariabilityLanguage V}
   → LanguageCompiler L₁ L₂
   → L₂ ≽ L₁
 expressiveness-from-compiler compiler = expressiveness-by-translation (LanguageCompiler.compile compiler) (λ e → ≅[]→≅ (LanguageCompiler.preserves compiler e))
+
+compiler-cannot-exist : ∀ {L₁ L₂ : VariabilityLanguage V}
+  → L₂ ⋡ L₁
+  → LanguageCompiler L₁ L₂
+  → ⊥
+compiler-cannot-exist = contraposition expressiveness-from-compiler
 ```

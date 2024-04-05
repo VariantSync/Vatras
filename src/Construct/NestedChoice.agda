@@ -9,7 +9,7 @@ open import Size using (Size; ↑_)
 
 open import Construct.Choices
 
-data NestedChoice : Size → 𝔼 where
+data NestedChoice : Size → Set → Set where
   value  : ∀ {i A} → A → NestedChoice i A
   choice : ∀ {i A} → 2Choice.Syntax F (NestedChoice i A) → NestedChoice (↑ i) A
 

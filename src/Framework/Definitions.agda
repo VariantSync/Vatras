@@ -1,10 +1,11 @@
 module Framework.Definitions where
 
 open import Data.Maybe using (Maybe; just)
-open import Data.Product using (_×_; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+open import Data.Product using (_×_; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
 open import Data.Unit using (⊤; tt) public
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
+open import Relation.Binary using (DecidableEquality)
 open import Relation.Nullary.Negation using (¬_)
 
 -- open import Level using (suc; _⊔_)
@@ -16,7 +17,10 @@ We have no assumptions on that data so its just a type.
 -- 𝔸 : ∀ {ℓ} → Set (suc ℓ)
 -- 𝔸 {ℓ} = Set ℓ
 𝔸 : Set₁
-𝔸 = Set
+𝔸 = Σ Set DecidableEquality
+
+atoms : 𝔸 → Set
+atoms = proj₁
 
 {-
 Variant Language.

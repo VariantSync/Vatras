@@ -3,11 +3,11 @@
 
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 
-This is the supplementary Agda library for our paper _On the Expressive Power of Variability Languages_ submitted to 51st ACM SIGPLAN Symposium on Principles of Programming Languages (POPL 2024).
+This is the supplementary Agda library for our paper _On the Expressive Power of Variability Languages_ submitted to Object-Oriented Programming, Systems, Languages, and Applications 2024 (in PACM PL) (OOPSLA 2024). 
 
 ## Setup
 
-The library needs Agda version 2.6.3 (newer version should also work but we did not test them). We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)) and Manjaro. The only dependency of this library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory (already contained within the zip file of the POPL'24 supplementary material).
+The library needs Agda version 2.6.3 (newer version should also work but we did not test them). We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)) and Manjaro. The only dependency of this library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory (already contained within the zip file of the supplementary material).
 
 ### Installation
 
@@ -16,7 +16,12 @@ We recommend following the installation instructions from the [Programming Langu
 
 TL;DR: In summary, when following the book, you have to do:
 
-1. Install the GHC compiler (if you have not installed it already) and the cabal build tool for which we recommend using [GHCup](https://www.haskell.org/ghcup/).
+0. Install [GHCup](https://www.haskell.org/ghcup/), which we recommend for installing `ghc` and `cabal`. 
+   ```shell 
+   curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh 
+   ```
+
+1. Install the GHC compiler (if you have not installed it already) and the cabal build tool with [GHCup](https://www.haskell.org/ghcup/).
 
     ```shell
     ghcup install ghc 9.2.4
@@ -26,7 +31,7 @@ TL;DR: In summary, when following the book, you have to do:
     ghcup set cabal recommended
     ```
 
-2. Install Agda
+2. Install Agda (this may take a while).
 
     ```shell
     cabal update

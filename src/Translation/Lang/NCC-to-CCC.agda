@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.NCC-to-CCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC-to-CCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -14,7 +15,6 @@ open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (refl)
@@ -25,25 +25,11 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-import Lang.CCC
-module CCC where
-  open Lang.CCC public
-  module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
-  open CCC-Sem-1 using (CCCL) public
-  module CCC-Sem-2 {D} = Lang.CCC.Sem D Variant Artifact∈ₛVariant
-  open CCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
-
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
@@ -141,7 +127,7 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → CCC.⟦ translate n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-NCC→CCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (CCCL D)
+NCC→CCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (CCCL D)
 NCC→CCC n .LanguageCompiler.compile = translate n
 NCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
 NCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n

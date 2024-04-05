@@ -23,15 +23,15 @@ record ParallelComposition {ℓ} (A : Set ℓ) : Set ℓ where
 
 module VLLeaf where
   Syntax : ℂ
-  Syntax _ A = Leaf A
+  Syntax _ A = Leaf (atoms A)
 
   make-leaf :
     ∀ {E : 𝔼} → Syntax ∈ₛ E
-    → {A : 𝔸} → A
+    → {A : 𝔸} → atoms A
     → E A
   make-leaf mkLeaf a = cons mkLeaf (leaf a)
 
-  elim-leaf : ∀ {V} → Syntax ∈ₛ V → ∀ {A} → Leaf A → V A
+  elim-leaf : ∀ {V} → Syntax ∈ₛ V → ∀ {A} → Leaf (atoms A) → V A
   elim-leaf leaf∈V l = cons leaf∈V l
 
   Construct : PlainConstruct

@@ -17,7 +17,7 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
 open import Function using (_∘_; Surjective)
 
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 
 open import Framework.VariabilityLanguage
 open import Framework.Properties.Completeness V using (Complete)
@@ -150,24 +150,16 @@ VariantList-is-Complete vs =
 ### Soundness
 
 ```agda
-module _ {A : 𝔸} where
-  #' : VariantList A → ℕ
-  #' = length
-
-  pick-conf : (e : VariantList A) → Fin (suc (#' e)) → Configuration
-  pick-conf _ = vl-conf
-
-  pick-conf-surjective : ∀ (e : VariantList A) → Surjective _≡_ (VariantListL ∋ e ⊢_≣ⁱ_) (pick-conf e)
-  pick-conf-surjective _ zero = zero , refl
-  pick-conf-surjective (_ ∷ []) (suc y) = vl-fnoc (suc y) , refl
-  pick-conf-surjective (e ∷ f ∷ es) (suc y) with pick-conf-surjective (f ∷ es) y
-  ... | i , ⟦f∷es⟧i≡⟦f∷es⟧y = suc i , ⟦f∷es⟧i≡⟦f∷es⟧y
+-- vl-conf is inverse to vl-fnoc w.r.t. semantic equivalence of configurations.
+inverse : ∀ {A} (c : Configuration) (e : VariantList A) → VariantListL ∋ e ⊢ vl-conf {length e} (vl-fnoc c) ≣ⁱ c
+inverse zero e = refl
+inverse (suc c) (_ ∷ []) = refl
+inverse (suc c) (_ ∷ y ∷ ys) = inverse c (y ∷ ys)
 
 VariantList-is-Sound : Sound VariantListL
-VariantList-is-Sound = soundness-from-enumerability (λ e → record
-  { size = #' e
-  ; enumerate = pick-conf e
-  ; enumerate-is-surjective = pick-conf-surjective e
-  })
-
+VariantList-is-Sound e =
+    length e
+  , ⟦ e ⟧ ∘ vl-conf
+  , (λ i → vl-conf i , refl)
+  , (λ i → vl-fnoc i , sym (inverse i e))
 ```

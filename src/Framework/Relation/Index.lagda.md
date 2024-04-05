@@ -1,5 +1,5 @@
 ```agda
-open import Framework.Definitions using (𝕍)
+open import Framework.Definitions using (𝕍; 𝔸)
 module Framework.Relation.Index (V : 𝕍) where
 
 open import Level using (0ℓ)
@@ -16,7 +16,7 @@ We can actually generalize this to index equivalence on indexed sets (TODO).
 ```agda
 𝕃 = VariabilityLanguage V
 
-module _ {A : Set} where
+module _ {A : 𝔸} where
   _∋_⊢_≣ⁱ_ :
     ∀ (L : 𝕃)
     → Expression L A

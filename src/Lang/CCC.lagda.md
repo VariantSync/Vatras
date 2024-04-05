@@ -12,7 +12,7 @@ We use sizes to constrain the maximum tree-depth of an expression.
 
 ```agda
 open import Framework.Definitions
-module Lang.CCC (Dimension : 𝔽) where
+module Lang.CCC where
 ```
 
 ## Imports
@@ -43,9 +43,9 @@ open import Construct.Choices
 ## Syntax
 
 ```agda
-data CCC : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (CCC i) A → CCC (↑ i) A
-   chc  : ∀ {i A} → VLChoice.Syntax Dimension (CCC i) A → CCC (↑ i) A
+data CCC (Dimension : 𝔽) : Size → 𝔼 where
+   atom : ∀ {i A} → Artifact (CCC Dimension i) A → CCC Dimension (↑ i) A
+   chc  : ∀ {i A} → VLChoice.Syntax Dimension (CCC Dimension i) A → CCC Dimension (↑ i) A
 
 pattern _-<_>- a cs = atom (a At.-< cs >-)
 pattern _⟨_⟩ D cs    = chc  (D Choice.⟨ cs ⟩)
@@ -64,8 +64,8 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 
 First, we define configurations as functions that evaluate dimensions by tags:
 ```agda
-Configuration : 𝕂
-Configuration = Choice.Config Dimension
+Configuration : (Dimension : 𝔽) → 𝕂
+Configuration Dimension = Choice.Config Dimension
 ```
 
 We can now define the semantics.
@@ -74,45 +74,49 @@ This allows us to avoid complex error handling and we cannot easily define a con
 ```agda
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
-    CCCL : ∀ {i : Size} → VariabilityLanguage V
-    CCCL {i} = ⟪ CCC i , Configuration , ⟦_⟧ ⟫
+    CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
+    CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V (Choice.Config Dimension) (CCC i)
-    ⟦ atom x ⟧ = PlainConstruct-Semantics Artifact-Construct mkArtifact CCCL x
-    ⟦ chc  x ⟧ = VLChoice.Semantics V Dimension CCCL id x
+    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Choice.Config Dimension) (CCC Dimension i)
+    ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (CCCL Dimension) x
+    ⟦_⟧ {i} {Dimension} (chc  x) = VLChoice.Semantics V Dimension (CCCL Dimension) id x
+```
+
+```agda
+module _ {Dimension : 𝔽} where
 ```
 
 ## Properties
 
 Some transformation rules
 ```agda
-module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  open import Framework.Relation.Expression V
-  open Sem V mkArtifact
+  module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
+    open import Framework.Relation.Expression V
+    open Sem V mkArtifact
 
-  module _ {A : 𝔸} where
-    -- unary choices are mandatory
-    D⟨e⟩≣e : ∀ {e : CCC ∞ A} {D : Dimension}
-        -----------------------------
-      → CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣₁ e
-    D⟨e⟩≣e _ = refl
+    module _ {A : 𝔸} where
+      -- unary choices are mandatory
+      D⟨e⟩≣e : ∀ {e : CCC Dimension ∞ A} {D : Dimension}
+          -----------------------------
+        → CCCL Dimension ⊢ D ⟨ e ∷ [] ⟩ ≣₁ e
+      D⟨e⟩≣e _ = refl
 
-    -- other way to prove the above via variant-equivalence
+      -- other way to prove the above via variant-equivalence
 
-    D⟨e⟩⊆e : ∀ {e : CCC ∞ A} {D : Dimension}
-        -------------------------------
-      → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≤ e
-    D⟨e⟩⊆e c = c , refl
+      D⟨e⟩⊆e : ∀ {e : CCC Dimension ∞ A} {D : Dimension}
+          -------------------------------
+        → CCCL Dimension , CCCL Dimension ⊢ D ⟨ e ∷ [] ⟩ ≤ e
+      D⟨e⟩⊆e c = c , refl
 
-    e⊆D⟨e⟩ : ∀ {e : CCC ∞ A} {D : Dimension}
-        -------------------------------
-      → CCCL , CCCL ⊢ e ≤ D ⟨ e ∷ [] ⟩
-    e⊆D⟨e⟩ c = c , refl
+      e⊆D⟨e⟩ : ∀ {e : CCC Dimension ∞ A} {D : Dimension}
+          -------------------------------
+        → CCCL Dimension , CCCL Dimension ⊢ e ≤ D ⟨ e ∷ [] ⟩
+      e⊆D⟨e⟩ c = c , refl
 
-    D⟨e⟩≣e' : ∀ {e : CCC ∞ A} {D : Dimension}
-        ------------------------------
-      → CCCL , CCCL ⊢ D ⟨ e ∷ [] ⟩ ≣ e
-    D⟨e⟩≣e' {e} {D} = D⟨e⟩⊆e {e} {D} , e⊆D⟨e⟩ {e} {D}
+      D⟨e⟩≣e' : ∀ {e : CCC Dimension ∞ A} {D : Dimension}
+          ------------------------------
+        → CCCL Dimension , CCCL Dimension ⊢ D ⟨ e ∷ [] ⟩ ≣ e
+      D⟨e⟩≣e' {e} {D} = D⟨e⟩⊆e {e} {D} , e⊆D⟨e⟩ {e} {D}
 ```
 
 ## Completeness
@@ -120,89 +124,81 @@ module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
 Proof in progress:
 
 Idea: Show that we can embed any list of variants into a big choice.
-Maybe its smarter to do this for ADDs and then to conclude by transitivity of translations that CCC is also complete.
+Maybe its smarter to do this for ADDs and then to conclude by transitivity of translations that CCC Dimension is also complete.
 
 ```agda
-module Encode where
-  open import Framework.Relation.Function using (_⇔_; to; from)
-  open import Construct.Plain.Artifact as Pat using (map-children; _-<_>-)
-  open import Data.List.Properties using (map-∘; map-id; map-cong)
-  open Eq.≡-Reasoning
+  module Encode where
+    open import Framework.Relation.Function using (_⇔_; to; from)
+    open import Construct.Plain.Artifact as Pat using (map-children; _-<_>-)
+    open import Data.List.Properties using (map-∘; map-id; map-cong)
+    open Eq.≡-Reasoning
 
-  V = Rose ∞
-  mkArtifact = Artifact∈ₛRose
-  open Sem V mkArtifact
+    V = Rose ∞
+    mkArtifact = Artifact∈ₛRose
+    open Sem V mkArtifact
 
-  encode : ∀ {i} {A} → Rose i A → CCC ∞ A
-  encode (rose a) = atom (map-children encode a)
+    encode : ∀ {i} {A} → Rose i A → CCC Dimension ∞ A
+    encode (rose a) = atom (map-children encode a)
 
-  confs : ⊤ ⇔ Config CCCL
-  confs = record
-    { to = λ where tt _ → 0
-    ; from = λ _ → tt
-    }
+    confs : ⊤ ⇔ Config (CCCL Dimension)
+    confs = record
+      { to = λ where tt _ → 0
+      ; from = λ _ → tt
+      }
 
-  {-|
-  Unfortunately, I had to flag this function as terminating.
-  One solution to prove its termination is to use a sized variant (instead of using ∞).
-  The problem is that the semantics ⟦_⟧ forgets the size and sets it to ∞ and hence,
-  the types of ⟦ encode v ⟧ c and v are different and hence their values can never be equivalent regarding ≡.
+    ccc-encode-idemp : ∀ {A} (v : Rose ∞ A) → (c : Configuration Dimension) → ⟦ encode v ⟧ c ≡ v
+    ccc-encode-idemp {A} v@(rose (a At.-< cs >-)) c =
+      begin
+        ⟦ encode v ⟧ c
+      ≡⟨⟩
+        rose (a At.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-)
+      ≡˘⟨ Eq.cong rose $
+            Eq.cong (a At.-<_>-) (map-∘ cs) ⟩
+        rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
+      ≡⟨ Eq.cong rose $
+            Eq.cong (a At.-<_>-) (go cs) ⟩
+        v
+      ∎
+      where
+      go : (cs' : List (Rose ∞ A)) → map (λ c' → ⟦ encode c' ⟧ c) cs' ≡ cs'
+      go [] = refl
+      go (c' ∷ cs') = Eq.cong₂ _∷_ (ccc-encode-idemp c' c) (go cs')
 
-  The function below indeed terminates but proving it within our framework became a _technical_ challenge (not a mathematical one) for which I found no solution yet.
-  -}
-  {-# TERMINATING #-}
-  ccc-encode-idemp : ∀ {A} (v : Rose ∞ A) → (c : Configuration) → ⟦ encode v ⟧ c ≡ v
-  ccc-encode-idemp v@(rose (a At.-< cs >-)) c =
-    begin
-      ⟦ encode v ⟧ c
-    ≡⟨⟩
-      rose (a At.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-)
-    ≡˘⟨ Eq.cong rose $
-          Eq.cong (a At.-<_>-) (map-∘ cs) ⟩
-      rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
-    ≡⟨ Eq.cong rose $
-          Eq.cong (a At.-<_>-) (map-cong (λ x → ccc-encode-idemp x c) cs) ⟩
-      rose (a At.-< map id cs >-)
-    ≡⟨ Eq.cong rose $
-          Eq.cong (a At.-<_>-) (map-id cs) ⟩
-      v
-    ∎
+    preserves : ∀ {A} → (v : Rose ∞ A)
+      → Semantics (Variant-is-VL V) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
+    preserves {A} v = irrelevant-index-≅ v
+      (λ { tt → refl })
+      (ccc-encode-idemp v)
+      (to confs)
+      (from confs)
 
-  preserves : ∀ {A} → (v : Rose ∞ A)
-    → Semantics (Variant-is-VL V) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
-  preserves {A} v = irrelevant-index-≅ v
-    (λ { tt → refl })
-    (ccc-encode-idemp v)
-    (to confs)
-    (from confs)
-
-  encoder : VariantEncoder V CCCL
-  encoder = record
-    { compile = encode
-    ; config-compiler = λ _ → confs
-    ; preserves = preserves
-    }
+    encoder : VariantEncoder V (CCCL Dimension)
+    encoder = record
+      { compile = encode
+      ; config-compiler = λ _ → confs
+      ; preserves = preserves
+      }
 ```
 
 
 ## Utility
 
 ```agda
--- get all dimensions used in a CCC expression
-open Data.List using (concatMap)
+  -- get all dimensions used in a CCC Dimension expression
+  open Data.List using (concatMap)
 
-dims : ∀ {i : Size} {A : Set} → CCC i A → List Dimension
-dims (_ -< es >-) = concatMap dims es
-dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
+  dims : ∀ {i : Size} {A : 𝔸} → CCC Dimension i A → List Dimension
+  dims (_ -< es >-) = concatMap dims es
+  dims (D ⟨ es ⟩) = D ∷ concatMap dims (toList es)
 ```
 
 ## Show
 
 ```agda
-open import Data.String using (String; _++_)
+  open import Data.String as String using (String; _++_)
 
-show : ∀ {i} → (Dimension → String) → CCC i String → String
-show _ (a -< [] >-) = a
-show show-D (a -< es@(_ ∷ _) >- ) = a ++ "-<" ++ (foldl _++_ "" (map (show show-D) es)) ++ ">-"
-show show-D (D ⟨ es ⟩) = show-D D ++ "⟨" ++ (Data.String.intersperse ", " (toList (map⁺ (show show-D) es))) ++ "⟩"
+  show : ∀ {i} → (Dimension → String) → CCC Dimension i (String , String._≟_) → String
+  show _ (a -< [] >-) = a
+  show show-D (a -< es@(_ ∷ _) >- ) = a ++ "-<" ++ (foldl _++_ "" (map (show show-D) es)) ++ ">-"
+  show show-D (D ⟨ es ⟩) = show-D D ++ "⟨" ++ (String.intersperse ", " (toList (map⁺ (show show-D) es))) ++ "⟩"
 ```

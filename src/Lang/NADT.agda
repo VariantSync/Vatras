@@ -1,8 +1,7 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Definitions
--- TODO: Generalize level of F
-module Lang.NADT (F : 𝔽) (V : 𝕍) where
+module Lang.NADT where
 
 open import Data.Nat using (ℕ)
 open import Function using (id)
@@ -14,14 +13,14 @@ open import Framework.Variants using (GrulerVariant)
 open import Construct.GrulerArtifacts
 open import Construct.Choices
 
-data NADT : Size → 𝔼 where
-  NADTAsset  : ∀ {i A} → Leaf (V A)                   → NADT i A
-  NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT i) A → NADT (↑ i) A
+data NADT (V : 𝕍) (F : 𝔽) : Size → 𝔼 where
+  NADTAsset  : ∀ {i A} → Leaf (V A)                       → NADT V F (↑ i) A
+  NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT V F i) A → NADT V F (↑ i) A
 
 mutual
-  NADTVL : ∀ {i : Size} → VariabilityLanguage V
-  NADTVL {i} = ⟪ NADT i , Choice.Config F , semantics ⟫
+  NADTVL : ∀ {i : Size} (V : 𝕍) (F : 𝔽) → VariabilityLanguage V
+  NADTVL {i} V F = ⟪ NADT V F i , Choice.Config F , ⟦_⟧ ⟫
 
-  semantics : ∀ {i : Size} → 𝔼-Semantics V (Choice.Config F) (NADT i)
-  semantics (NADTAsset (leaf v)) _ = v
-  semantics (NADTChoice chc)       = VLChoice.Semantics V F NADTVL id chc
+  ⟦_⟧ : ∀ {i : Size} {V : 𝕍} {F : 𝔽} → 𝔼-Semantics V (Choice.Config F) (NADT V F i)
+  ⟦_⟧ (NADTAsset (leaf v)) _   = v
+  ⟦_⟧ {i} {V} {F} (NADTChoice chc) = VLChoice.Semantics V F (NADTVL V F) id chc

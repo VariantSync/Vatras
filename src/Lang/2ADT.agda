@@ -1,21 +1,21 @@
 open import Framework.Definitions
-module Lang.2ADT (F : 𝔽) (V : 𝕍) where
+module Lang.2ADT where
 
 open import Data.Bool using (Bool; if_then_else_)
 open import Framework.VariabilityLanguage
 
-data 2ADT : 𝔼 where
-  leaf   : ∀ {A} → V A → 2ADT A
-  _⟨_,_⟩ : ∀ {A} → (D : F) → (l : 2ADT A) → (r : 2ADT A) → 2ADT A
+data 2ADT (V : 𝕍) (F : 𝔽) : 𝔼 where
+  leaf   : ∀ {A} → V A → 2ADT V F A
+  _⟨_,_⟩ : ∀ {A} → (D : F) → (l : 2ADT V F A) → (r : 2ADT V F A) → 2ADT V F A
 
-Configuration : Set
-Configuration = F → Bool
+Configuration : (F : 𝔽) → Set
+Configuration F = F → Bool
 
-⟦_⟧ : 𝔼-Semantics V Configuration 2ADT
+⟦_⟧ : {V : 𝕍} → {F : 𝔽} → 𝔼-Semantics V (Configuration F) (2ADT V F)
 ⟦ leaf v      ⟧ _ = v
 ⟦ D ⟨ l , r ⟩ ⟧ c = if c D
                     then ⟦ l ⟧ c
                     else ⟦ r ⟧ c
 
-2ADTL : VariabilityLanguage V
-2ADTL = ⟪ 2ADT , Configuration , ⟦_⟧ ⟫
+2ADTL : (V : 𝕍) → (F : 𝔽) → VariabilityLanguage V
+2ADTL V F = ⟪ 2ADT V F , Configuration F , ⟦_⟧ ⟫

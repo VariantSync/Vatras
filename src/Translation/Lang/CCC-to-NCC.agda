@@ -1,9 +1,10 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Construct using (_∈ₛ_; cons)
+open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.CCC-to-NCC (Variant : Set → Set) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.CCC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -15,7 +16,6 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (_∘_; id)
@@ -29,35 +29,18 @@ open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open IndexedSet.≅[]-Reasoning using (step-≅[]; step-≅[]˘; _≅[]⟨⟩_; _≅[]-∎)
 
-import Lang.CCC
-module CCC where
-  open Lang.CCC public
-  module CCC-Sem-1 D = Lang.CCC.Sem D Variant Artifact∈ₛVariant
-  open CCC-Sem-1 using (CCCL) public
-  module CCC-Sem-2 {D} = Lang.CCC.Sem D Variant Artifact∈ₛVariant
-  open CCC-Sem-2 using (⟦_⟧) public
+open import Lang.All.Generic Variant Artifact∈ₛVariant
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
-
-import Lang.NCC
-module NCC where
-  open Lang.NCC public
-  module NCC-Sem-1 n D = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-1 using (NCCL) public
-  module NCC-Sem-2 {n} {D} = Lang.NCC.Sem n D Variant Artifact∈ₛVariant
-  open NCC-Sem-2 using (⟦_⟧) public
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-
-import Translation.Lang.NCC-to-NCC
-open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open Translation.Lang.NCC-to-NCC.map-dim Variant Artifact∈ₛVariant using (NCC-map-dim; NCC-map-config)
-module NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-map-dim {i} {D₁} {D₂} n f f⁻¹ is-inverse)
-open Translation.Lang.NCC-to-NCC Variant Artifact∈ₛVariant using (IndexedDimension)
+open import Framework.Annotation.IndexedDimension
+open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
+open import Translation.Lang.NCC.Rename Variant Artifact∈ₛVariant using (NCC-rename; NCC-map-config)
+module NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
 
-artifact : ∀ {A : 𝔸} → A → List (Variant A) → Variant A
+artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
-
 
 module Exact where
   -- Idea of this translation:
@@ -78,14 +61,14 @@ module Exact where
   -- We want to translate into `NCC` which has an arity of at leat 2 so we
   -- ensure that the result is ≥ 2
   ⌈_⌉ : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → CCC D i A → ℕ≥ 2
-  ⌈ a -< cs >- ⌉ = maximum (List.map ⌈_⌉ cs)
-  ⌈ d ⟨ c ∷ [] ⟩ ⌉ = ⌈_⌉ c
+  ⌈ a -< cs >-         ⌉ = maximum (List.map ⌈_⌉ cs)
+  ⌈ d ⟨ c ∷ [] ⟩       ⌉ = ⌈ c ⌉
   ⌈ d ⟨ c₁ ∷ c₂ ∷ cs ⟩ ⌉ = sucs (List.length cs) ⊔ maximum⁺ (List⁺.map ⌈_⌉ (c₁ ∷ c₂ ∷ cs))
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
     data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
-      maxArtifact : {i : Size} → {a : A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
+      maxArtifact : {i : Size} → {a : atoms A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
       maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → NumberOfAlternatives≤-List⁺ n {i} cs → NumberOfAlternatives≤ n {↑ i} (d ⟨ cs ⟩)
 
     data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
@@ -346,7 +329,7 @@ translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → CCC D i A
   → NCC n (D × ℕ) ∞ A
 translate (sucs n) expr =
-  NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉)
+  NCC-rename.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉)
     (NCC→NCC.compile ⌈ expr ⌉ (sucs n)
       (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)))
 
@@ -377,8 +360,8 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
 preserves (sucs n) expr =
   NCC.⟦ translate (sucs n) expr ⟧
   ≅[]⟨⟩
-    NCC.⟦ NCC-map-dim.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
-  ≅[]˘⟨ NCC-map-dim.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+    NCC.⟦ NCC-rename.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
+  ≅[]˘⟨ NCC-rename.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
     NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ⟧
   ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
     NCC.⟦ Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟧
@@ -386,7 +369,7 @@ preserves (sucs n) expr =
     CCC.⟦ expr ⟧
   ≅[]-∎
 
-CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
+CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL {i} D) (NCCL n (D × ℕ))
 CCC→NCC n .LanguageCompiler.compile = translate n
 CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n expr
 CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr

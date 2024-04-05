@@ -1,7 +1,7 @@
 {-# OPTIONS --sized-types #-}
 module Test.Examples.CCC where
 
-open import Data.String using (String)
+open import Data.String as String using (String)
 open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
@@ -11,25 +11,27 @@ open import Data.Product
 open import Size
   using (Size; ∞; ↑_)
 
+open import Framework.Definitions using (𝔸; atoms)
 open import Construct.Plain.Artifact using (leaf; leaves⁺)
 
-open import Lang.CCC String -- use strings as dimensions
+open import Lang.All
+open CCC -- use strings as dimensions
 open import Test.Example
 
 CCCExample : Set
-CCCExample = Example (CCC ∞ String)
+CCCExample = Example (CCC String ∞ (String , String._≟_))
 
 -- some smart constructors
-ccA : ∀ {i : Size} {A : Set} → List⁺ (CCC i A) → CCC (↑ i) A
+ccA : ∀ {i : Size} {A : 𝔸} → List⁺ (CCC String i A) → CCC String (↑ i) A
 ccA es = "A" ⟨ es ⟩
 
-cc-leaves : ∀ {i : Size} {A : Set} → String → List⁺ A → CCC (↑ ↑ i) A
+cc-leaves : ∀ {i : Size} {A : 𝔸} → String → List⁺ (atoms A) → CCC String (↑ ↑ i) A
 cc-leaves D es = D ⟨ map⁺ atom (leaves⁺ es) ⟩
 
-ccA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CCC (↑ ↑ i) A
+ccA-leaves : ∀ {i : Size} {A : 𝔸} → List⁺ (atoms A) → CCC String (↑ ↑ i) A
 ccA-leaves = cc-leaves "A"
 
-cc-leaf : ∀ {i : Size} {A : Set} → A → CCC (↑ i) A
+cc-leaf : ∀ {i : Size} {A : 𝔸} → (atoms A) → CCC String (↑ i) A
 cc-leaf a = atom (leaf a)
 
 -- examples

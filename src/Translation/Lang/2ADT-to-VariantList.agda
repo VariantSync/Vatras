@@ -27,7 +27,7 @@ open import Framework.Compiler
 open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Framework.Properties.Soundness V using (Sound)
 open import Framework.Proof.Transitive V using (soundness-by-expressiveness)
-open import Lang.2ADT F V
+open import Lang.2ADT
   using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
   renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)
 open import Lang.VariantList V
@@ -47,24 +47,24 @@ This is correct only if the 2ADT is undead.
 Otherwise, also dead variants will be part of
 the resulting list.
 -}
-tr : ∀ {A : 𝔸} → 2ADT A → VariantList A
+tr : ∀ {A : 𝔸} → 2ADT V F A → VariantList A
 tr (leaf v) = v ∷ []
 tr (D ⟨ l , r ⟩) = tr l ⁺++⁺ tr r
 
 tr-undead : ∀ {A : 𝔸} → Undead2ADT A → VariantList A
 tr-undead = tr ∘ node
 
-toVariantList : ∀ {A : 𝔸} → 2ADT A → VariantList A
+toVariantList : ∀ {A : 𝔸} → 2ADT V F A → VariantList A
 toVariantList = tr-undead ∘ kill-dead
 
 -- Converts a path to in the input 2ADT to the index in the resulting list.
-conf : ∀ {A} → (e : 2ADT A) → PathConfig e → ℕ
+conf : ∀ {A} → (e : 2ADT V F A) → PathConfig e → ℕ
 conf .(leaf _) (.[] is-valid tleaf) = 0
 conf (D ⟨ l , _ ⟩) ((_ ∷ pl) is-valid walk-left  t) = conf l (pl is-valid t)
 conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) = length (tr l) + conf r (pr is-valid t)
 
 -- Converts an index from the resulting list back to a path in the input 2ADT.
-fnoc : ∀ {A} → (e : 2ADT A) → ℕ → PathConfig e
+fnoc : ∀ {A} → (e : 2ADT V F A) → ℕ → PathConfig e
 fnoc (leaf v) _ = [] is-valid tleaf
 fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
 fnoc (D ⟨ l , r ⟩) i | no _ {-left-} with fnoc l i
@@ -74,7 +74,7 @@ fnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with fnoc r (i ∸ (length (tr l)))
 
 -- The index of a path will never be out of bounds.
 conf-bounded : ∀ {A}
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → (c : PathConfig e)
   → conf e c < length (tr e)
 conf-bounded (leaf v) (.[] is-valid tleaf) = s≤s z≤n
@@ -96,7 +96,7 @@ conf-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
     go rewrite ⁺++⁺-length (tr l) (tr r) = gox
 
 preservation-walk-to-list-conf : ∀ {A : 𝔸}
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → walk e ⊆[ conf e ] ⟦ tr e ⟧ₗ
 preservation-walk-to-list-conf .(leaf _) (.[] is-valid tleaf) = refl
 preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left t) =
@@ -121,7 +121,7 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right
   ∎
 
 preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → ⟦ tr e ⟧ₗ ⊆[ fnoc e ] walk e
 preservation-walk-to-list-fnoc (leaf v) i = refl
 preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
@@ -157,14 +157,14 @@ down them, then simply converting a 2ADT to a variant list by
 gathering all variants in leafs from left to right preserves semantics.
 -}
 preservation-walk-to-list : ∀ {A : 𝔸}
-  → (e : 2ADT A)
+  → (e : 2ADT V F A)
   → walk e ≅[ conf e ][ fnoc e ] ⟦ tr e ⟧ₗ
 preservation-walk-to-list e = (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
 
-conf-undead-to-list : ∀ {A} → Undead2ADT A → Conf₂ → ℕ
+conf-undead-to-list : ∀ {A} → Undead2ADT A → Conf₂ F → ℕ
 conf-undead-to-list e = conf (node e) ∘ Walk.fun-to-path (node e)
 
-fnoc-undead-to-list : ∀ {A} → Undead2ADT A → ℕ → Conf₂
+fnoc-undead-to-list : ∀ {A} → Undead2ADT A → ℕ → Conf₂ F
 fnoc-undead-to-list e = Walk.path-to-fun (node e) ∘ fnoc (node e)
 
 preservation-undead-to-list : ∀ {A : 𝔸}
@@ -189,11 +189,11 @@ Undead2ADT→VariantList = record
   ; preserves = preservation-undead-to-list
   }
 
-2ADT→VariantList : LanguageCompiler 2ADTL VariantListL
+2ADT→VariantList : LanguageCompiler (2ADTL V F) VariantListL
 2ADT→VariantList = DeadElim.kill-dead-compiler ⊕ Undead2ADT→VariantList
 
-VariantList≽2ADT : VariantListL ≽ 2ADTL
+VariantList≽2ADT : VariantListL ≽ 2ADTL V F
 VariantList≽2ADT = expressiveness-from-compiler 2ADT→VariantList
 
-2ADT-is-sound : Sound 2ADTL
+2ADT-is-sound : Sound (2ADTL V F)
 2ADT-is-sound = soundness-by-expressiveness VariantList-is-Sound VariantList≽2ADT
