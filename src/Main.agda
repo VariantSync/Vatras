@@ -9,7 +9,7 @@ open import Data.List using (List; []; _∷_; map)
 open import Data.Product using (∃-syntax; Σ-syntax; _×_; _,_)
 open import Size using (∞)
 
-open import Show.Lines
+open import Show.Lines hiding (map)
 open import Show.Print
 
 open import Test.Example using (Example)

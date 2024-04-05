@@ -17,7 +17,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Util.Named
 open import Test.Example
 open import Test.Experiment
-open import Show.Lines
+open import Show.Lines hiding (map)
 open import Util.ShowHelpers
 open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
