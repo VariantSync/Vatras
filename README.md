@@ -16,7 +16,12 @@ We recommend following the installation instructions from the [Programming Langu
 
 TL;DR: In summary, when following the book, you have to do:
 
-1. Install the GHC compiler (if you have not installed it already) and the cabal build tool for which we recommend using [GHCup](https://www.haskell.org/ghcup/).
+0. Install [GHCup](https://www.haskell.org/ghcup/), which we recommend for installing `ghc` and `cabal`. 
+   ```shell 
+   curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh 
+   ```
+
+1. Install the GHC compiler (if you have not installed it already) and the cabal build tool with [GHCup](https://www.haskell.org/ghcup/).
 
     ```shell
     ghcup install ghc 9.2.4
@@ -26,7 +31,7 @@ TL;DR: In summary, when following the book, you have to do:
     ghcup set cabal recommended
     ```
 
-2. Install Agda
+2. Install Agda (this may take a while).
 
     ```shell
     cabal update
