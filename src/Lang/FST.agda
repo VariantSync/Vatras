@@ -160,8 +160,10 @@ branches = concat
 module Impose (AtomSet : 𝔸) where
   FSTA : Size → Set
   FSTA i = FST i AtomSet
-  A = atoms AtomSet
-  _≟_ = proj₂ AtomSet
+
+  private
+    A = atoms AtomSet
+    _≟_ = proj₂ AtomSet
 
   _==_ : ∀ {i} → Decidable (_≈_ {AtomSet} {i})
   (a -< _ >-) == (b -< _ >-) = a ≟ b
@@ -387,6 +389,9 @@ module Impose (AtomSet : 𝔸) where
     if c (name f)
     then impl f ∷ select c fs
     else          select c fs
+
+  names : SPL → List (Name F)
+  names spl = (map name) (features spl)
 
   ---- Algebra ----
 

@@ -7,7 +7,7 @@ module Test.Experiments.FST-Experiments where
 open import Data.Bool using (true; false)
 open import Data.List using (List; _∷_; []; map; [_])
 open import Data.Product using (proj₁; proj₂; _,_; _×_)
-open import Function using (id)
+open import Function using (id; _∘_)
 
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Nullary.Decidable using (yes; no; does; _because_; _×-dec_)
@@ -21,33 +21,36 @@ open import Show.Lines
 open import Util.ShowHelpers
 open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
-open import Lang.FST as FSTModule using (Conf)
+open import Framework.Variants using (show-rose)
 
-module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
-  open FSTModule.Defs {A}
-  open FSTModule.Defs.Impose _≟_
-  module FSTShow = FSTModule.Defs.Impose.Show
+import Lang.FST as FST
+open FST using (Conf)
 
-  exp : ∀ {N}
-    → (N → String)
-    → (A → String)
-    → List (Conf N)
-    → Experiment (SPL N)
+module _ (F : 𝔽) (A : 𝔸) where
+-- (_≟_ : DecidableEquality A)
+  open FST.Impose F A
+  module FSTShow = FST.Impose.Show F A
+
+  exp :
+      (F → String)
+    → (atoms A → String)
+    → List (Conf F)
+    → Experiment SPL
   getName (exp _ _ _) = "Configure FST example"
   get (exp show-N show-A configs) (example-name ≔ forest) =
-    let open FSTShow _≟_ show-N show-A
+    let open FSTShow show-N show-A
     in
     do
     > "Expression e has features"
     indent 2 do
-      lines (map show-Feature forest)
+      lines (map show-Feature (features forest))
 
     foreach [ c ∈ configs ] do
       let cstr = show-fun show-N show-bool c (names forest)
       linebreak
       > "⟦ e ⟧" <+> cstr <+> "="
       indent 2 do
-        show-FSF (forget-uniqueness (⟦ forest ⟧ c))
+        > show-rose show-A (⟦ forest ⟧ c)
 
 pick-all : ∀ {N} → Conf N
 pick-all _ = true
@@ -66,8 +69,8 @@ module Java where
   _≟-ast_ : DecidableEquality ASTNode
   _≟-ast_ = _≟ˢ_
 
-  open FSTModule.Defs {ASTNode}
-  open FSTModule.Defs.Impose _≟-ast_
+  open FST String using (_．_; branches)
+  open FST.Impose String (ASTNode , _≟-ast_)
 
   module Calculator where
     fname-Add = "Add"
@@ -90,35 +93,35 @@ module Java where
     open import Data.List.Relation.Unary.AllPairs using ([]; _∷_)
     open import Data.List.Relation.Unary.All using ([]; _∷_)
 
-    feature-Add : Feature ASTNode
-    feature-Add = fname-Add :: (cls ． add ． add-ret ． [] , ([] ∷ []) , ((unq ([] ∷ [] , (unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ [])) ∷ []))
+    feature-Add : Feature
+    feature-Add = fname-Add :: (cls ． add ． add-ret ． []) ⊚ (([] ∷ []) , ((([] ∷ []) , ((([] ∷ []) , (([] , []) ∷ [])) ∷ [])) ∷ []))
 
-    feature-Sub : Feature ASTNode
-    feature-Sub = fname-Sub :: (cls ． sub ． sub-ret ． [] , ([] ∷ []) , ((unq ([] ∷ [] , (unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ [])) ∷ []))
+    feature-Sub : Feature
+    feature-Sub = fname-Sub :: (cls ． sub ． sub-ret ． []) ⊚ (([] ∷ []) , ((([] ∷ [] , ((([] ∷ []) , ((([] , [])) ∷ []))) ∷ [])) ∷ []))
 
-    feature-Log : Feature ASTNode
-    feature-Log = fname-Log :: cls ．
+    feature-Log : Feature
+    feature-Log = fname-Log :: (cls ．
       branches (
         (add ． log ． [])
       ∷ (sub ． log ． [])
-      ∷ []) , ([] ∷ []) , ((unq (((tt ∷ []) ∷ ([] ∷ [])) , ((unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ ((unq (([] ∷ []) , ((unq ([] , [])) ∷ []))) ∷ [])))) ∷ [])
+      ∷ [])) ⊚ (([] ∷ []) , ((((((λ where ()) ∷ []) ∷ ([] ∷ [])) , (((([] ∷ []) , ((([] , [])) ∷ []))) ∷ (((([] ∷ []) , ((([] , [])) ∷ []))) ∷ [])))) ∷ []))
 
     ---- Example SPLs
 
-    ex-Add-Sub : Example (SPL ASTNode)
-    ex-Add-Sub = "add-sub" ≔ feature-Add ∷ feature-Sub ∷ []
+    ex-Add-Sub : Example SPL
+    ex-Add-Sub = "add-sub" ≔ "package" ◀ (feature-Add ∷ feature-Sub ∷ [])
 
-    ex-Sub-Add : Example (SPL ASTNode)
-    ex-Sub-Add = "sub-add" ≔ feature-Sub ∷ feature-Add ∷ []
+    ex-Sub-Add : Example SPL
+    ex-Sub-Add = "sub-add" ≔ "package" ◀ (feature-Sub ∷ feature-Add ∷ [])
 
-    ex-Add-Sub-Log : Example (SPL ASTNode)
-    ex-Add-Sub-Log = "add-sub" ≔ feature-Add ∷ feature-Sub ∷ feature-Log ∷ []
+    ex-Add-Sub-Log : Example SPL
+    ex-Add-Sub-Log = "add-sub" ≔ "package" ◀ (feature-Add ∷ feature-Sub ∷ feature-Log ∷ [])
 
-    ex-all : List (Example (SPL ASTNode))
+    ex-all : List (Example SPL)
     ex-all = ex-Add-Sub ∷ ex-Sub-Add ∷ ex-Add-Sub-Log ∷ []
 
     ---- Experiments
 
     toy-calculator-experiment =
       let eq = _≟-ast_ in
-      exp eq id id (pick-all ∷ pick-only eq fname-Add ∷ [])
+      exp String (ASTNode , eq) id id (pick-all ∷ pick-only eq fname-Add ∷ [])
