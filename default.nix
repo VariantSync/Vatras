@@ -27,6 +27,7 @@ pkgs.agdaPackages.mkDerivation {
   ];
 
   buildPhase = ''
+    patchShebangs ./scripts/check-all.sh
     make check-all
     make build
   '';
