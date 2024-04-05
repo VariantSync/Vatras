@@ -2,6 +2,12 @@
 {-# OPTIONS --sized-types #-}
 
 open import Framework.Definitions
+
+{-
+This module formalizes feature structure trees.
+We formalized the language, its semantics, and the typing to disallow duplicate neighbors.
+We also prove that FSTs are a feature algebra but the proof is work in progress.
+-}
 module Lang.FST (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
@@ -47,7 +53,7 @@ FST i = Rose i
 pattern _-<_>- a cs = rose (a At.-< cs >-)
 fst-leaf = rose-leaf
 
-induction : ∀ {A : 𝔸} {B : Set} → (A → List B → B) → FST ∞ A → B
+induction : ∀ {A : 𝔸} {B : Set} → (atoms A → List B → B) → FST ∞ A → B
 induction {A} {B} f n = go n [] where
   go : FST ∞ A → List B → B
   go (a -< [] >-) bs = f a (reverse bs)
@@ -107,7 +113,7 @@ map-≉ : ∀ {i} {A} {b xs} (ys : List (FST i A)) (z : FST (↑ i) A)
   → b -< ys >- ≉ z
 map-≉ ys (z -< zs >-) z≉z refl = z≉z refl
 
-map-∉ : ∀ {i} {A} {b : A} {cs cs' : List (FST i A)} {xs : List (FST (↑ i) A)}
+map-∉ : ∀ {i} {A : 𝔸} {b : atoms A} {cs cs' : List (FST i A)} {xs : List (FST (↑ i) A)}
   → b -< cs  >- ∉ xs
   → b -< cs' >- ∉ xs
 map-∉ [] = []
@@ -144,15 +150,20 @@ disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
 
 -- the syntax used in the paper for paths
 infixr 5 _．_
-_．_ : ∀ {A} → A → (cs : List (FST ∞ A)) → List (FST ∞ A)
+_．_ : ∀ {A : 𝔸} → atoms A → (cs : List (FST ∞ A)) → List (FST ∞ A)
 a ． cs = a -< cs >- ∷ []
 
 -- helper function when branching in paths
 branches : ∀ {A} → List (List (FST ∞ A)) → List (FST ∞ A)
 branches = concat
 
-module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
-  _==_ : ∀ {i} → Decidable (_≈_ {A} {i})
+module Impose (AtomSet : 𝔸) where
+  FSTA : Size → Set
+  FSTA i = FST i AtomSet
+  A = atoms AtomSet
+  _≟_ = proj₂ AtomSet
+
+  _==_ : ∀ {i} → Decidable (_≈_ {AtomSet} {i})
   (a -< _ >-) == (b -< _ >-) = a ≟ b
 
   -- ≟-refl : ∀ (x : A) → x ≡ x
@@ -160,37 +171,37 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
   mutual
     infixr 5 _⊕_
-    _⊕_ : ∀ {i} → List (FST i A) → List (FST i A) → List (FST i A)
+    _⊕_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
     l ⊕ []      = l
     l ⊕ (h ∷ t) = (h ⊙ l) ⊕ t
 
 
     infixr 5 _⊙_
-    _⊙_ : ∀ {i} → FST i A → List (FST i A) → List (FST i A)
+    _⊙_ : ∀ {i} → FSTA i → List (FSTA i) → List (FSTA i)
     l ⊙ [] = l ∷ []
     l ⊙ (h ∷ t) with l == h
     ... | no _ = h ∷ (l ⊙ t)
     a -< ca >- ⊙ (.a -< cb >- ∷ t) | yes refl = a -< ca ⊕ cb >- ∷ t
 
-  Unique : ∀ {i} → List (FST i A) → Set
+  Unique : ∀ {i} → List (FSTA i) → Set
   Unique = AllPairs _≉_
 
   mutual
-    WellFormed : ∀ {i} → FST i A → Set
+    WellFormed : ∀ {i} → FSTA i → Set
     WellFormed (_ -< cs >-) = AllWellFormed cs
 
-    AllWellFormed : ∀ {i} → List (FST i A) → Set
+    AllWellFormed : ∀ {i} → List (FSTA i) → Set
     AllWellFormed cs = Unique cs × All WellFormed cs
 
   mutual
-    ⊕-wf : ∀ {i} {ls rs : List (FST i A)}
+    ⊕-wf : ∀ {i} {ls rs : List (FSTA i)}
       → AllWellFormed ls
       → AllWellFormed rs
       → AllWellFormed (ls ⊕ rs)
     ⊕-wf ls-wf ([] , []) = ls-wf
     ⊕-wf ls-wf (_ ∷ u-rs , du-r ∷ du-rs) = ⊕-wf (⊙-wf du-r ls-wf) (u-rs , du-rs)
 
-    ⊙-wf : ∀ {i} {l : FST i A} {r : List (FST i A)}
+    ⊙-wf : ∀ {i} {l : FSTA i} {r : List (FSTA i)}
       → WellFormed l
       → AllWellFormed r
       → AllWellFormed (l ⊙ r)
@@ -203,7 +214,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
     ⊙-wf {_} {a -< ca >- } {b -< cb >- ∷ t} du-l (u-h ∷ u-t , du-h ∷ du-t) | no a≢b | u-rec , du-rec
       = ind a≢b u-h ∷ u-rec , du-h ∷ du-rec
       where
-        ind :  ∀ {i} {b a} {cb ca : List (FST i A)} {t : List (FST (↑ i) A)}
+        ind :  ∀ {i} {b a} {cb ca : List (FSTA i)} {t : List (FSTA (↑ i))}
           → ¬ (a ≡ b)
           → b -< cb >- ∉ t
           → b -< cb >- ∉ ((a -< ca >-) ⊙ t)
@@ -213,13 +224,13 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
         ind {_} {_} {a} {cb} {ca} {( t -< ct >-) ∷ ts} a≢b (b≢t ∷ b∉ts) | no   a≢t = b≢t ∷ (ind a≢b b∉ts)
 
   mutual
-    WellFormed-deterministic : ∀ {x : FST ∞ A}
+    WellFormed-deterministic : ∀ {x : FSTA ∞}
       → (a : WellFormed x)
       → (b : WellFormed x)
       → a ≡ b
     WellFormed-deterministic {_ -< cs >- } a b = AllWellFormed-deterministic cs a b
 
-    AllWellFormed-deterministic : ∀ (xs : List (FST ∞ A))
+    AllWellFormed-deterministic : ∀ (xs : List (FSTA ∞))
       → (ua : AllWellFormed xs)
       → (ub : AllWellFormed xs)
       → ua ≡ ub
@@ -233,7 +244,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       rewrite ∉-deterministic xs a-x∉xs b-x∉xs
       = refl
 
-  ⊙-stranger : ∀ {i} (l : FST i A) (rs : List (FST i A))
+  ⊙-stranger : ∀ {i} (l : FSTA i) (rs : List (FSTA i))
     → l ∉ rs
     → l ⊙ rs ≡ rs ∷ʳ l
   ⊙-stranger l [] _ = refl
@@ -241,7 +252,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   ... | yes l≡r = ⊥-elim (l≢r l≡r)
   ... | no  _   = Eq.cong (r ∷_) (⊙-stranger l rs l∉rs)
 
-  ⊕-strangers : ∀ {i} (ls rs : List (FST i A))
+  ⊕-strangers : ∀ {i} (ls rs : List (FSTA i))
     → Unique rs
     → Disjoint rs ls
     → ls ⊕ rs ≡ ls ++ rs
@@ -255,78 +266,78 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
     = ⊕-strangers (ls ++ r ∷ []) rs u-rs (disjoint-shiftʳ r ls rs (disjoint-grow r ls rs d-ls-rs r∉rs))
 
   ⊕-idˡ :
-    ∀ {i} (rs : List (FST i A))
+    ∀ {i} (rs : List (FSTA i))
     → Unique rs
     → [] ⊕ rs ≡ rs
   ⊕-idˡ rs u-rs = ⊕-strangers [] rs u-rs (disjoint-[]ʳ rs)
 
   -- A proof that all FSTs xs are already imposed into another list of FSTs ys.
-  data _lies-in_ : ∀ {i} → List (FST i A) → List (FST i A) → Set where
-    lempty : ∀ {i} {xs : List (FST i A)}
+  data _lies-in_ : ∀ {i} → List (FSTA i) → List (FSTA i) → Set where
+    lempty : ∀ {i} {xs : List (FSTA i)}
         -------------
       → [] lies-in xs
 
-    lstep-here : ∀ {i} {a b : A} {as bs : List (FST i A)} {xs ys : List (FST (↑ i) A)}
+    lstep-here : ∀ {i} {a b : A} {as bs : List (FSTA i)} {xs ys : List (FSTA (↑ i))}
       → a ≡ b
       → as lies-in bs
       → xs lies-in ys
         ---..................----------------------
       → (a -< as >- ∷ xs) lies-in (b -< bs >- ∷ ys)
 
-    lstep-there : ∀ {i} {x y : FST i A} {xs ys : List (FST i A)}
+    lstep-there : ∀ {i} {x y : FSTA i} {xs ys : List (FSTA i)}
       → x ≉ y
       → (x ∷ xs) lies-in ys
         -------------------------
       → (x ∷ xs) lies-in (y ∷ ys)
 
-  _slice-of_ : ∀ {i} → FST i A → FST i A → Set
+  _slice-of_ : ∀ {i} → FSTA i → FSTA i → Set
   x slice-of y = (x ∷ []) lies-in (y ∷ [])
 
-  _slice-within_ : ∀ {i} → FST i A → List (FST i A) → Set
+  _slice-within_ : ∀ {i} → FSTA i → List (FSTA i) → Set
   x slice-within ys = (x ∷ []) lies-in ys
 
-  lies-in-refl : ∀ {i} → (xs : List (FST i A)) → xs lies-in xs
+  lies-in-refl : ∀ {i} → (xs : List (FSTA i)) → xs lies-in xs
   lies-in-refl [] = lempty
   lies-in-refl ((a -< as >-) ∷ xs) = lstep-here refl (lies-in-refl as) (lies-in-refl xs)
 
-  slice-prop : ∀ {i} {xs ys : List (FST i A)} (zs : List (FST i A))
+  slice-prop : ∀ {i} {xs ys : List (FSTA i)} (zs : List (FSTA i))
     → xs lies-in ys
     → xs lies-in (ys ⊕ zs)
   slice-prop zs lempty = lempty
   slice-prop {xs = a -< as >- ∷ xs} {ys = .a -< bs >- ∷ ys} zs (lstep-here refl as-lies-in-bs xs-lies-in-ys) = {!lstep-here!}
   slice-prop zs (lstep-there x x₁) = {!!}
 
-  slice-concat : ∀ {i} {x : FST i A} {ys : List (FST i A)} (xs : List (FST i A))
+  slice-concat : ∀ {i} {x : FSTA i} {ys : List (FSTA i)} (xs : List (FSTA i))
     → x slice-within ys
     → (x ∷ xs) lies-in (ys ⊕ xs)
   slice-concat = {!!}
 
   -- mutual
-  --   ⊕-makes-slicesˡ : ∀ {i} (xs ys : List (FST i A))
+  --   ⊕-makes-slicesˡ : ∀ {i} (xs ys : List (FSTA i))
   --     → xs lies-in (ys ⊕ xs)
   --   ⊕-makes-slicesˡ [] ys = lempty
   --   ⊕-makes-slicesˡ (x ∷ xs) ys = slice-concat xs (⊙-makes-slice-head x ys)
 
-  --   ⊕-makes-slicesʳ : ∀ {i} (xs ys : List (FST i A))
+  --   ⊕-makes-slicesʳ : ∀ {i} (xs ys : List (FSTA i))
   --     → xs lies-in (xs ⊕ ys)
   --   ⊕-makes-slicesʳ xs []       = lies-in-refl xs
   --   ⊕-makes-slicesʳ xs (y ∷ ys) = slice-prop ys (⊙-makes-slice-tail y xs)
 
-  --   ⊙-makes-slice-tail : ∀ {i} (x : FST i A) (ys : List (FST i A))
+  --   ⊙-makes-slice-tail : ∀ {i} (x : FSTA i) (ys : List (FSTA i))
   --     → ys lies-in (x ⊙ ys)
   --   ⊙-makes-slice-tail x [] = lempty
   --   ⊙-makes-slice-tail (a -< cs >-) ((b -< bs >-) ∷ ys) with a ≟ b
   --   ... | yes refl = lstep-here refl (⊕-makes-slicesˡ bs cs) (lies-in-refl ys)
   --   ... | no     _ = lstep-here refl (lies-in-refl bs) (⊙-makes-slice-tail (a -< cs >-) ys)
 
-  --   ⊙-makes-slice-head : ∀ {i} (x : FST i A) (ys : List (FST i A))
+  --   ⊙-makes-slice-head : ∀ {i} (x : FSTA i) (ys : List (FSTA i))
   --     → x slice-within (x ⊙ ys)
   --   ⊙-makes-slice-head (a -< cs >-) [] = lies-in-refl (a -< cs >- ∷ [])
   --   ⊙-makes-slice-head (a -< cs >-) ((b -< bs >-) ∷ ys) with a ≟ b
   --   ... | yes refl = lstep-here refl (⊕-makes-slicesʳ cs bs) lempty
   --   ... | no   a≠b = lstep-there a≠b (⊙-makes-slice-head (a -< cs >-) ys)
 
-  ⊕-idem : ∀ {i} (xs ys : List (FST i A))
+  ⊕-idem : ∀ {i} (xs ys : List (FSTA i))
     → AllWellFormed xs
     → AllWellFormed ys
     → ys ⊕ xs ⊕ ys ≡ xs ⊕ ys
@@ -338,11 +349,11 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   record FSF : Set where
     constructor _⊚_
     field
-      trees : List (FST ∞ A)
+      trees : List (FSTA ∞)
       valid : AllWellFormed trees
   open FSF public
 
-  forget-uniqueness : FSF → List (FST ∞ A)
+  forget-uniqueness : FSF → List (FSTA ∞)
   forget-uniqueness = trees
 
   {-
@@ -438,7 +449,7 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
       open import Data.Product using (_,_)
 
   -- Semantics
-  ⟦_⟧ : SPL → Conf → Rose ∞ A
+  ⟦_⟧ : SPL → Conf → Rose ∞ AtomSet
   ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊛-all (select c features)) >-
 
   open import Data.String using (String; _<+>_)
@@ -446,12 +457,12 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
 
   module Show (show-F : F → String) (show-A : A → String) where
     mutual
-      show-FST : FST ∞ A → Lines
+      show-FST : FSTA ∞ → Lines
       show-FST = induction λ a children → do
         > show-A a
         indent 2 (lines children)
 
-      show-FSF : List (FST ∞ A) → Lines
+      show-FSF : List (FSTA ∞) → Lines
       show-FSF roots = lines (map show-FST roots)
 
       show-Feature : Feature → Lines
@@ -459,20 +470,8 @@ module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
         > show-F (name feature) <+> "∷"
         indent 2 (show-FSF (forget-uniqueness (impl feature)))
 
--- Our framework does not allow constraints on the atom type A.
--- This demonstrates that FSTs are not totally generic.
--- DecidableEquality is a reasonable constraint though - or rather it is an axiom.
--- Maybe we could avoid this constraint by not comparing atoms A
--- but equipping each node with an additional ID and compare that instead?
--- That would allow merging nodes with unequal atoms though.
--- Maybe assuming decidable equality as an axiom here is just fine?
--- Not having decidable equality is far from practical.
-module Framework (mkDec : (A : 𝔸) → DecidableEquality A) where
-  FSTL-𝔼 : 𝔼
-  FSTL-𝔼 A = Impose.SPL (mkDec A)
+FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf Impose.SPL
+FSTL-Sem {A} = Impose.⟦_⟧ A
 
-  FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf FSTL-𝔼
-  FSTL-Sem {A} = Impose.⟦_⟧ (mkDec A)
-
-  FSTL : VariabilityLanguage (Rose ∞)
-  FSTL = ⟪ FSTL-𝔼 , Conf ,  FSTL-Sem ⟫
+FSTL : VariabilityLanguage (Rose ∞)
+FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
