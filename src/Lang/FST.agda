@@ -151,7 +151,7 @@ a ． cs = a -< cs >- ∷ []
 branches : ∀ {A} → List (List (FST ∞ A)) → List (FST ∞ A)
 branches = concat
 
-module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
+module Impose {A : 𝔸} (_≟_ : DecidableEquality A) where
   _==_ : ∀ {i} → Decidable (_≈_ {A} {i})
   (a -< _ >-) == (b -< _ >-) = a ≟ b
 
@@ -402,8 +402,8 @@ module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
   r-id : RightIdentity _≡_ 𝟘 _⊛_
   r-id (xs ⊚ (u-xs , ur-xs)) = refl
 
-  -- ⊛ is not associative because
-  -- ⊕ is not associative because
+  -- ⊛ is not commutative because
+  -- ⊕ is not commutative because
   -- the order in which children appear below their parents
   -- is swapped.
   -- Example:
@@ -469,10 +469,10 @@ module _ {A : 𝔸} (_≟_ : DecidableEquality A) where
 -- Not having decidable equality is far from practical.
 module Framework (mkDec : (A : 𝔸) → DecidableEquality A) where
   FSTL-𝔼 : 𝔼
-  FSTL-𝔼 A = SPL (mkDec A)
+  FSTL-𝔼 A = Impose.SPL (mkDec A)
 
   FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf FSTL-𝔼
-  FSTL-Sem {A} = ⟦_⟧ (mkDec A)
+  FSTL-Sem {A} = Impose.⟦_⟧ (mkDec A)
 
   FSTL : VariabilityLanguage (Rose ∞)
   FSTL = ⟪ FSTL-𝔼 , Conf ,  FSTL-Sem ⟫
