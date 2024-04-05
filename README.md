@@ -16,13 +16,14 @@ We recommend using Nix.
 
 #### Installation via Nix
 
-When you have Nix installed on your system, navigate to this directory and then simply open a nix shell
+When you have Nix installed on your system, you can get access to all necessary development utilities by navigating to this directory and then simply opening a Nix shell
 ``` shell
 nix-shell
 ```
-or alternatively, run the demo directly
+Alternatively, the demo can be compiled and run directly using
 ``` shell
 nix-build
+./result/bin/EPVL
 ```
 
 #### Manual Installation
