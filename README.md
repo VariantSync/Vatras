@@ -3,11 +3,11 @@
 
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 
-This is the supplementary Agda library for our paper _On the Expressive Power of Variability Languages_ submitted to 51st ACM SIGPLAN Symposium on Principles of Programming Languages (POPL 2024).
+This is the supplementary Agda library for our paper _On the Expressive Power of Variability Languages_ submitted to Object-Oriented Programming, Systems, Languages, and Applications 2024 (in PACM PL) (OOPSLA 2024). 
 
 ## Setup
 
-The library needs Agda version 2.6.3 (newer version should also work but we did not test them). We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)) and Manjaro. The only dependency of this library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory (already contained within the zip file of the POPL'24 supplementary material).
+The library needs Agda version 2.6.3 (newer version should also work but we did not test them). We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)) and Manjaro. The only dependency of this library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory (already contained within the zip file of the supplementary material).
 
 ### Installation
 
