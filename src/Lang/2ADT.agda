@@ -19,3 +19,18 @@ Configuration F = F → Bool
 
 2ADTL : (V : 𝕍) → (F : 𝔽) → VariabilityLanguage V
 2ADTL V F = ⟪ 2ADT V F , Configuration F , ⟦_⟧ ⟫
+
+
+open import Data.String as String using (String; _++_; intersperse)
+open import Data.Product using (_,_)
+open import Show.Lines
+
+pretty : {A : 𝔸} → {V : 𝕍} → {F : 𝔽} → (V A → String) → (F → String) → 2ADT V F A → Lines
+pretty pretty-variant show-F (leaf v) = > pretty-variant v
+pretty pretty-variant show-F (D ⟨ l , r ⟩) = do
+  > show-F D ++ "⟨"
+  indent 2 do
+    pretty pretty-variant show-F l
+    > ","
+    pretty pretty-variant show-F r
+  > "⟩"
