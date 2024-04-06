@@ -49,6 +49,7 @@ open 2CC using (2CCL)
 open NADT using (NADTL)
 open ADT using (ADTL)
 open OC using (WFOCL)
+open FST using (FSTL)
 
 open CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 open import Translation.Lang.NCC.Rename Variant mkArtifact using (NCC-rename≽NCC)

@@ -30,3 +30,6 @@ module ADT where
 module OC where
   open import Lang.OC public
   open Lang.OC.Sem Variant Artifact∈ₛVariant public
+
+module FST where
+  open import Lang.FST renaming (FSTL-Sem to ⟦_⟧) public
