@@ -24,8 +24,8 @@ module 2CC where
 module NADT where
   open import Lang.NADT renaming (NADTVL to NADTL) public
 
-module 2ADT where
-  open import Lang.2ADT public
+module ADT where
+  open import Lang.ADT public
 
 module OC where
   open import Lang.OC public

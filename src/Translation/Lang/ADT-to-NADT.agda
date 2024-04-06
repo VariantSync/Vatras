@@ -5,7 +5,7 @@ open import Framework.Definitions
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
 
-module Translation.Lang.2ADT-to-NADT (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.ADT-to-NADT (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (if_then_else_; true; false)
 import Data.Bool.Properties as Bool
@@ -35,7 +35,7 @@ open import Framework.Variants using (GrulerVariant)
 open import Construct.GrulerArtifacts using (leaf)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
-open 2ADT using (2ADT; 2ADTL; _⟨_,_⟩)
+open ADT using (ADT; ADTL; _⟨_,_⟩)
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NADT using (NADT; NADTL; NADTAsset; NADTChoice)
 
@@ -46,23 +46,23 @@ artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-translate : ∀ {F : 𝔽} {A : 𝔸} → 2ADT Variant F A → NADT Variant F ∞ A
-translate (2ADT.leaf a) = NADTAsset (leaf a)
-translate {F = F} {A = A} (f 2ADT.⟨ l , r ⟩) = NADTChoice (f Choice.⟨ translate l ∷ translate r ∷ [] ⟩)
+translate : ∀ {F : 𝔽} {A : 𝔸} → ADT Variant F A → NADT Variant F ∞ A
+translate (ADT.leaf a) = NADTAsset (leaf a)
+translate {F = F} {A = A} (f ADT.⟨ l , r ⟩) = NADTChoice (f Choice.⟨ translate l ∷ translate r ∷ [] ⟩)
 
-conf : ∀ {F : 𝔽} → 2ADT.Configuration F → CCC.Configuration F
+conf : ∀ {F : 𝔽} → ADT.Configuration F → CCC.Configuration F
 conf config f with config f
 ... | true = 0
 ... | false = 1
 
-fnoc : ∀ {F : 𝔽} → CCC.Configuration F → 2ADT.Configuration F
+fnoc : ∀ {F : 𝔽} → CCC.Configuration F → ADT.Configuration F
 fnoc config f with config f
 ... | zero = true
 ... | suc _ = false
 
-preserves-⊆ : ∀ {F : 𝔽} {A : 𝔸} → (expr : 2ADT Variant F A) → NADT.⟦ translate expr ⟧ ⊆[ fnoc ] 2ADT.⟦ expr ⟧
-preserves-⊆ (2ADT.leaf v) config = refl
-preserves-⊆ (f 2ADT.⟨ l , r ⟩) config =
+preserves-⊆ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT Variant F A) → NADT.⟦ translate expr ⟧ ⊆[ fnoc ] ADT.⟦ expr ⟧
+preserves-⊆ (ADT.leaf v) config = refl
+preserves-⊆ (f ADT.⟨ l , r ⟩) config =
     NADT.⟦ NADTChoice (f Choice.⟨ translate l ∷ translate r ∷ [] ⟩) ⟧ config
   ≡⟨⟩
     NADT.⟦ List.find-or-last (config f) (translate l ∷ translate r ∷ []) ⟧ config
@@ -71,9 +71,9 @@ preserves-⊆ (f 2ADT.⟨ l , r ⟩) config =
   ≡⟨ Bool.push-function-into-if (λ e → NADT.⟦ e ⟧ config) (fnoc config f) ⟩
     (if fnoc config f then NADT.⟦ translate l ⟧ config else NADT.⟦ translate r ⟧ config)
   ≡⟨ Eq.cong₂ (if fnoc config f then_else_) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
-    (if fnoc config f then 2ADT.⟦ l ⟧ (fnoc config) else 2ADT.⟦ r ⟧ (fnoc config))
+    (if fnoc config f then ADT.⟦ l ⟧ (fnoc config) else ADT.⟦ r ⟧ (fnoc config))
   ≡⟨⟩
-    2ADT.⟦ f ⟨ l , r ⟩ ⟧ (fnoc config)
+    ADT.⟦ f ⟨ l , r ⟩ ⟧ (fnoc config)
   ∎
   where
   lemma : List.find-or-last (config f) (translate l ∷ translate r ∷ []) ≡ (if fnoc config f then translate l else translate r)
@@ -81,12 +81,12 @@ preserves-⊆ (f 2ADT.⟨ l , r ⟩) config =
   ... | zero = refl
   ... | suc _ = refl
 
-preserves-⊇ : ∀ {F : 𝔽} {A : 𝔸} → (expr : 2ADT Variant F A) → 2ADT.⟦ expr ⟧ ⊆[ conf ] NADT.⟦ translate expr ⟧
-preserves-⊇ (2ADT.leaf v) config = refl
+preserves-⊇ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT Variant F A) → ADT.⟦ expr ⟧ ⊆[ conf ] NADT.⟦ translate expr ⟧
+preserves-⊇ (ADT.leaf v) config = refl
 preserves-⊇ (f ⟨ l , r ⟩) config =
-    2ADT.⟦ f ⟨ l , r ⟩ ⟧ config
+    ADT.⟦ f ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
-    (if config f then 2ADT.⟦ l ⟧ config else 2ADT.⟦ r ⟧ config)
+    (if config f then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
   ≡⟨ Eq.cong₂ (if config f then_else_) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
     (if config f then NADT.⟦ translate l ⟧ (conf config) else NADT.⟦ translate r ⟧ (conf config))
   ≡˘⟨ Bool.push-function-into-if (λ e → NADT.⟦ e ⟧ (conf config)) (config f) ⟩
@@ -102,14 +102,14 @@ preserves-⊇ (f ⟨ l , r ⟩) config =
   ... | true = refl
   ... | false = refl
 
-preserves : ∀ {F : 𝔽} {A : 𝔸} → (expr : 2ADT Variant F A) → NADT.⟦ translate expr ⟧ ≅[ fnoc ][ conf ] 2ADT.⟦ expr ⟧
+preserves : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT Variant F A) → NADT.⟦ translate expr ⟧ ≅[ fnoc ][ conf ] ADT.⟦ expr ⟧
 preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-2ADT→NADT : ∀ {i : Size} {F : 𝔽} → LanguageCompiler (2ADTL Variant F) (NADTL Variant F)
-2ADT→NADT .LanguageCompiler.compile = translate
-2ADT→NADT .LanguageCompiler.config-compiler expr .to = conf
-2ADT→NADT .LanguageCompiler.config-compiler expr .from = fnoc
-2ADT→NADT .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
+ADT→NADT : ∀ {i : Size} {F : 𝔽} → LanguageCompiler (ADTL Variant F) (NADTL Variant F)
+ADT→NADT .LanguageCompiler.compile = translate
+ADT→NADT .LanguageCompiler.config-compiler expr .to = conf
+ADT→NADT .LanguageCompiler.config-compiler expr .from = fnoc
+ADT→NADT .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
-NADT≽2ADT : ∀ {F : 𝔽} → NADTL Variant F ≽ 2ADTL Variant F
-NADT≽2ADT = expressiveness-from-compiler 2ADT→NADT
+NADT≽ADT : ∀ {F : 𝔽} → NADTL Variant F ≽ ADTL Variant F
+NADT≽ADT = expressiveness-from-compiler ADT→NADT
