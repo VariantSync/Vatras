@@ -208,11 +208,11 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
   pretty show-D (a -< es@(_ ∷ _) >-) = do
     > a ++ "-<"
     indent 2 do
-      lines (map (pretty show-D) es)
+      intersperseCommas (map (pretty show-D) es)
     > ">-"
   pretty show-D (D ⟨ cs ⟩) = do
     > show-D D ++ "⟨"
     indent 2 do
-      lines (map (pretty show-D) (toList cs))
+      intersperseCommas (map (pretty show-D) (toList cs))
     > "⟩"
 ```

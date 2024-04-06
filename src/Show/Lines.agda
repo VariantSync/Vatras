@@ -2,7 +2,8 @@ module Show.Lines where
 
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.Nat using (ℕ; _*_; _∸_; ⌊_/2⌋; ⌈_/2⌉; _≤ᵇ_)
-open import Data.List as List using (List; _∷_; [_]; concat; splitAt)
+open import Data.List as List using (List; _∷_; [_]; concat; splitAt; _∷ʳ_)
+open import Data.Maybe using (nothing; just)
 open import Data.String using (String; _++_; _==_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
 open import Data.Product as Prod using (_,_; proj₁; map₁)
 open import Data.Unit using (⊤; tt)
@@ -48,6 +49,11 @@ Lines = Lines' (Level.Lift Level.zero ⊤)
 open Writer using (functor; applicative; monad) public
 open RawMonad {f = 0ℓ} (monad {𝕎 = List.++-[]-rawMonoid Line}) using (_>>_; _>>=_) public
 
+noLines : Lines
+noLines = pure (Level.lift tt)
+  where
+  open RawApplicative applicative
+
 -- print a single line
 single : Line → Lines
 single line = tell [ line ]
@@ -56,10 +62,9 @@ single line = tell [ line ]
 
 -- add a sequence of lines to the output at once
 lines : List Lines → Lines
-lines lines = Level.lift tt <$ sequenceA lines
+lines lines = sequenceA lines >> noLines
   where
   open List.TraversableA applicative
-  open RawFunctor functor
 
 map-lines : {A : Set} → (List Line → List Line) → Lines' A → Lines' A
 map-lines f = writer ∘ map₁ f ∘ runWriter
@@ -108,6 +113,22 @@ prefix p = mantle p ""
 
 suffix : String → Lines → Lines
 suffix s = mantle "" s
+
+modifyLastLine : (Line → Line) -> Lines → Lines
+modifyLastLine f ls with List.unsnoc (raw-lines ls)
+modifyLastLine f ls | nothing = noLines
+modifyLastLine f ls | just (init , last) = tell (init ∷ʳ f last)
+  where
+  open RawMonadWriter Writer.monadWriter
+
+appendToLastLine : String → Lines → Lines
+appendToLastLine suffix = modifyLastLine λ where
+  (alignment aligned line) → alignment aligned (line ++ suffix)
+
+intersperseCommas : List Lines → Lines
+intersperseCommas ls with List.unsnoc ls
+intersperseCommas ls | nothing = noLines
+intersperseCommas ls | just (init , last) = lines (List.map (appendToLastLine ",") init ∷ʳ last)
 
 -- indent all lines by the given number of spaces
 indent : ℕ → Lines → Lines
