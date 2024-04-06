@@ -458,7 +458,7 @@ module Impose (AtomSet : 𝔸) where
   ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊛-all (select c features)) >-
 
   open import Data.String using (String; _<+>_)
-  open import Show.Lines
+  open import Show.Lines hiding (map)
 
   module Show (show-F : F → String) (show-A : A → String) where
     mutual

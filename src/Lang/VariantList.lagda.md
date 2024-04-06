@@ -11,7 +11,7 @@ module Lang.VariantList (V : 𝕍) where
 
 ```agda
 open import Data.Fin using (Fin; zero; suc; toℕ)
-open import Data.List using ([]; _∷_)
+open import Data.List as List using ([]; _∷_)
 open import Data.List.NonEmpty using (List⁺; _∷_; toList; length)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (∃-syntax; _,_; proj₁; proj₂)
@@ -162,4 +162,18 @@ VariantList-is-Sound e =
   , ⟦ e ⟧ ∘ vl-conf
   , (λ i → vl-conf i , refl)
   , (λ i → vl-fnoc i , sym (inverse i e))
+```
+
+## Show
+
+```agda
+open import Data.String as String using (String; _++_; intersperse)
+open import Data.Product using (_,_)
+open import Show.Lines
+
+pretty : {A : 𝔸} → (V A → String) → VariantList A → Lines
+pretty {A} pretty-variant (v ∷ vs) = do
+  > "[ " ++ pretty-variant v
+  lines (List.map (λ v → > ", " ++ pretty-variant v) vs)
+  > "]"
 ```

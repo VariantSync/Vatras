@@ -6,7 +6,7 @@ open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.String using (String; _++_; length; replicate)
 open import Level using (suc)
 
-open import Show.Lines
+open import Show.Lines hiding (map)
 
 open import Test.Example
 open import Util.Named

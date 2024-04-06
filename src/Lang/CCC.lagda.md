@@ -195,10 +195,24 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
 ## Show
 
 ```agda
+  open import Show.Lines hiding (map)
   open import Data.String as String using (String; _++_)
 
   show : ∀ {i} → (Dimension → String) → CCC Dimension i (String , String._≟_) → String
   show _ (a -< [] >-) = a
   show show-D (a -< es@(_ ∷ _) >- ) = a ++ "-<" ++ (foldl _++_ "" (map (show show-D) es)) ++ ">-"
   show show-D (D ⟨ es ⟩) = show-D D ++ "⟨" ++ (String.intersperse ", " (toList (map⁺ (show show-D) es))) ++ "⟩"
+
+  pretty : ∀ {i : Size} → (Dimension → String) → CCC Dimension i (String , String._≟_) → Lines
+  pretty show-D (a -< [] >-) = > a
+  pretty show-D (a -< es@(_ ∷ _) >-) = do
+    > a ++ "-<"
+    indent 2 do
+      lines (map (pretty show-D) es)
+    > ">-"
+  pretty show-D (D ⟨ cs ⟩) = do
+    > show-D D ++ "⟨"
+    indent 2 do
+      lines (map (pretty show-D) (toList cs))
+    > "⟩"
 ```
