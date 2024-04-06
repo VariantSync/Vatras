@@ -18,7 +18,7 @@ OCExample : Set
 OCExample = Example (WFOC String ∞ (String , String._≟_))
 
 optex-unary : OCExample
-optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "lol") ])
+optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "a") ])
 
 optex-lock : OCExample
 optex-lock = "lock" ≔ (Root "void f() {" (
@@ -30,10 +30,10 @@ optex-lock = "lock" ≔ (Root "void f() {" (
 
 optex-sandwich : OCExample
 optex-sandwich = "sandwich" ≔ (Root "Buns" (
-    "Tomato?" ❲ oc-leaf "Tomato" ❳
-  ∷ "Salad?"  ❲ oc-leaf "Salad"  ❳
-  ∷ "Cheese?" ❲ oc-leaf "Cheese" ❳
-  ∷ oc-leaf "Mayonnaise" -- we always put mayo on the sandwich
+    "Tomato?" ❲ oc-leaf "tomato" ❳
+  ∷ "Salad?"  ❲ oc-leaf "salad"  ❳
+  ∷ "Cheese?" ❲ oc-leaf "cheese" ❳
+  ∷ oc-leaf "Mayo" -- we always put mayo on these sandwiches
   ∷ []))
 
 optex-deep : OCExample
