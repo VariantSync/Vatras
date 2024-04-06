@@ -76,51 +76,37 @@ compile : ∀ {VL₁ VL₂ : VariabilityLanguage Variant}
   → Lines' (Expression VL₂ Artifact)
 compile e VL₂-name compiler show = translate e VL₂-name (LanguageCompiler.compile compiler) show
 
-round-trip : Experiment (CCC.CCC Feature ∞ (String , String._≟_))
+round-trip : Experiment (OC.WFOC Feature ∞ (String , String._≟_))
 getName round-trip = "Translate CCC in one round-trip into equally expressive variability languages"
-get     round-trip ex@(name ≔ ccc) = do
-  [ Center ]> "CCC, original expression"
-  let pretty-ccc = CCC.pretty id ccc
+get     round-trip ex@(name ≔ oc) = do
+  [ Center ]> "OC, original expression"
+  let pretty-oc = >_ (OC.Show.show-wfoc Feature id oc)
   overwrite-alignment-with Center
-    (boxed (6 + width pretty-ccc) "" pretty-ccc)
+    (boxed (6 + width pretty-oc) "" pretty-oc)
 
-  ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                               (NCC.Pretty.pretty id)
-  ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                 (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                   (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  2adt        ← compile   2cc         "2ADT"        2CC→2ADT                                                    (2ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  variantList ← compile   2adt        "VariantList" (2ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
-  ccc'        ← compile   variantList "CCC"         (VariantList→CCC "default feature")                         (CCC.pretty id)
+  2cc         ← compile   oc          "2CC"         OC→2CC                              (2CC.Pretty.pretty id)
+  2adt        ← compile   2cc         "2ADT"        2CC→2ADT                            (2ADT.pretty (show-rose id) id)
+  variantList ← compile   2adt        "VariantList" (2ADT→VariantList String._≟_)       (VariantList.pretty (show-rose id))
+  ccc         ← compile   variantList "CCC"         (VariantList→CCC "default feature") (CCC.pretty id)
+  ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                       (NCC.Pretty.pretty id)
+  ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)         (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+  2cc'        ← compile   ncc2        "2CC"         NCC-2→2CC                           (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
   linebreak
 
 
-open CCC using (_⟨_⟩; _-<_>-)
+open OC using (Root; _❲_❳; _-<_>-)
 
-ex-trivial : Example (CCC.CCC Feature ∞ Artifact)
-ex-trivial = "trivial" ≔ "f1" ⟨ "a1" -< [] >- ∷ "a2" -< [] >- ∷ [] ⟩
-
-ex-sandwich : Example (CCC.CCC Feature ∞ Artifact)
+ex-sandwich : Example (OC.WFOC Feature ∞ Artifact)
 ex-sandwich = "sandwich" ≔
-  "bread"
-    -< "salad?"
-         ⟨ "salad" -< [] >-
-         ∷ "no salad" -< [] >-
-         ∷ []
-         ⟩
-    ∷  "cheese" -< [] >-
-    ∷  "patty?"
-         ⟨ "meat" -< [] >-
-         ∷ "tofu" -< [] >-
-         ∷ []
-         ⟩
-    ∷  "sauce?"
-         ⟨ "no souce" -< [] >-
-         ∷ "mayonnaise" -< [] >-
-         ∷ "ketchup" -< [] >-
-         ∷ "mayonnaise and ketchup" -< [] >-
-         ∷ []
-         ⟩
+  Root "bread"
+    ( "salad?" ❲ "salad" -< [] >- ❳
+    ∷ "cheese" -< [] >-
+    ∷ "tofu?" ❲ "tofu" -< [] >- ❳
+    ∷ "meat?" ❲ "meat" -< [] >- ❳
+    ∷ "ketchup?" ❲ "ketchup" -< [] >- ❳
+    ∷ "mayo?" ❲ "mayo" -< [] >- ❳
     ∷ []
-    >-
+    )
 
-examples : List (Example (CCC.CCC Feature ∞ Artifact))
-examples = ex-trivial ∷ ex-sandwich ∷ []
+examples : List (Example (OC.WFOC Feature ∞ Artifact))
+examples = ex-sandwich ∷ []
