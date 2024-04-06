@@ -36,5 +36,5 @@ pkgs.agdaPackages.mkDerivation {
     install -D src/Main "$out/bin/$pname"
   '';
 
-  meta = {description = "On the Expressive Power of Programming Languages";};
+  meta = {description = "On the Expressive Power of Languages for Static Variability";};
 }
