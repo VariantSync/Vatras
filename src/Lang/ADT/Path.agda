@@ -1,6 +1,6 @@
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸; 𝔼)
 open import Relation.Binary using (DecidableEquality; Rel)
-module Lang.2ADT.Path
+module Lang.ADT.Path
   (F : 𝔽)
   (V : 𝕍)
   (_==_ : DecidableEquality F)
@@ -26,7 +26,7 @@ open Eq.≡-Reasoning
 
 open import Framework.VariabilityLanguage
 open import Util.Suffix using (_endswith_)
-open import Lang.2ADT using (2ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
+open import Lang.ADT using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
 
 -- A selection of a feature matches it to a boolean value.
 record Selection : Set where
@@ -36,7 +36,7 @@ record Selection : Set where
     value : Bool
 open Selection public
 
--- A list of selection which denotes a path from the root of a 2ADT to a leaf node.
+-- A list of selection which denotes a path from the root of a ADT to a leaf node.
 Path : Set
 Path = List Selection
 
@@ -123,17 +123,17 @@ Note: The symmetry between the rules walk-left and walk-right causes many
       However, we cannot merge the rules into a single rule
       because we have to recurse on either the left or right alternative (not both).
 -}
-data _starts-at_ : ∀ {A} → (p : Path) → (e : 2ADT V F A) → Set where
+data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT V F A) → Set where
   tleaf : ∀ {A} {v : V A}
       ------------------
     → [] starts-at (leaf v)
 
-  walk-left : ∀ {A} {D : F} {l r : 2ADT V F A} {pl : Path}
+  walk-left : ∀ {A} {D : F} {l r : ADT V F A} {pl : Path}
     → pl starts-at l
       -------------------------------------
     → ((D ↣ true) ∷ pl) starts-at (D ⟨ l , r ⟩)
 
-  walk-right : ∀ {A} {D : F} {l r : 2ADT V F A} {pr : Path}
+  walk-right : ∀ {A} {D : F} {l r : ADT V F A} {pr : Path}
     → pr starts-at r
       --------------------------------------
     → ((D ↣ false) ∷ pr) starts-at (D ⟨ l , r ⟩)
@@ -142,14 +142,14 @@ data _starts-at_ : ∀ {A} → (p : Path) → (e : 2ADT V F A) → Set where
 An expression does not contain a feature name
 if all paths do not contain that feature name.
 -}
-_∉'_ : ∀{A} → F → 2ADT V F A → Set
+_∉'_ : ∀{A} → F → ADT V F A → Set
 D ∉' e = ∀ (p : Path) → p starts-at e → D ∉ p
 
 {-
 A path serves as a configuration for an expression e
 if it starts at that expression and ends at a leaf.
 -}
-record PathConfig {A} (e : 2ADT V F A) : Set where
+record PathConfig {A} (e : ADT V F A) : Set where
   constructor _is-valid_
   field
     path : Path
@@ -157,12 +157,12 @@ record PathConfig {A} (e : 2ADT V F A) : Set where
 open PathConfig public
 
 {-
-Alternative semantics of 2ADTs by walking a path.
+Alternative semantics of ADTs by walking a path.
 This walk may be illegal by choosing different alternatives for the same choice within a path.
 For example in D ⟨ D ⟨ 1 , dead ⟩ , 2 ⟩ we can reach 'dead' via (D ↣ true ∷ D ↣ false ∷ []).
 However, walking like this is fine as long as the path is unique as we will later prove.
 -}
-walk : ∀ {A} → (e : 2ADT V F A) → PathConfig e → V A
+walk : ∀ {A} → (e : ADT V F A) → PathConfig e → V A
 walk (leaf v) ([] is-valid tleaf) = v
 walk (D ⟨ l , _ ⟩) ((.(D ↣ true ) ∷ pl) is-valid walk-left  t) = walk l (pl is-valid t)
 walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-valid walk-right t) = walk r (pr is-valid t)
@@ -171,7 +171,7 @@ walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-valid walk-right t) = walk r 
 An expression a is a sub-expression of b
 iff all valid paths from a lead to paths from b.
 -}
-_subexprof_ : ∀ {A} → 2ADT V F A → 2ADT V F A → Set
+_subexprof_ : ∀ {A} → ADT V F A → ADT V F A → Set
 a subexprof b = ∀ (pa : Path) → pa starts-at a → ∃[ pb ] ((pb starts-at b) × (pb endswith pa))
 
 {-
