@@ -27,6 +27,7 @@ open import Test.Experiments.OC-to-2CC
 open import Translation.Experiments.Choice-to-2Choice-Experiment using (exp; all-ex)
 import Test.Experiments.FST-Experiments as FSTs
 open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
+open import Test.Experiments.RoundTrip as RoundTrip using (round-trip)
 
 {-|
 A list of programs that we want to run.
@@ -42,6 +43,7 @@ experimentsToRun =
   -- Run some example translations from n to binary choices
   setup exp all-ex ∷
   setup toy-calculator-experiment ex-all ∷
+  setup round-trip RoundTrip.examples ∷
   []
 
 {-|
