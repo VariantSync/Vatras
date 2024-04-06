@@ -80,7 +80,6 @@ module _ {Dimension : 𝔽} where
 
 Some transformation rules:
 ```agda
-  open import Util.AuxProofs using (if-idemp; if-cong)
   open Data.List using ([_])
   open import Data.Nat using (ℕ)
   open import Data.Vec using (Vec; toList; zipWith)

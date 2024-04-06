@@ -106,14 +106,6 @@ if-idemp' : ∀ {ℓ} {A : Set ℓ}
   → ∀ {c} → (if c then a else a) ≡ a
 if-idemp' _ {b} = if-idemp b
 
-if-cong : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂} {a b : A}
-  → (c : Bool)
-  → (P : A → B)
-    -------------------------------------------------
-  → (if c then P a else P b) ≡ P (if c then a else b)
-if-cong false _ = refl
-if-cong true  _ = refl
-
 if-swap : ∀ {A : Set} (x y : Bool) (a b : A)
   → (if x then a else (if y then a else b))
   ≡ (if y then a else (if x then a else b))
