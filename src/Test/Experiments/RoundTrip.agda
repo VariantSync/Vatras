@@ -96,27 +96,27 @@ get     round-trip ex@(name ≔ ccc) = do
 open CCC using (_⟨_⟩; _-<_>-)
 
 ex-trivial : Example (CCC.CCC Feature ∞ Artifact)
-ex-trivial = "trivial" ≔ "f1" ⟨ "a1" -< [] >- ∷ "a2" -< [] >- ∷ [] ⟩
+ex-trivial = "trivial" ≔ "D" ⟨ "l" -< [] >- ∷ "r" -< [] >- ∷ [] ⟩
 
 ex-sandwich : Example (CCC.CCC Feature ∞ Artifact)
-ex-sandwich = "sandwich" ≔
-  "bread"
-    -< "salad?"
+ex-sandwich = "Sandwich Recipe" ≔
+  "Bread"
+    -< "Salad?"
          ⟨ "salad" -< [] >-
-         ∷ "no salad" -< [] >-
+         ∷ "ε" -< [] >-
          ∷ []
          ⟩
     ∷  "cheese" -< [] >-
-    ∷  "patty?"
+    ∷  "Patty?"
          ⟨ "meat" -< [] >-
          ∷ "tofu" -< [] >-
          ∷ []
          ⟩
-    ∷  "sauce?"
-         ⟨ "no souce" -< [] >-
-         ∷ "mayonnaise" -< [] >-
+    ∷  "Sauce?"
+         ⟨ "ε" -< [] >-
+         ∷ "mayo" -< [] >-
          ∷ "ketchup" -< [] >-
-         ∷ "mayonnaise and ketchup" -< [] >-
+         ∷ "mayo+ketchup" -< [] >-
          ∷ []
          ⟩
     ∷ []
