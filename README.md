@@ -73,9 +73,12 @@ which will compile the library and run its small demo. Alternatively, you may us
 
 Building for the first time will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min). Running the demo will print:
 
-- some translations of core to binary choice calculus, and
-- some translations from option calculus to binary choice calculus, and
-- some examples of feature structure tree composition.
+- some translations from option calculus (`OC`) to binary choice calculus (`2CC`),
+- some examples for feature structure tree composition, and
+- two round-trip translations, following our circle established in the paper: `CCC → ⌈e⌉-CC → 2-CC → 2CC → ADT → VariantList (CaO) → CCC`.
+  The first round-trip will translate a trivial choice `D ⟨ l , r ⟩`.
+  The second round-trip will translate the sandwich expression from our paper (Expression 1).
+  Prepare for a long terminal output because of exponential blowups for `ADT` and `VariantList`. ;)
 
 When running the demo, make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
 Also, the demo prints unicode characters to terminal, which should be supported.
@@ -93,6 +96,7 @@ The library is organized as follows:
 - [src/Lang](src/Lang) contains definitions of particular variability languages (Section 3).
 - [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md) contains an overview of our case study (Section 5) to compare existing variability languages. The compilers can be found in the [src/Translation/Lang](src/Translation/Lang) sub-directory.
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
+- [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.3
