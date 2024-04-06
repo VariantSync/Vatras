@@ -125,6 +125,11 @@ appendToLastLine : String → Lines → Lines
 appendToLastLine suffix = modifyLastLine λ where
   (alignment aligned line) → alignment aligned (line ++ suffix)
 
+intersperseCommas : List Lines → Lines
+intersperseCommas ls with List.unsnoc ls
+intersperseCommas ls | nothing = noLines
+intersperseCommas ls | just (init , last) = lines (List.map (appendToLastLine ",") init ∷ʳ last)
+
 -- indent all lines by the given number of spaces
 indent : ℕ → Lines → Lines
 indent i = prefix (replicate i ' ')

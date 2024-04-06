@@ -98,11 +98,11 @@ module _ {n : ℕ≥ 2} {Dimension : 𝔽} where
     pretty (a -< es@(_ ∷ _) >-) = do
       > a ++ "-<"
       indent 2 do
-        lines (mapl pretty es)
+        intersperseCommas (mapl pretty es)
       > ">-"
     pretty (D ⟨ cs ⟩) = do
       > show-D D ++ "⟨"
       indent 2 do
-        lines (mapl pretty (Vec.toList cs))
+        intersperseCommas (mapl pretty (Vec.toList cs))
       > "⟩"
 ```

@@ -213,7 +213,7 @@ Some transformation rules:
     pretty (a -< es@(_ ∷ _) >-) = do
       > a ++ "-<"
       indent 2 do
-        lines (mapl pretty es)
+        intersperseCommas (mapl pretty es)
       > ">-"
     pretty (D ⟨ l , r ⟩) = do
       > show-D D ++ "⟨"
