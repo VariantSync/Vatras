@@ -30,7 +30,6 @@ pretty pretty-variant show-F (leaf v) = > pretty-variant v
 pretty pretty-variant show-F (D ⟨ l , r ⟩) = do
   > show-F D ++ "⟨"
   indent 2 do
-    pretty pretty-variant show-F l
-    > ","
+    appendToLastLine "," (pretty pretty-variant show-F l)
     pretty pretty-variant show-F r
   > "⟩"
