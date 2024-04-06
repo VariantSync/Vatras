@@ -41,7 +41,7 @@ experimentsToRun =
   -- Run some example translations of option calculus to binary choice calculus
   setup exp-oc-to-bcc optex-all ∷
   -- Run some example translations from n to binary choices
-  setup exp all-ex ∷
+  -- setup exp all-ex ∷
   setup toy-calculator-experiment ex-all ∷
   setup round-trip RoundTrip.examples ∷
   []
