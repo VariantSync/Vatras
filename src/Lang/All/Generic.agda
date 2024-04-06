@@ -22,7 +22,7 @@ module 2CC where
   open Lang.2CC.Sem Variant Artifact∈ₛVariant public
 
 module NADT where
-  open import Lang.NADT renaming (NADTVL to NADTL) public
+  open import Lang.NADT public
 
 module ADT where
   open import Lang.ADT public
