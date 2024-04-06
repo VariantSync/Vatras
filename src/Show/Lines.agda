@@ -2,15 +2,19 @@ module Show.Lines where
 
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.Nat using (ℕ; _*_; _∸_; ⌊_/2⌋; ⌈_/2⌉; _≤ᵇ_)
-open import Data.List using (List; _∷_; map; concat; splitAt)
+open import Data.List as List using (List; _∷_; [_]; concat; splitAt; _∷ʳ_)
+open import Data.Maybe using (nothing; just)
 open import Data.String using (String; _++_; _==_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
-open import Data.Product as Prod using (_,_)
+open import Data.Product as Prod using (_,_; proj₁; map₁)
+open import Data.Unit using (⊤; tt)
 open import Function using (id; _∘_)
 
+open import Algebra using (RawMonoid)
 open import Effect.Applicative using (RawApplicative)
+open import Effect.Functor using (RawFunctor)
 open import Effect.Monad using (RawMonad)
-open RawApplicative using (pure)
-open import Data.List.Effectful renaming (applicative to list-applicative; monad to list-monad)
+open import Effect.Monad.Writer as Writer using (RawMonadWriter; Writer; runWriter)
+open import Data.List.Effectful as List using () renaming (applicative to list-applicative; monad to list-monad)
 open import Level using (0ℓ)
 
 open import Util.List using (max)
@@ -35,28 +39,54 @@ length line = Data.String.length (content line)
 
 -- Lines monad.
 -- It captures a sequence of text lines which we aim to print.
--- Under the hood it is just a list of strings but with slightly different behaviour (see _>>_ below).
+Lines' : Set → Set
+Lines' = Writer (List.++-[]-rawMonoid Line)
+
 Lines : Set
-Lines = List Line
+Lines = Lines' (Level.Lift Level.zero ⊤)
+
+-- Export the composition operator to allow do-notation.
+open Writer using (functor; applicative; monad) public
+open RawMonad {f = 0ℓ} (monad {𝕎 = List.++-[]-rawMonoid Line}) using (_>>_; _>>=_) public
+
+noLines : Lines
+noLines = pure (Level.lift tt)
+  where
+  open RawApplicative applicative
 
 -- print a single line
 single : Line → Lines
-single = pure list-applicative
+single line = tell [ line ]
+  where
+  open RawMonadWriter Writer.monadWriter
 
 -- add a sequence of lines to the output at once
 lines : List Lines → Lines
-lines = concat
+lines lines = sequenceA lines >> noLines
+  where
+  open List.TraversableA applicative
+
+map-lines : {A : Set} → (List Line → List Line) → Lines' A → Lines' A
+map-lines f = writer ∘ map₁ f ∘ runWriter
+  where
+  open RawMonadWriter Writer.monadWriter
+
+map : {A : Set} → (Line → Line) → Lines' A → Lines' A
+map f = map-lines (List.map f)
+
+raw-lines : Lines → List Line
+raw-lines = proj₁ ∘ runWriter
+
+for-loop : ∀ {ℓ} {A : Set ℓ} → List A → (A → Lines) → Lines
+for-loop items op = lines (List.map op items)
+
+syntax for-loop items (λ c → l) = foreach [ c ∈ items ] l
 
 align-all : ℕ → Lines → Lines
 align-all width = map (align width)
 
 overwrite-alignment-with : Alignment → Lines → Lines
 overwrite-alignment-with a = map (λ l → record l { alignment = a })
-
--- Export the composition operator do allow do-notation.
--- We do not rely on _>>_ of the list monad because it forgets the first argument and just keeps the second list. We thus would forget everything we wanted to print except for the last line.
-_>>_ : Lines → Lines → Lines
-_>>_ = Data.List._++_
 
 -- Some smart constructors
 
@@ -65,12 +95,15 @@ _>>_ = Data.List._++_
 infix 1 [_]>_
 
 >_ : String → Lines
->_ = [_]>_ Left
+>_ = [ Left ]>_
 infix 1 >_
 
 >∷_ : List String → Lines
->∷_ = lines ∘ map >_
+>∷_ = lines ∘ List.map >_
 infix 1 >∷_
+
+phantom : String → String
+phantom s = replicate (Data.String.length s) ' '
 
 mantle : String → String → Lines → Lines
 mantle prefix suffix = map (manipulate (λ s → prefix ++ s ++ suffix))
@@ -81,6 +114,22 @@ prefix p = mantle p ""
 suffix : String → Lines → Lines
 suffix s = mantle "" s
 
+modifyLastLine : (Line → Line) -> Lines → Lines
+modifyLastLine f ls with List.unsnoc (raw-lines ls)
+modifyLastLine f ls | nothing = noLines
+modifyLastLine f ls | just (init , last) = tell (init ∷ʳ f last)
+  where
+  open RawMonadWriter Writer.monadWriter
+
+appendToLastLine : String → Lines → Lines
+appendToLastLine suffix = modifyLastLine λ where
+  (alignment aligned line) → alignment aligned (line ++ suffix)
+
+intersperseCommas : List Lines → Lines
+intersperseCommas ls with List.unsnoc ls
+intersperseCommas ls | nothing = noLines
+intersperseCommas ls | just (init , last) = lines (List.map (appendToLastLine ",") init ∷ʳ last)
+
 -- indent all lines by the given number of spaces
 indent : ℕ → Lines → Lines
 indent i = prefix (replicate i ' ')
@@ -89,7 +138,7 @@ linebreak : Lines
 linebreak = > ""
 
 width : Lines → ℕ
-width = max ∘ map length
+width = max ∘ List.map length ∘ raw-lines
 
 -- Given a maximum length, this function wraps a given line as often as necessary to not exceed that width,
 -- This is not guaranteed to terminate because the list could be infinite.
@@ -104,9 +153,7 @@ wrap-at max-width line with (length line) ≤ᵇ max-width
 
 -- Wraps all lines at the given maximum width using wrap-at.
 wrap-all-at : ℕ → Lines → Lines
-wrap-all-at max-width lines =
-  let open RawMonad list-monad in
-  lines >>= wrap-at max-width
+wrap-all-at max-width ls = lines (List.map (wrap-at max-width) (raw-lines ls))
 
 -- Dr
 boxed : ℕ → (title : String) → (content : Lines) → Lines

@@ -1,17 +1,19 @@
-{-# OPTIONS --sized-types --guardedness #-}
+{-# OPTIONS --sized-types --guardedness --allow-unsolved-metas #-}
 
 module Main where
 
+open import Level using (0ℓ; suc)
+
 open import Data.String using (String)
 open import Data.List using (List; []; _∷_; map)
-open import Data.Product using (∃-syntax; _×_; _,_)
+open import Data.Product using (∃-syntax; Σ-syntax; _×_; _,_)
 open import Size using (∞)
 
-open import Show.Lines
+open import Show.Lines hiding (map)
 open import Show.Print
 
 open import Test.Example using (Example)
-open import Test.Experiment using (Experiment; runAll)
+open import Test.Experiment using (Experiment; ExperimentSetup; setup; run-setup)
 
 open import Lang.CCC using (CCC)
 open import Lang.OC using (WFOC)
@@ -19,20 +21,29 @@ open import Lang.OC using (WFOC)
 open import Test.Examples.CCC using (cccex-all)
 open import Test.Examples.OC using (optex-all)
 
-open import Test.Experiments.CCC-to-BCC
-open import Test.Experiments.OC-to-BCC
+open import Test.Experiments.CCC-to-2CC
+open import Test.Experiments.OC-to-2CC
+
+open import Translation.Experiments.Choice-to-2Choice-Experiment using (exp; all-ex)
+import Test.Experiments.FST-Experiments as FSTs
+open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
+open import Test.Experiments.RoundTrip as RoundTrip using (round-trip)
 
 {-|
 A list of programs that we want to run.
 Each program is implemented in terms of an Experiment.
 Each experiment is run on each example from a list of examples (i.e., experiment inputs).
 -}
-experimentsToRun : List (∃[ A ] (Experiment A × List (Example A)))
+experimentsToRun : List (ExperimentSetup 0ℓ)
 experimentsToRun =
-    -- Run some example translations from n-ary to binary choice calculus
-    (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
-    -- Run some example translations of option calculus to binary choice calculus
-    (WFOC ∞ String ,          exp-oc-to-bcc , optex-all) ∷
+  -- DEPRECATED: Run some example translations from n-ary to binary choice calculus
+  -- DEPRECATED: (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
+  -- Run some example translations of option calculus to binary choice calculus
+  setup exp-oc-to-bcc optex-all ∷
+  -- Run some example translations from n to binary choices
+  -- setup exp all-ex ∷
+  setup toy-calculator-experiment ex-all ∷
+  setup round-trip RoundTrip.examples ∷
   []
 
 {-|
@@ -45,11 +56,10 @@ main_lines = do
   > "  ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳"
   > "... but now on to the experiments."
   linebreak
-  let runEntry = λ (A , exp , exa) → runAll exp exa
   linebreak
   overwrite-alignment-with
     Center
-    (lines (map runEntry experimentsToRun))
+    (lines (map run-setup experimentsToRun))
 
 open import IO using (IO; Main; putStrLn)
 

@@ -1,69 +1,70 @@
 {-# OPTIONS --sized-types #-}
 module Test.Examples.CCC where
 
-open import Data.String using (String)
+open import Data.String as String using (String)
 open import Data.List using (List; _∷_; [])
 open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
-  renaming (map to mapl⁺)
+  renaming (map to map⁺)
 open import Data.Product
   using (_,_; _×_)
 open import Size
   using (Size; ∞; ↑_)
 
-open import Lang.CCC
+open import Framework.Definitions using (𝔸; atoms)
+open import Construct.Plain.Artifact using (leaf; leaves⁺)
+
+open import Lang.All
+open CCC -- use strings as dimensions
 open import Test.Example
 
 CCCExample : Set
-CCCExample = Example (CCC ∞ String)
+CCCExample = Example (CCC String ∞ (String , String._≟_))
 
 -- some smart constructors
-chcA : ∀ {i : Size} {A : Set} → List⁺ (CCC i A) → CCC (↑ i) A
-chcA es = "A" ⟨ es ⟩
+ccA : ∀ {i : Size} {A : 𝔸} → List⁺ (CCC String i A) → CCC String (↑ i) A
+ccA es = "A" ⟨ es ⟩
 
-chcA-leaves : ∀ {i : Size} {A : Set} → List⁺ A → CCC (↑ ↑ i) A
-chcA-leaves es = chcA (leaves es)
+cc-leaves : ∀ {i : Size} {A : 𝔸} → String → List⁺ (atoms A) → CCC String (↑ ↑ i) A
+cc-leaves D es = D ⟨ map⁺ atom (leaves⁺ es) ⟩
+
+ccA-leaves : ∀ {i : Size} {A : 𝔸} → List⁺ (atoms A) → CCC String (↑ ↑ i) A
+ccA-leaves = cc-leaves "A"
+
+cc-leaf : ∀ {i : Size} {A : 𝔸} → (atoms A) → CCC String (↑ i) A
+cc-leaf a = atom (leaf a)
 
 -- examples
 
-cccex-ekko : CCCExample
-cccex-ekko = "ekko" example: cc_example_walk
-
 cccex-binary : CCCExample
-cccex-binary = "binary" example: "D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩
+cccex-binary = "binary" ≔ "D" ⟨ cc-leaf "left" ∷ cc-leaf "right" ∷ [] ⟩
 
 cccex-binary-nested : CCCExample
-cccex-binary-nested = "binary-nested" example:
-  "A" ⟨ ("A" ⟨ leaf "1" ∷ leaf "2" ∷ [] ⟩) ∷
-        ("A" ⟨ leaf "3" ∷ leaf "4" ∷ [] ⟩) ∷ []
+cccex-binary-nested = "binary-nested" ≔
+  "A" ⟨ ("A" ⟨ cc-leaf "1" ∷ cc-leaf "2" ∷ [] ⟩) ∷
+        ("A" ⟨ cc-leaf "3" ∷ cc-leaf "4" ∷ [] ⟩) ∷ []
       ⟩
 
 cccex-ternary-nested : CCCExample
-cccex-ternary-nested = "ternary-nested" example:
-  chcA ( chcA-leaves ("1" ∷ "2" ∷ "3" ∷ []) ∷
-         chcA-leaves ("4" ∷ "5" ∷ "6" ∷ []) ∷
-         chcA-leaves ("7" ∷ "8" ∷ "9" ∷ []) ∷ [])
+cccex-ternary-nested = "ternary-nested" ≔
+  ccA ( ccA-leaves ("1" ∷ "2" ∷ "3" ∷ []) ∷
+        ccA-leaves ("4" ∷ "5" ∷ "6" ∷ []) ∷
+        ccA-leaves ("7" ∷ "8" ∷ "9" ∷ []) ∷ [])
 
 cccex-complex1 : CCCExample
-cccex-complex1 = "complex1" example:
-  "A" ⟨ ("B" ⟨ leaf "1" ∷ leaf "2" ∷ leaf "3" ∷ [] ⟩) ∷
-        ("C" ⟨ leaf "c" ∷ [] ⟩) ∷
-        ("A" ⟨ leaf "4" ∷
-               ("D" ⟨ leaf "left" ∷ leaf "right" ∷ [] ⟩) ∷
-               leaf "5" ∷ []
+cccex-complex1 = "complex1" ≔
+  "A" ⟨ (cc-leaves "B" ("1" ∷ "2" ∷ "3" ∷ [])) ∷
+        (cc-leaves "C" ("c" ∷ [])) ∷
+        ("A" ⟨ cc-leaf "4" ∷
+               (cc-leaves "D" ("left" ∷ "right" ∷ [] )) ∷
+               cc-leaf "5" ∷ []
              ⟩) ∷ []
       ⟩
 
-cccex-nametrick : CCCExample
-cccex-nametrick = "name-trick" example:
-  "A" ⟨ ("A.0" ⟨ leaf "A.0-left" ∷ leaf "A.0-right" ∷ [] ⟩) ∷ leaf "x" ∷ [] ⟩
-
 cccex-all : List CCCExample
 cccex-all =
-  cccex-ekko ∷
   cccex-binary ∷
   cccex-binary-nested ∷
   cccex-ternary-nested ∷
   cccex-complex1 ∷
-  cccex-nametrick ∷
   []

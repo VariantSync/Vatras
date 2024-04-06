@@ -1,5 +1,5 @@
 #!/bin/bash
-names=("Paul" "Bittner" "Alex" "Schult" "Jeff" "Young" "Parisa" "Ataei" "Eric" "Walking" "Martin" "Erwig" "Leo" "Teixeira" "Thomas" "Thüm" "VariantSync" "Ulm" "OSU" "Oregon" "GPCE")
+names=("Paul" "Bittner" "pmbittner" "Alex" "Schult" "Benjamin" "Moosherr" "ibbem" "Jeff" "Young" "Parisa" "Ataei" "Eric" "Walking" "Martin" "Erwig" "Leo" "Teixeira" "Thomas" "Thüm" "VariantSync" "Paderborn" "IOG" "IOHK" "Elemental" "Cognition" "Ulm" "OSU" "Oregon" "GPCE")
 for name in "${names[@]}";
 do
   # -I ignores binary files
