@@ -218,8 +218,7 @@ Some transformation rules:
     pretty (D ⟨ l , r ⟩) = do
       > show-D D ++ "⟨"
       indent 2 do
-        pretty l
-        > ","
+        appendToLastLine "," (pretty l)
         pretty r
       > "⟩"
 ```
