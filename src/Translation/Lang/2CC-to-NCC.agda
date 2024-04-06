@@ -23,7 +23,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Size using (Size)
 open import Util.Nat.AtLeast using (ℕ≥; sucs)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -62,7 +62,7 @@ module 2Ary where
       NCC.⟦ a -< List.map translate cs >- ⟧ config
     ≡⟨⟩
       artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map translate cs))
-    ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+    ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟨
       artifact a (List.map (λ e → NCC.⟦ translate e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ e config) cs) ⟩
       artifact a (List.map (λ e → 2CC.⟦ e ⟧ (fnoc config)) cs)
@@ -114,7 +114,7 @@ module 2Ary where
       2CC.⟦ if config d then l else r ⟧ config
     ≡⟨ preserves-⊇ (if config d then l else r) config ⟩
       NCC.⟦ translate (if config d then l else r) ⟧ (conf config)
-    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Bool.push-function-into-if (translate) (config d)) refl ⟩
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Bool.if-float (translate) (config d)) refl ⟩
       NCC.⟦ if config d then translate l else translate r ⟧ (conf config)
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ lemma refl ⟩
       NCC.⟦ Vec.lookup (translate l ∷ translate r ∷ []) (conf config d) ⟧ (conf config)

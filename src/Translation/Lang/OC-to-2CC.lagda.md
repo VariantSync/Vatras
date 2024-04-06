@@ -5,6 +5,7 @@
 ```agda
 {-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
 ```
 
 ## Module

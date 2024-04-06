@@ -14,16 +14,7 @@ pkgs.agdaPackages.mkDerivation {
   src = ./.;
 
   buildInputs = [
-    (pkgs.agdaPackages.standard-library.overrideAttrs
-      (oldAttrs: {
-        version = "1.7.2";
-        src = pkgs.fetchFromGitHub {
-          repo = "agda-stdlib";
-          owner = "agda";
-          rev = "177dc9e";
-          hash = "sha256-ovnhL5otoaACpqHZnk/ucivwtEfBQtGRu4/xw4+Ws+c=";
-        };
-      }))
+    pkgs.agdaPackages.standard-library
   ];
 
   buildPhase = ''

@@ -20,7 +20,7 @@ open import Function using (id)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
 open import Size using (Size; ∞)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -51,7 +51,7 @@ preserves-≗ Variant→2CC (f ADT.⟨ l , r ⟩) config =
     2CC.⟦ f 2CC.⟨ translate Variant→2CC l , translate Variant→2CC r ⟩ ⟧ config
   ≡⟨⟩
     2CC.⟦ if config f then translate Variant→2CC l else translate Variant→2CC r ⟧ config
-  ≡⟨ Bool.push-function-into-if (λ e → 2CC.⟦ e ⟧ config) (config f) ⟩
+  ≡⟨ Bool.if-float (λ e → 2CC.⟦ e ⟧ config) (config f) ⟩
     (if config f then 2CC.⟦ translate Variant→2CC l ⟧ config else 2CC.⟦ translate Variant→2CC r ⟧ config)
   ≡⟨ Eq.cong₂ (if config f then_else_) (preserves-≗ Variant→2CC l config) (preserves-≗ Variant→2CC r config) ⟩
     (if config f then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)

@@ -2,7 +2,7 @@
 module Construct.Choices where
 
 open import Data.Bool using (Bool; if_then_else_)
-open import Data.Bool.Properties using (push-function-into-if)
+open import Data.Bool.Properties using (if-float)
 open import Data.String using (String; _<+>_; intersperse)
 open import Level using (Level; _⊔_)
 open import Function using (_∘_)
@@ -101,7 +101,7 @@ module 2Choice where
       ⟦ map f (D ⟨ l , r ⟩) ⟧ c
     ≡⟨⟩
       (if c D then f l else f r)
-    ≡˘⟨ push-function-into-if f (c D) ⟩
+    ≡⟨ if-float f (c D) ⟨
       f (if c D then l else r)
     ≡⟨⟩
       f (⟦ D ⟨ l , r ⟩ ⟧ c)
@@ -151,7 +151,7 @@ module Choice where
       ⟦ map f (D ⟨ as ⟩) ⟧ c
     ≡⟨⟩
       find-or-last (c D) (map-list⁺ f as)
-    ≡˘⟨ map-find-or-last f (c D) as ⟩
+    ≡⟨ map-find-or-last f (c D) as ⟨
       f (find-or-last (c D) as)
     ≡⟨⟩
       f (⟦ D ⟨ as ⟩ ⟧ c)

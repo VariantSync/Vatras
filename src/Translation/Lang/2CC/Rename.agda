@@ -10,7 +10,7 @@ This module renames dimensions in binary choice calculus expressions.
 module Translation.Lang.2CC.Rename (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (if_then_else_)
-open import Data.Bool.Properties as Bool
+import Data.Bool.Properties as Bool
 import Data.EqIndexedSet as IndexedSet
 open import Data.List as List using (List)
 import Data.List.Properties as List
@@ -23,7 +23,7 @@ open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
 open import Size using (Size)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -56,7 +56,7 @@ preserves-⊆ f f⁻¹ (a -< cs >-) config =
     2CC.⟦ a -< List.map (rename f) cs >- ⟧ config
   ≡⟨⟩
     artifact a (List.map (λ e → 2CC.⟦ e ⟧ config) (List.map (rename f) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟨
     artifact a (List.map (λ e → 2CC.⟦ rename f e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ f f⁻¹ e config) cs) ⟩
     artifact a (List.map (λ e → 2CC.⟦ e ⟧ (config ∘ f)) cs)
@@ -69,7 +69,7 @@ preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
     2CC.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
   ≡⟨⟩
     2CC.⟦ if config (f d) then rename f l else rename f r ⟧ config
-  ≡˘⟨ Eq.cong₂ 2CC.⟦_⟧ (Bool.push-function-into-if (rename f) (config (f d))) refl ⟩
+  ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (Bool.if-float (rename f) (config (f d))) refl ⟨
     2CC.⟦ rename f (if config (f d) then l else r) ⟧ config
   ≡⟨ preserves-⊆ f f⁻¹ (if config (f d) then l else r) config ⟩
     2CC.⟦ if config (f d) then l else r ⟧ (config ∘ f)
@@ -104,9 +104,9 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     2CC.⟦ if config d then l else r ⟧ config
   ≡⟨ preserves-⊇ f f⁻¹ is-inverse (if config d then l else r) config ⟩
     2CC.⟦ rename f (if config d then l else r) ⟧ (config ∘ f⁻¹)
-  ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (push-function-into-if (rename f) (config d)) refl ⟩
+  ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (Bool.if-float (rename f) (config d)) refl ⟩
     2CC.⟦ if config d then rename f l else rename f r ⟧ (config ∘ f⁻¹)
-  ≡˘⟨ Eq.cong₂ 2CC.⟦_⟧ (Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (rename f l)) (rename f r)) refl ⟩
+  ≡⟨ Eq.cong₂ 2CC.⟦_⟧ (Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (rename f l)) (rename f r)) refl ⟨
     2CC.⟦ if config (f⁻¹ (f d)) then rename f l else rename f r ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
     2CC.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ (config ∘ f⁻¹)

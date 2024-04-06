@@ -23,7 +23,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Size using (Size; ∞)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -60,7 +60,7 @@ module 2Ary where
       2CC.⟦ (a -< List.map translate cs >-) ⟧ config
     ≡⟨⟩
       artifact a (List.map (λ e → 2CC.⟦ e ⟧ config) (List.map translate cs))
-    ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+    ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟨
       artifact a (List.map (λ e → 2CC.⟦ translate e ⟧ config) cs)
     ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ e config) cs) ⟩
       artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc config)) cs)
@@ -73,7 +73,7 @@ module 2Ary where
       2CC.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
     ≡⟨⟩
       2CC.⟦ if config d then translate l else translate r ⟧ config
-    ≡⟨ Bool.push-function-into-if (λ e → 2CC.⟦ e ⟧ config) (config d) ⟩
+    ≡⟨ Bool.if-float (λ e → 2CC.⟦ e ⟧ config) (config d) ⟩
       (if config d then 2CC.⟦ translate l ⟧ config else 2CC.⟦ translate r ⟧ config)
     ≡⟨ Eq.cong₂ (if_then_else_ (config d)) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
       (if config d then NCC.⟦ l ⟧ (fnoc config) else NCC.⟦ r ⟧ (fnoc config))
@@ -110,13 +110,13 @@ module 2Ary where
       NCC.⟦ d ⟨ l ∷ r ∷ [] ⟩ ⟧ config
     ≡⟨⟩
       NCC.⟦ Vec.lookup (l ∷ r ∷ []) (config d) ⟧ config
-    ≡˘⟨ Vec.lookup-map (config d) (λ e → NCC.⟦ e ⟧ config) (l ∷ r ∷ []) ⟩
+    ≡⟨ Vec.lookup-map (config d) (λ e → NCC.⟦ e ⟧ config) (l ∷ r ∷ []) ⟨
       Vec.lookup (NCC.⟦ l ⟧ config ∷ NCC.⟦ r ⟧ config ∷ []) (config d)
     ≡⟨ lemma ⟩
       (if conf config d then NCC.⟦ l ⟧ config else NCC.⟦ r ⟧ config)
     ≡⟨ Eq.cong₂ (if_then_else_ (conf config d)) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
       (if conf config d then 2CC.⟦ translate l ⟧ (conf config) else 2CC.⟦ translate r ⟧ (conf config))
-    ≡˘⟨ Bool.push-function-into-if (λ e → 2CC.⟦ e ⟧ (conf config)) (conf config d) ⟩
+    ≡⟨ Bool.if-float (λ e → 2CC.⟦ e ⟧ (conf config)) (conf config d) ⟨
       2CC.⟦ if conf config d then translate l else translate r ⟧ (conf config)
     ≡⟨⟩
       2CC.⟦ d ⟨ translate l , translate r ⟩ ⟧ (conf config)

@@ -94,15 +94,15 @@ module Translate
       ≡⟨ Eq.cong (find-or-last n) (
         begin
           w ∷ zs
-        ≡˘⟨ map⁺-id (w ∷ zs) ⟩
+        ≡⟨ map⁺-id (w ∷ zs) ⟨
           map⁺ id (w ∷ zs)
-        ≡˘⟨ map⁺-cong (encode-idemp V A embed c) (w ∷ zs) ⟩
+        ≡⟨ map⁺-cong (encode-idemp V A embed c) (w ∷ zs) ⟨
           map⁺ (⟦⟧c ∘ compile) (w ∷ zs)
         ≡⟨ map⁺-∘ (w ∷ zs) ⟩
           map⁺ ⟦⟧c tail-in-ccc
         ∎)⟩
         find-or-last n (map⁺ ⟦⟧c tail-in-ccc)
-      ≡˘⟨ map-find-or-last ⟦⟧c n tail-in-ccc ⟩
+      ≡⟨ map-find-or-last ⟦⟧c n tail-in-ccc ⟨
         ⟦⟧c (find-or-last n tail-in-ccc)
       ≡⟨⟩
         ⟦ find-or-last n (compile w ∷ map compile zs) ⟧ c
@@ -134,7 +134,7 @@ module Translate
         find-or-last i tail
       ≡⟨ Eq.cong (find-or-last i) (sym (map⁺-id tail)) ⟩
         find-or-last i (map⁺ id tail)
-      ≡˘⟨ Eq.cong (find-or-last i) (map⁺-cong (encode-idemp V A embed c) tail) ⟩
+      ≡⟨ Eq.cong (find-or-last i) (map⁺-cong (encode-idemp V A embed c) tail) ⟨
         find-or-last i (map⁺ (⟦⟧c ∘ compile) tail)
       ≡⟨ Eq.cong (find-or-last i) (map⁺-∘ tail) ⟩
         find-or-last i (map⁺ ⟦⟧c tail-in-ccc)

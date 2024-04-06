@@ -1,3 +1,5 @@
+{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
+
 module Util.Suffix where
 
 open import Data.Empty using (⊥-elim)

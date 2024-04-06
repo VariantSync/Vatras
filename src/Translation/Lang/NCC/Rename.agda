@@ -32,7 +32,7 @@ import Util.AuxProofs as ℕ
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -68,7 +68,7 @@ preserves-⊆ n f f⁻¹ (a -< cs >-) config =
     NCC.⟦ a -< List.map (rename n f) cs >- ⟧ config
   ≡⟨⟩
     artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (rename n f) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟨
     artifact a (List.map (λ e → NCC.⟦ rename n f e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n f f⁻¹ e config) cs) ⟩
     artifact a (List.map (λ e → NCC.⟦ e ⟧ (config ∘ f)) cs)
@@ -115,9 +115,9 @@ preserves-⊇ n f f⁻¹ is-inverse (d ⟨ cs ⟩) config =
     NCC.⟦ Vec.lookup cs (config d) ⟧ config
   ≡⟨ preserves-⊇ n f f⁻¹ is-inverse (Vec.lookup cs (config d)) config ⟩
     NCC.⟦ rename n f (Vec.lookup cs (config d)) ⟧ (config ∘ f⁻¹)
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) (rename n f) cs) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) (rename n f) cs) refl ⟨
     NCC.⟦ Vec.lookup (Vec.map (rename n f) cs) (config d) ⟧ (config ∘ f⁻¹)
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = Vec.map (rename n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = Vec.map (rename n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟨
     NCC.⟦ Vec.lookup (Vec.map (rename n f) cs) (config ((f⁻¹ ∘ f) d)) ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
     NCC.⟦ f d ⟨ Vec.map (rename n f) cs ⟩ ⟧ (config ∘ f⁻¹)

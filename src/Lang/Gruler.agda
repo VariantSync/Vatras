@@ -1,4 +1,5 @@
 {-# OPTIONS --sized-types #-}
+{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
 
 open import Framework.Definitions
 module Lang.Gruler (F : 𝔽) where

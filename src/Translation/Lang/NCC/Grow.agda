@@ -33,7 +33,7 @@ import Util.AuxProofs as ℕ
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -78,7 +78,7 @@ preserves-⊆ n m n≤m (a -< cs >-) config =
     NCC.⟦ a -< List.map (grow n m n≤m) cs >- ⟧ config
   ≡⟨⟩
     artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (grow n m n≤m) cs))
-  ≡˘⟨ Eq.cong₂ artifact Eq.refl (List.map-∘ cs) ⟩
+  ≡⟨ Eq.cong₂ artifact Eq.refl (List.map-∘ cs) ⟨
     artifact a (List.map (λ e → NCC.⟦ grow n m n≤m e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact Eq.refl (List.map-cong (λ e → preserves-⊆ n m n≤m e config) cs) ⟩
     artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc n m n≤m config)) cs)
@@ -121,19 +121,19 @@ preserves-⊇ (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) config =
     NCC.⟦ d ⟨ cs ⟩ ⟧ config
   ≡⟨⟩
     NCC.⟦ Vec.lookup cs (config d) ⟧ config
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = cs}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = cs}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟨
     NCC.⟦ Vec.lookup cs (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ config
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = cs}) (Eq.cong ℕ≥.cappedFin (Fin.toℕ-inject≤ (config d) n≤m))) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = cs}) (Eq.cong ℕ≥.cappedFin (Fin.toℕ-inject≤ (config d) n≤m))) refl ⟨
     NCC.⟦ Vec.lookup cs (ℕ≥.cappedFin (Fin.toℕ (Fin.inject≤ (config d) n≤m))) ⟧ config
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-saturate n≤m cs (Fin.inject≤ (config d) n≤m)) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-saturate n≤m cs (Fin.inject≤ (config d) n≤m)) refl ⟨
     NCC.⟦ Vec.lookup (Vec.saturate n≤m cs) (Fin.inject≤ (config d) n≤m) ⟧ config
   ≡⟨⟩
     NCC.⟦ Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d) ⟧ config
   ≡⟨ preserves-⊇ (sucs n) (sucs m) n≤m (Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d)) config ⟩
     NCC.⟦ (grow (sucs n) (sucs m) n≤m) (Vec.lookup (Vec.saturate n≤m cs) (conf (sucs n) (sucs m) n≤m config d)) ⟧ (conf (sucs n) (sucs m) n≤m config)
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (conf (sucs n) (sucs m) n≤m config d) (grow (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (conf (sucs n) (sucs m) n≤m config d) (grow (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) refl ⟨
     NCC.⟦ Vec.lookup (Vec.map (grow (sucs n) (sucs m) n≤m) (Vec.saturate n≤m cs)) (conf (sucs n) (sucs m) n≤m config d) ⟧ (conf (sucs n) (sucs m) n≤m config)
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (Vec.saturate-map n≤m (grow (sucs n) (sucs m) n≤m) cs) refl) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (Vec.saturate-map n≤m (grow (sucs n) (sucs m) n≤m) cs) refl) refl ⟨
     NCC.⟦ Vec.lookup (Vec.saturate n≤m (Vec.map (grow (sucs n) (sucs m) n≤m) cs)) (conf (sucs n) (sucs m) n≤m config d) ⟧ (conf (sucs n) (sucs m) n≤m config)
   ≡⟨⟩
     NCC.⟦ d ⟨ Vec.saturate n≤m (Vec.map (grow (sucs n) (sucs m) n≤m) cs) ⟩ ⟧ (conf (sucs n) (sucs m) n≤m config)

@@ -23,7 +23,7 @@ open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
 open import Size using (Size)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -76,7 +76,7 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     (if config d then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
   ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-⊇ f f⁻¹ is-inverse l config) (preserves-⊇ f f⁻¹ is-inverse r config) ⟩
     (if config d then ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
-  ≡˘⟨ Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (ADT.⟦ rename f l ⟧ (config ∘ f⁻¹))) (ADT.⟦ rename f r ⟧ (config ∘ f⁻¹)) ⟩
+  ≡⟨ Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (ADT.⟦ rename f l ⟧ (config ∘ f⁻¹))) (ADT.⟦ rename f r ⟧ (config ∘ f⁻¹)) ⟨
     (if config (f⁻¹ (f d)) then ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
   ≡⟨⟩
     ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ (config ∘ f⁻¹)

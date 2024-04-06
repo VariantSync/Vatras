@@ -1,3 +1,5 @@
+{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
+
 open import Framework.Definitions
 module Lang.ADT where
 

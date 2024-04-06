@@ -31,7 +31,7 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
   direct-idempotence i =
     begin
       i ⊕ i
-    ≡˘⟨ Eq.cong (i ⊕_) (proj₁ identity i) ⟩
+    ≡⟨ Eq.cong (i ⊕_) (proj₁ identity i) ⟨
       i ⊕ 𝟘 ⊕ i
     ≡⟨ distant-idempotence 𝟘 i ⟩
       𝟘 ⊕ i
@@ -51,13 +51,13 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
   ≤-trans {i} {j} {k} i≤j j≤k =
     begin
       i ⊕ k
-    ≡˘⟨ Eq.cong (i ⊕_) j≤k ⟩
+    ≡⟨ Eq.cong (i ⊕_) j≤k ⟨
       i ⊕ (j ⊕ k)
-    ≡˘⟨ Eq.cong (λ x → i ⊕ x ⊕ k) i≤j ⟩
+    ≡⟨ Eq.cong (λ x → i ⊕ x ⊕ k) i≤j ⟨
       i ⊕ ((i ⊕ j) ⊕ k)
-    ≡˘⟨ assoc i (i ⊕ j) k ⟩
+    ≡⟨ assoc i (i ⊕ j) k ⟨
       (i ⊕ (i ⊕ j)) ⊕ k
-    ≡˘⟨ Eq.cong (_⊕ k) (assoc i i j) ⟩
+    ≡⟨ Eq.cong (_⊕ k) (assoc i i j) ⟨
       ((i ⊕ i) ⊕ j) ⊕ k
     ≡⟨ Eq.cong (_⊕ k) (Eq.cong (_⊕ j) (direct-idempotence i)) ⟩
       (i ⊕ j) ⊕ k
@@ -136,7 +136,7 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
       (i₂ ⊕ i₁) ⊕ i₁ ⊕ i₂
     ≡⟨⟩
       (i₂ ⊕ i₁) ⊕ (i₁ ⊕ i₂)
-    ≡˘⟨ assoc (i₂ ⊕ i₁) i₁ i₂ ⟩
+    ≡⟨ assoc (i₂ ⊕ i₁) i₁ i₂ ⟨
       ((i₂ ⊕ i₁) ⊕ i₁) ⊕ i₂
     ≡⟨ Eq.cong (_⊕ i₂) (assoc i₂ i₁ i₁) ⟩
       (i₂ ⊕ (i₁ ⊕ i₁)) ⊕ i₂

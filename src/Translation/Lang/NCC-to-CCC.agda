@@ -22,7 +22,7 @@ open import Size using (Size; ∞)
 open import Util.List using (find-or-last; lookup⇒find-or-last)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -63,7 +63,7 @@ preserves-⊆ n (a -< cs >-) config =
     CCC.⟦ a -< List.map (translate n) cs >- ⟧ config
   ≡⟨⟩
     artifact a (List.map (λ e → CCC.⟦ e ⟧ config) (List.map (translate n) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ config)} {f = translate n} cs) ⟩
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ config)} {f = translate n} cs) ⟨
     artifact a (List.map (λ e → CCC.⟦ translate n e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
     artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc n config)) cs)
@@ -76,7 +76,7 @@ preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) config =
     CCC.⟦ d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩ ⟧ config
   ≡⟨⟩
     CCC.⟦ find-or-last (config d) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ config
-  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (lookup⇒find-or-last {m = config d} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
+  ≡⟨ Eq.cong₂ CCC.⟦_⟧ (lookup⇒find-or-last {m = config d} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟨
     CCC.⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (config d)) ⟧ config
   ≡⟨ Eq.cong₂ CCC.⟦_⟧ (Vec.lookup-map (ℕ≥.cappedFin (config d)) (translate (sucs n)) (c ∷ cs)) refl ⟩
     CCC.⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (ℕ≥.cappedFin (config d))) ⟧ config
@@ -109,9 +109,9 @@ preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
     NCC.⟦ Vec.lookup (c ∷ cs) (config d) ⟧ config
   ≡⟨ preserves-⊇ (sucs n) (Vec.lookup (c ∷ cs) (config d)) config ⟩
     CCC.⟦ translate (sucs n) (Vec.lookup (c ∷ cs) (config d)) ⟧ (conf (sucs n) config)
-  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (Vec.lookup-map (config d) (translate (sucs n)) (c ∷ cs)) refl ⟩
+  ≡⟨ Eq.cong₂ CCC.⟦_⟧ (Vec.lookup-map (config d) (translate (sucs n)) (c ∷ cs)) refl ⟨
     CCC.⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (config d) ⟧ (conf (sucs n) config)
-  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = Vec.map (translate (sucs n)) (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟩
+  ≡⟨ Eq.cong₂ CCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = Vec.map (translate (sucs n)) (c ∷ cs)}) (ℕ≥.cappedFin-toℕ (config d))) refl ⟨
     CCC.⟦ Vec.lookup (Vec.map (translate (sucs n)) (c ∷ cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ (conf (sucs n) config)
   ≡⟨ Eq.cong₂ CCC.⟦_⟧ (lookup⇒find-or-last {m = Fin.toℕ (config d)} (translate (sucs n) c ∷ Vec.map (translate (sucs n)) cs)) refl ⟩
     CCC.⟦ find-or-last (Fin.toℕ (config d)) (List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs))) ⟧ (conf (sucs n) config)

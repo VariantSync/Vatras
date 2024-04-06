@@ -282,7 +282,7 @@ preservation-path-configs-fnoc (D ⟨ l , r ⟩) u c@((.(D ↣ true ) ∷ p) is-
     walk l (p is-valid t)
   ≡⟨ preservation-path-configs-fnoc l (undead-left u) (p is-valid t) ⟩
     ⟦ l ⟧ (path-to-fun l (p is-valid t))
-  ≡˘⟨ path-to-fun-step-l D l r u p t ⟩
+  ≡⟨ path-to-fun-step-l D l r u p t ⟨
     ⟦ l ⟧ (path-to-fun (D ⟨ l , r ⟩) ((D ↣ true ∷ p) is-valid walk-left t))
   ≡⟨⟩
     ⟦ l ⟧ (λ D' → if isYes (D == D') then true else path-to-fun l (p is-valid t) D')

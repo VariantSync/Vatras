@@ -30,6 +30,7 @@ soundness-from-enumerability {L} L-has-finite-semantics {A} e =
         enumerate-configuration
         ⟦ e ⟧
         (enumerate-is-surjective fin)
+        (Eq._≡_.refl)
         (IsEquivalence.sym (≣ⁱ-IsEquivalence L e))
         (≣ⁱ-congruent L e)
       where ⟦_⟧ = Semantics L

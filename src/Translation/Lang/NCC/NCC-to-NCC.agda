@@ -37,9 +37,6 @@ import Util.AuxProofs as ℕ
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
-
 open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 

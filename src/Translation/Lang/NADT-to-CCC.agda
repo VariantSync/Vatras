@@ -20,7 +20,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
 open import Size using (Size; ∞)
 import Util.List as List
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -48,7 +48,7 @@ preserves-≗ Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) config 
     CCC.⟦ f ⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
   ≡⟨⟩
     CCC.⟦ List.find-or-last (config f) (List⁺.map (translate Variant→CCC) alternatives) ⟧ config
-  ≡˘⟨ Eq.cong₂ CCC.⟦_⟧ (List.map-find-or-last (translate Variant→CCC) (config f) alternatives) refl ⟩
+  ≡⟨ Eq.cong₂ CCC.⟦_⟧ (List.map-find-or-last (translate Variant→CCC) (config f) alternatives) refl ⟨
     CCC.⟦ translate Variant→CCC (List.find-or-last (config f) alternatives) ⟧ config
   ≡⟨ preserves-≗ Variant→CCC (List.find-or-last (config f) alternatives) config ⟩
     NADT.⟦ List.find-or-last (config f) alternatives ⟧ config
