@@ -7,7 +7,7 @@ open import Construct.Artifact using () renaming (Syntax to Artifact; _-<_>- to 
 {-
 This module renames dimensions in algebraic decision trees.
 -}
-module Translation.Lang.2ADT.Rename (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.ADT.Rename (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
 open import Data.Bool using (if_then_else_)
 open import Data.Bool.Properties as Bool
@@ -27,84 +27,84 @@ open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
-open 2ADT using (2ADT; 2ADTL; leaf; _⟨_,_⟩)
+open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
 artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
-2ADT-map-config : ∀ {D₁ D₂ : 𝔽}
+ADT-map-config : ∀ {D₁ D₂ : 𝔽}
   → (D₂ → D₁)
-  → 2ADT.Configuration D₁
-  → 2ADT.Configuration D₂
-2ADT-map-config f config = config ∘ f
+  → ADT.Configuration D₁
+  → ADT.Configuration D₂
+ADT-map-config f config = config ∘ f
 
 rename : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → (D₁ → D₂)
-  → 2ADT Variant D₁ A
-  → 2ADT Variant D₂ A
+  → ADT Variant D₁ A
+  → ADT Variant D₂ A
 rename f (leaf v) = leaf v
-rename f (d 2ADT.⟨ l , r ⟩) = f d ⟨ rename f l , rename f r ⟩
+rename f (d ADT.⟨ l , r ⟩) = f d ⟨ rename f l , rename f r ⟩
 
 preserves-⊆ : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
-  → (expr : 2ADT Variant D₁ A)
-  → 2ADT.⟦ rename f expr ⟧ ⊆[ 2ADT-map-config f ] 2ADT.⟦ expr ⟧
+  → (expr : ADT Variant D₁ A)
+  → ADT.⟦ rename f expr ⟧ ⊆[ ADT-map-config f ] ADT.⟦ expr ⟧
 preserves-⊆ f f⁻¹ (leaf v) config = refl
 preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
-    2ADT.⟦ rename f (d ⟨ l , r ⟩) ⟧ config
+    ADT.⟦ rename f (d ⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
-    2ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
+    ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
   ≡⟨⟩
-    (if config (f d) then 2ADT.⟦ rename f l ⟧ config else 2ADT.⟦ rename f r ⟧ config)
+    (if config (f d) then ADT.⟦ rename f l ⟧ config else ADT.⟦ rename f r ⟧ config)
   ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f f⁻¹ l config) (preserves-⊆ f f⁻¹ r config) ⟩
-    (if config (f d) then 2ADT.⟦ l ⟧ (config ∘ f) else 2ADT.⟦ r ⟧ (config ∘ f))
+    (if config (f d) then ADT.⟦ l ⟧ (config ∘ f) else ADT.⟦ r ⟧ (config ∘ f))
   ≡⟨⟩
-    2ADT.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
+    ADT.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
   ∎
 
 preserves-⊇ : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → (expr : 2ADT Variant D₁ A)
-  → 2ADT.⟦ expr ⟧ ⊆[ 2ADT-map-config f⁻¹ ] 2ADT.⟦ rename f expr ⟧
+  → (expr : ADT Variant D₁ A)
+  → ADT.⟦ expr ⟧ ⊆[ ADT-map-config f⁻¹ ] ADT.⟦ rename f expr ⟧
 preserves-⊇ f f⁻¹ is-inverse (leaf v) config = refl
 preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
-    2ADT.⟦ d ⟨ l , r ⟩ ⟧ config
+    ADT.⟦ d ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
-    (if config d then 2ADT.⟦ l ⟧ config else 2ADT.⟦ r ⟧ config)
+    (if config d then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
   ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-⊇ f f⁻¹ is-inverse l config) (preserves-⊇ f f⁻¹ is-inverse r config) ⟩
-    (if config d then 2ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else 2ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
-  ≡˘⟨ Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (2ADT.⟦ rename f l ⟧ (config ∘ f⁻¹))) (2ADT.⟦ rename f r ⟧ (config ∘ f⁻¹)) ⟩
-    (if config (f⁻¹ (f d)) then 2ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else 2ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
+    (if config d then ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
+  ≡˘⟨ Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (ADT.⟦ rename f l ⟧ (config ∘ f⁻¹))) (ADT.⟦ rename f r ⟧ (config ∘ f⁻¹)) ⟩
+    (if config (f⁻¹ (f d)) then ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
   ≡⟨⟩
-    2ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ (config ∘ f⁻¹)
+    ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
-    2ADT.⟦ rename f (d ⟨ l , r ⟩) ⟧ (config ∘ f⁻¹)
+    ADT.⟦ rename f (d ⟨ l , r ⟩) ⟧ (config ∘ f⁻¹)
   ∎
 
 preserves : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → (e : 2ADT Variant D₁ A)
-  → 2ADT.⟦ rename f e ⟧ ≅[ 2ADT-map-config f ][ 2ADT-map-config f⁻¹ ] 2ADT.⟦ e ⟧
+  → (e : ADT Variant D₁ A)
+  → ADT.⟦ rename f e ⟧ ≅[ ADT-map-config f ][ ADT-map-config f⁻¹ ] ADT.⟦ e ⟧
 preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
 
-2ADT-rename : ∀ {D₁ D₂ : 𝔽}
+ADT-rename : ∀ {D₁ D₂ : 𝔽}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (2ADTL Variant D₁) (2ADTL Variant D₂)
-2ADT-rename f f⁻¹ is-inverse .LanguageCompiler.compile = rename f
-2ADT-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2ADT-map-config f⁻¹
-2ADT-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2ADT-map-config f
-2ADT-rename f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)
+  → LanguageCompiler (ADTL Variant D₁) (ADTL Variant D₂)
+ADT-rename f f⁻¹ is-inverse .LanguageCompiler.compile = rename f
+ADT-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = ADT-map-config f⁻¹
+ADT-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = ADT-map-config f
+ADT-rename f f⁻¹ is-inverse .LanguageCompiler.preserves expr = ≅[]-sym (preserves f f⁻¹ is-inverse expr)
 
-2ADT-rename≽2ADT : ∀ {D₁ D₂ : Set}
+ADT-rename≽ADT : ∀ {D₁ D₂ : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → 2ADTL Variant D₂ ≽ 2ADTL Variant D₁
-2ADT-rename≽2ADT f f⁻¹ is-inverse = expressiveness-from-compiler (2ADT-rename f f⁻¹ is-inverse)
+  → ADTL Variant D₂ ≽ ADTL Variant D₁
+ADT-rename≽ADT f f⁻¹ is-inverse = expressiveness-from-compiler (ADT-rename f f⁻¹ is-inverse)

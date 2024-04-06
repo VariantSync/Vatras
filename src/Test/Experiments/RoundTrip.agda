@@ -84,12 +84,12 @@ get     round-trip ex@(name ≔ ccc) = do
   overwrite-alignment-with Center
     (boxed (6 + width pretty-ccc) "" pretty-ccc)
 
-  ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                               (NCC.Pretty.pretty id)
-  ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                 (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                   (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  2adt        ← compile   2cc         "2ADT"        2CC→2ADT                                                    (2ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  variantList ← compile   2adt        "VariantList" (2ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
-  ccc'        ← compile   variantList "CCC"         (VariantList→CCC "default feature")                         (CCC.pretty id)
+  ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (NCC.Pretty.pretty id)
+  ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+  2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+  adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+  variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
+  ccc'        ← compile   variantList "CCC"         (VariantList→CCC "default feature")                        (CCC.pretty id)
   linebreak
 
 

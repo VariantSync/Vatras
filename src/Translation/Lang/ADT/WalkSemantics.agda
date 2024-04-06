@@ -1,13 +1,13 @@
 {-
-Walk semantics are equivalent to ordinary 2ADT semantics
-as long as the 2ADT does not contain any dead branches.
+Walk semantics are equivalent to ordinary ADT semantics
+as long as the ADT does not contain any dead branches.
 This means that configurations can be modelled as functions or as paths.
 Interestingly, we obtain a compiler that does not change the input
 expression but only translates configurations.
 -}
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸)
 open import Relation.Binary using (DecidableEquality; Rel)
-module Translation.Lang.2ADT.WalkSemantics
+module Translation.Lang.ADT.WalkSemantics
   (F : 𝔽)
   (V : 𝕍)
   (_==_ : DecidableEquality F)
@@ -30,9 +30,9 @@ open import Data.EqIndexedSet hiding (_∈_)
 open Data.EqIndexedSet.≅-Reasoning
 
 open import Framework.VariabilityLanguage
-open import Lang.2ADT using (2ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
-open import Lang.2ADT.Path F V _==_
-open import Translation.Lang.2ADT.DeadElim F V _==_
+open import Lang.ADT using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
+open import Lang.ADT.Path F V _==_
+open import Translation.Lang.ADT.DeadElim F V _==_
 
 open import Util.Suffix
 
@@ -42,7 +42,7 @@ the given tree.
 The conversion checks the configuration function at each choice,
 constructs the path accordingly, and recurses until it reaches a leaf.
 -}
-fun-to-path : ∀ {A} (e : 2ADT V F A) → Configuration F → PathConfig e
+fun-to-path : ∀ {A} (e : ADT V F A) → Configuration F → PathConfig e
 fun-to-path (leaf _) _ = [] is-valid tleaf
 fun-to-path (D ⟨ _ , _ ⟩) c with c D
 fun-to-path (D ⟨ l , _ ⟩) c | true  with fun-to-path l c
@@ -59,7 +59,7 @@ Otherwise, returns true.
 (The returned function returns true for all features that
 are not on a valid path.)
 -}
-path-to-fun : ∀ {A} (e : 2ADT V F A) → PathConfig e → Configuration F
+path-to-fun : ∀ {A} (e : ADT V F A) → PathConfig e → Configuration F
 path-to-fun .(leaf _) ([] is-valid tleaf) _ = true
 path-to-fun (.D ⟨ l , r ⟩) (((D ↣ .true) ∷ p) is-valid walk-left t) D' =
   if (isYes (D == D'))
@@ -95,7 +95,7 @@ Crucial lemma for proving preservation.
 path-to-fun returns the value b for a given feature D
 if the path given to path-to-fun contains the selection D ↣ b somewhere.
 -}
-path-to-fun-lem : ∀ {A} (D : F) (e : 2ADT V F A) (p q : Path) (t : p starts-at e)
+path-to-fun-lem : ∀ {A} (D : F) (e : ADT V F A) (p q : Path) (t : p starts-at e)
   → (b : Bool)
   → Unique p
   → p endswith ((D ↣ b) ∷ q)
@@ -121,7 +121,7 @@ endswith-path-contains _ (match .((_ ↣ _) ∷ _)) = here (fromWitness refl)
 endswith-path-contains b (later x) = there (endswith-path-contains b x)
 
 path-to-fun-step-l-inner2 : ∀ {A}
-  → (D : F) (l r : 2ADT V F A)
+  → (D : F) (l r : ADT V F A)
   → (p : Path) → (t : p starts-at l)
   → All (different (D ↣ true)) p
     -------------------------------------------------------------------
@@ -134,7 +134,7 @@ path-to-fun-step-l-inner2 D l r p t all-dims-in-p-different-to-D E E∈p with D 
 
 -- clone-and-own from path-to-fun-step-l-inner2
 path-to-fun-step-r-inner2 : ∀ {A}
-  → (D : F) (l r : 2ADT V F A)
+  → (D : F) (l r : ADT V F A)
   → (p : Path) → (t : p starts-at r)
   → All (different (D ↣ false)) p
     -------------------------------------------------------------------
@@ -147,10 +147,10 @@ path-to-fun-step-r-inner2 D l r p t all-dims-in-p-different-to-D E E∈p with D 
 
 path-to-fun-step-l-inner : ∀ {A}
   -- for a choice D ⟨ l , r ⟩
-  → (D : F) (l r : 2ADT V F A)
+  → (D : F) (l r : ADT V F A)
   → (lp : Path)
   -- if there is a subexpression e
-  → (e : 2ADT V F A) (ep : Path)
+  → (e : ADT V F A) (ep : Path)
   -- (i.e., all paths starting in l end in paths starting in e)
   → (tlp : lp starts-at l)
   → (tep : ep starts-at e)
@@ -194,9 +194,9 @@ path-to-fun-step-l-inner D l r lp (D' ⟨ a , b ⟩) ((.D' ↣ false) ∷ ep) tl
 -- This is a huge copy and paste blob from
 -- path-to-fun-step-r-inner
 path-to-fun-step-r-inner : ∀ {A}
-  → (D : F) (l r : 2ADT V F A)
+  → (D : F) (l r : ADT V F A)
   → (rp : Path)
-  → (e : 2ADT V F A) (ep : Path)
+  → (e : ADT V F A) (ep : Path)
   → (trp : rp starts-at r)
   → (tep : ep starts-at e)
   → (sub : rp endswith ep)
@@ -218,7 +218,7 @@ path-to-fun-step-r-inner D l r lp (D' ⟨ a , b ⟩) ((.D' ↣ false) ∷ ep) tl
   = refl
 
 path-to-fun-step-l : ∀ {A}
-  → (D : F) (l r : 2ADT V F A)
+  → (D : F) (l r : ADT V F A)
   → Undead (D ⟨ l , r ⟩)
   → (p : Path)
   → (t : p starts-at l)
@@ -228,7 +228,7 @@ path-to-fun-step-l D l r u p t with u ((D ↣ true) ∷ p) (walk-left t)
 ... | u ∷ uu = path-to-fun-step-l-inner D l r p l p t t (match p) u uu
 
 path-to-fun-step-r : ∀ {A}
-  → (D : F) (l r : 2ADT V F A)
+  → (D : F) (l r : ADT V F A)
   → Undead (D ⟨ l , r ⟩)
   → (p : Path)
   → (t : p starts-at r)
@@ -239,7 +239,7 @@ path-to-fun-step-r D l r u p t with u ((D ↣ false) ∷ p) (walk-right t)
 
 path-to-fun-head : ∀ {A}
   → (D : F)
-  → (l r : 2ADT V F A)
+  → (l r : ADT V F A)
   → (b : Bool)
   → (p : Path)
   → (t : ((D ↣ b) ∷ p) starts-at (D ⟨ l , r ⟩))
@@ -252,7 +252,7 @@ path-to-fun-head D l r .false p (walk-right t) with D == D
 ... | no  D≢D = ⊥-elim (D≢D refl)
 
 preservation-path-configs-conf : ∀ {A : 𝔸}
-  → (e : 2ADT V F A)
+  → (e : ADT V F A)
   → (u : Undead e)
   → ⟦ e ⊚ u ⟧ᵤ ⊆[ fun-to-path e ] walk e
 preservation-path-configs-conf (leaf _) _ _ = refl
@@ -272,7 +272,7 @@ preservation-path-configs-conf (_ ⟨ _ , r ⟩) u c | false with fun-to-path r 
 ... | _ rewrite (sym eq) = preservation-path-configs-conf r (undead-right u) c
 
 preservation-path-configs-fnoc : ∀ {A : 𝔸}
-  → (e : 2ADT V F A)
+  → (e : ADT V F A)
   → (u : Undead e)
   → walk e ⊆[ path-to-fun e ] ⟦ e ⊚ u ⟧ᵤ
 preservation-path-configs-fnoc (leaf v) _ (.[] is-valid tleaf) = refl
@@ -294,13 +294,13 @@ preservation-path-configs-fnoc (D ⟨ l , r ⟩) u ((.(D ↣ false) ∷ p) is-va
   = refl
 
 preservation : ∀ {A : 𝔸}
-  → (e : Undead2ADT A)
+  → (e : UndeadADT A)
   → ⟦ e ⟧ᵤ ≅[ fun-to-path (node e) ][ path-to-fun (node e) ] walk (node e)
 preservation e =
     preservation-path-configs-conf (node e) (undead e)
   , preservation-path-configs-fnoc (node e) (undead e)
 
 -- We cannot construct a LanguageCompiler because
--- we cannot construct a VariabilityLanguage for 2ADT with walk semantics because
+-- we cannot construct a VariabilityLanguage for ADT with walk semantics because
 -- configurations for walk semantics (PathConfig) depend on the input expression
 -- which currently, cannot be modelled within our framework.
