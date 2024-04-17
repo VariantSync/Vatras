@@ -11,7 +11,11 @@
 pkgs.agdaPackages.mkDerivation {
   version = "1.0";
   pname = "EPVL";
-  src = ./.;
+  src = with pkgs.lib.fileset;
+    toSource {
+      root = ./.;
+      fileset = gitTracked ./.;
+    };
 
   buildInputs = [
     pkgs.agdaPackages.standard-library
