@@ -27,7 +27,7 @@ pkgs.agdaPackages.mkDerivation {
     make build
   '';
 
-  installPhase = ''
+  postInstall = ''
     install -D src/Main "$out/bin/$pname"
   '';
 
