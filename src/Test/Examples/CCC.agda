@@ -1,4 +1,3 @@
-{-# OPTIONS --sized-types #-}
 module Test.Examples.CCC where
 
 open import Data.String as String using (String)

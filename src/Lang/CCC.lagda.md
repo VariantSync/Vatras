@@ -1,14 +1,5 @@
 # Core Choice Calculus
 
-## Options
-
-For termination checking, we have to use sized types (i.e., types that are bounded by a certain size).
-We use sizes to constrain the maximum tree-depth of an expression.
-```agda
-{-# OPTIONS --sized-types #-}
-{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
-```
-
 ## Module
 
 ```agda

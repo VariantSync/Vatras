@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Show.Eval where
 
 open import Data.Bool using (Bool)

@@ -1,11 +1,5 @@
 # Overview of Language Relations
 
-## Options
-
-```agda
-{-# OPTIONS --sized-types #-}
-```
-
 ## Module
 
 ```agda

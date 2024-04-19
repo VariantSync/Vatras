@@ -1,7 +1,3 @@
-```agda
-{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
-```
-
 # Lists of Variants are Also Variability Languages
 
 ## Module

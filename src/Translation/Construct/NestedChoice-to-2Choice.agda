@@ -1,4 +1,3 @@
-{-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 module Translation.Construct.NestedChoice-to-2Choice where
 

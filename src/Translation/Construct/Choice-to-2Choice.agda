@@ -1,4 +1,3 @@
-{-# OPTIONS --sized-types #-}
 module Translation.Construct.Choice-to-2Choice {Q : Set} where
 
 open import Data.Bool using (Bool; false; true) renaming (_≟_ to _≟ᵇ_)

@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
 
 open import Framework.Construct using (_∈ₛ_; cons)

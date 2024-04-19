@@ -1,11 +1,5 @@
 # Encoding Lists of Variants in Core Choice Calculus
 
-## Options
-
-```agda
-{-# OPTIONS --sized-types #-}
-```
-
 ## Module
 
 ```agda

@@ -3,8 +3,6 @@
 ## Module
 
 ```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Level using (Level; suc; _⊔_)
 open import Relation.Binary as RB using (
   Rel;

@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Examples.OC where
 
 open import Data.List using (List; []; _∷_; [_])

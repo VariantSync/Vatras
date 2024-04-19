@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Experiments.OC-to-2CC where
 
 open import Data.Bool using (Bool; true; false)

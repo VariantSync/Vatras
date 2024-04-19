@@ -1,5 +1,3 @@
-{-# OPTIONS --large-indices --no-forced-argument-recursion #-}
-
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸; 𝔼)
 open import Relation.Binary using (DecidableEquality; Rel)
 module Lang.ADT.Path

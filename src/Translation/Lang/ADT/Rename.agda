@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions using (𝕍; atoms)
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Construct.Artifact using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)

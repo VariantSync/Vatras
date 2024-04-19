@@ -1,4 +1,4 @@
-{-# OPTIONS --sized-types --guardedness --allow-unsolved-metas #-}
+{-# OPTIONS --guardedness --allow-unsolved-metas #-}
 
 module Main where
 
