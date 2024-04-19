@@ -1,11 +1,12 @@
 {
-  outputs = inputs: let
-    EVPL = import inputs.self {system = "x86_64-linux";};
-  in {
-    packages.x86_64-linux.default = EVPL;
+  outputs = inputs: {
+    packages.x86_64-linux.default = import inputs.self {system = "x86_64-linux";};
     overlays.default = final: prev: {
       agdaPackages = prev.agdaPackages.overrideScope' (self: super: {
-        inherit EVPL;
+        (import inputs.self {
+          system = "x86_64-linux";
+          pkgs = final;
+        };)
       });
     };
   };
