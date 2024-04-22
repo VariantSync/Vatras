@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions using (𝕍)
 open import Framework.Construct using (_∈ₛ_)
 open import Construct.Artifact using () renaming (Syntax to Artifact)
@@ -22,7 +20,7 @@ module 2CC where
   open Lang.2CC.Sem Variant Artifact∈ₛVariant public
 
 module NADT where
-  open import Lang.NADT renaming (NADTVL to NADTL) public
+  open import Lang.NADT public
 
 module ADT where
   open import Lang.ADT public

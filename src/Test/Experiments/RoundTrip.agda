@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Experiments.RoundTrip where
 
 open import Data.Bool using (Bool; true; false)

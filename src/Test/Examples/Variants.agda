@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Examples.Variants where
 
 open import Data.Fin using (zero; suc)

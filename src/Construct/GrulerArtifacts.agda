@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Construct.GrulerArtifacts where
 
 open import Data.Maybe using (just; nothing)

@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.UnitTest where
 
 open import Data.List using (List)

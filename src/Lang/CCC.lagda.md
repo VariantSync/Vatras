@@ -1,13 +1,5 @@
 # Core Choice Calculus
 
-## Options
-
-For termination checking, we have to use sized types (i.e., types that are bounded by a certain size).
-We use sizes to constrain the maximum tree-depth of an expression.
-```agda
-{-# OPTIONS --sized-types #-}
-```
-
 ## Module
 
 ```agda
@@ -152,8 +144,8 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
         ⟦ encode v ⟧ c
       ≡⟨⟩
         rose (a At.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-)
-      ≡˘⟨ Eq.cong rose $
-            Eq.cong (a At.-<_>-) (map-∘ cs) ⟩
+      ≡⟨ Eq.cong rose $
+            Eq.cong (a At.-<_>-) (map-∘ cs) ⟨
         rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
       ≡⟨ Eq.cong rose $
             Eq.cong (a At.-<_>-) (go cs) ⟩

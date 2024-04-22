@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
 module Translation.Lang.FST-to-OC (F : 𝔽) where
 

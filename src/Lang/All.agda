@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Lang.All where
 
 open import Size using (∞)

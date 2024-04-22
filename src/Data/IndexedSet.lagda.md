@@ -3,8 +3,6 @@
 ## Module
 
 ```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Level using (Level; suc; _⊔_)
 open import Relation.Binary as RB using (
   Rel;
@@ -289,7 +287,7 @@ module ⊆-Reasoning where
 
 module ≅-Reasoning where
   infix  3 _≅-∎
-  infixr 2 _≅⟨⟩_ step-≅ step-≅˘ step-≐ step-≐˘ --step-≅-by-index-translation
+  infixr 2 _≅⟨⟩_ step-≅-⟨ step-≅-⟩ step-≐-⟨ step-≐-⟩ --step-≅-by-index-translation
   infix  1 ≅-begin_
 
   ≅-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → A ≅ B
@@ -298,11 +296,11 @@ module ≅-Reasoning where
   _≅⟨⟩_ : ∀ {I J} (A : IndexedSet I) {B : IndexedSet J} → A ≅ B → A ≅ B
   _ ≅⟨⟩ A≅B = A≅B
 
-  step-≅ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅-⟩ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
     → B ≅ C
     → A ≅ B
     → A ≅ C
-  step-≅ _ B≅C A≅B = ≅-trans A≅B B≅C
+  step-≅-⟩ _ B≅C A≅B = ≅-trans A≅B B≅C
 
   -- step-≅-by-index-translation : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
   --   → (i→j : I → J)
@@ -313,36 +311,36 @@ module ≅-Reasoning where
   --   → A ≅ C
   -- step-≅-by-index-translation _ i→j j→i ti tj B≅C = ≅-trans (⊆-by-index-translation i→j ti , ⊆-by-index-translation j→i tj) B≅C
 
-  step-≅˘ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅-⟨ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
     → B ≅ C
     → B ≅ A
     → A ≅ C
-  step-≅˘ A B≅C B≅A = step-≅ A B≅C (≅-sym B≅A)
+  step-≅-⟨ A B≅C B≅A = step-≅-⟩ A B≅C (≅-sym B≅A)
 
-  step-≐ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐-⟩ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
     → B ≅ C
     → A ≐ B
     → A ≅ C
-  step-≐ _ B≅C A≐B = ≅-trans (≐→≅ A≐B) B≅C
+  step-≐-⟩ _ B≅C A≐B = ≅-trans (≐→≅ A≐B) B≅C
 
-  step-≐˘ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐-⟨ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
     → B ≅ C
     → B ≐ A
     → A ≅ C
-  step-≐˘ A B≅C B≐A = step-≐ A B≅C (≐-sym B≐A)
+  step-≐-⟨ A B≅C B≐A = step-≐-⟩ A B≅C (≐-sym B≐A)
 
   _≅-∎ : ∀ {I} (A : IndexedSet I) → A ≅ A
   _≅-∎ _ = ≅-refl
 
-  syntax step-≅ A B≅C A≅B = A ≅⟨ A≅B ⟩ B≅C
-  syntax step-≅˘ A B≅C B≅A = A ≅˘⟨ B≅A ⟩ B≅C
-  syntax step-≐ A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
-  syntax step-≐˘ A B≅C (λ i → Bi≈Ai) = A ≐˘[ i ]⟨ Bi≈Ai ⟩ B≅C
+  syntax step-≅-⟩ A B≅C A≅B = A ≅⟨ A≅B ⟩ B≅C
+  syntax step-≅-⟨ A B≅C B≅A = A ≅⟨ B≅A ⟨ B≅C
+  syntax step-≐-⟩ A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
+  syntax step-≐-⟨ A B≅C (λ i → Bi≈Ai) = A ≐[ i ]⟨ Bi≈Ai ⟨ B≅C
   -- syntax step-≅-by-index-translation A i→j j→i ti tj B≅C = A ≅[ i→j ]⟨ ti ⟩[ j→i ]⟨ tj ⟩ B≅C
 
 module ≅[]-Reasoning where
   infix  3 _≅[]-∎
-  infixr 2 _≅[]⟨⟩_ step-≅[] step-≅[]˘ step-≐[] step-≐[]˘
+  infixr 2 _≅[]⟨⟩_ step-≅[]-⟨ step-≅[]-⟩ step-≐[]-⟨ step-≐[]-⟩
   infix  1 ≅[]-begin_
 
   ≅[]-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {g : J → I}
@@ -355,42 +353,42 @@ module ≅[]-Reasoning where
     → A ≅[ f ][ g ] B
   _ ≅[]⟨⟩ A≅B = A≅B
 
-  step-≅[] : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅[]-⟩ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
                {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
     → B ≅[ g ][ g⁻¹ ] C
     → A ≅[ f ][ f⁻¹ ] B
     → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
-  step-≅[] _ B≅C A≅B = ≅[]-trans A≅B B≅C
+  step-≅[]-⟩ _ B≅C A≅B = ≅[]-trans A≅B B≅C
 
-  step-≅[]˘ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅[]-⟨ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
                 {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
     → B ≅[ g ][ g⁻¹ ] C
     → B ≅[ f⁻¹ ][ f ] A
     → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
-  step-≅[]˘ A B≅C B≅A = step-≅[] A B≅C (≅[]-sym B≅A)
+  step-≅[]-⟨ A B≅C B≅A = step-≅[]-⟩ A B≅C (≅[]-sym B≅A)
 
-  step-≐[] : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐[]-⟩ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
               {g : I → J} {ginv : J → I}
     → B ≅[ g ][ ginv ] C
     → A ≐ B
     → A ≅[ g ][ ginv ] C
-  step-≐[] _ B≅C A≐B = ≅[]-trans (≐→≅[] A≐B) B≅C
+  step-≐[]-⟩ _ B≅C A≐B = ≅[]-trans (≐→≅[] A≐B) B≅C
 
-  step-≐[]˘ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐[]-⟨ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
                 {g : I → J} {ginv : J → I}
     → B ≅[ g ][ ginv ] C
     → B ≐ A
     → A ≅[ g ][ ginv ] C
-  step-≐[]˘ A B≅C B≐A = step-≐[] A B≅C (≐-sym B≐A)
+  step-≐[]-⟨ A B≅C B≐A = step-≐[]-⟩ A B≅C (≐-sym B≐A)
 
   _≅[]-∎ : ∀ {I} (A : IndexedSet I)
     → A ≅[ id ][ id ] A
   _≅[]-∎ _ = ≅[]-refl
 
-  syntax step-≅[] A B≅C A≅B = A ≅[]⟨ A≅B ⟩ B≅C
-  syntax step-≅[]˘ A B≅C B≅A = A ≅[]˘⟨ B≅A ⟩ B≅C
-  syntax step-≐[] A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
-  syntax step-≐[]˘ A B≅C (λ i → Bi≈Ai) = A ≐˘[ i ]⟨ Bi≈Ai ⟩ B≅C
+  syntax step-≅[]-⟩ A B≅C A≅B = A ≅[]⟨ A≅B ⟩ B≅C
+  syntax step-≅[]-⟨ A B≅C B≅A = A ≅[]⟨ B≅A ⟨ B≅C
+  syntax step-≐[]-⟩ A B≅C (λ i → Ai≈Bi) = A ≐[ i ]⟨ Ai≈Bi ⟩ B≅C
+  syntax step-≐[]-⟨ A B≅C (λ i → Bi≈Ai) = A ≐[ i ]⟨ Bi≈Ai ⟨ B≅C
 ```
 
 ## Common sets and relations
@@ -476,6 +474,7 @@ We do not require that both relations are indeed equivalence relations but only 
     - equivalence of original indices `_≈ᵇ_`
   - Equal original indices index equal source elements. This means that the equality of original indices `_≈ᵇ_` has to be congruent with
     respect to equivalence `_≈_` of the source elements.
+  - `Symmetric _≈ᵃ_`: reflexivity over renamed indices is required for a detail in the proof.
   - `Symmetric _≈ᵇ_`: symmetry over original indices is required for a detail in the proof.
 ```agda
 re-indexʳ : ∀ {A B : Index}
@@ -484,20 +483,21 @@ re-indexʳ : ∀ {A B : Index}
   → (rename : A → B)
   → (M : IndexedSet B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
+  → RB.Reflexive _≈ᵃ_
   → RB.Symmetric _≈ᵇ_
   → Congruent _≈ᵇ_ _≈_ M
     ---------------------
   → M ⊆ (M ∘ rename)
-re-indexʳ {A} {B} {_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵇ-sym M-is-congruent b =
+re-indexʳ {A} {B} {_≈ᵃ_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-sym M-is-congruent b =
   a , same-picks
-  where suitable-a : Σ[ a ∈ A ] (rename a ≈ᵇ b)
+  where suitable-a : Σ[ a ∈ A ] ({z : A} → z ≈ᵃ a → rename z ≈ᵇ b)
         suitable-a = rename-is-surjective b
 
         a : A
         a = proj₁ suitable-a
 
         same-picks : M b ≈ M (rename a)
-        same-picks = M-is-congruent (≈ᵇ-sym (proj₂ suitable-a))
+        same-picks = M-is-congruent (≈ᵇ-sym (proj₂ suitable-a ≈ᵃ-refl))
 
 re-index : ∀ {A B : Index}
     {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
@@ -505,13 +505,14 @@ re-index : ∀ {A B : Index}
   → (rename : A → B)
   → (M : IndexedSet B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
+  → RB.Reflexive _≈ᵃ_
   → RB.Symmetric _≈ᵇ_
   → Congruent _≈ᵇ_ _≈_ M
     ---------------------------
   → (M ∘ rename) ≅ M
-re-index {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵇ-sym M-is-congruent =
+re-index {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-sym M-is-congruent =
     re-indexˡ rename M
-  , re-indexʳ {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵇ-sym M-is-congruent
+  , re-indexʳ {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-sym M-is-congruent
 ```
 
 ## Examples

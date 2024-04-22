@@ -1,4 +1,3 @@
-{-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 
 module Framework.Variants where
@@ -81,7 +80,7 @@ module _ (V : 𝕍) (A : 𝔸) {Γ : VariabilityLanguage V} (encoder : VariantEn
       ⟦ compile encoder v ⟧ c
     ≡⟨ irrelevant-index (encoded-variant-is-singleton-set v) ⟩
       ⟦ compile encoder v ⟧ (conf encoder v tt)
-    ≡˘⟨ proj₁ (preserves encoder v) tt ⟩
+    ≡⟨ proj₁ (preserves encoder v) tt ⟨
       ⟦ v ⟧ᵥ tt
     ≡⟨⟩
       v
@@ -172,7 +171,7 @@ rose-encoder Γ has c = record
       --     rose x
       --   ≡⟨ {!!} ⟩
       --     (cons (C∈ₛV has) ∘ pcong ArtifactC Γ (map-children t x)) (confi i)
-      --   ≡˘⟨ resistant has (map-children t x) (confi i) ⟩
+      --   ≡⟨ resistant has (map-children t x) (confi i) ⟨
       --     ⟦ cons (C∈ₛΓ has) (map-children t x) ⟧ (confi i)
       --   ∎
 

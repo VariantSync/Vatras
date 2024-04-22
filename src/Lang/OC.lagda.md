@@ -3,7 +3,6 @@
 ## Options
 
 ```agda
-{-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 ```
 
@@ -233,6 +232,7 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Show
 
 ```agda
+open import Show.Lines hiding (map)
 open String using (_++_; intersperse)
 open import Function using (_∘_)
 
@@ -244,4 +244,19 @@ module Show (Option : 𝔽) (print-opt : Option → String) where
 
   show-wfoc : ∀ {i : Size} → WFOC Option i (String , String._≟_) → String
   show-wfoc = show-oc ∘ forgetWF
+
+  pretty-oc : ∀ {i : Size} → OC Option i (String , String._≟_) → Lines
+  pretty-oc (s -< [] >-) = > s
+  pretty-oc (s -< es@(_ ∷ _) >-) = do
+    > s ++ "-<"
+    indent 2 do
+      intersperseCommas (map pretty-oc es)
+    > ">-"
+  pretty-oc (O ❲ e ❳) = do
+    > print-opt O ++ "❲"
+    indent 2 (pretty-oc e)
+    > "❳"
+
+  pretty-wfoc : ∀ {i : Size} → WFOC Option i (String , String._≟_) → Lines
+  pretty-wfoc = pretty-oc ∘ forgetWF
 ```

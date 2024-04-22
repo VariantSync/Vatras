@@ -52,7 +52,7 @@ VariantListL = ⟪ VariantList , Configuration , ⟦_⟧ ⟫
 
 ```agda
 -- prove completeness via inference rules
-open import Util.AuxProofs using (clampAt)
+open import Util.Nat.AtLeast using (cappedFin)
 
 private
   open import Framework.VariantMap V
@@ -115,7 +115,7 @@ vl-conf : Fin (suc n) → Configuration
 vl-conf i = toℕ i
 
 vl-fnoc : Configuration → Fin (suc n)
-vl-fnoc {n} c = clampAt n c
+vl-fnoc c = cappedFin c
 
 preserves-∈ : ∀ {V}
   → n ⊢ V ⟶ e

@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
 
 module Construct.NestedChoice (F : 𝔽) where

@@ -2,6 +2,7 @@
 module Construct.Choices where
 
 open import Data.Bool using (Bool; if_then_else_)
+open import Data.Bool.Properties using (if-float)
 open import Data.String using (String; _<+>_; intersperse)
 open import Level using (Level; _⊔_)
 open import Function using (_∘_)
@@ -10,8 +11,6 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
 open import Data.EqIndexedSet as ISet
-
-open import Util.AuxProofs using (if-cong)
 
 module NChoice where
   open import Data.Fin using (Fin)
@@ -102,7 +101,7 @@ module 2Choice where
       ⟦ map f (D ⟨ l , r ⟩) ⟧ c
     ≡⟨⟩
       (if c D then f l else f r)
-    ≡⟨ if-cong (c D) f ⟩
+    ≡⟨ if-float f (c D) ⟨
       f (if c D then l else r)
     ≡⟨⟩
       f (⟦ D ⟨ l , r ⟩ ⟧ c)
@@ -152,7 +151,7 @@ module Choice where
       ⟦ map f (D ⟨ as ⟩) ⟧ c
     ≡⟨⟩
       find-or-last (c D) (map-list⁺ f as)
-    ≡˘⟨ map-find-or-last f (c D) as ⟩
+    ≡⟨ map-find-or-last f (c D) as ⟨
       f (find-or-last (c D) as)
     ≡⟨⟩
       f (⟦ D ⟨ as ⟩ ⟧ c)

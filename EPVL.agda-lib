@@ -1,3 +1,4 @@
 name: EPVL
 depend: standard-library-2.0
 include: src
+flags: --large-indices --no-forced-argument-recursion --sized-types

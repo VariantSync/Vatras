@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
 
 open import Framework.Construct using (_∈ₛ_; cons)
@@ -68,7 +66,7 @@ preserves-⊆ (f ADT.⟨ l , r ⟩) config =
     NADT.⟦ List.find-or-last (config f) (translate l ∷ translate r ∷ []) ⟧ config
   ≡⟨ Eq.cong₂ NADT.⟦_⟧ lemma refl ⟩
     NADT.⟦ if fnoc config f then translate l else translate r ⟧ config
-  ≡⟨ Bool.push-function-into-if (λ e → NADT.⟦ e ⟧ config) (fnoc config f) ⟩
+  ≡⟨ Bool.if-float (λ e → NADT.⟦ e ⟧ config) (fnoc config f) ⟩
     (if fnoc config f then NADT.⟦ translate l ⟧ config else NADT.⟦ translate r ⟧ config)
   ≡⟨ Eq.cong₂ (if fnoc config f then_else_) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
     (if fnoc config f then ADT.⟦ l ⟧ (fnoc config) else ADT.⟦ r ⟧ (fnoc config))
@@ -89,7 +87,7 @@ preserves-⊇ (f ⟨ l , r ⟩) config =
     (if config f then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
   ≡⟨ Eq.cong₂ (if config f then_else_) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
     (if config f then NADT.⟦ translate l ⟧ (conf config) else NADT.⟦ translate r ⟧ (conf config))
-  ≡˘⟨ Bool.push-function-into-if (λ e → NADT.⟦ e ⟧ (conf config)) (config f) ⟩
+  ≡⟨ Bool.if-float (λ e → NADT.⟦ e ⟧ (conf config)) (config f) ⟨
     NADT.⟦ if config f then translate l else translate r ⟧ (conf config)
   ≡⟨ Eq.cong₂ NADT.⟦_⟧ lemma refl ⟩
     NADT.⟦ List.find-or-last (conf config f) (translate l ∷ translate r ∷ []) ⟧ (conf config)

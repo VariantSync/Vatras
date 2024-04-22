@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
 module Lang.NADT where
 
@@ -18,9 +16,9 @@ data NADT (V : 𝕍) (F : 𝔽) : Size → 𝔼 where
   NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT V F i) A → NADT V F (↑ i) A
 
 mutual
-  NADTVL : ∀ {i : Size} (V : 𝕍) (F : 𝔽) → VariabilityLanguage V
-  NADTVL {i} V F = ⟪ NADT V F i , Choice.Config F , ⟦_⟧ ⟫
+  NADTL : ∀ {i : Size} (V : 𝕍) (F : 𝔽) → VariabilityLanguage V
+  NADTL {i} V F = ⟪ NADT V F i , Choice.Config F , ⟦_⟧ ⟫
 
   ⟦_⟧ : ∀ {i : Size} {V : 𝕍} {F : 𝔽} → 𝔼-Semantics V (Choice.Config F) (NADT V F i)
   ⟦_⟧ (NADTAsset (leaf v)) _   = v
-  ⟦_⟧ {i} {V} {F} (NADTChoice chc) = VLChoice.Semantics V F (NADTVL V F) id chc
+  ⟦_⟧ {i} {V} {F} (NADTChoice chc) = VLChoice.Semantics V F (NADTL V F) id chc

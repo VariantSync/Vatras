@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 {-
 Module with functions for assisting Agda's type checker
 when it comes to checking sized types.

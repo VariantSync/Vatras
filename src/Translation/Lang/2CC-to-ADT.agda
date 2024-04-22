@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Construct using (_∈ₛ_; cons)
 open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
@@ -18,7 +16,7 @@ open import Function using (id)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
 open import Size using (Size)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
@@ -57,7 +55,7 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
     → (vs : List (Variant A))
     → ADT.⟦ go a cs cs' vs ⟧ config ≡ artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) cs')
   go' [] vs = Eq.sym (Eq.cong₂ artifact refl (Eq.trans (List.ʳ++-defn vs) (List.++-identityʳ (List.reverse vs))))
-  go' (leaf v ∷ cs') vs = Eq.trans (go' cs' (v ∷ vs)) (Eq.cong₂ artifact refl (List.ʳ++-++ List.[ v ] {ys = vs}))
+  go' (leaf v ∷ cs') vs = Eq.trans (go' cs' (v ∷ vs)) (Eq.cong₂ artifact refl (List.++-ʳ++ List.[ v ] {ys = vs}))
   go' ((d ⟨ c₁ , c₂ ⟩) ∷ cs') vs =
       ADT.⟦ d ⟨ go a cs (c₁ ∷ cs') vs , go a cs (c₂ ∷ cs') vs ⟩ ⟧ config
     ≡⟨⟩
@@ -68,11 +66,11 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
       (if config d
         then artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c₁ ∷ cs'))
         else artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c₂ ∷ cs')))
-    ≡˘⟨ Bool.push-function-into-if (λ c → artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c ∷ cs'))) (config d) ⟩
+    ≡⟨ Bool.if-float (λ c → artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c ∷ cs'))) (config d) ⟨
       artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) ((if config d then c₁ else c₂) ∷ cs'))
     ≡⟨⟩
       artifact a (vs ʳ++ ADT.⟦ if config d then c₁ else c₂ ⟧ config ∷ List.map (λ e → ADT.⟦ e ⟧ config) cs')
-    ≡⟨ Eq.cong₂ artifact refl (Eq.cong₂ _ʳ++_ {x = vs} refl (Eq.cong₂ _∷_ (Bool.push-function-into-if (λ e → ADT.⟦ e ⟧ config) (config d)) refl)) ⟩
+    ≡⟨ Eq.cong₂ artifact refl (Eq.cong₂ _ʳ++_ {x = vs} refl (Eq.cong₂ _∷_ (Bool.if-float (λ e → ADT.⟦ e ⟧ config) (config d)) refl)) ⟩
       artifact a (vs ʳ++ (if config d then ADT.⟦ c₁ ⟧ config else ADT.⟦ c₂ ⟧ config) ∷ List.map (λ e → ADT.⟦ e ⟧ config) cs')
     ≡⟨⟩
       artifact a (vs ʳ++ ADT.⟦ d ⟨ c₁ , c₂ ⟩ ⟧ config ∷ List.map (λ e → ADT.⟦ e ⟧ config) cs')
@@ -89,7 +87,7 @@ preserves-≗ {D = D} {A = A} (a 2CC.-< cs >-) config =
     ADT.⟦ push-down-artifact a (List.map translate cs) ⟧ config
   ≡⟨ ⟦push-down-artifact⟧ a (List.map translate cs) config ⟩
     artifact a (List.map (λ e → ADT.⟦ e ⟧ config) (List.map translate cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
+  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟨
     artifact a (List.map (λ e → ADT.⟦ translate e ⟧ config) cs)
   ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-≗ e config) cs) ⟩
     artifact a (List.map (λ e → 2CC.⟦ e ⟧ config) cs)
@@ -102,7 +100,7 @@ preserves-≗ (d 2CC.⟨ l , r ⟩) config =
     ADT.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then ADT.⟦ translate l ⟧ config else ADT.⟦ translate r ⟧ config)
-  ≡˘⟨ Bool.push-function-into-if (λ e → ADT.⟦ translate e ⟧ config) (config d) ⟩
+  ≡⟨ Bool.if-float (λ e → ADT.⟦ translate e ⟧ config) (config d) ⟨
     ADT.⟦ translate (if config d then l else r) ⟧ config
   ≡⟨ preserves-≗ (if config d then l else r) config ⟩
     2CC.⟦ if config d then l else r ⟧ config

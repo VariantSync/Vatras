@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 open import Framework.Definitions
 module Translation.Experiments.Choice-to-2Choice-Experiment where
 

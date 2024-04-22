@@ -26,6 +26,17 @@ nix-build
 ./result/bin/EPVL
 ```
 
+To use this repository as a library in you own project, you can use `agda.withPackages`:
+```nix
+agda = nixpkgs.agda.withPackages [
+  nixpkgs.agdaPackages.standard-library
+  (import /path/to/this/git/repository {
+    pkgs = nixpkgs;
+  })
+];
+```
+Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
+
 #### Manual Installation
 We recommend following the installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book to install GHC, Cabal, and Agda (no need to install the book and the standard-library, which is shipped in the right version in the subdirectory `agda-stdlib` here).
 

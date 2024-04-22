@@ -1,4 +1,3 @@
-{-# OPTIONS --sized-types #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 
 module Test.Test.VariantList-Completeness where
