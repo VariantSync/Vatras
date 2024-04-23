@@ -123,7 +123,7 @@ Note: The symmetry between the rules walk-left and walk-right causes many
       However, we cannot merge the rules into a single rule
       because we have to recurse on either the left or right alternative (not both).
 -}
-data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT V F A) → Set where
+data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT V F A) → Set₁ where
   tleaf : ∀ {A} {v : V A}
       ------------------
     → [] starts-at (leaf v)
@@ -142,14 +142,14 @@ data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT V F A) → Set where
 An expression does not contain a feature name
 if all paths do not contain that feature name.
 -}
-_∉'_ : ∀{A} → F → ADT V F A → Set
+_∉'_ : ∀{A} → F → ADT V F A → Set₁
 D ∉' e = ∀ (p : Path) → p starts-at e → D ∉ p
 
 {-
 A path serves as a configuration for an expression e
 if it starts at that expression and ends at a leaf.
 -}
-record PathConfig {A} (e : ADT V F A) : Set where
+record PathConfig {A} (e : ADT V F A) : Set₁ where
   constructor _is-valid_
   field
     path : Path
@@ -171,7 +171,7 @@ walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-valid walk-right t) = walk r 
 An expression a is a sub-expression of b
 iff all valid paths from a lead to paths from b.
 -}
-_subexprof_ : ∀ {A} → ADT V F A → ADT V F A → Set
+_subexprof_ : ∀ {A} → ADT V F A → ADT V F A → Set₁
 a subexprof b = ∀ (pa : Path) → pa starts-at a → ∃[ pb ] ((pb starts-at b) × (pb endswith pa))
 
 {-

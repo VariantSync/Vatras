@@ -102,7 +102,7 @@ record FnocContract (D : Q) (fnoc : 2Config → NConfig) : Set where
       → fnoc c D ≢ i
 open FnocContract
 
-module Translate (A : Set) where
+module Translate {ℓ} (A : Set ℓ) where
   show-nested-choice : ∀ {i} → (Q → String) → (A → String) → NestedChoice i A → String
   show-nested-choice show-q = NestedChoice.show-nested-choice (show-IndexedName show-q)
 

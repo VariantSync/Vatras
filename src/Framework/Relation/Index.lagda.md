@@ -2,7 +2,7 @@
 open import Framework.Definitions using (𝕍; 𝔸)
 module Framework.Relation.Index (V : 𝕍) where
 
-open import Level using (0ℓ)
+open import Level using (0ℓ; suc)
 open import Relation.Binary using (Setoid; IsEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl; sym; trans)
 open import Function using (_∘_; Congruent)
@@ -21,7 +21,7 @@ module _ {A : 𝔸} where
     ∀ (L : 𝕃)
     → Expression L A
     → (c₁ c₂ : Config L)
-    → Set
+    → Set₁
   ⟪ _ , _ , ⟦_⟧ ⟫ ∋ e ⊢ c₁ ≣ⁱ c₂ = ⟦ e ⟧ c₁ ≡ ⟦ e ⟧ c₂
   infix 5 _∋_⊢_≣ⁱ_
 
@@ -44,7 +44,7 @@ module _ {A : 𝔸} where
   ≣ⁱ-setoid :
     ∀ (L : 𝕃)
     → (e : Expression L A)
-    → Setoid 0ℓ 0ℓ
+    → Setoid 0ℓ (suc 0ℓ)
   ≣ⁱ-setoid L e = record
     { Carrier       = Config L
     ; _≈_           = L ∋ e ⊢_≣ⁱ_

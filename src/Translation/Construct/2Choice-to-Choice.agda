@@ -79,7 +79,7 @@ default-fnoc-satisfies-contract : ∀ (f : Q) → FnocContract f default-fnoc
 suc→false (default-fnoc-satisfies-contract f) c cf≡suc  rewrite cf≡suc  = refl
 zero→true (default-fnoc-satisfies-contract f) c cf≡zero rewrite cf≡zero = refl
 
-module Translate (S : Setoid 0ℓ 0ℓ) where
+module Translate {ℓ} (S : Setoid ℓ ℓ) where
   open Setoid S
   module ≈-Eq = IsEquivalence isEquivalence
 

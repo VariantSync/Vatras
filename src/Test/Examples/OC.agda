@@ -12,7 +12,7 @@ open OC
 
 open import Test.Example
 
-OCExample : Set
+OCExample : Set₁
 OCExample = Example (WFOC String ∞ (String , String._≟_))
 
 optex-unary : OCExample

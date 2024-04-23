@@ -11,7 +11,7 @@ import Util.List as List
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
 -- Duplicates the last element of a vector to increase its length.
-saturate : ∀ {A : Set} {n : ℕ≥ 1} {m : ℕ}
+saturate : ∀ {ℓ} {A : Set ℓ} {n : ℕ≥ 1} {m : ℕ}
   → ℕ≥.toℕ n ≤ m
   → Vec A (ℕ≥.toℕ n)
   → Vec A m
@@ -19,20 +19,20 @@ saturate {n = sucs zero} {m = suc zero} suc-n≤m (x ∷ []) = x ∷ []
 saturate {n = sucs zero} {m = suc (suc m)} suc-n≤m (x ∷ []) = x ∷ saturate (s≤s z≤n) (x ∷ [])
 saturate {n = sucs (suc n)} {m = m} (s≤s suc-n≤m) (x ∷ xs) = x ∷ saturate suc-n≤m xs
 
-saturate-map : ∀ {n : ℕ≥ 1} {m : ℕ} {A B : Set}
+saturate-map : ∀ {ℓ} {n : ℕ≥ 1} {m : ℕ} {A B : Set ℓ}
   → (n≤m : ℕ≥.toℕ n ≤ m)
   → (f : A → B)
   → (vec : Vec A (ℕ≥.toℕ n))
   → saturate {n = n} n≤m (Vec.map f vec) ≡ Vec.map f (saturate {n = n} n≤m vec)
-saturate-map {sucs zero} {suc zero} (s≤s n≤m) f (x ∷ []) = refl
-saturate-map {sucs zero} {suc (suc m)} (s≤s n≤m) f (x ∷ [])
-  rewrite saturate-map {sucs zero} {suc m} (s≤s z≤n) f (x ∷ [])
+saturate-map {n = sucs zero} {suc zero} (s≤s n≤m) f (x ∷ []) = refl
+saturate-map {n = sucs zero} {suc (suc m)} (s≤s n≤m) f (x ∷ [])
+  rewrite saturate-map {n = sucs zero} {suc m} (s≤s z≤n) f (x ∷ [])
   = refl
-saturate-map {sucs (suc n)} {m} (s≤s n≤m) f (x ∷ xs)
+saturate-map {n = sucs (suc n)} {m} (s≤s n≤m) f (x ∷ xs)
   rewrite saturate-map n≤m f xs
   = refl
 
-lookup-saturate : ∀ {A : Set} {n : ℕ≥ 1} {m : ℕ}
+lookup-saturate : ∀ {ℓ} {A : Set ℓ} {n : ℕ≥ 1} {m : ℕ}
   → (n≤m : ℕ≥.toℕ n ≤ m)
   → (vec : Vec A (ℕ≥.toℕ n))
   → (i : Fin m)

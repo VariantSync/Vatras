@@ -25,7 +25,7 @@ if the functions they describe are pointwise equal (same output for same inputs)
 ```agda
 _⊢_≣₁_ : ∀ (L : VariabilityLanguage V)
   → (e₁ e₂ : Expression L A)
-  → Set
+  → Set₁
 L ⊢ e₁ ≣₁ e₂ = ⟦ e₁ ⟧ ≐ ⟦ e₂ ⟧
   where
     ⟦_⟧ = Semantics L
@@ -58,7 +58,7 @@ _,_⊢_≤_ :
   ∀ (L₁ L₂ : VariabilityLanguage V)
   → Expression L₁ A
   → Expression L₂ A
-  → Set
+  → Set₁
 L₁ , L₂ ⊢ e₁ ≤ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = Semantics L₁
@@ -69,7 +69,7 @@ _,_⊢_≣_ :
   ∀ (L₁ L₂ : VariabilityLanguage V)
   → Expression L₁ A
   → Expression L₂ A
-  → Set
+  → Set₁
 L₁ , L₂ ⊢ e₁ ≣ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = Semantics L₁

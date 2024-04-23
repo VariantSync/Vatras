@@ -78,7 +78,7 @@ This is in fact working just like "map" does on lists but we need the zipper to 
 The zipper does not store enough information to fully restore a tree from the current focus.
 This limitation is intended to keep the structure as simple as possible and only as complex as necessary.
 ```agda
-record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
+record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set₁ where
   -- In the paper, we write _⦇_≪_⦈ for this constructor.
   -- However, in Agda, using ⦇ and ⦈ is forbidden.
   constructor _-<_≪_>- --\T
@@ -108,7 +108,7 @@ data _⊢_⟶ₒ_ :
   → (i : Size) -- We have to make sizes explicit here because otherwise, Agda sometimes infers ∞ which makes termination checking fail.
   → Zip n i A
   → 2CC F ∞ A
-  → Set
+  → Set₁
 infix 3 _⊢_⟶ₒ_
 data _⊢_⟶ₒ_ where
   {-|
@@ -170,7 +170,7 @@ data _⟶_  :
   ∀ {i : Size} {A : 𝔸}
   → WFOC F i A
   → 2CC  F ∞ A
-  → Set
+  → Set₁
 infix 4 _⟶_
 data _⟶_ where
   T-root :
@@ -216,10 +216,10 @@ Every OC expression is OC→2CCd to at most one 2CC expression.
 Every OC expression is OC→2CCd to at least one 2CC expression.
 Since we have already proven determinism, the proof for totality and thus a translation is unique.
 ```agda
-Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set
+Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set₁
 Totalₒ {i = i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
 
-Total : ∀ {i} {A} → (e : WFOC F i A) → Set
+Total : ∀ {i} {A} → (e : WFOC F i A) → Set₁
 Total {i} e = ∃[ b ] (e ⟶ b)
 
 -- Smart constructor for Totalₒ that does not require naming the expression explicitly.

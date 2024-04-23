@@ -65,7 +65,7 @@ map-find-or-last f (suc i) (x ∷ y ∷ zs) =
     (find-or-last (suc i) ∘ map⁺ f) (x ∷ y ∷ zs)
   ∎
 
-find-or-last⇒lookup : ∀ {A : Set} {i : ℕ}
+find-or-last⇒lookup : ∀ {ℓ} {A : Set ℓ} {i : ℕ}
   → (x : A)
   → (xs : List A)
   → find-or-last i (x ∷ xs) ≡ Vec.lookup (x ∷ Vec.fromList xs) (ℕ≥.cappedFin i)
@@ -73,7 +73,7 @@ find-or-last⇒lookup {i = i} x [] = refl
 find-or-last⇒lookup {i = zero} x (y ∷ ys) = refl
 find-or-last⇒lookup {i = suc i} x (y ∷ ys) = find-or-last⇒lookup y ys
 
-lookup⇒find-or-last : ∀ {A : Set} {n m : ℕ}
+lookup⇒find-or-last : ∀ {ℓ} {A : Set ℓ} {n m : ℕ}
   → (vec : Vec A (suc n))
   → Vec.lookup vec (ℕ≥.cappedFin m) ≡ find-or-last m (List⁺.fromVec vec)
 lookup⇒find-or-last {n = zero} {m = m} (x ∷ []) = refl

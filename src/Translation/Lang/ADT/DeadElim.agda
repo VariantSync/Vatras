@@ -31,7 +31,7 @@ A ADT is undead if it does not contain any dead branches.
 This is the case if any path from the root to a leaf does not contain
 a feature name twice.
 -}
-Undead : ∀ {A} (e : ADT V F A) → Set
+Undead : ∀ {A} (e : ADT V F A) → Set₁
 Undead e = ∀ (p : Path) → p starts-at e → Unique p
 
 {-
@@ -78,7 +78,7 @@ undead-choice : ∀ {A} {D} {l r : ADT V F A}
 undead-choice u-l u-r D∉l D∉r (.(_ ↣ true ) ∷ p) (walk-left  t) = ∉→All-different p (D∉l p t) ∷ (u-l p t)
 undead-choice u-l u-r D∉l D∉r (.(_ ↣ false) ∷ p) (walk-right t) = ∉→All-different p (D∉r p t) ∷ (u-r p t)
 
-record UndeadADT (A : 𝔸) : Set where
+record UndeadADT (A : 𝔸) : Set₁ where
   constructor _⊚_ -- \oo
   field
     node   : ADT V F A

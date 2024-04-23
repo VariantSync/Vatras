@@ -34,7 +34,7 @@ A list of programs that we want to run.
 Each program is implemented in terms of an Experiment.
 Each experiment is run on each example from a list of examples (i.e., experiment inputs).
 -}
-experimentsToRun : List (ExperimentSetup 0ℓ)
+experimentsToRun : List (ExperimentSetup (suc 0ℓ))
 experimentsToRun =
   -- DEPRECATED: Run some example translations from n-ary to binary choice calculus
   -- DEPRECATED: (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷

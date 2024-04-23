@@ -1,5 +1,6 @@
 module Construct.GrulerArtifacts where
 
+open import Level using (suc)
 open import Data.Maybe using (just; nothing)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
@@ -21,26 +22,26 @@ record ParallelComposition {ℓ} (A : Set ℓ) : Set ℓ where
 
 module VLLeaf where
   Syntax : ℂ
-  Syntax _ A = Leaf (atoms A)
+  Syntax _ A = Level.Lift _ (Leaf (atoms A))
 
   make-leaf :
     ∀ {E : 𝔼} → Syntax ∈ₛ E
     → {A : 𝔸} → atoms A
     → E A
-  make-leaf mkLeaf a = cons mkLeaf (leaf a)
+  make-leaf mkLeaf a = cons mkLeaf (Level.lift (leaf a))
 
   elim-leaf : ∀ {V} → Syntax ∈ₛ V → ∀ {A} → Leaf (atoms A) → V A
-  elim-leaf leaf∈V l = cons leaf∈V l
+  elim-leaf leaf∈V l = cons leaf∈V (Level.lift l)
 
   Construct : PlainConstruct
   PSyntax Construct = Syntax
   pcong Construct _ e _ = e
 
   Leaf∈ₛGrulerVariant : Syntax ∈ₛ GrulerVariant
-  cons Leaf∈ₛGrulerVariant (leaf a) = asset a
-  snoc Leaf∈ₛGrulerVariant (asset a) = just (leaf a)
+  cons Leaf∈ₛGrulerVariant (Level.lift (leaf a)) = asset a
+  snoc Leaf∈ₛGrulerVariant (asset a) = just (Level.lift (leaf a))
   snoc Leaf∈ₛGrulerVariant (_ ∥ _) = nothing
-  id-l Leaf∈ₛGrulerVariant (leaf _) = refl
+  id-l Leaf∈ₛGrulerVariant (Level.lift (leaf _)) = refl
 
 module VLParallelComposition where
   Syntax : ℂ
