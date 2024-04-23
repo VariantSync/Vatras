@@ -15,7 +15,7 @@ open import Data.EqIndexedSet using (_≅_; _≅[_][_]_; ≅[]-trans)
 A translated configuration is extensionally equal.
 Fixme: Give me a proper name not this ugly one.
 -}
-record LanguageCompiler {V} (Γ₁ Γ₂ : VariabilityLanguage V) : Set₁ where
+record LanguageCompiler (Γ₁ Γ₂ : VariabilityLanguage) : Set₁ where
   private
     L₁ = Expression Γ₁
     L₂ = Expression Γ₂
@@ -39,7 +39,7 @@ record LanguageCompiler {V} (Γ₁ Γ₂ : VariabilityLanguage V) : Set₁ where
   fnoc e = from (config-compiler e)
 
 -- Compiles a single construct to another one without altering the underlying sub expressions.
-record ConstructCompiler {V} (VC₁ VC₂ : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where
+record ConstructCompiler (VC₁ VC₂ : VariabilityConstruct) (Γ : VariabilityLanguage) : Set₁ where
   open VariabilityConstruct VC₁ renaming (VSyntax to C₁; VSemantics to Kem₁; VConfig to Conf₁)
   open VariabilityConstruct VC₂ renaming (VSyntax to C₂; VSemantics to Kem₂; VConfig to Conf₂)
 
@@ -82,14 +82,13 @@ _⊕ᶜᶜ_ : ∀ {K₁ K₂ K₃ : 𝕂}
     id c₁
   ∎
 
-_⊕_ : ∀ {V}
-        {Γ₁ : VariabilityLanguage V}
-        {Γ₂ : VariabilityLanguage V}
-        {Γ₃ : VariabilityLanguage V}
+_⊕_ : ∀ {Γ₁ : VariabilityLanguage}
+        {Γ₂ : VariabilityLanguage}
+        {Γ₃ : VariabilityLanguage}
       → LanguageCompiler Γ₁ Γ₂
       → LanguageCompiler Γ₂ Γ₃
       → LanguageCompiler Γ₁ Γ₃
-_⊕_ {V} {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
+_⊕_ {Γ₁} {Γ₂} {Γ₃} L₁→L₂ L₂→L₃ = record
   { compile = compile L₂→L₃ ∘ compile L₁→L₂
   ; config-compiler = λ expr → record { to = conf' expr; from = fnoc' expr }
   ; preserves = p

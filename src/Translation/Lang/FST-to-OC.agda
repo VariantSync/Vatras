@@ -10,13 +10,13 @@ open import Relation.Nullary.Decidable using (yes; no; _because_; False)
 open import Relation.Binary using (Decidable; DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-open import Framework.Variants using (Rose; rose; Artifact∈ₛRose; rose-leaf)
+open import Framework.Variants using (Rose; RoseVL; rose; Artifact∈ₛRose; rose-leaf)
 
 V = Rose ∞
 mkArtifact = Artifact∈ₛRose
 Option = F
 
-open import Framework.Relation.Expressiveness V
+open import Framework.Relation.Expressiveness
 
 open import Framework.VariabilityLanguage
 open import Construct.Artifact as At using ()
@@ -32,7 +32,7 @@ open import Data.Nat using (zero; suc; ℕ)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Relation.Unary.All using (All; []; _∷_)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
-open import Framework.VariantMap V (ℕ , _≟_)
+open import Framework.VariantMap (ℕ , _≟_)
 
 import Lang.All
 open Lang.All.OC using (OC; _❲_❳; WFOC; Root; opt; Configuration; ⟦_⟧; WFOCL)
@@ -49,20 +49,23 @@ open import Data.Empty using (⊥-elim)
 open import Data.Product using (_,_; ∃-syntax)
 open import Util.Existence using (¬Σ-syntax)
 
-counterexample : VMap 3
-counterexample zero                   = rose-leaf 0
-counterexample (suc zero)             = rose (0 At.-< rose (1 At.-< rose-leaf 2 ∷ [] >-) ∷ [] >-)
-counterexample (suc (suc zero))       = rose (0 At.-< rose (1 At.-< rose-leaf 3 ∷ [] >-) ∷ [] >-)
-counterexample (suc (suc (suc zero))) = rose (0 At.-< rose (1 At.-< rose-leaf 2 ∷ rose-leaf 3 ∷ [] >-) ∷ [] >-)
+counterexample-Rose : IndexedSet {Rose ∞ AtomSet} (Fin (suc 3))
+counterexample-Rose zero                   = rose-leaf 0
+counterexample-Rose (suc zero)             = rose (0 At.-< rose (1 At.-< rose-leaf 2 ∷ [] >-) ∷ [] >-)
+counterexample-Rose (suc (suc zero))       = rose (0 At.-< rose (1 At.-< rose-leaf 3 ∷ [] >-) ∷ [] >-)
+counterexample-Rose (suc (suc (suc zero))) = rose (0 At.-< rose (1 At.-< rose-leaf 2 ∷ rose-leaf 3 ∷ [] >-) ∷ [] >-)
+
+counterexample-Variant : IndexedSet {Variant AtomSet} (Fin (suc 3))
+counterexample-Variant i = Semantics RoseVL (counterexample-Rose i) tt
 
 open import Relation.Nullary.Negation using (¬_)
 
 
-illegal : ∀ {i : Size} → ∄[ e ∈ WFOC FeatureName i AtomSet ] (⟦ e ⟧ ≅ counterexample)
--- root must be zero because it is always zero in counterexample
+illegal : ∀ {i : Size} → ∄[ e ∈ WFOC FeatureName i AtomSet ] (⟦ e ⟧ ≅ counterexample-Variant)
+-- root must be zero because it is always zero in counterexample-Variant
 illegal (Root (suc i) cs , _ , ⊇) with ⊇ zero
 ... | ()
--- there must be a child because there are variants in counterexample with children below the root (e.g., suc zero)
+-- there must be a child because there are variants in counterexample-Variant with children below the root (e.g., suc zero)
 illegal (Root zero [] , _ , ⊇) with ⊇ (suc zero) -- illegal' (cs , eq)
 ... | ()
 -- there must be an option at the front because there are variants with zero children (e.g., zero)
@@ -81,7 +84,7 @@ cef = 0 ◀ (
   (Y :: (1 ． 3 ． []) ⊚ ([] ∷ [] , ([] ∷ [] , ([] , []) ∷ []) ∷ [])) ∷
   [])
 
-cef-describes-counterexample : FST⟦ cef ⟧ ≅ counterexample
+cef-describes-counterexample : FST⟦ cef ⟧ ≅ counterexample-Rose
 cef-describes-counterexample = ⊆[]→⊆ cef-⊆[] , ⊆[]→⊆ {f = fnoc} cef-⊇[]
   where
     conf : FST.Conf FeatureName → Fin 4
@@ -91,7 +94,7 @@ cef-describes-counterexample = ⊆[]→⊆ cef-⊆[] , ⊆[]→⊆ {f = fnoc} ce
     ... | true  | false = suc zero
     ... | true  | true  = suc (suc (suc zero))
 
-    cef-⊆[] : FST⟦ cef ⟧ ⊆[ conf ] counterexample
+    cef-⊆[] : FST⟦ cef ⟧ ⊆[ conf ] counterexample-Rose
     cef-⊆[] c with c X | c Y
     ... | false | false = refl
     ... | false | true  = refl
@@ -108,7 +111,7 @@ cef-describes-counterexample = ⊆[]→⊆ cef-⊆[] , ⊆[]→⊆ {f = fnoc} ce
     fnoc (suc (suc (suc zero))) X = true
     fnoc (suc (suc (suc zero))) Y = true
 
-    cef-⊇[] : counterexample ⊆[ fnoc ] FST⟦ cef ⟧
+    cef-⊇[] : counterexample-Rose ⊆[ fnoc ] FST⟦ cef ⟧
     cef-⊇[] zero = refl
     cef-⊇[] (suc zero) = refl
     cef-⊇[] (suc (suc zero)) = refl

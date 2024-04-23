@@ -18,21 +18,21 @@ open 2Choice using (_⟨_,_⟩)
 
 private
   PC = VLParallelComposition.Syntax
-  pc-semantics = PlainConstruct-Semantics VLParallelComposition.Construct VLParallelComposition.ParallelComposition∈ₛGrulerVariant
+  -- pc-semantics = PlainConstruct-Semantics VLParallelComposition.Construct VLParallelComposition.ParallelComposition∈ₛGrulerVariant
 
 data Gruler : Size → 𝔼 where
   GAsset  : ∀ {i A} → Leaf (atoms A)                   → Gruler i A
   GPComp  : ∀ {i A} → ParallelComposition (Gruler i A) → Gruler (↑ i) A
   GChoice : ∀ {i A} → VL2Choice.Syntax F (Gruler i) A  → Gruler (↑ i) A
 
-semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (2Choice.Config F) (Gruler i)
+-- semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (2Choice.Config F) (Gruler i)
 
-GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-GrulerVL {i} = ⟪ Gruler i , 2Choice.Config F , semantics ⟫
+-- GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
+-- GrulerVL {i} = ⟪ Gruler i , 2Choice.Config F , semantics ⟫
 
-semantics (GAsset a)  _ = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
-semantics (GPComp pc)   = pc-semantics GrulerVL pc
-semantics (GChoice chc) = VL2Choice.Semantics GrulerVariant F GrulerVL id chc
+-- semantics (GAsset a)  _ = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
+-- semantics (GPComp pc)   = pc-semantics GrulerVL pc
+-- semantics (GChoice chc) = VL2Choice.Semantics GrulerVariant F GrulerVL id chc
 
 gruler-has-leaf : ∀ {i} → VLLeaf.Syntax ∈ₛ Gruler i
 gruler-has-leaf {i} = record
@@ -54,11 +54,11 @@ gruler-has-choice = record
         snoc' (GChoice chc) = just chc
         snoc' _ = nothing
 
-gruler-models-choice : VL2Choice.Construct GrulerVariant F ⟦∈⟧ᵥ GrulerVL
-make gruler-models-choice = gruler-has-choice
-extract gruler-models-choice = id
-preservation gruler-models-choice _ _ = refl
+-- gruler-models-choice : VL2Choice.Construct GrulerVariant F ⟦∈⟧ᵥ GrulerVL
+-- make gruler-models-choice = gruler-has-choice
+-- extract gruler-models-choice = id
+-- preservation gruler-models-choice _ _ = refl
 
-gruler-choice-preserves : ∀ {A : 𝔸} {D l r c}
-  → semantics (GChoice {A = A} (D ⟨ l , r ⟩)) c ≡ VL2Choice.Semantics GrulerVariant F GrulerVL id (D ⟨ l , r ⟩) c
-gruler-choice-preserves = refl
+-- gruler-choice-preserves : ∀ {A : 𝔸} {D l r c}
+--   → semantics (GChoice {A = A} (D ⟨ l , r ⟩)) c ≡ VL2Choice.Semantics GrulerVariant F GrulerVL id (D ⟨ l , r ⟩) c
+-- gruler-choice-preserves = refl

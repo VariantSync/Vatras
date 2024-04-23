@@ -1,5 +1,5 @@
 open import Framework.Definitions using (𝕍)
-module Framework.Properties.Finity (V : 𝕍) where
+module Framework.Properties.Finity where
 
 open import Data.Product using (_,_)
 open import Function using (_∘_; Surjective; Congruent)
@@ -8,17 +8,17 @@ open import Relation.Binary using (IsEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
 
 open import Framework.VariabilityLanguage
-open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_; ≣ⁱ-IsEquivalence; ≣ⁱ-congruent; ≣ⁱ-setoid)
-open import Framework.Properties.Soundness V
-open import Framework.Relation.Expression V
+open import Framework.Relation.Index using (_∋_⊢_≣ⁱ_; ≣ⁱ-IsEquivalence; ≣ⁱ-congruent; ≣ⁱ-setoid)
+open import Framework.Properties.Soundness
+open import Framework.Relation.Expression
 open import Data.EqIndexedSet
 open import Util.Enumerable
 
-HasEnumerableNonEmptySemantics : VariabilityLanguage V → Set₁
+HasEnumerableNonEmptySemantics : VariabilityLanguage → Set₁
 HasEnumerableNonEmptySemantics L = ∀ {A} e → EnumerableAndNonEmpty (≣ⁱ-setoid {A} L e)
 
 -- TODO: Move the following to the variability package?
-soundness-from-enumerability : ∀ {L : VariabilityLanguage V}
+soundness-from-enumerability : ∀ {L : VariabilityLanguage}
   → HasEnumerableNonEmptySemantics L
     --------------------------------
   → Sound L

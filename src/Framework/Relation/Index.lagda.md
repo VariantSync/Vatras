@@ -1,6 +1,6 @@
 ```agda
 open import Framework.Definitions using (𝕍; 𝔸)
-module Framework.Relation.Index (V : 𝕍) where
+module Framework.Relation.Index where
 
 open import Level using (0ℓ)
 open import Relation.Binary using (Setoid; IsEquivalence)
@@ -14,7 +14,7 @@ open import Framework.VariabilityLanguage
 Two indices are equivalent for an expression when they produce the same output for all expressions.
 We can actually generalize this to index equivalence on indexed sets (TODO).
 ```agda
-𝕃 = VariabilityLanguage V
+𝕃 = VariabilityLanguage
 
 module _ {A : 𝔸} where
   _∋_⊢_≣ⁱ_ :

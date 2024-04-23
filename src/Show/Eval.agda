@@ -15,9 +15,9 @@ open import Util.Named
 show-in-semantics : String → String
 show-in-semantics s = "⟦ " ++ s ++ " ⟧"
 
-show-eval : ∀ {V A}
-  → (L : VariabilityLanguage V)
-  → (V A → String)
+show-eval : ∀ {A}
+  → (L : VariabilityLanguage)
+  → (Variant A → String)
   → Named (Config L)
   → Named (Expression L A)
   → Lines

@@ -1,11 +1,7 @@
-open import Framework.Definitions using (𝕍; atoms)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
 {-
 This module renames dimensions in n-ary choice calculus expressions.
 -}
-module Translation.Lang.NCC.Rename (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC.Rename where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -19,9 +15,10 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
-open import Framework.Definitions using (𝔸; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (_≽_; expressiveness-from-compiler)
+open import Framework.Definitions using (𝔸; 𝔽; atoms)
+open import Framework.Relation.Expressiveness using (_≽_; expressiveness-from-compiler)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (artifact)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -33,11 +30,8 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-artifact : {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 NCC-map-config : ∀ {D₁ D₂ : Set}
   → (n : ℕ≥ 2)

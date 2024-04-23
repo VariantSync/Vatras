@@ -31,7 +31,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
 open import Framework.Annotation.Name using (Name)
-open import Framework.Variants using (Rose; rose; rose-leaf)
+open import Framework.Variants using (Rose; RoseVL; rose; rose-leaf)
 open import Framework.Composition.FeatureAlgebra
 open import Framework.VariabilityLanguage
 open import Construct.Artifact as At using ()
@@ -474,8 +474,8 @@ module Impose (AtomSet : 𝔸) where
         > show-F (name feature) <+> "∷"
         indent 2 (show-FSF (forget-uniqueness (impl feature)))
 
-FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf Impose.SPL
-FSTL-Sem {A} = Impose.⟦_⟧ A
+FSTL-Sem : 𝔼-Semantics Conf Impose.SPL
+FSTL-Sem {A} e config = Semantics RoseVL (Impose.⟦_⟧ A e config) tt
 
-FSTL : VariabilityLanguage (Rose ∞)
+FSTL : VariabilityLanguage
 FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫

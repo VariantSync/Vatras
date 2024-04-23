@@ -22,9 +22,9 @@ open 2Choice-to-Choice using (ConfContract; FnocContract)
 
 open import Construct.Choices
 
-module Translate {Q : 𝔽} {V : 𝕍} {A : 𝔸}
-  (Γ₁ Γ₂ : VariabilityLanguage V)
-  (extract₁ : Compatible (VL2Choice.Construct V Q) Γ₁)
+module Translate {Q : 𝔽} {A : 𝔸}
+  (Γ₁ Γ₂ : VariabilityLanguage)
+  (extract₁ : Compatible (VL2Choice.Construct Q) Γ₁)
   (t : LanguageCompiler Γ₁ Γ₂)
   (confi : 2Choice.Config Q → Choice.Config Q)
   (fnoci : Choice.Config Q → 2Choice.Config Q)

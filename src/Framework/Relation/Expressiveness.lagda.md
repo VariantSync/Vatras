@@ -1,6 +1,6 @@
 ```agda
 open import Framework.Definitions
-module Framework.Relation.Expressiveness (V : 𝕍) where
+module Framework.Relation.Expressiveness where
 
 open import Data.EqIndexedSet using (≅[]→≅)
 open import Data.Empty using (⊥)
@@ -11,7 +11,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym;
 open import Function using (_∘_; Injective)
 
 open import Framework.VariabilityLanguage
-open import Framework.Relation.Expression V
+open import Framework.Relation.Expression
 open import Framework.Relation.Function using (_⇒ₚ_)
 open import Framework.Compiler
 ```
@@ -23,19 +23,19 @@ This means that there exists a translation from `L₂` to `L₁`, , thus `L₁` 
 Core expressiveness relation that constitutes a partial order of variability languages.
 L₁ ≽ L₂ reads as L₁ is at least as expressive as L₂.
 -}
-_≽_ : ∀ (L₁ L₂ : VariabilityLanguage V) → Set₁ --\succeq
+_≽_ : ∀ (L₁ L₂ : VariabilityLanguage) → Set₁ --\succeq
 L₁ ≽ L₂ =
   ∀ {A : 𝔸} (e₂ : Expression L₂ A) →
       (Σ[ e₁ ∈ Expression L₁ A ] L₂ , L₁ ⊢ e₂ ≣ e₁)
   -- It would be nice if we could rephrase expressiveness to (semantics L₂) ⊆ (semantics L₁) but first we have to generalize our multisets somehow to allow keys in the source set.
 
-_⋡_ : ∀ (L₁ L₂ : VariabilityLanguage V) → Set₁ -- \nsucceq
+_⋡_ : ∀ (L₁ L₂ : VariabilityLanguage) → Set₁ -- \nsucceq
 L₁ ⋡ L₂ = ¬ (L₁ ≽ L₂)
 
-_≻_ : ∀ (L₁ L₂ : VariabilityLanguage V) → Set₁ -- \succ
+_≻_ : ∀ (L₁ L₂ : VariabilityLanguage) → Set₁ -- \succ
 L₁ ≻ L₂ = L₁ ≽ L₂ × L₂ ⋡ L₁
 
-_≋_ : ∀ (L₁ L₂ : VariabilityLanguage V) → Set₁ --\~~~
+_≋_ : ∀ (L₁ L₂ : VariabilityLanguage) → Set₁ --\~~~
 L₁ ≋ L₂ = (L₁ ≽ L₂) × (L₂ ≽ L₁)
 
 -- Aliases for the above definitions that spell out their meaning:
@@ -75,21 +75,21 @@ _is-equally-expressive-as_ = _≋_
 ## Concluding expressiveness from translations
 
 ```agda
-SemanticsPreserving : ∀ (L₁ L₂ : VariabilityLanguage V) → Expression L₁ ⇒ₚ Expression L₂ → Set₁
+SemanticsPreserving : ∀ (L₁ L₂ : VariabilityLanguage) → Expression L₁ ⇒ₚ Expression L₂ → Set₁
 SemanticsPreserving L₁ L₂ t = ∀ {A} (e : Expression L₁ A) → L₁ , L₂ ⊢ e ≣ t e
 
-expressiveness-by-translation : ∀ {L₁ L₂ : VariabilityLanguage V}
+expressiveness-by-translation : ∀ {L₁ L₂ : VariabilityLanguage}
   → (t : Expression L₁ ⇒ₚ Expression L₂)
   → SemanticsPreserving L₁ L₂ t
   → L₂ ≽ L₁
 expressiveness-by-translation t t-pres = λ e₂ → t e₂ , t-pres e₂ -- this implementation is very similar to ⊆[]→⊆
 
-expressiveness-from-compiler : ∀ {L₁ L₂ : VariabilityLanguage V}
+expressiveness-from-compiler : ∀ {L₁ L₂ : VariabilityLanguage}
   → LanguageCompiler L₁ L₂
   → L₂ ≽ L₁
 expressiveness-from-compiler compiler = expressiveness-by-translation (LanguageCompiler.compile compiler) (λ e → ≅[]→≅ (LanguageCompiler.preserves compiler e))
 
-compiler-cannot-exist : ∀ {L₁ L₂ : VariabilityLanguage V}
+compiler-cannot-exist : ∀ {L₁ L₂ : VariabilityLanguage}
   → L₂ ⋡ L₁
   → LanguageCompiler L₁ L₂
   → ⊥

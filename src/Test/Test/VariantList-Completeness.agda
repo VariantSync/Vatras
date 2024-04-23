@@ -18,7 +18,7 @@ open import Framework.Variants using (Rose; Artifact∈ₛRose)
 Variant = Rose ∞
 open import Lang.All
 open VariantList using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
-open import Framework.VariantMap Variant using (VMap)
+open import Framework.VariantMap using (VMap)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VMap A n)
 test-encode-conf i vs = ⟦ encode vs ⟧ (vl-conf i) ≡ vs i

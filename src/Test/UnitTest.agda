@@ -57,8 +57,8 @@ ForAllExamplesIn : ∀ {Data : Set}
   → Set
 ForAllExamplesIn ex utest = ForAllExamples utest ex
 
-test-translation : ∀ {V A}
-  → (L₁ L₂ : VariabilityLanguage V)
+test-translation : ∀ {A}
+  → (L₁ L₂ : VariabilityLanguage)
   → (Expression L₁ A → Expression L₂ A)
   → Config L₁ ⇔ Config L₂
   → Config L₁
@@ -70,8 +70,8 @@ test-translation L₁ L₂ translate t c₁ e₁ =
     ⟦_⟧₁ = Semantics L₁
     ⟦_⟧₂ = Semantics L₂
 
-test-translation-fnoc∘conf≡id : ∀ {V A}
-  → (L₁ L₂ : VariabilityLanguage V)
+test-translation-fnoc∘conf≡id : ∀ {A}
+  → (L₁ L₂ : VariabilityLanguage)
   → Config L₁ ⇔ Config L₂
   → Config L₁
   → UnitTest (Expression L₁ A)

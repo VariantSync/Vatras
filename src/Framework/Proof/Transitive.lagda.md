@@ -1,14 +1,13 @@
 # Theorems to Prove Completeness
 
 ```agda
-open import Framework.Definitions using (𝕍)
-module Framework.Proof.Transitive (V : 𝕍) where
+module Framework.Proof.Transitive where
 
 open import Data.Product using (_,_; _×_; ∄-syntax)
 open import Framework.VariabilityLanguage using (VariabilityLanguage)
-open import Framework.Properties.Completeness V
-open import Framework.Properties.Soundness V
-open import Framework.Relation.Expressiveness V
+open import Framework.Properties.Completeness
+open import Framework.Properties.Soundness
+open import Framework.Relation.Expressiveness
 open import Data.EqIndexedSet
 ```
 
@@ -26,7 +25,7 @@ Thus, there exists an expression m ∈ M that also describes V.
 Since V was picked arbitrarily, M can encode any set of variants.
 Thus, M is complete.
 ```agda
-completeness-by-expressiveness : ∀ {L M : VariabilityLanguage V}
+completeness-by-expressiveness : ∀ {L M : VariabilityLanguage}
   → Complete M
   → L ≽ M
     -----------------------------------
@@ -35,7 +34,7 @@ completeness-by-expressiveness encode-in-M M-to-L vs with encode-in-M vs
 ... | m , vs≅m with M-to-L m
 ...   | l , m≅l = l , ≅-trans vs≅m m≅l
 
-incompleteness-by-expressiveness : ∀ {L M : VariabilityLanguage V}
+incompleteness-by-expressiveness : ∀ {L M : VariabilityLanguage}
   → Incomplete L
   → L ≽ M
     -----------------------------------
@@ -47,7 +46,7 @@ If a language `L` is sound and at least as expressive as another language `M`, t
 The intuition is that `L` can express everything `M` and everything expressed by `L` is valid.
 So also everything expressed in `M` must be valid.
 ```agda
-soundness-by-expressiveness : ∀ {L M : VariabilityLanguage V}
+soundness-by-expressiveness : ∀ {L M : VariabilityLanguage}
   → Sound L
   → L ≽ M
     --------
@@ -56,7 +55,7 @@ soundness-by-expressiveness L-sound M-to-L m with M-to-L m
 ... | l , m≅l with L-sound l
 ...   | n , v , v≅l = n , v , ≅-trans v≅l (≅-sym m≅l)
 
-unsoundness-by-expressiveness : ∀ {L M : VariabilityLanguage V}
+unsoundness-by-expressiveness : ∀ {L M : VariabilityLanguage}
   → Unsound M
   → L ≽ M
     -----------------------------------
@@ -71,7 +70,7 @@ Given an arbitrary expression eˢ of our target language Lˢ, we have to show th
 By soundness of Lˢ we can compute the variant map of eˢ.
 By completeness of Lᶜ, we can encode any variant map as an expression eᶜ ∈ Lᶜ.
 ```agda
-expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLanguage V}
+expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLanguage}
   → Complete Lᶜ
   → Sound Lˢ
     ----------------------------------
@@ -88,7 +87,7 @@ Assuming `M` is as expressive as `L`, and knowing that `L` is complete, we can c
 Yet, we already know that M is incomplete.
 This yields a contradiction.
 ```agda
-less-expressive-from-completeness : ∀ {L M : VariabilityLanguage V}
+less-expressive-from-completeness : ∀ {L M : VariabilityLanguage}
   →   Complete L
   → Incomplete M
     ------------------------------
@@ -98,7 +97,7 @@ less-expressive-from-completeness L-comp M-incomp M-as-expressive-as-L =
 ```
 
 ```agda
-less-expressive-from-soundness : ∀ {L M : VariabilityLanguage V}
+less-expressive-from-soundness : ∀ {L M : VariabilityLanguage}
   →   Sound L
   → Unsound M
     ------------------------------
@@ -109,7 +108,7 @@ less-expressive-from-soundness L-sound M-unsound M≽L =
 
 Combined with `expressiveness-by-completeness` we can even further conclude that L is more expressive than M:
 ```agda
-more-expressive-by-completeness : ∀ {L M : VariabilityLanguage V}
+more-expressive-by-completeness : ∀ {L M : VariabilityLanguage}
   → Complete L
   → Sound M
   → Incomplete M
@@ -119,7 +118,7 @@ more-expressive-by-completeness L-comp M-sound M-incomp =
     expressiveness-by-completeness-and-soundness L-comp M-sound
   , less-expressive-from-completeness L-comp M-incomp
 
-more-expressive-by-soundness : ∀ {L M : VariabilityLanguage V}
+more-expressive-by-soundness : ∀ {L M : VariabilityLanguage}
   → Sound L
   → Complete M
   → Unsound M
@@ -131,14 +130,14 @@ more-expressive-by-soundness L-sound M-comp M-unsound =
 ```
 
 ```agda
-complete-is-most-expressive : ∀ {L : VariabilityLanguage V}
+complete-is-most-expressive : ∀ {L : VariabilityLanguage}
   → Complete L
     ----------------
   → ∄[ M ] (Sound M × M ≻ L)
 complete-is-most-expressive L-comp (M , M-sound , M≽L , L⋡M) =
   L⋡M (expressiveness-by-completeness-and-soundness L-comp M-sound)
 
-complete-is-most-expressive' : ∀ {L : VariabilityLanguage V}
+complete-is-most-expressive' : ∀ {L : VariabilityLanguage}
   → Sound L
     ----------------
   → ∄[ M ] (Complete M × L ≻ M)

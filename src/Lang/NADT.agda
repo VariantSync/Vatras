@@ -11,14 +11,14 @@ open import Framework.Variants using (GrulerVariant)
 open import Construct.GrulerArtifacts
 open import Construct.Choices
 
-data NADT (V : 𝕍) (F : 𝔽) : Size → 𝔼 where
-  NADTAsset  : ∀ {i A} → Leaf (V A)                       → NADT V F (↑ i) A
-  NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT V F i) A → NADT V F (↑ i) A
+data NADT (F : 𝔽) : Size → 𝔼 where
+  NADTAsset  : ∀ {i A} → Leaf (Variant A)               → NADT F (↑ i) A
+  NADTChoice : ∀ {i A} → VLChoice.Syntax F (NADT F i) A → NADT F (↑ i) A
 
 mutual
-  NADTL : ∀ {i : Size} (V : 𝕍) (F : 𝔽) → VariabilityLanguage V
-  NADTL {i} V F = ⟪ NADT V F i , Choice.Config F , ⟦_⟧ ⟫
+  NADTL : ∀ {i : Size} (F : 𝔽) → VariabilityLanguage
+  NADTL {i} F = ⟪ NADT F i , Choice.Config F , ⟦_⟧ ⟫
 
-  ⟦_⟧ : ∀ {i : Size} {V : 𝕍} {F : 𝔽} → 𝔼-Semantics V (Choice.Config F) (NADT V F i)
+  ⟦_⟧ : ∀ {i : Size} {F : 𝔽} → 𝔼-Semantics (Choice.Config F) (NADT F i)
   ⟦_⟧ (NADTAsset (leaf v)) _   = v
-  ⟦_⟧ {i} {V} {F} (NADTChoice chc) = VLChoice.Semantics V F (NADTL V F) id chc
+  ⟦_⟧ {i} {F} (NADTChoice chc) = VLChoice.Semantics F (NADTL F) id chc

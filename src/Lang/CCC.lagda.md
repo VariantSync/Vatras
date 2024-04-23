@@ -11,7 +11,7 @@ module Lang.CCC where
 ```agda
 -- -- Imports from Standard Library
 open import Data.List
-  using (List; []; _∷_; foldl; map)
+  using (List; []; _∷_; foldl; map; reverse)
 open import Data.List.NonEmpty
   using (List⁺; _∷_; toList)
   renaming (map to map⁺)
@@ -64,14 +64,13 @@ We can now define the semantics.
 In case a configuration picks an undefined tag for a dimension (i.e., the number of alternatives within a choice), we chose the last alternative as a fallback.
 This allows us to avoid complex error handling and we cannot easily define a configuration to only produce tags within ranges.
 ```agda
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  mutual
-    CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
-    CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+mutual
+  CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage
+  CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Choice.Config Dimension) (CCC Dimension i)
-    ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (CCCL Dimension) x
-    ⟦_⟧ {i} {Dimension} (chc  x) = VLChoice.Semantics V Dimension (CCCL Dimension) id x
+  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Choice.Config Dimension) (CCC Dimension i)
+  ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct Artifact∈ₛVariant (CCCL Dimension) x
+  ⟦_⟧ {i} {Dimension} (chc  x) = VLChoice.Semantics Dimension (CCCL Dimension) id x
 ```
 
 ```agda
@@ -82,9 +81,8 @@ module _ {Dimension : 𝔽} where
 
 Some transformation rules
 ```agda
-  module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-    open import Framework.Relation.Expression V
-    open Sem V mkArtifact
+  module Properties where
+    open import Framework.Relation.Expression
 
     module _ {A : 𝔸} where
       -- unary choices are mandatory
@@ -122,15 +120,11 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
   module Encode where
     open import Framework.Relation.Function using (_⇔_; to; from)
     open import Construct.Plain.Artifact as Pat using (map-children; _-<_>-)
-    open import Data.List.Properties using (map-∘; map-id; map-cong)
+    open import Data.List.Properties as List using (map-∘; map-id; map-cong)
     open Eq.≡-Reasoning
 
-    V = Rose ∞
-    mkArtifact = Artifact∈ₛRose
-    open Sem V mkArtifact
-
-    encode : ∀ {i} {A} → Rose i A → CCC Dimension ∞ A
-    encode (rose a) = atom (map-children encode a)
+    encode : ∀ {A} → Variant A → CCC Dimension ∞ A
+    encode {A} = foldVariant λ a cs → atom (a At.-< cs >-)
 
     confs : ⊤ ⇔ Config (CCCL Dimension)
     confs = record
@@ -138,33 +132,35 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
       ; from = λ _ → tt
       }
 
-    ccc-encode-idemp : ∀ {A} (v : Rose ∞ A) → (c : Configuration Dimension) → ⟦ encode v ⟧ c ≡ v
-    ccc-encode-idemp {A} v@(rose (a At.-< cs >-)) c =
-      begin
-        ⟦ encode v ⟧ c
-      ≡⟨⟩
-        rose (a At.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-)
-      ≡⟨ Eq.cong rose $
-            Eq.cong (a At.-<_>-) (map-∘ cs) ⟨
-        rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
-      ≡⟨ Eq.cong rose $
-            Eq.cong (a At.-<_>-) (go cs) ⟩
-        v
-      ∎
-      where
-      go : (cs' : List (Rose ∞ A)) → map (λ c' → ⟦ encode c' ⟧ c) cs' ≡ cs'
-      go [] = refl
-      go (c' ∷ cs') = Eq.cong₂ _∷_ (ccc-encode-idemp c' c) (go cs')
+    open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 
-    preserves : ∀ {A} → (v : Rose ∞ A)
-      → Semantics (Variant-is-VL V) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
+    ccc-encode-idemp : ∀ {A} (v : Variant A) → (c : Configuration Dimension) → ⟦ encode v ⟧ c ≡ v
+    ccc-encode-idemp {A} v c = VariantInduction H (λ where (artifact a cs) → go a cs) v
+      where
+      H = λ v → ⟦ encode v ⟧ c ≡ v
+      go : ∀ (a : atoms A) (cs : List (Variant A)) → All H cs → H (artifact a cs)
+      go a cs ih =
+        (begin
+          ⟦ encode (artifact a cs) ⟧ c
+        ≡⟨ Eq.cong₂ ⟦_⟧ (foldVariant-reduction (λ a cs → atom (a At.-< cs >-))) refl ⟩
+          ⟦ atom (a At.-< map encode cs >-) ⟧ c
+        ≡⟨⟩
+          artifact a (map (λ x → ⟦ x ⟧ c) (map encode cs))
+        ≡⟨ Eq.cong (artifact a) (map-∘ cs) ⟨
+          artifact a (map (λ x → ⟦ encode x ⟧ c) cs)
+        ≡⟨ Eq.cong (artifact a) (List.map-id-local ih) ⟩
+          artifact a cs
+        ∎)
+
+    preserves : ∀ {A} → (v : Variant A)
+      → Semantics Variant-is-VL v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
     preserves {A} v = irrelevant-index-≅ v
       (λ { tt → refl })
       (ccc-encode-idemp v)
       (to confs)
       (from confs)
 
-    encoder : VariantEncoder V (CCCL Dimension)
+    encoder : VariantEncoder (CCCL Dimension)
     encoder = record
       { compile = encode
       ; config-compiler = λ _ → confs

@@ -1,11 +1,7 @@
-open import Framework.Definitions using (𝕍; atoms)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
 {-
 This module renames dimensions in binary choice calculus expressions.
 -}
-module Translation.Lang.2CC.Rename (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2CC.Rename where
 
 open import Data.Bool using (if_then_else_)
 import Data.Bool.Properties as Bool
@@ -14,9 +10,10 @@ open import Data.List as List using (List)
 import Data.List.Properties as List
 open import Data.Product using () renaming (_,_ to _and_)
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Definitions using (𝔸; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (_≽_; expressiveness-from-compiler)
+open import Framework.Definitions using (𝔸; 𝔽; atoms)
+open import Framework.Relation.Expressiveness using (_≽_; expressiveness-from-compiler)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (artifact)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
 open import Size using (Size)
@@ -24,11 +21,8 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
-
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 2CC-map-config : ∀ {D₁ D₂ : 𝔽}
   → (D₂ → D₁)

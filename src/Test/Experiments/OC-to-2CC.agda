@@ -14,13 +14,11 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
 open import Framework.Definitions using (ℂ)
-open import Framework.Variants using (Rose; Artifact∈ₛRose; show-rose)
+open import Framework.Variants using (show-variant)
 
 Feature = String
-Variant = Rose ∞
-mkArtifact = Artifact∈ₛRose
 
-open import Lang.All.Generic Variant mkArtifact
+open import Lang.All
 -- open import Lang.OC Feature as OCL renaming (Configuration to Conf-oc)
 -- open import Lang.2CC as 2CCL
 open OC using (WFOC; WFOCL)
@@ -91,6 +89,6 @@ get     exp-oc-to-bcc ex@(name ≔ oc) = do
   linebreak
   > "Variants:"
   indent 2 do
-    show-eval (WFOCL Feature) (show-rose id) OC.allyes-oc ex
-    show-eval (WFOCL Feature) (show-rose id) OC.allno-oc  ex
+    show-eval (WFOCL Feature) (show-variant id) OC.allyes-oc ex
+    show-eval (WFOCL Feature) (show-variant id) OC.allno-oc  ex
   > "proven to be the same for the translated expression"

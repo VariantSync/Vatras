@@ -4,28 +4,28 @@ module Lang.ADT where
 open import Data.Bool using (Bool; if_then_else_)
 open import Framework.VariabilityLanguage
 
-data ADT (V : 𝕍) (F : 𝔽) : 𝔼 where
-  leaf   : ∀ {A} → V A → ADT V F A
-  _⟨_,_⟩ : ∀ {A} → (D : F) → (l : ADT V F A) → (r : ADT V F A) → ADT V F A
+data ADT (F : 𝔽) : 𝔼 where
+  leaf   : ∀ {A} → Variant A → ADT F A
+  _⟨_,_⟩ : ∀ {A} → (D : F) → (l : ADT F A) → (r : ADT F A) → ADT F A
 
 Configuration : (F : 𝔽) → Set
 Configuration F = F → Bool
 
-⟦_⟧ : {V : 𝕍} → {F : 𝔽} → 𝔼-Semantics V (Configuration F) (ADT V F)
+⟦_⟧ : {F : 𝔽} → 𝔼-Semantics (Configuration F) (ADT F)
 ⟦ leaf v      ⟧ _ = v
 ⟦ D ⟨ l , r ⟩ ⟧ c = if c D
                     then ⟦ l ⟧ c
                     else ⟦ r ⟧ c
 
-ADTL : (V : 𝕍) → (F : 𝔽) → VariabilityLanguage V
-ADTL V F = ⟪ ADT V F , Configuration F , ⟦_⟧ ⟫
+ADTL : (F : 𝔽) → VariabilityLanguage
+ADTL F = ⟪ ADT F , Configuration F , ⟦_⟧ ⟫
 
 
 open import Data.String as String using (String; _++_; intersperse)
 open import Data.Product using (_,_)
 open import Show.Lines
 
-pretty : {A : 𝔸} → {V : 𝕍} → {F : 𝔽} → (V A → String) → (F → String) → ADT V F A → Lines
+pretty : {A : 𝔸} → {F : 𝔽} → (Variant A → String) → (F → String) → ADT F A → Lines
 pretty pretty-variant show-F (leaf v) = > pretty-variant v
 pretty pretty-variant show-F (D ⟨ l , r ⟩) = do
   > show-F D ++ "⟨"

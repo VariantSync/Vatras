@@ -4,7 +4,7 @@
 
 ```agda
 open import Framework.Definitions using (𝕍)
-module Framework.Properties.Completeness (V : 𝕍) where
+module Framework.Properties.Completeness where
 ```
 
 ## Imports
@@ -13,7 +13,7 @@ module Framework.Properties.Completeness (V : 𝕍) where
 open import Data.Product using (Σ-syntax)
 open import Relation.Nullary.Negation using (¬_)
 open import Framework.VariabilityLanguage
-open import Framework.VariantMap V
+open import Framework.VariantMap
 open import Data.EqIndexedSet
 ```
 
@@ -27,7 +27,7 @@ Variant maps constitute the semantic domain of variability languages.
 While we defined variant maps to be indexed sets with an arbitrary finite and non-empty index set, we directly reflect these properties
 via Fin (suc n) here for convenience.
 -}
-Complete : VariabilityLanguage V → Set₁
+Complete : VariabilityLanguage → Set₁
 Complete ⟪ E , _ , ⟦_⟧ ⟫ =
   ∀ {A} {n} (m : VMap A n)
     ----------------------
@@ -37,6 +37,6 @@ Complete ⟪ E , _ , ⟦_⟧ ⟫ =
 We define incompleteness as then negation of completeness.
 This means assuming completeness for a language yields a contradiction.
 ```agda
-Incomplete : VariabilityLanguage V → Set₁
+Incomplete : VariabilityLanguage → Set₁
 Incomplete L = ¬ (Complete L)
 ```

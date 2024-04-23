@@ -1,5 +1,5 @@
 open import Framework.Definitions using (𝕍; 𝔸)
-module Framework.VariantMap (V : 𝕍) (A : 𝔸) where
+module Framework.VariantMap (A : 𝔸) where
 
 open import Data.Fin using (Fin)
 open import Data.List using (List)
@@ -8,8 +8,9 @@ open import Data.Nat using (ℕ; suc)
 open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
 import Relation.Binary.PropositionalEquality as Eq
+open import Framework.VariabilityLanguage using (Variant)
 
-open import Data.EqIndexedSet {V A}
+open import Data.EqIndexedSet {Variant A}
 
 {-|
 Variant maps constitute the semantic domain of variability languages.

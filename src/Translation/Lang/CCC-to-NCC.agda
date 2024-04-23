@@ -1,8 +1,4 @@
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
-module Translation.Lang.CCC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.CCC-to-NCC where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
@@ -14,8 +10,10 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Definitions using (𝔽; 𝔸; atoms)
+open import Framework.Relation.Expressiveness using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (artifact)
 open import Function using (_∘_; id)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
 open import Size using (Size; ↑_; ∞)
@@ -27,18 +25,15 @@ open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open IndexedSet.≅[]-Reasoning using (step-≅[]-⟨; step-≅[]-⟩; _≅[]⟨⟩_; _≅[]-∎)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Framework.Annotation.IndexedDimension
-open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open import Translation.Lang.NCC.Rename Variant Artifact∈ₛVariant using (NCC-rename; NCC-map-config)
+open import Translation.Lang.NCC.NCC-to-NCC using (NCC→NCC)
+open import Translation.Lang.NCC.Rename using (NCC-rename; NCC-map-config)
 module NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
-
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 module Exact where
   -- Idea of this translation:

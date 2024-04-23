@@ -61,14 +61,13 @@ We choose this order to follow the known _if c then a else b_ pattern where the 
 Configuration : (Dimension : 𝔽) → 𝕂
 Configuration Dimension = 2Choice.Config Dimension
 
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  mutual
-    2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
-    2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+mutual
+  2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage
+  2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Configuration Dimension) (2CC Dimension i)
-    ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (2CCL Dimension) x
-    ⟦_⟧ {i} {Dimension} (chc  x) = VL2Choice.Semantics V Dimension (2CCL Dimension) id x
+  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Configuration Dimension) (2CC Dimension i)
+  ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct Artifact∈ₛVariant (2CCL Dimension) x
+  ⟦_⟧ {i} {Dimension} (chc  x) = VL2Choice.Semantics Dimension (2CCL Dimension) id x
 ```
 
 ```agda
@@ -85,9 +84,8 @@ Some transformation rules:
 
   open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-  module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-    open import Framework.Relation.Expression V
-    open Sem V mkArtifact
+  module Properties where
+    open import Framework.Relation.Expression
 
     module _ {A : 𝔸} where
       ast-factoring : ∀ {i} {D : Dimension} {a : atoms A} {n : ℕ}
@@ -172,8 +170,7 @@ Some transformation rules:
     eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
     open import Framework.Compiler using (LanguageCompiler)
-    module _ (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-      open Sem V mkArtifact
+    module _ where
       Redundancy-Elimination : LanguageCompiler (2CCL Dimension) (2CCL Dimension)
       Redundancy-Elimination = record
         { compile = eliminate-redundancy

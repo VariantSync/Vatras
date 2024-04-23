@@ -4,7 +4,7 @@
 
 ```agda
 open import Framework.Definitions
-module Lang.VariantList (V : 𝕍) where
+module Lang.VariantList where
 ```
 
 ## Imports
@@ -20,10 +20,10 @@ open import Function using (_∘_; Surjective)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 
 open import Framework.VariabilityLanguage
-open import Framework.Properties.Completeness V using (Complete)
-open import Framework.Properties.Soundness V using (Sound)
-open import Framework.Properties.Finity V using (soundness-from-enumerability)
-open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_)
+open import Framework.Properties.Completeness using (Complete)
+open import Framework.Properties.Soundness using (Sound)
+open import Framework.Properties.Finity using (soundness-from-enumerability)
+open import Framework.Relation.Index using (_∋_⊢_≣ⁱ_)
 open import Data.EqIndexedSet as ISet
 open import Util.List using (find-or-last)
 ```
@@ -32,17 +32,17 @@ open import Util.List using (find-or-last)
 
 ```agda
 VariantList : 𝔼
-VariantList A = List⁺ (V A)
+VariantList A = List⁺ (Variant A)
 
 -- it would be nice if the confLang would be parameterized in expressions
 Configuration : 𝕊
 Configuration = ℕ
 
 -- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → VariantList i A → Configuration → Variant i A
-⟦_⟧ : 𝔼-Semantics V Configuration VariantList
+⟦_⟧ : 𝔼-Semantics Configuration VariantList
 ⟦_⟧ e c = find-or-last c e
 
-VariantListL : VariabilityLanguage V
+VariantListL : VariabilityLanguage
 VariantListL = ⟪ VariantList , Configuration , ⟦_⟧ ⟫
 ```
 
@@ -55,7 +55,7 @@ VariantListL = ⟪ VariantList , Configuration , ⟦_⟧ ⟫
 open import Util.Nat.AtLeast using (cappedFin)
 
 private
-  open import Framework.VariantMap V
+  open import Framework.VariantMap
   variable
     n : ℕ
     A : 𝔸
@@ -171,7 +171,7 @@ open import Data.String as String using (String; _++_; intersperse)
 open import Data.Product using (_,_)
 open import Show.Lines
 
-pretty : {A : 𝔸} → (V A → String) → VariantList A → Lines
+pretty : {A : 𝔸} → (Variant A → String) → VariantList A → Lines
 pretty {A} pretty-variant (v ∷ vs) = do
   > "[ " ++ pretty-variant v
   lines (List.map (λ v → > ", " ++ pretty-variant v) vs)

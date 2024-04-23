@@ -18,7 +18,7 @@ open Eq using (_≡_; refl)
 
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Definitions using (ℂ; 𝔸)
-open import Framework.Variants using (Rose; Artifact∈ₛRose; show-rose)
+open import Framework.Variants using (show-variant)
 open import Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
 open import Util.AuxProofs using (decidableEquality-×)
 open import Util.Nat.AtLeast using (ℕ≥)
@@ -27,9 +27,9 @@ import Util.String as String
 open import Lang.All
 open import Translation.LanguageMap
 import Translation.Lang.CCC-to-NCC
-module CCC-to-NCC = Translation.Lang.CCC-to-NCC.Exact Variant mkArtifact
+module CCC-to-NCC = Translation.Lang.CCC-to-NCC.Exact
 import Translation.Lang.NCC-to-2CC
-open Translation.Lang.NCC-to-2CC.2Ary Variant mkArtifact using () renaming (NCC→2CC to NCC-2→2CC)
+open Translation.Lang.NCC-to-2CC.2Ary using () renaming (NCC→2CC to NCC-2→2CC)
 
 open import Show.Lines
 open import Util.Named
@@ -66,7 +66,7 @@ translate e E₂-name translator show = do
   where
   open RawApplicative applicative
 
-compile : ∀ {VL₁ VL₂ : VariabilityLanguage Variant}
+compile : ∀ {VL₁ VL₂ : VariabilityLanguage}
   → Expression VL₁ Artifact
   → String
   → LanguageCompiler VL₁ VL₂
@@ -85,8 +85,8 @@ get     round-trip ex@(name ≔ ccc) = do
   ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (NCC.Pretty.pretty id)
   ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
   2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
+  adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-variant id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+  variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-variant id))
   ccc'        ← compile   variantList "CCC"         (VariantList→CCC "default feature")                        (CCC.pretty id)
   linebreak
 

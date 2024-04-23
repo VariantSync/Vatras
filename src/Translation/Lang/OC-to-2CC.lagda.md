@@ -16,8 +16,6 @@ module Translation.Lang.OC-to-2CC (F : 𝔽) where
 
 open import Framework.Variants using (Rose; rose; Artifact∈ₛRose)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
-V = Rose ∞
-mkArtifact = Artifact∈ₛRose
 Option = F
 ```
 
@@ -32,7 +30,7 @@ open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Function using (id; _∘_; flip)
 
 open import Framework.VariabilityLanguage
-open import Lang.All.Generic V mkArtifact
+open import Lang.All
 open OC renaming (_-<_>- to Artifactₒ)
 open 2CC renaming (_-<_>- to Artifact₂; ⟦_⟧ to ⟦_⟧₂)
 
@@ -93,11 +91,11 @@ infix 4 _-<_≪_>-
 Zip-is-𝔼 : ℕ → Size → 𝔼
 Zip-is-𝔼 = Zip
 
-⟦_⟧ₜ : ∀ {w i} → 𝔼-Semantics V (OC.Configuration F) (Zip w i)
+⟦_⟧ₜ : ∀ {w i} → 𝔼-Semantics (OC.Configuration F) (Zip w i)
 ⟦ a -< ls ≪ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
-   in cons mkArtifact (a At.-< ⟦ls⟧ ++ ⟦rs⟧ >-)
+   in artifact a (⟦ls⟧ ++ ⟦rs⟧)
 ```
 
 ## Translation as Big-Step Semantics
@@ -306,9 +304,9 @@ preserves-without-T-root {b = b} {es = es} {e = e} c ⟶e =
   in begin
        ⟦ Root b es ⟧ c
      ≡⟨⟩
-       Artifactᵥ b (⟦ es ⟧ₒ-recurse c)
-     ≡⟨ Eq.cong (λ eq → Artifactᵥ b (⟦ eq ⟧ₒ-recurse c)) (id≗toList∘fromList es) ⟩
-       Artifactᵥ b (⟦ toList (fromList es) ⟧ₒ-recurse c)
+       artifact b (⟦ es ⟧ₒ-recurse c)
+     ≡⟨ Eq.cong (λ eq → artifact b (⟦ eq ⟧ₒ-recurse c)) (id≗toList∘fromList es) ⟩
+       artifact b (⟦ toList (fromList es) ⟧ₒ-recurse c)
      ≡⟨⟩
        ⟦ z ⟧ₜ c
      ≡⟨ preservesₒ c ⟶e ⟩
@@ -326,7 +324,7 @@ preservesₒ-artifact :
     {ls  : List (2CC F ∞ A)}
     {es  : List (OC F i A)}
     {e   : 2CC F ∞ A}
-  → (rs  : List (V A))
+  → (rs  : List (Variant A))
   → (⟶e : i ⊢ b -< [] ≪ fromList es >- ⟶ₒ e)
     ----------------------------------------------------------------
   →   (map (flip ⟦_⟧₂ c) ls)             ++ ((⟦ Root b es ⟧ c) ∷ rs)
@@ -367,8 +365,8 @@ preservesₒ-option-size :
   ∀ {n} {i} {A} {c} {a : atoms A} {ls : List (2CC F ∞ A)} {rs : Vec (OC F (↑ i) A) n}
   → (e : OC F i A)
     -----------------------------------------------------------------------------------------------------
-  →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
-    ≡ Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {↑ i} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+  →   artifact a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+    ≡ artifact a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {↑ i} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
 preservesₒ-option-size (Artifactₒ _ _) = refl
 preservesₒ-option-size (_ ❲ _ ❳)       = refl
 ```
@@ -380,9 +378,9 @@ preservesₒ c (T-done {a = a} {ls = ls}) =
    in begin
         ⟦ a -< ls ≪ [] >- ⟧ₜ c
       ≡⟨⟩
-        Artifactᵥ a (m ++ [])
-      ≡⟨ Eq.cong (Artifactᵥ a) (++-identityʳ m) ⟩
-        Artifactᵥ a m
+        artifact a (m ++ [])
+      ≡⟨ Eq.cong (artifact a) (++-identityʳ m) ⟩
+        artifact a m
       ≡⟨⟩
         ⟦ Artifact₂ a ls ⟧₂ c
       ∎
@@ -393,11 +391,11 @@ preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ =
    in begin
         ⟦ z ⟧ₜ c
       ≡⟨⟩
-        Artifactᵥ a (map₂ ls ++ ⟦ toList all-rs ⟧ₒ-recurse c)
+        artifact a (map₂ ls ++ ⟦ toList all-rs ⟧ₒ-recurse c)
       ≡⟨⟩
-        Artifactᵥ a (map₂ ls ++ Artifactᵥ b (⟦ es ⟧ₒ-recurse c) ∷ ⟦ toList rs ⟧ₒ-recurse c)
-      ≡⟨ Eq.cong (Artifactᵥ a) (preservesₒ-artifact (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩ -- prove that we can make a step
-        Artifactᵥ a (map₂ (ls ++ e₁ ∷ []) ++ ⟦ toList rs ⟧ₒ-recurse c)
+        artifact a (map₂ ls ++ artifact b (⟦ es ⟧ₒ-recurse c) ∷ ⟦ toList rs ⟧ₒ-recurse c)
+      ≡⟨ Eq.cong (artifact a) (preservesₒ-artifact (⟦ toList rs ⟧ₒ-recurse c) ⟶e) ⟩ -- prove that we can make a step
+        artifact a (map₂ (ls ++ e₁ ∷ []) ++ ⟦ toList rs ⟧ₒ-recurse c)
       ≡⟨⟩
         ⟦ a -< ls ∷ʳ e₁ ≪ rs >- ⟧ₜ c
       ≡⟨ preservesₒ c ⟶b ⟩ -- apply induction hypothesis
@@ -405,7 +403,7 @@ preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ =
       ∎
 preservesₒ c (T-option {a = a} {O = O} {e = e} {ls = ls} {rs = rs} {eᵒ⁻ʸ = ey} {eᵒ⁻ⁿ = en} ⟶ey ⟶en) with c O
 ... | true  = begin
-                Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ map (flip ⟦_⟧ₒ c) (toList rs))))
+                artifact a (map (flip ⟦_⟧₂ c) ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ map (flip ⟦_⟧ₒ c) (toList rs))))
               ≡⟨ preservesₒ-option-size e ⟩ -- prove that size constraint on e does not matter for ⟦_⟧ₒ
                 ⟦ a -< ls ≪ e ∷ rs >- ⟧ₜ c
               ≡⟨ preservesₒ c ⟶ey ⟩ -- apply induction hypothesis
@@ -422,9 +420,9 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
    in begin
         ⟦ Root a es ⟧ c
       ≡⟨⟩
-        Artifactᵥ a (⟦ es ⟧ₒ-recurse c)
-      ≡⟨ Eq.cong (λ eq → Artifactᵥ a (⟦ eq ⟧ₒ-recurse c)) (id≗toList∘fromList es) ⟩
-        Artifactᵥ a (⟦ toList (fromList es) ⟧ₒ-recurse c)
+        artifact a (⟦ es ⟧ₒ-recurse c)
+      ≡⟨ Eq.cong (λ eq → artifact a (⟦ eq ⟧ₒ-recurse c)) (id≗toList∘fromList es) ⟩
+        artifact a (⟦ toList (fromList es) ⟧ₒ-recurse c)
       ≡⟨⟩
         ⟦ z ⟧ₜ c
       ≡⟨ preservesₒ c z⟶b ⟩ -- apply induction hypothesis
@@ -437,7 +435,7 @@ preserves {b = b} {e = Root a es} c (T-root z⟶b) =
 ```agda
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.VariabilityLanguage
-open import Framework.Relation.Expressiveness V
+open import Framework.Relation.Expressiveness
 open import Framework.Relation.Function  using (_⇔_)
 
 compile : ∀ {i : Size} {A : 𝔸} → WFOC F i A → 2CC F ∞ A

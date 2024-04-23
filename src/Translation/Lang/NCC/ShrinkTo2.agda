@@ -1,7 +1,3 @@
-open import Framework.Definitions using (𝕍; atoms)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
 {-
 This module defines a compiler from NCC n to NCC 2.
 To do so, each choice with n alternatives (a ∷ as) is replaced by a binary choice
@@ -12,7 +8,7 @@ The results looks like this:
             ↓
   D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩ ⟩ ⟩
 -}
-module Translation.Lang.NCC.ShrinkTo2 (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC.ShrinkTo2 where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -28,6 +24,7 @@ import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (artifact)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -39,11 +36,8 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-artifact : {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 -- To simplify the implementation and the proof, we constrain the translation to result in 2-ary `NCC` expressions.
 -- The idea of the translation is to represent each alternative vector as a `List` of alternatives where each `c ∷ cs` is represented by an alternative `d ⟨ c ∷ cs ∷ [] ⟩`.

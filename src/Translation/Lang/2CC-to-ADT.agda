@@ -1,8 +1,4 @@
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
-module Translation.Lang.2CC-to-ADT (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.2CC-to-ADT where
 
 import Data.EqIndexedSet as IndexedSet
 open import Data.Bool as Bool using (if_then_else_)
@@ -10,8 +6,10 @@ import Data.Bool.Properties as Bool
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 import Data.List.Properties as List
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Definitions using (𝔽; 𝔸; atoms)
+open import Framework.Relation.Expressiveness using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (Variant; artifact)
 open import Function using (id)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
 open import Size using (Size)
@@ -19,31 +17,27 @@ open import Size using (Size)
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open 2CC using (2CC; 2CCL)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
-
-
-push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT Variant D A) → ADT Variant D A
+push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT D A) → ADT D A
 push-down-artifact {A = A} a cs = go cs []
   module push-down-artifact-Implementation where
-  go : ∀ {i : Size} {D : 𝔽} → List (ADT Variant D A) → List (Variant A) → ADT Variant D A
+  go : ∀ {i : Size} {D : 𝔽} → List (ADT D A) → List (Variant A) → ADT D A
   go [] vs = leaf (artifact a (List.reverse vs))
   go (leaf v ∷ cs) vs = go cs (v ∷ vs)
   go (d ⟨ c₁ , c₂ ⟩ ∷ cs) vs = d ⟨ go (c₁ ∷ cs) vs , go (c₂ ∷ cs) vs ⟩
 
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → 2CC D i A
-  → ADT Variant D A
+  → ADT D A
 translate (a 2CC.-< cs >-) = push-down-artifact a (List.map translate cs)
 translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
 
 ⟦push-down-artifact⟧ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (a : atoms A)
-  → (cs : List (ADT Variant D A))
+  → (cs : List (ADT D A))
   → (config : ADT.Configuration D)
   → ADT.⟦ push-down-artifact a cs ⟧ config ≡ artifact a (List.map (λ e → ADT.⟦ e ⟧ config) cs)
 ⟦push-down-artifact⟧ {D = D} {A = A} a cs config = go' cs []
@@ -51,7 +45,7 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
   open push-down-artifact-Implementation
 
   go' : ∀ {i : Size}
-    → (cs' : List (ADT Variant D A))
+    → (cs' : List (ADT D A))
     → (vs : List (Variant A))
     → ADT.⟦ go a cs cs' vs ⟧ config ≡ artifact a (vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) cs')
   go' [] vs = Eq.sym (Eq.cong₂ artifact refl (Eq.trans (List.ʳ++-defn vs) (List.++-identityʳ (List.reverse vs))))
@@ -113,11 +107,11 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → ADT.⟦ translate expr ⟧ ≅[ id ][ id ] 2CC.⟦ expr ⟧
 preserves expr = ≗→≅[] (preserves-≗ expr)
 
-2CC→ADT : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (2CCL {i} D) (ADTL Variant D)
+2CC→ADT : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (2CCL {i} D) (ADTL D)
 2CC→ADT .LanguageCompiler.compile = translate
 2CC→ADT .LanguageCompiler.config-compiler expr .to = id
 2CC→ADT .LanguageCompiler.config-compiler expr .from = id
 2CC→ADT .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
-ADT≽2CC : ∀ {D : 𝔽} → ADTL Variant D ≽ 2CCL D
+ADT≽2CC : ∀ {D : 𝔽} → ADTL D ≽ 2CCL D
 ADT≽2CC = expressiveness-from-compiler 2CC→ADT

@@ -34,7 +34,7 @@ open import Relation.Nullary using (¬_)
 open import Function using (id; _∘_; Congruent; Surjective) --IsSurjection)
 
 open Setoid S
-module Eq = IsEquivalence isEquivalence
+private module Eq = IsEquivalence isEquivalence
 ```
 
 ## Definitions

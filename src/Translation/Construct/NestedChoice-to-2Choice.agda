@@ -26,22 +26,22 @@ open Choice-to-2Choice-explicit using (2Config)
 2Choice : 𝔽 → ℂ
 2Choice F E A = VL2Choice.Syntax (IndexedName F) E A
 
-2Choice-sem : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (2Config F) (2Choice F)
-2Choice-sem V F Γ fnoc cons conf = VL2Choice.Semantics V (IndexedName F) Γ (proj₁ ∘ fnoc) cons conf
+2Choice-sem : ∀ (F : 𝔽) → VariationalConstruct-Semantics (2Config F) (2Choice F)
+2Choice-sem F Γ fnoc cons conf = VL2Choice.Semantics (IndexedName F) Γ (proj₁ ∘ fnoc) cons conf
 
-ChoiceConstructor : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
-ChoiceConstructor V F = Variational-⟪ 2Choice F , 2Config F , 2Choice-sem V F ⟫
+ChoiceConstructor : ∀ (F : 𝔽) → VariabilityConstruct
+ChoiceConstructor F = Variational-⟪ 2Choice F , 2Config F , 2Choice-sem F ⟫
 
 module Embed
-  {V : 𝕍} {F : 𝔽} {A : 𝔸}
-  (Γ : VariabilityLanguage V)
-  (constr : ChoiceConstructor V F ⟦∈⟧ᵥ Γ)
+  {F : 𝔽} {A : 𝔸}
+  (Γ : VariabilityLanguage)
+  (constr : ChoiceConstructor F ⟦∈⟧ᵥ Γ)
   where
 
   extr = extract constr
 
   open Choice-to-2Choice.Translate {F} (Expression Γ A)
-  open Data.IndexedSet (Eq.setoid (V A)) using (_≅_; ≗→≅)
+  open Data.IndexedSet (Eq.setoid (Variant A)) using (_≅_; ≗→≅)
 
   embed : ∀ {i} → NestedChoice i (Expression Γ A) → Expression Γ A
   embed (value v) = v

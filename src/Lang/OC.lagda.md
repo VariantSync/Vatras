@@ -101,29 +101,29 @@ open import Function using (flip)
 Conventional Semantics of Option Calculus that dismisses all empty values
 except of there is an empty value at the top.
 -}
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
-  OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ V)
-  OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
+module Sem where
+  -- OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage
+  -- OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
 
-  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ V) (Configuration Option) (OC Option i)
+  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} {A : 𝔸} → OC Option i A → Configuration Option → Maybe (Variant A)
 
   -- -- recursive application of the semantics to all children of an artifact
   -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
-  ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ V) (Configuration Option) (List ∘ OC Option i)
+  ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} {A : 𝔸} → List (OC Option i A) → Configuration Option → List (Variant A)
   ⟦ es ⟧ₒ-recurse c =
     catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
     (map (flip ⟦_⟧ₒ c) es)
 
-  ⟦ a -< es >- ⟧ₒ c = just (cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-))
+  ⟦ a -< es >- ⟧ₒ c = just (artifact a (⟦ es ⟧ₒ-recurse c))
   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
 ```
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
-  ⟦_⟧ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics V (Configuration Option) (WFOC Option i)
-  ⟦ Root a es ⟧ c = cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-)
+  ⟦_⟧ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Configuration Option) (WFOC Option i)
+  ⟦ Root a es ⟧ c = artifact a (⟦ es ⟧ₒ-recurse c)
 
-  WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage V
+  WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage
   WFOCL {i} Option = ⟪ WFOC Option i , Configuration Option , ⟦_⟧ ⟫
 ```
 
@@ -159,15 +159,13 @@ We prove incompleteness by showing that there exists at least one set of variant
 In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
-  -- TODO: Can this be generalized to other types of variants as well?
-  module IncompleteOnRose where
-    open import Framework.Variants using (Rose; Artifact∈ₛRose)
-    open import Framework.VariantMap (Rose ∞) (ℕ , ℕ._≟_)
-    open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
-    open Sem (Rose ∞) Artifact∈ₛRose
+  module Incomplete where
+    open import Framework.VariantMap (ℕ , ℕ._≟_)
+    open import Framework.Properties.Completeness using (Incomplete)
+    open Sem
 
-    variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
-    variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
+    variant-0 = artifact {A = (ℕ , ℕ._≟_)} 0 []
+    variant-1 = artifact {A = (ℕ , ℕ._≟_)} 1 []
     -- variant-0 = cons mkArtifact (At.leaf 0)
     -- variant-1 = cons mkArtifact (At.leaf 1)
 
@@ -183,8 +181,8 @@ So we show that given an expression `e`, a proof that `e` can be configured to `
     does-not-describe-variants-0-and-1 :
       ∀ {i : Size}
       → (e : WFOC Option i (ℕ , ℕ._≟_))
-      → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
-      → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
+      → ∃[ c ] variant-0 ≡ ⟦ e ⟧ c
+      → ∄[ c ] variant-1 ≡ ⟦ e ⟧ c
     -- If e has 0 as root, it may be configured to 0 but never to 1.
     does-not-describe-variants-0-and-1 (Root 0 es) ∃c→v0≡⟦e⟧c ()
     -- if e has a number larger than 1 at the top, it cannot be configured to yield 0.

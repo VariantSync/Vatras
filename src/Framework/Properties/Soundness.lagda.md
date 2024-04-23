@@ -4,7 +4,7 @@
 
 ```agda
 open import Framework.Definitions using (𝕍)
-module Framework.Properties.Soundness (V : 𝕍) where
+module Framework.Properties.Soundness where
 ```
 
 ## Imports
@@ -13,19 +13,19 @@ module Framework.Properties.Soundness (V : 𝕍) where
 open import Data.Product using (∃-syntax; Σ-syntax)
 open import Relation.Nullary.Negation  using (¬_)
 open import Framework.VariabilityLanguage
-open import Framework.VariantMap V
+open import Framework.VariantMap
 open import Data.EqIndexedSet
 ```
 
 ## Definitions
 
 ```agda
-Sound : VariabilityLanguage V → Set₁
+Sound : VariabilityLanguage → Set₁
 Sound ⟪ E , _ , ⟦_⟧ ⟫ =
   ∀ {A} (e : E A)
     --------------------------------
   → ∃[ n ] Σ[ m ∈ VMap A n ] m ≅ ⟦ e ⟧
 
-Unsound : VariabilityLanguage V → Set₁
+Unsound : VariabilityLanguage → Set₁
 Unsound L = ¬ (Sound L)
 ```

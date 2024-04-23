@@ -1,8 +1,4 @@
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
-module Translation.Lang.NCC-to-2CC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC-to-2CC where
 
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.Bool.Properties as Bool
@@ -15,8 +11,10 @@ open import Data.Product using (_×_) renaming (_,_ to _and_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Definitions using (𝔽; 𝔸)
+open import Framework.Relation.Expressiveness using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (artifact)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Size using (Size; ∞)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
@@ -24,15 +22,12 @@ open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Framework.Annotation.IndexedDimension
-open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
-
+open import Translation.Lang.NCC.NCC-to-NCC using (NCC→NCC)
 
 module 2Ary where
   translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → NCC (sucs zero) D i A → 2CC D ∞ A

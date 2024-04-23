@@ -53,14 +53,13 @@ pattern _⟨_⟩ D cs = chc (D NChoice.⟨ cs ⟩)
 Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → 𝕂
 Configuration n Dimension = NChoice.Config n Dimension
 
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  mutual
-    NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage V
-    NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
+mutual
+  NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage
+  NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics V (Configuration n Dimension) (NCC n Dimension i)
-    ⟦_⟧ {i} {Dimension} {n} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (NCCL n Dimension) x
-    ⟦_⟧ {i} {Dimension} {n} (chc x) = VLNChoice.Semantics n V Dimension (NCCL n Dimension) id x
+  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Configuration n Dimension) (NCC n Dimension i)
+  ⟦_⟧ {i} {Dimension} {n} (atom x) = PlainConstruct-Semantics Artifact-Construct Artifact∈ₛVariant (NCCL n Dimension) x
+  ⟦_⟧ {i} {Dimension} {n} (chc x) = VLNChoice.Semantics n Dimension (NCCL n Dimension) id x
 ```
 
 ```agda

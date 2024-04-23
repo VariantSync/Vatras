@@ -1,13 +1,9 @@
-open import Framework.Definitions using (𝕍; atoms)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
 {-
 This module defines a compiler from NCC to NCC where the number N of alternatives per
 choice grows. The compiler duplicates the last alternative in each choice to grow the vector
 of alternatives to match a desired larger size.
 -}
-module Translation.Lang.NCC.Grow (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC.Grow where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -21,8 +17,9 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
-open import Framework.Definitions using (𝔸; 𝔽)
+open import Framework.Definitions using (𝔸; 𝔽; atoms)
 open import Framework.Relation.Function using (from; to)
+open import Framework.VariabilityLanguage using (artifact)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -34,11 +31,8 @@ import Util.Vec as Vec
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-artifact : {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 -- Increasing the arity is straightforward. We have to duplicate one element (we choose the last one to be consistent with the saturation semantic of `CCC`, see `find-or-last`) until the arity difference is zero.
 -- For symmetry, this module provides a translation from the 2-ary `NCC`, because, for simplicity of the proof, ShrinkTo2 translates to the 2-ary `NCC`.

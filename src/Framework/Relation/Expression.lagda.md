@@ -1,6 +1,6 @@
 ```agda
 open import Framework.Definitions
-module Framework.Relation.Expression (V : 𝕍) {A : 𝔸} where
+module Framework.Relation.Expression {A : 𝔸} where
 
 open import Data.Product using (_,_; _×_; Σ-syntax; proj₁; proj₂)
 open import Relation.Nullary.Negation using (¬_)
@@ -23,7 +23,7 @@ open import Data.EqIndexedSet using
 Two expressions `e₁` , `e₂` of the same language are semantically equivalent
 if the functions they describe are pointwise equal (same output for same inputs):
 ```agda
-_⊢_≣₁_ : ∀ (L : VariabilityLanguage V)
+_⊢_≣₁_ : ∀ (L : VariabilityLanguage)
   → (e₁ e₂ : Expression L A)
   → Set
 L ⊢ e₁ ≣₁ e₂ = ⟦ e₁ ⟧ ≐ ⟦ e₂ ⟧
@@ -31,7 +31,7 @@ L ⊢ e₁ ≣₁ e₂ = ⟦ e₁ ⟧ ≐ ⟦ e₂ ⟧
     ⟦_⟧ = Semantics L
 infix 5 _⊢_≣₁_
 
-≣₁-IsEquivalence : ∀ {L : VariabilityLanguage V} → IsEquivalence (L ⊢_≣₁_)
+≣₁-IsEquivalence : ∀ {L : VariabilityLanguage} → IsEquivalence (L ⊢_≣₁_)
 ≣₁-IsEquivalence = record
   { refl  = λ _ → refl
   ; sym   = λ x≣y c → sym (x≣y c)
@@ -41,7 +41,7 @@ infix 5 _⊢_≣₁_
 
 Syntactic equality implies semantic equality, independent of the semantics:
 ```agda
-≡→≣₁ : ∀ {L : VariabilityLanguage V} {a b : Expression L A}
+≡→≣₁ : ∀ {L : VariabilityLanguage} {a b : Expression L A}
   → a ≡ b
     ----------
   → L ⊢ a ≣₁ b
@@ -55,7 +55,7 @@ Then we leverage these relations to model relations between whole languages.
 
 ```agda
 _,_⊢_≤_ :
-  ∀ (L₁ L₂ : VariabilityLanguage V)
+  ∀ (L₁ L₂ : VariabilityLanguage)
   → Expression L₁ A
   → Expression L₂ A
   → Set
@@ -66,7 +66,7 @@ L₁ , L₂ ⊢ e₁ ≤ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
 infix 5 _,_⊢_≤_
 
 _,_⊢_≣_ :
-  ∀ (L₁ L₂ : VariabilityLanguage V)
+  ∀ (L₁ L₂ : VariabilityLanguage)
   → Expression L₁ A
   → Expression L₂ A
   → Set
@@ -76,17 +76,17 @@ L₁ , L₂ ⊢ e₁ ≣ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
     ⟦_⟧₂ = Semantics L₂
 infix 5 _,_⊢_≣_
 
-≤-refl : ∀ (L : VariabilityLanguage V) (e : Expression L A)
+≤-refl : ∀ (L : VariabilityLanguage) (e : Expression L A)
   → L , L ⊢ e ≤ e
 ≤-refl _ _ = ⊆-refl
 
-≤-antisym : ∀ {L M : VariabilityLanguage V} {a : Expression L A} {b : Expression M A}
+≤-antisym : ∀ {L M : VariabilityLanguage} {a : Expression L A} {b : Expression M A}
   → L , M ⊢ a ≤ b
   → M , L ⊢ b ≤ a
   → L , M ⊢ a ≣ b
 ≤-antisym = ⊆-antisym
 
-≤-trans : ∀ {L M N : VariabilityLanguage V}
+≤-trans : ∀ {L M N : VariabilityLanguage}
             {a : Expression L A} {b : Expression M A} {c : Expression N A}
   → L , M ⊢ a ≤ b
   → M , N ⊢ b ≤ c
@@ -94,17 +94,17 @@ infix 5 _,_⊢_≣_
   → L , N ⊢ a ≤ c
 ≤-trans = ⊆-trans
 
-≣-refl : ∀ (L : VariabilityLanguage V) (e : Expression L A)
+≣-refl : ∀ (L : VariabilityLanguage) (e : Expression L A)
     -------------
   → L , L ⊢ e ≣ e
 ≣-refl _ _ = ≅-refl
 
-≣-sym : ∀ {L M : VariabilityLanguage V} {a : Expression L A} {b : Expression M A}
+≣-sym : ∀ {L M : VariabilityLanguage} {a : Expression L A} {b : Expression M A}
   → L , M ⊢ a ≣ b
   → M , L ⊢ b ≣ a
 ≣-sym = ≅-sym
 
-≣-trans : ∀ {L M N : VariabilityLanguage V}
+≣-trans : ∀ {L M N : VariabilityLanguage}
             {a : Expression L A} {b : Expression M A} {c : Expression N A}
   → L , M ⊢ a ≣ b
   → M , N ⊢ b ≣ c
@@ -112,7 +112,7 @@ infix 5 _,_⊢_≣_
   → L , N ⊢ a ≣ c
 ≣-trans = ≅-trans
 
-≣₁→≣ : ∀ {L : VariabilityLanguage V} {a b : Expression L A}
+≣₁→≣ : ∀ {L : VariabilityLanguage} {a b : Expression L A}
   → L ⊢ a ≣₁ b
   → L , L ⊢ a ≣ b
 ≣₁→≣ = ≐→≅

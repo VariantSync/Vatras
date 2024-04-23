@@ -43,31 +43,31 @@ record PlainConstruct : Set₁ where
     Hence, after configuration, it just remains as is but any
     sub-expressions are configured to variants.
     -}
-    pcong : ∀ {V A}
-      → (Γ : VariabilityLanguage V)
+    pcong : ∀ {A}
+      → (Γ : VariabilityLanguage)
       → (e : PSyntax (Expression Γ) A)
       → (c : Config Γ)
-      → PSyntax V A
+      → PSyntax Variant A
 open PlainConstruct public
 
 {-|
 The semantics of a construct is that it can be configured to a variant
 when the construct is used within a variability language.
 -}
-Construct-Semantics : ∀ {V} → VariabilityLanguage V → ℂ → Set₁
-Construct-Semantics {V} Γ C = ∀ {A : 𝔸} → C (Expression Γ) A → Config Γ → V A
+Construct-Semantics : VariabilityLanguage → ℂ → Set₁
+Construct-Semantics Γ C = ∀ {A : 𝔸} → C (Expression Γ) A → Config Γ → Variant A
 
-PlainConstruct-Semantics : ∀ {V}
-  → (P : PlainConstruct)
-  → PSyntax P ∈ₛ V
-  → (Γ : VariabilityLanguage V)
+PlainConstruct-Semantics :
+    (P : PlainConstruct)
+  → PSyntax P ∈ₛ Variant
+  → (Γ : VariabilityLanguage)
   → Construct-Semantics Γ (PSyntax P)
 PlainConstruct-Semantics P make Γ e = cons make ∘ pcong P Γ e
 
-VariationalConstruct-Semantics : 𝕍 → 𝕂 → ℂ → Set₁
-VariationalConstruct-Semantics V K C =
+VariationalConstruct-Semantics : 𝕂 → ℂ → Set₁
+VariationalConstruct-Semantics K C =
   -- The underlying language, which the construct is part of.
-  ∀ (Γ : VariabilityLanguage V)
+  ∀ (Γ : VariabilityLanguage)
   -- A function that lets us apply language configurations to constructs.
   -- A language might be composed many constructors, each requiring another type
   -- of configuration (i.e., each having different requirements on a configuration).
@@ -78,7 +78,7 @@ VariationalConstruct-Semantics V K C =
   → (extract : Config Γ → K)
   → Construct-Semantics Γ C
 
-record VariabilityConstruct (V : 𝕍) : Set₁ where
+record VariabilityConstruct : Set₁ where
   constructor Variational-⟪_,_,_⟫
   field
     -- How to create a constructor...
@@ -86,7 +86,7 @@ record VariabilityConstruct (V : 𝕍) : Set₁ where
     -- What is required to configure a constructor...
     VConfig : 𝕂
     -- How to resolve a constructor...
-    VSemantics : VariationalConstruct-Semantics V VConfig VSyntax
+    VSemantics : VariationalConstruct-Semantics VConfig VSyntax
 open VariabilityConstruct public
 
 {-|
@@ -98,11 +98,11 @@ A proof for compatibility is thus a function that extracts the necessary informa
 from a language's configuration.
 TODO: We might want to have a better name for this.
 -}
-Compatible : ∀ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) → Set
+Compatible : ∀ (C : VariabilityConstruct) (Γ : VariabilityLanguage) → Set
 Compatible C Γ = Config Γ → VConfig C
 
 -- Semantic containment of variational constructs
-record _⟦∈⟧ᵥ_ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where
+record _⟦∈⟧ᵥ_ (C : VariabilityConstruct) (Γ : VariabilityLanguage) : Set₁ where
   private ⟦_⟧ = Semantics Γ
   field
     make : VSyntax C ∈ₛ Expression Γ
@@ -112,21 +112,21 @@ record _⟦∈⟧ᵥ_ {V} (C : VariabilityConstruct V) (Γ : VariabilityLanguage
       → ⟦ cons make c ⟧ ≗ VSemantics C Γ extract c
 open _⟦∈⟧ᵥ_ public
 
-_⟦∉⟧ᵥ_ : ∀ {V} → VariabilityConstruct V → VariabilityLanguage V → Set₁
+_⟦∉⟧ᵥ_ : VariabilityConstruct → VariabilityLanguage → Set₁
 C ⟦∉⟧ᵥ E = ¬ (C ⟦∈⟧ᵥ E)
 
-_⟦⊆⟧ᵥ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦⊆⟧ᵥ_ : VariabilityLanguage → VariabilityLanguage → Set₁
 E₁ ⟦⊆⟧ᵥ E₂ = ∀ C → C ⟦∈⟧ᵥ E₁ → C ⟦∈⟧ᵥ E₂
 
-_⟦≅⟧ᵥ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦≅⟧ᵥ_ : VariabilityLanguage → VariabilityLanguage → Set₁
 E₁ ⟦≅⟧ᵥ E₂ = E₁ ⟦⊆⟧ᵥ E₂ × E₂ ⟦⊆⟧ᵥ E₁
 
 -- Semantic containment of plain constructs
-record _⟦∈⟧ₚ_ {V} (C : PlainConstruct) (Γ : VariabilityLanguage V) : Set₁ where
+record _⟦∈⟧ₚ_ (C : PlainConstruct) (Γ : VariabilityLanguage) : Set₁ where
   private ⟦_⟧ = Semantics Γ
   field
     C∈ₛΓ : PSyntax C ∈ₛ Expression Γ
-    C∈ₛV : PSyntax C ∈ₛ V
+    C∈ₛV : PSyntax C ∈ₛ Variant
 
     -- Commuting Square:
     -- Creating a plain construct 'const P∈ₛΓ' in a variability language Γ and then configuring the expression
@@ -137,21 +137,21 @@ record _⟦∈⟧ₚ_ {V} (C : PlainConstruct) (Γ : VariabilityLanguage V) : Se
       → Semantics Γ (cons C∈ₛΓ c) ≗ cons C∈ₛV ∘ pcong C Γ c
 open _⟦∈⟧ₚ_ public
 
-_⟦∉⟧ₚ_ : ∀ {V} → PlainConstruct → VariabilityLanguage V → Set₁
+_⟦∉⟧ₚ_ : PlainConstruct → VariabilityLanguage → Set₁
 C ⟦∉⟧ₚ E = ¬ (C ⟦∈⟧ₚ E)
 
-_⟦⊆⟧ₚ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦⊆⟧ₚ_ : VariabilityLanguage → VariabilityLanguage → Set₁
 E₁ ⟦⊆⟧ₚ E₂ = ∀ C → C ⟦∈⟧ₚ E₁ → C ⟦∈⟧ₚ E₂
 
-_⟦≅⟧ₚ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦≅⟧ₚ_ : VariabilityLanguage → VariabilityLanguage → Set₁
 E₁ ⟦≅⟧ₚ E₂ = E₁ ⟦⊆⟧ₚ E₂ × E₂ ⟦⊆⟧ₚ E₁
 
----- Plain constructs can be seen as variational constructs that do nothing upon configuration. ---
+--- Plain constructs can be seen as variational constructs that do nothing upon configuration. ---
 
-PlainConstruct-Semantics-Are-VariationalConstruct-Semantics : ∀ {V}
-  → (P : PlainConstruct)
-  → PSyntax P ∈ₛ V
-  → VariationalConstruct-Semantics V ⊤ (PSyntax P)
+PlainConstruct-Semantics-Are-VariationalConstruct-Semantics :
+    (P : PlainConstruct)
+  → PSyntax P ∈ₛ Variant
+  → VariationalConstruct-Semantics ⊤ (PSyntax P)
 PlainConstruct-Semantics-Are-VariationalConstruct-Semantics P make Γ _ e
   = PlainConstruct-Semantics P make Γ e
 
@@ -159,13 +159,13 @@ PlainConstruct-Semantics-Are-VariationalConstruct-Semantics P make Γ _ e
 All plain constructs are also variational constructs
 (but they have no impact on the configuration process.)
 -}
-toVariational : ∀ {V}
-  → (P : PlainConstruct)
-  → PSyntax P ∈ₛ V
-  → VariabilityConstruct V
+toVariational :
+    (P : PlainConstruct)
+  → PSyntax P ∈ₛ Variant
+  → VariabilityConstruct
 toVariational P make = Variational-⟪ PSyntax P , ⊤ , PlainConstruct-Semantics-Are-VariationalConstruct-Semantics P make ⟫
 
-⟦∈⟧ₚ→⟦∈⟧ᵥ : ∀ {V P} {Γ : VariabilityLanguage V}
+⟦∈⟧ₚ→⟦∈⟧ᵥ : ∀ {P} {Γ : VariabilityLanguage}
   → (p : P ⟦∈⟧ₚ Γ)
   → toVariational P (C∈ₛV p) ⟦∈⟧ᵥ Γ
 ⟦∈⟧ₚ→⟦∈⟧ᵥ P⟦∈⟧ₚΓ = record

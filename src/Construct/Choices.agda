@@ -176,11 +176,11 @@ module VLNChoice where
   Syntax : ℕ≥ 2 → 𝔽 → ℂ
   Syntax n F E A = NChoice.Syntax n F (E A)
 
-  Semantics : ∀ (n : ℕ≥ 2) (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config n F) (Syntax n F)
-  Semantics _ _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ NChoice.⟦ chc ⟧ (extract c) ⟧ c
+  Semantics : ∀ (n : ℕ≥ 2) (F : 𝔽) → VariationalConstruct-Semantics (Config n F) (Syntax n F)
+  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ NChoice.⟦ chc ⟧ (extract c) ⟧ c
 
-  Construct : ∀ n (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
-  Construct n V F = Variational-⟪ Syntax n F , Config n F , Semantics n V F ⟫
+  Construct : ∀ n (F : 𝔽) → VariabilityConstruct
+  Construct n F = Variational-⟪ Syntax n F , Config n F , Semantics n F ⟫
 
 module VL2Choice where
   open 2Choice using (_⟨_,_⟩; Config; map; map-preserves)
@@ -189,11 +189,11 @@ module VL2Choice where
   Syntax : 𝔽 → ℂ
   Syntax F E A = 2Choice.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
-  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ 2Choice.⟦ chc ⟧ (extract c) ⟧ c
+  Semantics : ∀ (F : 𝔽) → VariationalConstruct-Semantics (Config F) (Syntax F)
+  Semantics _ (⟪ _ , _ , ⟦_⟧ ⟫) extract chc c = ⟦ 2Choice.⟦ chc ⟧ (extract c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
-  Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
+  Construct : ∀ (F : 𝔽) → VariabilityConstruct
+  Construct F = Variational-⟪ Syntax F , Config F , Semantics F ⟫
 
 module VLChoice where
   open Choice using (_⟨_⟩; Config; map; map-preserves)
@@ -202,8 +202,8 @@ module VLChoice where
   Syntax : 𝔽 → ℂ
   Syntax F E A = Choice.Syntax F (E A)
 
-  Semantics : ∀ (V : 𝕍) (F : 𝔽) → VariationalConstruct-Semantics V (Config F) (Syntax F)
-  Semantics _ _ (⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choice.⟦ choice ⟧ (extract c) ⟧ c
+  Semantics : ∀ (F : 𝔽) → VariationalConstruct-Semantics (Config F) (Syntax F)
+  Semantics _ (⟪ _ , _ , ⟦_⟧ ⟫) extract choice c = ⟦ Choice.⟦ choice ⟧ (extract c) ⟧ c
 
-  Construct : ∀ (V : 𝕍) (F : 𝔽) → VariabilityConstruct V
-  Construct V F = Variational-⟪ Syntax F , Config F , Semantics V F ⟫
+  Construct : ∀ (F : 𝔽) → VariabilityConstruct
+  Construct F = Variational-⟪ Syntax F , Config F , Semantics F ⟫
