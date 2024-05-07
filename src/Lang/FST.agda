@@ -28,7 +28,7 @@ open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative;
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (yes; no; _because_; False)
 open import Relation.Binary using (Decidable; DecidableEquality; Rel)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 open Eq.≡-Reasoning
 
 open import Framework.Annotation.Name using (Name)
@@ -273,68 +273,165 @@ module Impose (AtomSet : 𝔸) where
     → [] ⊕ rs ≡ rs
   ⊕-idˡ rs u-rs = ⊕-strangers [] rs u-rs (disjoint-[]ʳ rs)
 
-  -- A proof that all FSTs xs are already imposed into another list of FSTs ys.
-  data _lies-in_ : ∀ {i} → List (FSTA i) → List (FSTA i) → Set where
-    lempty : ∀ {i} {xs : List (FSTA i)}
-        -------------
-      → [] lies-in xs
+  mutual
+    -- A proof that an FST x was already imposed into a list of FSTs ys.
+    data _imposed-in_ : ∀ {i} → FSTA i → List (FSTA i) → Set where
+      lies-here : ∀ {i} {a : A} {as bs : List (FSTA i)} {ys : List (FSTA (↑ i))}
+        → All (_imposed-in bs) as
+          --------------------------------------
+        → (a -< as >-) imposed-in (a -< bs >- ∷ ys)
 
-    lstep-here : ∀ {i} {a b : A} {as bs : List (FSTA i)} {xs ys : List (FSTA (↑ i))}
-      → a ≡ b
-      → as lies-in bs
-      → xs lies-in ys
-        ---..................----------------------
-      → (a -< as >- ∷ xs) lies-in (b -< bs >- ∷ ys)
+      lies-there : ∀ {i} {x y : FSTA i} {ys : List (FSTA i)}
+        → x ≉ y
+        → x imposed-in ys
+          ------------------
+        → x imposed-in (y ∷ ys)
 
-    lstep-there : ∀ {i} {x y : FSTA i} {xs ys : List (FSTA i)}
-      → x ≉ y
-      → (x ∷ xs) lies-in ys
-        -------------------------
-      → (x ∷ xs) lies-in (y ∷ ys)
+    -- data _all-imposed-in_ : ∀ {i} → (xs ys : List (FSTA i)) → Set where
+    --   all-empty : ∀ {i} (ys : List (FSTA i))
+    --     → [] all-imposed-in ys
+
+    --   all-step : ∀ {i} (x : FSTA i) (xs ys : List (FSTA i))
+    --     → x imposed-in ys
+    --     → xs all-imposed-in ys
+    --     → (x ∷ xs) all-imposed-in ys
+
+    _all-imposed-in_ : ∀ {i} → (xs ys : List (FSTA i)) → Set
+    xs all-imposed-in ys = All (_imposed-in ys) xs
 
   _slice-of_ : ∀ {i} → FSTA i → FSTA i → Set
-  x slice-of y = (x ∷ []) lies-in (y ∷ [])
+  x slice-of y = x imposed-in (y ∷ [])
 
-  _slice-within_ : ∀ {i} → FSTA i → List (FSTA i) → Set
-  x slice-within ys = (x ∷ []) lies-in ys
+  data _is-sparse-sublist-of_ {ℓ} {A : Set ℓ} : List A → List A → Set ℓ where
+    sub-base : ∀ (p : List A)
+        ------------------------
+      → [] is-sparse-sublist-of p
 
-  lies-in-refl : ∀ {i} → (xs : List (FSTA i)) → xs lies-in xs
-  lies-in-refl [] = lempty
-  lies-in-refl ((a -< as >-) ∷ xs) = lstep-here refl (lies-in-refl as) (lies-in-refl xs)
+    step-match : ∀ {p q : List A} {a : A}
+      → p is-sparse-sublist-of q
+        ------------------------------------
+      → (a ∷ p) is-sparse-sublist-of (a ∷ q)
 
-  slice-prop : ∀ {i} {xs ys : List (FSTA i)} (zs : List (FSTA i))
-    → xs lies-in ys
-    → xs lies-in (ys ⊕ zs)
-  slice-prop zs lempty = lempty
-  slice-prop {xs = a -< as >- ∷ xs} {ys = .a -< bs >- ∷ ys} zs (lstep-here refl as-lies-in-bs xs-lies-in-ys) = {!lstep-here!}
-  slice-prop zs (lstep-there x x₁) = {!!}
+    step-diff : ∀ {p q : List A} {a b : A}
+      → ¬ (a ≡ b)
+      → (a ∷ p) is-sparse-sublist-of q
+        ------------------------------------
+      → (a ∷ p) is-sparse-sublist-of (b ∷ q)
 
-  slice-concat : ∀ {i} {x : FSTA i} {ys : List (FSTA i)} (xs : List (FSTA i))
-    → x slice-within ys
-    → (x ∷ xs) lies-in (ys ⊕ xs)
-  slice-concat = {!!}
+  _in-list_ : ∀ {ℓ} {A : Set ℓ} → A → List A → Set ℓ
+  x in-list ys = (x ∷ []) is-sparse-sublist-of ys
+
+  step-diff' : ∀ {ℓ} {A : Set ℓ} (xs : List A) (y : A) (ys : List A)
+    → All (_≢ y) xs
+    → xs is-sparse-sublist-of ys
+    → xs is-sparse-sublist-of (y ∷ ys)
+  step-diff' [] y ys _ _ = sub-base (y ∷ ys)
+  step-diff' (x ∷ xs) y ys (x≢y ∷ y∉xs) sub = step-diff x≢y sub
+
+  is-sparse-sublist-of-refl : ∀ {ℓ} {A : Set ℓ} (xs : List A) → xs is-sparse-sublist-of xs
+  is-sparse-sublist-of-refl [] = sub-base []
+  is-sparse-sublist-of-refl (x ∷ xs) = step-match (is-sparse-sublist-of-refl xs)
+
+  sparse-sublist-head : ∀ {ℓ} {A : Set ℓ} (x : A) (xs ys : List A)
+    → (x ∷ xs) is-sparse-sublist-of ys
+    → (x ∷ []) is-sparse-sublist-of ys
+  sparse-sublist-head x xs (.x ∷ ys) (step-match sub) = step-match (sub-base ys)
+  sparse-sublist-head x xs (y ∷ ys) (step-diff x≢y sub) = step-diff x≢y (sparse-sublist-head x xs ys sub)
+
+  sparse-sublist-drop-head : ∀ {ℓ} {A : Set ℓ} (x : A) (xs ys : List A)
+    → All (_≢ x) xs
+    → (x ∷ xs) is-sparse-sublist-of ys
+    → xs is-sparse-sublist-of ys
+  sparse-sublist-drop-head x xs (.x ∷ ys) u (step-match sub) = step-diff' xs x ys u sub
+  sparse-sublist-drop-head x xs (y ∷ ys) u (step-diff x≢y sub) = {!sparse-sublist-drop-head x xs ys u sub!}
+
+  sparse-sublist-append-to-tail : ∀ {ℓ} {A : Set ℓ} (xs : List A) (y : A) (ys : List A)
+    → xs is-sparse-sublist-of ys
+    → xs is-sparse-sublist-of (y ∷ ys)
+  sparse-sublist-append-to-tail [] y ys sub = sub-base (y ∷ ys)
+  sparse-sublist-append-to-tail (x ∷ xs) y ys sub = {!!}
+
+  -- data _in-list_ {ℓ} {A : Set ℓ} : A → List A → Set ℓ where
+  --   in-here : ∀ {x xs} → x in-list (x ∷ xs)
+  --   in-there : ∀ {x y ys}
+  --     → ¬ (x ≡ y)
+  --     → x in-list ys
+  --     → x in-list (y ∷ ys)
+
+  mutual
+    imposed-in-refl : ∀ {i} (x : FSTA i) (ys : List (FSTA i))
+      → WellFormed x
+      → AllWellFormed ys
+      → x in-list ys
+      → x imposed-in ys
+    imposed-in-refl (a -< as >-) ((.a -< .as >-) ∷ ys) wx wys (step-match asd)
+      = lies-here (all-imposed-in-refl as as wx wx (is-sparse-sublist-of-refl as))
+    imposed-in-refl (a -< as >-) ((b -< bs >-) ∷ ys) wx (b∉ys ∷ u-ys , wf-bs ∷ wf-ys) (step-diff aas≢bbs asd)
+      = lies-there {!aas≢bbs!} (imposed-in-refl (a -< as >-) ys wx (u-ys , wf-ys) asd)
+
+    all-imposed-in-refl : ∀ {i} (xs ys : List (FSTA i))
+      → AllWellFormed xs
+      → AllWellFormed ys
+      → xs is-sparse-sublist-of ys
+      → xs all-imposed-in ys
+    all-imposed-in-refl [] _ _ _ _ = []
+    all-imposed-in-refl (x ∷ xs) (.x ∷ ys) (x∉xs ∷ u-xs , wf-x ∷ wf-xs) wf-ys (step-match xs-sub-ys)
+      = imposed-in-refl x (x ∷ ys) wf-x wf-ys (step-match (sub-base ys)) ∷ all-imposed-in-refl xs (x ∷ ys) (u-xs , wf-xs) wf-ys (step-diff' xs x ys {!x∉xs!} xs-sub-ys)
+    all-imposed-in-refl (x ∷ xs) (y ∷ ys) (x∉xs ∷ u-xs , wf-x ∷ wf-xs) wf-ys (step-diff x≢y xxs-sub-ys)
+      = imposed-in-refl x (y ∷ ys) wf-x wf-ys (step-diff x≢y (sparse-sublist-head x xs ys xxs-sub-ys)) ∷ all-imposed-in-refl xs (y ∷ ys) (u-xs , wf-xs) wf-ys lemmm
+      where
+        lemmm : xs is-sparse-sublist-of (y ∷ ys)
+        lemmm = {!!}
+
+  mutual
+    ⊙-preserves : ∀ (x : FSTA ∞) (ys : List (FSTA ∞))
+      → WellFormed x
+      → AllWellFormed ys
+      → x imposed-in (x ⊙ ys)
+    ⊙-preserves x [] wf-x wf-ys = imposed-in-refl x (x ∷ []) wf-x (([] ∷ []) , wf-x ∷ []) (is-sparse-sublist-of-refl (x ∷ []))
+    ⊙-preserves (a -< as >-) (b  -< bs >- ∷ _) _ _ with a ≟ b
+    ⊙-preserves (a -< as >-) ((a -< bs >-) ∷ ys) wf-as (_ , wf-bs ∷ _) | yes refl = lies-here (⊕-preserves as bs wf-as wf-bs)
+    ⊙-preserves (a -< as >-) (b  -< bs >- ∷ ys) wf-x wf-ys | no   a≠b = lies-there a≠b (⊙-preserves (a -< as >-) ys {!!} {!!})
+
+    ⊕-preserves : ∀ (xs ys : List (FSTA ∞))
+      → AllWellFormed xs
+      → AllWellFormed ys
+      → xs all-imposed-in (xs ⊕ ys)
+    ⊕-preserves = {!!}
+
+  -- slice-prop : ∀ {i} {xs ys : List (FSTA i)} (zs : List (FSTA i))
+  --   → xs imposed-in ys
+  --   → xs imposed-in (ys ⊕ zs)
+  -- slice-prop zs lempty = lempty
+  -- slice-prop {xs = a -< as >- ∷ xs} {ys = .a -< bs >- ∷ ys} zs (lstep-here as-imposed-in-bs xs-imposed-in-ys) = {!lstep-here!}
+  -- slice-prop zs (lstep-there x x₁) = {!!}
+
+  -- slice-concat : ∀ {i} {x : FSTA i} {ys : List (FSTA i)} (xs : List (FSTA i))
+  --   → x slice-within ys
+  --   → (x ∷ xs) imposed-in (ys ⊕ xs)
+  -- slice-concat = {!!}
 
   -- mutual
   --   ⊕-makes-slicesˡ : ∀ {i} (xs ys : List (FSTA i))
-  --     → xs lies-in (ys ⊕ xs)
+  --     → xs imposed-in (ys ⊕ xs)
   --   ⊕-makes-slicesˡ [] ys = lempty
   --   ⊕-makes-slicesˡ (x ∷ xs) ys = slice-concat xs (⊙-makes-slice-head x ys)
 
   --   ⊕-makes-slicesʳ : ∀ {i} (xs ys : List (FSTA i))
-  --     → xs lies-in (xs ⊕ ys)
-  --   ⊕-makes-slicesʳ xs []       = lies-in-refl xs
+  --     → xs imposed-in (xs ⊕ ys)
+  --   ⊕-makes-slicesʳ xs []       = imposed-in-refl xs
   --   ⊕-makes-slicesʳ xs (y ∷ ys) = slice-prop ys (⊙-makes-slice-tail y xs)
 
   --   ⊙-makes-slice-tail : ∀ {i} (x : FSTA i) (ys : List (FSTA i))
-  --     → ys lies-in (x ⊙ ys)
+  --     → ys imposed-in (x ⊙ ys)
   --   ⊙-makes-slice-tail x [] = lempty
   --   ⊙-makes-slice-tail (a -< cs >-) ((b -< bs >-) ∷ ys) with a ≟ b
-  --   ... | yes refl = lstep-here refl (⊕-makes-slicesˡ bs cs) (lies-in-refl ys)
-  --   ... | no     _ = lstep-here refl (lies-in-refl bs) (⊙-makes-slice-tail (a -< cs >-) ys)
+  --   ... | yes refl = lstep-here refl (⊕-makes-slicesˡ bs cs) (imposed-in-refl ys)
+  --   ... | no     _ = lstep-here refl (imposed-in-refl bs) (⊙-makes-slice-tail (a -< cs >-) ys)
 
   --   ⊙-makes-slice-head : ∀ {i} (x : FSTA i) (ys : List (FSTA i))
   --     → x slice-within (x ⊙ ys)
-  --   ⊙-makes-slice-head (a -< cs >-) [] = lies-in-refl (a -< cs >- ∷ [])
+  --   ⊙-makes-slice-head (a -< cs >-) [] = imposed-in-refl (a -< cs >- ∷ [])
   --   ⊙-makes-slice-head (a -< cs >-) ((b -< bs >-) ∷ ys) with a ≟ b
   --   ... | yes refl = lstep-here refl (⊕-makes-slicesʳ cs bs) lempty
   --   ... | no   a≠b = lstep-there a≠b (⊙-makes-slice-head (a -< cs >-) ys)
@@ -427,6 +524,31 @@ module Impose (AtomSet : 𝔸) where
   -- Y :: a -< c >-
   -- X ⊕ Y = a -< b , c >-
   -- Y ⊕ X = a -< c , b >-
+
+  -- ⊙-assoc : ∀ (x y : List (FSTA ∞)) (z : FSTA ∞) → (z ⊙ x) ⊙ y ≡ x ⊙ (z ⊙ y)
+  -- ⊙-assoc = {!!}
+
+  time-of-imposition-irrelevant : ∀ (i : FSTA ∞) (x y : List (FSTA ∞))
+    → (i ⊙ x) ⊕ y ≡ i ⊙ (x ⊕ y)
+  time-of-imposition-irrelevant i x [] = refl
+  time-of-imposition-irrelevant (ai -< ci >-) x ((ay -< cy >-) ∷ ys) with ai ≟ ay
+  ... | yes refl = {!!}
+  ... | no ¬p = {!!}
+    -- where
+    --   h : (y ⊙ (i ⊙ x)) ⊕ ys ≡ i ⊙ ((y ⊙ x) ⊕ ys)
+    --   h = {!!}
+
+  lemxx  : ∀ (x y : List (FSTA ∞)) (z : FSTA ∞) (zs : List (FSTA ∞))
+    → (z ⊙ (x ⊕ y)) ⊕ zs ≡ x ⊕ ((z ⊙ y) ⊕ zs)
+  lemxx x y z zs = {!!}
+
+  ⊕-assoc : Associative _≡_ _⊕_
+  ⊕-assoc x y [] = refl
+  ⊕-assoc x y (z ∷ zs) = lemxx x y z zs
+
+  {-
+  FSTs should be associate
+  -}
   assoc : Associative _≡_ _⊛_
   assoc (x ⊚ x-wf) (y ⊚ y-wf) (z ⊚ z-wf) = {!!}
 
