@@ -25,11 +25,23 @@ data _endswith_ {ℓ} {A : Set ℓ} : List A → List A → Set where
       ------------------
     → (a ∷ p) endswith q
 
+endswith-refl : ∀ {ℓ} {A : Set ℓ} {xs : List A}
+  → xs endswith xs
+endswith-refl {xs = xs} = match xs
+
 endswith-shrink-suffix : ∀ {ℓ} {A : Set ℓ} {y : A} {xs ys : List A}
   → xs endswith (y ∷ ys)
   → xs endswith ys
 endswith-shrink-suffix (match (y ∷ ys)) = later (match ys)
 endswith-shrink-suffix (later x) = later (endswith-shrink-suffix x)
+
+endswith-trans : ∀ {ℓ} {A : Set ℓ} {xs ys zs : List A}
+  → xs endswith ys
+  → ys endswith zs
+  → xs endswith zs
+endswith-trans (match _) b = b
+endswith-trans (later a) (match _) = later a
+endswith-trans (later a) (later b) = later (endswith-trans (endswith-shrink-suffix a) b)
 
 endswith-tail : ∀ {ℓ} {A : Set ℓ} {x y : A} {xs ys : List A}
   → ¬ x ≡ y
