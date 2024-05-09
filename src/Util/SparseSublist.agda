@@ -78,9 +78,9 @@ step-diff' : ∀ {ℓ} {A : Set ℓ} {xs : List A} {y : A} {ys : List A}
 step-diff' {xs = []} _ _ = sub-base
 step-diff' {xs = x ∷ xs} (x≢y ∷ _) sub = step-diff x≢y sub
 
-is-sparse-sublist-of-refl : ∀ {ℓ} {A : Set ℓ} (xs : List A) → xs is-sparse-sublist-of xs
-is-sparse-sublist-of-refl [] = sub-base
-is-sparse-sublist-of-refl (x ∷ xs) = step-match (is-sparse-sublist-of-refl xs)
+sparse-sublist-refl : ∀ {ℓ} {A : Set ℓ} (xs : List A) → xs is-sparse-sublist-of xs
+sparse-sublist-refl [] = sub-base
+sparse-sublist-refl (x ∷ xs) = step-match (sparse-sublist-refl xs)
 
 sparse-sublist-head : ∀ {ℓ} {A : Set ℓ} (x : A) (xs ys : List A)
   → (x ∷ xs) is-sparse-sublist-of ys
