@@ -63,6 +63,9 @@ infix 15 _≈_
 _≈_ : ∀ {A i} → Rel (FST i A) 0ℓ
 (a -< _ >-) ≈ (b -< _ >-) = a ≡ b
 
+≈-refl : ∀ {A i} → (a : FST i A) → a ≈ a
+≈-refl (_ -< _ >-) = refl
+
 ≈-sym : ∀ {A i} → (a b : FST i A) → a ≈ b → b ≈ a
 ≈-sym (a -< _ >-) (.a -< _ >-) refl = refl
 
