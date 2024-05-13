@@ -33,7 +33,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
 open import Framework.Annotation.Name using (Name)
-open import Framework.Variants using (Rose; rose; rose-leaf)
+open import Framework.Variants using (Rose; rose; rose-leaf; children-equality)
 open import Framework.Composition.FeatureAlgebra
 open import Framework.VariabilityLanguage
 open import Framework.VariantMap using (VMap)
@@ -504,3 +504,15 @@ module IncompleteOnRose where
   FST-is-incomplete : Incomplete (Rose ∞) FSTL
   FST-is-incomplete complete with complete variants-0-and-1
   FST-is-incomplete complete | e , e⊆vs , vs⊆e = does-not-describe-variants-0-and-1 e (e⊆vs zero) (e⊆vs (suc zero))
+
+cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] FSTL-Sem e c ≡ rose (a At.-< rose-leaf b ∷ rose-leaf b ∷ [] >-))
+cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
+  ¬Unique b (Eq.subst (λ l → Unique l) (children-equality ⟦e⟧c≡neighbors) (lemma (⊛-all (select conf (features e)))))
+  where
+  open Impose A
+
+  lemma : ∀ (e : FSF) → Unique (forget-uniqueness e)
+  lemma (_ Impose.⊚ (unique , _)) = unique
+
+  ¬Unique : ∀ (a : atoms A) → ¬ Unique (a -< [] >- ∷ a -< [] >- ∷ [])
+  ¬Unique a ((a≢a ∷ []) ∷ [] ∷ []) = a≢a refl

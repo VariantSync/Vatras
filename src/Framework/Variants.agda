@@ -4,7 +4,7 @@ module Framework.Variants where
 
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (_,_; proj₁; proj₂)
-open import Data.List using ([]; _∷_; map)
+open import Data.List using (List; []; _∷_; map)
 open import Function using (id; _∘_; flip)
 open import Size using (Size; ↑_; ∞)
 
@@ -32,6 +32,9 @@ open import Framework.Construct
 open import Data.Maybe using (nothing; just)
 open import Relation.Binary.PropositionalEquality as Peq using (_≡_; _≗_; refl)
 open Peq.≡-Reasoning
+
+children-equality : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose ∞ A)} → rose (a₁ -< cs₁ >-) ≡ rose (a₂ -< cs₂ >-) → cs₁ ≡ cs₂
+children-equality refl = refl
 
 Artifact∈ₛRose : Artifact ∈ₛ Rose ∞
 cons Artifact∈ₛRose x = rose x

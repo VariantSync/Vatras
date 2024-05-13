@@ -66,6 +66,7 @@ import Translation.Lang.VariantList-to-CCC as VariantList-to-CCC
 import Translation.Lang.ADT-to-NADT Variant mkArtifact as ADT-to-NADT
 import Translation.Lang.NADT-to-CCC Variant mkArtifact as NADT-to-CCC
 import Translation.Lang.OC-to-2CC as OC-to-2CC
+import Translation.Lang.OC-to-FST as OC-to-FST
 ```
 
 
@@ -260,6 +261,14 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 
   2CC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (2CCL F) (FSTL F))
   2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-2CC
+
+  open OC-to-FST using (FSTL⋡WFOCL)
+
+  FST-is-less-expressive-than-OC : FSTL F ⋡ WFOCL F
+  FST-is-less-expressive-than-OC = FSTL⋡WFOCL F
+
+  OC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (WFOCL F) (FSTL F))
+  OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-OC
 ```
 
 ```agda
