@@ -10,12 +10,14 @@ We also prove that FSTs are a feature algebra but the proof is work in progress.
 module Lang.FST (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
+open import Data.Fin using (zero; suc)
 open import Data.List using (List; []; _∷_; _∷ʳ_; _++_; foldr; map; filterᵇ; concat; reverse)
 open import Data.List.Properties using (++-identityˡ; ++-identityʳ)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
-open import Data.Product using (Σ; ∃-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Nat as ℕ using (ℕ; zero; suc)
+open import Data.Product using (Σ; ∃-syntax; ∄-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (tt)
 open import Function using (_∘_)
@@ -34,7 +36,9 @@ open import Framework.Annotation.Name using (Name)
 open import Framework.Variants using (Rose; rose; rose-leaf)
 open import Framework.Composition.FeatureAlgebra
 open import Framework.VariabilityLanguage
+open import Framework.VariantMap using (VMap)
 open import Construct.Artifact as At using ()
+open import Framework.Properties.Completeness using (Incomplete)
 
 Conf : Set
 Conf = F → Bool
@@ -479,3 +483,24 @@ FSTL-Sem {A} = Impose.⟦_⟧ A
 
 FSTL : VariabilityLanguage (Rose ∞)
 FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
+
+
+module IncompleteOnRose where
+  variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
+  variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
+
+  variants-0-and-1 : VMap (Rose ∞) (ℕ , ℕ._≟_) 1
+  variants-0-and-1 zero = variant-0
+  variants-0-and-1 (suc zero) = variant-1
+
+  does-not-describe-variants-0-and-1 :
+    ∀ {i : Size}
+    → (e : Impose.SPL (ℕ , ℕ._≟_))
+    → ∃[ c ] (variant-0 ≡ FSTL-Sem e c)
+    → ∄[ c ] (variant-1 ≡ FSTL-Sem e c)
+  does-not-describe-variants-0-and-1 (zero Impose.◀ features) _ ()
+  does-not-describe-variants-0-and-1 (suc root Impose.◀ features) ()
+
+  FST-is-incomplete : Incomplete (Rose ∞) FSTL
+  FST-is-incomplete complete with complete variants-0-and-1
+  FST-is-incomplete complete | e , e⊆vs , vs⊆e = does-not-describe-variants-0-and-1 e (e⊆vs zero) (e⊆vs (suc zero))

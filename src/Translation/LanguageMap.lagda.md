@@ -252,6 +252,14 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 
   2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler (2CCL F) (WFOCL F))
   2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-2CC
+
+  open FST.IncompleteOnRose using (FST-is-incomplete)
+
+  FST-is-less-expressive-than-2CC : FSTL F ⋡ 2CCL F
+  FST-is-less-expressive-than-2CC = less-expressive-from-completeness 2CC-is-complete (FST-is-incomplete F)
+
+  2CC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (2CCL F) (FSTL F))
+  2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-2CC
 ```
 
 ```agda
