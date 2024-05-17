@@ -6,7 +6,7 @@ This is the supplementary Agda library for our paper _On the Expressive Power of
 
 ## Setup
 
-The library needs Agda version 2.6.3 (newer version should also work but we did not test them). We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)), Manjaro, and NixOS. The only dependency of this library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory (already contained within the zip file of the supplementary material).
+The library needs Agda version 2.6.4.3 (newer version should also work but we did not test them). We tested our setup on Ubuntu (inside windows subsystem for linux (WSL 2)), Manjaro, and NixOS. The only dependency of this library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory (already contained within the zip file of the supplementary material).
 
 ### Installation
 
@@ -61,10 +61,10 @@ TL;DR: In summary, when following the book, you have to do:
 
     ```shell
     cabal update
-    cabal install Agda-2.6.3
+    cabal install Agda-2.6.4.3
     ```
 
-Detailed installation instructions can also be found [in the official documentation](https://agda.readthedocs.io/en/v2.6.3/getting-started/installation.html), too.
+Detailed installation instructions can also be found [in the official documentation](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), too.
 
 3. Finding the standard library: Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided makefile sets this environment variable temporarily, and locally during the build process to the `.libs` directory within this repository. (Your global setup will not be affected). If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
 
@@ -109,5 +109,5 @@ The library is organized as follows:
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
 - [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
 
-[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.3-blue.svg
-[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.3
+[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
+[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3

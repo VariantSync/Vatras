@@ -1,4 +1,4 @@
-.PHONY: andrun check check-all check-everything build build-2.6.3 run clean
+.PHONY: andrun check check-all check-everything build build-2.6.4.3 run clean
 
 andrun : build run
 
@@ -14,8 +14,8 @@ check-everything: src/Everything.agda
 build:
 	env AGDA_DIR="./libs" agda --compile src/Main.agda
 
-build-2.6.3:
-	env AGDA_DIR="./libs" agda-2.6.3 --compile src/Main.agda
+build-2.6.4.3:
+	env AGDA_DIR="./libs" agda-2.6.4.3 --compile src/Main.agda
 
 run:
 	./src/Main
