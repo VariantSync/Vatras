@@ -15,7 +15,7 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Function using (_∘_; id)
 open import Size using (∞)
 open import Relation.Binary using (DecidableEquality)
-open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
+open import Relation.Binary.PropositionalEquality as Eq using (_≢_; _≗_)
 open import Relation.Nullary.Negation using (¬_)
 
 open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
@@ -67,6 +67,7 @@ import Translation.Lang.ADT-to-NADT Variant mkArtifact as ADT-to-NADT
 import Translation.Lang.NADT-to-CCC Variant mkArtifact as NADT-to-CCC
 import Translation.Lang.OC-to-2CC as OC-to-2CC
 import Translation.Lang.OC-to-FST as OC-to-FST
+import Translation.Lang.FST-to-OC as FST-to-OC
 ```
 
 
@@ -269,6 +270,15 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 
   OC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (WFOCL F) (FSTL F))
   OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-OC
+
+  module _ {F' : 𝔽} (f₁ f₂ : F') (f₁≢f₂ : f₁ ≢ f₂) (_==ꟳ_ : DecidableEquality F') where
+    open FST-to-OC f₁ f₂ f₁≢f₂ _==ꟳ_ using (WFOCL⋡FSTL)
+
+    OC-is-less-expressive-than-FST : WFOCL F ⋡ FSTL F'
+    OC-is-less-expressive-than-FST = WFOCL⋡FSTL {F}
+
+    FST-cannot-be-compiled-to-OC : ¬ LanguageCompiler (FSTL F') (WFOCL F)
+    FST-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-FST
 ```
 
 ```agda

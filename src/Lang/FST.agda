@@ -33,11 +33,11 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
 open import Framework.Annotation.Name using (Name)
-open import Framework.Variants using (Rose; rose; rose-leaf; children-equality)
+open import Framework.Variants using (Rose; _-<_>-; rose-leaf; children-equality)
 open import Framework.Composition.FeatureAlgebra
 open import Framework.VariabilityLanguage
 open import Framework.VariantMap using (VMap)
-open import Construct.Artifact as At using ()
+import Construct.Artifact as At
 open import Framework.Properties.Completeness using (Incomplete)
 
 Conf : Set
@@ -53,7 +53,6 @@ open TODO-MOVE-TO-AUX-OR-USE-STL
 FST : Size → 𝔼
 FST i = Rose i
 
-pattern _-<_>- a cs = rose (a At.-< cs >-)
 fst-leaf = rose-leaf
 
 induction : ∀ {A : 𝔸} {B : Set} → (atoms A → List B → B) → FST ∞ A → B
@@ -505,7 +504,7 @@ module IncompleteOnRose where
   FST-is-incomplete complete with complete variants-0-and-1
   FST-is-incomplete complete | e , e⊆vs , vs⊆e = does-not-describe-variants-0-and-1 e (e⊆vs zero) (e⊆vs (suc zero))
 
-cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] FSTL-Sem e c ≡ rose (a At.-< rose-leaf b ∷ rose-leaf b ∷ [] >-))
+cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] FSTL-Sem e c ≡ a -< rose-leaf b ∷ rose-leaf b ∷ [] >-)
 cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
   ¬Unique b (Eq.subst (λ l → Unique l) (children-equality ⟦e⟧c≡neighbors) (lemma (⊛-all (select conf (features e)))))
   where
