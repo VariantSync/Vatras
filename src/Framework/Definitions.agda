@@ -28,8 +28,8 @@ A variant should represent atomic data in some way so its parameterized in atomi
 -}
 -- 𝕍 : ∀ {ℓ} → Set (suc ℓ)
 -- 𝕍 {ℓ} = 𝔸 {ℓ} → Set ℓ
-𝕍 : Set₁
-𝕍 = 𝔸 → Set
+𝕍 : Set₂
+𝕍 = 𝔸 → Set₁
 
 {-
 Annotation Language.
@@ -68,8 +68,8 @@ and hence expressions are parameterized in the type of this atomic data.
 -}
 -- 𝔼 : ∀ {ℓ} → Set (suc ℓ)
 -- 𝔼 {ℓ} = 𝔸 {ℓ} → Set ℓ
-𝔼 : Set₁
-𝔼 = 𝔸 → Set
+𝔼 : Set₂
+𝔼 = 𝔸 → Set₁
 
 {-
 Variability Construct.
@@ -83,6 +83,5 @@ for variability annotations 𝔽.
 -}
 -- ℂ : ∀ {ℓ} → Set (suc ℓ)
 -- ℂ {ℓ} = 𝔼 {ℓ} → 𝔸 {ℓ} → Set ℓ
-ℂ : Set₁
-ℂ = 𝔼 → 𝔸 → Set
-
+ℂ : Set₂
+ℂ = 𝔼 → 𝔸 → Set₁

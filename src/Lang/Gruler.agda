@@ -3,8 +3,9 @@ module Lang.Gruler (F : 𝔽) where
 
 open import Data.Bool using (Bool)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Function using (id)
+open import Function using (id; _∘_)
 open import Size using (Size; ↑_; ∞)
+import Level
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
@@ -36,12 +37,12 @@ semantics (GChoice chc) = VL2Choice.Semantics GrulerVariant F GrulerVL id chc
 
 gruler-has-leaf : ∀ {i} → VLLeaf.Syntax ∈ₛ Gruler i
 gruler-has-leaf {i} = record
-  { cons = GAsset
+  { cons = GAsset ∘ Level.lower
   ; snoc = snoc'
   ; id-l = λ _ → refl
   }
-  where snoc' : ∀ {A} → Gruler i A → Maybe (Leaf (atoms A))
-        snoc' (GAsset A)  = just A
+  where snoc' : ∀ {A} → Gruler i A → Maybe (VLLeaf.Syntax (Gruler i) A)
+        snoc' (GAsset A) = just (Level.lift A)
         snoc' _ = nothing
 
 gruler-has-choice : VL2Choice.Syntax F ∈ₛ Gruler ∞

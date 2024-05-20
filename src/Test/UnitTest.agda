@@ -23,38 +23,38 @@ open Eq using (refl) public
 Unit tests are theorems on concrete examples
 that the Agda type checker can figure out by itself.
 -}
-UnitTest : ∀ {ℓ} (Data : Set ℓ) → Set (suc 0ℓ ⊔ ℓ)
-UnitTest Data = Data → Set
+UnitTest : ∀ {ℓ₁ ℓ₂} (Data : Set ℓ₂) → Set (suc ℓ₁ ⊔ ℓ₂)
+UnitTest {ℓ₁} Data = Data → Set ℓ₁
 
-ExamplesTest : ∀ {ℓ} (Data : Set ℓ) → Set (suc 0ℓ ⊔ ℓ)
-ExamplesTest Data = UnitTest (List (Example Data))
+ExamplesTest : ∀ {ℓ₁ ℓ₂} (Data : Set ℓ₂) → Set (suc ℓ₁ ⊔ ℓ₂)
+ExamplesTest {ℓ₁} Data = UnitTest {ℓ₁} (List (Example Data))
 
-RunTest : ∀ {ℓ} {Data : Set ℓ}
-  → UnitTest Data
+RunTest : ∀ {ℓ₁ ℓ₂} {Data : Set ℓ₂}
+  → UnitTest {ℓ₁} Data
   → Data
-  → Set
+  → Set ℓ₁
 RunTest utest dataset = utest dataset
 
-ForExample : ∀ {ℓ} {Data : Set ℓ}
-  → UnitTest Data
-  → UnitTest (Example Data)
+ForExample : ∀ {ℓ₁ ℓ₂} {Data : Set ℓ₂}
+  → UnitTest {ℓ₁} Data
+  → UnitTest {ℓ₁} (Example Data)
 ForExample utest (e called _) = utest e
 
-ForAll : ∀ {Data : Set}
-  → UnitTest Data
-  → UnitTest (List Data)
+ForAll : ∀ {ℓ₁ ℓ₂} {Data : Set ℓ₂}
+  → UnitTest {ℓ₁} Data
+  → UnitTest {ℓ₁ ⊔ ℓ₂} (List Data)
 ForAll utest datasets = All utest datasets
 
-ForAllExamples : ∀ {Data : Set}
-  → UnitTest Data
-  → ExamplesTest Data
+ForAllExamples : ∀ {ℓ₁ ℓ₂} {Data : Set ℓ₂}
+  → UnitTest {ℓ₁} Data
+  → ExamplesTest {ℓ₁ ⊔ ℓ₂} Data
 ForAllExamples = ForAll ∘ ForExample
 
 -- syntactic sugar for ForAllExamples that puts the example list in front
-ForAllExamplesIn : ∀ {Data : Set}
+ForAllExamplesIn : ∀ {ℓ₁ ℓ₂} {Data : Set ℓ₂}
   → List (Example Data)
-  → UnitTest Data
-  → Set
+  → UnitTest {ℓ₁} Data
+  → Set (ℓ₁ ⊔ ℓ₂)
 ForAllExamplesIn ex utest = ForAllExamples utest ex
 
 test-translation : ∀ {V A}

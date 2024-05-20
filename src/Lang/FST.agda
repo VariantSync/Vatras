@@ -77,20 +77,20 @@ a ≉ b = ¬ (a ≈ b)
 ≉-sym a b a≉b b≈a = a≉b (≈-sym b a b≈a)
 
 infix 15 _∈_
-_∈_ : ∀ {i A} → FST i A → List (FST i A) → Set
+_∈_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∈ xs = Any (x ≈_) xs
 
 infix 15 _∉_
-_∉_ : ∀ {i A} → FST i A → List (FST i A) → Set
+_∉_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∉ xs = All (x ≉_) xs
 
-_⊑_ : ∀ {i A} → (xs ys : List (FST i A)) → Set --\squb=
+_⊑_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=
 xs ⊑ ys = All (_∈ ys) xs
 
-_⋢_ : ∀ {i A} → (xs ys : List (FST i A)) → Set --\squb=n
+_⋢_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=n
 xs ⋢ ys = Any (_∉ ys) xs
 
-Disjoint : ∀ {i A} → (xs ys : List (FST i A)) → Set --\squb=n
+Disjoint : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=n
 Disjoint xs ys = All (_∉ ys) xs
 
 -- identity of proofs
@@ -161,7 +161,7 @@ branches : ∀ {A} → List (List (FST ∞ A)) → List (FST ∞ A)
 branches = concat
 
 module Impose (AtomSet : 𝔸) where
-  FSTA : Size → Set
+  FSTA : Size → Set₁
   FSTA i = FST i AtomSet
 
   private
@@ -188,14 +188,14 @@ module Impose (AtomSet : 𝔸) where
     ... | no _ = h ∷ (l ⊙ t)
     a -< ca >- ⊙ (.a -< cb >- ∷ t) | yes refl = a -< ca ⊕ cb >- ∷ t
 
-  Unique : ∀ {i} → List (FSTA i) → Set
+  Unique : ∀ {i} → List (FSTA i) → Set₁
   Unique = AllPairs _≉_
 
   mutual
-    WellFormed : ∀ {i} → FSTA i → Set
+    WellFormed : ∀ {i} → FSTA i → Set₁
     WellFormed (_ -< cs >-) = AllWellFormed cs
 
-    AllWellFormed : ∀ {i} → List (FSTA i) → Set
+    AllWellFormed : ∀ {i} → List (FSTA i) → Set₁
     AllWellFormed cs = Unique cs × All WellFormed cs
 
   mutual
@@ -277,7 +277,7 @@ module Impose (AtomSet : 𝔸) where
   ⊕-idˡ rs u-rs = ⊕-strangers [] rs u-rs (disjoint-[]ʳ rs)
 
   -- A proof that all FSTs xs are already imposed into another list of FSTs ys.
-  data _lies-in_ : ∀ {i} → List (FSTA i) → List (FSTA i) → Set where
+  data _lies-in_ : ∀ {i} → List (FSTA i) → List (FSTA i) → Set₁ where
     lempty : ∀ {i} {xs : List (FSTA i)}
         -------------
       → [] lies-in xs
@@ -295,10 +295,10 @@ module Impose (AtomSet : 𝔸) where
         -------------------------
       → (x ∷ xs) lies-in (y ∷ ys)
 
-  _slice-of_ : ∀ {i} → FSTA i → FSTA i → Set
+  _slice-of_ : ∀ {i} → FSTA i → FSTA i → Set₁
   x slice-of y = (x ∷ []) lies-in (y ∷ [])
 
-  _slice-within_ : ∀ {i} → FSTA i → List (FSTA i) → Set
+  _slice-within_ : ∀ {i} → FSTA i → List (FSTA i) → Set₁
   x slice-within ys = (x ∷ []) lies-in ys
 
   lies-in-refl : ∀ {i} → (xs : List (FSTA i)) → xs lies-in xs
@@ -351,7 +351,7 @@ module Impose (AtomSet : 𝔸) where
   ⊕-idem (x ∷ xs) (y ∷ ys) xs-wf ys-wf = {!!}
 
   -- Feature Structure Forest
-  record FSF : Set where
+  record FSF : Set₁ where
     constructor _⊚_
     field
       trees : List (FSTA ∞)
@@ -372,14 +372,14 @@ module Impose (AtomSet : 𝔸) where
   which denote the children of the common root.
   -}
   infixr 3 _::_
-  record Feature : Set where
+  record Feature : Set₁ where
     constructor _::_
     field
       name : Name F
       impl : FSF
   open Feature public
 
-  record SPL : Set where
+  record SPL : Set₁ where
     constructor _◀_
     field
       root : A
@@ -408,7 +408,7 @@ module Impose (AtomSet : 𝔸) where
   ⊛-all : List FSF → FSF
   ⊛-all = foldr _⊛_ 𝟘
 
-  cong-app₂ : ∀ {A C : Set} {T : A → Set} {x y : A} {tx : T x} {ty : T y}
+  cong-app₂ : ∀ {ℓ} {A C : Set ℓ} {T : A → Set ℓ} {x y : A} {tx : T x} {ty : T y}
     → (f : (a : A) → T a → C)
     → x ≡ y
     → (∀ (a : A) (t u : T a) → t ≡ u)

@@ -63,7 +63,7 @@ private
 
 -- rules for translating a set of variants to a list of variants
 infix 3 _⊢_⟶_
-data _⊢_⟶_ : ∀ (n : ℕ) → VMap A n → VariantList A → Set where
+data _⊢_⟶_ : ∀ (n : ℕ) → VMap A n → VariantList A → Set₁ where
   -- a singleton set is translated to a singleton list
   E-zero : ∀ {A} {V : VMap A zero}
       ------------------------

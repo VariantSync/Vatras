@@ -49,22 +49,20 @@ CCC→NCC-Exact : (e : CCC.CCC Feature ∞ Artifact) → NCC.NCC ⌈ e ⌉ Featu
 CCC→NCC-Exact e = CCC-to-NCC.translate ⌈ e ⌉ e (numberOfAlternatives≤⌈_⌉ e)
 
 
-translate : {E₁ : Set} → {E₂ : E₁ → Set} → (e : E₁) → String → ((e : E₁) → E₂ e) → (E₂ e → Lines) → Lines' (E₂ e)
-translate e E₂-name translator show = do
+translate : {E₁ : Set₁} → {E₂ : E₁ → Set₁} → (e : E₁) → String → ((e : E₁) → E₂ e) → (E₂ e → Lines) → Lines' (E₂ e)
+translate e E₂-name translator show = return-level e' do
   linebreak
   [ Center ]> "│"
   [ Center ]> "          │ translate"
   [ Center ]> "↓"
   linebreak
-  let e' = translator e
-      pretty-e' = show e'
   [ Center ]> E₂-name
   overwrite-alignment-with Center
     (boxed (6 + width pretty-e') "" pretty-e')
   [ Center ]> "proven to have the same semantics as the previous expression"
-  pure e'
   where
-  open RawApplicative applicative
+  e' = translator e
+  pretty-e' = show e'
 
 compile : ∀ {VL₁ VL₂ : VariabilityLanguage Variant}
   → Expression VL₁ Artifact
@@ -82,12 +80,13 @@ get     round-trip ex@(name ≔ ccc) = do
   overwrite-alignment-with Center
     (boxed (6 + width pretty-ccc) "" pretty-ccc)
 
-  ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (NCC.Pretty.pretty id)
-  ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-  variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
-  ccc'        ← compile   variantList "CCC"         (VariantList→CCC "default feature")                        (CCC.pretty id)
+  void-level do
+    ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (NCC.Pretty.pretty id)
+    ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
+    do            compile   variantList "CCC"         (VariantList→CCC "default feature")                        (CCC.pretty id)
   linebreak
 
 

@@ -17,7 +17,7 @@ open import Lang.All
 open CCC -- use strings as dimensions
 open import Test.Example
 
-CCCExample : Set
+CCCExample : Set₁
 CCCExample = Example (CCC String ∞ (String , String._≟_))
 
 -- some smart constructors

@@ -3,14 +3,14 @@
 ## Module
 
 ```agda
-open import Level using (Level; suc; _⊔_)
+open import Level using (Level; 0ℓ; suc; _⊔_)
 open import Relation.Binary as RB using (
   Rel;
   Setoid;
   Antisym;
   IsEquivalence)
 open import Relation.Binary.Indexed.Heterogeneous using (
-  IRel;
+  IREL;
   Reflexive;
   Symmetric;
   Transitive;
@@ -40,39 +40,42 @@ module Eq = IsEquivalence isEquivalence
 ## Definitions
 
 ```agda
-Index : Set (suc c)
-Index = Set c
+variable
+  iℓ jℓ kℓ : Level
 
-IndexedSet : Index → Set c
+Index : (iℓ : Level) → Set (suc iℓ)
+Index iℓ = Set iℓ
+
+IndexedSet : Index iℓ → Set (c ⊔ iℓ)
 IndexedSet I = I → Carrier
 
 -- an element is within a subset, if there is an index pointing at that element
-_∈_ : ∀ {I} → Carrier → IndexedSet I → Set (c ⊔ ℓ)
+_∈_ : ∀ {I : Set iℓ} → Carrier → IndexedSet I → Set (ℓ ⊔ iℓ)
 a ∈ A = ∃[ i ] (a ≈ A i)
 
 -- morphisms
 -- _⊆_ : ∀ {I J} → IndexedSet I → IndexedSet J → Set ℓ
-_⊆_ : IRel IndexedSet (c ⊔ ℓ)
-_⊆_ {I} A B = ∀ (i : I) → A i ∈ B
+_⊆_ : IREL (IndexedSet {iℓ}) (IndexedSet {jℓ}) (ℓ ⊔ iℓ ⊔ jℓ)
+_⊆_ {i₁ = I} A B = ∀ (i : I) → A i ∈ B
 
-_≅_ : IRel IndexedSet (c ⊔ ℓ)
+_≅_ : IREL (IndexedSet {iℓ}) (IndexedSet {jℓ}) (ℓ ⊔ iℓ ⊔ jℓ)
 A ≅ B = (A ⊆ B) × (B ⊆ A)
 
 -- Same indices point to same values.
 -- This definition is the same as _≗_ from the standard-library but generalized to an arbitrary
 -- underlying equivalence relation _≈_.
-_≐_ : ∀ {I} (A B : IndexedSet I) → Set (c ⊔ ℓ)
-_≐_ {I} A B = ∀ (i : I) → A i ≈ B i
+_≐_ : ∀ {I : Set iℓ} (A B : IndexedSet I) → Set (ℓ ⊔ iℓ)
+_≐_ {I = I} A B = ∀ (i : I) → A i ≈ B i
 
-≐→≅ : ∀ {I} {A B : IndexedSet I} → A ≐ B → A ≅ B -- this acts as cong, too
+≐→≅ : ∀ {I : Set iℓ} {A B : IndexedSet I} → A ≐ B → A ≅ B -- this acts as cong, too
 ≐→≅ A≐B =
     (λ i → (i ,      A≐B i))
   , (λ i → (i , sym (A≐B i)))
 
-≗→≐ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≐ B
+≗→≐ : ∀ {I : Set iℓ} {A B : IndexedSet I} → A ≗ B → A ≐ B
 ≗→≐ A≗B i = Eq.reflexive (A≗B i)
 
-≗→≅ : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅ B
+≗→≅ : ∀ {I : Set iℓ} {A B : IndexedSet I} → A ≗ B → A ≅ B
 ≗→≅ A≗B = ≐→≅ (≗→≐ A≗B)
 ```
 
@@ -82,10 +85,10 @@ _≐_ {I} A B = ∀ (i : I) → A i ≈ B i
 {-|
 An indexed set contains only a single element if all indices point to the same element.
 -}
-Singleton : ∀ {I} → IndexedSet I → Set (c ⊔ ℓ)
+Singleton : ∀ {I : Set iℓ} → IndexedSet I → Set (c ⊔ ℓ ⊔ iℓ)
 Singleton A = ∃[ x ] ∀ i → A i ≈ x
 
-irrelevant-index : ∀ {I} {A : IndexedSet I}
+irrelevant-index : ∀ {I : Set iℓ} {A : IndexedSet I}
   → Singleton A
   → ∀ {i j} → A i ≈ A j
 irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
@@ -94,14 +97,15 @@ irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
 ## Properties
 
 ```agda
-⊆-refl : Reflexive IndexedSet _⊆_
+⊆-refl : Reflexive (IndexedSet {iℓ}) _⊆_
 ⊆-refl i = i , Eq.refl
 
 -- Todo: There is no antsymmetry definition in Relation.Binary.Indexed.Heterogeneous.Definition. Adding that to the standard library would be good and a low hanging fruit.
-⊆-antisym : ∀ {I J} → Antisym (_⊆_ {I} {J}) (_⊆_ {J} {I}) (_≅_ {I} {J})
+⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} → Antisym (_⊆_ {i₁ = I}) (_⊆_ {i₁ = J}) (_≅_)
 ⊆-antisym l r = l , r
 
-⊆-trans : Transitive IndexedSet _⊆_
+-- Todo: There are no generalized transitivity, symmetry and antisymmetry definitions which allow different levels in Relation.Binary.Indexed.Heterogeneous.Definition . Adding that to the standard library would be good and a low hanging fruit.
+⊆-trans : Transitive (IndexedSet {iℓ}) _⊆_
 ⊆-trans A⊆B B⊆C i =
   -- This proof looks resembles state monad bind >>=.
   -- interesting... :thinking_face:
@@ -109,34 +113,34 @@ irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
       (k , Bj≈Ck) = B⊆C j
    in k , Eq.trans Ai≈Bj Bj≈Ck
 
-≅-refl : Reflexive IndexedSet _≅_
+≅-refl : Reflexive (IndexedSet {iℓ}) _≅_
 ≅-refl = ⊆-refl , ⊆-refl
 
-≅-sym : Symmetric IndexedSet _≅_
+≅-sym : Symmetric (IndexedSet {iℓ}) _≅_
 ≅-sym (l , r) = r , l
 
-≅-trans : Transitive IndexedSet _≅_
+≅-trans : Transitive (IndexedSet {iℓ}) _≅_
 ≅-trans (A⊆B , B⊆A) (B⊆C , C⊆B) =
     ⊆-trans A⊆B B⊆C
   , ⊆-trans C⊆B B⊆A
 
-≅-IsIndexedEquivalence : IsIndexedEquivalence IndexedSet _≅_
+≅-IsIndexedEquivalence : IsIndexedEquivalence (IndexedSet {iℓ}) _≅_
 ≅-IsIndexedEquivalence = record
   { refl  = ≅-refl
   ; sym   = ≅-sym
   ; trans = ≅-trans
   }
 
-≐-refl : ∀ {I} → RB.Reflexive (_≐_ {I})
+≐-refl : ∀ {I} → RB.Reflexive (_≐_ {iℓ} {I})
 ≐-refl i = refl
 
-≐-sym : ∀ {I} → RB.Symmetric (_≐_ {I})
+≐-sym : ∀ {I} → RB.Symmetric (_≐_ {iℓ} {I})
 ≐-sym x≐y i = sym (x≐y i)
 
-≐-trans : ∀ {I} → RB.Transitive (_≐_ {I})
+≐-trans : ∀ {I} → RB.Transitive (_≐_ {iℓ} {I})
 ≐-trans x≐y y≐z i = trans (x≐y i) (y≐z i)
 
-≐-IsEquivalence : ∀ {I} → IsEquivalence (_≐_ {I})
+≐-IsEquivalence : ∀ {I} → IsEquivalence (_≐_ {iℓ} {I})
 ≐-IsEquivalence = record
   { refl = ≐-refl
   ; sym = ≐-sym
@@ -147,23 +151,23 @@ irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
 ## Indexed Sets With Index Translations
 
 ```agda
-_⊆[_]_ : ∀ {I J} → IndexedSet I → (I → J) → IndexedSet J → Set (c ⊔ ℓ)
-_⊆[_]_ {I} A f B = ∀ (i : I) → A i ≈ B (f i)
+_⊆[_]_ : ∀ {I : Set iℓ} {J : Set jℓ} → IndexedSet I → (I → J) → IndexedSet J → Set (ℓ ⊔ iℓ)
+_⊆[_]_ {I = I} A f B = ∀ (i : I) → A i ≈ B (f i)
 
-_≅[_][_]_ : ∀ {I J} → IndexedSet I → (I → J) → (J → I) → IndexedSet J → Set (c ⊔ ℓ)
+_≅[_][_]_ : ∀ {I : Set iℓ} {J : Set jℓ} → IndexedSet I → (I → J) → (J → I) → IndexedSet J → Set (ℓ ⊔ iℓ ⊔ jℓ)
 A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
 ```
 
 ### Relation to Ordinary Indexed Set Operators
 
 ```agda
-∈[]→∈ : ∀ {I} {A : IndexedSet I} {a : Carrier} {i : I}
+∈[]→∈ : ∀ {I : Set iℓ} {A : IndexedSet I} {a : Carrier} {i : I}
   → a ≈ A i
     ----------
   → a ∈ A
 ∈[]→∈ {i = i} eq = i , eq
 
-⊆[]→⊆ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J}
+⊆[]→⊆ : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} {f : I → J}
   → A ⊆[ f ] B
     -----------
   → A ⊆ B
@@ -175,7 +179,7 @@ A ≅[ f ][ f⁻¹ ] B = (A ⊆[ f ] B) × (B ⊆[ f⁻¹ ] A)
 --       We should isolate that behaviour and report it as a bug.
 syntax ⊆[]→⊆ e = ⊆-by-index-translation e
 
-≅[]→≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f   : I → J} {f⁻¹ : J → I}
+≅[]→≅ : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {f⁻¹ : J → I}
   → A ≅[ f ][ f⁻¹ ] B
     -----------------
   → A ≅ B
@@ -184,15 +188,15 @@ syntax ⊆[]→⊆ e = ⊆-by-index-translation e
 -- verbose name
 syntax ≅[]→≅ e = ≅-by-index-translation e
 
-≐→≅[] : ∀ {I} {A B : IndexedSet I} → A ≐ B → A ≅[ id ][ id ] B
+≐→≅[] : ∀ {I : Set iℓ} {A B : IndexedSet I} → A ≐ B → A ≅[ id ][ id ] B
 ≐→≅[] {J} {A} {B} A≐B =
     (λ i →      A≐B i )
   , (λ i → sym (A≐B i))
 
-≗→≅[] : ∀ {I} {A B : IndexedSet I} → A ≗ B → A ≅[ id ][ id ] B
+≗→≅[] : ∀ {I : Set iℓ} {A B : IndexedSet I} → A ≗ B → A ≅[ id ][ id ] B
 ≗→≅[] = ≐→≅[] ∘ ≗→≐
 
-irrelevant-index-⊆ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J}
+irrelevant-index-⊆ : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J}
   → (x : Carrier)
   → (∀ i → A i ≈ x)
   → (∀ j → B j ≈ x)
@@ -202,7 +206,7 @@ irrelevant-index-⊆ _ const-A const-B =
   λ f i →
     Eq.trans (const-A i) (Eq.sym (const-B (f i)))
 
-irrelevant-index-≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J}
+irrelevant-index-≅ : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J}
   → (x : Carrier)
   → (∀ i → A i ≈ x)
   → (∀ j → B j ≈ x)
@@ -217,10 +221,10 @@ irrelevant-index-≅ x const-A const-B =
 ### Basic Properties
 
 ```agda
-⊆[]-refl : ∀ {I} {A : IndexedSet I} → A ⊆[ id ] A
+⊆[]-refl : ∀ {I : Set iℓ} {A : IndexedSet I} → A ⊆[ id ] A
 ⊆[]-refl = λ _ → Eq.refl
 
-⊆[]-antisym : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f   : I → J} {f⁻¹ : J → I}
+⊆[]-antisym : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} {f   : I → J} {f⁻¹ : J → I}
   → A ⊆[ f   ] B
   → B ⊆[ f⁻¹ ] A
     -----------------
@@ -228,7 +232,7 @@ irrelevant-index-≅ x const-A const-B =
 ⊆[]-antisym A⊆B B⊆A = A⊆B , B⊆A
 
 ⊆[]-trans :
-  ∀ {I J K} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K}
+  ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K}
     {f : I → J} {g : J → K}
   → A ⊆[ f ] B
   → B ⊆[ g ] C
@@ -236,17 +240,17 @@ irrelevant-index-≅ x const-A const-B =
   → A ⊆[ g ∘ f ] C
 ⊆[]-trans {f = f} A⊆B B⊆C i = Eq.trans (A⊆B i) (B⊆C (f i))
 
-≅[]-refl : ∀ {I} {A : IndexedSet I} → A ≅[ id ][ id ] A
+≅[]-refl : ∀ {I : Set iℓ} {A : IndexedSet I} → A ≅[ id ][ id ] A
 ≅[]-refl = ⊆[]-refl , ⊆[]-refl
 
-≅[]-sym : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {f⁻¹ : J → I}
+≅[]-sym : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {f⁻¹ : J → I}
   → A ≅[ f ][ f⁻¹ ] B
     -----------------
   → B ≅[ f⁻¹ ][ f ] A
 ≅[]-sym (A⊆B , B⊆A) = B⊆A , A⊆B
 
 ≅[]-trans :
-  ∀ {I J K} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K}
+  ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K}
     {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
   → A ≅[ f ][ f⁻¹ ] B
   → B ≅[ g ][ g⁻¹ ] C
@@ -256,7 +260,7 @@ irrelevant-index-≅ x const-A const-B =
   ⊆[]-trans {C = C} A⊆B B⊆C ,
   ⊆[]-trans {C = A} C⊆B B⊆A
 
-⊆→≅ : ∀ {I J} {A : IndexedSet I} {B : IndexedSet J} → (f : I → J) → (f⁻¹ : J → I) → f ∘ f⁻¹ ≗ id → A ⊆[ f ] B → A ≅[ f ][ f⁻¹ ] B
+⊆→≅ : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → (f : I → J) → (f⁻¹ : J → I) → f ∘ f⁻¹ ≗ id → A ⊆[ f ] B → A ≅[ f ][ f⁻¹ ] B
 ⊆→≅ {A = A} {B = B} f f⁻¹ f∘f⁻¹ A⊆B = A⊆B , (λ i → Eq.sym (subst (λ j → A (f⁻¹ i) ≈ B j) (f∘f⁻¹ i) (A⊆B (f⁻¹ i))))
 ```
 
@@ -268,19 +272,19 @@ module ⊆-Reasoning where
   infixr 2 _⊆⟨⟩_ step-⊆
   infix  1 ⊆-begin_
 
-  ⊆-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ⊆ B → A ⊆ B
+  ⊆-begin_ : ∀{I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → A ⊆ B → A ⊆ B
   ⊆-begin_ A⊆B = A⊆B
 
-  _⊆⟨⟩_ : ∀ {I J} (A : IndexedSet I) {B : IndexedSet J} → A ⊆ B → A ⊆ B
+  _⊆⟨⟩_ : ∀ {I : Set iℓ} {J : Set jℓ} (A : IndexedSet I) {B : IndexedSet J} → A ⊆ B → A ⊆ B
   _ ⊆⟨⟩ A⊆B = A⊆B
 
-  step-⊆ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-⊆ : ∀ {I J K : Set iℓ} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
     → B ⊆ C
     → A ⊆ B
     → A ⊆ C
   step-⊆ _ B⊆C A⊆B = ⊆-trans A⊆B B⊆C
 
-  _⊆-∎ : ∀ {I} (A : IndexedSet I) → A ⊆ A
+  _⊆-∎ : ∀ {I : Set iℓ} (A : IndexedSet I) → A ⊆ A
   _⊆-∎ _ = ⊆-refl
 
   syntax step-⊆ A B⊆C A⊆B = A ⊆⟨ A⊆B ⟩ B⊆C
@@ -290,13 +294,13 @@ module ≅-Reasoning where
   infixr 2 _≅⟨⟩_ step-≅-⟨ step-≅-⟩ step-≐-⟨ step-≐-⟩ --step-≅-by-index-translation
   infix  1 ≅-begin_
 
-  ≅-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → A ≅ B
+  ≅-begin_ : ∀{I J : Set iℓ} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → A ≅ B
   ≅-begin_ A≅B = A≅B
 
-  _≅⟨⟩_ : ∀ {I J} (A : IndexedSet I) {B : IndexedSet J} → A ≅ B → A ≅ B
+  _≅⟨⟩_ : ∀ {I J : Set iℓ} (A : IndexedSet I) {B : IndexedSet J} → A ≅ B → A ≅ B
   _ ≅⟨⟩ A≅B = A≅B
 
-  step-≅-⟩ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅-⟩ : ∀ {I J K : Set iℓ} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
     → B ≅ C
     → A ≅ B
     → A ≅ C
@@ -311,25 +315,25 @@ module ≅-Reasoning where
   --   → A ≅ C
   -- step-≅-by-index-translation _ i→j j→i ti tj B≅C = ≅-trans (⊆-by-index-translation i→j ti , ⊆-by-index-translation j→i tj) B≅C
 
-  step-≅-⟨ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅-⟨ : ∀ {I J K : Set iℓ} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
     → B ≅ C
     → B ≅ A
     → A ≅ C
   step-≅-⟨ A B≅C B≅A = step-≅-⟩ A B≅C (≅-sym B≅A)
 
-  step-≐-⟩ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐-⟩ : ∀ {I J : Set iℓ} (A {B} : IndexedSet I) {C : IndexedSet J}
     → B ≅ C
     → A ≐ B
     → A ≅ C
   step-≐-⟩ _ B≅C A≐B = ≅-trans (≐→≅ A≐B) B≅C
 
-  step-≐-⟨ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐-⟨ : ∀ {I J : Set iℓ} (A {B} : IndexedSet I) {C : IndexedSet J}
     → B ≅ C
     → B ≐ A
     → A ≅ C
   step-≐-⟨ A B≅C B≐A = step-≐-⟩ A B≅C (≐-sym B≐A)
 
-  _≅-∎ : ∀ {I} (A : IndexedSet I) → A ≅ A
+  _≅-∎ : ∀ {I : Set iℓ} (A : IndexedSet I) → A ≅ A
   _≅-∎ _ = ≅-refl
 
   syntax step-≅-⟩ A B≅C A≅B = A ≅⟨ A≅B ⟩ B≅C
@@ -343,45 +347,45 @@ module ≅[]-Reasoning where
   infixr 2 _≅[]⟨⟩_ step-≅[]-⟨ step-≅[]-⟩ step-≐[]-⟨ step-≐[]-⟩
   infix  1 ≅[]-begin_
 
-  ≅[]-begin_ : ∀{I J} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {g : J → I}
+  ≅[]-begin_ : ∀{I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} {f : I → J} {g : J → I}
     → A ≅[ f ][ g ] B
     → A ≅[ f ][ g ] B
   ≅[]-begin_ A≅B = A≅B
 
-  _≅[]⟨⟩_ : ∀ {I J} {f : I → J} {g : J → I} (A : IndexedSet I) {B : IndexedSet J}
+  _≅[]⟨⟩_ : ∀ {I : Set iℓ} {J : Set jℓ} {f : I → J} {g : J → I} (A : IndexedSet I) {B : IndexedSet J}
     → A ≅[ f ][ g ] B
     → A ≅[ f ][ g ] B
   _ ≅[]⟨⟩ A≅B = A≅B
 
-  step-≅[]-⟩ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅[]-⟩ : ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
                {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
     → B ≅[ g ][ g⁻¹ ] C
     → A ≅[ f ][ f⁻¹ ] B
     → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
   step-≅[]-⟩ _ B≅C A≅B = ≅[]-trans A≅B B≅C
 
-  step-≅[]-⟨ : ∀ {I J K} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
+  step-≅[]-⟨ : ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} (A : IndexedSet I) {B : IndexedSet J} {C : IndexedSet K}
                 {f : I → J} {f⁻¹ : J → I} {g : J → K} {g⁻¹ : K → J}
     → B ≅[ g ][ g⁻¹ ] C
     → B ≅[ f⁻¹ ][ f ] A
     → A ≅[ g ∘ f ][ f⁻¹ ∘ g⁻¹ ] C
   step-≅[]-⟨ A B≅C B≅A = step-≅[]-⟩ A B≅C (≅[]-sym B≅A)
 
-  step-≐[]-⟩ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐[]-⟩ : ∀ {I : Set iℓ} {J : Set jℓ} (A {B} : IndexedSet I) {C : IndexedSet J}
               {g : I → J} {ginv : J → I}
     → B ≅[ g ][ ginv ] C
     → A ≐ B
     → A ≅[ g ][ ginv ] C
   step-≐[]-⟩ _ B≅C A≐B = ≅[]-trans (≐→≅[] A≐B) B≅C
 
-  step-≐[]-⟨ : ∀ {I J} (A {B} : IndexedSet I) {C : IndexedSet J}
+  step-≐[]-⟨ : ∀ {I : Set iℓ} {J : Set jℓ} (A {B} : IndexedSet I) {C : IndexedSet J}
                 {g : I → J} {ginv : J → I}
     → B ≅[ g ][ ginv ] C
     → B ≐ A
     → A ≅[ g ][ ginv ] C
   step-≐[]-⟨ A B≅C B≐A = step-≐[]-⟩ A B≅C (≐-sym B≐A)
 
-  _≅[]-∎ : ∀ {I} (A : IndexedSet I)
+  _≅[]-∎ : ∀ {I : Set iℓ} (A : IndexedSet I)
     → A ≅[ id ][ id ] A
   _≅[]-∎ _ = ≅[]-refl
 
@@ -397,24 +401,24 @@ module ≅[]-Reasoning where
 {-|
 The empty set
 -}
-𝟘 : IndexedSet ⊥
+𝟘 : IndexedSet {0ℓ} ⊥
 𝟘 = λ ()
 
 {-|
 The type of singleton sets over a source.
 -}
-𝟙 : Set c
-𝟙 = IndexedSet ⊤
+𝟙 : (iℓ : Level) → Set (c ⊔ iℓ)
+𝟙 iℓ = IndexedSet {iℓ} ⊤
 
 -- predicate that checks whether a subset is nonempty
 -- A set is non-empty when there exists at least one index.
-nonempty : ∀ {I} → IndexedSet I → Set c
+nonempty : ∀ {I : Set iℓ} → IndexedSet I → Set iℓ
 nonempty {I = I} _ = I --∃[ a ] (a ∈ A)
 
 -- We can retrieve an element from a non-empty set.
 -- This proves that our definition of nonempty indeed
 -- implies that there is an element in each non-empty set.
-get-from-nonempty : ∀ {I}
+get-from-nonempty : ∀ {I : Set iℓ}
   → (A : IndexedSet I)
   → nonempty A
     ----------------
@@ -422,31 +426,31 @@ get-from-nonempty : ∀ {I}
 get-from-nonempty A i = A i
 
 -- predicate that checks whether a subset is empty
-empty : ∀ {I} → IndexedSet I → Set c
+empty : ∀ {I : Set iℓ} → IndexedSet I → Set iℓ
 empty A = ¬ (nonempty A)
 
 𝟘-is-empty : empty 𝟘
 𝟘-is-empty ()
 
-𝟘⊆A : ∀ {I} {A : IndexedSet I}
+𝟘⊆A : ∀ {I : Set iℓ} {A : IndexedSet I}
     -----
   → 𝟘 ⊆ A
 𝟘⊆A = λ ()
 
-empty-set⊆𝟘 : ∀ {I} {A : IndexedSet I}
+empty-set⊆𝟘 : ∀ {I : Set iℓ} {A : IndexedSet I}
   → empty A
     -------
   → A ⊆ 𝟘
 empty-set⊆𝟘 A-empty i with A-empty i
 ...| ()
 
-all-empty-sets-are-equal : ∀ {I} {A : IndexedSet I}
+all-empty-sets-are-equal : ∀ {I : Set iℓ} {A : IndexedSet I}
   → empty A
     -------
   → A ≅ 𝟘
 all-empty-sets-are-equal A-empty = empty-set⊆𝟘 A-empty , 𝟘⊆A
 
-singleton-set-is-nonempty : (A : 𝟙) → nonempty A
+singleton-set-is-nonempty : (A : 𝟙 iℓ) → nonempty A
 singleton-set-is-nonempty _ = tt
 ```
 
@@ -457,7 +461,7 @@ singleton-set-is-nonempty _ = tt
 We can rename the indices of a multiset M to obtain a subset of M.
 ```agda
 
-re-indexˡ : ∀ {A B : Set c}
+re-indexˡ : ∀ {A B : Set iℓ}
   → (rename : A → B)
   → (M : IndexedSet B)
     ---------------------
@@ -477,9 +481,9 @@ We do not require that both relations are indeed equivalence relations but only 
   - `Symmetric _≈ᵃ_`: reflexivity over renamed indices is required for a detail in the proof.
   - `Symmetric _≈ᵇ_`: symmetry over original indices is required for a detail in the proof.
 ```agda
-re-indexʳ : ∀ {A B : Index}
-    {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
-    {_≈ᵇ_ : Rel B c} -- Equality of original indices
+re-indexʳ : ∀ {ℓᵃ ℓᵇ : Level} {A B : Index iℓ}
+    {_≈ᵃ_ : Rel A ℓᵃ} -- Equality of renamed indices
+    {_≈ᵇ_ : Rel B ℓᵇ} -- Equality of original indices
   → (rename : A → B)
   → (M : IndexedSet B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename
@@ -488,7 +492,7 @@ re-indexʳ : ∀ {A B : Index}
   → Congruent _≈ᵇ_ _≈_ M
     ---------------------
   → M ⊆ (M ∘ rename)
-re-indexʳ {A} {B} {_≈ᵃ_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-sym M-is-congruent b =
+re-indexʳ {A = A} {B} {_≈ᵃ_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-sym M-is-congruent b =
   a , same-picks
   where suitable-a : Σ[ a ∈ A ] ({z : A} → z ≈ᵃ a → rename z ≈ᵇ b)
         suitable-a = rename-is-surjective b
@@ -499,9 +503,9 @@ re-indexʳ {A} {B} {_≈ᵃ_} {_≈ᵇ_} rename M rename-is-surjective ≈ᵃ-re
         same-picks : M b ≈ M (rename a)
         same-picks = M-is-congruent (≈ᵇ-sym (proj₂ suitable-a ≈ᵃ-refl))
 
-re-index : ∀ {A B : Index}
-    {_≈ᵃ_ : Rel A c} -- Equality of renamed indices
-    {_≈ᵇ_ : Rel B c} -- Equality of original indices
+re-index : ∀ {ℓᵃ ℓᵇ : Level} {A B : Index iℓ}
+    {_≈ᵃ_ : Rel A ℓᵃ} -- Equality of renamed indices
+    {_≈ᵇ_ : Rel B ℓᵇ} -- Equality of original indices
   → (rename : A → B)
   → (M : IndexedSet B)
   → Surjective _≈ᵃ_ _≈ᵇ_ rename

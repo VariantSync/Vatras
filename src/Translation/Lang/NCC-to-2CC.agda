@@ -83,7 +83,7 @@ module 2Ary where
       NCC.⟦ d ⟨ l ∷ r ∷ [] ⟩ ⟧ (fnoc config)
     ∎
     where
-    lemma : ∀ {A : Set} {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (fnoc config d)
+    lemma : ∀ {ℓ} {A : Set ℓ} {a b : A} → (if config d then a else b) ≡ Vec.lookup (a ∷ b ∷ []) (fnoc config d)
     lemma with config d
     ... | true = refl
     ... | false = refl
@@ -122,7 +122,7 @@ module 2Ary where
       2CC.⟦ translate (d ⟨ l ∷ r ∷ [] ⟩) ⟧ (conf config)
     ∎
     where
-    lemma : {A : Set} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if conf config d then a else b)
+    lemma : ∀ {ℓ} {A : Set ℓ} → {a b : A} → Vec.lookup (a ∷ b ∷ []) (config d) ≡ (if conf config d then a else b)
     lemma with config d
     ... | zero = refl
     ... | suc zero = refl

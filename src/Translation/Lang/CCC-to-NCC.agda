@@ -65,15 +65,15 @@ module Exact where
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
-    data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
+    data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set₁ where
       maxArtifact : {i : Size} → {a : atoms A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
       maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → NumberOfAlternatives≤-List⁺ n {i} cs → NumberOfAlternatives≤ n {↑ i} (d ⟨ cs ⟩)
 
-    data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
+    data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set₁ where
       [] : {i : Size} → NumberOfAlternatives≤-List n {i} []
       _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List n {i} (c ∷ cs)
 
-    data NumberOfAlternatives≤-List⁺ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set where
+    data NumberOfAlternatives≤-List⁺ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set₁ where
       _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List⁺ n {i} (c ∷ cs)
 
   mutual
@@ -129,7 +129,7 @@ module Exact where
       d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
 
     -- TODO Can probably be generalized
-    zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+    zipWith : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
       → (n : ℕ≥ 2)
       → ((expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result)
       → (cs : List (CCC D i A))
@@ -138,16 +138,16 @@ module Exact where
     zipWith n f [] [] = []
     zipWith n f (c ∷ cs) (max-c ∷ max-cs) = f c max-c ∷ zipWith n f cs max-cs
 
-    length-zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+    length-zipWith : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
       → (n : ℕ≥ 2)
       → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
       → (cs : List (CCC D i A))
       → (max-cs : NumberOfAlternatives≤-List n cs)
-      → List.length (zipWith {i} n f cs max-cs) ≡ List.length cs
+      → List.length (zipWith {i = i} n f cs max-cs) ≡ List.length cs
     length-zipWith n [] [] = refl
     length-zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong suc (length-zipWith n cs max-cs)
 
-  map∘zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result₁ Result₂ : Set}
+  map∘zipWith : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result₁ Result₂ : Set ℓ}
     → (n : ℕ≥ 2)
     → {g : Result₁ → Result₂}
     → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result₁}
@@ -157,7 +157,7 @@ module Exact where
   map∘zipWith n [] [] = refl
   map∘zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (map∘zipWith n cs max-cs)
 
-  zipWith-cong : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+  zipWith-cong : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
     → (n : ℕ≥ 2)
     → {f g : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
     → ((e : CCC D i A) → (max-e : NumberOfAlternatives≤ n e) → f e max-e ≡ g e max-e)
@@ -167,7 +167,7 @@ module Exact where
   zipWith-cong n f≗g [] [] = refl
   zipWith-cong n f≗g (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ (f≗g c max-c) (zipWith-cong n f≗g cs max-cs)
 
-  zipWith⇒map : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+  zipWith⇒map : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
     → (n : ℕ≥ 2)
     → (f : (expr : CCC D i A) → Result)
     → (cs : List (CCC D i A))

@@ -14,7 +14,7 @@ Hence, the semantics is a function that configures an expression
 𝔼-Semantics : 𝕍 → 𝕂 → 𝔼 → Set₁
 𝔼-Semantics V K E = ∀ {A : 𝔸} → E A → K → V A
 
-record VariabilityLanguage (V : 𝕍) : Set₁ where
+record VariabilityLanguage (V : 𝕍) : Set₂ where
   constructor ⟪_,_,_⟫
   field
     Expression : 𝔼

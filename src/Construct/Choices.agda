@@ -12,13 +12,16 @@ open Eq.≡-Reasoning
 
 open import Data.EqIndexedSet as ISet
 
+private variable
+  ℓ : Level
+
 module NChoice where
   open import Data.Fin using (Fin)
   open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥)
   open import Data.Vec using (Vec; lookup; toList) renaming (map to map-vec)
   open import Data.Vec.Properties using (lookup-map)
 
-  record Syntax (n : ℕ≥ 2) (Q : Set) (A : Set) : Set where
+  record Syntax (n : ℕ≥ 2) (Q : Set) (A : Set ℓ) : Set ℓ where
     constructor _⟨_⟩
     field
       dim : Q
@@ -28,43 +31,43 @@ module NChoice where
   Config n Q = Q → Fin (ℕ≥.toℕ n)
 
   -- choice-elimination
-  ⟦_⟧ : ∀ {n : ℕ≥ 2} {A : Set} {Q : Set} → Syntax n Q A → Config n Q → A
+  ⟦_⟧ : ∀ {n : ℕ≥ 2} {A : Set ℓ} {Q : Set} → Syntax n Q A → Config n Q → A
   ⟦_⟧ (D ⟨ alternatives ⟩) c = lookup alternatives (c D)
 
-  map : ∀ {n : ℕ≥ 2} {Q : Set} {A : Set} {B : Set}
+  map : ∀ {ℓ₁ ℓ₂} {n : ℕ≥ 2} {Q : Set} {A : Set ℓ₁} {B : Set ℓ₂}
     → (A → B)
     → Syntax n Q A
     → Syntax n Q B
   map f (D ⟨ alternatives ⟩) = D ⟨ map-vec f alternatives ⟩
 
   -- -- rename
-  map-dim : ∀ {n : ℕ≥ 2} {Q : Set} {R : Set} {A : Set}
+  map-dim : ∀ {n : ℕ≥ 2} {Q : Set} {R : Set} {A : Set ℓ}
     → (Q → R)
     → Syntax n Q A
     → Syntax n R A
   map-dim f (D ⟨ es ⟩) = (f D) ⟨ es ⟩
 
-  map-preserves : ∀ {n : ℕ≥ 2} {Q : Set} {A : Set} {B : Set}
+  map-preserves : ∀ {ℓ₁ ℓ₂} {n : ℕ≥ 2} {Q : Set} {A : Set ℓ₁} {B : Set ℓ₂}
     → (f : A → B)
     → (chc : Syntax n Q A)
     → (c : Config n Q)
     → ⟦ map f chc ⟧ c ≡ f (⟦ chc ⟧ c)
-  map-preserves {n} f (D ⟨ es ⟩) c =
+  map-preserves {n = n} f (D ⟨ es ⟩) c =
     begin
-      ⟦ map {n} f (D ⟨ es ⟩) ⟧ c
+      ⟦ map {n = n} f (D ⟨ es ⟩) ⟧ c
     ≡⟨⟩
       lookup (map-vec f es) (c D)
     ≡⟨ lookup-map (c D) f es ⟩
       f (lookup es (c D))
     ≡⟨⟩
-      f (⟦_⟧ {n} (D ⟨ es ⟩) c) -- TODO implicit argument
+      f (⟦_⟧ {n = n} (D ⟨ es ⟩) c) -- TODO implicit argument
     ∎
 
-  show : ∀ {n : ℕ≥ 2} {Q : Set} {A : Set} → (Q → String) → (A → String) → Syntax n Q A → String
+  show : ∀ {n : ℕ≥ 2} {Q : Set} {A : Set ℓ} → (Q → String) → (A → String) → Syntax n Q A → String
   show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-vec show-a es))) <+> "⟩"
 
 module 2Choice where
-  record Syntax (Q : Set) (A : Set) : Set where
+  record Syntax (Q : Set) (A : Set ℓ) : Set ℓ where
     constructor _⟨_,_⟩
     field
       dim : Q
@@ -75,23 +78,23 @@ module 2Choice where
   Config Q = Q → Bool
 
   -- choice-elimination
-  ⟦_⟧ : ∀ {A : Set} {Q : Set} → Syntax Q A → Config Q → A
+  ⟦_⟧ : ∀ {A : Set ℓ} {Q : Set} → Syntax Q A → Config Q → A
   ⟦_⟧ (D ⟨ l , r ⟩) c = if c D then l else r
 
-  map : ∀ {Q : Set} {A : Set} {B : Set}
+  map : ∀ {ℓ₁ ℓ₂} {Q : Set} {A : Set ℓ₁} {B : Set ℓ₂}
     → (A → B)
     → Syntax Q A
     → Syntax Q B
   map f (D ⟨ l , r ⟩) = D ⟨ f l , f r ⟩
 
   -- rename
-  map-dim : ∀ {Q : Set} {R : Set} {A : Set}
+  map-dim : ∀ {Q : Set} {R : Set} {A : Set ℓ}
     → (Q → R)
     → Syntax Q A
     → Syntax R A
   map-dim f (D ⟨ l , r ⟩) = (f D) ⟨ l , r ⟩
 
-  map-preserves : ∀ {Q : Set} {A : Set} {B : Set}
+  map-preserves : ∀ {ℓ₁ ℓ₂} {Q : Set} {A : Set ℓ₁} {B : Set ℓ₂}
     → (f : A → B)
     → (chc : Syntax Q A)
     → (c : Config Q)
@@ -107,7 +110,7 @@ module 2Choice where
       f (⟦ D ⟨ l , r ⟩ ⟧ c)
     ∎
 
-  show : ∀ {Q : Set} {A : Set} → (Q → String) → (A → String) → Syntax Q A → String
+  show : ∀ {Q : Set} {A : Set ℓ} → (Q → String) → (A → String) → Syntax Q A → String
   show show-q show-a (D ⟨ l , r ⟩) = show-q D <+> "⟨" <+> show-a l <+> "," <+> show-a r <+> "⟩"
 
 open import Data.Nat using (ℕ)
@@ -115,7 +118,7 @@ open import Data.List.NonEmpty using (List⁺; toList) renaming (map to map-list
 open import Util.List using (find-or-last; map-find-or-last)
 
 module Choice where
-  record Syntax (Q : Set) (A : Set) : Set where
+  record Syntax (Q : Set) (A : Set ℓ) : Set ℓ where
     constructor _⟨_⟩
     field
       dim : Q
@@ -125,23 +128,23 @@ module Choice where
   Config Q = Q → ℕ
 
   -- choice-elimination
-  ⟦_⟧ : ∀ {Q : Set} {A : Set} → Syntax Q A → Config Q → A
+  ⟦_⟧ : ∀ {Q : Set} {A : Set ℓ} → Syntax Q A → Config Q → A
   ⟦_⟧ (D ⟨ alternatives ⟩) c = find-or-last (c D) alternatives
 
-  map : ∀ {Q : Set} {A : Set} {B : Set}
+  map : ∀ {ℓ₁ ℓ₂} {Q : Set} {A : Set ℓ₁} {B : Set ℓ₂}
     → (A → B)
     → Syntax Q A
     → Syntax Q B
   map f (dim ⟨ alternatives ⟩) = dim ⟨ map-list⁺ f alternatives ⟩
 
   -- rename
-  map-dim : ∀ {Q : Set} {R : Set} {A : Set}
+  map-dim : ∀ {Q : Set} {R : Set} {A : Set ℓ}
     → (Q → R)
     → Syntax Q A
     → Syntax R A
   map-dim f (dim ⟨ alternatives ⟩) = (f dim) ⟨ alternatives ⟩
 
-  map-preserves : ∀ {Q : Set} {A : Set} {B : Set}
+  map-preserves : ∀ {ℓ₁ ℓ₂} {Q : Set} {A : Set ℓ₁} {B : Set ℓ₂}
     → (f : A → B)
     → (chc : Syntax Q A)
     → (c : Config Q) -- todo: use ≐ here?
@@ -157,7 +160,7 @@ module Choice where
       f (⟦ D ⟨ as ⟩ ⟧ c)
     ∎
 
-  show : ∀ {Q : Set} {A : Set} → (Q → String) → (A → String) → Syntax Q A → String
+  show : ∀ {Q : Set} {A : Set ℓ} → (Q → String) → (A → String) → Syntax Q A → String
   show show-q show-a (D ⟨ es ⟩) = show-q D <+> "⟨" <+> (intersperse " , " (toList (map-list⁺ show-a es))) <+> "⟩"
 
 -- Show how choices can be used as constructors in variability languages.

@@ -26,13 +26,13 @@ open _∈ₛ_ public
 _∉ₛ_ : ℂ → 𝔼 → Set₁
 C ∉ₛ E = ¬ (C ∈ₛ E)
 
-_⊆ₛ_ : 𝔼 → 𝔼 → Set₁
+_⊆ₛ_ : 𝔼 → 𝔼 → Set₂
 E₁ ⊆ₛ E₂ = ∀ (C : ℂ) → C ∈ₛ E₁ → C ∈ₛ E₂
 
-_≅ₛ_ : 𝔼 → 𝔼 → Set₁
+_≅ₛ_ : 𝔼 → 𝔼 → Set₂
 E₁ ≅ₛ E₂ = E₁ ⊆ₛ E₂ × E₂ ⊆ₛ E₁
 
-record PlainConstruct : Set₁ where
+record PlainConstruct : Set₂ where
   constructor Plain-⟪_,_⟫
   field
     PSyntax : ℂ
@@ -64,7 +64,7 @@ PlainConstruct-Semantics : ∀ {V}
   → Construct-Semantics Γ (PSyntax P)
 PlainConstruct-Semantics P make Γ e = cons make ∘ pcong P Γ e
 
-VariationalConstruct-Semantics : 𝕍 → 𝕂 → ℂ → Set₁
+VariationalConstruct-Semantics : 𝕍 → 𝕂 → ℂ → Set₂
 VariationalConstruct-Semantics V K C =
   -- The underlying language, which the construct is part of.
   ∀ (Γ : VariabilityLanguage V)
@@ -78,7 +78,7 @@ VariationalConstruct-Semantics V K C =
   → (extract : Config Γ → K)
   → Construct-Semantics Γ C
 
-record VariabilityConstruct (V : 𝕍) : Set₁ where
+record VariabilityConstruct (V : 𝕍) : Set₂ where
   constructor Variational-⟪_,_,_⟫
   field
     -- How to create a constructor...
@@ -115,10 +115,10 @@ open _⟦∈⟧ᵥ_ public
 _⟦∉⟧ᵥ_ : ∀ {V} → VariabilityConstruct V → VariabilityLanguage V → Set₁
 C ⟦∉⟧ᵥ E = ¬ (C ⟦∈⟧ᵥ E)
 
-_⟦⊆⟧ᵥ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦⊆⟧ᵥ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₂
 E₁ ⟦⊆⟧ᵥ E₂ = ∀ C → C ⟦∈⟧ᵥ E₁ → C ⟦∈⟧ᵥ E₂
 
-_⟦≅⟧ᵥ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦≅⟧ᵥ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₂
 E₁ ⟦≅⟧ᵥ E₂ = E₁ ⟦⊆⟧ᵥ E₂ × E₂ ⟦⊆⟧ᵥ E₁
 
 -- Semantic containment of plain constructs
@@ -140,10 +140,10 @@ open _⟦∈⟧ₚ_ public
 _⟦∉⟧ₚ_ : ∀ {V} → PlainConstruct → VariabilityLanguage V → Set₁
 C ⟦∉⟧ₚ E = ¬ (C ⟦∈⟧ₚ E)
 
-_⟦⊆⟧ₚ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦⊆⟧ₚ_ :  ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₂
 E₁ ⟦⊆⟧ₚ E₂ = ∀ C → C ⟦∈⟧ₚ E₁ → C ⟦∈⟧ₚ E₂
 
-_⟦≅⟧ₚ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₁
+_⟦≅⟧ₚ_ : ∀ {V} → VariabilityLanguage V → VariabilityLanguage V → Set₂
 E₁ ⟦≅⟧ₚ E₂ = E₁ ⟦⊆⟧ₚ E₂ × E₂ ⟦⊆⟧ₚ E₁
 
 ---- Plain constructs can be seen as variational constructs that do nothing upon configuration. ---
