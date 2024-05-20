@@ -36,7 +36,7 @@ open import Util.AuxProofs using (decidableEquality-×)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
 open import Lang.All
-open VariantList using (VariantListL; VariantList-is-Complete; VariantList-is-Sound)
+open VariantList using (VariantListL)
 open CCC using (CCCL)
 open NCC using (NCCL)
 open 2CC using (2CCL)
@@ -232,6 +232,8 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
 module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (D : F) where
   open Expressiveness f f⁻¹ f⁻¹∘f≗id
 
+  open VariantList using (VariantList-is-Complete) public
+
   CCC-is-complete : Complete (CCCL F)
   CCC-is-complete = completeness-by-expressiveness VariantList-is-Complete (CCC≽VariantList D)
 
@@ -282,6 +284,8 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 ```
 
 ```agda
+open VariantList using (VariantList-is-Sound) public
+
 ADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (ADTL Variant F)
 ADT-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (ADT-to-VariantList.VariantList≽ADT F Variant _==_)
 
