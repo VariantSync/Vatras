@@ -1,8 +1,12 @@
-open import Framework.Definitions using (𝕍)
+open import Framework.Definitions using (𝕍; 𝔽; 𝔸)
 open import Framework.Construct using (_∈ₛ_)
 open import Construct.Artifact using () renaming (Syntax to Artifact)
 
 module Lang.All.Generic (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+
+open import Size using (∞)
+
+open import Framework.Variants using (Rose)
 
 module VariantList where
   open import Lang.VariantList Variant public
@@ -30,4 +34,9 @@ module OC where
   open Lang.OC.Sem Variant Artifact∈ₛVariant public
 
 module FST where
-  open import Lang.FST renaming (FSTL-Sem to ⟦_⟧) public
+  open import Lang.FST hiding (FST; FSTL-Sem; Conf) public
+
+  Configuration = Lang.FST.Conf
+
+  ⟦_⟧ : ∀ {F : 𝔽} {A : 𝔸} → Impose.SPL F A → Configuration F → Rose ∞ A
+  ⟦_⟧ {F} = Lang.FST.FSTL-Sem F

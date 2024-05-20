@@ -75,12 +75,12 @@ counter-example = zero ◀ (
 
 -- There are four relevant configurations for `counter-example` because it uses
 -- exactly two features: `c₁`, `c₂`, `all-oc true` and `all-oc false`.
-c₁ : FST.Conf F
+c₁ : FST.Configuration F
 c₁ f with f ==ꟳ f₁
 c₁ f | yes f≡f₁ = true
 c₁ f | no f≢f₁ = false
 
-c₂ : FST.Conf F
+c₂ : FST.Configuration F
 c₂ f with f ==ꟳ f₂
 c₂ f | yes f≡f₂ = true
 c₂ f | no f≢f₂ = false

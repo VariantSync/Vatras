@@ -68,6 +68,7 @@ import Translation.Lang.NADT-to-CCC Variant mkArtifact as NADT-to-CCC
 import Translation.Lang.OC-to-2CC as OC-to-2CC
 import Translation.Lang.OC-to-FST as OC-to-FST
 import Translation.Lang.FST-to-OC as FST-to-OC
+import Translation.Lang.FST-to-VariantList as FST-to-VariantList
 ```
 
 
@@ -115,6 +116,13 @@ NADT→CCC {F} = NADT-to-CCC.NADT→CCC {F = F} CCC-Rose-encoder
 ```agda
 module _ {F : 𝔽} where
   open OC-to-2CC F using (OC→2CC) public
+```
+
+## Feature Structure Trees vs Variant Lists
+
+```agda
+module _ {F : 𝔽} (_==_ : DecidableEquality F) where
+  open FST-to-VariantList F _==_ using (FST→VariantList) public
 ```
 
 
@@ -186,6 +194,9 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
 
   VariantList≽ADT : (_==_ : DecidableEquality F) → VariantListL ≽ ADTL Variant F
   VariantList≽ADT _==_ = ADT-to-VariantList.VariantList≽ADT F Variant _==_
+
+  VariantList≽FST : (_==_ : DecidableEquality F) → VariantListL ≽ FSTL F
+  VariantList≽FST _==_ = FST-to-VariantList.VariantList≽FST F _==_
 
   CCC≽VariantList : F → CCCL F ≽ VariantListL
   CCC≽VariantList D = VariantList-to-CCC.Translate.CCC≽VariantList F D Variant mkArtifact CCC-Rose-encoder
@@ -303,4 +314,7 @@ NADT-is-sound _==_ = soundness-by-expressiveness (CCC-is-sound _==_) (NADT-to-CC
 
 OC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (WFOCL F)
 OC-is-sound {F} _==_ = soundness-by-expressiveness (2CC-is-sound _==_) (OC-to-2CC.2CC≽OC F)
+
+FST-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (FSTL F)
+FST-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (FST-to-VariantList.VariantList≽FST F _==_)
 ```
