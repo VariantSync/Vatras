@@ -58,7 +58,7 @@ Translates a feature-based product line into a variant list
 by enumerating all possible configurations and then deriving
 all possible variants.
 A crucial observation is that each index in the list is associated to
-exactly one unique configuration _and_ its respective variant.
+exactly one unique configuration _and_ its respective, not neccessarily unique, variant.
 (conf and fnoc below rely on exactly this correspondence.)
 -}
 translate : ∀ {A : 𝔸} → SPL F A → VariantList A
@@ -81,7 +81,7 @@ conf : ∀ {A : 𝔸} → (e : SPL F A) → FST.Configuration F → VariantList.
 conf {A} (_ ◀ fs) c = conf' c (map name fs)
 
 {-|
-Translates an VariantList configuration back to an FST configuration
+Translates a VariantList configuration back to a FST configuration
 matching a feature-based SPL that was translated via the 'translate' function above.
 The translation works by a lookup:
 An index pointing to an FST variant in the list corresponds to exactly one unique
@@ -153,7 +153,13 @@ config-with-≢ b f f' f≢f' c | no _ = refl
 config-with-≢ b f f' f≢f' c | yes f'≡f = ⊥-elim (f≢f' (Eq.sym f'≡f))
 
 {-|
-@ibbem: ?
+Proof that a `config-with b f'` term can be eliminated
+from a selection of configurations which all have this term in common.
+This is not really a deep theorem.
+This lemma is just factored out of `conf'-lemma` because it appears four times in there.
+
+The idea is to evalute the selection on a specific feature `f`,
+then the `config-with b f' c f` term can be evaluated.
 -}
 find-or-last-config-with : ∀ (c : FST.Configuration F) (b : Bool) (f f' : F) (fs : List F) (v : FST.Configuration F → Bool)
   → ((c : FST.Configuration F) → config-with b f' c f ≡ v c)
@@ -172,6 +178,24 @@ find-or-last-config-with c b f f' fs v p =
   where
   open Eq.≡-Reasoning
 
+{-|
+Proof that `fnoc` is the inverse of `conf`.
+It talks about `conf'` instead of `conf` and inlines `fnoc` to avoid extracting the `name` all the time.
+Note that if a feature `f` is not in the list of features of the `SPL` expression,
+we just set the configuration in `configs` to `false`.
+Hence, it can be different to a given configuration `c`.
+
+The proof does an induction on the list of features
+and makes a case analysis,
+on wether we have found the feature in question (`f ==ꟳ f'`) and
+on to what the original configuration evaluates to (`c f'`).
+
+All cases start by selecting the correct sublist of `configs`.
+Either the right half, if `c f'` is false,
+or the left half if `c f'` is true.
+Then we simplify the expression using `find-or-last-config-with` and recurse in
+case `f ≢ f'`.
+-}
 conf'-lemma : (c : FST.Configuration F) → (f : F) → (fs : List F) → f ∈ fs → find-or-last (conf' c fs) (configs fs) f ≡ c f
 conf'-lemma c f (f' ∷ fs) f∈fs with f ==ꟳ f'
 conf'-lemma c f (.f ∷ fs) f∈fs | yes refl with c f
@@ -230,10 +254,21 @@ conf'-lemma c f (f' ∷ fs) (there f∈fs) | no f≢f' | false =
   where
   open Eq.≡-Reasoning
 
+{-|
+If we can prove a predicate `P a`,
+given a proof that `a` is an element of a list `as`,
+we can prove the predicate for all elements of that list `as`.
+-}
 AllWith∈ : ∀ {A : Set} {P : A → Set} (as : List A) → ((a : A) → a ∈ as → P a) → All P as
 AllWith∈ [] f = []
 AllWith∈ (a ∷ as) f = f a (here refl) ∷ AllWith∈ as (λ a a∈as → f a (there a∈as))
 
+{-|
+If two configurations agree on their value for all features in a FST,
+then the semantics must also agree.
+This looks like functional extensionality from the perspective of the semantics (`FST.⟦_⟧`)
+because it does not observe values other than `map name fs`.
+-}
 ⟦⟧-cong : ∀ {A : 𝔸} (a : atoms A) (fs : List (Feature F A)) (c : FST.Configuration F)
   → (g : FST.Configuration F → FST.Configuration F)
   → All (λ f → g c f ≡ c f) (map name fs)
