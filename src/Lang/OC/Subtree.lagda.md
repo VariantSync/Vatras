@@ -1,3 +1,4 @@
+```agda
 module Lang.OC.Subtree where
 
 open import Data.Bool using (true; false)
@@ -13,21 +14,21 @@ open import Framework.Variants as V hiding (_-<_>-)
 open import Lang.OC
 open Sem (Rose ∞) Artifact∈ₛRose
 open import Util.AuxProofs using (true≢false)
+```
 
-{-
-Relates two variants iff the first argument is a subtree of the second
-argument. In other words: if some artifacts (including all their children)
-can be removed from the second variant to obtain the first variant exactly.
--}
+Relates two variants iff the first argument is a subtree of the second argument.
+In other words: if some artifacts (including all their children) can be removed
+from the second variant to obtain the first variant exactly.
+```agda
 data Subtree {A : 𝔸} : Rose ∞ A → Rose ∞ A → Set₁ where
   subtrees : {a : atoms A} → {cs₁ cs₂ : List (Rose ∞ A)} → Sublist Subtree cs₁ cs₂ → Subtree (a V.-< cs₁ >-) (a V.-< cs₂ >-)
+```
 
-{-
 Relates two optional variants using `Subtree`. This is mostly useful for
 relating `⟦_⟧ₒ` whereas `Subtree` is mostly used to relate `⟦_⟧`. It has the
 same semantics as `Subtree` but allows for the removal of the root artifact,
 which is fixed in `Subtree`.
--}
+```agda
 data MaybeSubtree {A : 𝔸} : Maybe (Rose ∞ A) → Maybe (Rose ∞ A) → Set₁ where
   neither : MaybeSubtree nothing nothing
   one : {c : Rose ∞ A} → MaybeSubtree nothing (just c)
@@ -56,14 +57,15 @@ mutual
   ... | .nothing | .nothing | neither = subtreeₒ-recurse cs c₁ c₂ c₁-implies-c₂
   ... | .nothing | just c' | one = c' ∷ʳ subtreeₒ-recurse cs c₁ c₂ c₁-implies-c₂
   ... | .(just _) | .(just _) | both p = p ∷ subtreeₒ-recurse cs c₁ c₂ c₁-implies-c₂
+```
 
-{-
-If two configurations are related, their variants are also related.
-This result is enabled by the fact that OC cannot encode alternatives but
-only include or exclude subtrees. Hence, a subtree present in `c₂` can be
-removed, without any accidental additions anywhere in the variant, by
-configuring an option above it to `false` in `c₁`. However, the reverse is
-ruled out by the `Implies` assumption.
--}
+If two configurations are related, their variants are also related.  This result
+is enabled by the fact that OC cannot encode alternatives but only include or
+exclude subtrees. Hence, a subtree present in `c₂` can be removed, without any
+accidental additions anywhere in the variant, by configuring an option above it
+to `false` in `c₁`. However, the reverse is ruled out by the `Implies`
+assumption.
+```agda
 subtree : ∀ {F : 𝔽} {A : 𝔸} → (e : WFOC F ∞ A) → (c₁ c₂ : Configuration F) → Implies c₁ c₂ → Subtree (⟦ e ⟧ c₁) (⟦ e ⟧ c₂)
 subtree {F} {A} (Root a cs) c₁ c₂ c₁-implies-c₂ = subtrees (subtreeₒ-recurse cs c₁ c₂ c₁-implies-c₂)
+```
