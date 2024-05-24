@@ -3,6 +3,12 @@ open import Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 
+```
+
+To be as general as possible, we do not fix `F` but only require that it
+contains at least two distinct features `f₁` and `f₂`. To implement
+configurations, equality in `F` nees to be decidable, so `==ꟳ` is also required.
+```agda
 module Translation.Lang.FST-to-OC {F : 𝔽} (f₁ f₂ : F) (f₁≢f₂ : f₁ ≢ f₂) (_==ꟳ_ : DecidableEquality F) where
 
 open import Size using (∞)
@@ -91,12 +97,10 @@ c₂ f | yes f≡f₂ = true
 c₂ f | no f≢f₂ = false
 ```
 
-To be as general as possible, we do not fix `F` but only require that it
-contains at least two different features `f₁` and `f₂`. To implement `c₁` and
-`c₂` equality in `F` nees to be decidable, so `==ꟳ` is also required. However,
-Agda can't compute with `==ꟳ` so we need the following two lemmas to sort out
-invalid definitions of `==ꟳ` and actually compute the semantics of
-`counter-example`.
+In the following proofs, we will need to the exact variants which can be
+configured from `counter-example`. Agda can't compute with `==ꟳ` so we need the
+following two lemmas to sort out invalid definitions of `==ꟳ`. Then Agda can
+actually compute the semantics of `counter-example`.
 ```agda
 compute-counter-example-c₁ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ a → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ a
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
