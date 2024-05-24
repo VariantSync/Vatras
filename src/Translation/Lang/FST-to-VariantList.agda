@@ -269,17 +269,17 @@ then the semantics must also agree.
 This looks like functional extensionality from the perspective of the semantics (`FST.⟦_⟧`)
 because it does not observe values other than `map name fs`.
 -}
-⟦⟧-cong : ∀ {A : 𝔸} (a : atoms A) (fs : List (Feature F A)) (c : FST.Configuration F)
-  → (g : FST.Configuration F → FST.Configuration F)
-  → All (λ f → g c f ≡ c f) (map name fs)
-  → FST.⟦ a ◀ fs ⟧ (g c) ≡ FST.⟦ a ◀ fs ⟧ c
-⟦⟧-cong {A} a fs c g ps = Eq.cong₂ _-<_>- refl (Eq.cong forget-uniqueness (Eq.cong ⊛-all (go fs ps)))
+⟦⟧-cong : ∀ {A : 𝔸} (a : atoms A) (fs : List (Feature F A))
+  → (c₁ c₂ : FST.Configuration F)
+  → All (λ f → c₁ f ≡ c₂ f) (map name fs)
+  → FST.⟦ a ◀ fs ⟧ c₁ ≡ FST.⟦ a ◀ fs ⟧ c₂
+⟦⟧-cong {A} a fs c₁ c₂ ps = Eq.cong₂ _-<_>- refl (Eq.cong forget-uniqueness (Eq.cong ⊛-all (go fs ps)))
   where
   go : (fs : List (Feature F A))
-    → All (λ f → g c f ≡ c f) (map name fs)
-    → select (g c) fs ≡ select c fs
+    → All (λ f → c₁ f ≡ c₂ f) (map name fs)
+    → select c₁ fs ≡ select c₂ fs
   go [] p = refl
-  go ((f :: i) ∷ fs) (px ∷ p) with (g c) f | c f
+  go ((f :: i) ∷ fs) (px ∷ p) with c₁ f | c₂ f
   go ((f :: i) ∷ fs) (px ∷ p) | false | false = go fs p
   go ((f :: i) ∷ fs) (px ∷ p) | true  | true = Eq.cong₂ _∷_ refl (go fs p)
 
@@ -301,7 +301,7 @@ preserves-⊆ e@(a ◀ fs) c =
 preserves-⊇ : ∀ {A : 𝔸} → (e : SPL F A) → FST.⟦ e ⟧ ⊆[ conf e ] VariantList.⟦ translate e ⟧
 preserves-⊇ e@(a ◀ fs) c =
     FST.⟦ e ⟧ c
-  ≡⟨ ⟦⟧-cong a fs c (λ c → find-or-last (conf e c) (configs (map name fs))) (AllWith∈ (map name fs) (λ f f∈fs → conf'-lemma c f (map name fs) f∈fs)) ⟨
+  ≡⟨ ⟦⟧-cong a fs c (find-or-last (conf e c) (configs (map name fs))) (AllWith∈ (map name fs) (λ f f∈fs → Eq.sym (conf'-lemma c f (map name fs) f∈fs))) ⟩
     FST.⟦ e ⟧ (find-or-last (conf e c) (configs (map name fs)))
   ≡⟨ map-find-or-last (λ c → FST.⟦ e ⟧ c) (conf e c) (configs (map name fs)) ⟩
     find-or-last (conf e c) (List⁺.map (λ c → FST.⟦ e ⟧ c) (configs (map name fs)))
