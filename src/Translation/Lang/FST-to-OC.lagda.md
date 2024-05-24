@@ -52,7 +52,8 @@ This represents a form of an alternative where there are the variants
   0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
 but there is no
   0 -< 0 -<              [] >- ∷ [] >-
-variant. Hence, at least one inner children is required. Note, however, that
+variant. Hence, at least one inner child is required. As FSTs require a fixed
+root artifact, the outermost artifact is always the same. Note, however, that
 there are two more variants:
   0 -< 0 -< 0 -< [] >- ∷ 1 -< [] >- ∷ [] >- ∷ [] >-
   0 -<                                   >- ∷ [] >-
@@ -60,14 +61,16 @@ there are two more variants:
 The idea of the following proof is to show that any OC expression will
 necessarily have to include some other variant. We identified two cases:
 
-- The `shared-artifact` case includes the extra variant
+- In the `shared-artifact` case, the OC expression also include the following
+  extra variant:
     0 -< 0 -<                                       [] >- ∷ [] >-
   For example:
     0 -< 0 -< f₁ ❲ 0 -< [] >- ❳ ∷ f₂ ❲ 1 -< [] >- ❳ ∷ [] >- ∷ [] >-
 
-- The `more-artifacts` case includes an extra variant like
+- In the `more-artifacts` case, the OC expression also includes an extra variant
+  like the following:
     0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
-  for example
+  For example:
     0 -< f₁ ❲ 0 -< 0 -< [] >- ∷ [] >- ❳ ∷ f₂ ❲ 0 -< 1 -< [] >- ∷ [] >- ❳ ∷ [] >-
   Note that, in contrast to the `shared-artifact` case, this variant is not
   uniquely determined. In fact, The order of the two features isn't fixed and
@@ -97,18 +100,18 @@ c₂ f | yes f≡f₂ = true
 c₂ f | no f≢f₂ = false
 ```
 
-In the following proofs, we will need to the exact variants which can be
-configured from `counter-example`. Agda can't compute with `==ꟳ` so we need the
-following two lemmas to sort out invalid definitions of `==ꟳ`. Then Agda can
-actually compute the semantics of `counter-example`.
+In the following proofs, we will need the exact variants which can be configured
+from `counter-example`. Agda can't compute with `==ꟳ` so we need the following
+two lemmas to sort out invalid definitions of `==ꟳ`. Then Agda can actually
+compute the semantics of `counter-example`.
 ```agda
-compute-counter-example-c₁ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ a → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ a
+compute-counter-example-c₁ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
 compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _ | _ = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
 compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁ | true | false = p
 compute-counter-example-c₁ p | no f₁≢f₁ | _ | _ | _ = ⊥-elim (f₁≢f₁ refl)
 
-compute-counter-example-c₂ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ a → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ a
+compute-counter-example-c₂ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₂ p with f₁ ==ꟳ f₂ | f₂ ==ꟳ f₂ | c₂ f₁ in c₂-f₁ | c₂ f₂ in c₂-f₂
 compute-counter-example-c₂ p | yes f₁≡f₂ | _ | _ | _ = ⊥-elim (f₁≢f₂ f₁≡f₂)
 compute-counter-example-c₂ p | no f₁≢f₂ | yes f₂≡f₂ | false | true = p
@@ -117,7 +120,7 @@ compute-counter-example-c₂ p | no f₁≢f₂ | no f₂≢f₂ | _ | _ = ⊥-e
 
 For proving the `shared-artifact` case, we need to compute a configuration which
 deselects the options guarding the inner artifacts (`0 -< [] >-` and `1 -< [] >-`)
-but selects all options leading to the shared artifact surrounding these two
+but selects the options leading to the shared artifact surrounding these two
 options.
 ```agda
 _∧_ : {F : 𝔽} → OC.Configuration F → OC.Configuration F → OC.Configuration F
@@ -134,7 +137,7 @@ implies-∧₂ f p | true | true = refl
 
 In case we found a node corresponding to either `0 -< 0 -< [] >- ∷ [] >-`
 or `0 -< 1 -< [] >- ∷ [] >-`, we choose the all true configuration and
-proof that there is at least one more artifact in the resulting variant.
+prove that there is at least one more artifact in the resulting variant.
 
 As discussed at the definition of `counter-example`, the order of the artifact
 nodes is not uniquely determined. Hence, there are two distinct cases in
@@ -178,7 +181,7 @@ shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-arti
 ```
 
 This is the main induction over the top most children of the OC expression. It
-requires two configuration which evaluate to the two alternative variants. For
+requires two configurations which evaluate to the two alternative variants. For
 simplicity, though not actually required for the result, it also takes a
 configuration showing that the semantics of the expression includes a variant
 without children. This eliminates a bunch of proof cases (e.g. having an
@@ -192,7 +195,7 @@ this option alone is not enough to guarantee that there is an artifact because
 options can be nested arbitrarily deep without artifacts in between.
 
 If an option evaluates to an artifact in exactly one of the configurations, we
-know there must be a second option in `cs` evaluating to the an artifact in the
+know there must be a second option in `cs` evaluating to an artifact in the
 other configuration. In this case, called `more-artifacts`, we count the top
 level child artifacts when the OC expression is evaluated using the all true
 configuration.
