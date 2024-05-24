@@ -15,7 +15,7 @@ open import Data.List.Relation.Binary.Sublist.Heterogeneous using ([]; _∷_; _�
 open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.List.Relation.Unary.AllPairs using ([]; _∷_)
 open import Data.Maybe using (nothing; just)
-open import Data.Nat using (zero; suc; _≟_; ℕ; _+_; _≤_; z≤n; s≤s)
+open import Data.Nat using (_≟_; ℕ; _+_; _≤_; z≤n; s≤s)
 import Data.Nat.Properties as ℕ
 open import Data.Product using (_,_; ∃-syntax)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
@@ -42,20 +42,20 @@ A = ℕ , _≟_
 ```
 
 This represents a form of an alternative where there are the variants
-  zero -< zero -<     zero -< [] >- ∷ [] >- ∷ [] >-
-  zero -< zero -< suc zero -< [] >- ∷ [] >- ∷ [] >-
+  0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >-
+  0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
 but there is no
-  zero -< zero -<                     [] >- ∷ [] >-
+  0 -< 0 -<              [] >- ∷ [] >-
 variant. Hence, at least one inner children is required. Note, however, that
 there are two more variants:
-  zero -< zero -< zero -< [] >- ∷ suc zero -< [] >- ∷ [] >- ∷ [] >-
-  zero -<                                                >- ∷ [] >-
+  0 -< 0 -< 0 -< [] >- ∷ 1 -< [] >- ∷ [] >- ∷ [] >-
+  0 -<                                   >- ∷ [] >-
 
 The idea of the following proof is to show that any OC expression will
 necessarily have to include some other variant. We identified two cases:
 
 - The `shared-artifact` case includes the extra variant
-    0 -< 0 -<                     [] >- ∷ [] >-
+    0 -< 0 -<                                       [] >- ∷ [] >-
   For example:
     0 -< 0 -< f₁ ❲ 0 -< [] >- ❳ ∷ f₂ ❲ 1 -< [] >- ❳ ∷ [] >- ∷ [] >-
 
@@ -71,9 +71,9 @@ necessarily have to include some other variant. We identified two cases:
 
 ```agda
 counter-example : SPL F A
-counter-example = zero ◀ (
-    (f₁ :: ((zero -<     zero -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
-  ∷ (f₂ :: ((zero -< suc zero -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
+counter-example = 0 ◀ (
+    (f₁ :: ((0 -< 0 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
+  ∷ (f₂ :: ((0 -< 1 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
   ∷ [])
 ```
 
@@ -98,13 +98,13 @@ Agda can't compute with `==ꟳ` so we need the following two lemmas to sort out
 invalid definitions of `==ꟳ` and actually compute the semantics of
 `counter-example`.
 ```agda
-compute-counter-example-c₁ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ a → zero -< zero -< zero -< [] >- ∷ [] >- ∷ [] >- ≡ a
+compute-counter-example-c₁ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ a → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ a
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
 compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _ | _ = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
 compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁ | true | false = p
 compute-counter-example-c₁ p | no f₁≢f₁ | _ | _ | _ = ⊥-elim (f₁≢f₁ refl)
 
-compute-counter-example-c₂ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ a → zero -< zero -< suc zero -< [] >- ∷ [] >- ∷ [] >- ≡ a
+compute-counter-example-c₂ : {a : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ a → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ a
 compute-counter-example-c₂ p with f₁ ==ꟳ f₂ | f₂ ==ꟳ f₂ | c₂ f₁ in c₂-f₁ | c₂ f₂ in c₂-f₂
 compute-counter-example-c₂ p | yes f₁≡f₂ | _ | _ | _ = ⊥-elim (f₁≢f₂ f₁≡f₂)
 compute-counter-example-c₂ p | no f₁≢f₂ | yes f₂≡f₂ | false | true = p
@@ -112,9 +112,9 @@ compute-counter-example-c₂ p | no f₁≢f₂ | no f₂≢f₂ | _ | _ = ⊥-e
 ```
 
 For proving the `shared-artifact` case, we need to compute a configuration which
-deselects the options guarding the inner artifacts (`zero -< [] >-` and `suc
-zero -< [] >-`) but selects all options leading to the shared artifact
-surrounding these two options.
+deselects the options guarding the inner artifacts (`0 -< [] >-` and `1 -< [] >-`)
+but selects all options leading to the shared artifact surrounding these two
+options.
 ```agda
 _∧_ : {F : 𝔽} → OC.Configuration F → OC.Configuration F → OC.Configuration F
 _∧_ c₁ c₂ f = c₁ f Bool.∧ c₂ f
@@ -128,8 +128,8 @@ implies-∧₂ {c₁ = c₁} {c₂ = c₂} f p with c₁ f | c₂ f
 implies-∧₂ f p | true | true = refl
 ```
 
-In case we found a node corresponding to either `zero -< zero -< [] >- ∷ [] >-`
-or `zero -< suc zero -< [] >- ∷ [] >-`, we choose the all true configuration and
+In case we found a node corresponding to either `0 -< 0 -< [] >- ∷ [] >-`
+or `0 -< 1 -< [] >- ∷ [] >-`, we choose the all true configuration and
 proof that there is at least one more artifact in the resulting variant.
 
 As discussed at the definition of `counter-example`, the order of the artifact
@@ -144,7 +144,7 @@ more-artifacts : ∀ {F' : 𝔽}
   → (cs : List (OC.OC F' ∞ A))
   → (cₙ : OC.Configuration F')
   → (v : Rose ∞ A)
-  → zero -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
+  → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
   → 1 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
 more-artifacts (a OC.-< cs' >- ∷ cs) cₙ v p = s≤s z≤n
 more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
@@ -163,12 +163,12 @@ artifacts themselves because each configuration excludes one of them.
 shared-artifact : ∀ {F' : 𝔽}
   → (e : OC.OC F' ∞ A)
   → (c₁ c₂ : OC.Configuration F')
-  → just (zero -< rose-leaf      zero  ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
-  → just (zero -< rose-leaf (suc zero) ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
-  → just (zero -< [] >-) ≡ OC.⟦ e ⟧ₒ (c₁ ∧ c₂)
-shared-artifact (zero OC.-< cs >-) c₁ c₂ p₁ p₂ with OC.⟦ cs ⟧ₒ-recurse c₁ | OC.⟦ cs ⟧ₒ-recurse c₂ | OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₂ (implies-∧₂ {c₁ = c₁})
-shared-artifact (zero OC.-< cs >-) c₁ c₂ refl refl | _ | _ | [] | _ | _ = refl
-shared-artifact (zero OC.-< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
+  → just (0 -< rose-leaf 0  ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
+  → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
+  → just (0 -< [] >-) ≡ OC.⟦ e ⟧ₒ (c₁ ∧ c₂)
+shared-artifact (0 OC.-< cs >-) c₁ c₂ p₁ p₂ with OC.⟦ cs ⟧ₒ-recurse c₁ | OC.⟦ cs ⟧ₒ-recurse c₂ | OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₂ (implies-∧₂ {c₁ = c₁})
+shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | [] | _ | _ = refl
+shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
 shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
 shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
 ```
@@ -203,11 +203,11 @@ under the intersection of `c₁` and `c₂`.
 induction : ∀ {F' : 𝔽}
   → (cs : List (OC.OC F' ∞ A))
   → (c₁ c₂ c₃ : OC.Configuration F')
-  → zero -< rose-leaf      zero  ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₁
-  → zero -< rose-leaf (suc zero) ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₂
+  → 0 -< rose-leaf 0 ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₁
+  → 0 -< rose-leaf 1 ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₂
   → [] ≡ OC.⟦ cs ⟧ₒ-recurse c₃
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
-  ⊎ zero -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
+  ⊎ 0 -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
 induction (_ OC.-< _ >- ∷ cs) c₁ c₂ c₃ p₁ p₂ ()
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ with OC.⟦ e ⟧ₒ c₁ in ⟦e⟧c₁ | OC.⟦ e ⟧ₒ c₂ in ⟦e⟧c₂ | OC.⟦ e ⟧ₒ c₃
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing with induction cs c₁ c₂ c₃ p₁ p₂ p₃
@@ -217,17 +217,17 @@ induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | 
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p with OC.⟦ e ⟧ₒ (c₁ ∧ c₂) | OC.⟦ e ⟧ₒ c₁ | subtreeₒ e (c₁ ∧ c₂) c₁ implies-∧₁
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p | nothing | nothing | neither = inj₂ p
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing with OC.⟦ e ⟧ₒ c₂ | ⟦e⟧c₂ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₂ (all-oc true) (λ f p → refl)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₁ (rose-leaf zero) p₁))
+induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₁ (rose-leaf 0) p₁))
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing with OC.⟦ e ⟧ₒ c₁ | ⟦e⟧c₁ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₁ (all-oc true) (λ f p → refl)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₂ (rose-leaf (suc zero)) p₂))
+induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₂ (rose-leaf 1) p₂))
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing with List.∷-injectiveʳ p₁
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ with OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) in ⟦cs⟧c₁∧c₂ | OC.⟦ cs ⟧ₒ-recurse c₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
 induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ | .[] | .[] | [] = inj₂ (
-    zero -< [] >- ∷ []
+    0 -< [] >- ∷ []
   ≡⟨ Eq.cong₂ _∷_ refl ⟦cs⟧c₁∧c₂ ⟨
-    zero -< [] >- ∷ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
+    0 -< [] >- ∷ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
   ≡⟨⟩
-    catMaybes (just (zero -< [] >-) ∷ List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)
+    catMaybes (just (0 -< [] >-) ∷ List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)
   ≡⟨ Eq.cong catMaybes (Eq.cong₂ _∷_ (shared-artifact e c₁ c₂
                                                       (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₁)) (Eq.sym ⟦e⟧c₁))
                                                       (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₂)) (Eq.sym ⟦e⟧c₂)))
@@ -245,9 +245,9 @@ configurations which results in contradictions in every case.
 impossible : ∀ {F' : 𝔽}
   → (cs : List (OC.OC F' ∞ A))
   → (c₁ c₂ : OC.Configuration F')
-  → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root zero cs ⟧ c ≡ FSTL-Sem F counter-example c')
+  → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FSTL-Sem F counter-example c')
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
-  ⊎ zero -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
+  ⊎ 0 -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
   → ⊥
 impossible cs c₁ c₂ alternative⊆e (inj₁ p) with alternative⊆e (all-oc true)
 impossible cs c₁ c₂ alternative⊆e (inj₁ p) | c' , e' with OC.⟦ cs ⟧ₒ-recurse (all-oc true) | c' f₁ | c' f₂
@@ -257,7 +257,7 @@ impossible cs c₁ c₂ alternative⊆e (inj₁ p) | c' , () | _ ∷ _ ∷ _ | f
 impossible cs c₁ c₂ alternative⊆e (inj₁ p) | c' , () | _ ∷ _ ∷ _ | true  | false
 impossible cs c₁ c₂ alternative⊆e (inj₁ p) | c' , () | _ ∷ _ ∷ _ | true  | true
 impossible cs c₁ c₂ alternative⊆e (inj₂ p) with alternative⊆e (c₁ ∧ c₂)
-impossible cs c₁ c₂ alternative⊆e (inj₂ p) | c' , e' with c' f₁ | c' f₂ | Eq.trans (Eq.cong (zero -<_>-) p) e'
+impossible cs c₁ c₂ alternative⊆e (inj₂ p) | c' , e' with c' f₁ | c' f₂ | Eq.trans (Eq.cong (0 -<_>-) p) e'
 impossible cs c₁ c₂ alternative⊆e (inj₂ p) | c' , e' | false | false | ()
 impossible cs c₁ c₂ alternative⊆e (inj₂ p) | c' , e' | false | true  | ()
 impossible cs c₁ c₂ alternative⊆e (inj₂ p) | c' , e' | true  | false | ()
@@ -270,7 +270,7 @@ Trees (FST) with no Option Calculus (OC) equivalent.
 WFOCL⋡FSTL : ∀ {F' : 𝔽} → WFOCL F' ⋡ FSTL F
 WFOCL⋡FSTL WFOCL≽FSTL with WFOCL≽FSTL counter-example
 WFOCL⋡FSTL WFOCL≽FSTL | Root a cs , e⊆alternative , alternative⊆e with e⊆alternative c₁ | e⊆alternative c₂ | e⊆alternative (all-oc false)
-WFOCL⋡FSTL {F'} WFOCL≽FSTL | Root zero cs , e⊆alternative , alternative⊆e | (c₁ , p₁) | (c₂ , p₂) | (c₃ , p₃) =
+WFOCL⋡FSTL {F'} WFOCL≽FSTL | Root 0 cs , e⊆alternative , alternative⊆e | (c₁ , p₁) | (c₂ , p₂) | (c₃ , p₃) =
   impossible cs c₁ c₂ alternative⊆e
     (induction cs c₁ c₂ c₃ (children-equality (compute-counter-example-c₁ p₁))
                            (children-equality (compute-counter-example-c₂ p₂))
