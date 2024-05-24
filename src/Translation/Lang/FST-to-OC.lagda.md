@@ -181,18 +181,23 @@ shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-arti
 ```
 
 This is the main induction over the top most children of the OC expression. It
-requires two configurations which evaluate to the two alternative variants. For
-simplicity, though not actually required for the result, it also takes a
-configuration showing that the semantics of the expression includes a variant
+proofs that there is at least one variant, configurable from an expression with
+children `cs`, which is not included in our `counter-example`. For this result,
+it requires two configurations which evaluate to the two alternative variants.
+For simplicity, though not actually required for the final result, it also takes
+a configuration showing that the semantics of the expression includes a variant
 without children. This eliminates a bunch of proof cases (e.g. having an
 unconditional artifact).
 
 The idea is to find a child which exists in at least one of the variants
 configured by `c₁` or `c₂`. Hence, we do a case analysis on whether a given
 option exists when evaluated with the configurations `c₁` and `c₂` (we can
-ignore artifacts because of `c₃`). Note that evaluating the configuration for
-this option alone is not enough to guarantee that there is an artifact because
-options can be nested arbitrarily deep without artifacts in between.
+rule out artifacts because `OC.⟦ cs ⟧ₒ-recurse c₃` evaluates to `[]` so there
+are no unconditional artifacts in `cs`). Note that evaluating the configuration
+for this option alone is not enough to guarantee that there is an artifact
+because options can be nested arbitrarily deep without artifacts in between.
+Hence, we almost always use a `with` clause to match on the final result of the
+semantics (`OC.⟦_⟧ₒ`)
 
 If an option evaluates to an artifact in exactly one of the configurations, we
 know there must be a second option in `cs` evaluating to an artifact in the
@@ -201,8 +206,8 @@ level child artifacts when the OC expression is evaluated using the all true
 configuration.
 
 If an option evaluates to an artifact for both `c₁` and `c₂` it must also
-evaluate to an artifact for the intersection of these configurations. The
-resulting variant can't include the child artifacts of the `c₁` and `c₂`
+evaluate to an artifact for the intersection (`_∧_`) of these configurations.
+The resulting variant can't include the child artifacts of the `c₁` and `c₂`
 variants forcing it to have exactly one shape. In this case, called
 `shared-artifact`, we return the exact variant to which the expression evaluates
 under the intersection of `c₁` and `c₂`.
@@ -276,7 +281,7 @@ Trees (FST) with no Option Calculus (OC) equivalent.
 ```agda
 WFOCL⋡FSTL : ∀ {F' : 𝔽} → WFOCL F' ⋡ FSTL F
 WFOCL⋡FSTL WFOCL≽FSTL with WFOCL≽FSTL counter-example
-WFOCL⋡FSTL WFOCL≽FSTL | Root a cs , e⊆alternative , alternative⊆e with e⊆alternative c₁ | e⊆alternative c₂ | e⊆alternative (all-oc false)
+WFOCL⋡FSTL WFOCL≽FSTL | Root a cs , e⊆alternative , alternative⊆e with e⊆alternative c₁ | e⊆alternative c₂ | e⊆alternative (λ _ → false)
 WFOCL⋡FSTL {F'} WFOCL≽FSTL | Root 0 cs , e⊆alternative , alternative⊆e | (c₁ , p₁) | (c₂ , p₂) | (c₃ , p₃) =
   impossible cs c₁ c₂ alternative⊆e
     (induction cs c₁ c₂ c₃ (children-equality (compute-counter-example-c₁ p₁))

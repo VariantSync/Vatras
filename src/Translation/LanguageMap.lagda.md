@@ -283,7 +283,12 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 
   OC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (WFOCL F) (FSTL F))
   OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-OC
+```
 
+For the proof of `WFOCL⋡FSTL`, we need to construct at least three distinct
+configurations. Hence, we need at least two distint features and a method for
+comparing these features to decided which values these features are assigned.
+```agda
   module _ {F' : 𝔽} (f₁ f₂ : F') (f₁≢f₂ : f₁ ≢ f₂) (_==ꟳ_ : DecidableEquality F') where
     open FST-to-OC f₁ f₂ f₁≢f₂ _==ꟳ_ using (WFOCL⋡FSTL)
 
