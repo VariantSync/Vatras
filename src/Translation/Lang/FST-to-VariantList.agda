@@ -179,8 +179,13 @@ find-or-last-config-with c b f f' fs v p =
   open Eq.≡-Reasoning
 
 {-|
-Proof that `fnoc` is the inverse of `conf`.
-It talks about `conf'` instead of `conf` and inlines `fnoc` to avoid extracting the `name` all the time.
+Proof that `fnoc` is the inverse of `conf`:
+Given a particular configuration `c`,
+enumerating all possible configurations,
+and then evaluating the configuration at the index of `c` (which must be `c`),
+is the same as evaluating `c` directly.
+
+The lemma talks about `conf'` instead of `conf` and inlines `fnoc` to avoid extracting the `name` all the time.
 Note that if a feature `f` is not in the list of features of the `SPL` expression,
 we just set the configuration in `configs` to `false`.
 Hence, it can be different to a given configuration `c`.
