@@ -15,7 +15,7 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Function using (_∘_; id)
 open import Size using (∞)
 open import Relation.Binary using (DecidableEquality)
-open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
+open import Relation.Binary.PropositionalEquality as Eq using (_≢_; _≗_)
 open import Relation.Nullary.Negation using (¬_)
 
 open import Framework.Variants using (Rose; Artifact∈ₛRose; Variant-is-VL)
@@ -36,7 +36,7 @@ open import Util.AuxProofs using (decidableEquality-×)
 open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 
 open import Lang.All
-open VariantList using (VariantListL; VariantList-is-Complete; VariantList-is-Sound)
+open VariantList using (VariantListL)
 open CCC using (CCCL)
 open NCC using (NCCL)
 open 2CC using (2CCL)
@@ -67,6 +67,8 @@ import Translation.Lang.ADT-to-NADT Variant mkArtifact as ADT-to-NADT
 import Translation.Lang.NADT-to-CCC Variant mkArtifact as NADT-to-CCC
 import Translation.Lang.OC-to-2CC as OC-to-2CC
 import Translation.Lang.OC-to-FST as OC-to-FST
+import Translation.Lang.FST-to-OC as FST-to-OC
+import Translation.Lang.FST-to-VariantList as FST-to-VariantList
 ```
 
 
@@ -114,6 +116,13 @@ NADT→CCC {F} = NADT-to-CCC.NADT→CCC {F = F} CCC-Rose-encoder
 ```agda
 module _ {F : 𝔽} where
   open OC-to-2CC F using (OC→2CC) public
+```
+
+## Feature Structure Trees vs Variant Lists
+
+```agda
+module _ {F : 𝔽} (_==_ : DecidableEquality F) where
+  open FST-to-VariantList F _==_ using (FST→VariantList) public
 ```
 
 
@@ -186,6 +195,9 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   VariantList≽ADT : (_==_ : DecidableEquality F) → VariantListL ≽ ADTL Variant F
   VariantList≽ADT _==_ = ADT-to-VariantList.VariantList≽ADT F Variant _==_
 
+  VariantList≽FST : (_==_ : DecidableEquality F) → VariantListL ≽ FSTL F
+  VariantList≽FST _==_ = FST-to-VariantList.VariantList≽FST F _==_
+
   CCC≽VariantList : F → CCCL F ≽ VariantListL
   CCC≽VariantList D = VariantList-to-CCC.Translate.CCC≽VariantList F D Variant mkArtifact CCC-Rose-encoder
 
@@ -197,6 +209,9 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
 
   2CC≽OC : 2CCL F ≽ WFOCL F
   2CC≽OC = OC-to-2CC.2CC≽OC F
+
+  2CC≽FST : F → (_==_ : DecidableEquality F) → 2CCL F ≽ FSTL F
+  2CC≽FST D _==_ = ≽-trans 2CC≽CCC (≽-trans (CCC≽VariantList D) (VariantList≽FST _==_))
 
 
   CCC≋NCC : ∀ (n : ℕ≥ 2) → CCCL F ≋ NCCL n F
@@ -230,6 +245,8 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
 ```agda
 module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (D : F) where
   open Expressiveness f f⁻¹ f⁻¹∘f≗id
+
+  open VariantList using (VariantList-is-Complete) public
 
   CCC-is-complete : Complete (CCCL F)
   CCC-is-complete = completeness-by-expressiveness VariantList-is-Complete (CCC≽VariantList D)
@@ -271,7 +288,23 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
   OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-OC
 ```
 
+For the proof of `WFOCL⋡FSTL`, we need to construct at least three distinct
+configurations. Hence, we need at least two distint features and a method for
+comparing these features to decided which values these features are assigned.
 ```agda
+  module _ {F' : 𝔽} (f₁ f₂ : F') (f₁≢f₂ : f₁ ≢ f₂) (_==ꟳ_ : DecidableEquality F') where
+    open FST-to-OC f₁ f₂ f₁≢f₂ _==ꟳ_ using (WFOCL⋡FSTL)
+
+    OC-is-less-expressive-than-FST : WFOCL F ⋡ FSTL F'
+    OC-is-less-expressive-than-FST = WFOCL⋡FSTL {F}
+
+    FST-cannot-be-compiled-to-OC : ¬ LanguageCompiler (FSTL F') (WFOCL F)
+    FST-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-FST
+```
+
+```agda
+open VariantList using (VariantList-is-Sound) public
+
 ADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (ADTL Variant F)
 ADT-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (ADT-to-VariantList.VariantList≽ADT F Variant _==_)
 
@@ -289,4 +322,7 @@ NADT-is-sound _==_ = soundness-by-expressiveness (CCC-is-sound _==_) (NADT-to-CC
 
 OC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (WFOCL F)
 OC-is-sound {F} _==_ = soundness-by-expressiveness (2CC-is-sound _==_) (OC-to-2CC.2CC≽OC F)
+
+FST-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (FSTL F)
+FST-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (FST-to-VariantList.VariantList≽FST F _==_)
 ```

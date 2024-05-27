@@ -10,7 +10,7 @@ open import Size using (Size; ↑_; ∞)
 
 open import Framework.Definitions using (𝕍; 𝔸; atoms)
 open import Framework.VariabilityLanguage
-open import Construct.Artifact as At using (_-<_>-; map-children) renaming (Syntax to Artifact; Construct to ArtifactC)
+open import Construct.Artifact as At using (map-children) renaming (Syntax to Artifact; Construct to ArtifactC)
 
 open import Data.EqIndexedSet
 
@@ -24,6 +24,8 @@ data Rose : Size → 𝕍 where
 rose-leaf : ∀ {A : 𝔸} → atoms A → Rose ∞ A
 rose-leaf {A} a = rose (At.leaf a)
 
+pattern _-<_>- a cs = rose (a At.-< cs >-)
+
 -- Variants are also variability languages
 Variant-is-VL : ∀ (V : 𝕍) → VariabilityLanguage V
 Variant-is-VL V = ⟪ V , ⊤ , (λ e c → e) ⟫
@@ -33,7 +35,7 @@ open import Data.Maybe using (nothing; just)
 open import Relation.Binary.PropositionalEquality as Peq using (_≡_; _≗_; refl)
 open Peq.≡-Reasoning
 
-children-equality : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose ∞ A)} → rose (a₁ -< cs₁ >-) ≡ rose (a₂ -< cs₂ >-) → cs₁ ≡ cs₂
+children-equality : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose ∞ A)} → a₁ -< cs₁ >- ≡ a₂ -< cs₂ >- → cs₁ ≡ cs₂
 children-equality refl = refl
 
 Artifact∈ₛRose : Artifact ∈ₛ Rose ∞
@@ -49,8 +51,8 @@ RoseVL = Variant-is-VL (Rose ∞)
 
 open import Data.String using (String; _++_; intersperse)
 show-rose : ∀ {i} {A} → (atoms A → String) → Rose i A → String
-show-rose show-a (rose (a -< [] >-)) = show-a a
-show-rose show-a (rose (a -< es@(_ ∷ _) >-)) = show-a a ++ "-<" ++ (intersperse ", " (map (show-rose show-a) es)) ++ ">-"
+show-rose show-a (a -< [] >-) = show-a a
+show-rose show-a (a -< es@(_ ∷ _) >-) = show-a a ++ "-<" ++ (intersperse ", " (map (show-rose show-a) es)) ++ ">-"
 
 
 -- Variants can be encoded into other variability language.
@@ -123,24 +125,24 @@ rose-encoder Γ has c = record
       ⟦_⟧ₚ = pcong ArtifactC Γ
 
       h : ∀ (v : Rose ∞ A) (j : Config Γ) → ⟦ t v ⟧ j ≡ v
-      h (rose (a -< cs >-)) j =
+      h (rose (a At.-< cs >-)) j =
         begin
-          ⟦ cons (C∈ₛΓ has) (map-children t (a -< cs >-)) ⟧ j
-        ≡⟨ resistant has (map-children t (a -< cs >-)) j ⟩
-          (cons (C∈ₛV has) ∘ ⟦ map-children t (a -< cs >-)⟧ₚ) j
+          ⟦ cons (C∈ₛΓ has) (map-children t (a At.-< cs >-)) ⟧ j
+        ≡⟨ resistant has (map-children t (a At.-< cs >-)) j ⟩
+          (cons (C∈ₛV has) ∘ ⟦ map-children t (a At.-< cs >-)⟧ₚ) j
         ≡⟨⟩
-          cons (C∈ₛV has) (⟦ map-children t (a -< cs >-) ⟧ₚ j)
+          cons (C∈ₛV has) (⟦ map-children t (a At.-< cs >-) ⟧ₚ j)
         ≡⟨⟩
-          (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (map-children t (a -< cs >-))
+          (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (map-children t (a At.-< cs >-))
         ≡⟨⟩
-          (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (a -< map t cs >-)
-        -- ≡⟨ Peq.cong (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (Peq.cong (a -<_>-) {!!}) ⟩
-          -- (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (a -< cs >-)
+          (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (a At.-< map t cs >-)
+        -- ≡⟨ Peq.cong (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (Peq.cong (a At.-<_>-) {!!}) ⟩
+          -- (cons (C∈ₛV has) ∘ flip ⟦_⟧ₚ j) (a At.-< cs >-)
         ≡⟨ {!!} ⟩
         -- ≡⟨ bar _ ⟩
-          -- rose            (pcong ArtifactC Γ (a -< map t cs >-) j)
-        -- ≡⟨ Peq.cong rose {!preservation ppp (a -< map t cs >-)!} ⟩
-          rose (a -< cs >-)
+          -- rose            (pcong ArtifactC Γ (a At.-< map t cs >-) j)
+        -- ≡⟨ Peq.cong rose {!preservation ppp (a At.-< map t cs >-)!} ⟩
+          rose (a At.-< cs >-)
         ∎
         where
           module _ where
@@ -150,8 +152,8 @@ rose-encoder Γ has c = record
 
             -- unprovable
             -- Imagine our domain A is pairs (a , b)
-            -- Then cons could take an '(a , b) -< cs >-'
-            -- and encode it as a 'rose ((b , a) -< cs >-)'
+            -- Then cons could take an '(a , b) At.-< cs >-'
+            -- and encode it as a 'rose ((b , a) At.-< cs >-)'
             -- for which exists an inverse snoc that just has
             -- to swap the arguments in the pair again.
             -- So we need a stronger axiom here that syntax
@@ -163,8 +165,8 @@ rose-encoder Γ has c = record
             sno : oc ∘ rose ≗ just
             sno a rewrite Peq.sym (bar a) = id-l (C∈ₛV has) a
 
-            foo : co (a -< cs >-) ≡ rose (a -< cs >-)
-            foo = bar (a -< cs >-)
+            foo : co (a At.-< cs >-) ≡ rose (a At.-< cs >-)
+            foo = bar (a At.-< cs >-)
 
       -- lp : ∀ (e : Rose ∞ A) → ⟦ e ⟧ᵥ ⊆[ confi ] ⟦ t e ⟧
       -- lp (rose x) i =

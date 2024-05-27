@@ -22,7 +22,7 @@ open import Data.String as String using (String)
 open import Size using (Size; ∞; ↑_)
 open import Function using (_∘_)
 
-open import Framework.Variants
+open import Framework.Variants hiding (_-<_>-)
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
