@@ -210,6 +210,9 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   2CC≽OC : 2CCL F ≽ WFOCL F
   2CC≽OC = OC-to-2CC.2CC≽OC F
 
+  2CC≽FST : F → (_==_ : DecidableEquality F) → 2CCL F ≽ FSTL F
+  2CC≽FST D _==_ = ≽-trans 2CC≽CCC (≽-trans (CCC≽VariantList D) (VariantList≽FST _==_))
+
 
   CCC≋NCC : ∀ (n : ℕ≥ 2) → CCCL F ≋ NCCL n F
   CCC≋NCC n = CCC≽NCC n , NCC≽CCC n
