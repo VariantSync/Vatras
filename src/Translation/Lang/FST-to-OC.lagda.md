@@ -219,12 +219,12 @@ more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s�
 ### Putting the pieces together
 
 This is the main induction over the top most children of the OC expression. It
-proofs that there is at least one variant, configurable from an expression with
+proves that there is at least one variant, configurable from an expression with
 children `cs`, which is not included in our `counter-example`. For this result,
 it requires two configurations which evaluate to the two alternative variants.
 For simplicity, though not actually required for the final result, it also takes
 a configuration showing that the semantics of the expression includes a variant
-without children. This eliminates a bunch of proof cases (e.g. having an
+without children. This eliminates a bunch of proof cases (e.g., having an
 unconditional artifact).
 
 The idea is to find a child which exists in at least one of the variants
