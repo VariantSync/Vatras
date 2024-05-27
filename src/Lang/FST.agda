@@ -12,12 +12,13 @@ module Lang.FST (F : 𝔽) where
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Fin using (zero; suc)
 open import Data.List using (List; []; _∷_; _∷ʳ_; _++_; foldl; foldr; map; filterᵇ; concat; reverse)
-open import Data.List.Properties using (++-identityˡ; ++-identityʳ)
+open import Data.List.Properties as List using (++-identityˡ; ++-identityʳ)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
 open import Data.Nat as ℕ using (ℕ; zero; suc)
 open import Data.Product using (Σ; ∃-syntax; ∄-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (tt)
 open import Function using (_∘_)
@@ -65,16 +66,29 @@ infix 15 _≈_
 _≈_ : ∀ {A i} → Rel (FST i A) 0ℓ
 (a -< _ >-) ≈ (b -< _ >-) = a ≡ b
 
-≈-sym : ∀ {A i} → (a b : FST i A) → a ≈ b → b ≈ a
-≈-sym (a -< _ >-) (.a -< _ >-) refl = refl
+≈-refl : ∀ {A i} → {a : FST i A} → a ≈ a
+≈-refl {A} {.(↑ _)} {_ -< _ >- } = refl
+
+≈-reflexive : ∀ {A i} → {a b : FST i A} → a ≡ b → a ≈ b
+≈-reflexive {A} {.(↑ _)} {_ -< _ >- } refl = refl
+
+≈-sym : ∀ {A i} → {a b : FST i A} → a ≈ b → b ≈ a
+≈-sym {A} {i} {(a -< _ >-)} {(.a -< _ >-)} refl = refl
+
+≈-trans : ∀ {A i} → {a b c : FST i A} → a ≈ b → b ≈ c → a ≈ c
+≈-trans {A} {i} {(a -< _ >-)} {(.a -< _ >-)} {(.a -< _ >-)} refl refl = refl
 
 infix 15 _≉_
 _≉_ : ∀ {A i} → Rel (FST i A) 0ℓ
 a ≉ b = ¬ (a ≈ b)
 
-≉-sym : ∀ {A i} → (a b : FST i A) → a ≉ b → b ≉ a
-≉-sym a b a≉b b≈a = a≉b (≈-sym b a b≈a)
+≉-sym : ∀ {A i} → {a b : FST i A} → a ≉ b → b ≉ a
+≉-sym a≉b b≈a = a≉b (≈-sym b≈a)
 
+≉-ignores-children : ∀ {A i} → {a₁ a₂ b₁ b₂ : FST i A} → a₁ ≈ a₂ → b₁ ≈ b₂ → a₁ ≉ b₁ → a₂ ≉ b₂
+≉-ignores-children a₁≈a₂ b₁≈b₂ a₁≉b₁ a₂≈b₂ = a₁≉b₁ (≈-trans a₁≈a₂ (≈-trans a₂≈b₂ (≈-sym b₁≈b₂)))
+
+-- TODO use standard library
 infix 15 _∈_
 _∈_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∈ xs = Any (x ≈_) xs
@@ -134,7 +148,7 @@ disjoint-grow : ∀ {i A} (r : FST i A) (rs ls : List (FST i A))
   → Disjoint ls (r ∷ rs)
 disjoint-grow r rs [] _ _ = []
 disjoint-grow r rs (l ∷ ls) (l∉rs ∷ d-ls-rs) (r≉l ∷ r∉ls)
-  = (≉-sym r l r≉l ∷ l∉rs) ∷ disjoint-grow r rs ls d-ls-rs r∉ls
+  = (≉-sym r≉l ∷ l∉rs) ∷ disjoint-grow r rs ls d-ls-rs r∉ls
 
 disjoint-shiftʳ : ∀ {i A} (r : FST i A) (rs ls : List (FST i A))
   → Disjoint ls (r ∷ rs)
@@ -436,6 +450,231 @@ module Impose (AtomSet : 𝔸) where
   r-id : RightIdentity _≡_ 𝟘 _⊛_
   r-id (xs ⊚ (u-xs , ur-xs)) = refl
 
+  data Once {A : Set₁} (P : A → Set) : List A → Set₁ where
+    here  : {x : A} → {xs : List A} →    P x →  All (¬_ ∘ P) xs → Once P (x ∷ xs)
+    there : {x : A} → {xs : List A} → ¬ (P x) → Once      P  xs → Once P (x ∷ xs)
+
+  contains? : ∀ {i : Size} (xs : List (FSTA i)) (y : FSTA i)
+    → Unique xs
+    → y ∉ xs ⊎ Once (y ≈_) xs
+  contains? [] y [] = inj₁ []
+  contains? (x ∷ xs) y (x∉xs ∷ xs-unique) with y == x
+  contains? (x ∷ xs) y (x∉xs ∷ xs-unique) | yes y≈x = inj₂ (here y≈x (map-all (λ x≉a' y≈a' → x≉a' (≈-trans (≈-sym y≈x) y≈a')) x∉xs))
+  contains? (x ∷ xs) y (x∉xs ∷ xs-unique) | no y≉x with contains? xs y xs-unique
+  contains? (x ∷ xs) y (x∉xs ∷ xs-unique) | no y≉x | inj₁ y∉xs = inj₁ (y≉x ∷ y∉xs)
+  contains? (x ∷ xs) y (x∉xs ∷ xs-unique) | no y≉x | inj₂ y∈x = inj₂ (there y≉x y∈x)
+
+  ∈-⊙ˡ : ∀ {i : Size} (x : FSTA i) (ys : List (FSTA i)) (z : FSTA i)
+    → x ∈ ys
+    → x ∈ (ys ⊙ z)
+  ∈-⊙ˡ x (y ∷ ys) z (here x≈y) with z == y
+  ∈-⊙ˡ x (y ∷ ys) z (here x≈y) | no _ = here x≈y
+  ∈-⊙ˡ (x -< _ >-) (.x -< _ >- ∷ ys) (.x -< _ >-) (here refl) | yes refl = here refl
+  ∈-⊙ˡ x (y ∷ ys) z (there x∈ys) with z == y
+  ∈-⊙ˡ x (y ∷ ys) z (there x∈ys) | no z≉y = there (∈-⊙ˡ x ys z x∈ys)
+  ∈-⊙ˡ x (.z -< _ >- ∷ ys) (z -< _ >-) (there x∈ys) | yes refl = there x∈ys
+
+  ∈-⊙ʳ : ∀ {i : Size} (x : FSTA i) (ys : List (FSTA i)) (z : FSTA i)
+    → x ≈ z
+    → x ∈ (ys ⊙ z)
+  ∈-⊙ʳ x [] z x≈z = here x≈z
+  ∈-⊙ʳ x (y ∷ ys) z x≈z with z == y
+  ∈-⊙ʳ x (y ∷ ys) z x≈z | no z≉y = there (∈-⊙ʳ x ys z x≈z)
+  ∈-⊙ʳ (x -< _ >-) ((.x -< _ >-) ∷ ys) (x -< _ >-) refl | yes refl = here refl
+
+  compute-⊙-excludes : ∀ {i : Size} (x : FSTA i) (xs : List (FSTA i)) (y : FSTA i)
+    → y ≉ x
+    → (x ∷ xs) ⊙ y ≡ x ∷ (xs ⊙ y)
+  compute-⊙-excludes x xs y y≉x with y == x
+  compute-⊙-excludes x xs y y≉x | yes y≈x = ⊥-elim (y≉x y≈x)
+  compute-⊙-excludes x xs y y≉x | no y≉x = refl
+
+  compute-⊙-includes : ∀ {i : Size} (x : A) (cs₁ cs₂ : List (FSTA i)) (ys : List (FSTA (↑ i)))
+    → (x -< cs₁ >- ∷ ys) ⊙ (x -< cs₂ >-) ≡ x -< cs₁ ⊕ cs₂ >- ∷ ys
+  compute-⊙-includes x cs₁ cs₂ ys with x ≟ x
+  compute-⊙-includes x cs₁ cs₂ ys | yes refl = refl
+  compute-⊙-includes x cs₁ cs₂ ys | no x≢x = ⊥-elim (x≢x refl)
+
+  reorder-⊙ : ∀ {i : Size} (xs : List (FSTA i)) (y z : FSTA i)
+    → y ≉ z
+    → z ∈ xs
+    → (xs ⊙ z) ⊙ y ≡ (xs ⊙ y) ⊙ z
+  reorder-⊙ (x ∷ xs) y z y≉z z∈xs with z == x
+  reorder-⊙ (x ∷ xs) y z y≉z z∈xs | yes z≈x with y == x
+  reorder-⊙ (x ∷ xs) y z y≉z z∈xs | yes z≈x | yes y≈x = ⊥-elim (y≉z (≈-trans y≈x (≈-sym z≈x)))
+  reorder-⊙ (.z -< cs₁ >- ∷ xs) y (z -< cs₂ >-) y≉z z∈xs | yes refl | no _ with y == (z -< cs₁ ⊕ cs₂ >-)
+  reorder-⊙ (.z -< cs₁ >- ∷ xs) y (z -< cs₂ >-) y≉z z∈xs | yes refl | no _ | no _ with z ≟ z
+  reorder-⊙ (.z -< cs₁ >- ∷ xs) y (z -< cs₂ >-) y≉z z∈xs | yes refl | no _ | no _ | yes refl = refl
+  reorder-⊙ (.z -< cs₁ >- ∷ xs) y (z -< cs₂ >-) y≉z z∈xs | yes refl | no _ | no _ | no z≢z = ⊥-elim (z≢z refl)
+  reorder-⊙ (.z -< cs₁ >- ∷ xs) (.z -< _ >-) (z -< cs₂ >-) y≉z z∈xs | yes refl | no _ | yes refl = ⊥-elim (y≉z refl)
+  reorder-⊙ (x ∷ xs) y z y≉z (here z≈x) | no z≉x = ⊥-elim (z≉x z≈x)
+  reorder-⊙ (x ∷ xs) y z y≉z (there z∈xs) | no z≉x with y == x
+  reorder-⊙ (x ∷ xs) y z y≉z (there z∈xs) | no z≉x | no _ with z == x
+  reorder-⊙ (x ∷ xs) y z y≉z (there z∈xs) | no z≉x | no _ | yes z≈x = ⊥-elim (z≉x z≈x)
+  reorder-⊙ (x ∷ xs) y z y≉z (there z∈xs) | no z≉x | no _ | no _ = Eq.cong₂ _∷_ refl (reorder-⊙ xs y z y≉z z∈xs)
+  reorder-⊙ (.y -< cs₁ >- ∷ xs) (y -< cs₂ >-) z y≉z (there z∈xs) | no z≉x | yes refl with z == (y -< cs₁ ⊕ cs₂ >-)
+  reorder-⊙ (.y -< cs₁ >- ∷ xs) (y -< cs₂ >-) z y≉z (there z∈xs) | no z≉x | yes refl | no z≉y = refl
+  reorder-⊙ (.y -< cs₁ >- ∷ xs) (y -< cs₂ >-) (.y -< _ >-) y≉z (there z∈xs) | no z≉a | yes refl | yes refl = ⊥-elim (y≉z refl)
+
+  reorder-after-⊕ : ∀ {i : Size} (xs ys : List (FSTA i)) (z : FSTA i)
+    → z ∈ xs
+    → z ∉ ys
+    → xs ⊕ (z ∷ ys) ≡ xs ⊕ (ys ⊙ z)
+  reorder-after-⊕ xs [] z z∈xs [] = refl
+  reorder-after-⊕ xs (y ∷ ys) z z∈xs (z≉y ∷ z∉ys) =
+      xs ⊕ (z ∷ (y ∷ ys))
+    ≡⟨⟩
+      foldl _⊙_ xs (z ∷ y ∷ ys)
+    ≡⟨⟩
+      foldl _⊙_ (xs ⊙ z) (y ∷ ys)
+    ≡⟨⟩
+      foldl _⊙_ ((xs ⊙ z) ⊙ y) ys
+    ≡⟨ Eq.cong (λ x → foldl _⊙_ x ys) (reorder-⊙ xs y z (≉-sym z≉y) z∈xs) ⟩
+      foldl _⊙_ ((xs ⊙ y) ⊙ z) ys
+    ≡⟨⟩
+      foldl _⊙_ (xs ⊙ y) (z ∷ ys)
+    ≡⟨ reorder-after-⊕ (xs ⊙ y) ys z (∈-⊙ˡ z xs y z∈xs) z∉ys ⟩
+      foldl _⊙_ xs (y ∷ (ys ⊙ z))
+    ≡⟨ Eq.cong (foldl _⊙_ xs) (compute-⊙-excludes y ys z z≉y) ⟨
+      foldl _⊙_ xs ((y ∷ ys) ⊙ z)
+    ≡⟨⟩
+      xs ⊕ ((y ∷ ys) ⊙ z)
+    ∎
+
+  ⊙-⊕-distrib-excludes : ∀ {i : Size} (xs : List (FSTA (↑ i))) (y : A) (cs₁ cs₂ : List (FSTA i))
+    → (y -< cs₁ ⊕ cs₂ >-) ∉ xs
+    → xs ⊙ (y -< cs₁ ⊕ cs₂ >-) ≡ (xs ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
+  ⊙-⊕-distrib-excludes [] y cs₁ cs₂ y∉xs with (y -< cs₁ >-) == (y -< cs₂ >-)
+  ⊙-⊕-distrib-excludes [] y cs₁ cs₂ y∉xs | yes refl = refl
+  ⊙-⊕-distrib-excludes [] y cs₁ cs₂ y∉xs | no y≉y = ⊥-elim (y≉y refl)
+  ⊙-⊕-distrib-excludes (a ∷ xs) y cs₁ cs₂ (y≉a ∷ y∉xs) with (y -< cs₁ ⊕ cs₂ >-) == a
+  ⊙-⊕-distrib-excludes (a ∷ xs) y cs₁ cs₂ (y≉a ∷ y∉xs) | yes y≈a = ⊥-elim (y≉a y≈a)
+  ⊙-⊕-distrib-excludes (a ∷ xs) y cs₁ cs₂ (y≉a ∷ y∉xs) | no _ =
+      a ∷ (xs ⊙ (y -< cs₁ ⊕ cs₂ >-))
+    ≡⟨ Eq.cong₂ _∷_ refl (⊙-⊕-distrib-excludes xs y cs₁ cs₂ y∉xs) ⟩
+      a ∷ (xs ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-))
+    ≡⟨ compute-⊙-excludes a (xs ⊙ y -< cs₁ >-) (y -< cs₂ >-) (≉-ignores-children refl ≈-refl y≉a) ⟨
+      (a ∷ (xs ⊙ (y -< cs₁ >-))) ⊙ (y -< cs₂ >-)
+    ≡⟨ Eq.cong₂ _⊙_ (compute-⊙-excludes a xs (y -< cs₁ >-) (≉-ignores-children refl ≈-refl y≉a)) refl ⟨
+      (a ∷ xs) ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-)
+    ∎
+
+  ⊕-assoc : ∀ {i : Size} (xs ys zs : List (FSTA i))
+    → AllWellFormed xs
+    → AllWellFormed ys
+    → AllWellFormed zs
+    → xs ⊕ (ys ⊕ zs) ≡ (xs ⊕ ys) ⊕ zs
+
+  ⊙-⊕-distrib-includes : ∀ {i : Size} (xs : List (FSTA (↑ i))) (y : A) (cs₁ cs₂ : List (FSTA i))
+    → AllWellFormed xs
+    → AllWellFormed cs₁
+    → AllWellFormed cs₂
+    → Once (y -< cs₁ ⊕ cs₂ >- ≈_) xs
+    → xs ⊙ (y -< cs₁ ⊕ cs₂ >-) ≡ (xs ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
+  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (here y≈x y∉xs) with (y -< cs₁ ⊕ cs₂ >-) == x
+  ⊙-⊕-distrib-includes (.y -< cs >- ∷ xs) y cs₁ cs₂ (_ , cs-wf ∷ _) cs₁-wf cs₂-wf (here y≈x y∉xs) | yes refl =
+      y -< cs ⊕ (cs₁ ⊕ cs₂) >- ∷ xs
+    ≡⟨ Eq.cong₂ _∷_ (Eq.cong₂ _-<_>- refl (⊕-assoc cs cs₁ cs₂ cs-wf cs₁-wf cs₂-wf)) refl ⟩
+      y -< (cs ⊕ cs₁) ⊕ cs₂ >- ∷ xs
+    ≡⟨ compute-⊙-includes y (cs ⊕ cs₁) cs₂ xs ⟨
+      (y -< cs ⊕ cs₁ >- ∷ xs) ⊙ (y -< cs₂ >-)
+    ≡⟨ Eq.cong₂ _⊙_ (compute-⊙-includes y cs cs₁ xs) refl ⟨
+      ((y -< cs >- ∷ xs) ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
+    ∎
+  ⊙-⊕-distrib-includes (x -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (here y≈x y∉xs) | no y≉x = ⊥-elim (y≉x y≈x)
+  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (there y≉x y∈x) with (y -< cs₁ ⊕ cs₂ >-) == x
+  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (there y≉x y∈x) | yes y≈x = ⊥-elim (y≉x y≈x)
+  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ (_ ∷ xs-unique , _ ∷ xs-wf) cs₁-wf cs₂-wf (there y≉x y∈x) | no _ =
+      x ∷ (xs ⊙ (y -< cs₁ ⊕ cs₂ >-))
+    ≡⟨ Eq.cong₂ _∷_ refl (⊙-⊕-distrib-includes xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf y∈x) ⟩
+      x ∷ (xs ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-))
+    ≡⟨ compute-⊙-excludes x (xs ⊙ y -< cs₁ >-) (y -< cs₂ >-) (≉-ignores-children refl ≈-refl y≉x) ⟨
+      (x ∷ (xs ⊙ (y -< cs₁ >-))) ⊙ (y -< cs₂ >-)
+    ≡⟨ Eq.cong₂ _⊙_ (compute-⊙-excludes x xs (y -< cs₁ >-) (≉-ignores-children refl ≈-refl y≉x)) refl ⟨
+      (x ∷ xs) ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-)
+    ∎
+
+  ⊙-⊕-distrib : {i : Size} (xs : List (FSTA (↑ i))) (y : A) (cs₁ cs₂ : List (FSTA i))
+    → AllWellFormed xs
+    → AllWellFormed cs₁
+    → AllWellFormed cs₂
+    → xs ⊙ (y -< cs₁ ⊕ cs₂ >-) ≡ (xs ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
+  ⊙-⊕-distrib xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf =
+    Sum.[ ⊙-⊕-distrib-excludes xs y cs₁ cs₂
+        , ⊙-⊕-distrib-includes xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf
+        ]′ (contains? xs (y -< cs₁ ⊕ cs₂ >-) xs-unique)
+
+  ⊕-⊙-assoc-excludes : ∀ {i : Size} (xs ys : List (FSTA i)) (z : (FSTA i))
+    → z ∉ ys
+    → xs ⊕ (ys ⊙ z) ≡ (xs ⊕ ys) ⊙ z
+  ⊕-⊙-assoc-excludes xs [] z [] = refl
+  ⊕-⊙-assoc-excludes xs (y ∷ ys) z (z≢y ∷ z∉ys) with z == y
+  ⊕-⊙-assoc-excludes xs (y ∷ ys) z (z≢y ∷ z∉ys) | yes z≡y = ⊥-elim (z≢y z≡y)
+  ⊕-⊙-assoc-excludes xs (y ∷ ys) z (z≢y ∷ z∉ys) | no _ = ⊕-⊙-assoc-excludes (xs ⊙ y) ys z z∉ys
+
+  ⊕-⊙-assoc-includes : ∀ {i : Size} (xs ys : List (FSTA i)) (z : (FSTA i))
+    → AllWellFormed xs
+    → AllWellFormed ys
+    → WellFormed z
+    → Once (z ≈_) ys
+    → xs ⊕ (ys ⊙ z) ≡ (xs ⊕ ys) ⊙ z
+  ⊕-⊙-assoc-includes xs (y ∷ ys) z xs-wf ys-wf z-wf (here z≈b z∉ys) with z == y
+  ⊕-⊙-assoc-includes xs (.z -< cs₁ >- ∷ ys) (z -< cs₂ >-) xs-wf (_ , cs₁-wf ∷ _) z-wf (here z≈b z∉ys) | yes refl =
+      xs ⊕ (z -< cs₁ ⊕ cs₂ >- ∷ ys)
+    ≡⟨⟩
+      foldl _⊙_ xs (z -< cs₁ ⊕ cs₂ >- ∷ ys)
+    ≡⟨⟩
+      foldl _⊙_ (xs ⊙ (z -< cs₁ ⊕ cs₂ >-)) ys
+    ≡⟨ Eq.cong (λ x → foldl _⊙_ x ys) (⊙-⊕-distrib xs z cs₁ cs₂ xs-wf cs₁-wf z-wf) ⟩
+      foldl _⊙_ ((xs ⊙ z -< cs₁ >-) ⊙ (z -< cs₂ >-)) ys
+    ≡⟨⟩
+      foldl _⊙_ (xs ⊙ z -< cs₁ >-) (z -< cs₂ >- ∷ ys)
+    ≡⟨ reorder-after-⊕ (xs ⊙ z -< cs₁ >-) ys (z -< cs₂ >-) (∈-⊙ʳ (z -< cs₂ >-) xs (z -< cs₁ >-) refl) z∉ys ⟩
+      foldl _⊙_ (xs ⊙ z -< cs₁ >-) (ys ⊙ z -< cs₂ >-)
+    ≡⟨ ⊕-⊙-assoc-excludes (xs ⊙ z -< cs₁ >-) ys (z -< cs₂ >-) z∉ys ⟩
+      foldl _⊙_ (xs ⊙ z -< cs₁ >-) ys ⊙ (z -< cs₂ >-)
+    ≡⟨⟩
+      foldl _⊙_ xs (z -< cs₁ >- ∷ ys) ⊙ (z -< cs₂ >-)
+    ≡⟨⟩
+      (xs ⊕ (z -< cs₁ >- ∷ ys)) ⊙ (z -< cs₂ >-)
+    ∎
+  ⊕-⊙-assoc-includes xs (y -< cs₁ >- ∷ ys) (z -< cs₂ >-) xs-wf ys-wf z-wf (here z≈b z∉ys) | no z≉b = ⊥-elim (z≉b z≈b)
+  ⊕-⊙-assoc-includes xs (y ∷ ys) z xs-wf ys-wf z-wf (there z≉b z∉ys) with z == y
+  ⊕-⊙-assoc-includes xs (y ∷ ys) z xs-wf ys-wf z-wf (there z≉b z∉ys) | yes z≈b = ⊥-elim (z≉b z≈b)
+  ⊕-⊙-assoc-includes xs (y ∷ ys) z xs-wf (_ ∷ ys-unique , b-wf ∷ ys-wf) z-wf (there z≉b z∉ys) | no _ = ⊕-⊙-assoc-includes (xs ⊙ y) ys z (⊙-wf xs-wf b-wf) (ys-unique , ys-wf) z-wf z∉ys
+
+  ⊕-⊙-assoc : ∀ {i : Size} (xs ys : List (FSTA i)) (z : (FSTA i))
+    → AllWellFormed xs
+    → AllWellFormed ys
+    → WellFormed z
+    → foldl _⊙_ xs (ys ⊙ z) ≡ foldl _⊙_ xs ys ⊙ z
+  ⊕-⊙-assoc xs ys z xs-wf (ys-unique , ys-wf) z-wf =
+    Sum.[ ⊕-⊙-assoc-excludes xs ys z
+        , ⊕-⊙-assoc-includes xs ys z xs-wf (ys-unique , ys-wf) z-wf
+        ]′ (contains? ys z ys-unique)
+
+  -- ⊕-assoc : ∀ {i : Size} (xs ys zs : List (FSTA i))
+  --   → AllWellFormed xs
+  --   → AllWellFormed ys
+  --   → AllWellFormed zs
+  --   → xs ⊕ (ys ⊕ zs) ≡ (xs ⊕ ys) ⊕ zs
+  ⊕-assoc xs ys [] xs-wf ys-wf zs-wf = refl
+  ⊕-assoc xs ys (z ∷ zs) xs-wf ys-wf (_ ∷ zs-unique , z-wf ∷ zs-wf) =
+      xs ⊕ (ys ⊕ (z ∷ zs))
+    ≡⟨⟩
+      foldl _⊙_ xs (foldl _⊙_ ys (z ∷ zs))
+    ≡⟨⟩
+      foldl _⊙_ xs (foldl _⊙_ (ys ⊙ z) zs)
+    ≡⟨ ⊕-assoc xs (ys ⊙ z) zs xs-wf (⊙-wf ys-wf z-wf) (zs-unique , zs-wf) ⟩
+      foldl _⊙_ (foldl _⊙_ xs (ys ⊙ z)) zs
+    ≡⟨ Eq.cong (λ x → foldl _⊙_ x zs) (⊕-⊙-assoc xs ys z xs-wf ys-wf z-wf) ⟩
+      foldl _⊙_ (foldl _⊙_ xs ys ⊙ z) zs
+    ≡⟨⟩
+      foldl _⊙_ (foldl _⊙_ xs ys) (z ∷ zs)
+    ≡⟨⟩
+      (xs ⊕ ys) ⊕ (z ∷ zs)
+    ∎
+
   -- ⊛ is not commutative because
   -- ⊕ is not commutative because
   -- the order in which children appear below their parents
@@ -446,7 +685,7 @@ module Impose (AtomSet : 𝔸) where
   -- X ⊕ Y = a -< b , c >-
   -- Y ⊕ X = a -< c , b >-
   assoc : Associative _≡_ _⊛_
-  assoc (x ⊚ x-wf) (y ⊚ y-wf) (z ⊚ z-wf) = {!!}
+  assoc (x ⊚ x-wf) (y ⊚ y-wf) (z ⊚ z-wf) = cong-app₂ _⊚_ (Eq.sym (⊕-assoc x y z x-wf y-wf z-wf)) AllWellFormed-deterministic
 
   cong : Congruent₂ _≡_ _⊛_
   cong refl refl = refl
