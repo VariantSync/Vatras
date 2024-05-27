@@ -616,7 +616,7 @@ module Impose (AtomSet : 𝔸) where
   cong : Congruent₂ _≡_ _⊛_
   cong refl refl = refl
 
-  idem : ∀ (x y : FSF) → y ⊛ x ⊛ y ≡ x ⊛ y
+  idem : ∀ (x y : FSF) → x ⊛ y ⊛ x ≡ x ⊛ y
   idem = {!!}
 
   FST-is-FeatureAlgebra : FeatureAlgebra FSF _⊛_ 𝟘

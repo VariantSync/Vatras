@@ -20,10 +20,10 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
   field
     monoid : IsMonoid _≡_ _⊕_ 𝟘
 
-    -- Only the rightmost occurence of an introduction is effective in a sum,
+    -- Only the leftmost occurence of an introduction is effective in a sum,
     -- because it has been introduced first.
     -- This is, duplicates of i have no effect.
-    distant-idempotence : ∀ (i₁ i₂ : I) → i₂ ⊕ i₁ ⊕ i₂ ≡ i₁ ⊕ i₂
+    distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ i₂ ⊕ i₁ ≡ i₁ ⊕ i₂
 
   open IsMonoid monoid
 
@@ -33,16 +33,16 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
       i ⊕ i
     ≡⟨ Eq.cong (i ⊕_) (proj₁ identity i) ⟨
       i ⊕ 𝟘 ⊕ i
-    ≡⟨ distant-idempotence 𝟘 i ⟩
-      𝟘 ⊕ i
-    ≡⟨ proj₁ identity i ⟩
+    ≡⟨ distant-idempotence i 𝟘 ⟩
+      i ⊕ 𝟘
+    ≡⟨ proj₂ identity i ⟩
       i
     ∎
 
   -- introduction inclusion
   infix 6 _≤_
   _≤_ : Rel I c
-  i₂ ≤ i₁ = i₂ ⊕ i₁ ≡ i₁
+  i₂ ≤ i₁ = i₁ ⊕ i₂ ≡ i₁
 
   ≤-refl : Reflexive _≤_
   ≤-refl {i} = direct-idempotence i
@@ -50,19 +50,19 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
   ≤-trans : Transitive _≤_
   ≤-trans {i} {j} {k} i≤j j≤k =
     begin
-      i ⊕ k
-    ≡⟨ Eq.cong (i ⊕_) j≤k ⟨
-      i ⊕ (j ⊕ k)
-    ≡⟨ Eq.cong (λ x → i ⊕ x ⊕ k) i≤j ⟨
-      i ⊕ ((i ⊕ j) ⊕ k)
-    ≡⟨ assoc i (i ⊕ j) k ⟨
-      (i ⊕ (i ⊕ j)) ⊕ k
-    ≡⟨ Eq.cong (_⊕ k) (assoc i i j) ⟨
-      ((i ⊕ i) ⊕ j) ⊕ k
-    ≡⟨ Eq.cong (_⊕ k) (Eq.cong (_⊕ j) (direct-idempotence i)) ⟩
-      (i ⊕ j) ⊕ k
-    ≡⟨ Eq.cong (_⊕ k) i≤j ⟩
-      j ⊕ k
+      k ⊕ i
+    ≡⟨ Eq.cong (_⊕ i) j≤k ⟨
+      (k ⊕ j) ⊕ i
+    ≡⟨ Eq.cong (λ x → (k ⊕ x) ⊕ i) i≤j ⟨
+      (k ⊕ (j ⊕ i)) ⊕ i
+    ≡⟨ assoc k (j ⊕ i) i ⟩
+      k ⊕ ((j ⊕ i) ⊕ i)
+    ≡⟨ Eq.cong (k ⊕_) (assoc j i i) ⟩
+      k ⊕ (j ⊕ (i ⊕ i))
+    ≡⟨ Eq.cong (k ⊕_) (Eq.cong (j ⊕_) (direct-idempotence i)) ⟩
+      k ⊕ (j ⊕ i)
+    ≡⟨ Eq.cong (k ⊕_) i≤j ⟩
+      k ⊕ j
     ≡⟨ j≤k ⟩
       k
     ∎
@@ -75,23 +75,30 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
     }
 
   least-element : ∀ i → 𝟘 ≤ i
-  least-element = proj₁ identity
+  least-element = proj₂ identity
 
   least-element-unique : ∀ i → i ≤ 𝟘 → i ≡ 𝟘
-  least-element-unique i i≤𝟘 rewrite (proj₂ identity i) = i≤𝟘
+  least-element-unique i i≤𝟘 rewrite (proj₁ identity i) = i≤𝟘
 
   upper-bound-l : ∀ i₂ i₁ → i₂ ≤ i₂ ⊕ i₁
   upper-bound-l i₂ i₁ =
     begin
-      i₂ ⊕ (i₂ ⊕ i₁)
-    ≡⟨ Eq.sym (assoc i₂ i₂ i₁) ⟩
-      (i₂ ⊕ i₂) ⊕ i₁
-    ≡⟨ Eq.cong (_⊕ i₁) (direct-idempotence i₂) ⟩
+      (i₂ ⊕ i₁) ⊕ i₂
+    ≡⟨ assoc i₂ i₁ i₂ ⟩
+      i₂ ⊕ (i₁ ⊕ i₂)
+    ≡⟨ distant-idempotence i₂ i₁ ⟩
       i₂ ⊕ i₁
     ∎
 
   upper-bound-r : ∀ i₂ i₁ → i₁ ≤ i₂ ⊕ i₁
-  upper-bound-r i₂ i₁ = distant-idempotence i₂ i₁
+  upper-bound-r i₂ i₁ =
+    begin
+      (i₂ ⊕ i₁) ⊕ i₁
+    ≡⟨ assoc i₂ i₁ i₁ ⟩
+      i₂ ⊕ (i₁ ⊕ i₁)
+    ≡⟨ Eq.cong (i₂ ⊕_) (direct-idempotence i₁) ⟩
+      i₂ ⊕ i₁
+    ∎
 
   least-upper-bound : ∀ i i₂ i₁
     → i₁ ≤ i
@@ -100,12 +107,12 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
     → i₁ ⊕ i₂ ≤ i
   least-upper-bound i i₂ i₁ i₁≤i i₂≤i =
     begin
-      (i₁ ⊕ i₂) ⊕ i
-    ≡⟨ assoc i₁ i₂ i ⟩
-      i₁ ⊕ (i₂ ⊕ i)
-    ≡⟨ Eq.cong (i₁ ⊕_) i₂≤i ⟩
-      i₁ ⊕ i
-    ≡⟨ i₁≤i ⟩
+      i ⊕ (i₁ ⊕ i₂)
+    ≡⟨ assoc i i₁ i₂ ⟨
+      (i ⊕ i₁) ⊕ i₂
+    ≡⟨ Eq.cong (_⊕ i₂) i₁≤i ⟩
+      i ⊕ i₂
+    ≡⟨ i₂≤i ⟩
       i
     ∎
 
@@ -133,17 +140,15 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
   quasi-smaller : ∀ i₂ i₁ → i₂ ⊕ i₁ ≤ i₁ ⊕ i₂
   quasi-smaller i₂ i₁ =
     begin
-      (i₂ ⊕ i₁) ⊕ i₁ ⊕ i₂
-    ≡⟨⟩
-      (i₂ ⊕ i₁) ⊕ (i₁ ⊕ i₂)
-    ≡⟨ assoc (i₂ ⊕ i₁) i₁ i₂ ⟨
-      ((i₂ ⊕ i₁) ⊕ i₁) ⊕ i₂
-    ≡⟨ Eq.cong (_⊕ i₂) (assoc i₂ i₁ i₁) ⟩
-      (i₂ ⊕ (i₁ ⊕ i₁)) ⊕ i₂
-    ≡⟨ Eq.cong (_⊕ i₂) (Eq.cong (i₂ ⊕_) (direct-idempotence i₁)) ⟩
-      (i₂ ⊕ i₁) ⊕ i₂
-    ≡⟨ assoc i₂ i₁ i₂ ⟩
-      i₂ ⊕ i₁ ⊕ i₂
+      (i₁ ⊕ i₂) ⊕ (i₂ ⊕ i₁)
+    ≡⟨ assoc (i₁ ⊕ i₂) i₂ i₁ ⟨
+      ((i₁ ⊕ i₂) ⊕ i₂) ⊕ i₁
+    ≡⟨ Eq.cong (_⊕ i₁) (assoc i₁ i₂ i₂) ⟩
+      (i₁ ⊕ (i₂ ⊕ i₂)) ⊕ i₁
+    ≡⟨ Eq.cong (_⊕ i₁) (Eq.cong (i₁ ⊕_) (direct-idempotence i₂)) ⟩
+      (i₁ ⊕ i₂) ⊕ i₁
+    ≡⟨ assoc i₁ i₂ i₁ ⟩
+      i₁ ⊕ (i₂ ⊕ i₁)
     ≡⟨ distant-idempotence i₁ i₂ ⟩
       i₁ ⊕ i₂
     ∎
