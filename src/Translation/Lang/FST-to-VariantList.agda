@@ -272,10 +272,14 @@ AllWith∈ [] f = []
 AllWith∈ (a ∷ as) f = f a (here refl) ∷ AllWith∈ as (λ a a∈as → f a (there a∈as))
 
 {-|
-If two configurations agree on their value for all features in a FST,
+If two configurations agree on their value for all features in an FST,
 then the semantics must also agree.
 This looks like functional extensionality from the perspective of the semantics (`FST.⟦_⟧`)
 because it does not observe values other than `map name fs`.
+In fact, this theorem states that (extensionally) equal configurations are
+indistinguishable in semantics and hence produce the same result.
+The proof works by showing that both configurations select the same list of features (in the same order)
+from the list of available features in the input SPL.
 -}
 ⟦⟧-cong : ∀ {A : 𝔸} (a : atoms A) (fs : List (Feature F A))
   → (c₁ c₂ : FST.Configuration F)
