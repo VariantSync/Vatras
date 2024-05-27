@@ -1,9 +1,13 @@
+# Option calculus is not as expressive as feature structure trees
+
 ```agda
 open import Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 
 ```
+
+## Assumptions and Imports
 
 To be as general as possible, we do not fix `F` but only require that it
 contains at least two distinct features `f₁` and `f₂`. To implement
@@ -47,37 +51,27 @@ A : 𝔸
 A = ℕ , _≟_
 ```
 
-This represents a form of an alternative where there are the variants
-  0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >-
-  0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
-but there is no
-  0 -< 0 -<              [] >- ∷ [] >-
-variant. Hence, at least one inner child is required. As FSTs require a fixed
-root artifact, the outermost artifact is always the same. Note, however, that
-there are two more variants:
-  0 -< 0 -< 0 -< [] >- ∷ 1 -< [] >- ∷ [] >- ∷ [] >-
-  0 -<                                   >- ∷ [] >-
+## Counter-Example
 
-The idea of the following proof is to show that any OC expression will
-necessarily have to include some other variant. We identified two cases:
+To prove that option calculus is not at least as expressive as feature structure trees,
+we construct a counter-example product line of feature structure trees that cannot be
+translated to option calculus.
 
-- In the `shared-artifact` case, the OC expression also include the following
-  extra variant:
-    0 -< 0 -<                                       [] >- ∷ [] >-
-  For example:
-    0 -< 0 -< f₁ ❲ 0 -< [] >- ❳ ∷ f₂ ❲ 1 -< [] >- ❳ ∷ [] >- ∷ [] >-
+The following counter-example embodies a form of an alternative, which
+describes the following variants
 
-- In the `more-artifacts` case, the OC expression also includes an extra variant
-  like the following:
-    0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
-  For example:
-    0 -< f₁ ❲ 0 -< 0 -< [] >- ∷ [] >- ❳ ∷ f₂ ❲ 0 -< 1 -< [] >- ∷ [] >- ❳ ∷ [] >-
-  Note that, in contrast to the `shared-artifact` case, this variant is not
-  uniquely determined. In fact, The order of the two features isn't fixed and
-  the configuration chosen by the proof could introduce more artifacts because
-  there can be options which are not selected by the configurations `c₁` and
-  `c₂` below.
+    f₁ =  true, f₂ = false: 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >-
+    f₁ = false, f₂ =  true: 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
+    f₁ = false, f₂ = false: 0 -<                                   >- ∷ [] >-
+    f₁ =  true, f₂ =  true: 0 -< 0 -< 0 -< [] >- ∷ 1 -< [] >- ∷ [] >- ∷ [] >-
 
+but not
+
+    0 -< 0 -<              [] >- ∷ [] >-
+
+Hence, at least one inner child is required for a valid variant of
+this counter-example SPL (or no children in which case there is only the root).
+As FSTs require a fixed root artifact, the outermost artifact is always set to 0.
 ```agda
 counter-example : SPL F A
 counter-example = 0 ◀ (
@@ -85,6 +79,35 @@ counter-example = 0 ◀ (
   ∷ (f₂ :: ((0 -< 1 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
   ∷ [])
 ```
+
+## Proof that option calculus cannot encode the counter-example
+
+The idea of the following proof is to show that any OC expression, which describes
+these variants, necessarily includes some other variant. We identified two cases:
+
+- In the `shared-artifact` case, the OC expression also includes the following
+  extra variant:
+
+      0 -< 0 -<                                       [] >- ∷ [] >-
+
+  which as stated above, is not described by the counter-example FST.
+  For example, the following OC expression has this problem:
+
+      0 -< 0 -< f₁ ❲ 0 -< [] >- ❳ ∷ f₂ ❲ 1 -< [] >- ❳ ∷ [] >- ∷ [] >-
+
+- In the `more-artifacts` case, the OC expression also includes an extra variant
+  like the following:
+
+      0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
+  For example:
+
+      0 -< f₁ ❲ 0 -< 0 -< [] >- ∷ [] >- ❳ ∷ f₂ ❲ 0 -< 1 -< [] >- ∷ [] >- ❳ ∷ [] >-
+
+  Note that, in contrast to the `shared-artifact` case, this variant is not
+  uniquely determined. In fact, the order of the two features isn't fixed and
+  the configuration chosen by the proof could introduce more artifacts because
+  there can be options which are not selected by the configurations `c₁` and
+  `c₂` below.
 
 There are four relevant configurations for `counter-example` because it uses
 exactly two features: `c₁`, `c₂`, `all-oc true` and `all-oc false`.
@@ -135,6 +158,41 @@ implies-∧₂ {c₁ = c₁} {c₂ = c₂} f p with c₁ f | c₂ f
 implies-∧₂ f p | true | true = refl
 ```
 
+### `shared-artifact` case
+
+We observe that any option calculus expression that describes
+the variants `0 -< 0 >-` and `0 -< 1 >-` must also describe the
+variant `0 -< >-`.
+
+In this case, the relevant options are contained in the same, shared, option
+`e`. The goal is to prove that we can deselect all inner options and obtain this
+shared artifact without any inner artifacts.
+
+As configuration, we chose the intersection of the two given configurations.
+This ensures that all options up to the shared artifact are included because
+they must be included in both variants. Simultaneously, this excludes the
+artifacts themselves because each configuration excludes one of them.
+```agda
+shared-artifact : ∀ {F' : 𝔽}
+  → (e : OC.OC F' ∞ A)
+  → (c₁ c₂ : OC.Configuration F')
+  → just (0 -< rose-leaf 0 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
+  → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
+  → just (0 -< [] >-) ≡ OC.⟦ e ⟧ₒ (c₁ ∧ c₂)
+shared-artifact (0 OC.-< cs >-) c₁ c₂ p₁ p₂
+  with OC.⟦ cs ⟧ₒ-recurse c₁
+     | OC.⟦ cs ⟧ₒ-recurse c₂
+     | OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
+     | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
+     | subtreeₒ-recurse cs (c₁ ∧ c₂) c₂ (implies-∧₂ {c₁ = c₁})
+shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | []    | _              | _      = refl
+shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
+shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
+shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
+```
+
+### `more-artifacts` case
+
 In case we found a node corresponding to either `0 -< 0 -< [] >- ∷ [] >-`
 or `0 -< 1 -< [] >- ∷ [] >-`, we choose the all true configuration and
 prove that there is at least one more artifact in the resulting variant.
@@ -158,27 +216,7 @@ more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-o
 more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
 ```
 
-In this case, the relevant options are contained in the same, shared, option
-`e`. The goal is to proof that we can deselect all inner options and obtain this
-shared artifact without any inner artifacts.
-
-As configuration, we chose the intersection of the two given configurations.
-This ensures that all options up to the shared artifact are included because
-they must be included in both variants. Simultaneously, this excludes the
-artifacts themselves because each configuration excludes one of them.
-```agda
-shared-artifact : ∀ {F' : 𝔽}
-  → (e : OC.OC F' ∞ A)
-  → (c₁ c₂ : OC.Configuration F')
-  → just (0 -< rose-leaf 0  ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
-  → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
-  → just (0 -< [] >-) ≡ OC.⟦ e ⟧ₒ (c₁ ∧ c₂)
-shared-artifact (0 OC.-< cs >-) c₁ c₂ p₁ p₂ with OC.⟦ cs ⟧ₒ-recurse c₁ | OC.⟦ cs ⟧ₒ-recurse c₂ | OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₂ (implies-∧₂ {c₁ = c₁})
-shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | [] | _ | _ = refl
-shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
-shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
-shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
-```
+### Putting the pieces together
 
 This is the main induction over the top most children of the OC expression. It
 proofs that there is at least one variant, configurable from an expression with
