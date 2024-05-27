@@ -130,15 +130,15 @@ compute the semantics of `counter-example`.
 ```agda
 compute-counter-example-c₁ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
-compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _ | _ = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
-compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁ | true | false = p
-compute-counter-example-c₁ p | no f₁≢f₁ | _ | _ | _ = ⊥-elim (f₁≢f₁ refl)
+compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _    | _     = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
+compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁  | true | false = p
+compute-counter-example-c₁ p | no f₁≢f₁  | _         | _    | _     = ⊥-elim (f₁≢f₁ refl)
 
 compute-counter-example-c₂ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₂ p with f₁ ==ꟳ f₂ | f₂ ==ꟳ f₂ | c₂ f₁ in c₂-f₁ | c₂ f₂ in c₂-f₂
-compute-counter-example-c₂ p | yes f₁≡f₂ | _ | _ | _ = ⊥-elim (f₁≢f₂ f₁≡f₂)
-compute-counter-example-c₂ p | no f₁≢f₂ | yes f₂≡f₂ | false | true = p
-compute-counter-example-c₂ p | no f₁≢f₂ | no f₂≢f₂ | _ | _ = ⊥-elim (f₂≢f₂ refl)
+compute-counter-example-c₂ p | yes f₁≡f₂ | _         | _     | _    = ⊥-elim (f₁≢f₂ f₁≡f₂)
+compute-counter-example-c₂ p | no f₁≢f₂  | yes f₂≡f₂ | false | true = p
+compute-counter-example-c₂ p | no f₁≢f₂  | no f₂≢f₂  | _     | _    = ⊥-elim (f₂≢f₂ refl)
 ```
 
 For proving the `shared-artifact` case, we need to compute a configuration which
