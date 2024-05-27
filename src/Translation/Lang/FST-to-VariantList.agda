@@ -201,7 +201,10 @@ or the left half if `c f'` is true.
 Then we simplify the expression using `find-or-last-config-with` and recurse in
 case `f ≢ f'`.
 -}
-conf'-lemma : (c : FST.Configuration F) → (f : F) → (fs : List F) → f ∈ fs → find-or-last (conf' c fs) (configs fs) f ≡ c f
+conf'-lemma : ∀ (c : FST.Configuration F) (f : F) (fs : List F)
+  → f ∈ fs
+    ----------------------------------------------
+  → find-or-last (conf' c fs) (configs fs) f ≡ c f
 conf'-lemma c f (f' ∷ fs) f∈fs with f ==ꟳ f'
 conf'-lemma c f (.f ∷ fs) f∈fs | yes refl with c f
 conf'-lemma c f (.f ∷ fs) f∈fs | yes refl | true =
