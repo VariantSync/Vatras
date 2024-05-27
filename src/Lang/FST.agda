@@ -11,7 +11,7 @@ module Lang.FST (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Fin using (zero; suc)
-open import Data.List using (List; []; _∷_; _∷ʳ_; _++_; foldr; map; filterᵇ; concat; reverse)
+open import Data.List using (List; []; _∷_; _∷ʳ_; _++_; foldl; foldr; map; filterᵇ; concat; reverse)
 open import Data.List.Properties using (++-identityˡ; ++-identityʳ)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.List.Relation.Unary.All using (All; []; _∷_) renaming (map to map-all)
@@ -176,16 +176,14 @@ module Impose (AtomSet : 𝔸) where
   mutual
     infixr 5 _⊕_
     _⊕_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
-    l ⊕ []      = l
-    l ⊕ (h ∷ t) = (h ⊙ l) ⊕ t
+    l ⊕ r = foldl _⊙_ l r
 
-
-    infixr 5 _⊙_
-    _⊙_ : ∀ {i} → FSTA i → List (FSTA i) → List (FSTA i)
-    l ⊙ [] = l ∷ []
-    l ⊙ (h ∷ t) with l == h
-    ... | no _ = h ∷ (l ⊙ t)
-    a -< ca >- ⊙ (.a -< cb >- ∷ t) | yes refl = a -< ca ⊕ cb >- ∷ t
+    infixl 5 _⊙_
+    _⊙_ : ∀ {i} → List (FSTA i) → FSTA i → List (FSTA i)
+    [] ⊙ r = r ∷ []
+    (h ∷ t) ⊙ r with r == h
+    ... | no _ = h ∷ (t ⊙ r)
+    (a -< ca >- ∷ t) ⊙ .a -< cb >- | yes refl = a -< ca ⊕ cb >- ∷ t
 
   Unique : ∀ {i} → List (FSTA i) → Set₁
   Unique = AllPairs _≉_
@@ -203,29 +201,29 @@ module Impose (AtomSet : 𝔸) where
       → AllWellFormed rs
       → AllWellFormed (ls ⊕ rs)
     ⊕-wf ls-wf ([] , []) = ls-wf
-    ⊕-wf ls-wf (_ ∷ u-rs , du-r ∷ du-rs) = ⊕-wf (⊙-wf du-r ls-wf) (u-rs , du-rs)
+    ⊕-wf ls-wf (_ ∷ u-rs , du-r ∷ du-rs) = ⊕-wf (⊙-wf ls-wf du-r) (u-rs , du-rs)
 
-    ⊙-wf : ∀ {i} {l : FSTA i} {r : List (FSTA i)}
-      → WellFormed l
-      → AllWellFormed r
+    ⊙-wf : ∀ {i} {l : List (FSTA i)} {r : FSTA i}
+      → AllWellFormed l
+      → WellFormed r
       → AllWellFormed (l ⊙ r)
-    ⊙-wf du-l ([] , []) = [] ∷ [] , du-l ∷ []
-    ⊙-wf {_} {l} {h ∷ _} _ (_ ∷ _ , _ ∷ _) with l == h
-    ⊙-wf {_} {a -< ca >- } {(.a -< cb >-) ∷ t} wf-ca (  _ ∷ _   , wf-cb ∷    _) | yes refl with ⊕-wf wf-ca wf-cb
-    ⊙-wf                                       _     (u-h ∷ u-t ,     _ ∷ du-t) | yes refl | wf-ca⊕cb
+    ⊙-wf ([] , []) du-r = [] ∷ [] , du-r ∷ []
+    ⊙-wf {_} {h ∷ _} {r} (_ ∷ _ , _ ∷ _) _ with r == h
+    ⊙-wf {_} {(a -< ca >-) ∷ t} {.a -< cb >- } (  _ ∷ _   , wf-ca ∷    _) wf-cb | yes refl with ⊕-wf wf-ca wf-cb
+    ⊙-wf                                       (u-h ∷ u-t ,     _ ∷ du-t) _     | yes refl | wf-ca⊕cb
       = (map-∉ u-h) ∷ u-t , wf-ca⊕cb ∷ du-t
-    ⊙-wf {_} {a -< ca >- } {b -< cb >- ∷ t} du-l (u-h ∷ u-t , du-h ∷ du-t) | no _ with ⊙-wf du-l (u-t , du-t)
-    ⊙-wf {_} {a -< ca >- } {b -< cb >- ∷ t} du-l (u-h ∷ u-t , du-h ∷ du-t) | no a≢b | u-rec , du-rec
+    ⊙-wf {_} {a -< ca >- ∷ t} {b -< cb >- } (u-h ∷ u-t , du-h ∷ du-t) du-r | no _ with ⊙-wf (u-t , du-t) du-r
+    ⊙-wf {_} {a -< ca >- ∷ t} {b -< cb >- } (u-h ∷ u-t , du-h ∷ du-t) du-r | no a≢b | u-rec , du-rec
       = ind a≢b u-h ∷ u-rec , du-h ∷ du-rec
       where
-        ind :  ∀ {i} {b a} {cb ca : List (FSTA i)} {t : List (FSTA (↑ i))}
+        ind :  ∀ {i} {a b} {ca cb : List (FSTA i)} {t : List (FSTA (↑ i))}
           → ¬ (a ≡ b)
           → b -< cb >- ∉ t
-          → b -< cb >- ∉ ((a -< ca >-) ⊙ t)
+          → b -< cb >- ∉ (t ⊙ (a -< ca >-))
         ind {t = []} a≢b b∉t = (λ b≡a → a≢b (Eq.sym b≡a)) ∷ []
-        ind {_} {_} {a} {_}  {ca} {t ∷ ts} a≢b b∉t with (a -< ca >-) == t
-        ind {_} {_} {a} {cb} {ca} {(.a -< ct >-) ∷ ts} a≢b (  _ ∷ b∉ts) | yes refl = (λ b≡a → a≢b (Eq.sym b≡a)) ∷ b∉ts
-        ind {_} {_} {a} {cb} {ca} {( t -< ct >-) ∷ ts} a≢b (b≢t ∷ b∉ts) | no   a≢t = b≢t ∷ (ind a≢b b∉ts)
+        ind {_} {a} {_} {ca} {_}  {t ∷ ts} a≢b b∉t with (a -< ca >-) == t
+        ind {_} {a} {_} {ca} {cb} {(.a -< ct >-) ∷ ts} a≢b (  _ ∷ b∉ts) | yes refl = (λ b≡a → a≢b (Eq.sym b≡a)) ∷ b∉ts
+        ind {_} {a} {_} {ca} {cb} {( t -< ct >-) ∷ ts} a≢b (b≢t ∷ b∉ts) | no   a≢t = b≢t ∷ (ind a≢b b∉ts)
 
   mutual
     WellFormed-deterministic : ∀ {x : FSTA ∞}
@@ -250,7 +248,7 @@ module Impose (AtomSet : 𝔸) where
 
   ⊙-stranger : ∀ {i} (l : FSTA i) (rs : List (FSTA i))
     → l ∉ rs
-    → l ⊙ rs ≡ rs ∷ʳ l
+    → rs ⊙ l ≡ rs ∷ʳ l
   ⊙-stranger l [] _ = refl
   ⊙-stranger l (r ∷ rs) (l≢r ∷ l∉rs) with l == r -- TODO: Is there an easier way to tell Agda that we already know l ≢ r?
   ... | yes l≡r = ⊥-elim (l≢r l≡r)
@@ -262,9 +260,9 @@ module Impose (AtomSet : 𝔸) where
     → ls ⊕ rs ≡ ls ++ rs
   ⊕-strangers ls [] _ _ rewrite ++-identityʳ ls = refl
   ⊕-strangers ls (r ∷ rs) (r∉rs ∷ u-rs) (r∉ls ∷ d-ls-rs)
--- Goal: (r ⊙ ls) ⊕ rs ≡ ls ++ r ∷ rs
+-- Goal: (ls ⊙ r) ⊕ rs ≡ ls ++ r ∷ rs
     rewrite (Eq.sym (lem r rs ls))
--- Goal: (r ⊙ ls) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
+-- Goal: (ls ⊙ r) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
     rewrite ⊙-stranger r ls r∉ls
 -- Goal: (ls ++ r ∷ []) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
     = ⊕-strangers (ls ++ r ∷ []) rs u-rs (disjoint-shiftʳ r ls rs (disjoint-grow r ls rs d-ls-rs r∉rs))
