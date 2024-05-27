@@ -178,6 +178,24 @@ module Impose (AtomSet : 𝔸) where
     _⊕_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
     l ⊕ r = foldl _⊙_ l r
 
+    -- Implementation without `foldl` for the paper.
+    -- TODO inconsistent with paper, change the paper
+    _⊕'_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
+    l ⊕' [] = l
+    l ⊕' (r ∷ rs) = (l ⊙ r) ⊕' rs
+
+    ⊕≗⊕' : ∀ xs ys → xs ⊕ ys ≡ xs ⊕' ys
+    ⊕≗⊕' xs [] = refl
+    ⊕≗⊕' xs (y ∷ ys) =
+        xs ⊕ (y ∷ ys)
+      ≡⟨⟩
+        (xs ⊙ y) ⊕ ys
+      ≡⟨ ⊕≗⊕' (xs ⊙ y) ys ⟩
+        (xs ⊙ y) ⊕' (ys)
+      ≡⟨⟩
+        xs ⊕' (y ∷ ys)
+      ∎
+
     infixl 5 _⊙_
     _⊙_ : ∀ {i} → List (FSTA i) → FSTA i → List (FSTA i)
     [] ⊙ r = r ∷ []
