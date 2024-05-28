@@ -42,15 +42,10 @@ open import Framework.VariantMap using (VMap)
 import Construct.Artifact as At
 open import Framework.Properties.Completeness using (Incomplete)
 
+open import Util.List using (++-tail)
+
 Conf : Set
 Conf = F → Bool
-
-module TODO-MOVE-TO-AUX-OR-USE-STL where
-  lem : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
-    → (xs ++ y ∷ []) ++ ys ≡ (xs ++ (y ∷ ys))
-  lem y ys [] = refl
-  lem y ys (x ∷ xs) = Eq.cong (x ∷_) (lem y ys xs)
-open TODO-MOVE-TO-AUX-OR-USE-STL
 
 FST : Size → 𝔼
 FST i = Rose i
@@ -294,7 +289,7 @@ module Impose (AtomSet : 𝔸) where
   ⊕-strangers ls [] _ _ rewrite ++-identityʳ ls = refl
   ⊕-strangers ls (r ∷ rs) (r∉rs ∷ u-rs) (r∉ls ∷ d-ls-rs)
 -- Goal: (ls ⊙ r) ⊕ rs ≡ ls ++ r ∷ rs
-    rewrite (Eq.sym (lem r rs ls))
+    rewrite (Eq.sym (++-tail r rs ls))
 -- Goal: (ls ⊙ r) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
     rewrite ⊙-stranger r ls r∉ls
 -- Goal: (ls ++ r ∷ []) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
