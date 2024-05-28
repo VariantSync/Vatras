@@ -42,6 +42,7 @@ open import Framework.VariantMap using (VMap)
 import Construct.Artifact as At
 open import Framework.Properties.Completeness using (Incomplete)
 
+open import Util.Function using (cong-app₂)
 open import Util.List using (++-tail)
 
 Conf : Set
@@ -358,13 +359,6 @@ module Impose (AtomSet : 𝔸) where
 
   ⊛-all : List FSF → FSF
   ⊛-all = foldr _⊛_ 𝟘
-
-  cong-app₂ : ∀ {ℓ} {A C : Set ℓ} {T : A → Set ℓ} {x y : A} {tx : T x} {ty : T y}
-    → (f : (a : A) → T a → C)
-    → x ≡ y
-    → (∀ (a : A) (t u : T a) → t ≡ u)
-    → f x tx ≡ f y ty
-  cong-app₂ {y = y} {tx = tx} {ty = ty} f refl T-cong = Eq.cong (f y) (T-cong y tx ty)
 
   l-id : LeftIdentity _≡_ 𝟘 _⊛_
   l-id (ls ⊚ (u-ls , du-ls)) = cong-app₂ _⊚_ (⊕-idˡ ls u-ls) AllWellFormed-deterministic
