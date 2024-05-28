@@ -422,10 +422,20 @@ module Impose (AtomSet : 𝔸) where
   r-id : RightIdentity _≡_ 𝟘 _⊛_
   r-id (xs ⊚ (u-xs , ur-xs)) = refl
 
+  -- A predicate stating that a `P` is only true once in a list.
+  -- In contrast to `Any`, `Once` requires a proof that `P` is false for all
+  -- other elements in the list.
   data Once {A : Set₁} (P : A → Set) : List A → Set₁ where
     here  : {x : A} → {xs : List A} →    P x →  All (¬_ ∘ P) xs → Once P (x ∷ xs)
     there : {x : A} → {xs : List A} → ¬ (P x) → Once      P  xs → Once P (x ∷ xs)
 
+  -- Decides wether the list `xs` contains the element `y`.
+  -- Containment is checked using `==`
+  -- (i.e., only the root artifact is checked, all children are ignored).
+  --
+  -- The returned predicate, in case that `y` is found in `xs`, is stronger than just containment (i.e., `Any (y ≈_)`).
+  -- This stronger proposition is required for some proofs and
+  -- is supported by the uniqueness constraint
   contains? : ∀ {i : Size} (xs : List (FSTA i)) (y : FSTA i)
     → Unique xs
     → y ∉ xs ⊎ Once (y ≈_) xs
