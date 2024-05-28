@@ -9,7 +9,6 @@ We formalized the language, its semantics, and the typing to disallow duplicate 
 module Lang.FST (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.Fin using (zero; suc)
 open import Data.List using (List; []; _∷_; _∷ʳ_; _++_; foldl; foldr; map; filterᵇ; concat; reverse)
 open import Data.List.Properties as List using (++-identityˡ; ++-identityʳ)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; there)
@@ -17,11 +16,9 @@ import Data.List.Relation.Unary.Any.Properties as Any
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_) renaming (map to map-all)
 import Data.List.Relation.Unary.All.Properties as All
 open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_; head)
-open import Data.Nat as ℕ using (ℕ; zero; suc)
 open import Data.Product using (Σ; ∃-syntax; ∄-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Unit using (tt)
 open import Function using (_∘_)
 open import Level using (0ℓ)
 open import Size using (Size; ↑_; ∞)
@@ -29,7 +26,7 @@ open import Size using (Size; ↑_; ∞)
 open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂)
 
 open import Relation.Nullary.Negation using (¬_)
-open import Relation.Nullary.Decidable using (yes; no; _because_; False)
+open import Relation.Nullary.Decidable using (yes; no)
 open import Relation.Binary using (Decidable; DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
@@ -38,9 +35,6 @@ open import Framework.Annotation.Name using (Name)
 open import Framework.Variants using (Rose; _-<_>-; rose-leaf; children-equality)
 open import Framework.Composition.FeatureAlgebra
 open import Framework.VariabilityLanguage
-open import Framework.VariantMap using (VMap)
-import Construct.Artifact as At
-open import Framework.Properties.Completeness using (Incomplete)
 
 open import Util.Function using (cong-app₂)
 open import Util.List using (++-tail)
@@ -780,6 +774,11 @@ FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
 
 
 module IncompleteOnRose where
+  open import Data.Fin using (zero; suc)
+  open import Data.Nat as ℕ using (ℕ; zero; suc)
+  open import Framework.VariantMap using (VMap)
+  open import Framework.Properties.Completeness using (Incomplete)
+
   variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
   variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
 
