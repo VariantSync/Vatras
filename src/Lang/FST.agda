@@ -65,6 +65,10 @@ induction {A} {B} f n = go n [] where
   go (a -< [] >-) bs = f a (reverse bs)
   go (a -< c ∷ cs >-) bs = go (a -< cs >-) (go c [] ∷ bs)
 
+{-|
+Equality relation that determines when to FST nodes
+should be composed: Exactly if their atoms are equal.
+-}
 infix 15 _≈_
 _≈_ : ∀ {A i} → Rel (FST i A) 0ℓ
 (a -< _ >-) ≈ (b -< _ >-) = a ≡ b
@@ -92,6 +96,7 @@ a ≉ b = ¬ (a ≈ b)
 ≉-ignores-children a₁≈a₂ b₁≈b₂ a₁≉b₁ a₂≈b₂ = a₁≉b₁ (≈-trans a₁≈a₂ (≈-trans a₂≈b₂ (≈-sym b₁≈b₂)))
 
 -- TODO use standard library
+-- Predicates for list containment.
 infix 15 _∈_
 _∈_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∈ xs = Any (x ≈_) xs
@@ -100,6 +105,9 @@ infix 15 _∉_
 _∉_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∉ xs = All (x ≉_) xs
 
+{-|
+xs ⊑ ys iff all elements in xs occur (somewhere) in ys
+-}
 _⊑_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=
 xs ⊑ ys = All (_∈ ys) xs
 
@@ -199,8 +207,14 @@ module Impose (AtomSet : 𝔸) where
     _⊕_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
     l ⊕ r = foldl _⊙_ l r
 
-    -- Implementation without `foldl` for the paper.
-    -- TODO inconsistent with paper, change the paper
+    {-|
+    The following is the definition of ⊕ as written in the paper.
+    In fact, this definition is just a foldl, which we hid in the paper
+    for easier reading.
+    For our definition and proofs, we use the foldl formulation (see above)
+    and prove that both definitions are equivalent (below).
+    TODO: inconsistent with paper, change the paper
+    -}
     _⊕'_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
     l ⊕' [] = l
     l ⊕' (r ∷ rs) = (l ⊙ r) ⊕' rs
@@ -217,6 +231,7 @@ module Impose (AtomSet : 𝔸) where
         xs ⊕' (y ∷ ys)
       ∎
 
+    -- TODO: inconsistent with paper, change the paper
     infixl 5 _⊙_
     _⊙_ : ∀ {i} → List (FSTA i) → FSTA i → List (FSTA i)
     [] ⊙ r = r ∷ []
@@ -228,9 +243,17 @@ module Impose (AtomSet : 𝔸) where
   Unique = AllPairs _≉_
 
   mutual
+    {-|
+    An FST is considered well-formed if its children list is well-formed.
+    -}
     WellFormed : ∀ {i} → FSTA i → Set₁
     WellFormed (_ -< cs >-) = AllWellFormed cs
 
+    {-|
+    A list of FSTs is well-formed if
+    - there are no duplicate atoms among the FSTs in the list,
+    - and all FSTs are well-formed
+    -}
     AllWellFormed : ∀ {i} → List (FSTA i) → Set₁
     AllWellFormed cs = Unique cs × All WellFormed cs
 
@@ -299,11 +322,11 @@ module Impose (AtomSet : 𝔸) where
     → ls ⊕ rs ≡ ls ++ rs
   ⊕-strangers ls [] _ _ rewrite ++-identityʳ ls = refl
   ⊕-strangers ls (r ∷ rs) (r∉rs ∷ u-rs) (r∉ls ∷ d-ls-rs)
--- Goal: (ls ⊙ r) ⊕ rs ≡ ls ++ r ∷ rs
+    -- Goal: (ls ⊙ r) ⊕ rs ≡ ls ++ r ∷ rs
     rewrite (Eq.sym (++-tail r rs ls))
--- Goal: (ls ⊙ r) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
+    -- Goal: (ls ⊙ r) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
     rewrite ⊙-stranger r ls r∉ls
--- Goal: (ls ++ r ∷ []) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
+    -- Goal: (ls ++ r ∷ []) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
     = ⊕-strangers (ls ++ r ∷ []) rs u-rs (disjoint-shiftʳ r ls rs (disjoint-grow r ls rs d-ls-rs r∉rs))
 
   ⊕-idˡ :
@@ -312,7 +335,12 @@ module Impose (AtomSet : 𝔸) where
     → [] ⊕ rs ≡ rs
   ⊕-idˡ rs u-rs = ⊕-strangers [] rs u-rs (disjoint-[]ʳ rs)
 
-  -- Feature Structure Forest
+  {-|
+  A Feature Structure Forest (FSF) consists
+  of a well-formed list of FSTs.
+  Each FSF will represent one feature in
+  a product line.
+  -}
   record FSF : Set₁ where
     constructor _⊚_
     field
@@ -323,13 +351,13 @@ module Impose (AtomSet : 𝔸) where
   forget-uniqueness : FSF → List (FSTA ∞)
   forget-uniqueness = trees
 
-  {-
-  A feature is a named feature structure tree.
+  {-|
+  A feature is a named feature structure forest.
   All features in a product line are required to have
   the very same root node, otherwise they could not be
   imposed.
   To ensure this constraint by design, this root node is
-  part of the SPL definition and not the feature.
+  part of the SPL definition and not the features.
   Hence, a feature is a rootless tree: It holds a list of trees,
   which denote the children of the common root.
   -}
@@ -341,6 +369,10 @@ module Impose (AtomSet : 𝔸) where
       impl : FSF
   open Feature public
 
+  {-|
+  SPL denotes the syntax of the variability language
+  for FST-based feature composition.
+  -}
   record SPL : Set₁ where
     constructor _◀_
     field
@@ -363,6 +395,20 @@ module Impose (AtomSet : 𝔸) where
   𝟘 : FSF
   𝟘 = [] ⊚ ([] , [])
 
+  {-|
+  Feature composition that applies
+  ⊕ for lists of FSTS
+  to FSFs.
+
+  Note: ⊛ is not commutative because
+        ⊕ is not commutative because
+        the order in which children appear below their parents is swapped.
+        Example:
+        X :: a -< b >-
+        Y :: a -< c >-
+        X ⊕ Y = a -< b , c >-
+        Y ⊕ X = a -< c , b >-
+  -}
   infixr 7 _⊛_
   _⊛_ : FSF → FSF → FSF
   (l ⊚ u-l) ⊛ (r ⊚ u-r) = (l ⊕ r) ⊚ (⊕-wf u-l u-r)
@@ -612,15 +658,6 @@ module Impose (AtomSet : 𝔸) where
       (xs ⊕ ys) ⊕ (z ∷ zs)
     ∎
 
-  -- ⊛ is not commutative because
-  -- ⊕ is not commutative because
-  -- the order in which children appear below their parents
-  -- is swapped.
-  -- Example:
-  -- X :: a -< b >-
-  -- Y :: a -< c >-
-  -- X ⊕ Y = a -< b , c >-
-  -- Y ⊕ X = a -< c , b >-
   assoc : Associative _≡_ _⊛_
   assoc (x ⊚ x-wf) (y ⊚ y-wf) (z ⊚ z-wf) = cong-app₂ _⊚_ (Eq.sym (⊕-assoc x y z x-wf y-wf z-wf)) AllWellFormed-deterministic
 
@@ -760,7 +797,12 @@ module Impose (AtomSet : 𝔸) where
     where
       open import Data.Product using (_,_)
 
-  -- Semantics
+  {-|
+  Semantics of FST product lines.
+  Given a configuration c, select all FSFs whose feature is selected by c.
+  Then compose all those features.
+  Finally, drop the uniqueness-typing to obtain a single variant.
+  -}
   ⟦_⟧ : SPL → Conf → Rose ∞ AtomSet
   ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊛-all (select c features)) >-
 
@@ -788,7 +830,10 @@ FSTL-Sem {A} = Impose.⟦_⟧ A
 FSTL : VariabilityLanguage (Rose ∞)
 FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
 
-
+{-|
+Proof that FST SPLs are an incomplete variability language, when
+assuming rose trees as variant type.
+-}
 module IncompleteOnRose where
   open import Data.Fin using (zero; suc)
   open import Data.Nat as ℕ using (ℕ; zero; suc)
@@ -814,6 +859,13 @@ module IncompleteOnRose where
   FST-is-incomplete complete with complete variants-0-and-1
   FST-is-incomplete complete | e , e⊆vs , vs⊆e = does-not-describe-variants-0-and-1 e (e⊆vs zero) (e⊆vs (suc zero))
 
+{-|
+Theorem which states that FST SPLs can never
+describe a variant in which two neighboring nodes have the same atom.
+This theorem is a specialized form in which this variant is fixed to
+  a -< b, b >-
+for two any two atoms a, b.
+-}
 cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] FSTL-Sem e c ≡ a -< rose-leaf b ∷ rose-leaf b ∷ [] >-)
 cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
   ¬Unique b (Eq.subst (λ l → Unique l) (children-equality ⟦e⟧c≡neighbors) (lemma (⊛-all (select conf (features e)))))
