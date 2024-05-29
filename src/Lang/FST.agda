@@ -35,7 +35,7 @@ open import Function using (_∘_)
 open import Level using (0ℓ)
 open import Size using (Size; ↑_; ∞)
 
-open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂)
+open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂; Commutative)
 
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -828,3 +828,14 @@ cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
 
   ¬Unique : ∀ (a : atoms A) → ¬ Unique (a -< [] >- ∷ a -< [] >- ∷ [])
   ¬Unique a ((a≢a ∷ []) ∷ [] ∷ []) = a≢a refl
+
+module _ (A : 𝔸) (a₁ a₂ : atoms A) where
+  open Impose A
+
+  ¬comm : ¬ Commutative _≡_ _⊛_
+  ¬comm comm with comm ((a₁ -< rose-leaf a₁ ∷ [] >- ∷ []) ⊚ (([] ∷ []) , (([] ∷ [] , ([] , []) ∷ []) ∷ [])))
+                       ((a₁ -< rose-leaf a₂ ∷ [] >- ∷ []) ⊚ (([] ∷ []) , (([] ∷ [] , ([] , []) ∷ []) ∷ [])))
+  ¬comm comm | ()
+
+  FST-is-not-FeatureAlgebra2 : ¬ RightAdditive.FeatureAlgebra FSF _⊛_ 𝟘
+  FST-is-not-FeatureAlgebra2 faʳ = ¬comm (commutativity FSF _⊛_ 𝟘 FST-is-FeatureAlgebra faʳ)

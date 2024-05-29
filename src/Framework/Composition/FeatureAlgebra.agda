@@ -12,7 +12,7 @@ module Framework.Composition.FeatureAlgebra where
 open import Data.Product using (proj₁; proj₂; _×_; _,_; swap)
 open import Algebra.Structures using (IsMonoid; IsSemigroup; IsMagma)
 open import Algebra.Core using (Op₂)
-open import Algebra.Definitions using (Associative)
+open import Algebra.Definitions using (Associative; Commutative)
 open import Function using (flip; IsInverse; Inverseˡ; Inverseʳ)
 open import Relation.Binary using (Rel; Reflexive; Symmetric; Transitive; IsEquivalence; IsPreorder)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -304,6 +304,20 @@ module RightAdditive where
 
     quasi-commutativity : ∀ i₂ i₁ → i₂ ⊕ i₁ ~ i₁ ⊕ i₂
     quasi-commutativity i₂ i₁ = quasi-smaller i₂ i₁ , quasi-smaller i₁ i₂
+
+commutativity : ∀ {c} (I : Set c) (_⊕_ : Op₂ I) (𝟘 : I)
+  → LeftAdditive.FeatureAlgebra I _⊕_ 𝟘
+  → RightAdditive.FeatureAlgebra I _⊕_ 𝟘
+  → Commutative _≡_ _⊕_
+commutativity I _⊕_ 𝟘 faˡ faʳ a b =
+    a ⊕ b
+  ≡⟨ LeftAdditive.FeatureAlgebra.distant-idempotence faˡ a b ⟨
+    a ⊕ (b ⊕ a)
+  ≡⟨ RightAdditive.FeatureAlgebra.distant-idempotence faʳ b a ⟩
+    b ⊕ a
+  ∎
+  where
+  open Eq.≡-Reasoning
 
 open LeftAdditive.FeatureAlgebra
 open RightAdditive.FeatureAlgebra
