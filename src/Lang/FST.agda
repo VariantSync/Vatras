@@ -731,7 +731,7 @@ module Impose (AtomSet : 𝔸) where
   idem : ∀ (x y : FSF) → x ⊛ y ⊛ x ≡ x ⊛ y
   idem (x ⊚ x-wf) (y ⊚ y-wf) = cong-app₂ _⊚_ (⊕-idem x y x-wf y-wf) AllWellFormed-deterministic
 
-  FST-is-FeatureAlgebra : FeatureAlgebra FSF _⊛_ 𝟘
+  FST-is-FeatureAlgebra : LeftAdditive.FeatureAlgebra FSF _⊛_ 𝟘
   FST-is-FeatureAlgebra = record
     { monoid = record
       { isSemigroup = record
