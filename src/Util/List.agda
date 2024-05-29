@@ -7,7 +7,7 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
 open import Data.Nat.Properties using (m≤m+n)
-open import Data.List as List using (List; []; _∷_; lookup; foldr)
+open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
 open import Data.List.Properties using (map-id; length-++)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
 open import Data.Vec as Vec using (Vec; []; _∷_)
@@ -32,6 +32,11 @@ max = foldr _⊔_ zero
 
 ⁺++⁺-length-≤ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A) → List⁺.length xs ≤ List⁺.length (xs ⁺++⁺ ys)
 ⁺++⁺-length-≤ xs ys rewrite ⁺++⁺-length xs ys = m≤m+n (List⁺.length xs) (List⁺.length ys)
+
+++-tail : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
+  → (xs ++ y ∷ []) ++ ys ≡ xs ++ y ∷ ys
+++-tail y ys [] = refl
+++-tail y ys (x ∷ xs) = Eq.cong (x ∷_) (++-tail y ys xs)
 
 -- Do not touch this function. its definition is very fragile and just refactoring it can break proofs.
 find-or-last : ∀ {ℓ} {A : Set ℓ} → ℕ → List⁺ A → A
