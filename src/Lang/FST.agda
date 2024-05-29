@@ -5,18 +5,6 @@ open import Framework.Definitions
 {-
 This module formalizes feature structure trees.
 We formalized the language, its semantics, and the typing to disallow duplicate neighbors.
-
-Notes on axioms:
-This module assumes extensionality but for a single proof only.
-FSTs come with a typing that ensures that all direct children of a node
-have unique atoms. For proving left identity of FST composition,
-we must prove equality of two FSTs including their typing.
-While we can prove syntactic equality of the FSTs without problems,
-proving equality of the typings requires extensionality because
-typings are functions by definitions.
-To us, it is important only that a typing exists, not how it looks exactly,
-so introducing extensionality should be ok in this case.
-Moreover, typings should be unique anyway.
 -}
 module Lang.FST (F : 𝔽) where
 
@@ -111,25 +99,12 @@ xs ⋢ ys = Any (_∉ ys) xs
 Disjoint : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=n
 Disjoint xs ys = All (_∉ ys) xs
 
--- We open a module here to ensure that the extensionality axiom is used
--- only for this single proof.
-module _ where
-  open import Axioms.Extensionality using (extensionality)
-
-  -- identity of proofs
-  ≉-deterministic : ∀ {A} (x y : FST ∞ A)
-    → (p₁ : x ≉ y)
-    → (p₂ : x ≉ y)
-    → p₁ ≡ p₂
-  ≉-deterministic (a -< _ >-) (b -< _ >-) p₁ p₂ = extensionality λ where refl → refl
-
 ∉-deterministic : ∀ {A} {x : FST ∞ A} (ys : List (FST ∞ A))
   → (p₁ : x ∉ ys)
   → (p₂ : x ∉ ys)
   → p₁ ≡ p₂
 ∉-deterministic [] [] [] = refl
 ∉-deterministic {_} {x} (y ∷ ys) (x≉y₁ ∷ pa) (x≉y₂ ∷ pb)
-  rewrite ≉-deterministic x y x≉y₁ x≉y₂
   rewrite ∉-deterministic ys pa pb
   = refl
 
