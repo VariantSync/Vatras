@@ -516,15 +516,15 @@ module Impose (AtomSet : 𝔸) where
       foldl _⊙_ (xs ⊙ z) (y ∷ ys)
     ≡⟨⟩
       foldl _⊙_ ((xs ⊙ z) ⊙ y) ys
-    ≡⟨ Eq.cong (λ x → foldl _⊙_ x ys) (reorder-⊙ xs y z (≉-sym z≉y) z∈xs) ⟩
-      foldl _⊙_ ((xs ⊙ y) ⊙ z) ys
     ≡⟨⟩
-      foldl _⊙_ (xs ⊙ y) (z ∷ ys)
+      ((xs ⊙ z) ⊙ y) ⊕ ys
+    ≡⟨ Eq.cong (_⊕ ys) (reorder-⊙ xs y z (≉-sym z≉y) z∈xs) ⟩
+      ((xs ⊙ y) ⊙ z) ⊕ ys
+    ≡⟨⟩
+      (xs ⊙ y) ⊕ (z ∷ ys)
     ≡⟨ reorder-after-⊕ (xs ⊙ y) ys z (∈-⊙ˡ z xs y z∈xs) z∉ys ⟩
-      foldl _⊙_ xs (y ∷ (ys ⊙ z))
-    ≡⟨ Eq.cong (foldl _⊙_ xs) (compute-⊙-excludes y ys z z≉y) ⟨
-      foldl _⊙_ xs ((y ∷ ys) ⊙ z)
-    ≡⟨⟩
+      xs ⊕ (y ∷ (ys ⊙ z))
+    ≡⟨ Eq.cong (xs ⊕_) (compute-⊙-excludes y ys z z≉y) ⟨
       xs ⊕ ((y ∷ ys) ⊙ z)
     ∎
 
@@ -575,16 +575,20 @@ module Impose (AtomSet : 𝔸) where
       foldl _⊙_ xs (z -< cs₁ ⊕ cs₂ >- ∷ ys)
     ≡⟨⟩
       foldl _⊙_ (xs ⊙ (z -< cs₁ ⊕ cs₂ >-)) ys
+    ≡⟨⟩
+      (xs ⊙ (z -< cs₁ ⊕ cs₂ >-)) ⊕ ys
     ≡⟨ Eq.cong (λ x → foldl _⊙_ x ys) (⊙-⊕-distrib xs z cs₁ cs₂ xs-wf cs₁-wf z-wf) ⟩
-      foldl _⊙_ ((xs ⊙ z -< cs₁ >-) ⊙ (z -< cs₂ >-)) ys
+      ((xs ⊙ z -< cs₁ >-) ⊙ (z -< cs₂ >-)) ⊕ ys
     ≡⟨⟩
-      foldl _⊙_ (xs ⊙ z -< cs₁ >-) (z -< cs₂ >- ∷ ys)
+      (xs ⊙ z -< cs₁ >-) ⊕ (z -< cs₂ >- ∷ ys)
     ≡⟨ reorder-after-⊕ (xs ⊙ z -< cs₁ >-) ys (z -< cs₂ >-) (∈-⊙ʳ (z -< cs₂ >-) xs (z -< cs₁ >-) refl) z∉ys ⟩
-      foldl _⊙_ (xs ⊙ z -< cs₁ >-) (ys ⊙ z -< cs₂ >-)
+      (xs ⊙ z -< cs₁ >-) ⊕ (ys ⊙ z -< cs₂ >-)
     ≡⟨ ⊕-⊙-assoc-excludes (xs ⊙ z -< cs₁ >-) ys (z -< cs₂ >-) z∉ys ⟩
-      foldl _⊙_ (xs ⊙ z -< cs₁ >-) ys ⊙ (z -< cs₂ >-)
+      ((xs ⊙ z -< cs₁ >-) ⊕ ys) ⊙ (z -< cs₂ >-)
     ≡⟨⟩
-      foldl _⊙_ xs (z -< cs₁ >- ∷ ys) ⊙ (z -< cs₂ >-)
+      (foldl _⊙_ (xs ⊙ z -< cs₁ >-) ys) ⊙ (z -< cs₂ >-)
+    ≡⟨⟩
+      (foldl _⊙_ xs (z -< cs₁ >- ∷ ys)) ⊙ (z -< cs₂ >-)
     ≡⟨⟩
       (xs ⊕ (z -< cs₁ >- ∷ ys)) ⊙ (z -< cs₂ >-)
     ∎
@@ -612,15 +616,19 @@ module Impose (AtomSet : 𝔸) where
   ⊕-assoc xs ys (z ∷ zs) xs-wf ys-wf (_ ∷ zs-unique , z-wf ∷ zs-wf) =
       xs ⊕ (ys ⊕ (z ∷ zs))
     ≡⟨⟩
-      foldl _⊙_ xs (foldl _⊙_ ys (z ∷ zs))
+      xs ⊕ foldl _⊙_ ys (z ∷ zs)
     ≡⟨⟩
-      foldl _⊙_ xs (foldl _⊙_ (ys ⊙ z) zs)
+      xs ⊕ foldl _⊙_ (ys ⊙ z) zs
+    ≡⟨⟩
+      xs ⊕ ((ys ⊙ z) ⊕ zs)
     ≡⟨ ⊕-assoc xs (ys ⊙ z) zs xs-wf (⊙-wf ys-wf z-wf) (zs-unique , zs-wf) ⟩
-      foldl _⊙_ (foldl _⊙_ xs (ys ⊙ z)) zs
+      (xs ⊕ (ys ⊙ z)) ⊕ zs
     ≡⟨ Eq.cong (λ x → foldl _⊙_ x zs) (⊕-⊙-assoc xs ys z xs-wf ys-wf z-wf) ⟩
-      foldl _⊙_ (foldl _⊙_ xs ys ⊙ z) zs
+      ((xs ⊕ ys) ⊙ z) ⊕ zs
     ≡⟨⟩
-      foldl _⊙_ (foldl _⊙_ xs ys) (z ∷ zs)
+      foldl _⊙_ ((xs ⊕ ys) ⊙ z) zs
+    ≡⟨⟩
+      foldl _⊙_ (xs ⊕ ys) (z ∷ zs)
     ≡⟨⟩
       (xs ⊕ ys) ⊕ (z ∷ zs)
     ∎
@@ -697,18 +705,20 @@ module Impose (AtomSet : 𝔸) where
   ⊕-++-idem xs₁ (x ∷ xs₂) ys (xs-unique , xs-wf) ys-wf =
       (xs₁ ++ (x ∷ xs₂)) ⊕ (ys ⊕ (x ∷ xs₂))
     ≡⟨⟩
-      foldl _⊙_ (xs₁ ++ (x ∷ xs₂)) (foldl _⊙_ ys (x ∷ xs₂))
+      (xs₁ ++ (x ∷ xs₂)) ⊕ foldl _⊙_ ys (x ∷ xs₂)
+    ≡⟨⟩
+      (xs₁ ++ (x ∷ xs₂)) ⊕ foldl _⊙_ (ys ⊙ x) xs₂
     ≡⟨⟩
       foldl _⊙_ (xs₁ ++ (x ∷ xs₂)) (foldl _⊙_ (ys ⊙ x) xs₂)
-    ≡⟨ Eq.cong (λ p → foldl _⊙_ p (foldl _⊙_ (ys ⊙ x) xs₂)) (List.∷ʳ-++ xs₁ x xs₂) ⟨
-      foldl _⊙_ ((xs₁ ∷ʳ x) ++ xs₂) (foldl _⊙_ (ys ⊙ x) xs₂)
-    ≡⟨ ⊕-++-idem (xs₁ ∷ʳ x) xs₂ (ys ⊙ x) (Eq.subst AllWellFormed (Eq.sym (List.∷ʳ-++ xs₁ x xs₂)) (xs-unique , xs-wf)) (⊙-wf ys-wf (All.head (All.++⁻ʳ xs₁ xs-wf))) ⟩
-      foldl _⊙_ ((xs₁ ∷ʳ x) ++ xs₂) (ys ⊙ x)
-    ≡⟨ Eq.cong (λ p → foldl _⊙_ p (ys ⊙ x)) (List.∷ʳ-++ xs₁ x xs₂) ⟩
-      foldl _⊙_ (xs₁ ++ (x ∷ xs₂)) (ys ⊙ x)
-    ≡⟨ ⊙-distant-idempotence (xs₁ ++ (x ∷ xs₂)) ys x (xs-unique , xs-wf) ys-wf (All.head (All.++⁻ʳ xs₁ xs-wf)) (Any.++⁺ʳ xs₁ (here refl)) ⟩
-      foldl _⊙_ (xs₁ ++ (x ∷ xs₂)) ys
     ≡⟨⟩
+      (xs₁ ++ (x ∷ xs₂)) ⊕ ((ys ⊙ x) ⊕ xs₂)
+    ≡⟨ Eq.cong (_⊕ ((ys ⊙ x) ⊕ xs₂)) (List.∷ʳ-++ xs₁ x xs₂) ⟨
+      ((xs₁ ∷ʳ x) ++ xs₂) ⊕ ((ys ⊙ x) ⊕ xs₂)
+    ≡⟨ ⊕-++-idem (xs₁ ∷ʳ x) xs₂ (ys ⊙ x) (Eq.subst AllWellFormed (Eq.sym (List.∷ʳ-++ xs₁ x xs₂)) (xs-unique , xs-wf)) (⊙-wf ys-wf (All.head (All.++⁻ʳ xs₁ xs-wf))) ⟩
+      ((xs₁ ∷ʳ x) ++ xs₂) ⊕ (ys ⊙ x)
+    ≡⟨ Eq.cong (_⊕ (ys ⊙ x)) (List.∷ʳ-++ xs₁ x xs₂) ⟩
+      (xs₁ ++ (x ∷ xs₂)) ⊕ (ys ⊙ x)
+    ≡⟨ ⊙-distant-idempotence (xs₁ ++ (x ∷ xs₂)) ys x (xs-unique , xs-wf) ys-wf (All.head (All.++⁻ʳ xs₁ xs-wf)) (Any.++⁺ʳ xs₁ (here refl)) ⟩
       (xs₁ ++ (x ∷ xs₂)) ⊕ ys
     ∎
 
