@@ -528,68 +528,31 @@ module Impose (AtomSet : 𝔸) where
       xs ⊕ ((y ∷ ys) ⊙ z)
     ∎
 
-  ⊙-⊕-distrib-excludes : ∀ {i : Size} (xs : List (FSTA (↑ i))) (y : A) (cs₁ cs₂ : List (FSTA i))
-    → (y -< cs₁ ⊕ cs₂ >-) ∉ xs
-    → xs ⊙ (y -< cs₁ ⊕ cs₂ >-) ≡ (xs ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
-  ⊙-⊕-distrib-excludes [] y cs₁ cs₂ y∉xs with (y -< cs₁ >-) == (y -< cs₂ >-)
-  ⊙-⊕-distrib-excludes [] y cs₁ cs₂ y∉xs | yes refl = refl
-  ⊙-⊕-distrib-excludes [] y cs₁ cs₂ y∉xs | no y≉y = ⊥-elim (y≉y refl)
-  ⊙-⊕-distrib-excludes (a ∷ xs) y cs₁ cs₂ (y≉a ∷ y∉xs) with (y -< cs₁ ⊕ cs₂ >-) == a
-  ⊙-⊕-distrib-excludes (a ∷ xs) y cs₁ cs₂ (y≉a ∷ y∉xs) | yes y≈a = ⊥-elim (y≉a y≈a)
-  ⊙-⊕-distrib-excludes (a ∷ xs) y cs₁ cs₂ (y≉a ∷ y∉xs) | no _ =
-      a ∷ (xs ⊙ (y -< cs₁ ⊕ cs₂ >-))
-    ≡⟨ Eq.cong₂ _∷_ refl (⊙-⊕-distrib-excludes xs y cs₁ cs₂ y∉xs) ⟩
-      a ∷ (xs ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-))
-    ≡⟨ compute-⊙-excludes a (xs ⊙ y -< cs₁ >-) (y -< cs₂ >-) (≉-ignores-children refl ≈-refl y≉a) ⟨
-      (a ∷ (xs ⊙ (y -< cs₁ >-))) ⊙ (y -< cs₂ >-)
-    ≡⟨ Eq.cong₂ _⊙_ (compute-⊙-excludes a xs (y -< cs₁ >-) (≉-ignores-children refl ≈-refl y≉a)) refl ⟨
-      (a ∷ xs) ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-)
-    ∎
-
   ⊕-assoc : ∀ {i : Size} (xs ys zs : List (FSTA i))
     → AllWellFormed xs
     → AllWellFormed ys
     → AllWellFormed zs
     → xs ⊕ (ys ⊕ zs) ≡ (xs ⊕ ys) ⊕ zs
 
-  ⊙-⊕-distrib-includes : ∀ {i : Size} (xs : List (FSTA (↑ i))) (y : A) (cs₁ cs₂ : List (FSTA i))
-    → AllWellFormed xs
-    → AllWellFormed cs₁
-    → AllWellFormed cs₂
-    → Once (y -< cs₁ ⊕ cs₂ >- ≈_) xs
-    → xs ⊙ (y -< cs₁ ⊕ cs₂ >-) ≡ (xs ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
-  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (here y≈x y∉xs) with (y -< cs₁ ⊕ cs₂ >-) == x
-  ⊙-⊕-distrib-includes (.y -< cs >- ∷ xs) y cs₁ cs₂ (_ , cs-wf ∷ _) cs₁-wf cs₂-wf (here y≈x y∉xs) | yes refl =
-      y -< cs ⊕ (cs₁ ⊕ cs₂) >- ∷ xs
-    ≡⟨ Eq.cong₂ _∷_ (Eq.cong₂ _-<_>- refl (⊕-assoc cs cs₁ cs₂ cs-wf cs₁-wf cs₂-wf)) refl ⟩
-      y -< (cs ⊕ cs₁) ⊕ cs₂ >- ∷ xs
-    ≡⟨ compute-⊙-includes y (cs ⊕ cs₁) cs₂ xs ⟨
-      (y -< cs ⊕ cs₁ >- ∷ xs) ⊙ (y -< cs₂ >-)
-    ≡⟨ Eq.cong₂ _⊙_ (compute-⊙-includes y cs cs₁ xs) refl ⟨
-      ((y -< cs >- ∷ xs) ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
-    ∎
-  ⊙-⊕-distrib-includes (x -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (here y≈x y∉xs) | no y≉x = ⊥-elim (y≉x y≈x)
-  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (there y≉x y∈x) with (y -< cs₁ ⊕ cs₂ >-) == x
-  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf (there y≉x y∈x) | yes y≈x = ⊥-elim (y≉x y≈x)
-  ⊙-⊕-distrib-includes (x ∷ xs) y cs₁ cs₂ (_ ∷ xs-unique , _ ∷ xs-wf) cs₁-wf cs₂-wf (there y≉x y∈x) | no _ =
-      x ∷ (xs ⊙ (y -< cs₁ ⊕ cs₂ >-))
-    ≡⟨ Eq.cong₂ _∷_ refl (⊙-⊕-distrib-includes xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf y∈x) ⟩
-      x ∷ (xs ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-))
-    ≡⟨ compute-⊙-excludes x (xs ⊙ y -< cs₁ >-) (y -< cs₂ >-) (≉-ignores-children refl ≈-refl y≉x) ⟨
-      (x ∷ (xs ⊙ (y -< cs₁ >-))) ⊙ (y -< cs₂ >-)
-    ≡⟨ Eq.cong₂ _⊙_ (compute-⊙-excludes x xs (y -< cs₁ >-) (≉-ignores-children refl ≈-refl y≉x)) refl ⟨
-      (x ∷ xs) ⊙ (y -< cs₁ >-) ⊙ (y -< cs₂ >-)
-    ∎
-
   ⊙-⊕-distrib : {i : Size} (xs : List (FSTA (↑ i))) (y : A) (cs₁ cs₂ : List (FSTA i))
     → AllWellFormed xs
     → AllWellFormed cs₁
     → AllWellFormed cs₂
     → xs ⊙ (y -< cs₁ ⊕ cs₂ >-) ≡ (xs ⊙ (y -< cs₁ >-)) ⊙ (y -< cs₂ >-)
-  ⊙-⊕-distrib xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf =
-    Sum.[ ⊙-⊕-distrib-excludes xs y cs₁ cs₂
-        , ⊙-⊕-distrib-includes xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf
-        ]′ (contains? xs (y -< cs₁ ⊕ cs₂ >-) xs-unique)
+  ⊙-⊕-distrib [] y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf with y ≟ y
+  ⊙-⊕-distrib [] y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | yes refl = refl
+  ⊙-⊕-distrib [] y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | no y≢y = ⊥-elim (y≢y refl)
+  ⊙-⊕-distrib (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf with (y -< cs₁ ⊕ cs₂ >-) == x
+  ⊙-⊕-distrib (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | no y≉x with (y -< cs₁ >-) == x
+  ⊙-⊕-distrib (x ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | no y≉x | no _ with (y -< cs₂ >-) == x
+  ⊙-⊕-distrib (x ∷ xs) y cs₁ cs₂ (_ ∷ xs-unique , _ ∷ xs-wf) cs₁-wf cs₂-wf | no y≉x | no _ | no _ = Eq.cong (x ∷_) (⊙-⊕-distrib xs y cs₁ cs₂ (xs-unique , xs-wf) cs₁-wf cs₂-wf)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | no y≉x | no _ | yes refl = ⊥-elim (y≉x refl)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | no y≉x | yes refl = ⊥-elim (y≉x refl)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | yes refl with (y -< cs₁ >-) == (y -< cs >-)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | yes refl | no y≉y = ⊥-elim (y≉y refl)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | yes refl | yes refl with (y -< cs₂ >-) == (y -< cs >-)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ xs-wf cs₁-wf cs₂-wf | yes refl | yes refl | no y≉y = ⊥-elim (y≉y refl)
+  ⊙-⊕-distrib (.y -< cs >- ∷ xs) y cs₁ cs₂ (_ ∷ _ , cs-wf ∷ _) cs₁-wf cs₂-wf | yes refl | yes refl | yes refl = Eq.cong (λ p → y -< p >- ∷ xs) (⊕-assoc cs cs₁ cs₂ cs-wf cs₁-wf cs₂-wf)
 
   ⊕-⊙-assoc-excludes : ∀ {i : Size} (xs ys : List (FSTA i)) (z : (FSTA i))
     → z ∉ ys
@@ -715,42 +678,16 @@ module Impose (AtomSet : 𝔸) where
     ∎
   ⊙-⊕-distrib-idem (.z -< _ >- ∷ xs) z cs₁ cs₂ xs-unique cs₁-wf cs₂-wf (here refl) | no z≢z = ⊥-elim (z≢z refl)
 
-  ⊙-distant-idempotence-excludes : ∀ {i : Size} (xs ys : List (FSTA i)) (z : FSTA i)
-    → AllWellFormed xs
-    → AllWellFormed ys
-    → WellFormed z
-    → Any (z ≡_) xs
-    → z ∉ ys
-    → xs ⊕ (ys ⊙ z) ≡ xs ⊕ ys
-  ⊙-distant-idempotence-excludes xs [] z (xs-unique , _) ys-wf z-wf z∈xs [] = ⊙-idem xs z xs-unique z-wf z∈xs
-  ⊙-distant-idempotence-excludes xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs (z≉y ∷ z∉ys) with z == y
-  ⊙-distant-idempotence-excludes xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs (z≉y ∷ z∉ys) | yes z≈y = ⊥-elim (z≉y z≈y)
-  ⊙-distant-idempotence-excludes xs (y ∷ ys) z xs-wf (_ ∷ ys-unique , y-wf ∷ ys-wf) z-wf z∈xs (z≉y ∷ z∉ys) | no _ = ⊙-distant-idempotence-excludes (xs ⊙ y) ys z (⊙-wf xs-wf y-wf) (ys-unique , ys-wf) z-wf (∈-⊙ˡ-exact z xs y z≉y z∈xs) z∉ys
-
-  ⊙-distant-idempotence-includes : ∀ {i : Size} (xs ys : List (FSTA i)) (z : FSTA i)
-    → AllWellFormed xs
-    → AllWellFormed ys
-    → WellFormed z
-    → Any (z ≡_) xs
-    → Once (z ≈_) ys
-    → xs ⊕ (ys ⊙ z) ≡ xs ⊕ ys
-  ⊙-distant-idempotence-includes xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs (here z≈y z∉ys) with z == y
-  ⊙-distant-idempotence-includes xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs (here z≈y z∉ys) | no z≉y = ⊥-elim (z≉y z≈y)
-  ⊙-distant-idempotence-includes xs ((.z -< cs₁ >-) ∷ ys) (z -< cs₂ >-) (xs-unique , _) (_ , cs₁-wf ∷ _) cs₂-wf z∈xs (here z≈y z∉ys) | yes refl = Eq.cong (λ x → foldl _⊙_ x ys) (⊙-⊕-distrib-idem xs z cs₁ cs₂ xs-unique cs₁-wf cs₂-wf z∈xs)
-  ⊙-distant-idempotence-includes xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs (there z≉y z∈ys) with z == y
-  ⊙-distant-idempotence-includes xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs (there z≉y z∈ys) | yes z≈y = ⊥-elim (z≉y z≈y)
-  ⊙-distant-idempotence-includes xs (y ∷ ys) z xs-wf (_ ∷ ys-unique , y-wf ∷ ys-wf) z-wf z∈xs (there z≉y z∈ys) | no z≉y = ⊙-distant-idempotence-includes (xs ⊙ y) ys z (⊙-wf xs-wf y-wf) (ys-unique , ys-wf) z-wf (∈-⊙ˡ-exact z xs y z≉y z∈xs) z∈ys
-
   ⊙-distant-idempotence : ∀ {i : Size} (xs ys : List (FSTA i)) (z : FSTA i)
     → AllWellFormed xs
     → AllWellFormed ys
     → WellFormed z
     → Any (z ≡_) xs
     → xs ⊕ (ys ⊙ z) ≡ xs ⊕ ys
-  ⊙-distant-idempotence xs ys z xs-wf (ys-unique , ys-wf) z-wf z∈xs =
-    Sum.[ ⊙-distant-idempotence-excludes xs ys z xs-wf (ys-unique , ys-wf) z-wf z∈xs
-        , ⊙-distant-idempotence-includes xs ys z xs-wf (ys-unique , ys-wf) z-wf z∈xs
-        ]′ (contains? ys z ys-unique)
+  ⊙-distant-idempotence xs [] z (xs-unique , _) ys-wf z-wf z∈xs = ⊙-idem xs z xs-unique z-wf z∈xs
+  ⊙-distant-idempotence xs (y ∷ ys) z xs-wf ys-wf z-wf z∈xs with z == y
+  ⊙-distant-idempotence xs (y ∷ ys) z xs-wf (_ ∷ ys-unique , y-wf ∷ ys-wf) z-wf z∈xs | no z≉y = ⊙-distant-idempotence (xs ⊙ y) ys z (⊙-wf xs-wf y-wf) (ys-unique , ys-wf) z-wf (∈-⊙ˡ-exact z xs y z≉y z∈xs)
+  ⊙-distant-idempotence xs (.z -< cs₁ >- ∷ ys) (z -< cs₂ >-) (xs-unique , _) (_ , y-wf ∷ _) z-wf z∈xs | yes refl = Eq.cong (_⊕ ys) (⊙-⊕-distrib-idem xs z cs₁ cs₂ xs-unique y-wf z-wf z∈xs)
 
   ⊕-++-idem : ∀ {i : Size} (xs₁ xs₂ ys : List (FSTA i))
     → AllWellFormed (xs₁ ++ xs₂)
