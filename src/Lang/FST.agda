@@ -59,12 +59,6 @@ FST i = Rose i
 
 fst-leaf = rose-leaf
 
-induction : ∀ {A : 𝔸} {B : Set} → (atoms A → List B → B) → FST ∞ A → B
-induction {A} {B} f n = go n [] where
-  go : FST ∞ A → List B → B
-  go (a -< [] >-) bs = f a (reverse bs)
-  go (a -< c ∷ cs >-) bs = go (a -< cs >-) (go c [] ∷ bs)
-
 {-|
 Equality relation that determines when to FST nodes
 should be composed: Exactly if their atoms are equal.
@@ -821,12 +815,12 @@ module Impose (AtomSet : 𝔸) where
 
   module Show (show-F : F → String) (show-A : A → String) where
     mutual
-      show-FST : FSTA ∞ → Lines
-      show-FST = induction λ a children → do
+      show-FST : {i : Size} → FSTA i → Lines
+      show-FST (a -< cs >-) = do
         > show-A a
-        indent 2 (lines children)
+        indent 2 (lines (map show-FST cs))
 
-      show-FSF : List (FSTA ∞) → Lines
+      show-FSF : {i : Size} → List (FSTA i) → Lines
       show-FSF roots = lines (map show-FST roots)
 
       show-Feature : Feature → Lines
