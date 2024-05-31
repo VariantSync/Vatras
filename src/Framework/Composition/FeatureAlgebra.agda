@@ -17,6 +17,7 @@ If the position of the left is prioritized over the right one, we call it
                Also, see my comment below. It might help to better
                understand what x should be in a name left-x / right-x.
                Other name ideas: x-dominant, x-determined,, x-override.
+  @pmbittner: I like x-dominant the most out of the current ideas.
 -}
 module Framework.Composition.FeatureAlgebra where
 
@@ -54,9 +55,63 @@ module LeftAdditive where
       --                but
       --                  i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
       --                If you like to, we could discuss this next week.
+      -- @pmbittner: Regardless of the associativity, the leftmost occurence of
+      --             `i₁` is the same in either case. However, I agree that the
+      --             reasoning "has been introduced first" is wrong.
+      --             On that note: I think it would make sense to use left
+      --             associativity for LeftAdditive. It feels more intuitive in
+      --             this case and is also more efficient. 😄 (The intuitive
+      --             implementation traverses the right argument and inserts it
+      --             into the left argument. The other way around is harder to
+      --             implement.) In the end, it doesn't matter for us though,
+      --             because we have associativity.
+      --             A meeting next week sounds good to me.
+      --
+      --             A completely different thought I just had:
+      --             There is actually more than one way to implement
+      --             LeftDominant and RightDominant (now these names really
+      --             start to make sense) than just the `flip` one I implemented
+      --             below:
+      --             (For simplicity, I ignore children in the following
+      --             examples.)
+      --
+      --             1. LeftDominant (FST):
+      --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 1 ∷ 2 ∷ 3 ∷ 4 ∷ 5 ∷ 6 ∷ []
+      --
+      --             2. RightDominant (left→right FST):
+      --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 5 ∷ 6 ∷ 2 ∷ 1 ∷ 3 ∷ 4 ∷ []
+      --
+      --             3. alternative RightDominant:
+      --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 3 ∷ 4 ∷ 5 ∷ 6 ∷ 2 ∷ 1 ∷ []
+      --
+      --             4. alternative LeftDominant (right→left of the previous one):
+      --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 5 ∷ 6 ∷ 1 ∷ 2 ∷ 3 ∷ 4 []
+      --
+      --             If you are unsure what the 3ʳᵈ version is doing, think of
+      --             the following:
+      --             1. l ⊕ r = mergeDuplicatesIntoLeftmost (l ++ r)
+      --             2. l ⊕ r = mergeDuplicatesIntoLeftmost (r ++ l)
+      --             3. l ⊕ r = mergeDuplicatesIntoRightmost (l ++ r)
+      --             4. l ⊕ r = mergeDuplicatesIntoRightmost (r ++ l)
+      --
+      --             Thinking about it, 3 is way more intuitive than 2 (maybe
+      --             even "trivial" 😂).
+      --
+      --             Currently, I can't think of a simple way to convert 1 or 2
+      --             into 3 or 4 without having implementation knowledge.
+      --             However, for FSTs, mirroring the variant (visually, on the
+      --             y-axis) before and after the composition seems to work.
+      --             e.g. 3. l ⊕ r = mirror (mergeDuplicatesIntoRightmost (mirror (l ++ r)))
+      --             with
+      --             mirror fs = map mirror' (reverse fs)
+      --             mirror' (a -< cs >-) = a -< mirror cs >-
+      --
       --
       -- This is, duplicates of i have no effect.
       -- ^- TODO ibbem: So this is wrong, right?
+      -- @pmbittner: Yes, strictly speaking. I think a better explanation would
+      --             be "This is, additional introductions on the right have no
+      --             effect."
       distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ i₂ ⊕ i₁ ≡ i₁ ⊕ i₂
 
     open IsMonoid monoid
