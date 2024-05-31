@@ -6,8 +6,18 @@ SCP, 2010, Elsevier.
 We noticed that there are two variants of the distant idempotence law depending
 on the order of composition. In case the same artifact is composed from the left
 and the right, one of them will determine the position in the result. If the
+^- TODO ibbem: Who is "them". Could you sketch the terms in brackets if that helps?
 position of the left is prioritized over the right one, we call it
 `LeftAdditive` otherwise we call it `RightAdditive`.
+^- TODO ibbem: I am also not yet sure about these names.
+               Just googling "left additive" did not really show something
+               expect for some advanced category theory beyond the
+               things we do here.
+               What about just referring to these modules/algebras as
+               "Left" and "Right" for now?
+               Also, see my comment below. It might help to better
+               understand what x should be in a name left-x / right-x.
+               Other name ideas: x-dominant, x-determined,, x-override.
 -}
 module Framework.Composition.FeatureAlgebra where
 
@@ -32,7 +42,22 @@ module LeftAdditive where
 
       -- Only the leftmost occurence of an introduction is effective in a sum,
       -- because it has been introduced first.
+      -- ^- TODO ibbem: Is this really true?
+      --                The ⊕ operator is right-associative (infixr)
+      --                so the idempotence law is
+      --                  i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
+      --                right?
+      --                This means the leftmost occurence determines the order of introductions
+      --                but i₁ is actually already part of the of the (i₂ ⊕ i₁) introduction, right?
+      --                This means that introducing an introduction i₁ to an introduction (i₂ ⊕ i₁)
+      --                it is already contained in, may still change/mutate the introduction because
+      --                        i₂ ⊕ i₁  ≢ i₁ ⊕ i₂
+      --                but
+      --                  i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
+      --                If you like to, we could discuss this next week.
+      --
       -- This is, duplicates of i have no effect.
+      -- ^- TODO ibbem: So this is wrong, right?
       distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ i₂ ⊕ i₁ ≡ i₁ ⊕ i₂
 
     open IsMonoid monoid
@@ -364,6 +389,11 @@ from I sum 𝟘 faʳ = record
   ; distant-idempotence = λ a b → Eq.trans (assoc (isSemigroup (monoid faʳ)) a b a) (distant-idempotence faʳ b a)
   }
 
+-- TODO ibbem:
+--   - please document on the usage and necessity of this axiom.
+--   - adding imports in the middle of a module seems unclean because it is not very transparent what
+--     is imported and what not. Should we move the following to its own module (within this file or in
+--     another file).
 open import Axioms.Extensionality
 open import Relation.Binary.PropositionalEquality.WithK using (≡-irrelevant)
 
