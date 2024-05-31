@@ -1,5 +1,7 @@
 {-
-This module implements the feature algebra by Apel et al.
+This module implements the feature algebra by Apel et al. in
+"An Algebraic Foundation for Automatic Feature-based Program Synthesis",
+SCP, 2010, Elsevier.
 
 We noticed that there are two variants of the distant idempotence law depending
 on the order of composition. In case the same artifact is composed from the left
@@ -164,6 +166,9 @@ module LeftAdditive where
     quasi-commutativity : ∀ i₂ i₁ → i₂ ⊕ i₁ ~ i₁ ⊕ i₂
     quasi-commutativity i₂ i₁ = quasi-smaller i₂ i₁ , quasi-smaller i₁ i₂
 
+{-|
+This is the feature algebra as introduced initially by Apel et al.
+-}
 module RightAdditive where
   record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) where
     open Eq.≡-Reasoning
