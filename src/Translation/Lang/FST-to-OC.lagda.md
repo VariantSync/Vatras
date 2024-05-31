@@ -82,8 +82,14 @@ counter-example = 0 ◀ (
 
 ## Proof that option calculus cannot encode the counter-example
 
-The idea of the following proof is to show that any OC expression, which describes
-these variants, necessarily includes some other variant. We identified two cases:
+The idea of the following proof is to show that any OC expression, which
+describes these variants, necessarily includes some other variant. To be
+specific, we assume `WFOCL ≽ FSTL` and show that there is an expression
+(`counter-example`) in FSTL whose translation has at least one configuration
+(which we freely choose) that produces a variant which can never be produced in
+counter-example.
+
+We identified two cases:
 
 - In the `shared-artifact` case, the OC expression also includes the following
   extra variant:
@@ -99,15 +105,14 @@ these variants, necessarily includes some other variant. We identified two cases
   like the following:
 
       0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ 0 -< 1 -< [] >- ∷ [] >- ∷ [] >-
+
   For example:
 
       0 -< f₁ ❲ 0 -< 0 -< [] >- ∷ [] >- ❳ ∷ f₂ ❲ 0 -< 1 -< [] >- ∷ [] >- ❳ ∷ [] >-
 
   Note that, in contrast to the `shared-artifact` case, this variant is not
   uniquely determined. In fact, the order of the two features isn't fixed and
-  the configuration chosen by the proof could introduce more artifacts because
-  there can be options which are not selected by the configurations `c₁` and
-  `c₂` below.
+  the configuration chosen by the proof could introduce more artifacts.
 
 There are four relevant configurations for `counter-example` because it uses
 exactly two features: `c₁`, `c₂`, `all-oc true` and `all-oc false`.
