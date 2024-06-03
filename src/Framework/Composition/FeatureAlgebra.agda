@@ -16,8 +16,9 @@ If the position of the left is prioritized over the right one, we call it
                "Left" and "Right" for now?
                Also, see my comment below. It might help to better
                understand what x should be in a name left-x / right-x.
-               Other name ideas: x-dominant, x-determined,, x-override.
+               Other name ideas: x-dominant, x-determined, x-override.
   @pmbittner: I like x-dominant the most out of the current ideas.
+  @ibbem:     Me too. Then let's stick with that for now.
 -}
 module Framework.Composition.FeatureAlgebra where
 
@@ -48,7 +49,7 @@ module LeftAdditive where
       --                  i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
       --                right?
       --                This means the leftmost occurence determines the order of introductions
-      --                but i₁ is actually already part of the of the (i₂ ⊕ i₁) introduction, right?
+      --                but i₁ is actually already part of the (i₂ ⊕ i₁) introduction, right?
       --                This means that introducing an introduction i₁ to an introduction (i₂ ⊕ i₁)
       --                it is already contained in, may still change/mutate the introduction because
       --                        i₂ ⊕ i₁  ≢ i₁ ⊕ i₂
@@ -66,8 +67,20 @@ module LeftAdditive where
       --             implement.) In the end, it doesn't matter for us though,
       --             because we have associativity.
       --             A meeting next week sounds good to me.
-      --
-      --             A completely different thought I just had:
+      -- @ibbem: Ah true, we have associativity, so we actually have:
+      --                         i₂  ⊕ i₁  ≢ i₁ ⊕ i₂
+      --                but
+      --                   i₁ ⊕ (i₂  ⊕ i₁) ≡ i₁ ⊕ i₂
+      --                and
+      --                  (i₁ ⊕  i₂) ⊕ i₁  ≡ i₁ ⊕ i₂
+      --         which means, the rightmost occurence has no effect, right!?
+      --         It still is a bit counter-intuitive because without explicit
+      --         brackets, i₁ ⊕ (i₂ ⊕ i₁) is still the order of computation, where
+      --         the rightmost occurence is handled first but is only "later" found
+      --         to have no effect. :thinking:
+
+
+      -- @pmbittner: A completely different thought I just had:
       --             There is actually more than one way to implement
       --             LeftDominant and RightDominant (now these names really
       --             start to make sense) than just the `flip` one I implemented
@@ -77,9 +90,11 @@ module LeftAdditive where
       --
       --             1. LeftDominant (FST):
       --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 1 ∷ 2 ∷ 3 ∷ 4 ∷ 5 ∷ 6 ∷ []
+      --     --> @ibbem: This is what you used for the proofs, right?
       --
       --             2. RightDominant (left→right FST):
       --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 5 ∷ 6 ∷ 2 ∷ 1 ∷ 3 ∷ 4 ∷ []
+      --     --> @ibbem: This is what I described in the paper and had formalized in Agda, right (except for the alternating-bug)?
       --
       --             3. alternative RightDominant:
       --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 3 ∷ 4 ∷ 5 ∷ 6 ∷ 2 ∷ 1 ∷ []
@@ -93,25 +108,68 @@ module LeftAdditive where
       --             2. l ⊕ r = mergeDuplicatesIntoLeftmost (r ++ l)
       --             3. l ⊕ r = mergeDuplicatesIntoRightmost (l ++ r)
       --             4. l ⊕ r = mergeDuplicatesIntoRightmost (r ++ l)
+      --     --> @ibbem: This formulation is brilliant! It helped a lot in understanding 3 and 4. Also, it is a great
+      --                 explanation how and why these four alternative composition strategies exist!
+      --                 I am yet unsure what to do with these results.
+      --                 What we should definitely do is to characterize which of these composition schemes
+      --                 corresponds to which implementation, as I tried above.
+      --                 Given the extra space in the paper in case of good reviews, we can also shed some light
+      --                 on this, and it would also be a great explanation why our implementation of FSTs and
+      --                 algebra slightly deviates from the Apel paper + why even in the Apel paper there seem
+      --                 to be minor inconsistencies.
+      --                 Good job! 🤩
       --
       --             Thinking about it, 3 is way more intuitive than 2 (maybe
       --             even "trivial" 😂).
+      --     --> @ibbem: I guess both 1 and 3 are in a sense more intuitive because they just concatenate and
+      --                 then eliminate duplicates by favoring either the left or right occurence.
+      --                 I am so biased by now, thinking 2 is super intuitive but it probably is not indeed. 😅
+      --                 In my mind, the numbers on the left start to walk to the right one by one, starting with the leftmost number.
+      --                 I agree though, and we should probably replace the formulation in the paper with 1 or 3.
       --
       --             Currently, I can't think of a simple way to convert 1 or 2
       --             into 3 or 4 without having implementation knowledge.
+      --     --> @ibbem: If this way does not exist, it would mean that there exist incompatible algebras right?
+      --                 I mean assuming we find an abstract formulation for 3 and 4 in the first place (maybe aab=ab?).
       --             However, for FSTs, mirroring the variant (visually, on the
       --             y-axis) before and after the composition seems to work.
       --             e.g. 3. l ⊕ r = mirror (mergeDuplicatesIntoRightmost (mirror (l ++ r)))
       --             with
       --             mirror fs = map mirror' (reverse fs)
       --             mirror' (a -< cs >-) = a -< mirror cs >-
+      --     --> @ibbem: Interesting. This 'mirror function then embodies the flipping _after_ composition.
+      --                 So again, we find a commuting square, which tells us that we can "toggle" dominance
+      --                 at multiple levels:
       --
+      --                                FST² <--- swap ---> FST²
+      --                                 |                   |
+      --                                 |                   |                Algebra
+      --                                _⊕_  <--- flip ---> _⊕_
+      --                                 |                   |
+      --                                 |                   |           ------------------
+      --                                 V                   V
+      --                                FST  <-- mirror --> FST            Implementation
+      --
+      --                                           |
+      --                            left-dominant  |  right-dominant
+      --                                           |
+      --
+      --                 So we can toggle dominance not only on the implementation but also the algebra level.
+      --                 In the algebra, we can perform 'swap' and 'flip' but not 'mirror'.
+      --
+      --                 I guess the reason for you not finding a way to toggle from 1/2 to and from 3/4 with just _⊕_ is the following:
+      --                 As you have demonstrated above, _⊕_ performs two actions: concatenation _++_ and eliminating duplicates
+      --                 (which besides is the reason for the unique-neighbors-axiom).
+      --                 So maybe, the algebra needs finer granularity in assuming the existence of both of these operations,
+      --                 splitting _⊕_ into the two sub-operations.
       --
       -- This is, duplicates of i have no effect.
       -- ^- TODO ibbem: So this is wrong, right?
       -- @pmbittner: Yes, strictly speaking. I think a better explanation would
       --             be "This is, additional introductions on the right have no
       --             effect."
+      -- @ibbem    : Ok, let's rephrase accordingly, once we figured out how to handle
+      --             the above ordering thoughts.
       distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ i₂ ⊕ i₁ ≡ i₁ ⊕ i₂
 
     open IsMonoid monoid
