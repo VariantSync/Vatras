@@ -744,6 +744,8 @@ module Impose (AtomSet : 𝔸) where
       ; identity = l-id , r-id
       }
     ; distant-idempotence = idem
+    ; distant-idempotence' = λ a b → Eq.trans (assoc a b a) (idem a b)
+    ; associative' = λ a b c → Eq.sym (assoc a b c)
     }
     where
       open import Data.Product using (_,_)

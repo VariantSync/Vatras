@@ -170,7 +170,18 @@ module LeftAdditive where
       --             effect."
       -- @ibbem    : Ok, let's rephrase accordingly, once we figured out how to handle
       --             the above ordering thoughts.
-      distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ i₂ ⊕ i₁ ≡ i₁ ⊕ i₂
+      distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
+
+      -- The following laws are already stated equivalently above. However, they
+      -- serve as a trick to proof that translation between LeftAdditive and
+      -- RightAdditive is a bijection without using the funtion extensionality
+      -- or K axiom.
+      -- This trick is an adaption of a similar trick used in
+      --   https://github.com/agda/agda-categories
+      -- as explain in
+      --   https://www.youtube.com/live/VQiQtH47pbM?si=AJAI24-dhYypr7p9&t=650
+      distant-idempotence' : ∀ (i₁ i₂ : I) → (i₁ ⊕ i₂) ⊕ i₁ ≡ i₁ ⊕ i₂
+      associative' : ∀ a b c → (a ⊕ (b ⊕ c)) ≡ ((a ⊕ b) ⊕ c)
 
     open IsMonoid monoid
 
@@ -319,7 +330,11 @@ module RightAdditive where
       -- Only the rightmost occurence of an introduction is effective in a sum,
       -- because it has been introduced first.
       -- This is, duplicates of i have no effect.
-      distant-idempotence : ∀ (i₁ i₂ : I) → i₂ ⊕ i₁ ⊕ i₂ ≡ i₁ ⊕ i₂
+      distant-idempotence : ∀ (i₁ i₂ : I) → i₂ ⊕ (i₁ ⊕ i₂) ≡ i₁ ⊕ i₂
+
+      -- See `LeftAdditive` for documentation of the following fields.
+      distant-idempotence' : ∀ (i₁ i₂ : I) → (i₂ ⊕ i₁) ⊕ i₂ ≡ i₁ ⊕ i₂
+      associative' : ∀ a b c → (a ⊕ (b ⊕ c)) ≡ ((a ⊕ b) ⊕ c)
 
     open IsMonoid monoid
 
@@ -477,11 +492,13 @@ left→right I sum 𝟘 faˡ = record
         { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faˡ)))
         ; ∙-cong = flip (∙-cong (isMagma (isSemigroup (monoid faˡ))))
         }
-      ; assoc = λ a b c → Eq.sym (assoc (isSemigroup (monoid faˡ)) c b a)
+      ; assoc = λ a b c → associative' faˡ c b a
       }
     ; identity = swap (identity (monoid faˡ))
     }
-  ; distant-idempotence = λ a b → Eq.trans (assoc (isSemigroup (monoid faˡ)) b a b) (distant-idempotence faˡ b a)
+  ; distant-idempotence = λ a b → distant-idempotence' faˡ b a
+  ; distant-idempotence' = λ a b → distant-idempotence faˡ b a
+  ; associative' = λ a b c → assoc (isSemigroup (monoid faˡ)) c b a
   }
 
 right→left : ∀ {c} (I : Set c) (sum : Op₂ I) (𝟘 : I)
@@ -494,143 +511,34 @@ right→left I sum 𝟘 faʳ = record
         { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faʳ)))
         ; ∙-cong = flip (∙-cong (isMagma (isSemigroup (monoid faʳ))))
         }
-      ; assoc = λ a b c → Eq.sym (assoc (isSemigroup (monoid faʳ)) c b a)
+      ; assoc = λ a b c → associative' faʳ c b a
       }
     ; identity = swap (identity (monoid faʳ))
     }
-  ; distant-idempotence = λ a b → Eq.trans (assoc (isSemigroup (monoid faʳ)) a b a) (distant-idempotence faʳ b a)
+  ; distant-idempotence = λ a b → distant-idempotence' faʳ b a
+  ; distant-idempotence' = λ a b → distant-idempotence faʳ b a
+  ; associative' = λ a b c → assoc (isSemigroup (monoid faʳ)) c b a
   }
 
-module _ where
-  {-
-  To prove that `left→right` and `right→left` are inverses
-  we need to prove that their function compositions
-  keep the feature algebra composition operation and
-  the laws unchanged.
-
-  The feature algebra composition operation is judgementally equal.
-  However, the proof that the laws are unchanged requires
-  extensionality because many of these laws are functions and
-  uniqueness of identity proofs (K axiom) because the result of these functions are equalities.
-
-  To limit the scope of these axioms, an unnamed modules is used.
-  -}
-  open import Axioms.Extensionality
-  open import Relation.Binary.PropositionalEquality.WithK using (≡-irrelevant)
-
-  isInverse : ∀ {c} (I : Set c) (sum : Op₂ I) (𝟘 : I)
-    → IsInverse _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
-  isInverse I sum 𝟘 = record
-    { isLeftInverse = record
-      { isCongruent = record
-        { cong = Eq.cong (left→right I (flip sum) 𝟘)
-        ; isEquivalence₁ = Eq.isEquivalence
-        ; isEquivalence₂ = Eq.isEquivalence
-        }
-      ; from-cong = Eq.cong (right→left I sum 𝟘)
-      ; inverseˡ = invˡ
+isInverse : ∀ {c} (I : Set c) (sum : Op₂ I) (𝟘 : I)
+  → IsInverse _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
+isInverse I sum 𝟘 = record
+  { isLeftInverse = record
+    { isCongruent = record
+      { cong = Eq.cong (left→right I (flip sum) 𝟘)
+      ; isEquivalence₁ = Eq.isEquivalence
+      ; isEquivalence₂ = Eq.isEquivalence
       }
-    ; inverseʳ = invʳ
+    ; from-cong = Eq.cong (right→left I sum 𝟘)
+    ; inverseˡ = invˡ
     }
-    where
-    open Eq.≡-Reasoning
+  ; inverseʳ = invʳ
+  }
+  where
+  open Eq.≡-Reasoning
 
-    invˡ : Inverseˡ _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
-    invˡ {faˡ} x rewrite x =
-        left→right I (flip sum) 𝟘 (right→left I sum 𝟘 faˡ)
-      ≡⟨⟩
-        record
-          { monoid = record
-            { isSemigroup = record
-              { isMagma = record
-                { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faˡ)))
-                ; ∙-cong = flip (flip (∙-cong (isMagma (isSemigroup (monoid faˡ)))))
-                }
-              ; assoc = λ a b c → Eq.sym (Eq.sym (assoc (isSemigroup (monoid faˡ)) a b c))
-              }
-            ; identity = swap (swap (identity (monoid faˡ)))
-            }
-          ; distant-idempotence = λ a b → Eq.trans (Eq.sym (assoc (isSemigroup (monoid faˡ)) b a b)) (Eq.trans (assoc (isSemigroup (monoid faˡ)) b a b) (distant-idempotence faˡ a b))
-          }
-      ≡⟨⟩
-        record
-          { monoid = record
-            { isSemigroup = record
-              { isMagma = record
-                { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faˡ)))
-                ; ∙-cong = ∙-cong (isMagma (isSemigroup (monoid faˡ)))
-                }
-              ; assoc = λ a b c → Eq.sym (Eq.sym (assoc (isSemigroup (monoid faˡ)) a b c))
-              }
-            ; identity = identity (monoid faˡ)
-            }
-          ; distant-idempotence = λ a b → Eq.trans (Eq.sym (assoc (isSemigroup (monoid faˡ)) b a b)) (Eq.trans (assoc (isSemigroup (monoid faˡ)) b a b) (distant-idempotence faˡ a b))
-          }
-      ≡⟨ Eq.cong₂ (λ x y →
-          record
-            { monoid = record
-              { isSemigroup = record
-                { isMagma = record
-                  { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faˡ)))
-                  ; ∙-cong = ∙-cong (isMagma (isSemigroup (monoid faˡ)))
-                  }
-                ; assoc = x
-                }
-              ; identity = identity (monoid faˡ)
-              }
-            ; distant-idempotence = y
-            })
-          (extensionality λ a → extensionality λ b → extensionality (λ c → ≡-irrelevant (Eq.sym (Eq.sym (assoc (isSemigroup (monoid faˡ)) a b c))) (assoc (isSemigroup (monoid faˡ)) a b c)))
-          (extensionality λ a → extensionality λ b → ≡-irrelevant (Eq.trans (Eq.sym (assoc (isSemigroup (monoid faˡ)) b a b)) (Eq.trans (assoc (isSemigroup (monoid faˡ)) b a b) (distant-idempotence faˡ a b))) (distant-idempotence faˡ a b)) ⟩
-        faˡ
-      ∎
+  invˡ : Inverseˡ _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
+  invˡ {faˡ} x rewrite x = Eq.refl
 
-    invʳ : Inverseʳ _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
-    invʳ {faʳ} x rewrite x =
-        right→left I sum 𝟘 (left→right I (flip sum) 𝟘 faʳ)
-      ≡⟨⟩
-        record
-          { monoid = record
-            { isSemigroup = record
-              { isMagma = record
-                { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faʳ)))
-                ; ∙-cong = flip (flip (∙-cong (isMagma (isSemigroup (monoid faʳ)))))
-                }
-              ; assoc = λ a b c → Eq.sym (Eq.sym (assoc (isSemigroup (monoid faʳ)) a b c))
-              }
-            ; identity = swap (swap (identity (monoid faʳ)))
-            }
-          ; distant-idempotence = λ a b → Eq.trans (Eq.sym (assoc (isSemigroup (monoid faʳ)) a b a)) (Eq.trans (assoc (isSemigroup (monoid faʳ)) a b a) (distant-idempotence faʳ a b))
-          }
-      ≡⟨⟩
-        record
-          { monoid = record
-            { isSemigroup = record
-              { isMagma = record
-                { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faʳ)))
-                ; ∙-cong = ∙-cong (isMagma (isSemigroup (monoid faʳ)))
-                }
-              ; assoc = λ a b c → Eq.sym (Eq.sym (assoc (isSemigroup (monoid faʳ)) a b c))
-              }
-            ; identity = identity (monoid faʳ)
-            }
-          ; distant-idempotence = λ a b → Eq.trans (Eq.sym (assoc (isSemigroup (monoid faʳ)) a b a)) (Eq.trans (assoc (isSemigroup (monoid faʳ)) a b a) (distant-idempotence faʳ a b))
-          }
-      ≡⟨ Eq.cong₂ (λ x y →
-          record
-            { monoid = record
-              { isSemigroup = record
-                { isMagma = record
-                  { isEquivalence = isEquivalence (isMagma (isSemigroup (monoid faʳ)))
-                  ; ∙-cong = ∙-cong (isMagma (isSemigroup (monoid faʳ)))
-                  }
-                ; assoc = x
-                }
-              ; identity = identity (monoid faʳ)
-              }
-            ; distant-idempotence = y
-            })
-          (extensionality λ a → extensionality λ b → extensionality (λ c → ≡-irrelevant (Eq.sym (Eq.sym (assoc (isSemigroup (monoid faʳ)) a b c))) (assoc (isSemigroup (monoid faʳ)) a b c)))
-          (extensionality λ a → extensionality λ b → ≡-irrelevant (Eq.trans (Eq.sym (assoc (isSemigroup (monoid faʳ)) a b a)) (Eq.trans (assoc (isSemigroup (monoid faʳ)) a b a) (distant-idempotence faʳ a b))) (distant-idempotence faʳ a b)) ⟩
-        faʳ
-      ∎
+  invʳ : Inverseʳ _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
+  invʳ {faʳ} x rewrite x = Eq.refl
