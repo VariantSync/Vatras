@@ -8,17 +8,6 @@ on the order of composition. In case the same artifact is composed from the left
 and the right, one of these artifacts will determine the position in the result.
 If the position of the left is prioritized over the right one, we call it
 `LeftDominant` otherwise we call it `RightDominant`.
-^- TODO ibbem: I am also not yet sure about these names.
-               Just googling "left additive" did not really show something
-               expect for some advanced category theory beyond the
-               things we do here.
-               What about just referring to these modules/algebras as
-               "Left" and "Right" for now?
-               Also, see my comment below. It might help to better
-               understand what x should be in a name left-x / right-x.
-               Other name ideas: x-dominant, x-determined, x-override.
-  @pmbittner: I like x-dominant the most out of the current ideas.
-  @ibbem:     Me too. Then let's stick with that for now.
 -}
 module Framework.Composition.FeatureAlgebra where
 
@@ -91,10 +80,12 @@ module LeftDominant where
       --             1. LeftDominant (FST):
       --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 1 ∷ 2 ∷ 3 ∷ 4 ∷ 5 ∷ 6 ∷ []
       --     --> @ibbem: This is what you used for the proofs, right?
+      --              A: Yes.
       --
       --             2. RightDominant (left→right FST):
       --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 5 ∷ 6 ∷ 2 ∷ 1 ∷ 3 ∷ 4 ∷ []
       --     --> @ibbem: This is what I described in the paper and had formalized in Agda, right (except for the alternating-bug)?
+      --              A: Yes.
       --
       --             3. alternative RightDominant:
       --               (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) ⊕ (5 ∷ 6 ∷ 2 ∷ 1 ∷ []) ≡ 3 ∷ 4 ∷ 5 ∷ 6 ∷ 2 ∷ 1 ∷ []
@@ -133,7 +124,7 @@ module LeftDominant where
       --                 I mean assuming we find an abstract formulation for 3 and 4 in the first place (maybe aab=ab?).
       --             However, for FSTs, mirroring the variant (visually, on the
       --             y-axis) before and after the composition seems to work.
-      --             e.g. 3. l ⊕ r = mirror (mergeDuplicatesIntoRightmost (mirror (l ++ r)))
+      --             e.g. 3. l ⊕ r = mirror (mergeDuplicatesIntoLeftmost (mirror (l ++ r)))
       --             with
       --             mirror fs = map mirror' (reverse fs)
       --             mirror' (a -< cs >-) = a -< mirror cs >-
@@ -163,13 +154,73 @@ module LeftDominant where
       --                 So maybe, the algebra needs finer granularity in assuming the existence of both of these operations,
       --                 splitting _⊕_ into the two sub-operations.
       --
-      -- This is, duplicates of i have no effect.
-      -- ^- TODO ibbem: So this is wrong, right?
-      -- @pmbittner: Yes, strictly speaking. I think a better explanation would
-      --             be "This is, additional introductions on the right have no
-      --             effect."
-      -- @ibbem    : Ok, let's rephrase accordingly, once we figured out how to handle
-      --             the above ordering thoughts.
+      --    --> @pmbittner: I agree that there is a diagram hiding here but yours is a little weird:
+      --                      if you mirror only the result then you destroy most properties of the FeatureAlgebra (e.g., associativity).
+      --                      it doesn't commute
+      --                        (mirror ∘ _⊕_ ∘ swap) (FST₁ , FST₂) ≡ mirror (FST₂ ⊕ FST₁) ≢ FST₁ ⊕ FST₂ ≡ _⊕_ (FST₁ , FST₂)
+      --
+      --                    A better one might be:
+      --                               ⊕₁ <--- swap ---> ⊕₂
+      --                               ^                 ^
+      --                               |                 |
+      --                               |                 |
+      --                             mirror            mirror
+      --                               |                 |
+      --                               |                 |
+      --                               v                 v
+      --                               ⊕₃ <--- swap ---> ⊕₃
+      --
+      --                    Furthermore, we can actually use `mirror` as follows:
+      --
+      --                        mirror (mergeDuplicatesIntoLeftmost (mirror (l ++ r)))
+      --                      = mirror (mergeDuplicatesIntoLeftmost (mirror r ++ mirror l))
+      --
+      --                    which gives us
+      --
+      --                    1. l ⊕₁ r = mergeDuplicatesIntoLeftmost (l ++ r)
+      --                    2. l ⊕₂ r = r ⊕₁ l
+      --                    3. l ⊕₃ r = mirror (mirror r ⊕₁ mirror l)
+      --                    4. l ⊕₄ r = mirror (mirror l ⊕₁ mirror r)
+      --
+      --                    Hence, I don't think that separating `_⊕_` into two phases makes much sense.
+      --                    In addition, there are `FeatureAlgebra`s where I can't think of a similar `mirror` function.
+      --                    For example: Consider variants which use sets instead of lists, i.e. do not have a children order
+      --                    (or, as implemented below, only allow one children order)
+      --
+      --                      mutual
+      --                        data Variant (A : StrictTotalOrder) : Set where
+      --                          artifact : Carrier A → VariantSet A → Variant A
+      --
+      --                        VariantSet : StrictTotalOrder → Set
+      --                        VariantSet A = Σ (List (Variant A)) (Linked (Variant-< A))
+      --
+      --                        Variant-< : (A : StrictTotalOrder) → StrictTotalOrder (Variant A) Variant-< = ... -- ignore children, only compare artifacts
+      --
+      --                      -- Here, I left out the proofs 😅
+      --                      _⊕_ : {A : StrictTotalOrder} → VariantSet A → VariantSet A → VariantSet A
+      --                      [] ⊕ vs₂ = vs₂
+      --                      (artifact a₁ cs₁ ∷ vs₁) ⊕ [] = (artifact a₁ cs₁ ∷ vs₁)
+      --                      (artifact a₁ cs₁ ∷ vs₁) ⊕ (artifact a₂ cs₂ ∷ vs₂) with compare _ a₁ a₂
+      --                      ... | tri< a₁<a₂ = artifact a₁ cs₁ ∷ (vs₁ ⊕ (artifact a₂ cs₂ ∷ vs₂))
+      --                      ... | tri≈ a₁≈a₂ = artifact a₁ (cs₁ ⊕ cs₂) ∷ (vs₁ ⊕ vs₂)
+      --                      ... | tri> a₁>a₂ = artifact a₂ cs₂ ∷ ((artifact a₁ cs₁ ∷ vs₁) ⊕ vs₂)
+      --
+      --                    This is also an example of a commutative `FeatureAlgebra`.
+      --                    Which is equivalent to the statement that `swap` has no effect. See `swap≡id⇒commutativity`
+      --
+      --
+      --                    And here is an example of a `LeftDominant` feature algebra which is not commutative and has (to my knowledge) no `mirror` equivalent:
+      --
+      --                      data Variant (A : Set) : Set where
+      --                        identity : Variant A
+      --                        artifact : A → Variant A
+      --
+      --                        _⊕_ : {A : Set} → Variant A → Variant A → Variant A
+      --                        identity ⊕ b = b
+      --                        (artifact a) ⊕ b = artifact a
+
+
+      -- This is, additional introductions on the right have no effect.
       distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
 
       -- The following laws are already stated equivalently above. However, they
@@ -542,3 +593,9 @@ isInverse I sum 𝟘 = record
 
   invʳ : Inverseʳ _≡_ _≡_ (left→right I (flip sum) 𝟘) (right→left I sum 𝟘)
   invʳ {faʳ} x rewrite x = Eq.refl
+
+swap≡id⇒commutativity : ∀ {c} (I : Set c) (sum : Op₂ I) (𝟘 : I)
+  → (fa : LeftDominant.FeatureAlgebra I sum 𝟘)
+  → flip sum ≡ sum
+  → Commutative _≡_ sum
+swap≡id⇒commutativity I sum 𝟘 fa flip-sum≡sum = commutativity I sum 𝟘 fa (Eq.subst (λ p → RightDominant.FeatureAlgebra I p 𝟘) flip-sum≡sum (left→right I sum 𝟘 fa))
