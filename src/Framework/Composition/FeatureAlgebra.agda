@@ -7,7 +7,7 @@ We noticed that there are two variants of the distant idempotence law depending
 on the order of composition. In case the same artifact is composed from the left
 and the right, one of these artifacts will determine the position in the result.
 If the position of the left is prioritized over the right one, we call it
-`LeftAdditive` otherwise we call it `RightAdditive`.
+`LeftDominant` otherwise we call it `RightDominant`.
 ^- TODO ibbem: I am also not yet sure about these names.
                Just googling "left additive" did not really show something
                expect for some advanced category theory beyond the
@@ -31,7 +31,7 @@ open import Relation.Binary using (Rel; Reflexive; Symmetric; Transitive; IsEqui
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Level using (suc; _⊔_)
 
-module LeftAdditive where
+module LeftDominant where
   record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) where
     open Eq.≡-Reasoning
 
@@ -60,7 +60,7 @@ module LeftAdditive where
       --             `i₁` is the same in either case. However, I agree that the
       --             reasoning "has been introduced first" is wrong.
       --             On that note: I think it would make sense to use left
-      --             associativity for LeftAdditive. It feels more intuitive in
+      --             associativity for LeftDominant. It feels more intuitive in
       --             this case and is also more efficient. 😄 (The intuitive
       --             implementation traverses the right argument and inserts it
       --             into the left argument. The other way around is harder to
@@ -173,8 +173,8 @@ module LeftAdditive where
       distant-idempotence : ∀ (i₁ i₂ : I) → i₁ ⊕ (i₂ ⊕ i₁) ≡ i₁ ⊕ i₂
 
       -- The following laws are already stated equivalently above. However, they
-      -- serve as a trick to proof that translation between LeftAdditive and
-      -- RightAdditive is a bijection without using the funtion extensionality
+      -- serve as a trick to proof that translation between LeftDominant and
+      -- RightDominant is a bijection without using the funtion extensionality
       -- or K axiom.
       -- This trick is an adaption of a similar trick used in
       --   https://github.com/agda/agda-categories
@@ -317,7 +317,7 @@ module LeftAdditive where
 {-|
 This is the feature algebra as introduced initially by Apel et al.
 -}
-module RightAdditive where
+module RightDominant where
   record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) where
     open Eq.≡-Reasoning
 
@@ -332,7 +332,7 @@ module RightAdditive where
       -- This is, duplicates of i have no effect.
       distant-idempotence : ∀ (i₁ i₂ : I) → i₂ ⊕ (i₁ ⊕ i₂) ≡ i₁ ⊕ i₂
 
-      -- See `LeftAdditive` for documentation of the following fields.
+      -- See `LeftDominant` for documentation of the following fields.
       distant-idempotence' : ∀ (i₁ i₂ : I) → (i₂ ⊕ i₁) ⊕ i₂ ≡ i₁ ⊕ i₂
       associative' : ∀ a b c → (a ⊕ (b ⊕ c)) ≡ ((a ⊕ b) ⊕ c)
 
@@ -463,28 +463,28 @@ module RightAdditive where
     quasi-commutativity i₂ i₁ = quasi-smaller i₂ i₁ , quasi-smaller i₁ i₂
 
 commutativity : ∀ {c} (I : Set c) (_⊕_ : Op₂ I) (𝟘 : I)
-  → LeftAdditive.FeatureAlgebra I _⊕_ 𝟘
-  → RightAdditive.FeatureAlgebra I _⊕_ 𝟘
+  → LeftDominant.FeatureAlgebra I _⊕_ 𝟘
+  → RightDominant.FeatureAlgebra I _⊕_ 𝟘
   → Commutative _≡_ _⊕_
 commutativity I _⊕_ 𝟘 faˡ faʳ a b =
     a ⊕ b
-  ≡⟨ LeftAdditive.FeatureAlgebra.distant-idempotence faˡ a b ⟨
+  ≡⟨ LeftDominant.FeatureAlgebra.distant-idempotence faˡ a b ⟨
     a ⊕ (b ⊕ a)
-  ≡⟨ RightAdditive.FeatureAlgebra.distant-idempotence faʳ b a ⟩
+  ≡⟨ RightDominant.FeatureAlgebra.distant-idempotence faʳ b a ⟩
     b ⊕ a
   ∎
   where
   open Eq.≡-Reasoning
 
-open LeftAdditive.FeatureAlgebra
-open RightAdditive.FeatureAlgebra
+open LeftDominant.FeatureAlgebra
+open RightDominant.FeatureAlgebra
 open IsMonoid
 open IsSemigroup
 open IsMagma
 
 left→right : ∀ {c} (I : Set c) (sum : Op₂ I) (𝟘 : I)
-  → LeftAdditive.FeatureAlgebra I sum 𝟘
-  → RightAdditive.FeatureAlgebra I (flip sum) 𝟘
+  → LeftDominant.FeatureAlgebra I sum 𝟘
+  → RightDominant.FeatureAlgebra I (flip sum) 𝟘
 left→right I sum 𝟘 faˡ = record
   { monoid = record
     { isSemigroup = record
@@ -502,8 +502,8 @@ left→right I sum 𝟘 faˡ = record
   }
 
 right→left : ∀ {c} (I : Set c) (sum : Op₂ I) (𝟘 : I)
-  → RightAdditive.FeatureAlgebra I sum 𝟘
-  → LeftAdditive.FeatureAlgebra I (flip sum) 𝟘
+  → RightDominant.FeatureAlgebra I sum 𝟘
+  → LeftDominant.FeatureAlgebra I (flip sum) 𝟘
 right→left I sum 𝟘 faʳ = record
   { monoid = record
     { isSemigroup = record
