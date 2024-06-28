@@ -52,7 +52,7 @@ main_lines = do
   linebreak
   > "It's dangerous to go alone! Take this unicode to see whether your terminal supports it:"
   > "  ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳"
-  > "... but now on to the experiments."
+  > "... but now on to the demo."
   linebreak
   linebreak
   overwrite-alignment-with
