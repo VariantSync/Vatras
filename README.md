@@ -34,16 +34,22 @@ The library and its demo were tested on standard laptops.
 
 This section gives you a short "Getting Started" guide.
 For full setup instructions, including detailed instructions on setting up dependencies, see the next section.
-
-The library needs Agda version 2.6.3 (newer version should also work but we did not test them). We tested our setup on Manjaro, NixOS, and Windows Subsystem for Linux (WSL2). The only dependency of our library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory.
+We tested our setup on Manjaro, NixOS, and Windows Subsystem for Linux (WSL2).
 
 ### Setup
 
 There are two ways to compile the library and run its small demo.
-Either use Nix or install Agda manually.
+**Either** use Nix or install Agda manually.
 We recommend using Nix because it creates a sandbox environment with all dependencies satisfied while not affecting your system setup.
 
-#### Installation via Nix
+There are no other software requirements apart from having either Nix or Agda installed.
+The only dependency of our library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory and is taken care of automatically by our [makefile](makefile).
+
+Note that building for the first time (or running `nix-shell`) will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min and a lot of terminal output).
+
+#### Alternative 1: Setup via Nix
+
+How to install Nix, also depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
 
 When you have Nix installed on your system, you can get access to all necessary development utilities by navigating to this directory and then simply opening a Nix shell
 ``` shell
@@ -55,85 +61,21 @@ nix-build
 ./result/bin/EPVL
 ```
 
-To use this repository as a library in you own project, you can use `agda.withPackages`:
-```nix
-agda = nixpkgs.agda.withPackages [
-  nixpkgs.agdaPackages.standard-library
-  (import /path/to/this/git/repository {
-    pkgs = nixpkgs;
-  })
-];
-```
-Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
 
 #### Manual Installation
+=======
+#### Alternative 2: Manual Setup
 
-To install Agda, we recommend following the installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book to install GHC, Cabal, and Agda (no need to install the book and the standard-library, which is shipped in the right version in the sub-directory `agda-stdlib` here).
+The library needs Agda version 2.6.3 (newer version should also work but we did not test them).
+There are different ways to install Agda.
+Following the [Agda book's installation instructions], we recommend using [GHCup][ghcup] to install GHC, Cabal, and Agda as follows (You may skip steps for tools you have already installed but there might be compatibility errors with some versions):
 
-Assuming you have ghc and cabal installed, you can install Agda as follows.
-
-```shell
-cabal update
-cabal install Agda-2.6.3
-```
-
-To test whether this worked or whether your existing installation of Agda has the right version you can check the following command's output:
-```shell
-> agda --version
-Agda version 2.6.3
-```
-
-In case of trouble, please head to the detailed step-by-step instructions below or use Nix.
-
-### Compiling the Library and Running the Demo
-
-To test whether your setup is correct, and to run the demo, run make.
-Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
-```shell
-make
-```
-which will compile the library and run its small demo. Alternatively, you may use `nix-build` as explained above.
-
-### Expected Output
-
-Building for the first time (or running `nix-shell`) will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min). Running the demo will print:
-
-- some translations from option calculus (`OC`) to binary choice calculus (`2CC`),
-- some examples for feature structure tree composition, and
-- two round-trip translations, following our circle established in the paper: `CCC → ⌈e⌉-CC → 2-CC → 2CC → ADT → VariantList (CaO) → CCC`.
-  The first round-trip will translate a trivial choice `D ⟨ l , r ⟩`.
-  The second round-trip will translate the sandwich expression from our paper (Expression 1).
-  Prepare for a long terminal output because of exponential blowups for `ADT` and `VariantList`. ;)
-
-Note that the demo prints unicode characters to terminal, which should be supported.
-There will be a short hint at the beginning of the demo with some test characters.
-
-## Step-by-Step Guide
-
-The "Kick-The-Tires" section above explains all steps for running the demo.
-Here, we give additional instructions on how to install the required dependencies such as Nix or Agda.
-Note that you do not have to install Agda when you want to use the the Nix setup.
-
-### Installing Nix
-
-To build our library and run the demo with Nix, you must have Nix installed on your system.
-How to install Nix, also depends on your operating system.
-Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system.
-Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`!
-Note that Nix is not available for Windows but it can be used from within Windows Subsystem for Linux (WSL2).
-To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install).
-In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
-
-### Installing Agda
-
-Following the recommend installation instructions from the [Programming Language Foundations in Agda](https://plfa.github.io/GettingStarted/) book to install GHC, Cabal, and Agda, you basically have to do the following:
-
-0. Install [GHCup](https://www.haskell.org/ghcup/), which we recommend for installing `ghc` and `cabal`. 
+0. Install [GHCup][ghcup], which we recommend for installing `ghc` and `cabal`. 
    ```shell 
    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh 
    ```
 
-1. Install the GHC compiler (if you have not installed it already) and the cabal build tool with [GHCup](https://www.haskell.org/ghcup/).
+1. Install the GHC compiler and the cabal build tool with [GHCup][ghcup].
 
     ```shell
     ghcup install ghc 9.2.4
@@ -150,15 +92,74 @@ Following the recommend installation instructions from the [Programming Language
     cabal install Agda-2.6.4.3
     ```
 
-Detailed installation instructions can also be found [in the official documentation](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), too.
+   To test whether the installation worked or whether your existing installation of Agda has the right version you can check the following command's output:
+   ```shell
+   > agda --version
+   Agda version 2.6.3
+   ```
+   
+In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup.
 
-3. Finding the standard library: Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided makefile sets this environment variable temporarily and locally during the build process to the `.libs` directory within this repository. (Your global setup will not be affected). If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
+### Compiling the Library and Running the Demo
+
+To test whether your setup is correct, and to run the demo, run make.
+Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
+If you are using Nix, make sure to be in the `nix-shell` as described above.
+Then run
+```shell
+make
+```
+which will compile the library and run its small demo. Alternatively, you may use `nix-build` as explained above.
+The demo will then print a range of translations of variational expressions to the terminal.
+The expected output is explained in detail in the Step-by-Step guide below.
+
+## Step-by-Step Guide
+
+The "Kick-The-Tires" section above basically explains all necessary steps to get the library up and running.
+Here, we give additional instructions on the expected output and how to play with other demo inputs.
+
+### How does the demo know which standard library to use?
+
+Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided [makefile](makefile) sets this environment variable temporarily and locally during the build process to the `.libs` directory within this repository. (Your global setup will not be affected). If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
 
     ```shell
     export AGDA_DIR="path/to/this/repository/libs"
     ```
 
     Beware that setting the variable will overwrite any previously set directory. In that case you might want to overwrite the variable only temporarily while working on this project.
+
+### Expected Output
+
+First, the demo prints unicode characters to terminal, as a test for you to see whether your terminal supports unicode.
+The first lines should look like this.
+
+``` shell
+It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
+  ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳
+... but now on to the demo.
+```
+
+The actual demo will then print:
+
+- some translations from option calculus (`OC`) to binary choice calculus (`2CC`),
+- some examples for feature structure tree composition, and
+- two round-trip translations, following our circle established in the paper: `CCC → ⌈e⌉-CC → 2-CC → 2CC → ADT → VariantList (CaO) → CCC`.
+  The first round-trip will translate a trivial choice `D ⟨ l , r ⟩`.
+  The second round-trip will translate the sandwich expression from our paper (Expression 1).
+  Prepare for a long terminal output because of exponential blowups for `ADT` and `VariantList`. ;)
+
+## Reusability Guide
+
+To use this repository as a library in you own project, you can use `agda.withPackages`:
+```nix
+agda = nixpkgs.agda.withPackages [
+  nixpkgs.agdaPackages.standard-library
+  (import /path/to/this/git/repository {
+    pkgs = nixpkgs;
+  })
+];
+```
+Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
 
 ## Project Structure
 
@@ -174,5 +175,24 @@ The library is organized as follows:
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
 - [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
 
-[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
-[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
+## Troubleshooting
+
+If you see an error similar to this one
+
+``` shell
+.../src/MAlonzo/Code/Data/IndexedSet.hs:1705:3: error:
+    Not in scope:
+      type constructor or class ‘MAlonzo.Code.Agda.Primitive.T_Level_14’
+    Perhaps you meant ‘MAlonzo.Code.Agda.Primitive.T_Level_18’ (imported from MAlonzo.Code.Agda.Primitive)
+    Module ‘MAlonzo.Code.Agda.Primitive’ does not export ‘T_Level_14’.
+     |
+1705 |   MAlonzo.Code.Agda.Primitive.T_Level_14 ->
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+there might be corrupt build files. Simply run `make clean`.
+
+[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.3-blue.svg
+[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.3
+[ghcup]: https://www.haskell.org/ghcup/
+[plfa]: https://plfa.github.io/GettingStarted/
