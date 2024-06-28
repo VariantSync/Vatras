@@ -34,15 +34,16 @@ The library and its demo were tested on standard laptops.
 
 This section gives you a short "Getting Started" guide.
 For full setup instructions, including detailed instructions on setting up dependencies, see the next section.
-We tested our setup on Manjaro, NixOS, and Windows Subsystem for Linux (WSL2).
+We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and we also tested the Docker setup on Windows 11.
 
 ### Setup
 
-There are two ways to compile the library and run its small demo.
-**Either** use Nix or install Agda manually.
-We recommend using Nix because it creates a sandbox environment with all dependencies satisfied while not affecting your system setup.
+There are **three alternative ways** to compile the library and run its small demo.
+**Either use **Nix, Docker, or install Agda manually.**
+We **recommend Nix** because it creates a sandbox environment with all dependencies satisfied while not affecting your system setup (as does Docker), as well as giving you the opportunity to adapt and reuse the library in your own Agda projects (Docker requires to rebuild an image after every change).
+If you just want to run the demo or if you are on **Windows** and don't want to install WSL2, we recommend Docker.
 
-There are no other software requirements apart from having either Nix or Agda installed.
+There are no other software requirements apart from having either Nix, Docker, or Agda installed.
 The only dependency of our library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory and is taken care of automatically by our [makefile](makefile).
 
 Note that building for the first time (or running `nix-shell`) will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min and a lot of terminal output).
@@ -51,7 +52,7 @@ Note that building for the first time (or running `nix-shell`) will take a while
 
 How to install Nix, also depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
 
-When you have Nix installed on your system, you can get access to all necessary development utilities by navigating to this directory and then simply opening a Nix shell
+When you have Nix installed on your system, you can get access to all necessary development utilities by opening a terminal, navigating to this directory, and then simply opening a Nix shell by typing
 ``` shell
 nix-shell
 ```
@@ -61,10 +62,34 @@ nix-build
 ./result/bin/EPVL
 ```
 
+#### Alternative 2: Setup via Docker
 
-#### Manual Installation
-=======
-#### Alternative 2: Manual Setup
+How to install Docker depends on your operating system. **For Windows or Mac**, you can find download and installation instructions [here](https://www.docker.com/get-started). **On Linux**, installing Docker depends on your distribution. The chances are high that Docker is part of your distributions package database. Docker's [documentation](https://docs.docker.com/engine/install/) contains instructions for common distributions.
+
+Once you have installed Docker, start the Docker daemon.
+**On Windows**, open the search bar using the 'Windows Key' and search for 'Docker' or 'Docker Desktop'.
+**On Linux**, the docker daemon typically runs automatically, so there is nothing to do; otherwise, run `sudo systemctl start docker`.
+More detailed instructions on starting the deamon are given [here](https://docs.docker.com/config/daemon/start/) on the docker website.
+
+Afterwards, open a terminal and navigate to this repository's directory (the directory containing this README.md).
+First, you must create the docker image:
+``` shell
+docker build -t epvl .
+```
+
+Optionally, you may verify that the image was created successfully by running
+``` shell
+docker images
+```
+and checking that an image called `epvl` is listed.
+
+You can then run the demo by running the image:
+
+``` shell
+docker run -t epvl
+```
+
+#### Alternative 3: Manual Setup
 
 The library needs Agda version 2.6.3 (newer version should also work but we did not test them).
 There are different ways to install Agda.
@@ -102,14 +127,15 @@ In case of confusion or trouble, we recommend to check the [official installatio
 
 ### Compiling the Library and Running the Demo
 
-To test whether your setup is correct, and to run the demo, run make.
+To test whether your setup is correct, and to run the demo you may use our makefile (except for the docker setup which requires to run the image as explained above).
 Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
 If you are using Nix, make sure to be in the `nix-shell` as described above.
 Then run
 ```shell
 make
 ```
-which will compile the library and run its small demo. Alternatively, you may use `nix-build` as explained above.
+which will compile the library and run its small demo.
+Alternatively, you may use `nix-build` as explained above.
 The demo will then print a range of translations of variational expressions to the terminal.
 The expected output is explained in detail in the Step-by-Step guide below.
 
@@ -150,18 +176,11 @@ The actual demo will then print:
 
 ## Reusability Guide
 
-To use this repository as a library in you own project, you can use `agda.withPackages`:
-```nix
-agda = nixpkgs.agda.withPackages [
-  nixpkgs.agdaPackages.standard-library
-  (import /path/to/this/git/repository {
-    pkgs = nixpkgs;
-  })
-];
-```
-Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
+Our library was designed to be resuable in other research endeavors or tools for studying or analyzing static variability.
+For language designers, our framework enables basic sanity checks, which despite being basic, have never been studied nor implemented for variability languages before. For practitioners, our framework provides proven-to-be correct compilers and differencing algorithms, originating from constructive proofs for the above prop- erties, implemented in Agda. For researchers, our framework provides proof strategies to derive insightful theorems on the expressiveness, completeness, and soundness of variability languages.
+We outline relevant parts for reusing the library in the following.
 
-## Project Structure
+### Overview and Project Structure
 
 The library is organized as follows:
 
@@ -174,6 +193,69 @@ The library is organized as follows:
 - [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md) contains an overview of our case study (Section 5) to compare existing variability languages. The compilers can be found in the [src/Translation/Lang](src/Translation/Lang) sub-directory.
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
 - [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
+
+### Documentation
+
+### Explain how to adapt the artifact to new inputs or new use cases.
+
+#### Adding new languages
+
+Our library's primary purpose is to determine and compare the (semantic) expressive power of variability languages based.
+The library comes with a range of languages already defined (Section 3 in our paper), as well as comparisons between all of those (Section 5 in our paper).
+You may add a new language and compare it to existing ones, as follows.
+
+1.  Define your own language as a new type.
+    Therefore, you must first define its abstract syntax as a data type.
+    The syntax must be of type `𝔼` (see [Definitions.agda](src/Framework/Definitions.agda)), which means it must accept another type (the type of atoms) as parameter:
+ 
+    ```agda
+    data NewLang (A : Set) : Set where
+      -- constructors go here
+    ```
+    
+    To be a variability language, your syntax also needs a configuration language. This might be just any type. For this example, we just call it `NewConf`.
+   
+    ```agda
+    NewConf : Set
+    NewConf = ?
+    ```
+  
+    With the configuration language, we can now define a semantics of your language. To be compatible with our framework, the semantics must be of type `𝔼-Semantics` (see [VariabilityLanguage.agda](src/Framework/VariabilityLanguage.agda)), which means it must be a function of the following signature:
+    ```agda
+    ⟦_⟧ : ∀ {A} → NewLang A → Configuration F → V A
+    data NewLang (A : Set) : Set where
+      -- constructors go here
+    ```
+    where `V : 𝕍` is the type of variants. In our paper and for our language comparison, this type is always a rose tree `Rose ∞` (see [Variants.agda](src/Framework/Variants.agda)).
+ 
+  
+#### Adapting the demo
+
+To adapt the demo, you can implement your own experiments and add them to the list of experiments to run at the top of the [Main](src/Main.agda) file.
+If you simply want to change the inputs of existing experiments, you can change the list of inputs for each experiment in the list of experiments as well.
+In particular, you may add new inputs to the round-trip translation by adding your own example core choice calculus expression (`CCC`) to the `examples` list at the bottom of the [RoundTrip module](src/Test/Experiments/RoundTrip.agda).
+You may define your own expression by adding a new definition like this, where `ex-new` is the name of your example, `"The new example"` is its title, and where `{!!}` is an Agda hole which you can fill in with an abstract syntax tree of a core choice calculus expression:
+```agda
+ex-new : Example (CCC.CCC Feature ∞ Artifact)
+ex-new = "The new example" ≔ {!!}
+```
+Then add your new list to the `examples` list at the bottom of the file.
+
+### Using our library in your own Agda projects
+
+When using Nix, you can use this repository as a library in you own project, by using `agda.withPackages`:
+```nix
+agda = nixpkgs.agda.withPackages [
+  nixpkgs.agdaPackages.standard-library
+  (import /path/to/this/git/repository {
+    pkgs = nixpkgs;
+  })
+];
+```
+Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
+
+### Limitations
+
 
 ## Troubleshooting
 
