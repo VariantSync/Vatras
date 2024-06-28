@@ -22,7 +22,7 @@ open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 
 import Agda.Builtin.Equality.Erase
 
--- The following axioms are needed to proof properties about string
+-- The following axioms are needed to prove properties about string
 -- computations but are not yet provided by Agda. See
 -- https://github.com/agda/agda/issues/6119 for details.
 fromList-toList : ∀ (s : String) → String.fromList (String.toList s) ≡ s
