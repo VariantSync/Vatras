@@ -53,11 +53,11 @@ Note that building for the first time (or running `nix-shell`) will take a while
 How to install Nix, also depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
 
 When you have Nix installed on your system, you can get access to all necessary development utilities by opening a terminal, navigating to this directory, and then simply opening a Nix shell by typing
-``` shell
+```shell
 nix-shell
 ```
 Alternatively, the demo can be compiled and run directly using
-``` shell
+```shell
 nix-build
 ./result/bin/EPVL
 ```
@@ -78,14 +78,14 @@ docker build -t epvl .
 ```
 
 Optionally, you may verify that the image was created successfully by running
-``` shell
+```shell
 docker images
 ```
 and checking that an image called `epvl` is listed.
 
 You can then run the demo by running the image:
 
-``` shell
+```shell
 docker run -t epvl
 ```
 
@@ -159,7 +159,7 @@ Agda looks for its dependencies in a directory specified by the environment vari
 First, the demo prints unicode characters to terminal, as a test for you to see whether your terminal supports unicode.
 The first lines should look like this.
 
-``` shell
+```shell
 It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
   ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳
 ... but now on to the demo.
@@ -261,7 +261,7 @@ Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) cr
 
 If you see an error similar to this one
 
-``` shell
+```shell
 .../src/MAlonzo/Code/Data/IndexedSet.hs:1705:3: error:
     Not in scope:
       type constructor or class ‘MAlonzo.Code.Agda.Primitive.T_Level_14’
