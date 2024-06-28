@@ -38,9 +38,9 @@ experimentsToRun : List (ExperimentSetup (suc 0ℓ))
 experimentsToRun =
   -- Run some example translations of option calculus to binary choice calculus
   setup exp-oc-to-bcc optex-all ∷
-  -- Run some example translations from n to binary choices
-  -- setup exp all-ex ∷
+  -- Run some example configurations of feature structure trees.
   setup toy-calculator-experiment ex-all ∷
+  -- Run the roundtrip demo.
   setup round-trip RoundTrip.examples ∷
   []
 
