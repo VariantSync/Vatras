@@ -202,32 +202,7 @@ The library is organized as follows:
 
 Our library's primary purpose is to determine and compare the (semantic) expressive power of variability languages based.
 The library comes with a range of languages already defined (Section 3 in our paper), as well as comparisons between all of those (Section 5 in our paper).
-You may add a new language and compare it to existing ones, as follows.
-
-1.  Define your own language as a new type.
-    Therefore, you must first define its abstract syntax as a data type.
-    The syntax must be of type `𝔼` (see [Definitions.agda](src/Framework/Definitions.agda)), which means it must accept another type (the type of atoms) as parameter:
- 
-    ```agda
-    data NewLang (A : Set) : Set where
-      -- constructors go here
-    ```
-    
-    To be a variability language, your syntax also needs a configuration language. This might be just any type. For this example, we just call it `NewConf`.
-   
-    ```agda
-    NewConf : Set
-    NewConf = ?
-    ```
-  
-    With the configuration language, we can now define a semantics of your language. To be compatible with our framework, the semantics must be of type `𝔼-Semantics` (see [VariabilityLanguage.agda](src/Framework/VariabilityLanguage.agda)), which means it must be a function of the following signature:
-    ```agda
-    ⟦_⟧ : ∀ {A} → NewLang A → Configuration F → V A
-    data NewLang (A : Set) : Set where
-      -- constructors go here
-    ```
-    where `V : 𝕍` is the type of variants. In our paper and for our language comparison, this type is always a rose tree `Rose ∞` (see [Variants.agda](src/Framework/Variants.agda)).
- 
+We explain how to add a new language and compare it to existing ones, in the [New Language Tutorial](src/Tutorial/NewLanguage.lagda.md), a literate Agda file in which you can test your extensions immediately.
   
 #### Adapting the demo
 
