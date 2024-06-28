@@ -36,8 +36,6 @@ Each experiment is run on each example from a list of examples (i.e., experiment
 -}
 experimentsToRun : List (ExperimentSetup (suc 0ℓ))
 experimentsToRun =
-  -- DEPRECATED: Run some example translations from n-ary to binary choice calculus
-  -- DEPRECATED: (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
   -- Run some example translations of option calculus to binary choice calculus
   setup exp-oc-to-bcc optex-all ∷
   -- Run some example translations from n to binary choices
