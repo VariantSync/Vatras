@@ -34,8 +34,8 @@ Variant Language.
 A variant should represent atomic data in some way so its parameterized in atomic data.
 In our paper, this type is fixed to rose trees (see Framework.Variants.agda).
 -}
-𝕍 : Set₂
-𝕍 = 𝔸 → Set₁
+𝕍 : Set₁
+𝕍 = 𝔸 → Set
 
 {-
 Annotation Language.
@@ -71,8 +71,8 @@ occur within an expression.
 Such sub-terms describe variants of atomic data (i.e., some structure on atomic elements),
 and hence expressions are parameterized in the type of this atomic data.
 -}
-𝔼 : Set₂
-𝔼 = 𝔸 → Set₁
+𝔼 : Set₁
+𝔼 = 𝔸 → Set
 
 {-
 Variability Construct.
@@ -84,5 +84,5 @@ they must know the atomic data type.
 Moreover, constructs often denote variational expressions and hence require a language
 for variability annotations 𝔽.
 -}
-ℂ : Set₂
-ℂ = 𝔼 → 𝔸 → Set₁
+ℂ : Set₁
+ℂ = 𝔼 → 𝔸 → Set

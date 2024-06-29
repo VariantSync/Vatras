@@ -36,9 +36,9 @@ open import Construct.Choices
 In the following we formalize the binary normal forms for choice calculus. We express a normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system. Our goal is to prove that every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
 
 ```agda
-data 2CC (Dimension : 𝔽) : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (2CC Dimension i) A → 2CC Dimension (↑ i) A
-   chc  : ∀ {i A} → VL2Choice.Syntax Dimension (2CC Dimension i) A → 2CC Dimension (↑ i) A
+data 2CC (Dimension : 𝔽) (A : 𝔸) : Size → Set where
+   atom : ∀ {i} → Artifact (iflip (2CC Dimension) i) A → 2CC Dimension A (↑ i)
+   chc  : ∀ {i} → VL2Choice.Syntax Dimension (iflip (2CC Dimension) i) A → 2CC Dimension A (↑ i)
 
 pattern _-<_>- a cs  = atom (a At.-< cs >-)
 pattern _⟨_,_⟩ D l r = chc (D 2Choice.⟨ l , r ⟩)
@@ -64,9 +64,9 @@ Configuration Dimension = 2Choice.Config Dimension
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
     2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
-    2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+    2CCL {i} Dimension = ⟪ iflip (2CC Dimension) i , Configuration Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Configuration Dimension) (2CC Dimension i)
+    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Configuration Dimension) (iflip (2CC Dimension) i)
     ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (2CCL Dimension) x
     ⟦_⟧ {i} {Dimension} (chc  x) = VL2Choice.Semantics V Dimension (2CCL Dimension) id x
 ```
@@ -91,14 +91,14 @@ Some transformation rules:
 
     module _ {A : 𝔸} where
       ast-factoring : ∀ {i} {D : Dimension} {a : atoms A} {n : ℕ}
-        → (xs ys : Vec (2CC Dimension i A) n)
+        → (xs ys : Vec (2CC Dimension A i) n)
           -------------------------------------------------------------------------------------
         → 2CCL Dimension ⊢
               D ⟨ a -< toList xs >- , a -< toList ys >- ⟩
             ≣₁ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >-
       ast-factoring xs ys c = {!!}
 
-      choice-idempotency : ∀ {D} {e : 2CC Dimension ∞ A}  -- do not use ∞ here?
+      choice-idempotency : ∀ {D} {e : 2CC Dimension A ∞}  -- do not use ∞ here?
           ---------------------------
         → 2CCL Dimension ⊢ D ⟨ e , e ⟩ ≣₁ e
       choice-idempotency {D} {e} c with c D
@@ -128,7 +128,7 @@ Some transformation rules:
       for e and e′, we know it per assumption.
       -}
 
-      choice-l-congruence : ∀ {i : Size} {D : Dimension} {l l′ r : 2CC Dimension i A}
+      choice-l-congruence : ∀ {i : Size} {D : Dimension} {l l′ r : 2CC Dimension A i}
         → 2CCL Dimension ⊢ l ≣₁ l′
           ---------------------------------------
         → 2CCL Dimension ⊢ D ⟨ l , r ⟩ ≣₁ D ⟨ l′ , r ⟩
@@ -136,7 +136,7 @@ Some transformation rules:
       ... | false = refl
       ... | true  = l≣l′ c
 
-      choice-r-congruence : ∀ {i : Size} {D : Dimension} {l r r′ : 2CC Dimension i A}
+      choice-r-congruence : ∀ {i : Size} {D : Dimension} {l r r′ : 2CC Dimension A i}
         → 2CCL Dimension ⊢ r ≣₁ r′
           ---------------------------------------
         → 2CCL Dimension ⊢ D ⟨ l , r ⟩ ≣₁ D ⟨ l , r′ ⟩
@@ -159,7 +159,7 @@ Some transformation rules:
                           then just b
                           else scope D'
 
-    eliminate-redundancy-in : ∀ {i : Size} {A : 𝔸} → Scope → 2CC Dimension i A → 2CC Dimension ∞ A
+    eliminate-redundancy-in : ∀ {i : Size} {A : 𝔸} → Scope → 2CC Dimension A i → 2CC Dimension A ∞
     eliminate-redundancy-in scope (a -< es >-) = a -< mapl (eliminate-redundancy-in scope) es >-
     eliminate-redundancy-in scope (D ⟨ l , r ⟩) with scope D
     ... | just true  = eliminate-redundancy-in scope l
@@ -168,7 +168,7 @@ Some transformation rules:
                         , eliminate-redundancy-in (refine scope D false) r
                         ⟩
 
-    eliminate-redundancy : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → 2CC Dimension ∞ A
+    eliminate-redundancy : ∀ {i : Size} {A : 𝔸} → 2CC Dimension A i → 2CC Dimension A ∞
     eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
     open import Framework.Compiler using (LanguageCompiler)
@@ -188,7 +188,7 @@ Some transformation rules:
   open Data.List using (concatMap) renaming (_++_ to _++l_)
 
   -- get all dimensions used in a binary CC expression
-  dims : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → List Dimension
+  dims : ∀ {i : Size} {A : 𝔸} → 2CC Dimension A i → List Dimension
   dims (_ -< es >-) = concatMap dims es
   dims (D ⟨ l , r ⟩) = D ∷ (dims l ++l dims r)
 ```
@@ -200,13 +200,13 @@ Some transformation rules:
   module Pretty (show-D : Dimension → String) where
     open import Show.Lines
 
-    show : ∀ {i} → 2CC Dimension i (String , String._≟_) → String
+    show : ∀ {i} → 2CC Dimension (String , String._≟_) i → String
     show (a -< [] >-) = a
     show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
     show (D ⟨ l , r ⟩) = show-D D ++ "⟨" ++ (show l) ++ ", " ++ (show r) ++ "⟩"
 
 
-    pretty : ∀ {i : Size} → 2CC Dimension i (String , String._≟_) → Lines
+    pretty : ∀ {i : Size} → 2CC Dimension (String , String._≟_) i → Lines
     pretty (a -< [] >-) = > a
     pretty (a -< es@(_ ∷ _) >-) = do
       > a ++ "-<"

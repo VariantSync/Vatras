@@ -14,14 +14,19 @@ open import Construct.Artifact as At using (map-children) renaming (Syntax to Ar
 
 open import Data.EqIndexedSet
 
-data GrulerVariant : 𝕍 where
-  asset : ∀ {A : 𝔸} (a : atoms A) → GrulerVariant A
-  _∥_   : ∀ {A : 𝔸} (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
+data GrulerVariant (A : 𝔸) : Set where
+  asset : (a : atoms A) → GrulerVariant A
+  _∥_   : (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
 
-data Rose : Size → 𝕍 where
-  rose : ∀ {i} {A : 𝔸} → Artifact (Rose i) A → Rose (↑ i) A
+iflip : ∀ {a c} {A : Set a} {C : A → Size → Set c}
+  → ((x : A) (y : Size) → C x y)
+  → ((y : Size) (x : A) → C x y)
+iflip cons y x = cons x y
 
-rose-leaf : ∀ {A : 𝔸} → atoms A → Rose ∞ A
+data Rose (A : 𝔸) : Size → Set where
+  rose : ∀ {i} → Artifact (iflip Rose i) A → Rose A (↑ i)
+
+rose-leaf : ∀ {A : 𝔸} → atoms A → Rose A ∞
 rose-leaf {A} a = rose (At.leaf a)
 
 pattern _-<_>- a cs = rose (a At.-< cs >-)
@@ -35,10 +40,10 @@ open import Data.Maybe using (nothing; just)
 open import Relation.Binary.PropositionalEquality as Peq using (_≡_; _≗_; refl)
 open Peq.≡-Reasoning
 
-children-equality : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose ∞ A)} → a₁ -< cs₁ >- ≡ a₂ -< cs₂ >- → cs₁ ≡ cs₂
+children-equality : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose A ∞)} → a₁ -< cs₁ >- ≡ a₂ -< cs₂ >- → cs₁ ≡ cs₂
 children-equality refl = refl
 
-Artifact∈ₛRose : Artifact ∈ₛ Rose ∞
+Artifact∈ₛRose : Artifact ∈ₛ iflip Rose ∞
 cons Artifact∈ₛRose x = rose x
 snoc Artifact∈ₛRose (rose x) = just x
 id-l Artifact∈ₛRose x = refl
@@ -46,11 +51,11 @@ id-l Artifact∈ₛRose x = refl
 GrulerVL : VariabilityLanguage GrulerVariant
 GrulerVL = Variant-is-VL GrulerVariant
 
-RoseVL : VariabilityLanguage (Rose ∞)
-RoseVL = Variant-is-VL (Rose ∞)
+RoseVL : VariabilityLanguage (iflip Rose ∞)
+RoseVL = Variant-is-VL (iflip Rose ∞)
 
 open import Data.String using (String; _++_; intersperse)
-show-rose : ∀ {i} {A} → (atoms A → String) → Rose i A → String
+show-rose : ∀ {i} {A} → (atoms A → String) → Rose A i → String
 show-rose show-a (a -< [] >-) = show-a a
 show-rose show-a (a -< es@(_ ∷ _) >-) = show-a a ++ "-<" ++ (intersperse ", " (map (show-rose show-a) es)) ++ ">-"
 
@@ -92,10 +97,10 @@ module _ (V : 𝕍) (A : 𝔸) {Γ : VariabilityLanguage V} (encoder : VariantEn
     ∎
 
 rose-encoder :
-  ∀ (Γ : VariabilityLanguage (Rose ∞))
+  ∀ (Γ : VariabilityLanguage (iflip Rose ∞))
   → ArtifactC ⟦∈⟧ₚ Γ
   → Config Γ
-  → VariantEncoder (Rose ∞) Γ
+  → VariantEncoder (iflip Rose ∞) Γ
 rose-encoder Γ has c = record
   { compile = t
   ; config-compiler = λ _ → record { to = confi; from = fnoci }
@@ -103,7 +108,7 @@ rose-encoder Γ has c = record
   }
   where
     ⟦_⟧ = Semantics Γ
-    ⟦_⟧ᵥ = Semantics (Variant-is-VL (Rose ∞))
+    ⟦_⟧ᵥ = Semantics (Variant-is-VL (iflip Rose ∞))
 
     confi : ⊤ → Config Γ
     confi tt = c
@@ -115,16 +120,16 @@ rose-encoder Γ has c = record
     ppp = ⟦∈⟧ₚ→⟦∈⟧ᵥ has
 
     module _ {A : 𝔸} where
-      t : ∀ {i} → Rose i A → Expression Γ A
+      t : ∀ {i} → Rose A i → Expression Γ A
       t (rose x) = cons (C∈ₛΓ has) (map-children t x)
 
       ⟦_⟧ₚ : ∀ {A}
         → (e : Artifact (Expression Γ) A)
         → (c : Config Γ)
-        → Artifact (Rose ∞) A
+        → Artifact (iflip Rose ∞) A
       ⟦_⟧ₚ = pcong ArtifactC Γ
 
-      h : ∀ (v : Rose ∞ A) (j : Config Γ) → ⟦ t v ⟧ j ≡ v
+      h : ∀ (v : Rose A ∞) (j : Config Γ) → ⟦ t v ⟧ j ≡ v
       h (rose (a At.-< cs >-)) j =
         begin
           ⟦ cons (C∈ₛΓ has) (map-children t (a At.-< cs >-)) ⟧ j
@@ -180,6 +185,6 @@ rose-encoder Γ has c = record
       --     ⟦ cons (C∈ₛΓ has) (map-children t x) ⟧ (confi i)
       --   ∎
 
-      p : ∀ (e : Rose ∞ A) → ⟦ e ⟧ᵥ ≅[ confi ][ fnoci ] ⟦ t e ⟧
+      p : ∀ (e : Rose A ∞) → ⟦ e ⟧ᵥ ≅[ confi ][ fnoci ] ⟦ t e ⟧
       -- p (rose x) = {!!}
       p e = irrelevant-index-≅ e (λ _ → refl) (λ j → h e j) confi fnoci
