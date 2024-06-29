@@ -12,6 +12,11 @@
 > Note to the OOSPLA Artifact Reviewers:
 > This is a source code and proof artifact.
 
+> Note to the OOPSLA Artifact Reviewers:
+> Some links in this document only work from within the repository.
+> Some links are relative, pointing to specific files or directories which are unavailable
+> when reading this documentation as a standalone file.
+
 This is the supplementary Agda library for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
 
 This library formalizes all results in our paper:
@@ -35,6 +40,8 @@ The library and its demo were tested on standard laptops.
 This section gives you a short "Getting Started" guide.
 For full setup instructions, including detailed instructions on setting up dependencies, see the next section.
 We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and we also tested the Docker setup on Windows 11.
+
+> In case of problems, there is a "Troubleshooting" section at the bottom of this file.
 
 ### Setup
 
@@ -176,11 +183,17 @@ The actual demo will then print:
 
 ## Reusability Guide
 
-Our library was designed to be resuable in other research endeavors or tools for studying or analyzing static variability.
-For language designers, our framework enables basic sanity checks, which despite being basic, have never been studied nor implemented for variability languages before. For practitioners, our framework provides proven-to-be correct compilers and differencing algorithms, originating from constructive proofs for the above prop- erties, implemented in Agda. For researchers, our framework provides proof strategies to derive insightful theorems on the expressiveness, completeness, and soundness of variability languages.
-We outline relevant parts for reusing the library in the following.
+Our library was designed to be reusable in other research endeavors or tools for studying or analyzing static variability.
+In particular, our library provides,
 
-### Overview and Project Structure
+- **formalizations of common variability languages** as algebraic data types, including their abstract syntax and semantics (see Section 3 in our paper), and sometimes functions or proofs of their properties (e.g., for algebraic decision trees, we have implemented a dead-branch elimination and proved it correct). Previously, most of these languages were only defined on paper. These formalizations can be reused to implement variational analyses or more practice-oriented variability languages. (Our formalization might even serve as teaching material for courses on software variability in the future.)
+- **proven-to-be correct compilers**, which translate common variability languages into each other (see Section 5 in our paper). The compilers can be reused to, for example, translate datasets or inputs to reuse analysis formulated based on a particular language to all other languages which are less or equally expressive.
+- a means to conduct **basic sanity checks** for language designers, such as soundness or completeness. Language designers can relate new languages to existing ones with only one or two translations with respective proofs without having to compare to each language individually. 
+- a reusable implementation of **indexed sets** that can be used to talk about subsets of types in terms of functions.
+- a small **pretty-printing** library which we use for the terminal output of our demo.
+- a range of **tutorials** guiding you through the process of creating your own language and comparing it to existing once, eventually concluding completeness and soundness either for free or by yourself. In the future, these tutorials might even serve as teaching material for courses on software variability.
+
+### Overview
 
 The library is organized as follows:
 
@@ -188,23 +201,29 @@ The library is organized as follows:
   - [VariabilityLanguage.lagda.md](src/Framework/VariabilityLanguage.lagda.md) defines variability languages and their denotational semantics.
   - Soundness and completeness are defined in the [Properties](src/Framework/Properties) sub-directory.
   - Definitions for expressiveness and configuration equivalence are in the [Relation](src/Framework/Relation) sub-directory.
-  - Theorems for proofs for free (Section 4.4) are within the [Proof](src/Framework/Proof) sub-directory, including several more interesting theorems, which did not fit into the paper.
+  - Theorems for proofs for free (Section 4.4) are within the [Proof](src/Framework/Proof) sub-directory, including several additional interesting theorems, which did not fit into the paper.
 - [src/Lang](src/Lang) contains definitions of particular variability languages (Section 3).
 - [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md) contains an overview of our case study (Section 5) to compare existing variability languages. The compilers can be found in the [src/Translation/Lang](src/Translation/Lang) sub-directory.
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
 - [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
+- [src/Show/Lines.agda](src/Show/Lines.agda) implements a small pretty-printer, which we use for the demo's output.
+
+### Tutorials
+
+To extend or reuse the library, we offer a range of tutorials in the [Tutorials module](src/Tutorial).
+These tutorials are literate Agda files with holes for you to fill in.
+Hence, when trying the tutorials you can directly check your definitions to be type-correct with Agda in a suitable editor (e.g., Emacs of VS Code) and you can navigate the framework.
+The tutorials might also serve as copy-and-paste-templates for new definitions.
+
+- [The New Language Tutorial](src/Tutorial/NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
+- [TODO] and compare it to existing ones, in the , a literate Agda file in which you can test your extensions immediately.
 
 ### Documentation
 
-### Explain how to adapt the artifact to new inputs or new use cases.
-
-#### Adding new languages
-
-Our library's primary purpose is to determine and compare the (semantic) expressive power of variability languages based.
-The library comes with a range of languages already defined (Section 3 in our paper), as well as comparisons between all of those (Section 5 in our paper).
-We explain how to add a new language and compare it to existing ones, in the [New Language Tutorial](src/Tutorial/NewLanguage.lagda.md), a literate Agda file in which you can test your extensions immediately.
+The code base is documented thoroughly.
+For some of the crucial files or proof steps, we use literate Agda (mostly markdown) to explain proofs step-by-step.
   
-#### Adapting the demo
+### Changing the Demo Input
 
 To adapt the demo, you can implement your own experiments and add them to the list of experiments to run at the top of the [Main](src/Main.agda) file.
 If you simply want to change the inputs of existing experiments, you can change the list of inputs for each experiment in the list of experiments as well.
@@ -235,7 +254,6 @@ Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) cr
 ## Troubleshooting
 
 If you see an error similar to this one
-
 ```shell
 .../src/MAlonzo/Code/Data/IndexedSet.hs:1705:3: error:
     Not in scope:
@@ -246,7 +264,6 @@ If you see an error similar to this one
 1705 |   MAlonzo.Code.Agda.Primitive.T_Level_14 ->
      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
-
 there might be corrupt build files. Simply run `make clean`.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.3-blue.svg
