@@ -1,9 +1,6 @@
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
+module Translation.Lang.NCC-to-CCC where
 
-module Translation.Lang.NCC-to-CCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
-
+open import Size using (Size; ∞)
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
 open import Data.List as List using (List; []; _∷_)
@@ -13,23 +10,20 @@ open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Definitions using (𝔸; 𝔽)
+open import Framework.Variants as V using (Rose)
+open import Framework.Relation.Expressiveness (Rose ∞) using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Relation.Binary.PropositionalEquality as Eq using (refl)
-open import Size using (Size; ∞)
 open import Util.List using (find-or-last; lookup⇒find-or-last)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
-
 
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
@@ -60,11 +54,11 @@ preserves-⊆ n (a -< cs >-) config =
   ≡⟨⟩
     CCC.⟦ a -< List.map (translate n) cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → CCC.⟦ e ⟧ config) (List.map (translate n) cs))
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ config)} {f = translate n} cs) ⟨
-    artifact a (List.map (λ e → CCC.⟦ translate n e ⟧ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc n config)) cs)
+    a V.-< List.map (λ e → CCC.⟦ e ⟧ config) (List.map (translate n) cs) >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ config)} {f = translate n} cs) ⟨
+    a V.-< List.map (λ e → CCC.⟦ translate n e ⟧ config) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ n e config) cs) ⟩
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ (fnoc n config)) cs >-
   ≡⟨⟩
     NCC.⟦ a -< cs >- ⟧ (fnoc n config)
   ∎
@@ -91,11 +85,11 @@ preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
 preserves-⊇ n (a -< cs >-) config =
     NCC.⟦ a -< cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n e config) cs) ⟩
-    artifact a (List.map (λ e → CCC.⟦ translate n e ⟧ (conf n config)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ (conf n config))} {f = translate n} cs) ⟩
-    artifact a (List.map (λ e → CCC.⟦ e ⟧ (conf n config)) (List.map (translate n) cs))
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ config) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊇ n e config) cs) ⟩
+    a V.-< List.map (λ e → CCC.⟦ translate n e ⟧ (conf n config)) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ {g = (λ e → CCC.⟦ e ⟧ (conf n config))} {f = translate n} cs) ⟩
+    a V.-< List.map (λ e → CCC.⟦ e ⟧ (conf n config)) (List.map (translate n) cs) >-
   ≡⟨⟩
     CCC.⟦ a -< List.map (translate n) cs >- ⟧ (conf n config)
   ≡⟨⟩

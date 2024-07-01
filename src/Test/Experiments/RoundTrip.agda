@@ -18,18 +18,21 @@ open Eq using (_≡_; refl)
 
 open import Framework.Compiler using (LanguageCompiler)
 open import Framework.Definitions using (ℂ; 𝔸)
-open import Framework.Variants using (Rose; Artifact∈ₛRose; show-rose)
+open import Framework.Variants using (Rose; show-rose)
 open import Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
 open import Util.AuxProofs using (decidableEquality-×)
 open import Util.Nat.AtLeast using (ℕ≥)
 import Util.String as String
 
 open import Lang.All
+open CCC using (CCC; _⟨_⟩; _-<_>-)
+open NCC using (NCC)
 open import Translation.LanguageMap
 import Translation.Lang.CCC-to-NCC
-module CCC-to-NCC = Translation.Lang.CCC-to-NCC.Exact Variant mkArtifact
+module CCC-to-NCC = Translation.Lang.CCC-to-NCC.Exact
 import Translation.Lang.NCC-to-2CC
-open Translation.Lang.NCC-to-2CC.2Ary Variant mkArtifact using () renaming (NCC→2CC to NCC-2→2CC)
+open Translation.Lang.NCC-to-2CC.2Ary using () renaming (NCC→2CC to NCC-2→2CC)
+open CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 
 open import Show.Lines
 open import Util.Named
@@ -45,7 +48,7 @@ Artifact = String , String._≟_
 
 open CCC-to-NCC using (⌈_⌉; numberOfAlternatives≤⌈_⌉)
 
-CCC→NCC-Exact : (e : CCC.CCC Feature ∞ Artifact) → NCC.NCC ⌈ e ⌉ Feature ∞ Artifact
+CCC→NCC-Exact : (e : CCC Feature ∞ Artifact) → NCC ⌈ e ⌉ Feature ∞ Artifact
 CCC→NCC-Exact e = CCC-to-NCC.translate ⌈ e ⌉ e (numberOfAlternatives≤⌈_⌉ e)
 
 
@@ -72,7 +75,7 @@ compile : ∀ {VL₁ VL₂ : VariabilityLanguage Variant}
   → Lines' (Expression VL₂ Artifact)
 compile e VL₂-name compiler show = translate e VL₂-name (LanguageCompiler.compile compiler) show
 
-round-trip : Experiment (CCC.CCC Feature ∞ (String , String._≟_))
+round-trip : Experiment (CCC Feature ∞ (String , String._≟_))
 getName round-trip = "Translate CCC in one round-trip into equally expressive variability languages"
 get     round-trip ex@(name ≔ ccc) = do
   [ Center ]> "CCC, original expression"
@@ -85,17 +88,15 @@ get     round-trip ex@(name ≔ ccc) = do
     ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
     2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
     adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (show-rose id))
-    do            compile   variantList "CCC"         (VariantList→CCC "default feature")                        (CCC.pretty id)
+    variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (Rose ∞) (show-rose id))
+    do            compile   variantList "CCC"         (VariantList→CCC "default feature" CCC-Rose-encoder)       (CCC.pretty id)
   linebreak
 
 
-open CCC using (_⟨_⟩; _-<_>-)
-
-ex-trivial : Example (CCC.CCC Feature ∞ Artifact)
+ex-trivial : Example (CCC Feature ∞ Artifact)
 ex-trivial = "trivial" ≔ "D" ⟨ "l" -< [] >- ∷ "r" -< [] >- ∷ [] ⟩
 
-ex-sandwich : Example (CCC.CCC Feature ∞ Artifact)
+ex-sandwich : Example (CCC Feature ∞ Artifact)
 ex-sandwich = "Sandwich Recipe" ≔
   "Bread"
     -< "Salad?"
@@ -119,5 +120,5 @@ ex-sandwich = "Sandwich Recipe" ≔
     ∷ []
     >-
 
-examples : List (Example (CCC.CCC Feature ∞ Artifact))
+examples : List (Example (CCC Feature ∞ Artifact))
 examples = ex-trivial ∷ ex-sandwich ∷ []

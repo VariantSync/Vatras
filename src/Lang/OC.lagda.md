@@ -22,10 +22,8 @@ open import Data.String as String using (String)
 open import Size using (Size; ∞; ↑_)
 open import Function using (_∘_)
 
-open import Framework.Variants hiding (_-<_>-)
+open import Framework.Variants as V using (Rose; rose-leaf)
 open import Framework.VariabilityLanguage
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 ```
 
 ## Syntax
@@ -100,30 +98,30 @@ open import Function using (flip)
 Conventional Semantics of Option Calculus that dismisses all empty values
 except of there is an empty value at the top.
 -}
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
-  OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ V)
+mutual
+  OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ Rose ∞)
   OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
 
-  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ V) (Configuration Option) (OC Option i)
+  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ Rose ∞) (Configuration Option) (OC Option i)
 
   -- -- recursive application of the semantics to all children of an artifact
   -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
-  ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ V) (Configuration Option) (List ∘ OC Option i)
+  ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ Rose ∞) (Configuration Option) (List ∘ OC Option i)
   ⟦ es ⟧ₒ-recurse c =
     catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
     (map (flip ⟦_⟧ₒ c) es)
 
-  ⟦ a -< es >- ⟧ₒ c = just (cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-))
+  ⟦ a -< es >- ⟧ₒ c = just (a V.-< ⟦ es ⟧ₒ-recurse c >-)
   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
 ```
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
-  ⟦_⟧ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics V (Configuration Option) (WFOC Option i)
-  ⟦ Root a es ⟧ c = cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-)
+⟦_⟧ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Option) (WFOC Option i)
+⟦ Root a es ⟧ c = a V.-< ⟦ es ⟧ₒ-recurse c >-
 
-  WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage V
-  WFOCL {i} Option = ⟪ WFOC Option i , Configuration Option , ⟦_⟧ ⟫
+WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Rose ∞)
+WFOCL {i} Option = ⟪ WFOC Option i , Configuration Option , ⟦_⟧ ⟫
 ```
 
 -- ### Option calculus is unsound
@@ -160,10 +158,8 @@ As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
   -- TODO: Can this be generalized to other types of variants as well?
   module IncompleteOnRose where
-    open import Framework.Variants using (Rose; Artifact∈ₛRose)
     open import Framework.VariantMap (Rose ∞) (ℕ , ℕ._≟_)
     open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
-    open Sem (Rose ∞) Artifact∈ₛRose
 
     variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
     variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1

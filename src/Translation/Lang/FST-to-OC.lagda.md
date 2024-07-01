@@ -1,7 +1,7 @@
 # Option calculus is not as expressive as feature structure trees
 
 ```agda
-open import Framework.Definitions using (𝔽; 𝔸; atoms)
+open import Framework.Definitions using (𝔽; 𝔸)
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 
@@ -35,9 +35,8 @@ open import Relation.Nullary using (yes; no)
 open Eq.≡-Reasoning
 
 open import Framework.Variants using (Rose; rose-leaf; _-<_>-; children-equality)
-import Construct.Plain.Artifact
 open import Lang.All
-open OC using (WFOCL; Root; _❲_❳; all-oc)
+open OC using (OC; WFOCL; Root; _❲_❳; all-oc)
 open import Lang.OC.Properties using (⟦e⟧ₒtrue≡just)
 open import Lang.OC.Subtree using (Subtree; subtrees; both; neither; Implies; subtreeₒ; subtreeₒ-recurse)
 open import Lang.FST using (FSTL-Sem)
@@ -179,7 +178,7 @@ they must be included in both variants. Simultaneously, this excludes the
 artifacts themselves because each configuration excludes one of them.
 ```agda
 shared-artifact : ∀ {F' : 𝔽}
-  → (e : OC.OC F' ∞ A)
+  → (e : OC F' ∞ A)
   → (c₁ c₂ : OC.Configuration F')
   → just (0 -< rose-leaf 0 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
   → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
@@ -211,7 +210,7 @@ only prove that there is at least one more
 artifact.
 ```agda
 more-artifacts : ∀ {F' : 𝔽}
-  → (cs : List (OC.OC F' ∞ A))
+  → (cs : List (OC F' ∞ A))
   → (cₙ : OC.Configuration F')
   → (v : Rose ∞ A)
   → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
@@ -256,7 +255,7 @@ variants forcing it to have exactly one shape. In this case, called
 under the intersection of `c₁` and `c₂`.
 ```agda
 induction : ∀ {F' : 𝔽}
-  → (cs : List (OC.OC F' ∞ A))
+  → (cs : List (OC F' ∞ A))
   → (c₁ c₂ c₃ : OC.Configuration F')
   → 0 -< rose-leaf 0 ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₁
   → 0 -< rose-leaf 1 ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₂
@@ -298,7 +297,7 @@ expression. The proof evaluates the FST expression on all relevant
 configurations which results in contradictions in every case.
 ```agda
 impossible : ∀ {F' : 𝔽}
-  → (cs : List (OC.OC F' ∞ A))
+  → (cs : List (OC F' ∞ A))
   → (c₁ c₂ : OC.Configuration F')
   → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FSTL-Sem F counter-example c')
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))

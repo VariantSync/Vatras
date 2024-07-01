@@ -14,10 +14,10 @@ open import Util.Named using (get)
 open import Test.Examples.Variants
 open import Test.UnitTest
 
-open import Framework.Variants using (Rose; Artifact∈ₛRose)
+open import Framework.Variants using (Rose)
 Variant = Rose ∞
 open import Lang.All
-open VariantList using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
+open VariantList Variant using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
 open import Framework.VariantMap Variant using (VMap)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VMap A n)

@@ -6,7 +6,6 @@ open import Data.List.NonEmpty using (List⁺)
 open import Function using (id)
 open import Size using (Size; ↑_)
 
-open import Framework.Construct
 open import Framework.VariabilityLanguage
 open import Framework.Variants using (GrulerVariant)
 open import Util.List using (find-or-last)

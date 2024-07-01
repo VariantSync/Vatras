@@ -31,10 +31,8 @@ open import Data.Product using (_,_)
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Variants using (Rose)
+open import Framework.Variants as V using (Rose)
 open import Framework.VariabilityLanguage
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 ```
 
 ## Syntax
@@ -51,14 +49,13 @@ data NCC (n : ℕ≥ 2) (Dimension : 𝔽) : Size → 𝔼 where
 Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → 𝕂
 Configuration n Dimension = Dimension → Fin (ℕ≥.toℕ n)
 
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  mutual
-    NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage V
-    NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
+mutual
+  NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
+  NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics V (Configuration n Dimension) (NCC n Dimension i)
-    ⟦_⟧ (a -< cs >-) conf = cons mkArtifact (a At.-< mapl (λ c → ⟦ c ⟧ conf) cs >-)
-    ⟦_⟧ (d ⟨ cs ⟩) conf = ⟦ Vec.lookup cs (conf d) ⟧ conf
+  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Rose ∞) (Configuration n Dimension) (NCC n Dimension i)
+  ⟦_⟧ (a -< cs >-) conf = a V.-< mapl (λ e → ⟦ e ⟧ conf) cs >-
+  ⟦_⟧ (D ⟨ cs ⟩) conf = ⟦ Vec.lookup cs (conf D) ⟧ conf
 ```
 
 ```agda

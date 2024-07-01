@@ -4,15 +4,11 @@
 
 ```agda
 open import Framework.Definitions
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact)
 open import Data.EqIndexedSet
 
 module Translation.Lang.VariantList-to-CCC
   (Dimension : 𝔽)
   (𝔻 : Dimension)
-  (V : 𝕍)
-  (mkArtifact : Artifact ∈ₛ V)
   where
 ```
 
@@ -31,15 +27,14 @@ open import Size
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
 open Eq.≡-Reasoning
 
-open import Framework.VariabilityLanguage
 open import Framework.Compiler using (LanguageCompiler)
-open import Lang.All.Generic V mkArtifact
-open VariantList
+open import Framework.VariabilityLanguage
+open import Framework.Variants using (Rose; Variant-is-VL; encode-idemp)
+open import Lang.All
+open VariantList (Rose ∞)
   using (VariantList; VariantListL; VariantList-is-Complete)
   renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Cₗ)
 open CCC renaming (Configuration to Cᶜ)
-
-open import Framework.Variants
 
 open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
@@ -48,7 +43,7 @@ open import Util.List using (find-or-last; map-find-or-last; map⁺-id)
 
 ```agda
 module Translate
-  (embed : LanguageCompiler (Variant-is-VL V) (CCCL Dimension))
+  (embed : LanguageCompiler (Variant-is-VL (Rose ∞)) (CCCL Dimension))
   where
   open LanguageCompiler embed using (compile; preserves) renaming (conf to v-conf)
 
@@ -66,17 +61,17 @@ module Translate
 
 ```agda
   module Preservation (A : 𝔸) where
-    ⟦_⟧ᵥ = Semantics (Variant-is-VL V)
+    ⟦_⟧ᵥ = Semantics (Variant-is-VL (Rose ∞))
     open import Data.Unit using (tt)
 
     -- The proofs for preserves-⊆ and preserves-⊇ are highly similar and contain copy-and-paste. I could not yet see though how to properly abstract to reuse.
     preserves-⊆ : ∀ (l : VariantList A)
       → ⟦ l ⟧ₗ ⊆[ conf ] ⟦ translate l ⟧
     preserves-⊆ (v ∷ []) n
-      rewrite encode-idemp V A embed (λ _ → n) v
+      rewrite encode-idemp (Rose ∞) A embed (λ _ → n) v
       = refl
     preserves-⊆ (v ∷ w ∷ zs) zero
-      rewrite encode-idemp V A embed (λ _ → zero) v
+      rewrite encode-idemp (Rose ∞) A embed (λ _ → zero) v
       = refl
     preserves-⊆ (v ∷ w ∷ zs) (suc n) =
       begin
@@ -90,7 +85,7 @@ module Translate
           w ∷ zs
         ≡⟨ map⁺-id (w ∷ zs) ⟨
           map⁺ id (w ∷ zs)
-        ≡⟨ map⁺-cong (encode-idemp V A embed c) (w ∷ zs) ⟨
+        ≡⟨ map⁺-cong (encode-idemp (Rose ∞) A embed c) (w ∷ zs) ⟨
           map⁺ (⟦⟧c ∘ compile) (w ∷ zs)
         ≡⟨ map⁺-∘ (w ∷ zs) ⟩
           map⁺ ⟦⟧c tail-in-ccc
@@ -115,10 +110,10 @@ module Translate
     preserves-⊇ : ∀ (l : VariantList A)
       → ⟦ translate l ⟧ ⊆[ fnoc ] ⟦ l ⟧ₗ
     preserves-⊇ (v ∷ []) c -- This proof is the same as for the preserves-⊆ (so look there if you want to see a step by step proof)
-      rewrite encode-idemp V A embed c v
+      rewrite encode-idemp (Rose ∞) A embed c v
       = refl
     preserves-⊇ (v ∷ w ∷ zs) c with c 𝔻
-    ... | zero = encode-idemp V A embed c v
+    ... | zero = encode-idemp (Rose ∞) A embed c v
     ... | suc i =
       let ⟦⟧c = flip ⟦_⟧ c
           tail = w ∷ zs
@@ -128,7 +123,7 @@ module Translate
         find-or-last i tail
       ≡⟨ Eq.cong (find-or-last i) (sym (map⁺-id tail)) ⟩
         find-or-last i (map⁺ id tail)
-      ≡⟨ Eq.cong (find-or-last i) (map⁺-cong (encode-idemp V A embed c) tail) ⟨
+      ≡⟨ Eq.cong (find-or-last i) (map⁺-cong (encode-idemp (Rose ∞) A embed c) tail) ⟨
         find-or-last i (map⁺ (⟦⟧c ∘ compile) tail)
       ≡⟨ Eq.cong (find-or-last i) (map⁺-∘ tail) ⟩
         find-or-last i (map⁺ ⟦⟧c tail-in-ccc)
@@ -149,7 +144,7 @@ module Translate
         preserves-⊆ e , preserves-⊇ e
     }
 
-  open import Framework.Relation.Expressiveness V using (_≽_)
+  open import Framework.Relation.Expressiveness (Rose ∞) using (_≽_)
 
   CCC≽VariantList : CCCL Dimension ≽ VariantListL
   CCC≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)

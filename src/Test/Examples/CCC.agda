@@ -11,7 +11,6 @@ open import Size
   using (Size; ∞; ↑_)
 
 open import Framework.Definitions using (𝔸; atoms)
-open import Construct.Plain.Artifact using (leaf; leaves⁺)
 
 open import Lang.All
 open CCC -- use strings as dimensions
