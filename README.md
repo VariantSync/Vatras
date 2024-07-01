@@ -215,8 +215,8 @@ These tutorials are literate Agda files with holes for you to fill in.
 Hence, when trying the tutorials you can directly check your definitions to be type-correct with Agda in a suitable editor (e.g., Emacs of VS Code) and you can navigate the framework.
 The tutorials might also serve as copy-and-paste-templates for new definitions.
 
-- [The New Language Tutorial](src/Tutorial/NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
 - [TODO] and compare it to existing ones, in the , a literate Agda file in which you can test your extensions immediately.
+- [The New Language Tutorial](src/Tutorial/A_NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
 
 ### Documentation
 

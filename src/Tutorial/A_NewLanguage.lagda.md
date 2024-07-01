@@ -1,3 +1,7 @@
+```agda
+{-# OPTIONS --allow-unsolved-metas #-}
+```
+
 # Implementing your own variability language
 
 This tutorial guides you through the process of defining your own
@@ -5,7 +9,7 @@ variability language within our framework.
 It covers defining syntax, configurations, and semantics.
 
 ```agda
-module Tutorial.NewLanguage where
+module Tutorial.A_NewLanguage where
 
 open import Data.List using (List)
 open import Size using (∞)
@@ -58,6 +62,6 @@ or even make your semantics generic in the type of variants.
 
 Finally, we can define the full language as a triple of syntax, configuration language, and semantics.
 ```agda
-Lang : VariabilityLanguage V
-Lang = ⟪ MyLang , MyConfig , ⟦_⟧ ⟫
+MyVarLang : VariabilityLanguage V
+MyVarLang = ⟪ MyLang , MyConfig , ⟦_⟧ ⟫
 ```
