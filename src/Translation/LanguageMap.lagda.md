@@ -24,7 +24,7 @@ Variant = Rose ∞
 open import Framework.Annotation.IndexedDimension
 open import Framework.Compiler
 open import Framework.Definitions using (𝕍; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _⋡_; _≋_; compiler-cannot-exist)
+open import Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _≻_; _⋡_; _≋_; compiler-cannot-exist)
 open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
 open import Framework.Properties.Completeness Variant using (Complete)
 open import Framework.Properties.Soundness Variant using (Sound)
@@ -273,27 +273,30 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 
   open OC.IncompleteOnRose using (OC-is-incomplete)
 
-  OC-is-less-expressive-than-2CC : WFOCL F ⋡ 2CCL F
-  OC-is-less-expressive-than-2CC = less-expressive-from-completeness 2CC-is-complete OC-is-incomplete
+  OC⋡2CC : WFOCL F ⋡ 2CCL F
+  OC⋡2CC = less-expressive-from-completeness 2CC-is-complete OC-is-incomplete
+
+  2CC≻WFOC : 2CCL F ≻ WFOCL F
+  2CC≻WFOC = 2CC≽OC , OC⋡2CC
 
   2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler (2CCL F) (WFOCL F))
-  2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-2CC
+  2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC⋡2CC
 
   open FST.IncompleteOnRose using (FST-is-incomplete)
 
-  FST-is-less-expressive-than-2CC : FSTL F ⋡ 2CCL F
-  FST-is-less-expressive-than-2CC = less-expressive-from-completeness 2CC-is-complete (FST-is-incomplete F)
+  FST⋡2CC : FSTL F ⋡ 2CCL F
+  FST⋡2CC = less-expressive-from-completeness 2CC-is-complete (FST-is-incomplete F)
 
   2CC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (2CCL F) (FSTL F))
-  2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-2CC
+  2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡2CC
 
   open OC-to-FST using (FSTL⋡WFOCL)
 
-  FST-is-less-expressive-than-OC : FSTL F ⋡ WFOCL F
-  FST-is-less-expressive-than-OC = FSTL⋡WFOCL F
+  FST⋡OC : FSTL F ⋡ WFOCL F
+  FST⋡OC = FSTL⋡WFOCL F
 
   OC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (WFOCL F) (FSTL F))
-  OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-OC
+  OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡OC
 ```
 
 For the proof of `WFOCL⋡FSTL`, we need to construct at least three distinct

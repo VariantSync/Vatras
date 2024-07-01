@@ -6,7 +6,7 @@ open import Data.EqIndexedSet using (≅[]→≅)
 open import Data.Empty using (⊥)
 open import Data.Product using (_,_; _×_; Σ-syntax; proj₁; proj₂)
 open import Relation.Nullary.Negation using (¬_; contraposition)
-open import Relation.Binary using (IsEquivalence; Reflexive; Symmetric; Transitive; Antisymmetric)
+open import Relation.Binary using (IsEquivalence; IsPartialOrder; Reflexive; Symmetric; Transitive; Antisymmetric)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; trans)
 open import Function using (_∘_; Injective)
 
@@ -70,6 +70,24 @@ _is-equally-expressive-as_ = _≋_
 ≋-trans (L₁≽L₂ , L₂≽L₁) (L₂≽L₃ , L₃≽L₂)
   =   ≽-trans L₁≽L₂ L₂≽L₃
     , ≽-trans L₃≽L₂ L₂≽L₁
+
+≋-IsEquivalence : IsEquivalence _≋_
+≋-IsEquivalence = record
+  { refl = ≋-refl
+  ; sym = ≋-sym
+  ; trans = ≋-trans
+  }
+
+≽-IsPartialOrder : IsPartialOrder _≋_ _≽_
+≽-IsPartialOrder = record
+  { isPreorder = record
+    { isEquivalence = ≋-IsEquivalence
+    ; reflexive = proj₁
+    ; trans = ≽-trans
+    }
+  ; antisym = ≽-antisym
+  }
+
 ```
 
 ## Concluding expressiveness from translations
