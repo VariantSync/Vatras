@@ -90,12 +90,12 @@ MyVarLang : VariabilityLanguage V
 MyVarLang = ⟪ MyLang , MyConfig , ⟦_⟧ ⟫
 ```
 
- |
- |
- | scroll down for example semantics of example language above
- |
- |
- ↓
+    |
+    |
+    | scroll down for example semantics of example language above
+    |
+    |
+    ↓
 
 
 
