@@ -205,7 +205,9 @@ The library is organized as follows:
 - [src/Lang](src/Lang) contains definitions of particular variability languages (Section 3).
 - [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md) contains an overview of our case study (Section 5) to compare existing variability languages. The compilers can be found in the [src/Translation/Lang](src/Translation/Lang) sub-directory.
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
+- [src/Test](src/Test) contains our unit test infrastructure (or better: unit _proofs_) as well as some example expressions for some languages.
 - [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
+- [src/Tutorial](src/Tutorial) contains tutorials for getting to know the library (explained in more detail below).
 - [src/Show/Lines.agda](src/Show/Lines.agda) implements a small pretty-printer, which we use for the demo's output.
 
 ### Tutorials
@@ -215,8 +217,11 @@ These tutorials are literate Agda files with holes for you to fill in.
 Hence, when trying the tutorials you can directly check your definitions to be type-correct with Agda in a suitable editor (e.g., Emacs of VS Code) and you can navigate the framework.
 The tutorials might also serve as copy-and-paste-templates for new definitions.
 
-- [The New Language Tutorial](src/Tutorial/A_NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
-- [The Translation Tutorial](src/Tutorial/B_Translation.lagda.md) explains how to compile/translate your language to another existing language and proving correctness.
+1. [The New Language Tutorial](src/Tutorial/A_NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
+2. [The Translation Tutorial](src/Tutorial/B_Translation.lagda.md) explains how to compile/translate your language to another existing language and proving correctness.
+3. [The Proofs Tutorial](src/Tutorial/C_Proofs.lagda.md) explains how to proof completeness, soundness, and expressiveness, and how you can use your compiler to do so.
+
+We recommend following the tutorials in order.
 
 ### Documentation
 
@@ -252,6 +257,7 @@ Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) cr
 
 ### Limitations
 
+- The library currently only supports abstract syntax for all languages. There are no parsers, so it is not yet possible to read in files or strings of concrete syntax.
 
 ## Troubleshooting
 
