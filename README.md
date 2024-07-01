@@ -257,6 +257,65 @@ agda = nixpkgs.agda.withPackages [
 ```
 Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
 
+### Notes on Mechanized Proofs
+
+> Note to the OOPSLA Artifact Reviewers:
+> Here is where we explain everything regarding the guidelines on proof artifacts.
+
+#### Paper-to-Library Correspondence
+
+Some formalizations in the library differ slightly from their in-paper-representation.
+
+- The reason is that in this library, we generalized over the type of variants `V`.
+In the paper, this type is fixed to rose trees (see Definition 3.1), which we also formalized in [src/Framework/Variants.agda](src/Framework/Variants.agda) as type `Rose`.
+Many proofs do require variants to be rose trees though but instead only require that variants have a constructor for artifacts `a -< e , ... , e >-` (which `Rose` [does](src/Framework/Variants.agda)).
+This generalization allows us to also formalize other variability languages such as Gruler's language (see [src/Lang/Gruler.agda](src/Lang/Gruler.agda) within our library.
+- Also generalizing over the annotation language `𝔽` was rather easy in the paper but requires to carry around that `𝔽` in Agda a lot.
+
+The following table shows where each of the definitions, theorems, and proofs from the paper are formalized in this library. Note that this table is exhaustive.
+
+-- TODO: Put Benjamin's table here.
+
+#### Frameworks and Dependencies
+
+Except for the Agda standard-library, this library has no dependencies, as explained in the setup instructions above.
+In particular, this means we do not rely on other proof frameworks.
+
+#### Proof Structure, Organization, and Documentation
+
+Our library consists of many proofs. Their organization into multiple files is presented in the Overview section above.
+Proofs are documented inline via comments in the code (also see the Documentation section above).
+
+#### On Axioms and Assumptions
+
+Our library, does do not use any of the following assumptions or axioms in central parts of the code:
+
+1. **no** additional axioms via `postulate` (e.g., no extensionality or excluded middle)
+2. **no** termination macros (`{-# TERMINATING -#}`). All functions and proofs are proven to terminate (for proofs this means they use well-founded induction or is non-cyclic).
+3. **no** unfinished proofs (i.e., there are no holes `{! !}`).
+
+Of course, there are two exceptions to this.
+
+##### Exception 1
+
+For the [tutorials](src/Tutorial) (see above), we deliberately use many holes.
+These holes are intended to be exercises for someone who is working through the tutorial.
+We also use a terminating macro once here to avoid sized types to keep the tutorial simple.
+The place where we use the macro is proven to terminate multiple times throughout the rest
+of the library multiple times, by using sized types.
+
+##### Exception 2
+
+For a non-crucial part of our framework, we included four postulates, which assume that two primitive operations from the standard library are invertible:
+
+- converting `String`s to lists of characters and vice versa
+- converting characters to natural numbers and vice versa.
+
+These postulates can be found in [src/Util/String.agda](src/Util/String.agda).
+We believe these postulates to be reasonable because strings are commonly _defined_ as lists of characters, and because characters are usually encoded as natural numbers in text encodings (e.g., UTF-8).
+We use these axioms as an example, to prove that we can simplify annotations `String × ℕ` to just `String`, by turning a pair `s , n` into a String representation `s ++ "." ++ show n`.
+In fact, these postulates are an open issue [#6119](https://github.com/agda/agda/issues/6119) in the Agda implementation.
+
 ### Limitations
 
 - The library currently only supports abstract syntax for all languages. There are no parsers, so it is not yet possible to read in files or strings of concrete syntax.
