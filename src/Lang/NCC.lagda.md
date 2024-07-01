@@ -14,7 +14,7 @@ language in the NCC language family which is incomplete.
 
 ```agda
 open import Framework.Definitions
-open import Util.Nat.AtLeast using (ℕ≥)
+open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥)
 module Lang.NCC where
 ```
 
@@ -22,36 +22,34 @@ module Lang.NCC where
 
 ```agda
 open import Data.Bool using (Bool; true; false; if_then_else_)
+open import Data.Fin using (Fin)
 open import Data.List
   using (List; []; _∷_; lookup)
   renaming (map to mapl)
+open import Data.Vec as Vec using (Vec)
 open import Data.Product using (_,_)
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Variants
+open import Framework.Variants using (Rose)
 open import Framework.VariabilityLanguage
 open import Framework.Construct
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-open import Construct.Choices
 ```
 
 ## Syntax
 
 ```agda
 data NCC (n : ℕ≥ 2) (Dimension : 𝔽) : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (NCC n Dimension i) A → NCC n Dimension (↑ i) A
-   chc  : ∀ {i A} → VLNChoice.Syntax n Dimension (NCC n Dimension i) A → NCC n Dimension (↑ i) A
-
-pattern _-<_>- a cs = atom (a At.-< cs >-)
-pattern _⟨_⟩ D cs = chc (D NChoice.⟨ cs ⟩)
+   _-<_>- : ∀ {i A} → atoms A → List (NCC n Dimension i A) → NCC n Dimension (↑ i) A
+   _⟨_⟩ : ∀ {i A} → Dimension → Vec (NCC n Dimension i A) (ℕ≥.toℕ n) → NCC n Dimension (↑ i) A
 ```
 
 ## Semantics
 
 ```agda
 Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → 𝕂
-Configuration n Dimension = NChoice.Config n Dimension
+Configuration n Dimension = Dimension → Fin (ℕ≥.toℕ n)
 
 module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
   mutual
@@ -59,8 +57,8 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
     NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
 
     ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics V (Configuration n Dimension) (NCC n Dimension i)
-    ⟦_⟧ {i} {Dimension} {n} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (NCCL n Dimension) x
-    ⟦_⟧ {i} {Dimension} {n} (chc x) = VLNChoice.Semantics n V Dimension (NCCL n Dimension) id x
+    ⟦_⟧ (a -< cs >-) conf = cons mkArtifact (a At.-< mapl (λ c → ⟦ c ⟧ conf) cs >-)
+    ⟦_⟧ (d ⟨ cs ⟩) conf = ⟦ Vec.lookup cs (conf d) ⟧ conf
 ```
 
 ```agda

@@ -4,8 +4,6 @@ open import Construct.Artifact using () renaming (Syntax to Artifact)
 
 module Translation.Lang.NADT-to-CCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
-open import Construct.Choices
-open import Construct.GrulerArtifacts using (leaf)
 import Data.EqIndexedSet as IndexedSet
 import Data.List.NonEmpty as List⁺
 open import Data.Product using (proj₂)
@@ -23,25 +21,25 @@ open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
 open NADT using (NADT; NADTAsset; NADTChoice; NADTL)
-open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
+open CCC using (CCCL; _-<_>-; _⟨_⟩)
 
 
-translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder Variant (CCCL F) → NADT Variant F i A → CCC F ∞ A
-translate Variant→CCC (NADTAsset (leaf v)) = LanguageCompiler.compile Variant→CCC v
-translate Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) = f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
+translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder Variant (CCCL F) → NADT Variant F i A → CCC.CCC F ∞ A
+translate Variant→CCC (NADTAsset v) = LanguageCompiler.compile Variant→CCC v
+translate Variant→CCC (NADTChoice f alternatives) = f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
 
 preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder Variant (CCCL F)) → (expr : NADT Variant F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
-preserves-≗ {A = A} Variant→CCC (NADTAsset (leaf v)) config =
-    CCC.⟦ translate Variant→CCC (NADTAsset (leaf v)) ⟧ config
+preserves-≗ {A = A} Variant→CCC (NADTAsset v) config =
+    CCC.⟦ translate Variant→CCC (NADTAsset v) ⟧ config
   ≡⟨⟩
     CCC.⟦ LanguageCompiler.compile Variant→CCC v ⟧ config
   ≡⟨ proj₂ (LanguageCompiler.preserves Variant→CCC v) config ⟩
     v
   ≡⟨⟩
-    NADT.⟦ NADTAsset {Variant} (leaf v) ⟧ config
+    NADT.⟦ NADTAsset {Variant} v ⟧ config
   ∎
-preserves-≗ Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) config =
-    CCC.⟦ translate Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) ⟧ config
+preserves-≗ Variant→CCC (NADTChoice f alternatives) config =
+    CCC.⟦ translate Variant→CCC (NADTChoice f alternatives) ⟧ config
   ≡⟨⟩
     CCC.⟦ f ⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
   ≡⟨⟩
@@ -51,7 +49,7 @@ preserves-≗ Variant→CCC (NADTChoice (f Choice.⟨ alternatives ⟩)) config 
   ≡⟨ preserves-≗ Variant→CCC (List.find-or-last (config f) alternatives) config ⟩
     NADT.⟦ List.find-or-last (config f) alternatives ⟧ config
   ≡⟨⟩
-    NADT.⟦ NADTChoice (f Choice.⟨ alternatives ⟩) ⟧ config
+    NADT.⟦ NADTChoice f alternatives ⟧ config
   ∎
 
 preserves : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder Variant (CCCL F)) → (expr : NADT Variant F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≅[ id ][ id ] NADT.⟦ expr ⟧

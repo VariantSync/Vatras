@@ -25,28 +25,18 @@ open Eq.≡-Reasoning
 import Data.EqIndexedSet as IndexedSet
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Construct.Choices
-open import Construct.GrulerArtifacts as GL using ()
-open import Construct.NestedChoice using (value; choice)
-
-open import Framework.Variants using (GrulerVariant)
-open import Construct.GrulerArtifacts using (leaf)
-
 open import Lang.All.Generic Variant Artifact∈ₛVariant
 open ADT using (ADT; ADTL; _⟨_,_⟩)
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NADT using (NADT; NADTL; NADTAsset; NADTChoice)
-
-import Translation.Construct.2Choice-to-Choice as 2Choice-to-Choice
-open 2Choice-to-Choice.Translate using (convert)
 
 artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
 translate : ∀ {F : 𝔽} {A : 𝔸} → ADT Variant F A → NADT Variant F ∞ A
-translate (ADT.leaf a) = NADTAsset (leaf a)
-translate {F = F} {A = A} (f ADT.⟨ l , r ⟩) = NADTChoice (f Choice.⟨ translate l ∷ translate r ∷ [] ⟩)
+translate (ADT.leaf a) = NADTAsset a
+translate {F = F} {A = A} (f ADT.⟨ l , r ⟩) = NADTChoice f (translate l ∷ translate r ∷ [])
 
 conf : ∀ {F : 𝔽} → ADT.Configuration F → CCC.Configuration F
 conf config f with config f
@@ -61,7 +51,7 @@ fnoc config f with config f
 preserves-⊆ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT Variant F A) → NADT.⟦ translate expr ⟧ ⊆[ fnoc ] ADT.⟦ expr ⟧
 preserves-⊆ (ADT.leaf v) config = refl
 preserves-⊆ (f ADT.⟨ l , r ⟩) config =
-    NADT.⟦ NADTChoice (f Choice.⟨ translate l ∷ translate r ∷ [] ⟩) ⟧ config
+    NADT.⟦ NADTChoice f (translate l ∷ translate r ∷ []) ⟧ config
   ≡⟨⟩
     NADT.⟦ List.find-or-last (config f) (translate l ∷ translate r ∷ []) ⟧ config
   ≡⟨ Eq.cong₂ NADT.⟦_⟧ lemma refl ⟩
@@ -92,7 +82,7 @@ preserves-⊇ (f ⟨ l , r ⟩) config =
   ≡⟨ Eq.cong₂ NADT.⟦_⟧ lemma refl ⟩
     NADT.⟦ List.find-or-last (conf config f) (translate l ∷ translate r ∷ []) ⟧ (conf config)
   ≡⟨⟩
-    NADT.⟦ NADTChoice (f Choice.⟨ translate l ∷ translate r ∷ [] ⟩) ⟧ (conf config)
+    NADT.⟦ NADTChoice f (translate l ∷ translate r ∷ []) ⟧ (conf config)
   ∎
   where
   lemma : (if config f then translate l else translate r) ≡ List.find-or-last (conf config f) (translate l ∷ translate r ∷ [])

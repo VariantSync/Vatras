@@ -18,29 +18,27 @@ open import Data.List.NonEmpty
 open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
+open import Data.Nat using (ℕ)
 
 open import Function using (id; _∘_; _$_)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Variants
+open import Framework.Variants as V using (Rose; rose; Artifact∈ₛRose; Variant-is-VL; VariantEncoder)
 open import Framework.VariabilityLanguage
 open import Framework.Construct
+open import Util.List using (find-or-last)
 
 open import Data.EqIndexedSet as ISet
 
 open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-open import Construct.Choices
 ```
 
 ## Syntax
 
 ```agda
 data CCC (Dimension : 𝔽) : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (CCC Dimension i) A → CCC Dimension (↑ i) A
-   chc  : ∀ {i A} → VLChoice.Syntax Dimension (CCC Dimension i) A → CCC Dimension (↑ i) A
-
-pattern _-<_>- a cs = atom (a At.-< cs >-)
-pattern _⟨_⟩ D cs    = chc  (D Choice.⟨ cs ⟩)
+   _-<_>- : ∀ {i A} → atoms A → List (CCC Dimension i A) → CCC Dimension (↑ i) A
+   _⟨_⟩ : ∀ {i A} → Dimension → List⁺ (CCC Dimension i A) → CCC Dimension (↑ i) A
 ```
 
 ## Semantics
@@ -57,7 +55,7 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 First, we define configurations as functions that evaluate dimensions by tags:
 ```agda
 Configuration : (Dimension : 𝔽) → 𝕂
-Configuration Dimension = Choice.Config Dimension
+Configuration Dimension = Dimension → ℕ
 ```
 
 We can now define the semantics.
@@ -69,9 +67,9 @@ module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
     CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
     CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Choice.Config Dimension) (CCC Dimension i)
-    ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (CCCL Dimension) x
-    ⟦_⟧ {i} {Dimension} (chc  x) = VLChoice.Semantics V Dimension (CCCL Dimension) id x
+    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Configuration Dimension) (CCC Dimension i)
+    ⟦_⟧ {i} {Dimension} (a -< cs >-) conf = cons mkArtifact (a At.-< map (λ c → ⟦ c ⟧ conf) cs >-)
+    ⟦_⟧ (d ⟨ cs ⟩) conf = ⟦ find-or-last (conf d) cs ⟧ conf
 ```
 
 ```agda
@@ -130,7 +128,7 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
     open Sem V mkArtifact
 
     encode : ∀ {i} {A} → Rose i A → CCC Dimension ∞ A
-    encode (rose a) = atom (map-children encode a)
+    encode (a V.-< cs >-) = a -< map encode cs >-
 
     confs : ⊤ ⇔ Config (CCCL Dimension)
     confs = record

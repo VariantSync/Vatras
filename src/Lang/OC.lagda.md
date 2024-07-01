@@ -62,8 +62,7 @@ An expression is well-formed if there is an artifact at the root.
 Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbol for the empty variant in the semantic domain (which most languages do not require).
 ```agda
 data WFOC (Option : 𝔽) : Size → 𝔼 where
-  WRoot : ∀ {i A} → Artifact (OC Option i) A → WFOC Option (↑ i) A
-pattern Root a cs  = WRoot (a At.-< cs >-)
+  Root : ∀ {i A} → atoms A → List (OC Option i A) → WFOC Option (↑ i) A
 ```
 
 Well-formedness can be forgotten, meaning that we lose the knowledge that an expression is well-formed in the type-system.

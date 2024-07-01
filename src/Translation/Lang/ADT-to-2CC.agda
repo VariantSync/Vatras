@@ -22,14 +22,14 @@ open Eq.≡-Reasoning using (step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
-open 2CC using (2CC; 2CCL)
+open 2CC using (2CCL)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
 artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
 artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 
-translate : ∀ {F : 𝔽} {A : 𝔸} → VariantEncoder Variant (2CCL F) → ADT Variant F A → 2CC F ∞ A
+translate : ∀ {F : 𝔽} {A : 𝔸} → VariantEncoder Variant (2CCL F) → ADT Variant F A → 2CC.2CC F ∞ A
 translate Variant→2CC (ADT.leaf v) = LanguageCompiler.compile Variant→2CC v
 translate Variant→2CC (f ADT.⟨ l , r ⟩) = f 2CC.⟨ translate Variant→2CC l , translate Variant→2CC r ⟩
 

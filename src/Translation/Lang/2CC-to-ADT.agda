@@ -20,7 +20,7 @@ open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Lang.All.Generic Variant Artifact∈ₛVariant
-open 2CC using (2CC; 2CCL)
+open 2CC using (2CCL)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
 artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
@@ -36,7 +36,7 @@ push-down-artifact {A = A} a cs = go cs []
   go (d ⟨ c₁ , c₂ ⟩ ∷ cs) vs = d ⟨ go (c₁ ∷ cs) vs , go (c₂ ∷ cs) vs ⟩
 
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-  → 2CC D i A
+  → 2CC.2CC D i A
   → ADT Variant D A
 translate (a 2CC.-< cs >-) = push-down-artifact a (List.map translate cs)
 translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
@@ -79,7 +79,7 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
     ∎
 
 preserves-≗ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-  → (expr : 2CC D i A)
+  → (expr : 2CC.2CC D i A)
   → ADT.⟦ translate expr ⟧ ≗ 2CC.⟦ expr ⟧
 preserves-≗ {D = D} {A = A} (a 2CC.-< cs >-) config =
     ADT.⟦ translate (a 2CC.-< cs >-) ⟧ config
@@ -109,7 +109,7 @@ preserves-≗ (d 2CC.⟨ l , r ⟩) config =
   ∎
 
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-  → (expr : 2CC D i A)
+  → (expr : 2CC.2CC D i A)
   → ADT.⟦ translate expr ⟧ ≅[ id ][ id ] 2CC.⟦ expr ⟧
 preserves expr = ≗→≅[] (preserves-≗ expr)
 
