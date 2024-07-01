@@ -310,6 +310,11 @@ comparing these features to decided which values these features are assigned.
     FST-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-FST
 ```
 
+As for `Expressiveness` we re-export `Completeness` fixed to String and its respective proofs.
+```agda
+module Completeness-String = Completeness diagonal-ℕ diagonal-ℕ⁻¹ diagonal-ℕ-proof
+```
+
 ```agda
 open VariantList using (VariantList-is-Sound) public
 
