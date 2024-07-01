@@ -203,7 +203,9 @@ The library is organized as follows:
   - Definitions for expressiveness and configuration equivalence are in the [Relation](src/Framework/Relation) sub-directory.
   - Theorems for proofs for free (Section 4.4) are within the [Proof](src/Framework/Proof) sub-directory, including several additional interesting theorems, which did not fit into the paper.
 - [src/Lang](src/Lang) contains definitions of particular variability languages (Section 3).
-- [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md) contains an overview of our case study (Section 5) to compare existing variability languages. The compilers can be found in the [src/Translation/Lang](src/Translation/Lang) sub-directory.
+- [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md) contains an overview of our case study (Section 5) to compare existing variability languages.
+  - [src/Translation/Lang](src/Translation/Lang) contains the compilers and the resulting expressiveness proofs in one file per language pair and direction (e.g., `2CC-to-ADT` implements the translation from binary choice calculus to algebraic decision trees and its correctness proof).
+  - Further sub-directories of [src/Translation/Lang](src/Translation/Lang) facilitate intra-language compilers (i.e., compilers from a language to itself). For example, [src/Translation/Lang/ADT/DeadElim.agda](src/Translation/Lang/ADT/DeadElim.agda) implements a compiler from `ADT` to `ADT` that eliminates any dead branches, and additionally generates a proof that the returned `ADT` does not have any dead branches anymore.
 - [src/Data/IndexedSet.lagda.md](src/Data/IndexedSet.lagda.md) implements the theory of indexed sets with various operators and equational reasoning.
 - [src/Test](src/Test) contains our unit test infrastructure (or better: unit _proofs_) as well as some example expressions for some languages.
 - [src/Test/Experiments/RoundTrip.agda](src/Test/Experiments/RoundTrip.agda) implements the round-trip for our demo, including our sandwich running example. This file may serve as an entry point and example on how to run the compilers implemented in the library.
