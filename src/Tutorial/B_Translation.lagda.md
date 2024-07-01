@@ -39,7 +39,7 @@ Translating a variability language requires two steps.
 
 First, we have to translate terms in one language to terms in another language.
 ```agda
-translate : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → 2CC F i A → MyLang A
+translate : ∀ {i : Size} {A : 𝔸} → 2CC F i A → MyLang A
 translate (a -< cs >-)  = {!!}
 translate (D ⟨ l , r ⟩) = {!!}
 ```
@@ -99,7 +99,7 @@ So our goal is to prove the following, where
 ```agda
 open import Data.EqIndexedSet
 
-preservation : ∀ {F : 𝔽} {A : 𝔸} {i : Size}
+preservation : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
   → ⟦ e ⟧₂ ≅ ⟦ translate e ⟧
 ```
@@ -116,11 +116,11 @@ in normal mode in Vim or Emacs with evil).
 directions as explained before.
 
 ```agda
-preservation-⊆ : ∀ {F : 𝔽} {A : 𝔸} {i : Size}
+preservation-⊆ : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
   → ⟦ e ⟧₂ ⊆ ⟦ translate e ⟧
 
-preservation-⊇ : ∀ {F : 𝔽} {A : 𝔸} {i : Size}
+preservation-⊇ : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
   → ⟦ translate e ⟧ ⊆ ⟦ e ⟧₂
 ```
@@ -135,8 +135,8 @@ To make explicit the translation of indices in indexed sets,
 indexed sets come with dual definitions of its basic relations:
 
 | Indexed Set Relation | Relation with Explicit Translation of Indices |
-| --- | --- |
-| `_⊆_` | `_⊆[_]_` |
+| ----- | ----------- |
+| `_⊆_` | `_⊆[_]_`    |
 | `_≅_` | `_≅[_][_]_` |
 
 where the relations with explicit translation expect a function that
@@ -152,15 +152,22 @@ Navigate to the following holes and check what is expected to prove.
 You will see that you will have to prove that the input expression `e`,
 when configured with `c` yields the same variants as the translated / original
 expression when configured with `conf c` or `fnoc c` respectively.
+
+> Note that finished the following proofs require that `2CC`
+> can actually be translated to your language. This means, your
+> language must be expressive enough to actually model `2CC`.
+> Otherwise you won't be able to close the following goals
+> (but you may still proceed in reading this tutorial).
+
 ```agda
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-preservation-⊆[] : ∀ {F : 𝔽} {A : 𝔸} {i : Size}
+preservation-⊆[] : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
   → ⟦ e ⟧₂ ⊆[ conf e ] ⟦ translate e ⟧
 preservation-⊆[] e c = {!!}
 
-preservation-⊇[] : ∀ {F : 𝔽} {A : 𝔸} {i : Size}
+preservation-⊇[] : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
   → ⟦ translate e ⟧ ⊆[ fnoc e ] ⟦ e ⟧₂
 preservation-⊇[] e c = {!!}
@@ -206,7 +213,7 @@ It requires that preservation is satisfied exactly by
 the supplied translations for configurations. Luckily,
 we can reuse our above definitions anyway.
 ```agda
-preservation[] : ∀ {F : 𝔽} {A : 𝔸} {i : Size}
+preservation[] : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
   → ⟦ e ⟧₂ ≅[ conf e ][ fnoc e ] ⟦ translate e ⟧
 preservation[] e = preservation-⊆[] e , preservation-⊇[] e
@@ -218,8 +225,8 @@ as arguments (not the syntax `2CC` and `MyLang`) which is
 necessary to inform the compiler about the language's semantics
 and configuration type as well.
 ```agda
-compiler : ∀ {F : 𝔽} → LanguageCompiler (2CCL F) MyVarLang
-compiler = record
+my-compiler : LanguageCompiler (2CCL F) MyVarLang
+my-compiler = record
   { compile         = translate
   ; config-compiler = config-compiler
   ; preserves       = preservation[]
