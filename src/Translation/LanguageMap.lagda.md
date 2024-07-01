@@ -30,6 +30,7 @@ open import Framework.Properties.Completeness Variant using (Complete)
 open import Framework.Properties.Soundness Variant using (Sound)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Util.AuxProofs using (decidableEquality-×)
+open import Util.String using (diagonal-ℕ; diagonal-ℕ⁻¹; diagonal-ℕ-proof)
 
 open import Lang.All
 open VariantList using (VariantListL)
@@ -144,7 +145,12 @@ make the changes in the feature model explicit. For theoretical results however,
 it is easier to assume that the set of annotations `F` is infinite, which is
 equivalent to the restriction used here (except if `F` is empty).
 
-A witness of these preconditions can be faund in `Util.String`.
+This assumption is reasonable because it is satisfied by natural numbers
+(via [Cantor's first diagonal argument](https://de.wikipedia.org/wiki/Cantors_erstes_Diagonalargument)
+which was used to show that there are countably but infinite many rational numbers)
+and Strings. A witness of these preconditions for Strings can be found in `Util.String`.
+An alias module for importing expressiveness fixed to Strings and with the
+respective preconditions satisfied can be found below the `Expressivness` module.
 
 ```agda
 module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where
@@ -235,6 +241,12 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   VariantList≋CCC _==_ D = ≽-trans (VariantList≽ADT _==_) (≽-trans ADT≽2CC 2CC≽CCC) , CCC≽VariantList D
 ```
 
+The following module is an alias, which you can used to import
+the `Expressiveness` module above but with the set of annotations
+fixed to Strings.
+```agda
+module Expressiveness-String = Expressiveness diagonal-ℕ diagonal-ℕ⁻¹ diagonal-ℕ-proof
+```
 
 ## Completeness
 
