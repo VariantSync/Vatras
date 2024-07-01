@@ -220,8 +220,10 @@ The tutorials might also serve as copy-and-paste-templates for new definitions.
 
 ### Documentation
 
-The code base is documented thoroughly.
+The code base is documented thoroughly, in terms of inline comments for most definitions.
 For some of the crucial files or proof steps, we use literate Agda (mostly markdown) to explain proofs step-by-step.
+In terms of tutorials (see above), we provide a detailed introduction to the library and its central definitions.
+We refrained from providing documentation in terms of a separate website because commonly, Agda is best navigated, explored, and read from within a suitable editor (typically Emacs, Vim, or VS Code).
   
 ### Changing the Demo Input
 
