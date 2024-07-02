@@ -64,8 +64,8 @@ mutual
   CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 
   ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (CCC Dimension i)
-  ⟦_⟧ (a -< cs >-) conf = a V.-< map (λ e → ⟦ e ⟧ conf) cs >-
-  ⟦_⟧ (D ⟨ cs ⟩) conf = ⟦ find-or-last (conf D) cs ⟧ conf
+  ⟦ a -< cs >- ⟧ c = a V.-< map (λ e → ⟦ e ⟧ c) cs >-
+  ⟦ D ⟨ cs ⟩   ⟧ c = ⟦ find-or-last (c D) cs ⟧ c
 ```
 
 ```agda
