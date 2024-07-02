@@ -145,6 +145,6 @@ in the artifact case is smaller than the inpurt `artifact`.
 One might prove termination here by using sized types (as we do
 throughout the rest of the framework). To keep the tutorial
 simple though, we just tell Agda here that the semantics are terminating
-with an explicit macro.
+with an explicit pragma.
 
 </details>
