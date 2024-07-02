@@ -228,7 +228,7 @@ We recommend following the tutorials in order.
 ### Documentation
 
 The code base is documented thoroughly, in terms of inline comments for most definitions.
-For some of the crucial files or proof steps, we use literate Agda (mostly markdown) to explain proofs step-by-step.
+For some of the crucial files or proof steps, we use literate Agda (mostly Markdown) to explain proofs step-by-step.
 In terms of tutorials (see above), we provide a detailed introduction to the library and its central definitions.
 We refrained from providing documentation in terms of a separate website because commonly, Agda is best navigated, explored, and read from within a suitable editor (typically Emacs, Vim, or VS Code).
   
@@ -441,7 +441,7 @@ It's dangerous to go alone! Take this unicode to see whether your terminal suppo
 there might be a problem with your terminal settings.
 In particular, this error is caused by the Haskell runtime failing to detect UTF-8 support of your terminal.
 This might be caused by your terminal not actually supporting Unicode, or, more likely, misdetection of the Unicode capabilities of your terminal.
-Simply set the environment variable `LC_ALL` to `C.UTF-8` by, e.g., running `export LC_ALL=C.UTF-8` before running EPVL, to force Unicode detection.
+Simply set the environment variable `LC_ALL` to `C.UTF-8` by, for example, running `export LC_ALL=C.UTF-8` before running EPVL, to force Unicode detection.
 
 ### Unexpected or weird symbols
 
