@@ -10,7 +10,7 @@
 }:
 pkgs.agdaPackages.mkDerivation {
   version = "1.0";
-  pname = "EPVL";
+  pname = "Vatras";
   src = with pkgs.lib.fileset;
     toSource {
       root = ./.;

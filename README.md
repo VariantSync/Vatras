@@ -66,7 +66,7 @@ nix-shell
 Alternatively, the demo can be compiled and run directly using
 ```shell
 nix-build
-./result/bin/EPVL
+./result/bin/Vatras
 ```
 
 #### Alternative 2: Setup via Docker
@@ -81,19 +81,19 @@ More detailed instructions on starting the deamon are given [here](https://docs.
 Afterwards, open a terminal and navigate to this repository's directory (the directory containing this README.md).
 First, you must create the docker image:
 ``` shell
-docker build -t epvl .
+docker build -t vatras .
 ```
 
 Optionally, you may verify that the image was created successfully by running
 ```shell
 docker images
 ```
-and checking that an image called `epvl` is listed.
+and checking that an image called `vatras` is listed.
 
 You can then run the demo by running the image:
 
 ```shell
-docker run -t epvl
+docker run -t vatras
 ```
 
 #### Alternative 3: Manual Setup
@@ -261,15 +261,15 @@ Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) cr
 
 #### Alternative 2: Manual installation
 
-After downloading this library, you can register it by appending the path of (EPVL.agda-lib)[EPVL.agda-lib] to the file `$AGDA_DIR/libraries`, creating it if necessary.
+After downloading this library, you can register it by appending the path of (Vatras.agda-lib)[Vatras.agda-lib] to the file `$AGDA_DIR/libraries`, creating it if necessary.
 If the environment variable `AGDA_DIR` is unset, it defaults to `~/.agda` on unix-like systems and `C:\Users\USERNAME\AppData\Roaming\agda` or similar on Windows.
-After registering this library on your system, you can use it in your project by stating `EPVL` as a dependency in your Agda library file.
+After registering this library on your system, you can use it in your project by stating `Vatras` as a dependency in your Agda library file.
 An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
-Its content, including the dependency to EPVL, should include the following:
+Its content, including the dependency to Vatras, should include the following:
 
 ```
 name: YOUR-PROJECT-NAME
-depend: EPVL
+depend: Vatras
 include: SOME/PATH/IN/YOUR/PROJECT
 ```
 
@@ -436,12 +436,12 @@ there might be corrupt build files. Simply run `make clean`.
 If you see an error similar to this one
 ```
 It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
-   EPVL: <stdout>: commitAndReleaseBuffer: invalid argument (cannot encode character '\8345')
+   Vatras: <stdout>: commitAndReleaseBuffer: invalid argument (cannot encode character '\8345')
 ```
 there might be a problem with your terminal settings.
 In particular, this error is caused by the Haskell runtime failing to detect UTF-8 support of your terminal.
 This might be caused by your terminal not actually supporting Unicode, or, more likely, misdetection of the Unicode capabilities of your terminal.
-Simply set the environment variable `LC_ALL` to `C.UTF-8` by, for example, running `export LC_ALL=C.UTF-8` before running EPVL, to force Unicode detection.
+Simply set the environment variable `LC_ALL` to `C.UTF-8` by, for example, running `export LC_ALL=C.UTF-8` before running Vatras, to force Unicode detection.
 
 ### Unexpected or weird symbols
 
