@@ -11,6 +11,7 @@ import Lang.2CC
 import Lang.NADT
 import Lang.ADT
 import Lang.OC
+import Lang.Gruler
 
 module VariantList = Lang.VariantList
 module CCC = Lang.CCC
@@ -19,6 +20,7 @@ module 2CC = Lang.2CC
 module NADT = Lang.NADT
 module ADT = Lang.ADT
 module OC = Lang.OC
+module Gruler      = Lang.Gruler
 
 module FST where
   open import Lang.FST hiding (FST; FSTL-Sem; Conf) public
