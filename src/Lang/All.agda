@@ -14,12 +14,12 @@ import Lang.OC
 import Lang.Gruler
 
 module VariantList = Lang.VariantList
-module CCC = Lang.CCC
-module NCC = Lang.NCC
-module 2CC = Lang.2CC
-module NADT = Lang.NADT
-module ADT = Lang.ADT
-module OC = Lang.OC
+module CCC         = Lang.CCC
+module NCC         = Lang.NCC
+module 2CC         = Lang.2CC
+module NADT        = Lang.NADT
+module ADT         = Lang.ADT
+module OC          = Lang.OC
 module Gruler      = Lang.Gruler
 
 module FST where
