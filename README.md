@@ -377,6 +377,10 @@ Proofs are documented inline via comments in the code (also see the Documentatio
 
 #### On Axioms and Assumptions
 
+We use sized types, which currently have [known inconsistencies](https://github.com/agda/agda/issues/6002), for termination checking.
+The risks of using them in inconsistent ways are [often accepted](https://github.com/agda/agda/issues/4908) because they can simplify proofs substantially.
+We came to the same conclusion and tried our best to use them without interaction with more complicated language features to reduce the likelihood of encountering an inconsistency.
+
 Our library, does not use any of the following assumptions or axioms in central parts of the code:
 
 1. **no** additional axioms via `postulate` (e.g., no extensionality or excluded middle)
@@ -404,7 +408,7 @@ These postulates can be found in [src/Util/String.agda](src/Util/String.agda).
 We believe these postulates to be reasonable because strings are commonly _defined_ as lists of characters, and because characters are usually encoded as natural numbers in text encodings (e.g., UTF-8).
 We use these axioms as an example, to prove that we can simplify annotations `String × ℕ` to just `String`, by turning a pair `s , n` into a String representation `s ++ "." ++ show n`.
 This simplification only exists to beautify theorems (so they do not have to mention the pair) and align them more closely to our paper but our results would remain the same without that simplification.
-In fact, these postulates are an open issue [#6119](https://github.com/agda/agda/issues/6119) in the Agda implementation.
+In fact, some of these postulates are an open issue [#6119](https://github.com/agda/agda/issues/6119) in the Agda implementation.
 
 ### Limitations
 
