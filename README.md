@@ -451,7 +451,9 @@ It's dangerous to go alone! Take this unicode to see whether your terminal suppo
   ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳
 ... but now on to the demo.
 ```
-There are two possible causes for this issue:
+The second line should not be empty, nor should it contain Unicode replacement characters or characters with accents.
+Instead, it should contain mathematical symbols.
+There are two possible causes if you do not see the mathematical symbols:
 
 - The font you are using is missing the required symbols.
   In this case you can use a different font as a fallback or switch to a different font altogether.
