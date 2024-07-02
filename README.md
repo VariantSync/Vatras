@@ -462,6 +462,26 @@ There are two possible causes if you do not see the mathematical symbols:
 - Your terminal does not support UTF-8 correctly.
   In this case you have to switch to a different terminal.
 
+# Docker fails due to signal 9
+
+If you see an error like
+```
+ failed due to signal 9 (Killed)
+------
+Dockerfile:19
+--------------------
+  17 |
+  18 |     # Verify all proofs and build the demo.
+  19 | >>> RUN nix-build
+  20 |
+  21 |     # Copy the demo with all runtime dependencies (ignoring build-time dependencies)
+--------------------
+ERROR: failed to solve: process "/bin/sh -c nix-build" did not complete successfully: exit code: 100
+```
+during a Docker build, you might have encountered an out of memory issue.
+Try to rerun the same command after closing other applications which might comsume a lot of RAM.
+In some cases it may also be necessary to disable some kind of out-of-memory killer (also known as OOM killer or OOM deamon) but use this option with caution.
+
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
 [ghcup]: https://www.haskell.org/ghcup/
