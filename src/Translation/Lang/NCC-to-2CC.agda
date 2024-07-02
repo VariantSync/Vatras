@@ -2,7 +2,6 @@ module Translation.Lang.NCC-to-2CC where
 
 open import Size using (Size; ∞)
 open import Data.Bool using (true; false; if_then_else_)
-open import Data.Bool.Properties as Bool
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin; zero; suc)
 open import Data.List as List using (List)
@@ -65,8 +64,6 @@ module 2Ary where
     ≡⟨⟩
       2CC.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
     ≡⟨⟩
-      2CC.⟦ if config d then translate l else translate r ⟧ config
-    ≡⟨ Bool.if-float (λ e → 2CC.⟦ e ⟧ config) (config d) ⟩
       (if config d then 2CC.⟦ translate l ⟧ config else 2CC.⟦ translate r ⟧ config)
     ≡⟨ Eq.cong₂ (if_then_else_ (config d)) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
       (if config d then NCC.⟦ l ⟧ (fnoc config) else NCC.⟦ r ⟧ (fnoc config))
@@ -109,10 +106,6 @@ module 2Ary where
       (if conf config d then NCC.⟦ l ⟧ config else NCC.⟦ r ⟧ config)
     ≡⟨ Eq.cong₂ (if_then_else_ (conf config d)) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
       (if conf config d then 2CC.⟦ translate l ⟧ (conf config) else 2CC.⟦ translate r ⟧ (conf config))
-    ≡⟨ Bool.if-float (λ e → 2CC.⟦ e ⟧ (conf config)) (conf config d) ⟨
-      2CC.⟦ if conf config d then translate l else translate r ⟧ (conf config)
-    ≡⟨⟩
-      2CC.⟦ d ⟨ translate l , translate r ⟩ ⟧ (conf config)
     ≡⟨⟩
       2CC.⟦ translate (d ⟨ l ∷ r ∷ [] ⟩) ⟧ (conf config)
     ∎

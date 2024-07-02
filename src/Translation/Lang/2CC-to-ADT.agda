@@ -93,11 +93,7 @@ preserves-≗ (d 2CC.⟨ l , r ⟩) config =
     ADT.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then ADT.⟦ translate l ⟧ config else ADT.⟦ translate r ⟧ config)
-  ≡⟨ Bool.if-float (λ e → ADT.⟦ translate e ⟧ config) (config d) ⟨
-    ADT.⟦ translate (if config d then l else r) ⟧ config
-  ≡⟨ preserves-≗ (if config d then l else r) config ⟩
-    2CC.⟦ if config d then l else r ⟧ config
-  ≡⟨⟩
+  ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-≗ l config) (preserves-≗ r config) ⟩
     2CC.⟦ d 2CC.⟨ l , r ⟩ ⟧ config
   ∎
 

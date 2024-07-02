@@ -73,7 +73,7 @@ module 2Ary where
       2CC.⟦ Vec.lookup (l ∷ r ∷ []) (config d) ⟧ (fnoc config)
     ≡⟨ Eq.cong₂ 2CC.⟦_⟧ lemma refl ⟩
       2CC.⟦ if (fnoc config d) then l else r ⟧ (fnoc config)
-    ≡⟨⟩
+    ≡⟨ if-float (λ x → 2CC.⟦ x ⟧ (fnoc config)) (fnoc config d) ⟩
       2CC.⟦ d ⟨ l , r ⟩ ⟧ (fnoc config)
     ∎
     where
@@ -101,8 +101,8 @@ module 2Ary where
   preserves-⊇ (d ⟨ l , r ⟩) config =
       2CC.⟦ d ⟨ l , r ⟩ ⟧ config
     ≡⟨⟩
-      2CC.⟦ if config d then l else r ⟧ config
-    ≡⟨⟩
+      (if config d then 2CC.⟦ l ⟧ config else 2CC.⟦ r ⟧ config)
+    ≡⟨ if-float (λ x → 2CC.⟦ x ⟧ config) (config d) ⟨
       2CC.⟦ if config d then l else r ⟧ config
     ≡⟨ preserves-⊇ (if config d then l else r) config ⟩
       NCC.⟦ translate (if config d then l else r) ⟧ (conf config)
