@@ -246,6 +246,8 @@ Then add your new list to the `examples` list at the bottom of the file.
 
 ### Using our library in your own Agda projects
 
+#### Alternative 1: Installion via Nix
+
 When using Nix, you can use this repository as a library in you own project, by using `agda.withPackages`:
 ```nix
 agda = nixpkgs.agda.withPackages [
@@ -256,6 +258,22 @@ agda = nixpkgs.agda.withPackages [
 ];
 ```
 Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
+
+#### Alternative 2: Manual installation
+
+After downloading this library, you can register it by appending the path of (EPVL.agda-lib)[EPVL.agda-lib] to the file `$AGDA_DIR/libraries`, creating it if necessary.
+If the environment variable `AGDA_DIR` is unset, it defaults to `~/.agda` on unix-like systems and `C:\Users\USERNAME\AppData\Roaming\agda` or similar on Windows.
+After registering this library on your system, you can use it in your project by stating `EPVL` as a dependency in your Agda library file.
+An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
+Its content, including the dependency to EPVL, should include the following:
+
+```
+name: YOUR-PROJECT-NAME
+depend: EPVL
+include: SOME/PATH/IN/YOUR/PROJECT
+```
+
+For details about Agda's library management, look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html).
 
 ### Notes on Mechanized Proofs
 
