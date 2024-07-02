@@ -98,7 +98,7 @@ docker run -t epvl
 
 #### Alternative 3: Manual Setup
 
-The library needs Agda version 2.6.3 (newer version should also work but we did not test them).
+The library needs Agda version 2.6.4.3 (newer version should also work but we did not test them).
 There are different ways to install Agda.
 Following the [Agda book's installation instructions], we recommend using [GHCup][ghcup] to install GHC, Cabal, and Agda as follows (You may skip steps for tools you have already installed but there might be compatibility errors with some versions):
 
@@ -127,10 +127,10 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
    To test whether the installation worked or whether your existing installation of Agda has the right version you can check the following command's output:
    ```shell
    > agda --version
-   Agda version 2.6.3
+   Agda version 2.6.4.3
    ```
    
-In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup.
+In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup.
 
 ### Compiling the Library and Running the Demo
 
@@ -407,7 +407,7 @@ If you see an error similar to this one
 ```
 there might be corrupt build files. Simply run `make clean`.
 
-[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.3-blue.svg
-[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.3
+[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
+[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
 [ghcup]: https://www.haskell.org/ghcup/
 [plfa]: https://plfa.github.io/GettingStarted/
