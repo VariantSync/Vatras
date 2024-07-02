@@ -19,6 +19,7 @@ pkgs.agdaPackages.mkDerivation {
 
   buildInputs = [
     pkgs.agdaPackages.standard-library
+    pkgs.makeWrapper
   ];
 
   buildPhase = ''
@@ -29,6 +30,8 @@ pkgs.agdaPackages.mkDerivation {
 
   postInstall = ''
     install -D src/Main "$out/bin/$pname"
+    wrapProgram "$out/bin/$pname" \
+      --set LC_ALL C.UTF-8
   '';
 
   meta = {description = "On the Expressive Power of Languages for Static Variability";};
