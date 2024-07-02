@@ -155,18 +155,18 @@ Here, we give additional instructions on the expected output and how to play wit
 
 Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided [makefile](makefile) sets this environment variable temporarily and locally during the build process to the `.libs` directory within this repository. (Your global setup will not be affected). If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
 
-    ```shell
-    export AGDA_DIR="path/to/this/repository/libs"
-    ```
+```shell
+export AGDA_DIR="path/to/this/repository/libs"
+```
 
-    Beware that setting the variable will overwrite any previously set directory. In that case you might want to overwrite the variable only temporarily while working on this project.
+Beware that setting the variable will overwrite any previously set directory. In that case you might want to overwrite the variable only temporarily while working on this project.
 
 ### Expected Output
 
 First, the demo prints unicode characters to terminal, as a test for you to see whether your terminal supports unicode.
 The first lines should look like this.
 
-```shell
+```
 It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
   ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳
 ... but now on to the demo.
@@ -419,7 +419,7 @@ In fact, some of these postulates are an open issue [#6119](https://github.com/a
 ### Errors mentioning `MAlonzo`
 
 If you see an error similar to this one
-```shell
+```
 .../src/MAlonzo/Code/Data/IndexedSet.hs:1705:3: error:
     Not in scope:
       type constructor or class ‘MAlonzo.Code.Agda.Primitive.T_Level_14’
