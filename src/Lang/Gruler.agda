@@ -10,21 +10,24 @@ import Level
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Framework.VariabilityLanguage
-open import Framework.Variants using (GrulerVariant; asset; _∥_)
+open import Framework.Variants using (GrulerVariant; ε; asset; _∥_)
 
 data Gruler : Size → 𝔼 where
-  GAsset  : ∀ {i A} → atoms A → Gruler i A
-  GPComp  : ∀ {i A} → Gruler i A → Gruler i A → Gruler (↑ i) A
-  GChoice : ∀ {i A} → F → Gruler i A → Gruler i A → Gruler (↑ i) A
+  ntrl   : ∀ {i A} → Gruler i A
+  asset  : ∀ {i A} → atoms A → Gruler i A
+  _∥_    : ∀ {i A} → Gruler i A → Gruler i A → Gruler (↑ i) A
+  _⊕[_]_ : ∀ {i A} → Gruler i A → F → Gruler i A → Gruler (↑ i) A
 
 Configuration : Set
 Configuration = F → Bool
 
-semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant Configuration (Gruler i)
+⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics GrulerVariant Configuration (Gruler i)
+⟦ ntrl       ⟧ _ = ε
+⟦ asset a    ⟧ _ = asset a
+⟦ l ∥ r      ⟧ c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
+⟦ l ⊕[ f ] r ⟧ c = if c f
+                   then ⟦ l ⟧ c
+                   else ⟦ r ⟧ c
 
 GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-GrulerVL {i} = ⟪ Gruler i , Configuration , semantics ⟫
-
-semantics (GAsset a)  _ = asset a
-semantics (GPComp l r) conf = semantics l conf ∥ semantics r conf
-semantics (GChoice f l r) conf = if conf f then semantics l conf else semantics r conf
+GrulerVL {i} = ⟪ Gruler i , Configuration , ⟦_⟧ ⟫

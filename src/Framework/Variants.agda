@@ -14,6 +14,7 @@ open import Framework.VariabilityLanguage
 open import Data.EqIndexedSet
 
 data GrulerVariant : 𝕍 where
+  ε     : ∀ {A : 𝔸} → GrulerVariant A
   asset : ∀ {A : 𝔸} (a : atoms A) → GrulerVariant A
   _∥_   : ∀ {A : 𝔸} (l : GrulerVariant A) → (r : GrulerVariant A) → GrulerVariant A
 
