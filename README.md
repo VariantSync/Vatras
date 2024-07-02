@@ -352,7 +352,8 @@ In particular, this means we do not rely on other proof frameworks.
 
 #### Proof Structure, Organization, and Documentation
 
-Our library consists of many proofs. Their organization into multiple files is presented in the Overview section above.
+Our library consists of many proofs. Their organization into multiple files is presented in the Overview section, and the
+Paper-to-Library table above.
 Proofs are documented inline via comments in the code (also see the Documentation section above).
 
 #### On Axioms and Assumptions
