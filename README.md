@@ -412,6 +412,8 @@ In fact, these postulates are an open issue [#6119](https://github.com/agda/agda
 
 ## Troubleshooting
 
+### Errors mentioning `MAlonzo`
+
 If you see an error similar to this one
 ```shell
 .../src/MAlonzo/Code/Data/IndexedSet.hs:1705:3: error:
@@ -424,6 +426,35 @@ If you see an error similar to this one
      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
 there might be corrupt build files. Simply run `make clean`.
+
+### Errors mentioning `commitAndReleaseBuffer`
+
+If you see an error similar to this one
+```
+It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
+   EPVL: <stdout>: commitAndReleaseBuffer: invalid argument (cannot encode character '\8345')
+```
+there might be a problem with your terminal settings.
+In particular, this error is caused by the Haskell runtime failing to detect UTF-8 support of your terminal.
+This might be caused by your terminal not actually supporting Unicode, or, more likely, misdetection of the Unicode capabilities of your terminal.
+Simply set the environment variable `LC_ALL` to `C.UTF-8` by, e.g., running `export LC_ALL=C.UTF-8` before running EPVL, to force Unicode detection.
+
+### Unexpected or weird symbols
+
+The first lines the demo prints should be
+```
+It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
+  ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳
+... but now on to the demo.
+```
+There are two possible causes for this issue:
+
+- The font you are using is missing the required symbols.
+  In this case you can use a different font as a fallback or switch to a different font altogether.
+  A common font supporting all required symbols is Symbola.
+
+- Your terminal does not support UTF-8 correctly.
+  In this case you have to switch to a different terminal.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
