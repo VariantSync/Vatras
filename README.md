@@ -57,7 +57,7 @@ Note that building for the first time (or running `nix-shell`) will take a while
 
 #### Alternative 1: Setup via Nix
 
-How to install Nix, also depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
+The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
 
 When you have Nix installed on your system, you can get access to all necessary development utilities by opening a terminal, navigating to this directory, and then simply opening a Nix shell by typing
 ```shell
@@ -75,7 +75,7 @@ How to install Docker depends on your operating system. **For Windows or Mac**, 
 
 Once you have installed Docker, start the Docker daemon.
 **On Windows**, open the search bar using the 'Windows Key' and search for 'Docker' or 'Docker Desktop'.
-**On Linux**, the docker daemon typically runs automatically, so there is nothing to do; otherwise, run `sudo systemctl start docker`.
+**On Linux**, the docker daemon typically runs automatically, so there is nothing to do; otherwise, start Docker's service using your service manager (e.g., with `systemd`, execute `sudo systemctl start docker`).
 More detailed instructions on starting the deamon are given [here](https://docs.docker.com/config/daemon/start/) on the docker website.
 
 Afterwards, open a terminal and navigate to this repository's directory (the directory containing this README.md).
@@ -191,7 +191,7 @@ In particular, our library provides,
 - a means to conduct **basic sanity checks** for language designers, such as soundness or completeness. Language designers can relate new languages to existing ones with only one or two translations with respective proofs without having to compare to each language individually. 
 - a reusable implementation of **indexed sets** that can be used to talk about subsets of types in terms of functions.
 - a small **pretty-printing** library which we use for the terminal output of our demo.
-- a range of **tutorials** guiding you through the process of creating your own language and comparing it to existing once, eventually concluding completeness and soundness either for free or by yourself. In the future, these tutorials might even serve as teaching material for courses on software variability.
+- a range of **tutorials** guiding you through the process of creating your own language and comparing it to existing ones, eventually concluding completeness and soundness either for free or by yourself. In the future, these tutorials might even serve as teaching material for courses on software variability.
 
 ### Overview
 
@@ -216,7 +216,7 @@ The library is organized as follows:
 
 To extend or reuse the library, we offer a range of tutorials in the [Tutorials module](src/Tutorial).
 These tutorials are literate Agda files with holes for you to fill in.
-Hence, when trying the tutorials you can directly check your definitions to be type-correct with Agda in a suitable editor (e.g., Emacs of VS Code) and you can navigate the framework.
+Hence, when trying the tutorials you can directly check your definitions to be type-correct with Agda in a suitable editor (e.g., Emacs or VS Code) and you can navigate the framework.
 The tutorials might also serve as copy-and-paste-templates for new definitions.
 
 1. [The New Language Tutorial](src/Tutorial/A_NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
@@ -268,7 +268,7 @@ Some formalizations in the library differ slightly from their in-paper-represent
 
 - The reason is that in this library, we generalized over the type of variants `V`.
 In the paper, this type is fixed to rose trees (see Definition 3.1), which we also formalized in [src/Framework/Variants.agda](src/Framework/Variants.agda) as type `Rose`.
-Many proofs do require variants to be rose trees though but instead only require that variants have a constructor for artifacts `a -< e , ... , e >-` (which `Rose` [does](src/Framework/Variants.agda)).
+Many proofs do not require variants to be rose trees though but instead only require that variants have a constructor for artifacts `a -< e , ... , e >-` (which `Rose` [does](src/Framework/Variants.agda)).
 This generalization allows us to also formalize other variability languages such as Gruler's language (see [src/Lang/Gruler.agda](src/Lang/Gruler.agda) within our library.
 - Also generalizing over the annotation language `𝔽` was rather easy in the paper but requires to carry around that `𝔽` in Agda a lot.
 
@@ -361,7 +361,7 @@ Proofs are documented inline via comments in the code (also see the Documentatio
 Our library, does not use any of the following assumptions or axioms in central parts of the code:
 
 1. **no** additional axioms via `postulate` (e.g., no extensionality or excluded middle)
-2. **no** termination macros (`{-# TERMINATING -#}`). All functions and proofs are proven to terminate (for proofs this means they use well-founded induction or is non-cyclic).
+2. **no** termination macros (`{-# TERMINATING -#}`). All functions and proofs are proven to terminate (for proofs this means they use well-founded induction or are non-cyclic).
 3. **no** unfinished proofs (i.e., there are no holes `{! !}`).
 
 Of course, there are two exceptions to this.
@@ -370,8 +370,8 @@ Of course, there are two exceptions to this.
 
 For the [tutorials](src/Tutorial) (see above), we deliberately use many holes.
 These holes are intended to be exercises for someone who is working through the tutorial.
-We also use a terminating macro once here to avoid sized types to keep the tutorial simple.
-The place where we use the macro is proven to terminate multiple times throughout the rest
+We also use a terminating macro here to avoid sized types to keep the tutorial simple.
+The place where we use the macro is proven to terminate throughout the rest
 of the library multiple times, by using sized types.
 
 ##### Exception 2
