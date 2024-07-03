@@ -25,7 +25,7 @@ open import Framework.Annotation.IndexedDimension
 open import Framework.Compiler
 open import Framework.Definitions using (𝕍; 𝔽)
 open import Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _≻_; _⋡_; _≋_; compiler-cannot-exist)
-open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
+open import Framework.Proof.ForFree Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
 open import Framework.Properties.Completeness Variant using (Complete)
 open import Framework.Properties.Soundness Variant using (Sound)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)

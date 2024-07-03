@@ -26,7 +26,7 @@ open import Framework.VariabilityLanguage
 open import Framework.Compiler
 open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Framework.Properties.Soundness V using (Sound)
-open import Framework.Proof.Transitive V using (soundness-by-expressiveness)
+open import Framework.Proof.ForFree V using (soundness-by-expressiveness)
 open import Lang.ADT
   using (ADT; ADTL; leaf; _⟨_,_⟩)
   renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)
