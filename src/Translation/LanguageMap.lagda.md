@@ -290,10 +290,10 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
   2CC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (2CCL F) (FSTL F))
   2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡2CC
 
-  open OC-to-FST using (FSTL⋡WFOCL)
+  open OC-to-FST using (FST⋡WFOC)
 
   FST⋡OC : FSTL F ⋡ WFOCL F
-  FST⋡OC = FSTL⋡WFOCL F
+  FST⋡OC = FST⋡WFOC F
 
   OC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (WFOCL F) (FSTL F))
   OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡OC
@@ -304,10 +304,10 @@ configurations. Hence, we need at least two distint features and a method for
 comparing these features to decided which values these features are assigned.
 ```agda
   module _ {F' : 𝔽} (f₁ f₂ : F') (f₁≢f₂ : f₁ ≢ f₂) (_==ꟳ_ : DecidableEquality F') where
-    open FST-to-OC f₁ f₂ f₁≢f₂ _==ꟳ_ using (WFOCL⋡FSTL)
+    open FST-to-OC f₁ f₂ f₁≢f₂ _==ꟳ_ using (WFOC⋡FST)
 
     OC-is-less-expressive-than-FST : WFOCL F ⋡ FSTL F'
-    OC-is-less-expressive-than-FST = WFOCL⋡FSTL {F}
+    OC-is-less-expressive-than-FST = WFOC⋡FST {F}
 
     FST-cannot-be-compiled-to-OC : ¬ LanguageCompiler (FSTL F') (WFOCL F)
     FST-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-FST

@@ -321,10 +321,10 @@ impossible cs c₁ c₂ alternative⊆e (inj₂ p) | c' , e' | true  | true  | (
 With a little plumbing we can now conclude that there are Feature Structure
 Trees (FST) with no Option Calculus (OC) equivalent.
 ```agda
-WFOCL⋡FSTL : ∀ {F' : 𝔽} → WFOCL F' ⋡ FSTL F
-WFOCL⋡FSTL WFOCL≽FSTL with WFOCL≽FSTL counter-example
-WFOCL⋡FSTL WFOCL≽FSTL | Root a cs , e⊆alternative , alternative⊆e with e⊆alternative c₁ | e⊆alternative c₂ | e⊆alternative (λ _ → false)
-WFOCL⋡FSTL {F'} WFOCL≽FSTL | Root 0 cs , e⊆alternative , alternative⊆e | (c₁ , p₁) | (c₂ , p₂) | (c₃ , p₃) =
+WFOC⋡FST : ∀ {F' : 𝔽} → WFOCL F' ⋡ FSTL F
+WFOC⋡FST WFOC≽FST with WFOC≽FST counter-example
+WFOC⋡FST WFOC≽FST | Root a cs , e⊆alternative , alternative⊆e with e⊆alternative c₁ | e⊆alternative c₂ | e⊆alternative (λ _ → false)
+WFOC⋡FST {F'} WFOC≽FST | Root 0 cs , e⊆alternative , alternative⊆e | (c₁ , p₁) | (c₂ , p₂) | (c₃ , p₃) =
   impossible cs c₁ c₂ alternative⊆e
     (induction cs c₁ c₂ c₃ (children-equality (compute-counter-example-c₁ p₁))
                            (children-equality (compute-counter-example-c₂ p₂))

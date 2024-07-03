@@ -23,7 +23,7 @@ A = ℕ , _≟_
 neighbors : WFOC F ∞ A
 neighbors = Root zero (zero -< [] >- ∷ zero -< [] >- ∷ [])
 
-FSTL⋡WFOCL : FSTL F ⋡ WFOCL F
-FSTL⋡WFOCL FSTL≽WFOCL with FSTL≽WFOCL neighbors
+FST⋡WFOC : FSTL F ⋡ WFOCL F
+FST⋡WFOC FST≽WFOC with FST≽WFOC neighbors
 ... | e , e⊆neighbors , neighbors⊆e with e⊆neighbors (λ a → true)
 ... | conf , e≡neighbors = cannotEncodeNeighbors F zero zero (e , conf , Eq.sym e≡neighbors)
