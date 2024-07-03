@@ -16,7 +16,7 @@
 
 > Note to the OOPSLA Artifact Reviewers:
 > Some links in this document only work from within the repository because these links are relative, pointing to specific files or directories which are unavailable when reading this documentation as a standalone file.
-> We hence recommend opening the README.md in the submitted zip file in a program with Markdown support (e.g., VS Code, Okular).
+> We hence recommend opening the README.md in the submitted zip file in a program with Markdown support (e.g., VS Code).
 
 > Note to the OOPSLA Artifact Reviewers:
 > **We apply for _all_ badges**: **Artifacts Evaluated Functional+Reusable** as well as **Results Validated: Results Reproduced**.
