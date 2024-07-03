@@ -74,7 +74,7 @@ git clone --recursive https://github.com/pmbittner/AgdaCCnOC.git
 ```
 
 There are **three alternative ways** to compile the library and run its small demo.
-**Either use **Nix, Docker, or install Agda manually.**
+**Either use Nix, Docker, or install Agda manually.**
 We **recommend Nix** because it creates a sandbox environment with all dependencies satisfied while not affecting your system setup (as does Docker), as well as giving you the opportunity to adapt and reuse the library in your own Agda projects (Docker requires to rebuild an image after every change).
 If you just want to run the demo or if you are on **Windows** and don't want to install WSL2, we recommend Docker.
 
@@ -530,7 +530,7 @@ In some cases it may also be necessary to disable some kind of out-of-memory kil
 
 ### Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
 The following error may occur when executing `make` after a manual setup: 
-```shell
+```
 Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
 Reason: ./libs/../agda-stdlib/standard-library.agda-lib: openBinaryFile: does not exist (No such file or directory)
 make: *** [makefile:15: build] Error 42
