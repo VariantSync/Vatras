@@ -39,7 +39,40 @@ sed -i '
 
 # Don't use a temporary file, or all relative links will break.
 # https://github.com/Kozea/WeasyPrint/issues/532
-htmlq -f README.html -r 'header' -r 'main > p:first-of-type' | weasyprint -u "" -s <(echo '@page { size: A4 landscape; }') - README.pdf
+htmlq -f README.html -r 'header' -r 'main > p:first-of-type' | weasyprint -u "" -s <(echo '
+  @page {
+    size: A4 landscape;
+  }
+
+  @font-face {
+    font-family: 'DejaVu Sans';
+    src: url('file://${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'DejaVu Sans Mono';
+    src: url('file://${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSansMono.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'DejaVu Serif';
+    src: url('file://${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSerif.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Liberation Mono';
+    src: url('file://${pkgs.liberation_ttf}/share/fonts/truetype/LiberationMono-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Liberation Sans';
+    src: url('file://${pkgs.liberation_ttf}/share/fonts/truetype/LiberationSans-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Tex Gyre Cursor';
+    src: url('file://${pkgs.gyre-fonts}/share/fonts/truetype/texgyrecursor-regular.otf') format('opentype');
+  }
+  @font-face {
+    font-family: 'Tex Gyre Heros';
+    src: url('file://${pkgs.gyre-fonts}/share/fonts/truetype/texgyreheros-regular.otf') format('opentype');
+  }
+') - README.pdf
 
 mkdir "$out"
 cp README.html "$out/README.html"
