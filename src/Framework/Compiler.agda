@@ -37,18 +37,18 @@ record LanguageCompiler {V} (Γ₁ Γ₂ : VariabilityLanguage V) : Set₁ where
   fnoc : ∀ {A} → L₁ A → Config Γ₂ → Config Γ₁
   fnoc e = from (config-compiler e)
 
-_⊕ᶜᶜ_ : ∀ {K₁ K₂ K₃ : ℂ}
-  → K₁ ⇔ K₂
-  → K₂ ⇔ K₃
-  → K₁ ⇔ K₃
+_⊕ᶜᶜ_ : ∀ {C₁ C₂ C₃ : ℂ}
+  → C₁ ⇔ C₂
+  → C₂ ⇔ C₃
+  → C₁ ⇔ C₃
 1→2 ⊕ᶜᶜ 2→3 = record
   { to   = to   2→3 ∘ to   1→2
   ; from = from 1→2 ∘ from 2→3
   }
 
 ⊕ᶜᶜ-stable :
-  ∀ {K₁ K₂ K₃ : ℂ}
-    (1→2 : K₁ ⇔ K₂) (2→3 : K₂ ⇔ K₃)
+  ∀ {C₁ C₂ C₃ : ℂ}
+    (1→2 : C₁ ⇔ C₂) (2→3 : C₂ ⇔ C₃)
   → to-is-Embedding 1→2
   → to-is-Embedding 2→3
     --------------------

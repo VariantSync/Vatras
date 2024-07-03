@@ -39,7 +39,7 @@ open import Framework.VariabilityLanguage
 open import Util.Function using (cong-app₂)
 open import Util.List using (++-tail)
 
-Conf : Set
+Conf : ℂ
 Conf = F → Bool
 
 FST : Size → 𝔼

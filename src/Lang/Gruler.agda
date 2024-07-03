@@ -18,7 +18,7 @@ data Gruler : Size → 𝔼 where
   _∥_    : ∀ {i A} → Gruler i A → Gruler i A → Gruler (↑ i) A
   _⊕[_]_ : ∀ {i A} → Gruler i A → F → Gruler i A → Gruler (↑ i) A
 
-Configuration : Set
+Configuration : ℂ
 Configuration = F → Bool
 
 ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics GrulerVariant Configuration (Gruler i)

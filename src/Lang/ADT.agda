@@ -1,14 +1,14 @@
-open import Framework.Definitions
 module Lang.ADT where
 
 open import Data.Bool using (Bool; if_then_else_)
+open import Framework.Definitions
 open import Framework.VariabilityLanguage
 
 data ADT (V : 𝕍) (F : 𝔽) : 𝔼 where
   leaf   : ∀ {A} → V A → ADT V F A
   _⟨_,_⟩ : ∀ {A} → (D : F) → (l : ADT V F A) → (r : ADT V F A) → ADT V F A
 
-Configuration : (F : 𝔽) → Set
+Configuration : (F : 𝔽) → ℂ
 Configuration F = F → Bool
 
 ⟦_⟧ : {V : 𝕍} → {F : 𝔽} → 𝔼-Semantics V (Configuration F) (ADT V F)

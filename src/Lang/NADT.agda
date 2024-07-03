@@ -1,4 +1,3 @@
-open import Framework.Definitions
 module Lang.NADT where
 
 open import Data.Nat using (ℕ)
@@ -6,6 +5,7 @@ open import Data.List.NonEmpty using (List⁺)
 open import Function using (id)
 open import Size using (Size; ↑_)
 
+open import Framework.Definitions
 open import Framework.VariabilityLanguage
 open import Framework.Variants using (GrulerVariant)
 open import Util.List using (find-or-last)
@@ -21,7 +21,7 @@ data NADT (V : 𝕍) (F : 𝔽) : Size → 𝔼 where
   _⟨_⟩ : ∀ {i A} → F → List⁺ (NADT V F i A) → NADT V F (↑ i) A
 
 -- configurations pick an alternative to select
-Configuration : (F : 𝔽) → Set
+Configuration : (F : 𝔽) → ℂ
 Configuration F = F → ℕ
 
 {-|
