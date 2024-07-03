@@ -18,29 +18,24 @@ open import Data.List.NonEmpty
 open import Data.Product
   using (_,_; proj₁; proj₂; ∃-syntax; Σ-syntax)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym)
+open import Data.Nat using (ℕ)
 
 open import Function using (id; _∘_; _$_)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Variants
+open import Framework.Variants as V using (Rose; VariantEncoder; Variant-is-VL)
 open import Framework.VariabilityLanguage
-open import Framework.Construct
+open import Util.List using (find-or-last)
 
 open import Data.EqIndexedSet as ISet
-
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-open import Construct.Choices
 ```
 
 ## Syntax
 
 ```agda
 data CCC (Dimension : 𝔽) : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (CCC Dimension i) A → CCC Dimension (↑ i) A
-   chc  : ∀ {i A} → VLChoice.Syntax Dimension (CCC Dimension i) A → CCC Dimension (↑ i) A
-
-pattern _-<_>- a cs = atom (a At.-< cs >-)
-pattern _⟨_⟩ D cs    = chc  (D Choice.⟨ cs ⟩)
+   _-<_>- : ∀ {i A} → atoms A → List (CCC Dimension i A) → CCC Dimension (↑ i) A
+   _⟨_⟩ : ∀ {i A} → Dimension → List⁺ (CCC Dimension i A) → CCC Dimension (↑ i) A
 ```
 
 ## Semantics
@@ -57,21 +52,19 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 First, we define configurations as functions that evaluate dimensions by tags:
 ```agda
 Configuration : (Dimension : 𝔽) → 𝕂
-Configuration Dimension = Choice.Config Dimension
+Configuration Dimension = Dimension → ℕ
 ```
 
 We can now define the semantics.
 In case a configuration picks an undefined tag for a dimension (i.e., the number of alternatives within a choice), we chose the last alternative as a fallback.
 This allows us to avoid complex error handling and we cannot easily define a configuration to only produce tags within ranges.
 ```agda
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  mutual
-    CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
-    CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (CCC Dimension i)
+⟦ a -< cs >- ⟧ c = a V.-< map (λ e → ⟦ e ⟧ c) cs >-
+⟦ D ⟨ cs ⟩   ⟧ c = ⟦ find-or-last (c D) cs ⟧ c
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Choice.Config Dimension) (CCC Dimension i)
-    ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (CCCL Dimension) x
-    ⟦_⟧ {i} {Dimension} (chc  x) = VLChoice.Semantics V Dimension (CCCL Dimension) id x
+CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
+CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 ```
 
 ```agda
@@ -82,9 +75,8 @@ module _ {Dimension : 𝔽} where
 
 Some transformation rules
 ```agda
-  module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-    open import Framework.Relation.Expression V
-    open Sem V mkArtifact
+  module Properties where
+    open import Framework.Relation.Expression (Rose ∞)
 
     module _ {A : 𝔸} where
       -- unary choices are mandatory
@@ -121,16 +113,11 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
 ```agda
   module Encode where
     open import Framework.Relation.Function using (_⇔_; to; from)
-    open import Construct.Plain.Artifact as Pat using (map-children; _-<_>-)
     open import Data.List.Properties using (map-∘; map-id; map-cong)
     open Eq.≡-Reasoning
 
-    V = Rose ∞
-    mkArtifact = Artifact∈ₛRose
-    open Sem V mkArtifact
-
     encode : ∀ {i} {A} → Rose i A → CCC Dimension ∞ A
-    encode (rose a) = atom (map-children encode a)
+    encode (a V.-< cs >-) = a -< map encode cs >-
 
     confs : ⊤ ⇔ Config (CCCL Dimension)
     confs = record
@@ -139,16 +126,14 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
       }
 
     ccc-encode-idemp : ∀ {A} (v : Rose ∞ A) → (c : Configuration Dimension) → ⟦ encode v ⟧ c ≡ v
-    ccc-encode-idemp {A} v@(rose (a At.-< cs >-)) c =
+    ccc-encode-idemp {A} v@(a V.-< cs >-) c =
       begin
         ⟦ encode v ⟧ c
       ≡⟨⟩
-        rose (a At.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-)
-      ≡⟨ Eq.cong rose $
-            Eq.cong (a At.-<_>-) (map-∘ cs) ⟨
-        rose (a At.-< map (λ x → ⟦ encode x ⟧ c) cs >-)
-      ≡⟨ Eq.cong rose $
-            Eq.cong (a At.-<_>-) (go cs) ⟩
+        a V.-< map (λ x → ⟦ x ⟧ c) (map encode cs) >-
+      ≡⟨ Eq.cong (a V.-<_>-) (map-∘ cs) ⟨
+        a V.-< map (λ x → ⟦ encode x ⟧ c) cs >-
+      ≡⟨ Eq.cong (a V.-<_>-) (go cs) ⟩
         v
       ∎
       where
@@ -157,14 +142,14 @@ Maybe its smarter to do this for ADDs and then to conclude by transitivity of tr
       go (c' ∷ cs') = Eq.cong₂ _∷_ (ccc-encode-idemp c' c) (go cs')
 
     preserves : ∀ {A} → (v : Rose ∞ A)
-      → Semantics (Variant-is-VL V) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
+      → Semantics (Variant-is-VL (Rose ∞)) v ≅[ to confs ][ from confs ] ⟦ encode v ⟧
     preserves {A} v = irrelevant-index-≅ v
       (λ { tt → refl })
       (ccc-encode-idemp v)
       (to confs)
       (from confs)
 
-    encoder : VariantEncoder V (CCCL Dimension)
+    encoder : VariantEncoder (Rose ∞) (CCCL Dimension)
     encoder = record
       { compile = encode
       ; config-compiler = λ _ → confs

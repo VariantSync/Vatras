@@ -24,11 +24,8 @@ open import Data.Product using (_,_)
 open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
-open import Framework.Variants
+open import Framework.Variants as V using (Rose)
 open import Framework.VariabilityLanguage
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
-open import Construct.Choices
 ```
 
 ## Syntax
@@ -37,11 +34,8 @@ In the following we formalize the binary normal forms for choice calculus. We ex
 
 ```agda
 data 2CC (Dimension : 𝔽) : Size → 𝔼 where
-   atom : ∀ {i A} → Artifact (2CC Dimension i) A → 2CC Dimension (↑ i) A
-   chc  : ∀ {i A} → VL2Choice.Syntax Dimension (2CC Dimension i) A → 2CC Dimension (↑ i) A
-
-pattern _-<_>- a cs  = atom (a At.-< cs >-)
-pattern _⟨_,_⟩ D l r = chc (D 2Choice.⟨ l , r ⟩)
+   _-<_>- : ∀ {i A} → atoms A → List (2CC Dimension i A) → 2CC Dimension (↑ i) A
+   _⟨_,_⟩ : ∀ {i A} → Dimension → 2CC Dimension i A → 2CC Dimension i A → 2CC Dimension (↑ i) A
 ```
 
 ## Semantics
@@ -59,16 +53,17 @@ Defining it the other way around is also possible but we have to pick one defini
 We choose this order to follow the known _if c then a else b_ pattern where the evaluation of a condition _c_ to true means choosing the then-branch, which is the left one.
 ```agda
 Configuration : (Dimension : 𝔽) → 𝕂
-Configuration Dimension = 2Choice.Config Dimension
+Configuration Dimension = Dimension → Bool
 
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-  mutual
-    2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage V
-    2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (2CC Dimension i)
+⟦ a -< cs >-  ⟧ c = a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
+⟦ D ⟨ l , r ⟩ ⟧ c =
+  if c D
+  then ⟦ l ⟧ c
+  else ⟦ r ⟧ c
 
-    ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics V (Configuration Dimension) (2CC Dimension i)
-    ⟦_⟧ {i} {Dimension} (atom x) = PlainConstruct-Semantics Artifact-Construct mkArtifact (2CCL Dimension) x
-    ⟦_⟧ {i} {Dimension} (chc  x) = VL2Choice.Semantics V Dimension (2CCL Dimension) id x
+2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
+2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 ```
 
 ```agda
@@ -85,9 +80,8 @@ Some transformation rules:
 
   open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
-  module Properties (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-    open import Framework.Relation.Expression V
-    open Sem V mkArtifact
+  module Properties where
+    open import Framework.Relation.Expression (Rose ∞)
 
     module _ {A : 𝔸} where
       ast-factoring : ∀ {i} {D : Dimension} {a : atoms A} {n : ℕ}
@@ -172,8 +166,7 @@ Some transformation rules:
     eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
     open import Framework.Compiler using (LanguageCompiler)
-    module _ (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where
-      open Sem V mkArtifact
+    module _ where
       Redundancy-Elimination : LanguageCompiler (2CCL Dimension) (2CCL Dimension)
       Redundancy-Elimination = record
         { compile = eliminate-redundancy

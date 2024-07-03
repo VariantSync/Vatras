@@ -12,7 +12,6 @@ open import Size using (∞)
 open import Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Framework.Variants as V hiding (_-<_>-)
 open import Lang.OC
-open Sem (Rose ∞) Artifact∈ₛRose
 open import Util.AuxProofs using (true≢false)
 ```
 

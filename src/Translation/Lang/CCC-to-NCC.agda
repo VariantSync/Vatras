@@ -1,9 +1,6 @@
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
+module Translation.Lang.CCC-to-NCC where
 
-module Translation.Lang.CCC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
-
+open import Size using (Size; ↑_; ∞)
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
 open import Data.List as List using (List; []; _∷_)
@@ -14,11 +11,12 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Definitions using (𝔸; 𝔽; atoms)
+open import Framework.Variants as V using (Rose)
+open import Framework.Relation.Expressiveness (Rose ∞) using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (_∘_; id)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
-open import Size using (Size; ↑_; ∞)
 open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
@@ -27,18 +25,15 @@ open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open IndexedSet.≅[]-Reasoning using (step-≅[]-⟨; step-≅[]-⟩; _≅[]⟨⟩_; _≅[]-∎)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Framework.Annotation.IndexedDimension
-open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open import Translation.Lang.NCC.Rename Variant Artifact∈ₛVariant using (NCC-rename; NCC-map-config)
+open import Translation.Lang.NCC.NCC-to-NCC using (NCC→NCC)
+open import Translation.Lang.NCC.Rename using (NCC-rename; NCC-map-config)
 module NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
-
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 module Exact where
   -- Idea of this translation:
@@ -193,13 +188,13 @@ module Exact where
     ≡⟨⟩
       NCC.⟦ a -< zipWith n (translate n) cs max-cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (zipWith n (translate n) cs max-cs))
-    ≡⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ config) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → preserves-⊆ n e max-e config) cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs) ⟩
-      artifact a (List.map (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs)
+      a V.-< List.map (λ e → NCC.⟦ e ⟧ config) (zipWith n (translate n) cs max-cs) >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (map∘zipWith n cs max-cs) ⟩
+      a V.-< zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ config) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith-cong n (λ e max-e → preserves-⊆ n e max-e config) cs max-cs) ⟩
+      a V.-< zipWith n (λ e max-e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs) ⟩
+      a V.-< List.map (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs >-
     ≡⟨⟩
       CCC.⟦ a -< cs >- ⟧ (fnoc n config)
     ∎
@@ -243,13 +238,13 @@ module Exact where
   preserves-⊇ n (a -< cs >-) (maxArtifact max-cs) config =
       CCC.⟦ a -< cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → CCC.⟦ e ⟧ config) cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ config) cs max-cs) ⟨
-      artifact a (zipWith n (λ e max-e → CCC.⟦ e ⟧ config) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → preserves-⊇ n e max-e config) cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ (conf n config)) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟨
-      artifact a (List.map (λ e → NCC.⟦ e ⟧ (conf n config)) (zipWith n (translate n) cs max-cs))
+      a V.-< List.map (λ e → CCC.⟦ e ⟧ config) cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ config) cs max-cs) ⟨
+      a V.-< zipWith n (λ e max-e → CCC.⟦ e ⟧ config) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith-cong n (λ e max-e → preserves-⊇ n e max-e config) cs max-cs) ⟩
+      a V.-< zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ (conf n config)) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (map∘zipWith n cs max-cs) ⟨
+      a V.-< List.map (λ e → NCC.⟦ e ⟧ (conf n config)) (zipWith n (translate n) cs max-cs) >-
     ≡⟨⟩
       NCC.⟦ a -< zipWith n (translate n) cs max-cs >- ⟧ (conf n config)
     ≡⟨⟩

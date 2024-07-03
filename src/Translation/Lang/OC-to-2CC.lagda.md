@@ -10,14 +10,11 @@
 
 ```agda
 open import Framework.Definitions
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 module Translation.Lang.OC-to-2CC (F : 𝔽) where
 
-open import Framework.Variants using (Rose; rose; Artifact∈ₛRose)
+open import Framework.Variants as V using (Rose)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 V = Rose ∞
-mkArtifact = Artifact∈ₛRose
 Option = F
 ```
 
@@ -32,14 +29,14 @@ open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Function using (id; _∘_; flip)
 
 open import Framework.VariabilityLanguage
-open import Lang.All.Generic V mkArtifact
+open import Lang.All
 open OC renaming (_-<_>- to Artifactₒ)
 open 2CC renaming (_-<_>- to Artifact₂; ⟦_⟧ to ⟦_⟧₂)
 
 open import Data.EqIndexedSet
 
 Artifactᵥ : ∀ {A} → atoms A → List (Rose ∞ A) → Rose ∞ A
-Artifactᵥ a cs = rose (a At.-< cs >-)
+Artifactᵥ a cs = a V.-< cs >-
 
 open import Util.AuxProofs using (id≗toList∘fromList)
 
@@ -97,7 +94,7 @@ Zip-is-𝔼 = Zip
 ⟦ a -< ls ≪ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
-   in cons mkArtifact (a At.-< ⟦ls⟧ ++ ⟦rs⟧ >-)
+   in a V.-< ⟦ls⟧ ++ ⟦rs⟧ >-
 ```
 
 ## Translation as Big-Step Semantics

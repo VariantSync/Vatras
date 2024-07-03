@@ -2,7 +2,6 @@ module Framework.Compiler where
 
 open import Framework.Definitions
 open import Framework.VariabilityLanguage
-open import Framework.Construct
 open import Framework.Relation.Function using (_⇔_; to; from; to-is-Embedding)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_)
@@ -37,20 +36,6 @@ record LanguageCompiler {V} (Γ₁ Γ₂ : VariabilityLanguage V) : Set₁ where
 
   fnoc : ∀ {A} → L₁ A → Config Γ₂ → Config Γ₁
   fnoc e = from (config-compiler e)
-
--- Compiles a single construct to another one without altering the underlying sub expressions.
-record ConstructCompiler {V} (VC₁ VC₂ : VariabilityConstruct V) (Γ : VariabilityLanguage V) : Set₁ where
-  open VariabilityConstruct VC₁ renaming (VSyntax to C₁; VSemantics to Kem₁; VConfig to Conf₁)
-  open VariabilityConstruct VC₂ renaming (VSyntax to C₂; VSemantics to Kem₂; VConfig to Conf₂)
-
-  field
-    compile : ∀ {A} → C₁ (Expression Γ) A → C₂ (Expression Γ) A
-    config-compiler : Conf₁ ⇔ Conf₂
-    extract : Config Γ → Conf₁
-
-    stable : to-is-Embedding config-compiler
-    preserves : ∀ {A} (c : C₁ (Expression Γ) A)
-      → Kem₁ Γ extract c ≅ Kem₂ Γ (to config-compiler ∘ extract) (compile c)
 
 _⊕ᶜᶜ_ : ∀ {K₁ K₂ K₃ : 𝕂}
   → K₁ ⇔ K₂

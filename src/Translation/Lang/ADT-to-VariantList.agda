@@ -1,4 +1,4 @@
-open import Framework.Definitions using (𝔽; 𝕍; 𝔸; 𝔼)
+open import Framework.Definitions using (𝔽; 𝕍; 𝔸)
 open import Data.Bool using (Bool; true; false; not; if_then_else_)
 open import Relation.Binary using (DecidableEquality; Rel)
 module Translation.Lang.ADT-to-VariantList

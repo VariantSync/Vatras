@@ -22,10 +22,8 @@ open import Data.String as String using (String)
 open import Size using (Size; ∞; ↑_)
 open import Function using (_∘_)
 
-open import Framework.Variants hiding (_-<_>-)
+open import Framework.Variants as V using (Rose; rose-leaf)
 open import Framework.VariabilityLanguage
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 ```
 
 ## Syntax
@@ -62,8 +60,7 @@ An expression is well-formed if there is an artifact at the root.
 Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbol for the empty variant in the semantic domain (which most languages do not require).
 ```agda
 data WFOC (Option : 𝔽) : Size → 𝔼 where
-  WRoot : ∀ {i A} → Artifact (OC Option i) A → WFOC Option (↑ i) A
-pattern Root a cs  = WRoot (a At.-< cs >-)
+  Root : ∀ {i A} → atoms A → List (OC Option i A) → WFOC Option (↑ i) A
 ```
 
 Well-formedness can be forgotten, meaning that we lose the knowledge that an expression is well-formed in the type-system.
@@ -101,30 +98,29 @@ open import Function using (flip)
 Conventional Semantics of Option Calculus that dismisses all empty values
 except of there is an empty value at the top.
 -}
-module Sem (V : 𝕍) (mkArtifact : Artifact ∈ₛ V) where mutual
-  OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ V)
-  OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
-
-  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ V) (Configuration Option) (OC Option i)
-
+mutual
   -- -- recursive application of the semantics to all children of an artifact
   -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
-  ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ V) (Configuration Option) (List ∘ OC Option i)
+  ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ Rose ∞) (Configuration Option) (List ∘ OC Option i)
   ⟦ es ⟧ₒ-recurse c =
     catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
     (map (flip ⟦_⟧ₒ c) es)
 
-  ⟦ a -< es >- ⟧ₒ c = just (cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-))
+  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ Rose ∞) (Configuration Option) (OC Option i)
+  ⟦ a -< es >- ⟧ₒ c = just (a V.-< ⟦ es ⟧ₒ-recurse c >-)
   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
+
+OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ Rose ∞)
+OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
 ```
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
 ```agda
-  ⟦_⟧ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics V (Configuration Option) (WFOC Option i)
-  ⟦ Root a es ⟧ c = cons mkArtifact (a At.-< ⟦ es ⟧ₒ-recurse c >-)
+⟦_⟧ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Option) (WFOC Option i)
+⟦ Root a es ⟧ c = a V.-< ⟦ es ⟧ₒ-recurse c >-
 
-  WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage V
-  WFOCL {i} Option = ⟪ WFOC Option i , Configuration Option , ⟦_⟧ ⟫
+WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Rose ∞)
+WFOCL {i} Option = ⟪ WFOC Option i , Configuration Option , ⟦_⟧ ⟫
 ```
 
 -- ### Option calculus is unsound
@@ -161,10 +157,8 @@ As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
   -- TODO: Can this be generalized to other types of variants as well?
   module IncompleteOnRose where
-    open import Framework.Variants using (Rose; Artifact∈ₛRose)
     open import Framework.VariantMap (Rose ∞) (ℕ , ℕ._≟_)
     open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
-    open Sem (Rose ∞) Artifact∈ₛRose
 
     variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
     variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
