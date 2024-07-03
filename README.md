@@ -179,13 +179,16 @@ Beware that setting the variable will overwrite any previously set directory. In
 
 ### Expected Output
 
+The demo will print a long terminal output of about 1250 lines.
+A copy of the expected output can be found in the [expected-output.txt](expected-output.txt).
+
 First, the demo prints unicode characters to terminal, as a test for you to see whether your terminal supports unicode.
 The first lines should look like this.
 
 ```
 It's dangerous to go alone! Take this unicode to see whether your terminal supports it:
   ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳
-... but now on to the demo.
+... but now on to the demo
 ```
 
 The actual demo will then print:
