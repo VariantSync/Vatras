@@ -37,4 +37,4 @@ COPY --from=builder /home/user/result /demo
 # Unicode characters.
 ENV LC_ALL=C.UTF-8
 
-CMD ["/demo/bin/EPVL"]
+CMD ["/demo/bin/Vatras"]

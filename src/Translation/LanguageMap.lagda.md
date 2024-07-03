@@ -24,12 +24,13 @@ Variant = Rose ∞
 open import Framework.Annotation.IndexedDimension
 open import Framework.Compiler
 open import Framework.Definitions using (𝕍; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _⋡_; _≋_; compiler-cannot-exist)
+open import Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _≻_; _⋡_; _≋_; compiler-cannot-exist)
 open import Framework.Proof.Transitive Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
 open import Framework.Properties.Completeness Variant using (Complete)
 open import Framework.Properties.Soundness Variant using (Sound)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Util.AuxProofs using (decidableEquality-×)
+open import Util.String using (diagonal-ℕ; diagonal-ℕ⁻¹; diagonal-ℕ-proof)
 
 open import Lang.All
 open VariantList using (VariantListL)
@@ -144,7 +145,12 @@ make the changes in the feature model explicit. For theoretical results however,
 it is easier to assume that the set of annotations `F` is infinite, which is
 equivalent to the restriction used here (except if `F` is empty).
 
-A witness of these preconditions can be faund in `Util.String`.
+This assumption is reasonable because it is satisfied by natural numbers
+(via [Cantor's first diagonal argument](https://de.wikipedia.org/wiki/Cantors_erstes_Diagonalargument)
+which was used to show that there are countably but infinite many rational numbers)
+and Strings. A witness of these preconditions for Strings can be found in `Util.String`.
+An alias module for importing expressiveness fixed to Strings and with the
+respective preconditions satisfied can be found below the `Expressivness` module.
 
 ```agda
 module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where
@@ -235,6 +241,12 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   VariantList≋CCC _==_ D = ≽-trans (VariantList≽ADT _==_) (≽-trans ADT≽2CC 2CC≽CCC) , CCC≽VariantList D
 ```
 
+The following module is an alias, which you can used to import
+the `Expressiveness` module above but with the set of annotations
+fixed to Strings.
+```agda
+module Expressiveness-String = Expressiveness diagonal-ℕ diagonal-ℕ⁻¹ diagonal-ℕ-proof
+```
 
 ## Completeness
 
@@ -261,27 +273,30 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
 
   open OC.IncompleteOnRose using (OC-is-incomplete)
 
-  OC-is-less-expressive-than-2CC : WFOCL F ⋡ 2CCL F
-  OC-is-less-expressive-than-2CC = less-expressive-from-completeness 2CC-is-complete OC-is-incomplete
+  OC⋡2CC : WFOCL F ⋡ 2CCL F
+  OC⋡2CC = less-expressive-from-completeness 2CC-is-complete OC-is-incomplete
+
+  2CC≻WFOC : 2CCL F ≻ WFOCL F
+  2CC≻WFOC = 2CC≽OC , OC⋡2CC
 
   2CC-cannot-be-compiled-to-OC : ¬ (LanguageCompiler (2CCL F) (WFOCL F))
-  2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-2CC
+  2CC-cannot-be-compiled-to-OC = compiler-cannot-exist OC⋡2CC
 
   open FST.IncompleteOnRose using (FST-is-incomplete)
 
-  FST-is-less-expressive-than-2CC : FSTL F ⋡ 2CCL F
-  FST-is-less-expressive-than-2CC = less-expressive-from-completeness 2CC-is-complete (FST-is-incomplete F)
+  FST⋡2CC : FSTL F ⋡ 2CCL F
+  FST⋡2CC = less-expressive-from-completeness 2CC-is-complete (FST-is-incomplete F)
 
   2CC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (2CCL F) (FSTL F))
-  2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-2CC
+  2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡2CC
 
   open OC-to-FST using (FSTL⋡WFOCL)
 
-  FST-is-less-expressive-than-OC : FSTL F ⋡ WFOCL F
-  FST-is-less-expressive-than-OC = FSTL⋡WFOCL F
+  FST⋡OC : FSTL F ⋡ WFOCL F
+  FST⋡OC = FSTL⋡WFOCL F
 
   OC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (WFOCL F) (FSTL F))
-  OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST-is-less-expressive-than-OC
+  OC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡OC
 ```
 
 For the proof of `WFOCL⋡FSTL`, we need to construct at least three distinct
@@ -296,6 +311,11 @@ comparing these features to decided which values these features are assigned.
 
     FST-cannot-be-compiled-to-OC : ¬ LanguageCompiler (FSTL F') (WFOCL F)
     FST-cannot-be-compiled-to-OC = compiler-cannot-exist OC-is-less-expressive-than-FST
+```
+
+As for `Expressiveness` we re-export `Completeness` fixed to String and its respective proofs.
+```agda
+module Completeness-String = Completeness diagonal-ℕ diagonal-ℕ⁻¹ diagonal-ℕ-proof
 ```
 
 ```agda

@@ -8,8 +8,8 @@
       inherit system;
     },
 }: let
-  EPVL = import ../default.nix {};
+  Vatras = import ../default.nix {};
 in
   pkgs.mkShell {
-    inputsFrom = [EPVL];
+    inputsFrom = [Vatras];
   }

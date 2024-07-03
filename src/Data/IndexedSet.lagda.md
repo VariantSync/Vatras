@@ -15,6 +15,8 @@ open import Relation.Binary.Indexed.Heterogeneous using (
   Symmetric;
   Transitive;
   IsIndexedEquivalence)
+open import Relation.Binary.Indexed.Homogeneous using (
+  IsIndexedPartialOrder)
 module Data.IndexedSet
   {c ℓ : Level}
   (S : Setoid c ℓ)
@@ -129,6 +131,22 @@ irrelevant-index (x , Ai≈x) {i} {j} = Eq.trans (Ai≈x i) (Eq.sym (Ai≈x j))
   { refl  = ≅-refl
   ; sym   = ≅-sym
   ; trans = ≅-trans
+  }
+
+-- TODO: There is no heterogeneous version in the standard library. Hence, we
+-- only use the homogeneous one here.
+⊆-IsIndexedPartialOrder : IsIndexedPartialOrder (IndexedSet {iℓ}) _≅_ _⊆_
+⊆-IsIndexedPartialOrder = record
+  { isPreorderᵢ = record
+    { isEquivalenceᵢ = record
+      { reflᵢ = ≅-refl
+      ; symᵢ = ≅-sym
+      ; transᵢ = ≅-trans
+      }
+    ; reflexiveᵢ = proj₁
+    ; transᵢ = ⊆-trans
+    }
+  ; antisymᵢ = ⊆-antisym
   }
 
 ≐-refl : ∀ {I} → RB.Reflexive (_≐_ {iℓ} {I})

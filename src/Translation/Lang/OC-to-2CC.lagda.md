@@ -462,6 +462,6 @@ OC→2CC = record
   ; preserves = compile-preserves
   }
 
-2CC≽OC : 2CCL F ≽ (WFOCL F)
+2CC≽OC : 2CCL F ≽ WFOCL F
 2CC≽OC = expressiveness-from-compiler OC→2CC
 ```

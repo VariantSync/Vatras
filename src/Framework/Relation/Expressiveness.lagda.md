@@ -6,7 +6,7 @@ open import Data.EqIndexedSet using (≅[]→≅)
 open import Data.Empty using (⊥)
 open import Data.Product using (_,_; _×_; Σ-syntax; proj₁; proj₂)
 open import Relation.Nullary.Negation using (¬_; contraposition)
-open import Relation.Binary using (IsEquivalence; Reflexive; Symmetric; Transitive; Antisymmetric)
+open import Relation.Binary using (IsEquivalence; IsPartialOrder; Reflexive; Symmetric; Transitive; Antisymmetric)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; trans)
 open import Function using (_∘_; Injective)
 
@@ -70,6 +70,24 @@ _is-equally-expressive-as_ = _≋_
 ≋-trans (L₁≽L₂ , L₂≽L₁) (L₂≽L₃ , L₃≽L₂)
   =   ≽-trans L₁≽L₂ L₂≽L₃
     , ≽-trans L₃≽L₂ L₂≽L₁
+
+≋-IsEquivalence : IsEquivalence _≋_
+≋-IsEquivalence = record
+  { refl = ≋-refl
+  ; sym = ≋-sym
+  ; trans = ≋-trans
+  }
+
+≽-IsPartialOrder : IsPartialOrder _≋_ _≽_
+≽-IsPartialOrder = record
+  { isPreorder = record
+    { isEquivalence = ≋-IsEquivalence
+    ; reflexive = proj₁
+    ; trans = ≽-trans
+    }
+  ; antisym = ≽-antisym
+  }
+
 ```
 
 ## Concluding expressiveness from translations
@@ -88,6 +106,43 @@ expressiveness-from-compiler : ∀ {L₁ L₂ : VariabilityLanguage V}
   → LanguageCompiler L₁ L₂
   → L₂ ≽ L₁
 expressiveness-from-compiler compiler = expressiveness-by-translation (LanguageCompiler.compile compiler) (λ e → ≅[]→≅ (LanguageCompiler.preserves compiler e))
+
+{-
+Since Agda is based on constructive logic,
+any proof of existence explicitly constructs the element
+in questions. Hence, from a proof of expressiveness,
+we can always use the constructed elements (expressions and configurations)
+to be the result of a compiler.
+-}
+compiler-from-expressiveness : ∀ {L₁ L₂ : VariabilityLanguage V}
+  → L₂ ≽ L₁
+  → LanguageCompiler L₁ L₂
+compiler-from-expressiveness {L₁} {L₂} exp = record
+  { compile         = proj₁ ∘ exp
+  ; config-compiler = λ e → record { to = conf e ; from = fnoc e }
+  ; preserves       = λ e → ⊆-conf e , ⊆-fnoc e
+  }
+  where
+    ⟦_⟧₁ = Semantics L₁
+    ⟦_⟧₂ = Semantics L₂
+    open import Data.EqIndexedSet
+
+    conf : ∀ {A} → Expression L₁ A → Config L₁ → Config L₂
+    conf e c₁ = proj₁ (proj₁ (proj₂ (exp e)) c₁)
+
+    fnoc : ∀ {A} → Expression L₁ A → Config L₂ → Config L₁
+    fnoc e c₂ = proj₁ (proj₂ (proj₂ (exp e)) c₂)
+
+    eq : ∀ {A} → (e : Expression L₁ A) → ⟦ e ⟧₁ ≅ ⟦ proj₁ (exp e) ⟧₂
+    eq e = proj₂ (exp e)
+
+    ⊆-conf : ∀ {A} → (e : Expression L₁ A) → ⟦ e ⟧₁ ⊆[ conf e ] ⟦ proj₁ (exp e) ⟧₂
+    ⊆-conf e with eq e
+    ... | ⊆ , _ = proj₂ ∘ ⊆
+
+    ⊆-fnoc : ∀ {A} → (e : Expression L₁ A) → ⟦ proj₁ (exp e) ⟧₂ ⊆[ fnoc e ] ⟦ e ⟧₁
+    ⊆-fnoc e with eq e
+    ... | _ , ⊇ = proj₂ ∘ ⊇
 
 compiler-cannot-exist : ∀ {L₁ L₂ : VariabilityLanguage V}
   → L₂ ⋡ L₁

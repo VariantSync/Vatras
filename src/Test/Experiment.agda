@@ -25,6 +25,9 @@ Experiment A = Named (Example A → Lines)
 ExperimentSetup : ∀ ℓ → Set (suc ℓ)
 ExperimentSetup ℓ = Σ[ A ∈ Set ℓ ] (Experiment A × List (Example A))
 
+-- This functions creates an ExperimentSetup from an experiment and its list of inputs.
+-- (This basically constitutes a smart constructor avoiding the need to explicitly state
+-- the type of the underlying input data.)
 setup : ∀ {ℓ} {A : Set ℓ} → Experiment A → List (Example A) → ExperimentSetup ℓ
 setup {ℓ} {A} program inputs = A , program , inputs
 
