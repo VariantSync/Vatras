@@ -20,8 +20,8 @@ We say that a language `L₁` is as expressive as another language `L₂` **iff*
 This means that there exists a translation from `L₂` to `L₁`, , thus `L₁` can model `L₂`:
 ```agda
 {-|
-Core expressiveness relation that constitutes a partial order of variability languages.
-L₁ ≽ L₂ reads as L₁ is at least as expressive as L₂.
+Our central expressiveness relation.
+L₁ ≽ L₂ reads as: L₁ is at least as expressive as L₂.
 -}
 _≽_ : ∀ (L₁ L₂ : VariabilityLanguage V) → Set₁ --\succeq
 L₁ ≽ L₂ =
