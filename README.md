@@ -15,9 +15,8 @@
 > Since we have no empirical study in our paper, this artifact also does not constitute an empirical study.
 
 > Note to the OOPSLA Artifact Reviewers:
-> Some links in this document only work from within the repository.
-> Some links are relative, pointing to specific files or directories which are unavailable
-> when reading this documentation as a standalone file.
+> Some links in this document only work from within the repository because these links are relative, pointing to specific files or directories which are unavailable when reading this documentation as a standalone file.
+> We hence recommend opening the README.md in the submitted zip file (e.g., in VS Code).
 
 This is the supplementary Agda library for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
 
