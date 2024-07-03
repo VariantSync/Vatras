@@ -16,13 +16,13 @@
 
 > Note to the OOPSLA Artifact Reviewers:
 > Some links in this document only work from within the repository because these links are relative, pointing to specific files or directories which are unavailable when reading this documentation as a standalone file.
-> We hence recommend opening the README.md in the submitted zip file (e.g., in VS Code).
+> We hence recommend opening the README.md in the submitted zip file in a program with Markdown support (e.g., VS Code, Okular).
 
 > Note to the OOPSLA Artifact Reviewers:
 > **We claim _all_ badges**: **Artifacts Evaluated Functional+Reusable** as well as **Results Validated: Results Reproduced**.
 > (We plan to get the **Artifact Available** badge later on from the publisher as mentioned in the Call for Artifacts).
 >
-> Functional: As explained throughout this README (in particular in our setup instructions and Reusability Guide later on), our artifact is
+> Functional: As explained throughout this README (in particular in our setup instructions and Reusability Guide below), our artifact is
 > (1) documented as explained in the section "Documentation" below
 > (2) consistent as explained in the section "Notes on Mechanized Proofs" and in particular its subsection "Paper-to-Library Correspondence",
 > (3) complete as explained in the "Paper-to-Library Correspondence" subsection as well, and
