@@ -323,15 +323,11 @@ For details about Agda's library management, look at [Agda's packaging guide](ht
 
 #### Paper-to-Library Correspondence
 
-Some formalizations in the library differ slightly from their in-paper-representation.
+Our Agda formalization exhaustively formalizes all definitions, theorems, and proofs from our paper.
+The following table shows where each of the definitions, theorems, and proofs from the paper are formalized in this library.
 
-- The reason is that in this library, we generalized over the type of variants `V`.
-In the paper, this type is fixed to rose trees (see Definition 3.1), which we also formalized in [src/Framework/Variants.agda](src/Framework/Variants.agda) as type `Rose`.
-Many proofs do not require variants to be rose trees though but instead only require that variants have a constructor for artifacts `a -< e , ... , e >-` (which `Rose` [does](src/Framework/Variants.agda)).
-This generalization allows us to also formalize other variability languages such as Gruler's language (see [src/Lang/Gruler.agda](src/Lang/Gruler.agda) within our library.
-- Also generalizing over the annotation language `𝔽` was rather easy in the paper but requires to carry around that `𝔽` in Agda a lot.
-
-The following table shows where each of the definitions, theorems, and proofs from the paper are formalized in this library. Note that this table is exhaustive.
+> Note to the OOPSLA Artifact Reviewers:
+> The table thereby demonstrates that our artifact is _consistent_ and _complete_, and reproduces the results from the paper formally.
 
 | statement       | notation in paper                 | name in our Agda Library                                           | file                                                                                                 | notes                                                                                                                                                              |
 |-----------------|-----------------------------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -399,11 +395,19 @@ The following table shows where each of the definitions, theorems, and proofs fr
 | Theorem 5.20    | Sound(FST)                        | `FST-is-sound`                                                     | [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md)                         |                                                                                                                                                                    |
 |                 | 2CC ≽ FST                         | `2CC≽FST`                                                          | [src/Translation/LanguageMap.lagda.md](src/Translation/LanguageMap.lagda.md)                         |                                                                                                                                                                    |
 
+Some formalizations in the library differ slightly from their in-paper-representation:
+
+- A few definitions and proofs in this library generalize over the type of variants `V : 𝕍`.
+In the paper, this type is fixed to rose trees (see Definition 3.1, trees where each node can have any number of children), which we also formalized in [src/Framework/Variants.agda](src/Framework/Variants.agda) as type `Rose`.
+This generalization allows us to also formalize variability languages that
+(1) have other variant types such as Gruler's language (see [src/Lang/Gruler.agda](src/Lang/Gruler.agda), Section 3.6 in the paper), or
+(2) are independent of the variant type, such as [clone and own](src/Lang/VariantList.lagda.md) (Section 5.2 in the paper).
+- Also generalizing over the annotation language `F : 𝔽` was rather easy in the paper (Section 3.3) but requires to carry around that `𝔽` explicitly in Agda a lot.
+
 > Note to the OOPSLA Artifact Reviewers:
 > During formalization, we noticed that the proof of VariantList ≽ FST is easier than Sound(FST) and 2CC ≽ FST.
 > Hence, we proof VariantList ≽ FST, conclude 2CC ≽ FST using transitivity and follow Sound(FST) from 2CC ≽ FST.
 > We intend to adapt the proof in the paper to the formalized proof.
-
 
 #### Frameworks and Dependencies
 
