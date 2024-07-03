@@ -23,7 +23,7 @@ open import Function using (_∘_)
 open import Level using (0ℓ)
 open import Size using (Size; ↑_; ∞)
 
-open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂)
+open import Algebra.Definitions using (LeftIdentity; RightIdentity; Associative; Congruent₂; Commutative)
 
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -706,7 +706,7 @@ module Impose (AtomSet : 𝔸) where
   idem : ∀ (x y : FSF) → x ⊛ y ⊛ x ≡ x ⊛ y
   idem (x ⊚ x-wf) (y ⊚ y-wf) = cong-app₂ _⊚_ (⊕-idem x y x-wf y-wf) AllWellFormed-deterministic
 
-  FST-is-FeatureAlgebra : FeatureAlgebra FSF _⊛_ 𝟘
+  FST-is-FeatureAlgebra : LeftDominant.FeatureAlgebra FSF _⊛_ 𝟘
   FST-is-FeatureAlgebra = record
     { monoid = record
       { isSemigroup = record
@@ -719,6 +719,8 @@ module Impose (AtomSet : 𝔸) where
       ; identity = l-id , r-id
       }
     ; distant-idempotence = idem
+    ; distant-idempotence' = λ a b → Eq.trans (assoc a b a) (idem a b)
+    ; associative' = λ a b c → Eq.sym (assoc a b c)
     }
     where
       open import Data.Product using (_,_)
@@ -803,3 +805,14 @@ cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
 
   ¬Unique : ∀ (a : atoms A) → ¬ Unique (a -< [] >- ∷ a -< [] >- ∷ [])
   ¬Unique a ((a≢a ∷ []) ∷ [] ∷ []) = a≢a refl
+
+module _ (A : 𝔸) (a₁ a₂ : atoms A) where
+  open Impose A
+
+  ¬comm : ¬ Commutative _≡_ _⊛_
+  ¬comm comm with comm ((a₁ -< rose-leaf a₁ ∷ [] >- ∷ []) ⊚ (([] ∷ []) , (([] ∷ [] , ([] , []) ∷ []) ∷ [])))
+                       ((a₁ -< rose-leaf a₂ ∷ [] >- ∷ []) ⊚ (([] ∷ []) , (([] ∷ [] , ([] , []) ∷ []) ∷ [])))
+  ¬comm comm | ()
+
+  FST-is-not-RightDominant : ¬ RightDominant.FeatureAlgebra FSF _⊛_ 𝟘
+  FST-is-not-RightDominant faʳ = ¬comm (commutativity FSF _⊛_ 𝟘 FST-is-FeatureAlgebra faʳ)
