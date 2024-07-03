@@ -73,16 +73,3 @@ and hence expressions are parameterized in the type of this atomic data.
 -}
 𝔼 : Set₂
 𝔼 = 𝔸 → Set₁
-
-{-
-Variability Construct.
-A variability language is composed from a set of constructs (i.e., grammar rules).
-Each construct may recursively contain further expressions (made up from constructs again).
-Thus, constructs must know the overall set of expressions to include.
-Moreover, constructs might directly host some atomic data (e.g., leaf nodes) and hence
-they must know the atomic data type.
-Moreover, constructs often denote variational expressions and hence require a language
-for variability annotations 𝔽.
--}
-ℂ : Set₂
-ℂ = 𝔼 → 𝔸 → Set₁
