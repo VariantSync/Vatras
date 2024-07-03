@@ -24,12 +24,11 @@ open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Lang.All
 open ADT using (ADT; ADTL; _⟨_,_⟩)
-open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
-open NADT using (NADT; NADTL; NADTAsset; NADTChoice)
+open NADT using (NADT; NADTL; leaf; _⟨_⟩)
 
 translate : ∀ {F : 𝔽} {A : 𝔸} → ADT V F A → NADT V F ∞ A
-translate (ADT.leaf a) = NADTAsset a
-translate {F = F} {A = A} (f ADT.⟨ l , r ⟩) = NADTChoice f (translate l ∷ translate r ∷ [])
+translate (ADT.leaf a) = leaf a
+translate {F = F} {A = A} (f ADT.⟨ l , r ⟩) = f ⟨ translate l ∷ translate r ∷ [] ⟩
 
 conf : ∀ {F : 𝔽} → ADT.Configuration F → CCC.Configuration F
 conf config f with config f
@@ -44,7 +43,7 @@ fnoc config f with config f
 preserves-⊆ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT V F A) → NADT.⟦ translate expr ⟧ ⊆[ fnoc ] ADT.⟦ expr ⟧
 preserves-⊆ (ADT.leaf v) config = refl
 preserves-⊆ (f ADT.⟨ l , r ⟩) config =
-    NADT.⟦ NADTChoice f (translate l ∷ translate r ∷ []) ⟧ config
+    NADT.⟦ f ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ config
   ≡⟨⟩
     NADT.⟦ List.find-or-last (config f) (translate l ∷ translate r ∷ []) ⟧ config
   ≡⟨ Eq.cong₂ NADT.⟦_⟧ lemma refl ⟩
@@ -75,7 +74,7 @@ preserves-⊇ (f ⟨ l , r ⟩) config =
   ≡⟨ Eq.cong₂ NADT.⟦_⟧ lemma refl ⟩
     NADT.⟦ List.find-or-last (conf config f) (translate l ∷ translate r ∷ []) ⟧ (conf config)
   ≡⟨⟩
-    NADT.⟦ NADTChoice f (translate l ∷ translate r ∷ []) ⟧ (conf config)
+    NADT.⟦ f ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ (conf config)
   ∎
   where
   lemma : (if config f then translate l else translate r) ≡ List.find-or-last (conf config f) (translate l ∷ translate r ∷ [])

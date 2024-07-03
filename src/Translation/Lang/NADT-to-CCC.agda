@@ -17,26 +17,26 @@ import Util.List as List
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
-open import Lang.NADT as NADT using (NADT; NADTAsset; NADTChoice; NADTL)
+open import Lang.NADT as NADT using (NADT; NADTL; leaf; _⟨_⟩)
 open import Lang.CCC as CCC using (CCC; CCCL; _-<_>-)
 
 
 translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (CCCL F) → NADT (Rose ∞) F i A → CCC F ∞ A
-translate Variant→CCC (NADTAsset v) = LanguageCompiler.compile Variant→CCC v
-translate Variant→CCC (NADTChoice f alternatives) = f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
+translate Variant→CCC (leaf v) = LanguageCompiler.compile Variant→CCC v
+translate Variant→CCC (f ⟨ alternatives ⟩) = f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
 
 preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT (Rose ∞) F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
-preserves-≗ {A = A} Variant→CCC (NADTAsset v) config =
-    CCC.⟦ translate Variant→CCC (NADTAsset v) ⟧ config
+preserves-≗ {A = A} Variant→CCC (leaf v) config =
+    CCC.⟦ translate Variant→CCC (leaf v) ⟧ config
   ≡⟨⟩
     CCC.⟦ LanguageCompiler.compile Variant→CCC v ⟧ config
   ≡⟨ proj₂ (LanguageCompiler.preserves Variant→CCC v) config ⟩
     v
   ≡⟨⟩
-    NADT.⟦ NADTAsset {Rose ∞} v ⟧ config
+    NADT.⟦ leaf {Rose ∞} v ⟧ config
   ∎
-preserves-≗ Variant→CCC (NADTChoice f alternatives) config =
-    CCC.⟦ translate Variant→CCC (NADTChoice f alternatives) ⟧ config
+preserves-≗ Variant→CCC (f ⟨ alternatives ⟩) config =
+    CCC.⟦ translate Variant→CCC (f ⟨ alternatives ⟩) ⟧ config
   ≡⟨⟩
     CCC.⟦ f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
   ≡⟨⟩
@@ -46,7 +46,7 @@ preserves-≗ Variant→CCC (NADTChoice f alternatives) config =
   ≡⟨ preserves-≗ Variant→CCC (List.find-or-last (config f) alternatives) config ⟩
     NADT.⟦ List.find-or-last (config f) alternatives ⟧ config
   ≡⟨⟩
-    NADT.⟦ NADTChoice f alternatives ⟧ config
+    NADT.⟦ f ⟨ alternatives ⟩ ⟧ config
   ∎
 
 preserves : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT (Rose ∞) F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≅[ id ][ id ] NADT.⟦ expr ⟧
