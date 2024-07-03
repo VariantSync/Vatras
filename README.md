@@ -485,7 +485,7 @@ It's dangerous to go alone! Take this unicode to see whether your terminal suppo
    Vatras: <stdout>: commitAndReleaseBuffer: invalid argument (cannot encode character '\8345')
 ```
 there might be a problem with your terminal settings.
-In particular, this error is caused by the Haskell runtime failing to detect UTF-8 support of your terminal.
+In particular, this error is caused by the [Haskell runtime failing to detect UTF-8 support of your terminal](https://gitlab.haskell.org/ghc/ghc/-/issues/8118).
 This might be caused by your terminal not actually supporting Unicode, or, more likely, misdetection of the Unicode capabilities of your terminal.
 Simply set the environment variable `LC_ALL` to `C.UTF-8` by, for example, running `export LC_ALL=C.UTF-8` before running Vatras, to force Unicode detection.
 
