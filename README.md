@@ -67,10 +67,9 @@ When you have Nix installed on your system, you can get access to all necessary 
 ```shell
 nix-shell
 ```
-Alternatively, the demo can be compiled and run directly using
+Alternatively, the demo can be compiled locally to [./result/bin](./result/bin):
 ```shell
 nix-build
-./result/bin/Vatras
 ```
 
 #### Alternative 2: Setup via Docker
@@ -94,11 +93,6 @@ docker images
 ```
 and checking that an image called `vatras` is listed.
 
-You can then run the demo by running the image:
-
-```shell
-docker run -t vatras
-```
 
 #### Alternative 3: Manual Setup
 
@@ -137,8 +131,12 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
 In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup.
 
 ### Compiling the Library and Running the Demo
+> The following three alternatives depend on the setup you have chosen above. Please make sure to use the instructions meant for your setup. 
 
-To test whether your setup is correct, and to run the demo you may use our makefile (except for the docker setup which requires to run the image as explained above).
+#### Running the demo in a `nix-shell` or after a `manual setup`. 
+If you set up the environment using `nix-shell` or `manually`, you can compile and run the demo using `make`. 
+
+To test whether your setup is correct, and to run the demo you may use our makefile.
 Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
 If you are using Nix, make sure to be in the `nix-shell` as described above.
 Then run
@@ -146,9 +144,20 @@ Then run
 make
 ```
 which will compile the library and run its small demo.
-Alternatively, you may use `nix-build` as explained above.
 The demo will then print a range of translations of variational expressions to the terminal.
 The expected output is explained in detail in the Step-by-Step guide below.
+
+#### Running the demo after `nix-build`
+If you already built the library locally with `nix-build`, you should run the demo's binary directly instead of using `make`.
+```shell
+./result/bin/Vatras
+```
+
+#### Running the demo with Docker
+You can run the demo by running the Docker image that you created during the setup:
+```shell
+docker run -t vatras
+```
 
 ## Step-by-Step Guide
 
@@ -466,7 +475,7 @@ There are two possible causes if you do not see the mathematical symbols:
 - Your terminal does not support UTF-8 correctly.
   In this case you have to switch to a different terminal.
 
-# Docker fails due to signal 9
+### Docker fails due to signal 9
 
 If you see an error like
 ```
