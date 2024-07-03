@@ -31,7 +31,6 @@ open import Relation.Binary using (Decidable; DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
-open import Framework.Annotation.Name using (Name)
 open import Framework.Variants using (Rose; _-<_>-; rose-leaf; children-equality)
 open import Framework.Composition.FeatureAlgebra
 open import Framework.VariabilityLanguage
@@ -331,7 +330,7 @@ module Impose (AtomSet : 𝔸) where
   record Feature : Set₁ where
     constructor _::_
     field
-      name : Name F
+      name : F
       impl : FSF
   open Feature public
 
@@ -353,7 +352,7 @@ module Impose (AtomSet : 𝔸) where
     then impl f ∷ select c fs
     else          select c fs
 
-  names : SPL → List (Name F)
+  names : SPL → List F
   names spl = (map name) (features spl)
 
   ---- Algebra ----
