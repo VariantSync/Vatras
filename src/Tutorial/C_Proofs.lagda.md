@@ -120,7 +120,7 @@ can just replace them by a whole to experiment a bit)).
 
 ```agda
 open import Framework.Properties.Completeness V
-open import Framework.Proof.Transitive V
+open import Framework.Proof.ForFree V
 open Translation.LanguageMap.Completeness-String
 ```
 
