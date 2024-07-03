@@ -55,16 +55,15 @@ We choose this order to follow the known _if c then a else b_ pattern where the 
 Configuration : (Dimension : 𝔽) → 𝕂
 Configuration Dimension = Dimension → Bool
 
-mutual
-  2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
-  2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (2CC Dimension i)
+⟦ a -< cs >-  ⟧ c = a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
+⟦ D ⟨ l , r ⟩ ⟧ c =
+  if c D
+  then ⟦ l ⟧ c
+  else ⟦ r ⟧ c
 
-  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (2CC Dimension i)
-  ⟦ a -< cs >-  ⟧ c = a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
-  ⟦ D ⟨ l , r ⟩ ⟧ c =
-    if c D
-    then ⟦ l ⟧ c
-    else ⟦ r ⟧ c
+2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
+2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 ```
 
 ```agda
