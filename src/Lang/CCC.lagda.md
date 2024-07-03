@@ -59,13 +59,12 @@ We can now define the semantics.
 In case a configuration picks an undefined tag for a dimension (i.e., the number of alternatives within a choice), we chose the last alternative as a fallback.
 This allows us to avoid complex error handling and we cannot easily define a configuration to only produce tags within ranges.
 ```agda
-mutual
-  CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
-  CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
+⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (CCC Dimension i)
+⟦ a -< cs >- ⟧ c = a V.-< map (λ e → ⟦ e ⟧ c) cs >-
+⟦ D ⟨ cs ⟩   ⟧ c = ⟦ find-or-last (c D) cs ⟧ c
 
-  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (CCC Dimension i)
-  ⟦ a -< cs >- ⟧ c = a V.-< map (λ e → ⟦ e ⟧ c) cs >-
-  ⟦ D ⟨ cs ⟩   ⟧ c = ⟦ find-or-last (c D) cs ⟧ c
+CCCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
+CCCL {i} Dimension = ⟪ CCC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 ```
 
 ```agda
