@@ -1,4 +1,4 @@
-# The set of variants described by a language can be enumerated
+# Soundness and Unsoundness of Variability Languages
 
 ## Module
 
@@ -19,13 +19,18 @@ open import Data.EqIndexedSet
 
 ## Definitions
 
+A language is sound if every expression denotes an element in the semantic domain.
+For variability languages, this means that for any expression `e` there must exist a variant map `m` that is semantically equivalent.
 ```agda
 Sound : VariabilityLanguage V → Set₁
 Sound ⟪ E , _ , ⟦_⟧ ⟫ =
   ∀ {A} (e : E A)
-    --------------------------------
+    ----------------------------------
   → ∃[ n ] Σ[ m ∈ VMap A n ] m ≅ ⟦ e ⟧
+```
 
+We define unsoundness as the negation of soundness.
+```agda
 Unsound : VariabilityLanguage V → Set₁
 Unsound L = ¬ (Sound L)
 ```
