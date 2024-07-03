@@ -31,6 +31,7 @@ sed -i '
   \|<link .*href="/root/assets/css/style.css?v="| {
     a <style type="text/css">
     r _site/assets/css/style.css
+    a #content { max-width: none !important; }
     a </style>
     d
   }
