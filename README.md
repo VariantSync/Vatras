@@ -18,6 +18,27 @@
 > Some links in this document only work from within the repository because these links are relative, pointing to specific files or directories which are unavailable when reading this documentation as a standalone file.
 > We hence recommend opening the README.md in the submitted zip file (e.g., in VS Code).
 
+> Note to the OOPSLA Artifact Reviewers:
+> **We claim _all_ badges**: **Artifacts Evaluated Functional+Reusable** as well as **Results Validated: Results Reproduced**.
+> (We plan to get the **Artifact Available** badge later on from the publisher as mentioned in the Call for Artifacts).
+>
+> Functional: As explained throughout this README (in particular in our setup instructions and Reusability Guide later on), our artifact is
+> (1) documented as explained in the section "Documentation" below
+> (2) consistent as explained in the section "Notes on Mechanized Proofs" and in particular its subsection "Paper-to-Library Correspondence",
+> (3) complete as explained in the "Paper-to-Library Correspondence" subsection as well, and
+> (4) exercisable in terms of a demo (section "Compiling and Running the Demo").
+>
+> Reusable: Our "Reusability Guide" below motivates this badge in detail. In particular, we provide
+> a documented code base,
+> tutorials with exercises for getting to know the library,
+> instructions for changing the demo,
+> instructions for reusing the library in other Agda projects,
+> and detailed documentation on paper<->artifact correspondence.
+>
+> Results Reproduced: We formalized **all** definitions, theorems, and proofs from our paper in this Agda library.
+> Our "Notes on Mechanized Proofs" gives detailed information on our paper-to-artifact correspondence including a table that documents where and how every definition, theorem, or proof is formalized in Agda.
+> Moreover, our demo replays the round-trip running example of translating a variational sandwich to the various languages (Section 3) using our compilers (Section 5).
+
 This is the supplementary Agda library for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
 
 This library formalizes all results in our paper:
