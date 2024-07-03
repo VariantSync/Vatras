@@ -46,7 +46,7 @@ data NCC (n : ℕ≥ 2) (Dimension : 𝔽) : Size → 𝔼 where
 ## Semantics
 
 ```agda
-Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → 𝕂
+Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → ℂ
 Configuration n Dimension = Dimension → Fin (ℕ≥.toℕ n)
 
 ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Rose ∞) (Configuration n Dimension) (NCC n Dimension i)

@@ -52,7 +52,7 @@ We define `true` to mean choosing the left alternative and `false` to choose the
 Defining it the other way around is also possible but we have to pick one definition and stay consistent.
 We choose this order to follow the known _if c then a else b_ pattern where the evaluation of a condition _c_ to true means choosing the then-branch, which is the left one.
 ```agda
-Configuration : (Dimension : 𝔽) → 𝕂
+Configuration : (Dimension : 𝔽) → ℂ
 Configuration Dimension = Dimension → Bool
 
 ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} → 𝔼-Semantics (Rose ∞) (Configuration Dimension) (2CC Dimension i)

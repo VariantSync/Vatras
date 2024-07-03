@@ -61,8 +61,8 @@ selections language.
 𝕊 = Set
 
 -- Set of configuration languages
-𝕂 : Set₁
-𝕂 = Set
+ℂ : Set₁
+ℂ = Set
 
 {-
 The set of expressions of a variability language.

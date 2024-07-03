@@ -51,7 +51,7 @@ Thus, and for much simpler proofs, we choose the functional semantics.
 
 First, we define configurations as functions that evaluate dimensions by tags:
 ```agda
-Configuration : (Dimension : 𝔽) → 𝕂
+Configuration : (Dimension : 𝔽) → ℂ
 Configuration Dimension = Dimension → ℕ
 ```
 

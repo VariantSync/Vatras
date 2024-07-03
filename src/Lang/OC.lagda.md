@@ -77,7 +77,7 @@ children-wf (Root _ es) = es
 
 Let's first define configurations. Configurations of option calculus tell us which options to in- or exclude. We define `true` to mean "include" and `false` to mean "exclude". Defining it the other way around would also be fine as long as we are consistent. Yet, our way of defining it is in line with if-semantics and how it is usually implemented in papers and tools.
 ```agda
-Configuration : 𝔽 → 𝕂
+Configuration : 𝔽 → ℂ
 Configuration Option = Option → Bool
 ```
 
