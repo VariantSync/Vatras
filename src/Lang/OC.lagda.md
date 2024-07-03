@@ -99,11 +99,6 @@ Conventional Semantics of Option Calculus that dismisses all empty values
 except of there is an empty value at the top.
 -}
 mutual
-  OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ Rose ∞)
-  OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
-
-  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ Rose ∞) (Configuration Option) (OC Option i)
-
   -- -- recursive application of the semantics to all children of an artifact
   -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
   ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ Rose ∞) (Configuration Option) (List ∘ OC Option i)
@@ -111,8 +106,12 @@ mutual
     catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
     (map (flip ⟦_⟧ₒ c) es)
 
+  ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ Rose ∞) (Configuration Option) (OC Option i)
   ⟦ a -< es >- ⟧ₒ c = just (a V.-< ⟦ es ⟧ₒ-recurse c >-)
   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
+
+OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ Rose ∞)
+OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
 ```
 
 And now for the semantics of well-formed option calculus which just reuses the semantics of option calculus but we have the guarantee of the produced variants to exist.
