@@ -1,4 +1,9 @@
 open import Framework.Definitions using (𝕍)
+
+{-|
+This module contains definition to say that
+a variability language denotes a finite set of variants.
+-}
 module Framework.Properties.Finity (V : 𝕍) where
 
 open import Data.Product using (_,_)
@@ -14,10 +19,19 @@ open import Framework.Relation.Expression V
 open import Data.EqIndexedSet
 open import Util.Enumerable
 
+{-|
+A variability language satisfies this predicate
+if its variants can be enumerated and if it denotes at least
+one variant.
+-}
 HasEnumerableNonEmptySemantics : VariabilityLanguage V → Set₁
 HasEnumerableNonEmptySemantics L = ∀ {A} e → EnumerableAndNonEmpty (≣ⁱ-setoid {A} L e)
 
--- TODO: Move the following to the variability package?
+{-|
+If we know that the semantic domain of a variability language can
+be enumerated (i.e., is finite) and is not empty,
+we can prove that the language is sound.
+-}
 soundness-from-enumerability : ∀ {L : VariabilityLanguage V}
   → HasEnumerableNonEmptySemantics L
     --------------------------------
