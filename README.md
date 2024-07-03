@@ -11,15 +11,15 @@
 
 > Note to the OOSPLA Artifact Reviewers:
 > This is a source code and proof artifact.
-> Our artifact formalizes the definitions, theorems, and proofs of our paper.
-> Since we have no empirical study in our paper, this artifact also does not constitute an empirical study.
+> In our paper, we present theoretical and non-empirical research.
+> Our artifact formalizes the theoretical results but hence does not produce or analyze any empirical data.
 
 > Note to the OOPSLA Artifact Reviewers:
 > Some links in this document only work from within the repository because these links are relative, pointing to specific files or directories which are unavailable when reading this documentation as a standalone file.
 > We hence recommend opening the README.md in the submitted zip file in a program with Markdown support (e.g., VS Code, Okular).
 
 > Note to the OOPSLA Artifact Reviewers:
-> **We claim _all_ badges**: **Artifacts Evaluated Functional+Reusable** as well as **Results Validated: Results Reproduced**.
+> **We apply for _all_ badges**: **Artifacts Evaluated Functional+Reusable** as well as **Results Validated: Results Reproduced**.
 > (We plan to get the **Artifact Available** badge later on from the publisher as mentioned in the Call for Artifacts).
 >
 > Functional: As explained throughout this README (in particular in our setup instructions and Reusability Guide below), our artifact is
@@ -37,7 +37,7 @@
 >
 > Results Reproduced: We formalized **all** definitions, theorems, and proofs from our paper in this Agda library.
 > Our "Notes on Mechanized Proofs" gives detailed information on our paper-to-artifact correspondence including a table that documents where and how every definition, theorem, or proof is formalized in Agda.
-> Moreover, our demo replays the round-trip running example of translating a variational sandwich to the various languages (Section 3) using our compilers (Section 5).
+> Moreover, our demo replays the round-trip running example of translating a configurable sandwich to the various languages (Section 3) using our compilers (Section 5).
 
 This is the supplementary Agda library for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
 
@@ -402,7 +402,7 @@ In the paper, this type is fixed to rose trees (see Definition 3.1, trees where 
 This generalization allows us to also formalize variability languages that
 (1) have other variant types such as Gruler's language (see [src/Lang/Gruler.agda](src/Lang/Gruler.agda), Section 3.6 in the paper), or
 (2) are independent of the variant type, such as [clone and own](src/Lang/VariantList.lagda.md) (Section 5.2 in the paper).
-- Also generalizing over the annotation language `F : 𝔽` was rather easy in the paper (Section 3.3) but requires to carry around that `𝔽` explicitly in Agda a lot.
+- Also generalizing over the annotation language `F : 𝔽` was rather easy in the paper (Section 3.3) but requires to carry around that `𝔽` explicitly in Agda in definitions and theorems a lot.
 
 > Note to the OOPSLA Artifact Reviewers:
 > During formalization, we noticed that the proof of VariantList ≽ FST is easier than Sound(FST) and 2CC ≽ FST.
