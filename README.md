@@ -11,6 +11,8 @@
 
 > Note to the OOSPLA Artifact Reviewers:
 > This is a source code and proof artifact.
+> Our artifact formalizes the definitions, theorems, and proofs of our paper.
+> Since we have no empirical study in our paper, this artifact also does not constitute an empirical study.
 
 > Note to the OOPSLA Artifact Reviewers:
 > Some links in this document only work from within the repository.
