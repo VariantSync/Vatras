@@ -44,6 +44,10 @@ We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and w
 > In case of problems, there is a "Troubleshooting" section at the bottom of this file.
 
 ### Setup
+Clone the library and its submodules to a directory of your choice:
+```shell 
+git clone --recursive https://github.com/pmbittner/AgdaCCnOC.git 
+```
 
 There are **three alternative ways** to compile the library and run its small demo.
 **Either use **Nix, Docker, or install Agda manually.**
@@ -481,6 +485,16 @@ ERROR: failed to solve: process "/bin/sh -c nix-build" did not complete successf
 during a Docker build, you might have encountered an out of memory issue.
 Try to rerun the same command after closing other applications which might comsume a lot of RAM.
 In some cases it may also be necessary to disable some kind of out-of-memory killer (also known as OOM killer or OOM deamon) but use this option with caution.
+
+### Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
+The following error may occur when executing `make` after a manual setup: 
+```shell
+Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
+Reason: ./libs/../agda-stdlib/standard-library.agda-lib: openBinaryFile: does not exist (No such file or directory)
+make: *** [makefile:15: build] Error 42
+```
+This error indicates that the `agda-stdlib` git submodule has not been set up correctly. 
+Executing `git submodule update --init` in the root of the repository should fix the problem. 
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
