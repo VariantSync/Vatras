@@ -36,6 +36,7 @@
 > and detailed documentation on paper<->artifact correspondence.
 >
 > Results Reproduced: We formalized **all** definitions, theorems, and proofs from our paper in this Agda library.
+> Therefore, this library verifies all claims in our paper.
 > Our "Notes on Mechanized Proofs" gives detailed information on our paper-to-artifact correspondence including a table that documents where and how every definition, theorem, or proof is formalized in Agda.
 > Moreover, our demo replays the round-trip running example of translating a configurable sandwich to the various languages (Section 3) using our compilers (Section 5).
 
