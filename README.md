@@ -164,6 +164,8 @@ docker run -t vatras
 
 The "Kick-The-Tires" section above basically explains all necessary steps to get the library up and running.
 Here, we give additional instructions on the expected output and how to play with other demo inputs.
+For using the library once you finished the setup, please have a look at the later _Reusability Guide_, which, among other
+information, includes an overview of the library, notes on our mechanized proofs, and tutorials for getting to know the library.
 
 ### How does the demo know which standard library to use?
 
