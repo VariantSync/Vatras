@@ -120,6 +120,14 @@ pointwise equality of functions.
     ------
   → A ≅ B
 ≗→≅ = ≐→≅ ∘ ≗→≐
+
+{-|
+Equivalence of indices:
+For an indexed set A, two indices i, j are equivalent if
+they point to the same element.
+-}
+_⊢_≡ⁱ_ : ∀ {I : Set iℓ} (A : IndexedSet I) → I → I → Set ℓ
+A ⊢ i ≡ⁱ j = A i ≈ A j
 ```
 
 ## Singletons
@@ -149,6 +157,7 @@ We now prove the following theorems:
 - Subset `_⊆_` is a partial order.
 - Equivalence `_≅_` is an equivalence relation.
 - Pointwise equivalence `_≐_` is an equivalence relation.
+- Index equivalence `_≡ⁱ_` is an equivalence relation and congruent.
 
 ```agda
 ⊆-refl : Reflexive (IndexedSet {iℓ}) _⊆_
@@ -215,6 +224,16 @@ We now prove the following theorems:
   ; sym = ≐-sym
   ; trans = ≐-trans
   }
+
+≡ⁱ-IsEquivalence : ∀ {iℓ} {I : Set iℓ} {A : IndexedSet I} → IsEquivalence (A ⊢_≡ⁱ_)
+≡ⁱ-IsEquivalence = record
+  { refl  = refl
+  ; sym   = sym
+  ; trans = trans
+  }
+
+≡ⁱ-congruent :  ∀ {iℓ} {I : Set iℓ} (A : IndexedSet I) → Congruent (A ⊢_≡ⁱ_) _≈_ A
+≡ⁱ-congruent _ proof = proof
 ```
 
 ## Indexed Sets with Index Translations
