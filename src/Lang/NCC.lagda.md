@@ -49,13 +49,12 @@ data NCC (n : ℕ≥ 2) (Dimension : 𝔽) : Size → 𝔼 where
 Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → 𝕂
 Configuration n Dimension = Dimension → Fin (ℕ≥.toℕ n)
 
-mutual
-  NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
-  NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
+⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Rose ∞) (Configuration n Dimension) (NCC n Dimension i)
+⟦_⟧ (a -< cs >-) conf = a V.-< mapl (λ e → ⟦ e ⟧ conf) cs >-
+⟦_⟧ (D ⟨ cs ⟩) conf = ⟦ Vec.lookup cs (conf D) ⟧ conf
 
-  ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Rose ∞) (Configuration n Dimension) (NCC n Dimension i)
-  ⟦_⟧ (a -< cs >-) conf = a V.-< mapl (λ e → ⟦ e ⟧ conf) cs >-
-  ⟦_⟧ (D ⟨ cs ⟩) conf = ⟦ Vec.lookup cs (conf D) ⟧ conf
+NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
+NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
 ```
 
 ```agda
