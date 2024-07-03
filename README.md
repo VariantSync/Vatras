@@ -390,9 +390,10 @@ Proofs are documented inline via comments in the code (also see the Documentatio
 
 #### On Axioms and Assumptions
 
-We use sized types, which currently have [known inconsistencies](https://github.com/agda/agda/issues/6002), for termination checking.
+For termination checking, we use sized types, which currently have [known inconsistencies](https://github.com/agda/agda/issues/6002).
 The risks of using them in inconsistent ways are [often accepted](https://github.com/agda/agda/issues/4908) because they can simplify proofs substantially.
 We came to the same conclusion and tried our best to use them without interaction with more complicated language features to reduce the likelihood of encountering an inconsistency.
+(In particular, we only use the plain inductive flavor `Size` with `↑_` and do not mix it with the `Size<_` type because it is especially mixing the two which is causing inconsistencies (in particular in case of the issue above).)
 
 Our library, does not use any of the following assumptions or axioms in central parts of the code:
 
