@@ -1,4 +1,4 @@
-﻿# On the Expressive Power of Languages for Static Variability
+﻿# Vatras -- On the Expressive Power of Languages for Static Variability
 
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 
@@ -40,7 +40,7 @@
 > Our "Notes on Mechanized Proofs" gives detailed information on our paper-to-artifact correspondence including a table that documents where and how every definition, theorem, or proof is formalized in Agda.
 > Moreover, our demo replays the round-trip running example of translating a configurable sandwich to the various languages (Section 3) using our compilers (Section 5).
 
-This is the supplementary Agda library for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
+This is the supplementary Agda library, called Vatras, for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
 
 This library formalizes all results in our paper:
 
@@ -537,6 +537,11 @@ make: *** [makefile:15: build] Error 42
 ```
 This error indicates that the `agda-stdlib` git submodule has not been set up correctly. 
 Executing `git submodule update --init` in the root of the repository should fix the problem. 
+
+## Where does the library name 'Vatras' name come from?
+
+The name Vatras is (of course) an acronym, which stands for _VAriability language TRAnslationS_.
+Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who is praying to the god Adanos, who brings "some kind of equality" very loosely speaking.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
