@@ -44,6 +44,14 @@ htmlq -f README.html -r 'header' -r 'main > p:first-of-type' | weasyprint -u "" 
     size: A4 landscape;
   }
 
+  h2 {
+    break-before: page;
+  }
+
+  code {
+    break-inside: never;
+  }
+
   @font-face {
     font-family: 'DejaVu Sans';
     src: url('file://${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans.ttf') format('truetype');
