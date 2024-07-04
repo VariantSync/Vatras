@@ -168,9 +168,6 @@ module Impose (AtomSet : 𝔸) where
   _==_ : ∀ {i} → Decidable (_≈_ {AtomSet} {i})
   (a -< _ >-) == (b -< _ >-) = a ≟ b
 
-  -- ≟-refl : ∀ (x : A) → x ≡ x
-  -- ≟-refl = {!!}
-
   mutual
     infixr 5 _⊕_
     _⊕_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
