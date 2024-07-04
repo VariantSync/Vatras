@@ -23,7 +23,7 @@ open import Framework.VariabilityLanguage
 open import Framework.Properties.Completeness V using (Complete)
 open import Framework.Properties.Soundness V using (Sound)
 open import Framework.Properties.Finity V using (soundness-from-enumerability)
-open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_)
+open import Framework.Relation.Configuration V using (_∋_⊢_≣ⁱ_)
 open import Data.EqIndexedSet as ISet
 open import Util.List using (find-or-last)
 ```

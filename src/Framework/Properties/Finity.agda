@@ -13,7 +13,7 @@ open import Relation.Binary using (IsEquivalence)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
 
 open import Framework.VariabilityLanguage
-open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_; ≣ⁱ-IsEquivalence; ≣ⁱ-congruent; ≣ⁱ-setoid)
+open import Framework.Relation.Configuration V using (_∋_⊢_≣ⁱ_; ≣ⁱ-IsEquivalence; ≣ⁱ-congruent; ≣ⁱ-setoid)
 open import Framework.Properties.Soundness V
 open import Framework.Relation.Expression V
 open import Data.EqIndexedSet

@@ -1,8 +1,8 @@
-# Definitions for Relating configurations.
+# Definitions for Relating Configurations.
 
 ```agda
 open import Framework.Definitions using (𝕍; 𝔸)
-module Framework.Relation.Index (V : 𝕍) where
+module Framework.Relation.Configuration (V : 𝕍) where
 
 open import Level using (0ℓ; suc)
 open import Relation.Binary using (Setoid; IsEquivalence)
@@ -12,9 +12,13 @@ open import Framework.VariabilityLanguage
 open import Data.EqIndexedSet
 ```
 
-## Equivalence of Indices
+This module defines semantic equivalence of configurations.
 
-Two indices are equivalent for an expression when they produce the same output for all expressions.
+Two configurations c₁ c₂ are considered equivalent for an
+expression e ∈ L (written "L ∋ e ⊢ c₁ ≣ⁱ c₂") if the configurations
+configure e to the same variant.
+Our definition reuses the definition of index equivalence of
+indexed sets `_⊢_≡ⁱ_`.
 ```agda
 _∋_⊢_≣ⁱ_ : ∀ {A : 𝔸}
   → (L : VariabilityLanguage V)
@@ -23,7 +27,14 @@ _∋_⊢_≣ⁱ_ : ∀ {A : 𝔸}
   → Set₁
 ⟪ _ , _ , ⟦_⟧ ⟫ ∋ e ⊢ c₁ ≣ⁱ c₂ = ⟦ e ⟧ ⊢ c₁ ≡ⁱ c₂
 infix 5 _∋_⊢_≣ⁱ_
+```
 
+We now prove a range of useful properties
+of configuration equivalence.
+These properties are basically just aliases
+for the respective proofs on indexed sets.
+
+```agda
 ≣ⁱ-congruent : ∀ {A : 𝔸}
   → (L : VariabilityLanguage V)
   → (e : Expression L A)
