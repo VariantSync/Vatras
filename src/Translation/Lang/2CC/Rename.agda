@@ -39,10 +39,9 @@ rename f (d ⟨ l , r ⟩) = f d ⟨ rename f l , rename f r ⟩
 
 preserves-⊆ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
-  → (f⁻¹ : D₂ → D₁)
   → (expr : 2CC D₁ i A)
   → 2CC.⟦ rename f expr ⟧ ⊆[ 2CC-map-config f ] 2CC.⟦ expr ⟧
-preserves-⊆ f f⁻¹ (a -< cs >-) config =
+preserves-⊆ f (a -< cs >-) config =
     2CC.⟦ rename f (a -< cs >-) ⟧ config
   ≡⟨⟩
     2CC.⟦ a -< List.map (rename f) cs >- ⟧ config
@@ -50,18 +49,18 @@ preserves-⊆ f f⁻¹ (a -< cs >-) config =
     a V.-< List.map (λ e → 2CC.⟦ e ⟧ config) (List.map (rename f) cs) >-
   ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ cs) ⟨
     a V.-< List.map (λ e → 2CC.⟦ rename f e ⟧ config) cs >-
-  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ f f⁻¹ e config) cs) ⟩
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ f e config) cs) ⟩
     a V.-< List.map (λ e → 2CC.⟦ e ⟧ (config ∘ f)) cs >-
   ≡⟨⟩
     2CC.⟦ a -< cs >- ⟧ (config ∘ f)
   ∎
-preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
+preserves-⊆ f (d ⟨ l , r ⟩) config =
     2CC.⟦ rename f (d ⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
     2CC.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
   ≡⟨⟩
     (if config (f d) then 2CC.⟦ rename f l ⟧ config else 2CC.⟦ rename f r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f f⁻¹ l config) (preserves-⊆ f f⁻¹ r config) ⟩
+  ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f l config) (preserves-⊆ f r config) ⟩
     (if config (f d) then 2CC.⟦ l ⟧ (config ∘ f) else 2CC.⟦ r ⟧ (config ∘ f))
   ≡⟨⟩
     2CC.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
@@ -108,7 +107,7 @@ preserves : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → f⁻¹ ∘ f ≗ id
   → (e : 2CC D₁ i A)
   → 2CC.⟦ rename f e ⟧ ≅[ 2CC-map-config f ][ 2CC-map-config f⁻¹ ] 2CC.⟦ e ⟧
-preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
+preserves f f⁻¹ is-inverse expr = preserves-⊆ f expr and preserves-⊇ f f⁻¹ is-inverse expr
 
 2CC-rename : ∀ {i : Size} {D₁ D₂ : 𝔽}
   → (f : D₁ → D₂)

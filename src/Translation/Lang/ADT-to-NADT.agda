@@ -28,7 +28,7 @@ open NADT using (NADT; NADTL; leaf; _⟨_⟩)
 
 translate : ∀ {F : 𝔽} {A : 𝔸} → ADT V F A → NADT V F ∞ A
 translate (ADT.leaf a) = leaf a
-translate {F = F} {A = A} (f ADT.⟨ l , r ⟩) = f ⟨ translate l ∷ translate r ∷ [] ⟩
+translate (f ADT.⟨ l , r ⟩) = f ⟨ translate l ∷ translate r ∷ [] ⟩
 
 conf : ∀ {F : 𝔽} → ADT.Configuration F → CCC.Configuration F
 conf config f with config f

@@ -39,17 +39,16 @@ rename f (d ADT.⟨ l , r ⟩) = f d ⟨ rename f l , rename f r ⟩
 
 preserves-⊆ : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
-  → (f⁻¹ : D₂ → D₁)
   → (expr : ADT (Rose ∞) D₁ A)
   → ADT.⟦ rename f expr ⟧ ⊆[ ADT-map-config f ] ADT.⟦ expr ⟧
-preserves-⊆ f f⁻¹ (leaf v) config = refl
-preserves-⊆ f f⁻¹ (d ⟨ l , r ⟩) config =
+preserves-⊆ f (leaf v) config = refl
+preserves-⊆ f (d ⟨ l , r ⟩) config =
     ADT.⟦ rename f (d ⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
     ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
   ≡⟨⟩
     (if config (f d) then ADT.⟦ rename f l ⟧ config else ADT.⟦ rename f r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f f⁻¹ l config) (preserves-⊆ f f⁻¹ r config) ⟩
+  ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f l config) (preserves-⊆ f r config) ⟩
     (if config (f d) then ADT.⟦ l ⟧ (config ∘ f) else ADT.⟦ r ⟧ (config ∘ f))
   ≡⟨⟩
     ADT.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
@@ -82,7 +81,7 @@ preserves : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → f⁻¹ ∘ f ≗ id
   → (e : ADT (Rose ∞) D₁ A)
   → ADT.⟦ rename f e ⟧ ≅[ ADT-map-config f ][ ADT-map-config f⁻¹ ] ADT.⟦ e ⟧
-preserves f f⁻¹ is-inverse expr = preserves-⊆ f f⁻¹ expr and preserves-⊇ f f⁻¹ is-inverse expr
+preserves f f⁻¹ is-inverse expr = preserves-⊆ f expr and preserves-⊇ f f⁻¹ is-inverse expr
 
 ADT-rename : ∀ {D₁ D₂ : 𝔽}
   → (f : D₁ → D₂)
