@@ -423,17 +423,13 @@ Proofs are documented inline via comments in the code (also see the Documentatio
 
 #### On Axioms and Assumptions
 
-We use sized types, which currently have [known inconsistencies](https://github.com/agda/agda/issues/6002), for termination checking.
-The risks of using them in inconsistent ways are [often accepted](https://github.com/agda/agda/issues/4908) because they can simplify proofs substantially.
-We came to the same conclusion and tried our best to use them without interaction with more complicated language features to reduce the likelihood of encountering an inconsistency.
-
 Our library, does not use any of the following assumptions or axioms in central parts of the code:
 
 1. **no** additional axioms via `postulate` (e.g., no extensionality or excluded middle)
 2. **no** termination macros (`{-# TERMINATING -#}`). All functions and proofs are proven to terminate (for proofs this means they use well-founded induction or are non-cyclic).
 3. **no** unfinished proofs (i.e., there are no holes `{! !}`).
 
-Of course, there are two exceptions to this.
+Of course, there are three exceptions to this.
 
 ##### Exception 1
 
@@ -444,6 +440,16 @@ The place where we use the macro is proven to terminate throughout the rest
 of the library multiple times, by using sized types.
 
 ##### Exception 2
+
+For termination checking, we use sized types, which currently have [known inconsistencies](https://github.com/agda/agda/issues?q=is%3Aopen+label%3Afalse+sized+types).
+The risks of using them in inconsistent ways are [often accepted](https://github.com/agda/agda/issues/4908) because they can simplify proofs substantially.
+We came to the same conclusion and tried our best to use them without interaction with more complicated language features to reduce the likelihood of encountering an inconsistency.
+In particular, we use sized types only in a very basic, inductive way and:
+- We do not use coinductive data types ([#7178](https://github.com/agda/agda/issues/7178), [#1946](https://github.com/agda/agda/issues/1946), [#1201](https://github.com/agda/agda/issues/1201)).
+- We do not use `Size<` ([#6002](https://github.com/agda/agda/issues/6002)).
+- We do not compare `Size` for equality ([#2820](https://github.com/agda/agda/issues/2820)).
+
+##### Exception 3
 
 For a non-crucial part of our framework, we included four postulates, which assume that two primitive operations from the standard library are invertible:
 
