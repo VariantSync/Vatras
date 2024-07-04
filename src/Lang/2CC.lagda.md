@@ -76,7 +76,9 @@ Some transformation rules:
 ```agda
   open Data.List using ([_])
   open import Data.Nat using (ℕ)
-  open import Data.Vec using (Vec; toList; zipWith)
+  open import Data.Vec as Vec using (Vec; toList; zipWith)
+  import Data.Vec.Properties as Vec
+  import Util.Vec as Vec
 
   open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
@@ -90,7 +92,53 @@ Some transformation rules:
         → 2CCL Dimension ⊢
               D ⟨ a -< toList xs >- , a -< toList ys >- ⟩
             ≣₁ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >-
-      ast-factoring xs ys c = {!!}
+      ast-factoring {i} {D} {a} {n} xs ys c =
+          ⟦ D ⟨ a -< toList xs >- , a -< toList ys >- ⟩ ⟧ c
+        ≡⟨⟩
+          (if c D then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+        ≡⟨ lemma (c D) ⟩
+          a V.-< toList (zipWith (λ x y → if c D then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+        ≡⟨⟩
+          a V.-< toList (zipWith (λ x y → ⟦ D ⟨ x , y ⟩ ⟧ c) xs ys) >-
+        ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.map-zipWith (λ e → ⟦ e ⟧ c) (D ⟨_,_⟩) xs ys)) ⟨
+          a V.-< toList (Vec.map (λ e → ⟦ e ⟧ c) (zipWith (D ⟨_,_⟩) xs ys)) >-
+        ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) (zipWith (D ⟨_,_⟩) xs ys)) ⟩
+          a V.-< mapl (λ e → ⟦ e ⟧ c) (toList (zipWith (D ⟨_,_⟩) xs ys)) >-
+        ≡⟨⟩
+          ⟦ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >- ⟧ c
+        ∎
+        where
+        open Eq.≡-Reasoning
+
+        lemma : (b : Bool) →
+            (if b then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+          ≡ a V.-< toList (zipWith (λ x y → if b then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+        lemma false =
+            (if false then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+          ≡⟨⟩
+            ⟦ a -< toList ys >- ⟧ c
+          ≡⟨⟩
+            a V.-< mapl (λ e → ⟦ e ⟧ c) (toList ys) >-
+          ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) ys) ⟨
+            a V.-< toList (Vec.map (λ y → ⟦ y ⟧ c) ys) >-
+          ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.zipWith₂ (λ y → ⟦ y ⟧ c) xs ys)) ⟨
+            a V.-< toList (zipWith (λ x y → ⟦ y ⟧ c) xs ys) >-
+          ≡⟨⟩
+            a V.-< toList (zipWith (λ x y → if false then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+          ∎
+        lemma true =
+            (if true then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+          ≡⟨⟩
+            ⟦ a -< toList xs >- ⟧ c
+          ≡⟨⟩
+            a V.-< mapl (λ e → ⟦ e ⟧ c) (toList xs) >-
+          ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) xs) ⟨
+            a V.-< toList (Vec.map (λ x → ⟦ x ⟧ c) xs) >-
+          ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.zipWith₁ (λ x → ⟦ x ⟧ c) xs ys)) ⟨
+            a V.-< toList (zipWith (λ x y → ⟦ x ⟧ c) xs ys) >-
+          ≡⟨⟩
+            a V.-< toList (zipWith (λ x y → if true then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+          ∎
 
       choice-idempotency : ∀ {D} {e : 2CC Dimension ∞ A}  -- do not use ∞ here?
           ---------------------------
