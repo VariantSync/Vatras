@@ -75,12 +75,13 @@ module _ {Dimension : 𝔽} where
 Some transformation rules:
 ```agda
   open Data.List using ([_])
+  open import Data.List.Properties using (map-∘; map-cong)
   open import Data.Nat using (ℕ)
   open import Data.Vec as Vec using (Vec; toList; zipWith)
   import Data.Vec.Properties as Vec
   import Util.Vec as Vec
 
-  open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+  open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
 
   module Properties where
     open import Framework.Relation.Expression (Rose ∞)
@@ -190,16 +191,22 @@ Some transformation rules:
 ## Semantic Preserving Transformations
 
 ```agda
-  module Redundancy (_==_ : Dimension → Dimension → Bool) where
+  open import Relation.Binary.Definitions using (DecidableEquality)
+  open import Relation.Nullary using (yes; no)
+
+  module Redundancy (_==_ : DecidableEquality Dimension) where
+    open import Data.Empty using (⊥-elim)
     open import Data.Maybe using (Maybe; just; nothing)
+    open import Util.AuxProofs using (true≢false)
+    open Eq.≡-Reasoning
 
     Scope : Set
     Scope = Dimension → Maybe Bool
 
     refine : Scope → Dimension → Bool → Scope
-    refine scope D b D' = if D == D'
-                          then just b
-                          else scope D'
+    refine scope D b D' with D == D'
+    refine scope D b D' | yes _ = just b
+    refine scope D b D' | no _ = scope D'
 
     eliminate-redundancy-in : ∀ {i : Size} {A : 𝔸} → Scope → 2CC Dimension i A → 2CC Dimension ∞ A
     eliminate-redundancy-in scope (a -< es >-) = a -< mapl (eliminate-redundancy-in scope) es >-
@@ -213,13 +220,54 @@ Some transformation rules:
     eliminate-redundancy : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → 2CC Dimension ∞ A
     eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
 
+    preserves-≗ : ∀ {i : Size} {A : 𝔸}
+      → (scope : Scope)
+      → (c : Configuration Dimension)
+      → (∀ {D : Dimension} {b : Bool} → scope D ≡ just b → c D ≡ b)
+      → (e : 2CC Dimension i A)
+      → ⟦ eliminate-redundancy-in scope e ⟧ c ≡ ⟦ e ⟧ c
+    preserves-≗ scope c p (a -< cs >-) =
+        ⟦ eliminate-redundancy-in scope (a -< cs >-) ⟧ c
+      ≡⟨⟩
+        ⟦ a -< mapl (eliminate-redundancy-in scope) cs >- ⟧ c
+      ≡⟨⟩
+        a V.-< mapl (λ e → ⟦ e ⟧ c) (mapl (eliminate-redundancy-in scope) cs) >-
+      ≡⟨ Eq.cong (a V.-<_>-) (map-∘ cs) ⟨
+        a V.-< mapl (λ e → ⟦ eliminate-redundancy-in scope e ⟧ c) cs >-
+      ≡⟨ Eq.cong (a V.-<_>-) (map-cong (λ e → preserves-≗ scope c p e) cs) ⟩
+        a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
+      ≡⟨⟩
+        ⟦ a -< cs >- ⟧ c
+      ∎
+    preserves-≗ scope c p (D ⟨ l , r ⟩) with scope D in scope-D
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | just true with c D in c-D
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | just true | false = ⊥-elim (true≢false (p scope-D) c-D)
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | just true | true = preserves-≗ scope c p l
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | just false with c D in c-D
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | just false | false = preserves-≗ scope c p r
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | just false | true = ⊥-elim (true≢false c-D (p scope-D))
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | nothing with c D in c-D
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | nothing | true = preserves-≗ (refine scope D true) c lemma l
+      where
+      lemma : ∀ {D' : Dimension} {b : Bool} → refine scope D true D' ≡ just b → c D' ≡ b
+      lemma {D' = D'} p' with D == D'
+      lemma {b = true} p' | yes refl = c-D
+      lemma p' | no D≢D' = p p'
+    preserves-≗ scope c p (D ⟨ l , r ⟩) | nothing | false = preserves-≗ (refine scope D false) c lemma r
+      where
+      lemma : ∀ {D' : Dimension} {b : Bool} → refine scope D false D' ≡ just b → c D' ≡ b
+      lemma {D' = D'} p' with D == D'
+      lemma {b = false} p' | yes refl = c-D
+      lemma p' | no D≢D' = p p'
+
     open import Framework.Compiler using (LanguageCompiler)
+    open import Data.EqIndexedSet using (≗→≅[]; ≅[]-sym)
     module _ where
       Redundancy-Elimination : LanguageCompiler (2CCL Dimension) (2CCL Dimension)
       Redundancy-Elimination = record
         { compile = eliminate-redundancy
         ; config-compiler = λ _ → record { to = id ; from = id }
-        ; preserves = {!!}
+        ; preserves = λ e → ≅[]-sym (≗→≅[] λ c → preserves-≗ (λ _ → nothing) c (λ where ()) e)
         }
 ```
 
