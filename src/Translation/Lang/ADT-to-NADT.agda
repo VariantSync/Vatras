@@ -1,3 +1,7 @@
+{-|
+This module shows that `ADT` is a subset of `NADT` by translating the `ADT`
+constructors into their, less restrictive, `NADT` equivalent.
+-}
 open import Framework.Definitions using (𝔸; 𝕍; 𝔽)
 
 module Translation.Lang.ADT-to-NADT (V : 𝕍) where

@@ -1,8 +1,8 @@
-{-
-This module defines a compiler from NCC n to NCC 2.
-To do so, each choice with n alternatives (a ∷ as) is replaced by a binary choice
-between the first alternative a and a recursively reduced choice for as.
-The results looks like this:
+{-|
+This module defines a compiler from `NCC n` to `NCC 2`.
+To do so, each choice with `n` alternatives `a ∷ as` is replaced by a binary
+choice between the first alternative `a` and a recursively reduced choice for
+as. The results looks like this:
 
   D ⟨ a , b , c , d ⟩
             ↓

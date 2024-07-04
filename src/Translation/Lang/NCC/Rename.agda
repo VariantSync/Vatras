@@ -1,5 +1,12 @@
-{-
+{-|
 This module renames dimensions in n-ary choice calculus expressions.
+
+The idea of this translation is to apply a renaming function `f : D₁ → D₂` to
+all elements of `D₁` in the datastructure `NCC n D₁` to obtain a new
+datastructure `NCC n D₂`. To prove preservation of the semantics, we also
+require a left inverse `f⁻¹ : D₂ → D₁` of `f` as a proof that `f` is injective.
+This precondition is necessary because a non-injective rename would reduce the
+number of possible variants.
 -}
 module Translation.Lang.NCC.Rename where
 

@@ -1,3 +1,8 @@
+{-|
+This module shows that `NCC`, regardless of arity, is a subset of `CCC` by
+translating the `NCC` constructors into their, less restrictive, `CCC`
+equivalent.
+-}
 module Translation.Lang.NCC-to-CCC where
 
 open import Size using (Size; ∞)

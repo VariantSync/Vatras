@@ -1,3 +1,8 @@
+{-|
+This module provides an example of neighboring artifacts with equal atoms and
+uses the `cannotEncodeNeighbors` lemma from `FST` to show that there are
+expressions in `WFOC` that cannot be encoded in `FST`.
+-}
 open import Framework.Definitions using (𝔽; 𝔸)
 
 module Translation.Lang.OC-to-FST (F : 𝔽) where

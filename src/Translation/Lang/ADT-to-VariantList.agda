@@ -1,3 +1,9 @@
+{-|
+This module generates a list of variants from an `ADT` expression by choosing
+all possible configurations for each choice. However, this simple process might
+result in impossible, dead variants. Hence, dead branch elimination is applied
+first, resulting in the correct list of variants.
+-}
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸)
 open import Data.Bool using (Bool; true; false; not; if_then_else_)
 open import Relation.Binary using (DecidableEquality; Rel)

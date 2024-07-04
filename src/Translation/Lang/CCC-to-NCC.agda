@@ -1,3 +1,8 @@
+{-|
+This module translates `CCC` expressions to `NCC` expressions by calculating the
+maximum number of choice alternatives, translating `CCC` into `NCC` with that
+arity and then translating the `NCC` expression to a fixed arity.
+-}
 module Translation.Lang.CCC-to-NCC where
 
 open import Size using (Size; ↑_; ∞)
