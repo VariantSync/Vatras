@@ -1,3 +1,8 @@
+{-|
+This module shows that `2CC` is a subset of `NCC 2` by translating the `2CC`
+constructors into their `NCC 2` equivalent.  For convenience, it also provides a
+composition to allow translations to arbitrary arity `NCC` expressions.
+-}
 module Translation.Lang.2CC-to-NCC where
 
 open import Size using (Size; ∞)
