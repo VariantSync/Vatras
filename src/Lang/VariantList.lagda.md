@@ -35,7 +35,7 @@ VariantList : 𝔼
 VariantList A = List⁺ (V A)
 
 -- it would be nice if the confLang would be parameterized in expressions
-Configuration : 𝕊
+Configuration : ℂ
 Configuration = ℕ
 
 -- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → VariantList i A → Configuration → Variant i A

@@ -47,18 +47,10 @@ language's expressiveness more deeply.
 𝔽 : Set₁
 𝔽 = Set
 
-{-
-Feature Selection Language.
-This is the semantics of an annotation language 𝔽. An instance of 𝕊 describes the
-set of configurations for a feature language 𝔽.  Usually, each feature selection
-language `S : 𝕊` has a some function `ConfigEvaluater F S Sel` which resolves an
-expression of the annotation language `F : 𝔽` to a selection `Sel` interpreted
-by a concrete language.
-For example, a binary choice language may use `F → Bool` as the feature
-selections language.
+{-|
+Configuration Languages.
+We have no assumptions on this kind of language (yet).
 -}
-𝕊 : Set₁
-𝕊 = Set
 
 -- Set of configuration languages
 ℂ : Set₁
