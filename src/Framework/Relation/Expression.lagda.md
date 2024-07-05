@@ -1,3 +1,13 @@
+# Comparing Semantics of Expressions
+
+This module contains definitions to relate expressions of variability languages with respect
+to their semantics.
+These definitions have no direct counterpart in our paper but are here to enable reasoning
+on single expressions (or pairs of expressions) and to simplify some other definitions
+by reusing the definitions in here.
+
+The proofs and definitions in this module mostly amount to reusing indexed sets and their relations.
+
 ```agda
 open import Framework.Definitions
 module Framework.Relation.Expression (V : 𝕍) {A : 𝔸} where
@@ -25,7 +35,7 @@ if the functions they describe are pointwise equal (same output for same inputs)
 ```agda
 _⊢_≣₁_ : ∀ (L : VariabilityLanguage V)
   → (e₁ e₂ : Expression L A)
-  → Set
+  → Set₁
 L ⊢ e₁ ≣₁ e₂ = ⟦ e₁ ⟧ ≐ ⟦ e₂ ⟧
   where
     ⟦_⟧ = Semantics L
@@ -39,7 +49,7 @@ infix 5 _⊢_≣₁_
   }
 ```
 
-Syntactic equality implies semantic equality, independent of the semantics:
+Syntactic equality implies semantic equality.
 ```agda
 ≡→≣₁ : ∀ {L : VariabilityLanguage V} {a b : Expression L A}
   → a ≡ b
@@ -50,32 +60,41 @@ Syntactic equality implies semantic equality, independent of the semantics:
 
 ## Comparing expressions across languages
 
-To compare languages, we first define relations for comparing expressions between different languages.
-Then we leverage these relations to model relations between whole languages.
-
+These relations compare expressions of different variability languages.
+These relations basically compare two software product lines semantically.
 ```agda
+{-|
+An expression e₁ denotes a subset of the variants denoted by e₂.
+-}
 _,_⊢_≤_ :
   ∀ (L₁ L₂ : VariabilityLanguage V)
   → Expression L₁ A
   → Expression L₂ A
-  → Set
+  → Set₁
 L₁ , L₂ ⊢ e₁ ≤ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = Semantics L₁
     ⟦_⟧₂ = Semantics L₂
 infix 5 _,_⊢_≤_
 
+{-|
+Two expressions denote equivalent variant maps.
+-}
 _,_⊢_≣_ :
   ∀ (L₁ L₂ : VariabilityLanguage V)
   → Expression L₁ A
   → Expression L₂ A
-  → Set
+  → Set₁
 L₁ , L₂ ⊢ e₁ ≣ e₂ = ⟦ e₁ ⟧₁ ≅ ⟦ e₂ ⟧₂
   where
     ⟦_⟧₁ = Semantics L₁
     ⟦_⟧₂ = Semantics L₂
 infix 5 _,_⊢_≣_
+```
 
+We now prove that the above two relations for a partial order, and an equivalence relation, respectively.
+
+```agda
 ≤-refl : ∀ (L : VariabilityLanguage V) (e : Expression L A)
   → L , L ⊢ e ≤ e
 ≤-refl _ _ = ⊆-refl
@@ -112,6 +131,12 @@ infix 5 _,_⊢_≣_
   → L , N ⊢ a ≣ c
 ≣-trans = ≅-trans
 
+{-|
+This lemma converts
+semantic equality of expressions of the same language
+to
+semantic equality of expressions from any two langauges.
+-}
 ≣₁→≣ : ∀ {L : VariabilityLanguage V} {a b : Expression L A}
   → L ⊢ a ≣₁ b
   → L , L ⊢ a ≣ b

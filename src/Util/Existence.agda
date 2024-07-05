@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Util.Existence where
 
 open import Agda.Primitive using (Level; _⊔_)

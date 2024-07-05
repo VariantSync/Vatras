@@ -1,3 +1,15 @@
+{-|
+This module transforms an `ADT` expression into an equivalent `ADT` expression
+where no feature name is contained twice on a path. In other words, this
+transformation eliminates dead branches, so the resulting expression will have
+no choice whose feature name is contained in any of its child expressions.
+
+In case there is a choice `chc` whose feature name `f` is contained in a child
+expression `c` , all choices that mention `f` can be configured exactly like
+`chc` needs to be configured to choose `c`. Hence, the essential
+`kill-dead-below` transformation keeps track of the feature names and their
+respective configuration for the current expression.
+-}
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸; 𝔼)
 open import Relation.Binary using (DecidableEquality; Rel)
 module Translation.Lang.ADT.DeadElim
@@ -31,7 +43,7 @@ A ADT is undead if it does not contain any dead branches.
 This is the case if any path from the root to a leaf does not contain
 a feature name twice.
 -}
-Undead : ∀ {A} (e : ADT V F A) → Set
+Undead : ∀ {A} (e : ADT V F A) → Set₁
 Undead e = ∀ (p : Path) → p starts-at e → Unique p
 
 {-
@@ -78,7 +90,7 @@ undead-choice : ∀ {A} {D} {l r : ADT V F A}
 undead-choice u-l u-r D∉l D∉r (.(_ ↣ true ) ∷ p) (walk-left  t) = ∉→All-different p (D∉l p t) ∷ (u-l p t)
 undead-choice u-l u-r D∉l D∉r (.(_ ↣ false) ∷ p) (walk-right t) = ∉→All-different p (D∉r p t) ∷ (u-r p t)
 
-record UndeadADT (A : 𝔸) : Set where
+record UndeadADT (A : 𝔸) : Set₁ where
   constructor _⊚_ -- \oo
   field
     node   : ADT V F A

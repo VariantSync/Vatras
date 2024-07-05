@@ -1,3 +1,6 @@
+{-|
+This module introduces our pretty printing monad.
+-}
 module Show.Lines where
 
 open import Data.Bool using (true; false; if_then_else_)
@@ -6,7 +9,7 @@ open import Data.List as List using (List; _∷_; [_]; concat; splitAt; _∷ʳ_)
 open import Data.Maybe using (nothing; just)
 open import Data.String using (String; _++_; _==_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
 open import Data.Product as Prod using (_,_; proj₁; map₁)
-open import Data.Unit using (⊤; tt)
+open import Data.Unit.Polymorphic using (⊤; tt)
 open import Function using (id; _∘_)
 
 open import Algebra using (RawMonoid)
@@ -37,26 +40,33 @@ align width line = manipulate (fromAlignment (alignment line) width) line
 length : Line → ℕ
 length line = Data.String.length (content line)
 
--- Lines monad.
--- It captures a sequence of text lines which we aim to print.
-Lines' : Set → Set
-Lines' = Writer (List.++-[]-rawMonoid Line)
+{-|
+Lines monad.
+It captures a sequence of text lines which we aim to print.
+Unfortunately, we need Lines' to be able to handle different levels (e.g. in
+`Test.Experiments.RoundTrp`). Because of the same level limitation of the
+writer monad, the level of the actual lines data needs to be lifted
+accordingly.
+-}
+Lines' : ∀ {ℓ} → Set ℓ → Set ℓ
+Lines' {ℓ} A = Writer (List.++-[]-rawMonoid (Level.Lift ℓ Line)) A
 
 Lines : Set
-Lines = Lines' (Level.Lift Level.zero ⊤)
+Lines = Lines' ⊤
 
 -- Export the composition operator to allow do-notation.
 open Writer using (functor; applicative; monad) public
-open RawMonad {f = 0ℓ} (monad {𝕎 = List.++-[]-rawMonoid Line}) using (_>>_; _>>=_) public
+module test {ℓ} = RawMonad {ℓ} (monad {𝕎 = List.++-[]-rawMonoid (Level.Lift ℓ Line)})
+open test using (_>>_; _>>=_) public
 
 noLines : Lines
-noLines = pure (Level.lift tt)
+noLines = pure tt
   where
   open RawApplicative applicative
 
 -- print a single line
 single : Line → Lines
-single line = tell [ line ]
+single line = tell [ Level.lift line ]
   where
   open RawMonadWriter Writer.monadWriter
 
@@ -67,15 +77,28 @@ lines lines = sequenceA lines >> noLines
   open List.TraversableA applicative
 
 map-lines : {A : Set} → (List Line → List Line) → Lines' A → Lines' A
-map-lines f = writer ∘ map₁ f ∘ runWriter
+map-lines f = writer ∘ map₁ (List.map Level.lift ∘ f ∘ List.map Level.lower) ∘ runWriter
   where
   open RawMonadWriter Writer.monadWriter
 
 map : {A : Set} → (Line → Line) → Lines' A → Lines' A
 map f = map-lines (List.map f)
 
-raw-lines : Lines → List Line
-raw-lines = proj₁ ∘ runWriter
+raw-lines : ∀ {ℓ} {A : Set ℓ} → Lines' A → List Line
+raw-lines = List.map Level.lower ∘ proj₁ ∘ runWriter
+
+-- Haskell's `void` function. Only required to get the Level `ℓ` back down to
+-- `zero`.
+void-level : ∀ {ℓ} {A : Set ℓ} → Lines' A → Lines
+void-level lines = tell (List.map Level.lift (raw-lines lines))
+  where
+  open RawMonadWriter Writer.monadWriter
+
+-- `return` which is able to handle `Set`s of arbitrary levels.
+return-level : ∀ {ℓ} {A : Set ℓ} → A → Lines → Lines' A
+return-level a lines = writer (List.map Level.lift (raw-lines lines) , a)
+  where
+  open RawMonadWriter Writer.monadWriter
 
 for-loop : ∀ {ℓ} {A : Set ℓ} → List A → (A → Lines) → Lines
 for-loop items op = lines (List.map op items)
@@ -117,7 +140,7 @@ suffix s = mantle "" s
 modifyLastLine : (Line → Line) -> Lines → Lines
 modifyLastLine f ls with List.unsnoc (raw-lines ls)
 modifyLastLine f ls | nothing = noLines
-modifyLastLine f ls | just (init , last) = tell (init ∷ʳ f last)
+modifyLastLine f ls | just (init , last) = tell (List.map Level.lift (init ∷ʳ f last))
   where
   open RawMonadWriter Writer.monadWriter
 

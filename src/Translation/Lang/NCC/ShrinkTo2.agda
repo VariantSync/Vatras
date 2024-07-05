@@ -1,20 +1,14 @@
-{-# OPTIONS --sized-types #-}
-
-open import Framework.Definitions using (𝕍; atoms)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
-{-
-This module defines a compiler from NCC n to NCC 2.
-To do so, each choice with n alternatives (a ∷ as) is replaced by a binary choice
-between the first alternative a and a recursively reduced choice for as.
-The results looks like this:
+{-|
+This module defines a compiler from `NCC n` to `NCC 2`.
+To do so, each choice with `n` alternatives `a ∷ as` is replaced by a binary
+choice between the first alternative `a` and a recursively reduced choice for
+as. The results looks like this:
 
   D ⟨ a , b , c , d ⟩
             ↓
   D.0 ⟨ a , D.1 ⟨ b , D.2 ⟨ c , d ⟩ ⟩ ⟩
 -}
-module Translation.Lang.NCC.ShrinkTo2 (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC.ShrinkTo2 where
 
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
@@ -30,6 +24,7 @@ import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
 open import Framework.Relation.Function using (from; to)
+open import Framework.Variants as V using (Rose)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
@@ -38,14 +33,11 @@ import Util.AuxProofs as ℕ
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-artifact : {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 -- To simplify the implementation and the proof, we constrain the translation to result in 2-ary `NCC` expressions.
 -- The idea of the translation is to represent each alternative vector as a `List` of alternatives where each `c ∷ cs` is represented by an alternative `d ⟨ c ∷ cs ∷ [] ⟩`.
@@ -138,7 +130,7 @@ module FnocLemmas where
       → (∀ {k} → k Fin.< Fin.opposite (Fin.fromℕ< {    m} (<-trans (ℕ.n<1+n m) m<n)) → config (d , k) ≡ suc zero)
     extend-∀config≡1 {m} m<n config≡1 ∀config≡1 {k} m<k with k Fin.≟ Fin.opposite (Fin.fromℕ< {suc m} m<n)
     ... | yes k≡m = Eq.trans (Eq.cong config (Eq.cong₂ _,_ refl k≡m)) config≡1
-    ... | no k≢m = ∀config≡1 (ℕ.≤∧≢⇒< (ℕ.≤-pred (≤-trans m<k (≤-reflexive (Eq.trans (Fin.opposite-prop (Fin.fromℕ< (<-trans (s≤s ≤-refl) m<n))) (Eq.trans (Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< (<-trans (s≤s ≤-refl) m<n))) (Eq.trans (ℕ.+-∸-assoc 1 (ℕ.≤-pred m<n)) (Eq.cong suc (Eq.sym (Eq.trans (Fin.opposite-prop (Fin.fromℕ< m<n)) (Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< m<n))))))))))) (k≢m ∘ Fin.toℕ-injective))
+    ... | no k≢m = ∀config≡1 (ℕ.≤∧≢⇒< (ℕ.≤-pred (≤-trans m<k (≤-reflexive (Eq.trans (Fin.opposite-prop (Fin.fromℕ< (<-trans (s≤s ≤-refl) m<n))) (Eq.trans (Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< (<-trans (s≤s ≤-refl) m<n))) (Eq.trans (ℕ.+-∸-assoc 1 (ℕ.≤-pred m<n)) (Eq.cong suc (Eq.sym (Eq.trans (Fin.opposite-prop (Fin.fromℕ< m<n)) (Eq.cong₂ _∸_ {x = n} refl (Fin.toℕ-fromℕ< m<n))))))))))) (k≢m ∘ Fin.toℕ-injective))
 
     go' : (m : ℕ)
       → (m<n : m < suc n)
@@ -164,11 +156,11 @@ preserves-⊆ (sucs n) (a -< cs >-) config =
   ≡⟨⟩
     NCC.⟦ a -< List.map (shrinkTo2 (sucs n)) cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (shrinkTo2 (sucs n)) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ shrinkTo2 (sucs n) e ⟧ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ (sucs n) e config) cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ (fnoc (sucs n) config)) cs)
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ config) (List.map (shrinkTo2 (sucs n)) cs) >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ cs) ⟨
+    a V.-< List.map (λ e → NCC.⟦ shrinkTo2 (sucs n) e ⟧ config) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ (sucs n) e config) cs) ⟩
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ (fnoc (sucs n) config)) cs >-
   ≡⟨⟩
     NCC.⟦ a -< cs >- ⟧ (fnoc (sucs n) config)
   ∎
@@ -229,7 +221,7 @@ preserves-⊆ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
         n
         ≤.<⟨ ℕ.n<1+n n ⟩
           suc n
-        ≤.≡˘⟨ m+config-d≡j+n ⟩
+        ≤.≡⟨ m+config-d≡j+n ⟨
           Fin.toℕ (fnoc (sucs n) config d)
         ≤.∎
       ))) refl ⟩
@@ -241,15 +233,15 @@ preserves-⊆ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
       NCC.⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ shrinkTo2 (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ [] ⟩ ⟧ config
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = shrinkTo2 (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ []} refl (FnocLemmas.config≡0 config (Fin.opposite (Fin.fromℕ< {suc m} m≤n)) (Fin.toℕ-injective (
           Fin.toℕ (fnoc (sucs n) config d)
-        ≡˘⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (fnoc (sucs n) config d)) ⟩
+        ≡⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (fnoc (sucs n) config d)) ⟨
           suc m + Fin.toℕ (fnoc (sucs n) config d) ∸ suc m
         ≡⟨ Eq.cong (λ n → n ∸ suc m) m+config-d≡j+n ⟩
           n ∸ suc m
-        ≡˘⟨ Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< m≤n) ⟩
+        ≡⟨ Eq.cong₂ _∸_ {x = n} refl (Fin.toℕ-fromℕ< m≤n) ⟨
           n ∸ (Fin.toℕ (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.opposite-prop (Fin.fromℕ< m≤n) ⟩
+        ≡⟨ Fin.opposite-prop (Fin.fromℕ< m≤n) ⟨
           Fin.toℕ (Fin.opposite (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟩
+        ≡⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟨
           Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
         ∎
       )))) refl ⟩
@@ -271,11 +263,11 @@ preserves-⊆ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
         n ∸ suc m
         ≤.<⟨ ℕ.m≤n⇒m≤o+n (Fin.toℕ j) (ℕ.m∸n≢0⇒n<m (ℕ.m>n⇒m∸n≢0 (ℕ.n∸1+m<n∸m m≤n))) ⟩
           Fin.toℕ j + (n ∸ m)
-        ≤.≡˘⟨ ℕ.+-∸-assoc (Fin.toℕ j) (ℕ.≤-pred (ℕ.m≤n⇒m≤1+n m≤n)) ⟩
+        ≤.≡⟨ ℕ.+-∸-assoc (Fin.toℕ j) (ℕ.≤-pred (ℕ.m≤n⇒m≤1+n m≤n)) ⟨
           Fin.toℕ j + n ∸ m
         ≤.≡⟨⟩
           suc (Fin.toℕ j + n) ∸ suc m
-        ≤.≡˘⟨ Eq.cong (λ n → n ∸ suc m) m+config-d≡j+n ⟩
+        ≤.≡⟨ Eq.cong (λ n → n ∸ suc m) m+config-d≡j+n ⟨
           suc m + Fin.toℕ (fnoc (sucs n) config d) ∸ suc m
         ≤.≡⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (fnoc (sucs n) config d)) ⟩
           Fin.toℕ (fnoc (sucs n) config d)
@@ -293,11 +285,11 @@ preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
 preserves-⊇ (sucs n) (a -< cs >-) config =
     NCC.⟦ a -< cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ (sucs n) e config) cs) ⟩
-    artifact a (List.map (λ z → NCC.⟦ shrinkTo2 (sucs n) z ⟧ (conf (sucs n) config)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ (conf (sucs n) config)) (List.map (shrinkTo2 (sucs n)) cs))
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ config) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊇ (sucs n) e config) cs) ⟩
+    a V.-< List.map (λ z → NCC.⟦ shrinkTo2 (sucs n) z ⟧ (conf (sucs n) config)) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ cs) ⟩
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ (conf (sucs n) config)) (List.map (shrinkTo2 (sucs n)) cs) >-
   ≡⟨⟩
     NCC.⟦ shrinkTo2 (sucs n) (a -< cs >-) ⟧ (conf (sucs n) config)
   ∎
@@ -305,7 +297,7 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
     NCC.⟦ d ⟨ cs ⟩ ⟧ config
   ≡⟨⟩
     NCC.⟦ Vec.lookup cs (config d) ⟧ config
-  ≡˘⟨ lemma n (ℕ.n<1+n n) cs (config d) (ℕ.+-comm n (Fin.toℕ (config d))) ⟩
+  ≡⟨ lemma n (ℕ.n<1+n n) cs (config d) (ℕ.+-comm n (Fin.toℕ (config d))) ⟨
     NCC.⟦ shrinkTo2 (sucs n) (d ⟨ cs ⟩) ⟧ (conf (sucs n) config)
   ∎
   where
@@ -341,18 +333,18 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
           Fin.toℕ (config d)
         ≡⟨ m+config-d≡j+n ⟩
           n
-        ≡˘⟨ Fin.toℕ-fromℕ n ⟩
+        ≡⟨ Fin.toℕ-fromℕ n ⟨
           Fin.toℕ (Fin.fromℕ n)
         ≡⟨ Eq.cong Fin.toℕ (Eq.cong Fin.opposite (Eq.sym (Fin.fromℕ<-toℕ zero m≤n))) ⟩
           Fin.toℕ (Fin.opposite (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟩
+        ≡⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟨
           Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
         ∎
       )))) refl ⟩
       NCC.⟦ Vec.lookup (shrinkTo2 (sucs n) l ∷ shrinkTo2 (sucs n) r ∷ []) zero ⟧ (conf (sucs n) config)
     ≡⟨⟩
       NCC.⟦ shrinkTo2 (sucs n) l ⟧ (conf (sucs n) config)
-    ≡˘⟨ preserves-⊇ (sucs n) l config ⟩
+    ≡⟨ preserves-⊇ (sucs n) l config ⟨
       NCC.⟦ l ⟧ config
     ∎
   lemma zero m≤n (l ∷ r ∷ []) (suc zero) m+config-d≡j+n =
@@ -361,7 +353,7 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
       NCC.⟦ Vec.lookup (shrinkTo2 (sucs n) l ∷ shrinkTo2 (sucs n) r ∷ []) (conf (sucs n) config (d , Fin.opposite (Fin.fromℕ< m≤n))) ⟧ (conf (sucs n) config)
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = shrinkTo2 (sucs n) l ∷ shrinkTo2 (sucs n) r ∷ []} refl (ConfLemmas.config≡1' config (Fin.opposite (Fin.fromℕ< m≤n)) (λ config-d≡opposite-m → ℕ.1+n≢n (
           suc n
-        ≡˘⟨ m+config-d≡j+n ⟩
+        ≡⟨ m+config-d≡j+n ⟨
           Fin.toℕ (config d)
         ≡⟨ Eq.cong Fin.toℕ config-d≡opposite-m ⟩
           Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
@@ -376,27 +368,27 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
         ∎
       )))) refl ⟩
       NCC.⟦ shrinkTo2 (sucs n) r ⟧ (conf (sucs n) config)
-    ≡˘⟨ preserves-⊇ (sucs n) r config ⟩
+    ≡⟨ preserves-⊇ (sucs n) r config ⟨
       NCC.⟦ r ⟧ config
     ∎
   lemma (suc m) m≤n (c ∷ cs') zero m+config-d≡j+n =
       NCC.⟦ (d , Fin.opposite (Fin.fromℕ< m≤n)) ⟨ shrinkTo2 (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ [] ⟩ ⟧ (conf (sucs n) config)
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = shrinkTo2 (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) m≤n) cs' ∷ []} refl (ConfLemmas.config≡0' config (Fin.opposite (Fin.fromℕ< m≤n)) (Fin.toℕ-injective (
           Fin.toℕ (config d)
-        ≡˘⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (config d)) ⟩
+        ≡⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (config d)) ⟨
           suc m + Fin.toℕ (config d) ∸ suc m
         ≡⟨ Eq.cong (λ n → n ∸ suc m) m+config-d≡j+n ⟩
           n ∸ suc m
-        ≡˘⟨ Eq.cong₂ _∸_ refl (Fin.toℕ-fromℕ< m≤n) ⟩
+        ≡⟨ Eq.cong₂ _∸_ {x = n} refl (Fin.toℕ-fromℕ< m≤n) ⟨
           n ∸ (Fin.toℕ (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.opposite-prop (Fin.fromℕ< m≤n) ⟩
+        ≡⟨ Fin.opposite-prop (Fin.fromℕ< m≤n) ⟨
           Fin.toℕ (Fin.opposite (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟩
+        ≡⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟨
           Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
         ∎
       )))) refl ⟩
       NCC.⟦ shrinkTo2 (sucs n) c ⟧ (conf (sucs n) config)
-    ≡˘⟨ preserves-⊇ (sucs n) c config ⟩
+    ≡⟨ preserves-⊇ (sucs n) c config ⟨
       NCC.⟦ c ⟧ config
     ∎
   lemma (suc m) (s≤s m≤n) (c ∷ cs') (suc j) m+config-d≡j+n =
@@ -404,17 +396,17 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = shrinkTo2 (sucs n) c ∷ go n d cs m (<-trans (ℕ.n<1+n m) (s≤s m≤n)) cs' ∷ []} refl (ConfLemmas.config≡1' config (Fin.opposite (Fin.fromℕ< (s≤s m≤n)))
       (λ config-d≡opposite-m → (ℕ.<⇒≢ (ℕ.m≤n⇒m≤o+n (Fin.toℕ j) (ℕ.m∸n≢0⇒n<m (ℕ.m>n⇒m∸n≢0 (ℕ.n∸1+m<n∸m m≤n))))) (
           n ∸ suc m
-        ≡˘⟨ Eq.cong₂ _∸_ {x = n} refl (Eq.cong suc (Fin.toℕ-fromℕ< m≤n)) ⟩
+        ≡⟨ Eq.cong₂ _∸_ {x = n} refl (Eq.cong suc (Fin.toℕ-fromℕ< m≤n)) ⟨
           n ∸ suc (Fin.toℕ (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.opposite-prop (Fin.fromℕ< m≤n) ⟩
+        ≡⟨ Fin.opposite-prop (Fin.fromℕ< m≤n) ⟨
           Fin.toℕ (Fin.opposite (Fin.fromℕ< m≤n))
-        ≡˘⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟩
+        ≡⟨ Fin.toℕ-inject₁ (Fin.opposite (Fin.fromℕ< m≤n)) ⟨
           Fin.toℕ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n)))
-        ≡˘⟨ Fin.toℕ-inject₁ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n))) ⟩
+        ≡⟨ Fin.toℕ-inject₁ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n))) ⟨
           Fin.toℕ (Fin.inject₁ (Fin.inject₁ (Fin.opposite (Fin.fromℕ< m≤n))))
-        ≡˘⟨ Eq.cong Fin.toℕ config-d≡opposite-m ⟩
+        ≡⟨ Eq.cong Fin.toℕ config-d≡opposite-m ⟨
           Fin.toℕ (config d)
-        ≡˘⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (config d)) ⟩
+        ≡⟨ ℕ.m+n∸m≡n (suc m) (Fin.toℕ (config d)) ⟨
           suc m + Fin.toℕ (config d) ∸ suc m
         ≡⟨⟩
           m + Fin.toℕ (config d) ∸ m

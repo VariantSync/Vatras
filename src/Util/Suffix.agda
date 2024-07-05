@@ -15,7 +15,7 @@ This relation is a partial order because it is
   - antisymmetric (yet to prove),
   - and transitive (to prove).
 -}
-data _endswith_ {ℓ} {A : Set ℓ} : List A → List A → Set where
+data _endswith_ {ℓ} {A : Set ℓ} : List A → List A → Set ℓ where
   match : ∀ (p : List A)
       ------------
     → p endswith p -- reflexive

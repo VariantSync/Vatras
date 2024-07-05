@@ -19,14 +19,10 @@ open import Data.EqIndexedSet
 
 ## Definitions
 
-Completeness is given iff for any set of variants `vs` (modeled as a list for convenience in Agda), there exists an expression `e` in the language `L` that describes all variants in `vs`.
-In particular, for every variant `v` in `vs`, there exists a configuration `c` that configures `e` to `v`.
+A language is complete if for any element in its semantic domain, there exists an expression that denotes that element.
+For variability languages, this means that given a variant map `m` there must exist an expression `e` that describes all variants in `m`.
+In particular, for every variant `v` in `m`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
-{-|
-Variant maps constitute the semantic domain of variability languages.
-While we defined variant maps to be indexed sets with an arbitrary finite and non-empty index set, we directly reflect these properties
-via Fin (suc n) here for convenience.
--}
 Complete : VariabilityLanguage V → Set₁
 Complete ⟪ E , _ , ⟦_⟧ ⟫ =
   ∀ {A} {n} (m : VMap A n)

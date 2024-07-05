@@ -1,11 +1,11 @@
-{-# OPTIONS --sized-types #-}
+{-|
+This module translates `CCC` expressions to `NCC` expressions by calculating the
+maximum number of choice alternatives, translating `CCC` into `NCC` with that
+arity and then translating the `NCC` expression to a fixed arity.
+-}
+module Translation.Lang.CCC-to-NCC where
 
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
-module Translation.Lang.CCC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
-
+open import Size using (Size; ↑_; ∞)
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin)
 open import Data.List as List using (List; []; _∷_)
@@ -16,31 +16,29 @@ open import Data.Product using (_×_; _,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Definitions using (𝔸; 𝔽; atoms)
+open import Framework.Variants as V using (Rose)
+open import Framework.Relation.Expressiveness (Rose ∞) using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (_∘_; id)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
-open import Size using (Size; ↑_; ∞)
 open import Util.List using (find-or-last; map-find-or-last; find-or-last⇒lookup)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs; _⊔_)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
-open IndexedSet.≅[]-Reasoning using (step-≅[]; step-≅[]˘; _≅[]⟨⟩_; _≅[]-∎)
+open IndexedSet.≅[]-Reasoning using (step-≅[]-⟨; step-≅[]-⟩; _≅[]⟨⟩_; _≅[]-∎)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 open import Framework.Annotation.IndexedDimension
-open import Translation.Lang.NCC.NCC-to-NCC Variant Artifact∈ₛVariant using (NCC→NCC)
-open import Translation.Lang.NCC.Rename Variant Artifact∈ₛVariant using (NCC-rename; NCC-map-config)
+open import Translation.Lang.NCC.NCC-to-NCC using (NCC→NCC)
+open import Translation.Lang.NCC.Rename using (NCC-rename; NCC-map-config)
 module NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse = LanguageCompiler (NCC-rename {i} {D₁} {D₂} n f f⁻¹ is-inverse)
 module NCC→NCC {i} {D} n m = LanguageCompiler (NCC→NCC {i} {D} n m)
-
-artifact : ∀ {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 module Exact where
   -- Idea of this translation:
@@ -67,15 +65,15 @@ module Exact where
 
   mutual
     -- A proof that an expression's longest alternative list is at maximum `n`.
-    data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set where
+    data NumberOfAlternatives≤ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → CCC D i A → Set₁ where
       maxArtifact : {i : Size} → {a : atoms A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤ n {↑ i} (a -< cs >-)
       maxChoice : {i : Size} → {d : D} → {cs : List⁺ (CCC D i A)} → List⁺.length cs ≤ ℕ≥.toℕ n → NumberOfAlternatives≤-List⁺ n {i} cs → NumberOfAlternatives≤ n {↑ i} (d ⟨ cs ⟩)
 
-    data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set where
+    data NumberOfAlternatives≤-List {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List (CCC D i A) → Set₁ where
       [] : {i : Size} → NumberOfAlternatives≤-List n {i} []
       _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List n {i} (c ∷ cs)
 
-    data NumberOfAlternatives≤-List⁺ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set where
+    data NumberOfAlternatives≤-List⁺ {D : 𝔽} {A : 𝔸} (n : ℕ≥ 2) : {i : Size} → List⁺ (CCC D i A) → Set₁ where
       _∷_ : {i : Size} → {c : CCC D i A} → {cs : List (CCC D i A)} → NumberOfAlternatives≤ n {i} c → NumberOfAlternatives≤-List n {i} cs → NumberOfAlternatives≤-List⁺ n {i} (c ∷ cs)
 
   mutual
@@ -131,7 +129,7 @@ module Exact where
       d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
 
     -- TODO Can probably be generalized
-    zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+    zipWith : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
       → (n : ℕ≥ 2)
       → ((expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result)
       → (cs : List (CCC D i A))
@@ -140,16 +138,16 @@ module Exact where
     zipWith n f [] [] = []
     zipWith n f (c ∷ cs) (max-c ∷ max-cs) = f c max-c ∷ zipWith n f cs max-cs
 
-    length-zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+    length-zipWith : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
       → (n : ℕ≥ 2)
       → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
       → (cs : List (CCC D i A))
       → (max-cs : NumberOfAlternatives≤-List n cs)
-      → List.length (zipWith {i} n f cs max-cs) ≡ List.length cs
+      → List.length (zipWith {i = i} n f cs max-cs) ≡ List.length cs
     length-zipWith n [] [] = refl
     length-zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong suc (length-zipWith n cs max-cs)
 
-  map∘zipWith : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result₁ Result₂ : Set}
+  map∘zipWith : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result₁ Result₂ : Set ℓ}
     → (n : ℕ≥ 2)
     → {g : Result₁ → Result₂}
     → {f : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result₁}
@@ -159,7 +157,7 @@ module Exact where
   map∘zipWith n [] [] = refl
   map∘zipWith n (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (map∘zipWith n cs max-cs)
 
-  zipWith-cong : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+  zipWith-cong : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
     → (n : ℕ≥ 2)
     → {f g : (expr : CCC D i A) → NumberOfAlternatives≤ n expr → Result}
     → ((e : CCC D i A) → (max-e : NumberOfAlternatives≤ n e) → f e max-e ≡ g e max-e)
@@ -169,7 +167,7 @@ module Exact where
   zipWith-cong n f≗g [] [] = refl
   zipWith-cong n f≗g (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ (f≗g c max-c) (zipWith-cong n f≗g cs max-cs)
 
-  zipWith⇒map : ∀ {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set}
+  zipWith⇒map : ∀ {ℓ} {i : Size} {D : 𝔽} {A : 𝔸} {Result : Set ℓ}
     → (n : ℕ≥ 2)
     → (f : (expr : CCC D i A) → Result)
     → (cs : List (CCC D i A))
@@ -195,13 +193,13 @@ module Exact where
     ≡⟨⟩
       NCC.⟦ a -< zipWith n (translate n) cs max-cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (zipWith n (translate n) cs max-cs))
-    ≡⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ config) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → preserves-⊆ n e max-e config) cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs) ⟩
-      artifact a (List.map (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs)
+      a V.-< List.map (λ e → NCC.⟦ e ⟧ config) (zipWith n (translate n) cs max-cs) >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (map∘zipWith n cs max-cs) ⟩
+      a V.-< zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ config) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith-cong n (λ e max-e → preserves-⊆ n e max-e config) cs max-cs) ⟩
+      a V.-< zipWith n (λ e max-e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs max-cs) ⟩
+      a V.-< List.map (λ e → CCC.⟦ e ⟧ (fnoc n config)) cs >-
     ≡⟨⟩
       CCC.⟦ a -< cs >- ⟧ (fnoc n config)
     ∎
@@ -219,7 +217,7 @@ module Exact where
       NCC.⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (Fin.cast (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (config d)))) ⟧ config
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (Fin.toℕ (config d)) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟩
       NCC.⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (Fin.toℕ (config d))) ⟧ config
-    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (find-or-last⇒lookup (translate (sucs n) c max-c) (zipWith (sucs n) (translate (sucs n)) cs max-cs)) refl ⟩
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (find-or-last⇒lookup (translate (sucs n) c max-c) (zipWith (sucs n) (translate (sucs n)) cs max-cs)) refl ⟨
       NCC.⟦ find-or-last (Fin.toℕ (config d)) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟧ config
     ≡⟨ map-find-or-last (λ e → NCC.⟦ e ⟧ config) (Fin.toℕ (config d)) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟩
       find-or-last (Fin.toℕ (config d)) (NCC.⟦ translate (sucs n) c max-c ⟧ config ∷ List.map (λ e → NCC.⟦ e ⟧ config) (zipWith (sucs n) (translate (sucs n)) cs max-cs))
@@ -231,7 +229,7 @@ module Exact where
       find-or-last (Fin.toℕ (config d)) (CCC.⟦ c ⟧ (fnoc (sucs n) config) ∷ List.map (λ e → CCC.⟦ e ⟧ (fnoc (sucs n) config)) cs)
     ≡⟨⟩
       find-or-last (Fin.toℕ (config d)) (List⁺.map (λ e → CCC.⟦ e ⟧ (fnoc (sucs n) config)) (c ∷ cs))
-    ≡˘⟨ map-find-or-last (λ e → CCC.⟦ e ⟧ (fnoc (sucs n) config)) (fnoc (sucs n) config d) (c ∷ cs) ⟩
+    ≡⟨ map-find-or-last (λ e → CCC.⟦ e ⟧ (fnoc (sucs n) config)) (fnoc (sucs n) config d) (c ∷ cs) ⟨
       CCC.⟦ find-or-last (fnoc (sucs n) config d) (c ∷ cs) ⟧ (fnoc (sucs n) config)
     ≡⟨⟩
       CCC.⟦ d ⟨ c ∷ cs ⟩ ⟧ (fnoc (sucs n) config)
@@ -245,13 +243,13 @@ module Exact where
   preserves-⊇ n (a -< cs >-) (maxArtifact max-cs) config =
       CCC.⟦ a -< cs >- ⟧ config
     ≡⟨⟩
-      artifact a (List.map (λ e → CCC.⟦ e ⟧ config) cs)
-    ≡˘⟨ Eq.cong₂ artifact refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ config) cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → CCC.⟦ e ⟧ config) cs max-cs)
-    ≡⟨ Eq.cong₂ artifact refl (zipWith-cong n (λ e max-e → preserves-⊇ n e max-e config) cs max-cs) ⟩
-      artifact a (zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ (conf n config)) cs max-cs)
-    ≡˘⟨ Eq.cong₂ artifact refl (map∘zipWith n cs max-cs) ⟩
-      artifact a (List.map (λ e → NCC.⟦ e ⟧ (conf n config)) (zipWith n (translate n) cs max-cs))
+      a V.-< List.map (λ e → CCC.⟦ e ⟧ config) cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith⇒map n (λ e → CCC.⟦ e ⟧ config) cs max-cs) ⟨
+      a V.-< zipWith n (λ e max-e → CCC.⟦ e ⟧ config) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (zipWith-cong n (λ e max-e → preserves-⊇ n e max-e config) cs max-cs) ⟩
+      a V.-< zipWith n (λ e max-e → NCC.⟦ translate n e max-e ⟧ (conf n config)) cs max-cs >-
+    ≡⟨ Eq.cong₂ V._-<_>- refl (map∘zipWith n cs max-cs) ⟨
+      a V.-< List.map (λ e → NCC.⟦ e ⟧ (conf n config)) (zipWith n (translate n) cs max-cs) >-
     ≡⟨⟩
       NCC.⟦ a -< zipWith n (translate n) cs max-cs >- ⟧ (conf n config)
     ≡⟨⟩
@@ -265,25 +263,25 @@ module Exact where
       find-or-last (config d) (List⁺.map (λ e → CCC.⟦ e ⟧ config) (c ∷ cs))
     ≡⟨⟩
       find-or-last (config d) (CCC.⟦ c ⟧ config ∷ List.map (λ e → CCC.⟦ e ⟧ config) cs)
-    ≡˘⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (zipWith⇒map (sucs n) (λ e → CCC.⟦ e ⟧ config) cs max-cs)) ⟩
+    ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (zipWith⇒map (sucs n) (λ e → CCC.⟦ e ⟧ config) cs max-cs)) ⟨
       find-or-last (config d) (CCC.⟦ c ⟧ config ∷ zipWith (sucs n) (λ e max-e → CCC.⟦ e ⟧ config) cs max-cs)
     ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ (preserves-⊇ (sucs n) c max-c config) (zipWith-cong (sucs n) (λ e max-e → preserves-⊇ (sucs n) e max-e config) cs max-cs)) ⟩
       find-or-last (config d) (NCC.⟦ translate (sucs n) c max-c ⟧ (conf (sucs n) config) ∷ zipWith (sucs n) (λ e max-e → NCC.⟦ translate (sucs n) e max-e ⟧ (conf (sucs n) config)) cs max-cs)
-    ≡˘⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (map∘zipWith (sucs n) cs max-cs)) ⟩
+    ≡⟨ Eq.cong₂ find-or-last refl (Eq.cong₂ _∷_ refl (map∘zipWith (sucs n) cs max-cs)) ⟨
       find-or-last (config d) (NCC.⟦ translate (sucs n) c max-c ⟧ (conf (sucs n) config) ∷ List.map (λ e → NCC.⟦ e ⟧ (conf (sucs n) config)) (zipWith (sucs n) (translate (sucs n)) cs max-cs))
-    ≡˘⟨ map-find-or-last (λ e → NCC.⟦ e ⟧ (conf (sucs n) config)) (config d) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟩
+    ≡⟨ map-find-or-last (λ e → NCC.⟦ e ⟧ (conf (sucs n) config)) (config d) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟨
       NCC.⟦ find-or-last (config d) (translate (sucs n) c max-c ∷ zipWith (sucs n) (translate (sucs n)) cs max-cs) ⟧ (conf (sucs n) config)
     ≡⟨ Eq.cong₂ NCC.⟦_⟧ (find-or-last⇒lookup (translate (sucs n) c max-c) (zipWith (sucs n) (translate (sucs n)) cs max-cs)) refl ⟩
       NCC.⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d)) ⟧ (conf (sucs n) config)
-    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (config d) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟩
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)}) (ℕ≥.cast-cappedFin (config d) (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))))) refl ⟨
       NCC.⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (Fin.cast (Eq.sym (Eq.cong suc (length-zipWith (sucs n) cs max-cs))) (ℕ≥.cappedFin (config d))) ⟧ (conf (sucs n) config)
-    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-cast₁ (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d))) refl ⟩
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-cast₁ (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)) (ℕ≥.cappedFin (config d))) refl ⟨
       NCC.⟦ Vec.lookup (Vec.cast (Eq.cong suc (length-zipWith (sucs n) cs max-cs)) (translate (sucs n) c max-c ∷ Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (config d)) ⟧ (conf (sucs n) config)
     ≡⟨⟩
       NCC.⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (config d)) ⟧ (conf (sucs n) config)
-    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))}) (ℕ≥.cappedFin-idempotent max≤n (config d))) refl ⟩
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup (refl {x = translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))}) (ℕ≥.cappedFin-idempotent max≤n (config d))) refl ⟨
       NCC.⟦ Vec.lookup (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (ℕ≥.cappedFin (Fin.toℕ (conf (sucs n) config d))) ⟧ (conf (sucs n) config)
-    ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (conf (sucs n) config d)) refl ⟩
+    ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) (conf (sucs n) config d)) refl ⟨
       NCC.⟦ Vec.lookup (Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs)))) (conf (sucs n) config d) ⟧ (conf (sucs n) config)
     ≡⟨⟩
       NCC.⟦ d ⟨ Vec.saturate (s≤s max≤n) (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩ ⟧ (conf (sucs n) config)
@@ -361,9 +359,9 @@ preserves (sucs n) expr =
   NCC.⟦ translate (sucs n) expr ⟧
   ≅[]⟨⟩
     NCC.⟦ NCC-rename.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟧
-  ≅[]˘⟨ NCC-rename.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+  ≅[]⟨ NCC-rename.preserves (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉) (NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟨
     NCC.⟦ NCC→NCC.compile ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr)) ⟧
-  ≅[]˘⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟩
+  ≅[]⟨ (NCC→NCC.preserves ⌈ expr ⌉ (sucs n) (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))) ⟨
     NCC.⟦ Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟧
   ≅[]⟨ Exact.preserves ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr) ⟩
     CCC.⟦ expr ⟧

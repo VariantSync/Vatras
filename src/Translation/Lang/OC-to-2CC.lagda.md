@@ -1,24 +1,14 @@
 # Relating Option Calculus to Binary Choice Calculus
 
-## Options
-
-```agda
-{-# OPTIONS --sized-types #-}
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
 ## Module
 
 ```agda
 open import Framework.Definitions
-open import Framework.Construct
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; Construct to Artifact-Construct)
 module Translation.Lang.OC-to-2CC (F : 𝔽) where
 
-open import Framework.Variants using (Rose; rose; Artifact∈ₛRose)
+open import Framework.Variants as V using (Rose)
 open import Size using (Size; ↑_; _⊔ˢ_; ∞)
 V = Rose ∞
-mkArtifact = Artifact∈ₛRose
 Option = F
 ```
 
@@ -33,14 +23,14 @@ open import Data.Vec using (Vec; []; _∷_; toList; fromList)
 open import Function using (id; _∘_; flip)
 
 open import Framework.VariabilityLanguage
-open import Lang.All.Generic V mkArtifact
+open import Lang.All
 open OC renaming (_-<_>- to Artifactₒ)
 open 2CC renaming (_-<_>- to Artifact₂; ⟦_⟧ to ⟦_⟧₂)
 
 open import Data.EqIndexedSet
 
 Artifactᵥ : ∀ {A} → atoms A → List (Rose ∞ A) → Rose ∞ A
-Artifactᵥ a cs = rose (a At.-< cs >-)
+Artifactᵥ a cs = a V.-< cs >-
 
 open import Util.AuxProofs using (id≗toList∘fromList)
 
@@ -79,7 +69,7 @@ This is in fact working just like "map" does on lists but we need the zipper to 
 The zipper does not store enough information to fully restore a tree from the current focus.
 This limitation is intended to keep the structure as simple as possible and only as complex as necessary.
 ```agda
-record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set where
+record Zip (work : ℕ) (i : Size) (A : 𝔸) : Set₁ where
   -- In the paper, we write _⦇_≪_⦈ for this constructor.
   -- However, in Agda, using ⦇ and ⦈ is forbidden.
   constructor _-<_≪_>- --\T
@@ -98,7 +88,7 @@ Zip-is-𝔼 = Zip
 ⟦ a -< ls ≪ rs >- ⟧ₜ c =
   let ⟦ls⟧ = map (flip ⟦_⟧₂ c) ls
       ⟦rs⟧ = ⟦ toList rs ⟧ₒ-recurse c
-   in cons mkArtifact (a At.-< ⟦ls⟧ ++ ⟦rs⟧ >-)
+   in a V.-< ⟦ls⟧ ++ ⟦rs⟧ >-
 ```
 
 ## Translation as Big-Step Semantics
@@ -109,7 +99,7 @@ data _⊢_⟶ₒ_ :
   → (i : Size) -- We have to make sizes explicit here because otherwise, Agda sometimes infers ∞ which makes termination checking fail.
   → Zip n i A
   → 2CC F ∞ A
-  → Set
+  → Set₁
 infix 3 _⊢_⟶ₒ_
 data _⊢_⟶ₒ_ where
   {-|
@@ -171,7 +161,7 @@ data _⟶_  :
   ∀ {i : Size} {A : 𝔸}
   → WFOC F i A
   → 2CC  F ∞ A
-  → Set
+  → Set₁
 infix 4 _⟶_
 data _⟶_ where
   T-root :
@@ -217,10 +207,10 @@ Every OC expression is OC→2CCd to at most one 2CC expression.
 Every OC expression is OC→2CCd to at least one 2CC expression.
 Since we have already proven determinism, the proof for totality and thus a translation is unique.
 ```agda
-Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set
+Totalₒ : ∀ {n} {i} {A} → (e : Zip n i A) → Set₁
 Totalₒ {i = i} e = ∃[ b ] (i ⊢ e ⟶ₒ b)
 
-Total : ∀ {i} {A} → (e : WFOC F i A) → Set
+Total : ∀ {i} {A} → (e : WFOC F i A) → Set₁
 Total {i} e = ∃[ b ] (e ⟶ b)
 
 -- Smart constructor for Totalₒ that does not require naming the expression explicitly.
@@ -466,6 +456,6 @@ OC→2CC = record
   ; preserves = compile-preserves
   }
 
-2CC≽OC : 2CCL F ≽ (WFOCL F)
+2CC≽OC : 2CCL F ≽ WFOCL F
 2CC≽OC = expressiveness-from-compiler OC→2CC
 ```

@@ -1,14 +1,16 @@
-{-# OPTIONS --sized-types #-}
-
-open import Framework.Definitions using (𝕍; atoms)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
-{-
+{-|
 This module renames dimensions in n-ary choice calculus expressions.
--}
-module Translation.Lang.NCC.Rename (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
 
+The idea of this translation is to apply a renaming function `f : D₁ → D₂` to
+all elements of `D₁` in the datastructure `NCC n D₁` to obtain a new
+datastructure `NCC n D₂`. To prove preservation of the semantics, we also
+require a left inverse `f⁻¹ : D₂ → D₁` of `f` as a proof that `f` is injective.
+This precondition is necessary because a non-injective rename would reduce the
+number of possible variants.
+-}
+module Translation.Lang.NCC.Rename where
+
+open import Size using (Size; ∞)
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin; zero; suc)
@@ -22,24 +24,21 @@ open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (_≽_; expressiveness-from-compiler)
+open import Framework.Variants as V using (Rose)
+open import Framework.Relation.Expressiveness (Rose ∞) using (_≽_; expressiveness-from-compiler)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
-open import Size using (Size; ∞)
 import Util.AuxProofs as ℕ
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
-
-artifact : {A : 𝔸} → atoms A → List (Variant A) → Variant A
-artifact a cs = cons Artifact∈ₛVariant (artifact-constructor a cs)
 
 NCC-map-config : ∀ {D₁ D₂ : Set}
   → (n : ℕ≥ 2)
@@ -59,23 +58,22 @@ rename n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (rename n f) cs ⟩
 preserves-⊆ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → (f : D₁ → D₂)
-  → (f⁻¹ : D₂ → D₁)
   → (expr : NCC n D₁ i A)
   → NCC.⟦ rename n f expr ⟧ ⊆[ NCC-map-config n f ] NCC.⟦ expr ⟧
-preserves-⊆ n f f⁻¹ (a -< cs >-) config =
+preserves-⊆ n f (a -< cs >-) config =
     NCC.⟦ rename n f (a -< cs >-) ⟧ config
   ≡⟨⟩
     NCC.⟦ a -< List.map (rename n f) cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ config) (List.map (rename n f) cs))
-  ≡˘⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ rename n f e ⟧ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊆ n f f⁻¹ e config) cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ (config ∘ f)) cs)
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ config) (List.map (rename n f) cs) >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ cs) ⟨
+    a V.-< List.map (λ e → NCC.⟦ rename n f e ⟧ config) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ n f e config) cs) ⟩
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ (config ∘ f)) cs >-
   ≡⟨⟩
     NCC.⟦ a -< cs >- ⟧ (config ∘ f)
   ∎
-preserves-⊆ n f f⁻¹ (d ⟨ cs ⟩) config =
+preserves-⊆ n f (d ⟨ cs ⟩) config =
     NCC.⟦ rename n f (d ⟨ cs ⟩) ⟧ config
   ≡⟨⟩
     NCC.⟦ f d ⟨ Vec.map (rename n f) cs ⟩ ⟧ config
@@ -83,7 +81,7 @@ preserves-⊆ n f f⁻¹ (d ⟨ cs ⟩) config =
     NCC.⟦ Vec.lookup (Vec.map (rename n f) cs) (config (f d)) ⟧ config
   ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config (f d)) (rename n f) cs) refl ⟩
     NCC.⟦ rename n f (Vec.lookup cs (config (f d))) ⟧ config
-  ≡⟨ preserves-⊆ n f f⁻¹ (Vec.lookup cs (config (f d))) config ⟩
+  ≡⟨ preserves-⊆ n f (Vec.lookup cs (config (f d))) config ⟩
     NCC.⟦ Vec.lookup cs (config (f d)) ⟧ (config ∘ f)
   ≡⟨⟩
     NCC.⟦ d ⟨ cs ⟩ ⟧ (config ∘ f)
@@ -99,11 +97,11 @@ preserves-⊇ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
 preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
     NCC.⟦ a -< cs >- ⟧ config
   ≡⟨⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ config) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-cong (λ e → preserves-⊇ n f f⁻¹ is-inverse e config) cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ rename n f e ⟧ (config ∘ f⁻¹)) cs)
-  ≡⟨ Eq.cong₂ artifact refl (List.map-∘ cs) ⟩
-    artifact a (List.map (λ e → NCC.⟦ e ⟧ (config ∘ f⁻¹)) (List.map (rename n f) cs))
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ config) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊇ n f f⁻¹ is-inverse e config) cs) ⟩
+    a V.-< List.map (λ e → NCC.⟦ rename n f e ⟧ (config ∘ f⁻¹)) cs >-
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ cs) ⟩
+    a V.-< List.map (λ e → NCC.⟦ e ⟧ (config ∘ f⁻¹)) (List.map (rename n f) cs) >-
   ≡⟨⟩
     NCC.⟦ a -< List.map (rename n f) cs >- ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
@@ -115,9 +113,9 @@ preserves-⊇ n f f⁻¹ is-inverse (d ⟨ cs ⟩) config =
     NCC.⟦ Vec.lookup cs (config d) ⟧ config
   ≡⟨ preserves-⊇ n f f⁻¹ is-inverse (Vec.lookup cs (config d)) config ⟩
     NCC.⟦ rename n f (Vec.lookup cs (config d)) ⟧ (config ∘ f⁻¹)
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) (rename n f) cs) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config d) (rename n f) cs) refl ⟨
     NCC.⟦ Vec.lookup (Vec.map (rename n f) cs) (config d) ⟧ (config ∘ f⁻¹)
-  ≡˘⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = Vec.map (rename n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟩
+  ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Eq.cong₂ Vec.lookup {x = Vec.map (rename n f) cs} refl (Eq.cong config (is-inverse d))) refl ⟨
     NCC.⟦ Vec.lookup (Vec.map (rename n f) cs) (config ((f⁻¹ ∘ f) d)) ⟧ (config ∘ f⁻¹)
   ≡⟨⟩
     NCC.⟦ f d ⟨ Vec.map (rename n f) cs ⟩ ⟧ (config ∘ f⁻¹)
@@ -132,7 +130,7 @@ preserves : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → f⁻¹ ∘ f ≗ id
   → (e : NCC n D₁ i A)
   → NCC.⟦ rename n f e ⟧ ≅[ NCC-map-config n f ][ NCC-map-config n f⁻¹ ] NCC.⟦ e ⟧
-preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
+preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
 NCC-rename : ∀ {i : Size} {D₁ D₂ : Set}
   → (n : ℕ≥ 2)

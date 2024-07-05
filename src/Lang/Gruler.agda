@@ -1,66 +1,47 @@
-{-# OPTIONS --sized-types #-}
-
+{-|
+This module defines Gruler's language as defined in our paper.
+While the original formalization uses natural numbers to name choices, we allow any
+kind of annotation language F here without any loss of generality.
+-}
 open import Framework.Definitions
 module Lang.Gruler (F : 𝔽) where
 
-open import Data.Bool using (Bool)
+open import Data.Bool using (Bool; if_then_else_)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Function using (id)
+open import Function using (id; _∘_)
 open import Size using (Size; ↑_; ∞)
+import Level
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 open import Framework.VariabilityLanguage
-open import Framework.Variants using (GrulerVariant)
-open import Framework.Construct
-open import Construct.Choices
-open import Construct.GrulerArtifacts
+open import Framework.Variants using (GrulerVariant; ε; asset; _∥_)
 
-open 2Choice using (_⟨_,_⟩)
+{-|
+A simplified syntax of Gruler's language from:
+Alexander Gruler. 2010. A Formal Approach to Software Product Families. Ph. D. Dissertation. TU München
 
-private
-  PC = VLParallelComposition.Syntax
-  pc-semantics = PlainConstruct-Semantics VLParallelComposition.Construct VLParallelComposition.ParallelComposition∈ₛGrulerVariant
-
+-}
 data Gruler : Size → 𝔼 where
-  GAsset  : ∀ {i A} → Leaf (atoms A)                   → Gruler i A
-  GPComp  : ∀ {i A} → ParallelComposition (Gruler i A) → Gruler (↑ i) A
-  GChoice : ∀ {i A} → VL2Choice.Syntax F (Gruler i) A  → Gruler (↑ i) A
+  -- explicit syntax for an empty variant
+  ntrl   : ∀ {i A} → Gruler i A
+  -- an asset stores some atomic data in a leaf node
+  asset  : ∀ {i A} → atoms A → Gruler i A
+  -- parallel composition: This is a binary node in the abstract syntax tree without further information.
+  _∥_    : ∀ {i A} → Gruler i A → Gruler i A → Gruler (↑ i) A
+  -- a choice where the dimension / annotation is written right behind the choice operator ⊕
+  _⊕[_]_ : ∀ {i A} → Gruler i A → F → Gruler i A → Gruler (↑ i) A
 
-semantics : ∀ {i : Size} → 𝔼-Semantics GrulerVariant (2Choice.Config F) (Gruler i)
+Configuration : ℂ
+Configuration = F → Bool
+
+⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics GrulerVariant Configuration (Gruler i)
+⟦ ntrl       ⟧ _ = ε
+⟦ asset a    ⟧ _ = asset a
+⟦ l ∥ r      ⟧ c = ⟦ l ⟧ c ∥ ⟦ r ⟧ c
+⟦ l ⊕[ f ] r ⟧ c = if c f
+                   then ⟦ l ⟧ c
+                   else ⟦ r ⟧ c
 
 GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-GrulerVL {i} = ⟪ Gruler i , 2Choice.Config F , semantics ⟫
-
-semantics (GAsset a)  _ = VLLeaf.elim-leaf VLLeaf.Leaf∈ₛGrulerVariant a
-semantics (GPComp pc)   = pc-semantics GrulerVL pc
-semantics (GChoice chc) = VL2Choice.Semantics GrulerVariant F GrulerVL id chc
-
-gruler-has-leaf : ∀ {i} → VLLeaf.Syntax ∈ₛ Gruler i
-gruler-has-leaf {i} = record
-  { cons = GAsset
-  ; snoc = snoc'
-  ; id-l = λ _ → refl
-  }
-  where snoc' : ∀ {A} → Gruler i A → Maybe (Leaf (atoms A))
-        snoc' (GAsset A)  = just A
-        snoc' _ = nothing
-
-gruler-has-choice : VL2Choice.Syntax F ∈ₛ Gruler ∞
-gruler-has-choice = record
-  { cons = GChoice
-  ; snoc = snoc'
-  ; id-l = λ _ → refl
-  }
-  where snoc' : ∀ {i A} → Gruler (↑ i) A → Maybe (VL2Choice.Syntax F (Gruler i) A)
-        snoc' (GChoice chc) = just chc
-        snoc' _ = nothing
-
-gruler-models-choice : VL2Choice.Construct GrulerVariant F ⟦∈⟧ᵥ GrulerVL
-make gruler-models-choice = gruler-has-choice
-extract gruler-models-choice = id
-preservation gruler-models-choice _ _ = refl
-
-gruler-choice-preserves : ∀ {A : 𝔸} {D l r c}
-  → semantics (GChoice {A = A} (D ⟨ l , r ⟩)) c ≡ VL2Choice.Semantics GrulerVariant F GrulerVL id (D ⟨ l , r ⟩) c
-gruler-choice-preserves = refl
+GrulerVL {i} = ⟪ Gruler i , Configuration , ⟦_⟧ ⟫

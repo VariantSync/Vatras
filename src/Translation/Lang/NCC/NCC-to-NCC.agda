@@ -1,9 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
-open import Framework.Definitions using (𝕍)
-open import Framework.Construct using (_∈ₛ_; cons)
-open import Construct.Artifact as At using () renaming (Syntax to Artifact; _-<_>- to artifact-constructor)
-
 {-
 This module defines a compiler from NCC to NCC where the input and output expression
 can have any arities, in particular different ones.
@@ -12,8 +6,9 @@ This means, given an n-ary expression,
 it is first reduced to a 2-ary expression
 and then pumped to an m-ary expression.
 -}
-module Translation.Lang.NCC.NCC-to-NCC (Variant : 𝕍) (Artifact∈ₛVariant : Artifact ∈ₛ Variant) where
+module Translation.Lang.NCC.NCC-to-NCC where
 
+open import Size using (Size; ∞)
 open import Data.Empty using (⊥-elim)
 import Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin; zero; suc)
@@ -27,24 +22,21 @@ open import Data.Vec as Vec using (Vec; []; _∷_)
 import Data.Vec.Properties as Vec
 open import Framework.Compiler using (LanguageCompiler; _⊕_)
 open import Framework.Definitions using (𝔸; 𝔽)
-open import Framework.Relation.Expressiveness Variant using (expressiveness-from-compiler; _≽_)
+open import Framework.Variants using (Rose)
+open import Framework.Relation.Expressiveness (Rose ∞) using (expressiveness-from-compiler; _≽_)
 open import Framework.Relation.Function using (from; to)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl; _≗_)
 open import Relation.Nullary.Decidable using (yes; no)
-open import Size using (Size; ∞)
 import Util.AuxProofs as ℕ
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 import Util.Vec as Vec
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
-open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
-
-open import Lang.All.Generic Variant Artifact∈ₛVariant
+open import Lang.All
 open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
-open import Translation.Lang.NCC.ShrinkTo2 Variant Artifact∈ₛVariant using (shrinkTo2Compiler)
-open import Translation.Lang.NCC.Grow Variant Artifact∈ₛVariant using (growFrom2Compiler)
+open import Translation.Lang.NCC.ShrinkTo2 using (shrinkTo2Compiler)
+open import Translation.Lang.NCC.Grow using (growFrom2Compiler)
 
 NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→NCC n m = shrinkTo2Compiler n ⊕ growFrom2Compiler m

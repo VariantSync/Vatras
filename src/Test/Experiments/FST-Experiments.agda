@@ -1,5 +1,4 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-{-# OPTIONS --sized-types #-}
 
 open import Framework.Definitions
 module Test.Experiments.FST-Experiments where

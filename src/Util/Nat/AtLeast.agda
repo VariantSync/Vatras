@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module Util.Nat.AtLeast where
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
@@ -34,7 +32,6 @@ lift≤ {k} n≤m = ℕ.+-monoʳ-≤ k n≤m
 ≤-toℕ (sucs m) = ℕ.m≤n⇒m≤n+o m (ℕ.≤-reflexive refl)
 
 -- Convert a natural number into a finite number by using the maximum number for too big numbers.
--- TODO same as AuxProof.clamp
 cappedFin : {n : ℕ≥ 1} → ℕ → Fin (toℕ n)
 cappedFin {sucs zero} m = zero
 cappedFin {sucs (suc n)} zero = zero

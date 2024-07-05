@@ -69,28 +69,6 @@ n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
 n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
 
------ Implementations of the min function.
-
-{-|
-Takes the minium of the two given numbers and proves that the result is smaller than 1 + the first number.
-To prove that the result is smaller than 1 + the second number, use flip to sap the arguments of this function.
--}
-minFinFromLimit : (n-1 : ℕ) → ℕ → Fin (suc n-1)
-minFinFromLimit n-1 t = fromℕ< {n-1 ⊓ t} (s≤s (m⊓n≤m n-1 t))
-
-{-|
-Clamps a non-negative natural number at the given limit.
-In case the given number is smaller than the given length, the number is returned, otherwise the length - 1.
--}
-clamp : (n : ℕ) → {NonZero n} → ℕ → Fin n
-clamp (suc n) = minFinFromLimit n
-
-clampAt : (n : ℕ) → ℕ → Fin (suc n)
-clampAt _ zero = zero
-clampAt zero (suc _) = zero
-clampAt (suc n) (suc c) = suc (clampAt n c)
-
-
 ----- Properties of if_then_else
 
 if-idemp : ∀ {ℓ} {A : Set ℓ} {a : A}
@@ -105,14 +83,6 @@ if-idemp' : ∀ {ℓ} {A : Set ℓ}
     ------------------------
   → ∀ {c} → (if c then a else a) ≡ a
 if-idemp' _ {b} = if-idemp b
-
-if-cong : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂} {a b : A}
-  → (c : Bool)
-  → (P : A → B)
-    -------------------------------------------------
-  → (if c then P a else P b) ≡ P (if c then a else b)
-if-cong false _ = refl
-if-cong true  _ = refl
 
 if-swap : ∀ {A : Set} (x y : Bool) (a b : A)
   → (if x then a else (if y then a else b))

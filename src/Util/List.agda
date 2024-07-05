@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 {-|
 Utilities for lists.
 -}
@@ -9,11 +7,10 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
 open import Data.Nat.Properties using (m≤m+n)
-open import Data.List as List using (List; []; _∷_; lookup; foldr)
+open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
 open import Data.List.Properties using (map-id; length-++)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
 open import Data.Vec as Vec using (Vec; []; _∷_)
-open import Util.AuxProofs using (minFinFromLimit; clamp)
 open import Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Function using (id; _∘_; flip)
 
@@ -36,13 +33,11 @@ max = foldr _⊔_ zero
 ⁺++⁺-length-≤ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A) → List⁺.length xs ≤ List⁺.length (xs ⁺++⁺ ys)
 ⁺++⁺-length-≤ xs ys rewrite ⁺++⁺-length xs ys = m≤m+n (List⁺.length xs) (List⁺.length ys)
 
--- Selects the alternative at the given tag.
-lookup-clamped : {A : Set} → ℕ → List⁺ A → A
-lookup-clamped n list⁺ =
-  let list = toList list⁺
-   in lookup list (clamp (List.length list) n)
+++-tail : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
+  → (xs ++ y ∷ []) ++ ys ≡ xs ++ y ∷ ys
+++-tail y ys [] = refl
+++-tail y ys (x ∷ xs) = Eq.cong (x ∷_) (++-tail y ys xs)
 
--- alternative to lookup-clamped that is easier to handle in proofs
 -- Do not touch this function. its definition is very fragile and just refactoring it can break proofs.
 find-or-last : ∀ {ℓ} {A : Set ℓ} → ℕ → List⁺ A → A
 find-or-last _ (x ∷ []) = x
@@ -75,7 +70,7 @@ map-find-or-last f (suc i) (x ∷ y ∷ zs) =
     (find-or-last (suc i) ∘ map⁺ f) (x ∷ y ∷ zs)
   ∎
 
-find-or-last⇒lookup : ∀ {A : Set} {i : ℕ}
+find-or-last⇒lookup : ∀ {ℓ} {A : Set ℓ} {i : ℕ}
   → (x : A)
   → (xs : List A)
   → find-or-last i (x ∷ xs) ≡ Vec.lookup (x ∷ Vec.fromList xs) (ℕ≥.cappedFin i)
@@ -83,7 +78,7 @@ find-or-last⇒lookup {i = i} x [] = refl
 find-or-last⇒lookup {i = zero} x (y ∷ ys) = refl
 find-or-last⇒lookup {i = suc i} x (y ∷ ys) = find-or-last⇒lookup y ys
 
-lookup⇒find-or-last : ∀ {A : Set} {n m : ℕ}
+lookup⇒find-or-last : ∀ {ℓ} {A : Set ℓ} {n m : ℕ}
   → (vec : Vec A (suc n))
   → Vec.lookup vec (ℕ≥.cappedFin m) ≡ find-or-last m (List⁺.fromVec vec)
 lookup⇒find-or-last {n = zero} {m = m} (x ∷ []) = refl

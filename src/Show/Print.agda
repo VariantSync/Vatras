@@ -15,5 +15,9 @@ open import Data.List using (length)
 
 open import Function using (_∘_)
 
+{-|
+Converts our pretty printing monad to IO.
+The first argument is the expected terminal width in characters.
+-}
 print : ℕ → Lines → IO {0ℓ} ⊤
 print width = mapM′ (putStrLn ∘ content ∘ align width) ∘ raw-lines

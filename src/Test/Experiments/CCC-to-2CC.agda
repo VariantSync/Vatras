@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Experiments.CCC-to-2CC where
 
 open import Data.Bool
@@ -21,7 +19,7 @@ open import Size using (∞)
 
 open import Show.Lines
 
-open import Framework.Annotation.Name using (Dimension)
+-- open import Framework.Annotation.Name using (Dimension)
 -- open import Lang.CCC
 --   renaming (Configuration to Configurationₙ;
 --             ⟦_⟧ to ⟦_⟧ₙ)

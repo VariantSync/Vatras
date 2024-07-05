@@ -1,4 +1,4 @@
-{-# OPTIONS --sized-types --guardedness --allow-unsolved-metas #-}
+{-# OPTIONS --guardedness --allow-unsolved-metas #-}
 
 module Main where
 
@@ -24,7 +24,6 @@ open import Test.Examples.OC using (optex-all)
 open import Test.Experiments.CCC-to-2CC
 open import Test.Experiments.OC-to-2CC
 
-open import Translation.Experiments.Choice-to-2Choice-Experiment using (exp; all-ex)
 import Test.Experiments.FST-Experiments as FSTs
 open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
 open import Test.Experiments.RoundTrip as RoundTrip using (round-trip)
@@ -34,15 +33,13 @@ A list of programs that we want to run.
 Each program is implemented in terms of an Experiment.
 Each experiment is run on each example from a list of examples (i.e., experiment inputs).
 -}
-experimentsToRun : List (ExperimentSetup 0ℓ)
+experimentsToRun : List (ExperimentSetup (suc 0ℓ))
 experimentsToRun =
-  -- DEPRECATED: Run some example translations from n-ary to binary choice calculus
-  -- DEPRECATED: (CCC  ∞ String , exp-to-binary-and-back , cccex-all) ∷
   -- Run some example translations of option calculus to binary choice calculus
   setup exp-oc-to-bcc optex-all ∷
-  -- Run some example translations from n to binary choices
-  -- setup exp all-ex ∷
+  -- Run some example configurations of feature structure trees.
   setup toy-calculator-experiment ex-all ∷
+  -- Run the roundtrip demo.
   setup round-trip RoundTrip.examples ∷
   []
 
@@ -54,7 +51,7 @@ main_lines = do
   linebreak
   > "It's dangerous to go alone! Take this unicode to see whether your terminal supports it:"
   > "  ₙ ₁ ₂ 𝕃 ℂ 𝔸 ⟦ ⟧ ⟨ ⟩ ❲❳"
-  > "... but now on to the experiments."
+  > "... but now on to the demo."
   linebreak
   linebreak
   overwrite-alignment-with

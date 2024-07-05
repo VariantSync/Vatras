@@ -1,12 +1,10 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Experiments.OC-to-2CC where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (_∷_; [])
 open import Data.Nat using (_+_)
 open import Data.Product using (_,_; proj₁; proj₂)
-open import Data.String as String using (String; _++_; unlines; _==_)
+open import Data.String as String using (String; _++_; unlines; _≟_)
 
 open import Size using (Size; ∞)
 open import Function using (id)
@@ -16,19 +14,17 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
 open import Framework.Definitions using (ℂ)
-open import Framework.Variants using (Rose; Artifact∈ₛRose; show-rose)
+open import Framework.Variants using (Rose; show-rose)
 
 Feature = String
-Variant = Rose ∞
-mkArtifact = Artifact∈ₛRose
 
-open import Lang.All.Generic Variant mkArtifact
+open import Lang.All
 -- open import Lang.OC Feature as OCL renaming (Configuration to Conf-oc)
 -- open import Lang.2CC as 2CCL
 open OC using (WFOC; WFOCL)
 open OC.Show Feature id
 open 2CC using (2CCL)
-open 2CC.Redundancy _==_
+open import Translation.Lang.2CC.Redundancy Feature _≟_
 open 2CC.Pretty id
 
 open import Translation.Lang.OC-to-2CC Feature using (compile; compile-configs)

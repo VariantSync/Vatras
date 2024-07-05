@@ -1,6 +1,3 @@
-{-# OPTIONS --sized-types #-}
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module Test.Test.VariantList-Completeness where
 
 open import Level using (Level; 0ℓ; Lift; lift) renaming (suc to lsuc)
@@ -15,10 +12,10 @@ open import Util.Named using (get)
 open import Test.Examples.Variants
 open import Test.UnitTest
 
-open import Framework.Variants using (Rose; Artifact∈ₛRose)
+open import Framework.Variants using (Rose)
 Variant = Rose ∞
 open import Lang.All
-open VariantList using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
+open VariantList Variant using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
 open import Framework.VariantMap Variant using (VMap)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VMap A n)

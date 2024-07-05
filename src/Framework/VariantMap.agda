@@ -9,20 +9,33 @@ open import Level using (0ℓ)
 open import Relation.Binary using (Setoid)
 import Relation.Binary.PropositionalEquality as Eq
 
-open import Data.EqIndexedSet {V A}
+open import Data.EqIndexedSet {A = V A}
 
 {-|
 Variant maps constitute the semantic domain of variability languages.
-While we defined variant maps to be indexed sets with an arbitrary finite and non-empty index set, we directly reflect these properties
-via Fin (suc n) here for convenience.
+As a representative set, we use Fin (suc n) to ensure that variant maps
+are finite (Fin) and non-empty (suc n) indexed sets.
+Using (suc n) here is a shortcut to ensure that the index set has at
+least one element and hence is not empty.
 -}
-VMap : ℕ → Set
+VMap : ℕ → Set₁
 VMap n = IndexedSet (Fin (suc n))
 
--- Utility functions for manipulating variant maps.
+{-|
+This function removes the first variant from a variant map.
+Given that we use natural numbers as an index set for variant maps,
+variant maps have an implicit total order.
+Hence, we can distinguish the first element.
+-}
 remove-first : ∀ {n} → VMap (suc n) → VMap n
 remove-first set i = set (Data.Fin.suc i)
 
+{-|
+This function removes the last variant from a variant map.
+Given that we use natural numbers as an index set for variant maps,
+variant maps have an implicit total order.
+Hence, we can distinguish the last element.
+-}
 remove-last : ∀ {n} → VMap (suc n) → VMap n
 remove-last set i = set (Data.Fin.inject₁ i)
 

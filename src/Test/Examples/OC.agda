@@ -1,5 +1,3 @@
-{-# OPTIONS --sized-types #-}
-
 module Test.Examples.OC where
 
 open import Data.List using (List; []; _∷_; [_])
@@ -14,7 +12,7 @@ open OC
 
 open import Test.Example
 
-OCExample : Set
+OCExample : Set₁
 OCExample = Example (WFOC String ∞ (String , String._≟_))
 
 optex-unary : OCExample

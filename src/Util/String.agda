@@ -18,11 +18,11 @@ open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Nullary.Decidable using (yes; no)
 
-open Eq.≡-Reasoning using (step-≡; step-≡˘; _≡⟨⟩_; _∎)
+open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 
 import Agda.Builtin.Equality.Erase
 
--- The following axioms are needed to proof properties about string
+-- The following axioms are needed to prove properties about string
 -- computations but are not yet provided by Agda. See
 -- https://github.com/agda/agda/issues/6119 for details.
 fromList-toList : ∀ (s : String) → String.fromList (String.toList s) ≡ s
@@ -116,7 +116,7 @@ popDigits-prependDigits n cs =
       go (d₂ ∷ ds₁) (List.map Decimal→Char ds₂ ++ ('.' ∷ cs))
     ≡⟨ lemma (d₂ ∷ ds₁) ds₂ ⟩
       List.reverse ds₂ ++ (d₂ ∷ ds₁) , cs
-    ≡˘⟨ Eq.cong₂ _,_ (List.ʳ++-defn ds₂) refl ⟩
+    ≡⟨ Eq.cong₂ _,_ (List.ʳ++-defn ds₂) refl ⟨
       ds₂ List.ʳ++ (d₂ ∷ ds₁) , cs
     ≡⟨⟩
       (d₂ ∷ ds₂) List.ʳ++ ds₁ , cs
