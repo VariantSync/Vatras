@@ -1,3 +1,7 @@
+{-|
+This module contains proofs of some basic properties of
+option calculus.
+-}
 module Lang.OC.Properties where
 
 open import Data.Bool using (true)
@@ -11,6 +15,9 @@ import Framework.Variants as V
 open import Lang.All
 open OC using (OC; _-<_>-; _❲_❳; ⟦_⟧ₒ; ⟦_⟧ₒ-recurse; all-oc)
 
+{-|
+For any option calculus expression `e` we can derive a variant by including all options.
+-}
 ⟦e⟧ₒtrue≡just : ∀ {F : 𝔽} {A : 𝔸} (e : OC F ∞ A) → ∃[ v ] ⟦ e ⟧ₒ (all-oc true) ≡ just v
 ⟦e⟧ₒtrue≡just (a -< cs >-) = a V.-< ⟦ cs ⟧ₒ-recurse (all-oc true) >- , refl
 ⟦e⟧ₒtrue≡just (f ❲ e ❳) = ⟦e⟧ₒtrue≡just e

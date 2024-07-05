@@ -1,3 +1,7 @@
+{-|
+This module shows that `ADT` is a subset of `2CC` by translating the `ADT`
+constructors into their, less restrictive, `2CC` equivalent.
+-}
 module Translation.Lang.ADT-to-2CC where
 
 open import Size using (Size; ∞)

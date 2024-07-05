@@ -1,16 +1,14 @@
 # Fixed Arity Choice Calculus
 
-## Options
+This module defines the choice calculus in which every choice must have the same
+fixed number of alternatives, called $n-CC$ in our paper.
 
-```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
-## Module
-
-It's required that arity is at least one to have a semantic. However, we require
+It's required that arity $n$ is at least one to have semantics. However, we require
 that the arity is at least two, otherwise there is this annoying one-arity
 language in the NCC language family which is incomplete.
+In our paper, we also only inspect the languages with `n ≥ 2`.
+
+## Module
 
 ```agda
 open import Framework.Definitions
@@ -45,14 +43,23 @@ data NCC (n : ℕ≥ 2) (Dimension : 𝔽) : Size → 𝔼 where
 
 ## Semantics
 
+The semantics is very similar to the semantics for core choice calculus.
+The differences are:
+
+- We can restrict configuration to choose alternatives within bounds because the arity of choices is known in advance.
+- We can then do a vector lookup instead of a list lookup in the semantics.
+
 ```agda
 Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → ℂ
 Configuration n Dimension = Dimension → Fin (ℕ≥.toℕ n)
 
 ⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Rose ∞) (Configuration n Dimension) (NCC n Dimension i)
-⟦_⟧ (a -< cs >-) conf = a V.-< mapl (λ e → ⟦ e ⟧ conf) cs >-
-⟦_⟧ (D ⟨ cs ⟩) conf = ⟦ Vec.lookup cs (conf D) ⟧ conf
+⟦ a -< cs >- ⟧ c = a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
+⟦ D ⟨ cs ⟩   ⟧ c = ⟦ Vec.lookup cs (c D) ⟧ c
 
+{-|
+NCC is a variability language for all n ≥ 2.
+-}
 NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
 NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
 ```
@@ -63,11 +70,11 @@ module _ {n : ℕ≥ 2} {Dimension : 𝔽} where
 
 ## Utility
 
+Recursively, collect all dimensions used in an n-CC expression:
 ```agda
   open Data.List using (concatMap) renaming (_++_ to _++l_)
   import Data.Vec as Vec
 
-  -- get all dimensions used in a binary CC expression
   dims : ∀ {i : Size} {A : 𝔸} → NCC n Dimension i A → List Dimension
   dims (_ -< es >-) = concatMap dims es
   dims (D ⟨ cs ⟩) = D ∷ concatMap dims (Vec.toList cs)

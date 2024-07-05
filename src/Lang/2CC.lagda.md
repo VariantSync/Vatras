@@ -1,11 +1,5 @@
 # Binary Choice Calculus
 
-## Options
-
-```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
 ## Module
 
 ```agda
@@ -30,8 +24,12 @@ open import Framework.VariabilityLanguage
 
 ## Syntax
 
-In the following we formalize the binary normal forms for choice calculus. We express a normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system. Our goal is to prove that every choice calculus expression can be expressed as a variant-equivalent choice calculus expression in which every choice is binary.
-
+In the following we formalize the binary normal form for choice calculus.
+We express a normal form as a new data type such that a conversion of a choice calculus expression is proven in the type system.
+A binary choice calculus expression is either an artifact `a -< es >-` (just as in [rose trees](../Framework/Variants.agda))
+or a binary choice `D ⟨ l , r ⟩` between two sub-expressions `l` and `r`, where the dimension `D` gives the choice a name
+to identify the choice upon configuration.
+Dimensions `D` can be of any given type `Dimension : 𝔽`.
 ```agda
 data 2CC (Dimension : 𝔽) : Size → 𝔼 where
    _-<_>- : ∀ {i A} → atoms A → List (2CC Dimension i A) → 2CC Dimension (↑ i) A
@@ -40,11 +38,8 @@ data 2CC (Dimension : 𝔽) : Size → 𝔼 where
 
 ## Semantics
 
-The semantics of binary normal form is essentially the same as for n-ary choice calculus.
-We define the semantics explicitly though because of two reasons:
-
-1. Specializing the semantics to the binary case gives rise to further simplifications and transformation rules.
-2. Defining binary semantics explicitly allows us to prove that a conversion from and to binary normal form is semantics preserving.
+The semantics of binary normal form is essentially the same as for core choice calculus.
+We define the semantics explicitly though because specializing the semantics to the binary case gives rise to simplifications and transformation rules.
 
 To define the semantics of the binary normal form, we also introduce new binary tags because configurations now have to choose from two alternatives.
 Doing so is isomorphic to choosing a boolean value (i.e., being a predicate).
@@ -65,6 +60,9 @@ Configuration Dimension = Dimension → Bool
 2CCL : ∀ {i : Size} (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
 2CCL {i} Dimension = ⟪ 2CC Dimension i , Configuration Dimension , ⟦_⟧ ⟫
 ```
+
+In the following, we prove some interesting properties about binary choice calculus,
+known from the respective papers.
 
 ```agda
 module _ {Dimension : 𝔽} where
@@ -87,13 +85,19 @@ Some transformation rules:
     open import Framework.Relation.Expression (Rose ∞)
 
     module _ {A : 𝔸} where
-      ast-factoring : ∀ {i} {D : Dimension} {a : atoms A} {n : ℕ}
+      {-|
+      Given a choice between two artifacts with the same atom 'a',
+      we can factor out this atom 'a' outside of the choice because no matter
+      how we configure the choice, the resulting expression will always have 'a'
+      at the top.
+      -}
+      choice-factoring : ∀ {i} {D : Dimension} {a : atoms A} {n : ℕ}
         → (xs ys : Vec (2CC Dimension i A) n)
-          -------------------------------------------------------------------------------------
+          ------------------------------------------------
         → 2CCL Dimension ⊢
               D ⟨ a -< toList xs >- , a -< toList ys >- ⟩
             ≣₁ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >-
-      ast-factoring {i} {D} {a} {n} xs ys c =
+      choice-factoring {i} {D} {a} {n} xs ys c =
           ⟦ D ⟨ a -< toList xs >- , a -< toList ys >- ⟩ ⟧ c
         ≡⟨⟩
           (if c D then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
@@ -109,68 +113,52 @@ Some transformation rules:
           ⟦ a -< toList (zipWith (D ⟨_,_⟩) xs ys) >- ⟧ c
         ∎
         where
-        open Eq.≡-Reasoning
+          open Eq.≡-Reasoning
+          lemma : (b : Bool) →
+              (if b then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+            ≡ a V.-< toList (zipWith (λ x y → if b then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+          lemma false =
+              (if false then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+            ≡⟨⟩
+              ⟦ a -< toList ys >- ⟧ c
+            ≡⟨⟩
+              a V.-< mapl (λ e → ⟦ e ⟧ c) (toList ys) >-
+            ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) ys) ⟨
+              a V.-< toList (Vec.map (λ y → ⟦ y ⟧ c) ys) >-
+            ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.zipWith₂ (λ y → ⟦ y ⟧ c) xs ys)) ⟨
+              a V.-< toList (zipWith (λ x y → ⟦ y ⟧ c) xs ys) >-
+            ≡⟨⟩
+              a V.-< toList (zipWith (λ x y → if false then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+            ∎
+          lemma true =
+              (if true then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
+            ≡⟨⟩
+              ⟦ a -< toList xs >- ⟧ c
+            ≡⟨⟩
+              a V.-< mapl (λ e → ⟦ e ⟧ c) (toList xs) >-
+            ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) xs) ⟨
+              a V.-< toList (Vec.map (λ x → ⟦ x ⟧ c) xs) >-
+            ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.zipWith₁ (λ x → ⟦ x ⟧ c) xs ys)) ⟨
+              a V.-< toList (zipWith (λ x y → ⟦ x ⟧ c) xs ys) >-
+            ≡⟨⟩
+              a V.-< toList (zipWith (λ x y → if true then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
+            ∎
 
-        lemma : (b : Bool) →
-            (if b then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
-          ≡ a V.-< toList (zipWith (λ x y → if b then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
-        lemma false =
-            (if false then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
-          ≡⟨⟩
-            ⟦ a -< toList ys >- ⟧ c
-          ≡⟨⟩
-            a V.-< mapl (λ e → ⟦ e ⟧ c) (toList ys) >-
-          ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) ys) ⟨
-            a V.-< toList (Vec.map (λ y → ⟦ y ⟧ c) ys) >-
-          ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.zipWith₂ (λ y → ⟦ y ⟧ c) xs ys)) ⟨
-            a V.-< toList (zipWith (λ x y → ⟦ y ⟧ c) xs ys) >-
-          ≡⟨⟩
-            a V.-< toList (zipWith (λ x y → if false then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
-          ∎
-        lemma true =
-            (if true then ⟦ a -< toList xs >- ⟧ c else ⟦ a -< toList ys >- ⟧ c)
-          ≡⟨⟩
-            ⟦ a -< toList xs >- ⟧ c
-          ≡⟨⟩
-            a V.-< mapl (λ e → ⟦ e ⟧ c) (toList xs) >-
-          ≡⟨ Eq.cong (a V.-<_>-) (Vec.toList-map (λ e → ⟦ e ⟧ c) xs) ⟨
-            a V.-< toList (Vec.map (λ x → ⟦ x ⟧ c) xs) >-
-          ≡⟨ Eq.cong (a V.-<_>-) (Eq.cong toList (Vec.zipWith₁ (λ x → ⟦ x ⟧ c) xs ys)) ⟨
-            a V.-< toList (zipWith (λ x y → ⟦ x ⟧ c) xs ys) >-
-          ≡⟨⟩
-            a V.-< toList (zipWith (λ x y → if true then ⟦ x ⟧ c else ⟦ y ⟧ c) xs ys) >-
-          ∎
-
-      choice-idempotency : ∀ {D} {e : 2CC Dimension ∞ A}  -- do not use ∞ here?
-          ---------------------------
+      {-|
+      A choice between two equal alternatives is no choice.
+      No matter how we configure the choice, the result stays the same.
+      -}
+      choice-idempotency : ∀ {D} {e : 2CC Dimension ∞ A}
+          ---------------------------------
         → 2CCL Dimension ⊢ D ⟨ e , e ⟩ ≣₁ e
       choice-idempotency {D} {e} c with c D
       ... | false = refl
       ... | true  = refl
 
-      {-
-      TODO: Formulate choice-domination.
-      We cannot do this currently because we only cover total configurations so far.
-      We have to implement choice-elimination as an extra function first.
+      {-|
+      If the left alternative of a choice is semantically equivalent
+      to another expression l′, we can replace the left alternative with l′.
       -}
-
-      {-
-      TODO: Formulate AST-congruence.
-      This is tricky because it ranges over any sub-expression below an artifact (i.e., an arbitrary element in that list).
-      Maybe using a zipper on lists (i.e., a list where we can focus any element except for just the head) is what we want here.
-      Then we could say:
-      ∀ expressions 'e' and 'e′',
-        prefix 'p', and tail 't'
-        with '2CC Dimension , ⟦_⟧ ⊢ e ≈ e′'
-        -----------------------------------------------------------------------------------
-        '2CC Dimension , ⟦_⟧ ⊢ Artifact a (toList (p -∷ e ∷- t)) ≈ Artifact a (toList (p -∷ e′ ∷- t))'
-      where toList turns a zipper to a list and '-∷' and '∷-' denote the focus location behind the prefix and before the tail in the zipper.
-      I expect proving this theorem to be quite boilerplaty but easy in theory:
-      To show that both artifacts are semantically equivalent, we have to show that all the child nodes remain semantically equal.
-      We know this by identity for all children in p and t.
-      for e and e′, we know it per assumption.
-      -}
-
       choice-l-congruence : ∀ {i : Size} {D : Dimension} {l l′ r : 2CC Dimension i A}
         → 2CCL Dimension ⊢ l ≣₁ l′
           ---------------------------------------
@@ -179,6 +167,10 @@ Some transformation rules:
       ... | false = refl
       ... | true  = l≣l′ c
 
+      {-|
+      If the right alternative of a choice is semantically equivalent
+      to another expression r′, we can replace the right alternative with r′.
+      -}
       choice-r-congruence : ∀ {i : Size} {D : Dimension} {l r r′ : 2CC Dimension i A}
         → 2CCL Dimension ⊢ r ≣₁ r′
           ---------------------------------------
@@ -188,97 +180,16 @@ Some transformation rules:
       ... | true  = refl
 ```
 
-## Semantic Preserving Transformations
-
-```agda
-  open import Relation.Binary.Definitions using (DecidableEquality)
-  open import Relation.Nullary using (yes; no)
-
-  module Redundancy (_==_ : DecidableEquality Dimension) where
-    open import Data.Empty using (⊥-elim)
-    open import Data.Maybe using (Maybe; just; nothing)
-    open import Util.AuxProofs using (true≢false)
-    open Eq.≡-Reasoning
-
-    Scope : Set
-    Scope = Dimension → Maybe Bool
-
-    refine : Scope → Dimension → Bool → Scope
-    refine scope D b D' with D == D'
-    refine scope D b D' | yes _ = just b
-    refine scope D b D' | no _ = scope D'
-
-    eliminate-redundancy-in : ∀ {i : Size} {A : 𝔸} → Scope → 2CC Dimension i A → 2CC Dimension ∞ A
-    eliminate-redundancy-in scope (a -< es >-) = a -< mapl (eliminate-redundancy-in scope) es >-
-    eliminate-redundancy-in scope (D ⟨ l , r ⟩) with scope D
-    ... | just true  = eliminate-redundancy-in scope l
-    ... | just false = eliminate-redundancy-in scope r
-    ... | nothing    = D ⟨ eliminate-redundancy-in (refine scope D true ) l
-                        , eliminate-redundancy-in (refine scope D false) r
-                        ⟩
-
-    eliminate-redundancy : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → 2CC Dimension ∞ A
-    eliminate-redundancy = eliminate-redundancy-in (λ _ → nothing)
-
-    preserves-≗ : ∀ {i : Size} {A : 𝔸}
-      → (scope : Scope)
-      → (c : Configuration Dimension)
-      → (∀ {D : Dimension} {b : Bool} → scope D ≡ just b → c D ≡ b)
-      → (e : 2CC Dimension i A)
-      → ⟦ eliminate-redundancy-in scope e ⟧ c ≡ ⟦ e ⟧ c
-    preserves-≗ scope c p (a -< cs >-) =
-        ⟦ eliminate-redundancy-in scope (a -< cs >-) ⟧ c
-      ≡⟨⟩
-        ⟦ a -< mapl (eliminate-redundancy-in scope) cs >- ⟧ c
-      ≡⟨⟩
-        a V.-< mapl (λ e → ⟦ e ⟧ c) (mapl (eliminate-redundancy-in scope) cs) >-
-      ≡⟨ Eq.cong (a V.-<_>-) (map-∘ cs) ⟨
-        a V.-< mapl (λ e → ⟦ eliminate-redundancy-in scope e ⟧ c) cs >-
-      ≡⟨ Eq.cong (a V.-<_>-) (map-cong (λ e → preserves-≗ scope c p e) cs) ⟩
-        a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
-      ≡⟨⟩
-        ⟦ a -< cs >- ⟧ c
-      ∎
-    preserves-≗ scope c p (D ⟨ l , r ⟩) with scope D in scope-D
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | just true with c D in c-D
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | just true | false = ⊥-elim (true≢false (p scope-D) c-D)
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | just true | true = preserves-≗ scope c p l
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | just false with c D in c-D
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | just false | false = preserves-≗ scope c p r
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | just false | true = ⊥-elim (true≢false c-D (p scope-D))
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | nothing with c D in c-D
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | nothing | true = preserves-≗ (refine scope D true) c lemma l
-      where
-      lemma : ∀ {D' : Dimension} {b : Bool} → refine scope D true D' ≡ just b → c D' ≡ b
-      lemma {D' = D'} p' with D == D'
-      lemma {b = true} p' | yes refl = c-D
-      lemma p' | no D≢D' = p p'
-    preserves-≗ scope c p (D ⟨ l , r ⟩) | nothing | false = preserves-≗ (refine scope D false) c lemma r
-      where
-      lemma : ∀ {D' : Dimension} {b : Bool} → refine scope D false D' ≡ just b → c D' ≡ b
-      lemma {D' = D'} p' with D == D'
-      lemma {b = false} p' | yes refl = c-D
-      lemma p' | no D≢D' = p p'
-
-    open import Framework.Compiler using (LanguageCompiler)
-    open import Data.EqIndexedSet using (≗→≅[]; ≅[]-sym)
-    module _ where
-      Redundancy-Elimination : LanguageCompiler (2CCL Dimension) (2CCL Dimension)
-      Redundancy-Elimination = record
-        { compile = eliminate-redundancy
-        ; config-compiler = λ _ → record { to = id ; from = id }
-        ; preserves = λ e → ≅[]-sym (≗→≅[] λ c → preserves-≗ (λ _ → nothing) c (λ where ()) e)
-        }
-```
-
 ## Utility
 
 ```agda
   open Data.List using (concatMap) renaming (_++_ to _++l_)
 
-  -- get all dimensions used in a binary CC expression
+  {-|
+  Recursively, collect all dimensions used in a binary CC expression
+  -}
   dims : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → List Dimension
-  dims (_ -< es >-) = concatMap dims es
+  dims (_ -< es >-)  = concatMap dims es
   dims (D ⟨ l , r ⟩) = D ∷ (dims l ++l dims r)
 ```
 
@@ -293,7 +204,6 @@ Some transformation rules:
     show (a -< [] >-) = a
     show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
     show (D ⟨ l , r ⟩) = show-D D ++ "⟨" ++ (show l) ++ ", " ++ (show r) ++ "⟩"
-
 
     pretty : ∀ {i : Size} → 2CC Dimension i (String , String._≟_) → Lines
     pretty (a -< [] >-) = > a

@@ -24,7 +24,7 @@ open import Lang.All
 open OC using (WFOC; WFOCL)
 open OC.Show Feature id
 open 2CC using (2CCL)
-open 2CC.Redundancy _≟_
+open import Translation.Lang.2CC.Redundancy Feature _≟_
 open 2CC.Pretty id
 
 open import Translation.Lang.OC-to-2CC Feature using (compile; compile-configs)

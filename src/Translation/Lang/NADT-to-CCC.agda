@@ -1,3 +1,7 @@
+{-
+This module shows that `NADT` is a subset of `CCC` by translating the `NADT`
+constructors into their, less restrictive, `CCC` equivalent.
+-}
 module Translation.Lang.NADT-to-CCC where
 
 open import Size using (Size; ∞)

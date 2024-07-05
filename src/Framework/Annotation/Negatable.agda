@@ -1,19 +1,32 @@
 module Framework.Annotation.Negatable where
 
-open import Framework.Annotation.Name using (Name)
+open import Framework.Definitions using (𝔽)
 open import Data.Bool using (Bool; true; false; not)
 
 {-|
-A logic that only knows variables or their negations.
-TODO: Make this an instance of 𝔽.
+An annotation language that adds negations to an existing
+annotation language.
 -}
-data Negatable {ℓ} (A : Set ℓ) : Set ℓ where
-  if  : Name A → Negatable A
-  ifn : Name A → Negatable A
+data Negatable (F : 𝔽) : 𝔽 where
+  if  : F → Negatable F
+  ifn : F → Negatable F
 
-eval : ∀ {ℓ} {A : Set ℓ} → Negatable A → (Name A → Bool) → Bool
-eval (if  n) c = c n
+{-|
+Semantics of Negatable.
+Given a boolean configuration for the underlying
+annotation type, Negatable may flip the result if
+the ifn is chosen.
+This could potentially be generalized for other
+interpretations of negations in the result type.
+-}
+eval : ∀ {F : 𝔽} → Negatable F → (F → Bool) → Bool
+eval (if  n) c =      c n
 eval (ifn n) c = not (c n)
 
-mkConfig : ∀ {ℓ} {A : Set ℓ} → (Name A → Bool) → Negatable A → Bool
+{-|
+Converse to 'eval':
+Given a boolean configuration for the underlying
+annotation type F, creates a configuration for Negatable.
+-}
+mkConfig : ∀ {F : 𝔽} → (F → Bool) → Negatable F → Bool
 mkConfig c n = eval n c

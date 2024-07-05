@@ -1,5 +1,12 @@
-{-
+{-|
 This module renames dimensions in n-ary choice calculus expressions.
+
+The idea of this translation is to apply a renaming function `f : D₁ → D₂` to
+all elements of `D₁` in the datastructure `NCC n D₁` to obtain a new
+datastructure `NCC n D₂`. To prove preservation of the semantics, we also
+require a left inverse `f⁻¹ : D₂ → D₁` of `f` as a proof that `f` is injective.
+This precondition is necessary because a non-injective rename would reduce the
+number of possible variants.
 -}
 module Translation.Lang.NCC.Rename where
 
@@ -51,10 +58,9 @@ rename n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (rename n f) cs ⟩
 preserves-⊆ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → (f : D₁ → D₂)
-  → (f⁻¹ : D₂ → D₁)
   → (expr : NCC n D₁ i A)
   → NCC.⟦ rename n f expr ⟧ ⊆[ NCC-map-config n f ] NCC.⟦ expr ⟧
-preserves-⊆ n f f⁻¹ (a -< cs >-) config =
+preserves-⊆ n f (a -< cs >-) config =
     NCC.⟦ rename n f (a -< cs >-) ⟧ config
   ≡⟨⟩
     NCC.⟦ a -< List.map (rename n f) cs >- ⟧ config
@@ -62,12 +68,12 @@ preserves-⊆ n f f⁻¹ (a -< cs >-) config =
     a V.-< List.map (λ e → NCC.⟦ e ⟧ config) (List.map (rename n f) cs) >-
   ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-∘ cs) ⟨
     a V.-< List.map (λ e → NCC.⟦ rename n f e ⟧ config) cs >-
-  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ n f f⁻¹ e config) cs) ⟩
+  ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-⊆ n f e config) cs) ⟩
     a V.-< List.map (λ e → NCC.⟦ e ⟧ (config ∘ f)) cs >-
   ≡⟨⟩
     NCC.⟦ a -< cs >- ⟧ (config ∘ f)
   ∎
-preserves-⊆ n f f⁻¹ (d ⟨ cs ⟩) config =
+preserves-⊆ n f (d ⟨ cs ⟩) config =
     NCC.⟦ rename n f (d ⟨ cs ⟩) ⟧ config
   ≡⟨⟩
     NCC.⟦ f d ⟨ Vec.map (rename n f) cs ⟩ ⟧ config
@@ -75,7 +81,7 @@ preserves-⊆ n f f⁻¹ (d ⟨ cs ⟩) config =
     NCC.⟦ Vec.lookup (Vec.map (rename n f) cs) (config (f d)) ⟧ config
   ≡⟨ Eq.cong₂ NCC.⟦_⟧ (Vec.lookup-map (config (f d)) (rename n f) cs) refl ⟩
     NCC.⟦ rename n f (Vec.lookup cs (config (f d))) ⟧ config
-  ≡⟨ preserves-⊆ n f f⁻¹ (Vec.lookup cs (config (f d))) config ⟩
+  ≡⟨ preserves-⊆ n f (Vec.lookup cs (config (f d))) config ⟩
     NCC.⟦ Vec.lookup cs (config (f d)) ⟧ (config ∘ f)
   ≡⟨⟩
     NCC.⟦ d ⟨ cs ⟩ ⟧ (config ∘ f)
@@ -124,7 +130,7 @@ preserves : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → f⁻¹ ∘ f ≗ id
   → (e : NCC n D₁ i A)
   → NCC.⟦ rename n f e ⟧ ≅[ NCC-map-config n f ][ NCC-map-config n f⁻¹ ] NCC.⟦ e ⟧
-preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f f⁻¹ expr , preserves-⊇ n f f⁻¹ is-inverse expr
+preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
 NCC-rename : ∀ {i : Size} {D₁ D₂ : Set}
   → (n : ℕ≥ 2)

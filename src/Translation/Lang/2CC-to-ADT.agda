@@ -1,3 +1,10 @@
+{-|
+This module translates `2CC` expressions to `NADT` expressions by duplicating
+artifact constructors below the `2CC` choices if necessary.
+
+This translation eliminates all sharing between the variants by effectively
+enumerating all variants differentiated by a choice.
+-}
 module Translation.Lang.2CC-to-ADT where
 
 open import Size using (Size; ∞)

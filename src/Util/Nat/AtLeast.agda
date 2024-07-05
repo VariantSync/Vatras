@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module Util.Nat.AtLeast where
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)

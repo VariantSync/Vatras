@@ -1,3 +1,8 @@
+{-|
+This module translates expressions from `NCC` to `2CC` by first translating any
+`NCC` expression to `NCC 2` and then replacing all `NCC 2` constructors to their
+equivalent `2CC` constructors.
+-}
 module Translation.Lang.NCC-to-2CC where
 
 open import Size using (Size; ∞)

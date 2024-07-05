@@ -1,4 +1,8 @@
-# Lists of Variants are Also Variability Languages
+# Clone-and-Own as a Variability Language
+
+The simples way to express variability is to just list all the alternatives.
+In software engineering, developing software like this is know as _clone-and-own_.
+Formally, expressing variability in this way amounts to declaring a list of variants.
 
 ## Module
 
@@ -23,35 +27,63 @@ open import Framework.VariabilityLanguage
 open import Framework.Properties.Completeness V using (Complete)
 open import Framework.Properties.Soundness V using (Sound)
 open import Framework.Properties.Finity V using (soundness-from-enumerability)
-open import Framework.Relation.Index V using (_∋_⊢_≣ⁱ_)
+open import Framework.Relation.Configuration V using (_∋_⊢_≣ⁱ_)
 open import Data.EqIndexedSet as ISet
 open import Util.List using (find-or-last)
 ```
 
-## Definitions
+## Syntax
 
 ```agda
 VariantList : 𝔼
 VariantList A = List⁺ (V A)
 
--- it would be nice if the confLang would be parameterized in expressions
-Configuration : 𝕊
+{-|
+Just an alias.
+-}
+Clone-and-Own : 𝔼
+Clone-and-Own = VariantList
+```
+
+## Semantics
+
+```agda
+{-|
+To obtain a variant, we have to do a list lookup.
+Hence, a configuration is just an index / address in that list.
+For simplicity, we allow just any natural number and just pick the
+last variant in case of an overview.
+Otherwise, the type of configuration must be parameterized in the
+particular expression to configure.
+-}
+Configuration : ℂ
 Configuration = ℕ
 
+{-|
+Semantics is just a list lookup.
+-}
 -- ⟦_⟧ : ∀ {i : Size} {A : 𝔸} → VariantList i A → Configuration → Variant i A
 ⟦_⟧ : 𝔼-Semantics V Configuration VariantList
-⟦_⟧ e c = find-or-last c e
+⟦ clones ⟧ i = find-or-last i clones
+```
 
+## Clone-and-Own as a Variability Language
+
+```agda
 VariantListL : VariabilityLanguage V
 VariantListL = ⟪ VariantList , Configuration , ⟦_⟧ ⟫
 ```
 
 ## Properties
 
+We now prove completeness and soundness of clone-and-own.
+These proofs will form the basis for proving these properties for other languages as well.
+
 ### Completeness
 
+To prove completeness, we have to show that lists of variants can express any variant map.
+
 ```agda
--- prove completeness via inference rules
 open import Util.Nat.AtLeast using (cappedFin)
 
 private
@@ -61,7 +93,7 @@ private
     A : 𝔸
     e : VariantList A
 
--- rules for translating a set of variants to a list of variants
+-- rules for translating a variant map to a list of variants
 infix 3 _⊢_⟶_
 data _⊢_⟶_ : ∀ (n : ℕ) → VMap A n → VariantList A → Set₁ where
   -- a singleton set is translated to a singleton list
@@ -117,9 +149,11 @@ vl-conf i = toℕ i
 vl-fnoc : Configuration → Fin (suc n)
 vl-fnoc c = cappedFin c
 
+-- prove preservation of the encoding
+
 preserves-∈ : ∀ {V}
   → n ⊢ V ⟶ e
-    -----------------
+    ---------------------
   → V ⊆[ vl-conf ] ⟦ e ⟧
 preserves-∈ E-zero    zero = refl
 
@@ -128,7 +162,7 @@ preserves-∈ (E-suc ⟶e) (suc i) = preserves-∈ ⟶e i
 
 preserves-∋ : ∀ {V}
   → n ⊢ V ⟶ e
-    -----------------
+    ---------------------
   → ⟦ e ⟧ ⊆[ vl-fnoc ] V
 preserves-∋ E-zero      zero   = refl
 preserves-∋ E-zero     (suc _) = refl
@@ -141,6 +175,7 @@ preserves : ∀ {V}
   → V ≅ ⟦ e ⟧
 preserves encoding = ≅[]→≅ (preserves-∈ encoding , preserves-∋ encoding)
 
+-- final completeness proof
 VariantList-is-Complete : Complete VariantListL
 VariantList-is-Complete vs =
   let e , derivation = total vs
@@ -148,6 +183,12 @@ VariantList-is-Complete vs =
 ```
 
 ### Soundness
+
+We can use a trick to prove soundness by reusing the above definitions for completeness.
+The trick is that `⟦ e ⟧ ∘ vl-conf` denotes a variant map because it takes a `Fin (suc n)` as input and produces a variant.
+We are then left to prove that this variant map exactly denotes the expression in e which is almost true by definition.
+It just requires playing with the configuration translation functions a bit, and to prove
+that `vl-conf` is the (semantic) inverse of `vl-fnoc`.
 
 ```agda
 -- vl-conf is inverse to vl-fnoc w.r.t. semantic equivalence of configurations.

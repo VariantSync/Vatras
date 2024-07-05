@@ -1,3 +1,9 @@
+{-|
+This module generates a list of variants from an `ADT` expression by choosing
+all possible configurations for each choice. However, this simple process might
+result in impossible, dead variants. Hence, dead branch elimination is applied
+first, resulting in the correct list of variants.
+-}
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸)
 open import Data.Bool using (Bool; true; false; not; if_then_else_)
 open import Relation.Binary using (DecidableEquality; Rel)
@@ -26,7 +32,7 @@ open import Framework.VariabilityLanguage
 open import Framework.Compiler
 open import Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Framework.Properties.Soundness V using (Sound)
-open import Framework.Proof.Transitive V using (soundness-by-expressiveness)
+open import Framework.Proof.ForFree V using (soundness-by-expressiveness)
 open import Lang.ADT
   using (ADT; ADTL; leaf; _⟨_,_⟩)
   renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)

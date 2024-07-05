@@ -1,3 +1,15 @@
+{-|
+This module transforms an `ADT` expression into an equivalent `ADT` expression
+where no feature name is contained twice on a path. In other words, this
+transformation eliminates dead branches, so the resulting expression will have
+no choice whose feature name is contained in any of its child expressions.
+
+In case there is a choice `chc` whose feature name `f` is contained in a child
+expression `c` , all choices that mention `f` can be configured exactly like
+`chc` needs to be configured to choose `c`. Hence, the essential
+`kill-dead-below` transformation keeps track of the feature names and their
+respective configuration for the current expression.
+-}
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸; 𝔼)
 open import Relation.Binary using (DecidableEquality; Rel)
 module Translation.Lang.ADT.DeadElim

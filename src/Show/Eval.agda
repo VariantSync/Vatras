@@ -1,3 +1,6 @@
+{-|
+Some helper functions for pretty printing.
+-}
 module Show.Eval where
 
 open import Data.Bool using (Bool)

@@ -1,3 +1,7 @@
+{-|
+This module defines paths in ASTs from the root to a leaf.
+We use paths to reason on dead branches later on.
+-}
 open import Framework.Definitions using (𝔽; 𝕍; 𝔸; 𝔼)
 open import Relation.Binary using (DecidableEquality; Rel)
 module Lang.ADT.Path

@@ -1,3 +1,6 @@
+{-|
+This module introduces our pretty printing monad.
+-}
 module Show.Lines where
 
 open import Data.Bool using (true; false; if_then_else_)
@@ -37,12 +40,14 @@ align width line = manipulate (fromAlignment (alignment line) width) line
 length : Line → ℕ
 length line = Data.String.length (content line)
 
--- Lines monad.
--- It captures a sequence of text lines which we aim to print.
--- Unfortunately, we need Lines' to be able to handle different levels (e.g. in
--- `Test.Experiments.RoundTrp`). Because of the same level limitation of the
--- writer monad, the level of the actual lines data needs to be lifted
--- accordingly.
+{-|
+Lines monad.
+It captures a sequence of text lines which we aim to print.
+Unfortunately, we need Lines' to be able to handle different levels (e.g. in
+`Test.Experiments.RoundTrp`). Because of the same level limitation of the
+writer monad, the level of the actual lines data needs to be lifted
+accordingly.
+-}
 Lines' : ∀ {ℓ} → Set ℓ → Set ℓ
 Lines' {ℓ} A = Writer (List.++-[]-rawMonoid (Level.Lift ℓ Line)) A
 
