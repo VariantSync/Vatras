@@ -1,5 +1,8 @@
 # Overview of Language Relations
 
+This module contains all our proofs for the variability languages defined so far.
+In particular, this file corresponds to the map of compilers in Section 5 of our paper.
+
 ## Module
 
 ```agda
