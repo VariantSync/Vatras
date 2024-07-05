@@ -10,7 +10,7 @@ open import Framework.VariabilityLanguage
 open import Framework.Variants using (GrulerVariant)
 open import Util.List using (find-or-last)
 
-{-
+{-|
 A generalisation of algebraic decision trees
 to choices with an arbitrary number of alternatives (at least one though) just
 as in core choice calculus CCC.
