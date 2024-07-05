@@ -1,5 +1,8 @@
 # Option Calculus in Agda
 
+This module formalizes option calculus, a new language for variability
+we introduce to capture variability with exactly and only optional variability.
+
 ## Module
 
 ```agda
@@ -22,36 +25,32 @@ open import Framework.VariabilityLanguage
 
 ## Syntax
 
+An option calculus expression is either an artifact `a -< es >-` (just as in [rose trees](../Framework/Variants.agda))
+or an option `O ❲ e ❳` which optionally includes a sub-expression `e` in case `O` gets selected.
 ```agda
 data OC (Option : 𝔽) : Size → 𝔼 where
-  {-|
-  FIXME:
-  We do not reuse the artifact constructor here.
-  Below is a commented out variant of this type where we
-  reuse that constructor.
-  However, for some unfathomable reason then termination
-  checking fails within OC-to-2CC.agda
-  because prepending an 'OC i A' to a 'Vec (OC (↑ i) A) n'
-  is illegal then (but as of now just works).
-  I have no idea what's the reason for this.
-  Maybe reusing Artifact hides something from the Agda
-  compiler that it needs for termination checking.
-  -}
   _-<_>- : ∀ {i A} → atoms A → List (OC Option i A) → OC Option (↑ i) A
-  _❲_❳ : ∀ {i : Size} {A : 𝔸} →
-    Option → OC Option i A → OC Option (↑ i) A
+  _❲_❳ : ∀ {i : Size} {A : 𝔸} → Option → OC Option i A → OC Option (↑ i) A
 infixl 6 _❲_❳
 
--- data OC : Size → 𝔼 where
---   atom : ∀ {i A} → Artifact (OC i) A → OC (↑ i) A
---   _❲_❳ : ∀ {i : Size} {A : 𝔸} →
---     Option → OC i A → OC (↑ i) A
--- infixl 6 _❲_❳
--- pattern _-<_>- a cs  = atom (a At.-< cs >-)
+{-|
+Creates a leaf artifact node.
+-}
+oc-leaf : ∀ {i : Size} {A : 𝔸} {Option : 𝔽} → atoms A → OC Option (↑ i) A
+oc-leaf a = a -< [] >-
+
+{-|
+This is an alternative constructor for options to avoid typing tortoise shell braces.
+-}
+opt : ∀ {i : Size} {A : 𝔸} {Option : 𝔽} → Option → OC Option i A → OC Option (↑ i) A
+opt = _❲_❳
 ```
 
 An expression is well-formed if there is an artifact at the root.
 Otherwise, we would allow empty variants which would again require either (1) the assumption of the domain having an empty element or (2) the introduction of a symbol for the empty variant in the semantic domain (which most languages do not require).
+We discuss this problem in detail in our paper.
+
+To ensure well-formedness, we introduce the following auxiliary type which forces there to be an artifact at the root:
 ```agda
 data WFOC (Option : 𝔽) : Size → 𝔼 where
   Root : ∀ {i A} → atoms A → List (OC Option i A) → WFOC Option (↑ i) A
@@ -69,7 +68,11 @@ children-wf (Root _ es) = es
 
 ### Semantics
 
-Let's first define configurations. Configurations of option calculus tell us which options to in- or exclude. We define `true` to mean "include" and `false` to mean "exclude". Defining it the other way around would also be fine as long as we are consistent. Yet, our way of defining it is in line with if-semantics and how it is usually implemented in papers and tools.
+Let's first define configurations.
+Configurations of option calculus tell us which options to include or exclude.
+We define `true` to mean "include" and `false` to mean "exclude".
+Defining it the other way around would also be fine as long as we are consistent.
+Yet, our way of defining it is in line with if-semantics and how it is usually implemented in papers and tools.
 ```agda
 Configuration : 𝔽 → ℂ
 Configuration Option = Option → Bool
@@ -79,7 +82,7 @@ The semantics recursively evaluates options given a configuration to cut-off all
 Selected options will vanish from the expression because their variability was resolved.
 
 First we define the semantics of pure option calculus, without any well-formedness constraints.
-This may yield an empty variant which express using `Maybe`.
+This may yield an empty variant which we express using `Maybe`.
 As `Maybe` is not in the semantic domain of our variability language, we cannot directly use our definitions for reasoning on variability languages.
 
 Note: The following functions could also be implemented solely using lists but `Maybe` makes our intents more explicit and thus more readable (in particular the use of `catMaybes`).
@@ -93,17 +96,26 @@ Conventional Semantics of Option Calculus that dismisses all empty values
 except of there is an empty value at the top.
 -}
 mutual
-  -- -- recursive application of the semantics to all children of an artifact
+  {-|
+  Recursive application of the semantics to all children of an artifact.
+  -}
   -- ⟦_⟧ₒ-recurse : ∀ {i A} → List (OC i A) → Configuration → List (V A)
   ⟦_⟧ₒ-recurse : ∀ {i} {Option : 𝔽} → 𝔼-Semantics (List ∘ Rose ∞) (Configuration Option) (List ∘ OC Option i)
   ⟦ es ⟧ₒ-recurse c =
     catMaybes -- Keep everything that was chosen to be included and discard all 'nothing' values occurring from removed options.
     (map (flip ⟦_⟧ₒ c) es)
 
+  {-|
+  Semantics of non-well-formed option calculus.
+  -}
   ⟦_⟧ₒ : ∀ {i : Size} {Option : 𝔽} → 𝔼-Semantics (Maybe ∘ Rose ∞) (Configuration Option) (OC Option i)
   ⟦ a -< es >- ⟧ₒ c = just (a V.-< ⟦ es ⟧ₒ-recurse c >-)
   ⟦ O ❲ e ❳ ⟧ₒ c = if c O then ⟦ e ⟧ₒ c else nothing
 
+{-|
+Interestingly, option calculus without an artifact root still forms a variability language
+but only if the adapt the type of variants to also allow the empty variant, encoded via Maybe.
+-}
 OCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Maybe ∘ Rose ∞)
 OCL {i} Option = ⟪ OC Option i , Configuration Option , ⟦_⟧ₒ ⟫
 ```
@@ -117,19 +129,7 @@ WFOCL : ∀ {i : Size} (Option : 𝔽) → VariabilityLanguage (Rose ∞)
 WFOCL {i} Option = ⟪ WFOC Option i , Configuration Option , ⟦_⟧ ⟫
 ```
 
--- ### Option calculus is unsound
-
--- Option calculus is unsound by construction because it is not a variability language over variants V
--- but over Maybe ∘ V, i.e., an option calculus expression might be configured to something else which
--- is not a variant (i.e., nothing).
--- TODO: Maybe we can still explicitly construct the `Unsound` predicate.
-
--- ### Well-formed option calculus is sound
-
-```agda
--- TODO (Probably prove via soundness-by-expressiveness (done) and soundness of 2CC (todo))
-```
-
+## Incompleteness
 
 ```agda
 open import Data.Fin using (zero; suc)
@@ -143,30 +143,27 @@ open import Relation.Binary.PropositionalEquality using (_≡_)
 module _ {Option : 𝔽} where
 ```
 
-## Incompleteness
-
 We prove incompleteness by showing that there exists at least one set of variants that cannot be described by option calculus.
 In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
-  -- TODO: Can this be generalized to other types of variants as well?
   module IncompleteOnRose where
     open import Framework.VariantMap (Rose ∞) (ℕ , ℕ._≟_)
     open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
 
     variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
     variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
-    -- variant-0 = cons mkArtifact (At.leaf 0)
-    -- variant-1 = cons mkArtifact (At.leaf 1)
 
     variants-0-and-1 : VMap 1
     variants-0-and-1 zero = variant-0
     variants-0-and-1 (suc zero) = variant-1
 ```
+
 We stick to this concrete counter example instead of formulating the set of unrepresentable variants here to make the proof not more complicated than necessary.
 
 We now prove that any well-formed option calculus expression `e` cannot be configured to `0` and `1` at the same time. The reason is that the expression `e` always has a domain element at the top. This element is always included in the variant and cannot simultaneously be `0` and `1`.
 So we show that given an expression `e`, a proof that `e` can be configured to `0`, and a proof that `e` can be configured to `1`, we eventually conclude falsehood.
+
 ```agda
     does-not-describe-variants-0-and-1 :
       ∀ {i : Size}
@@ -181,6 +178,7 @@ So we show that given an expression `e`, a proof that `e` can be configured to `
 
 Finally, we can conclude incompleteness by showing that assuming completeness yields a contradiction using our definition above.
 We pattern match on the assumed completeness evidence to unveil the expression `e` and the proofs that it can be configured to `0` and `1`.
+
 ```agda
     OC-is-incomplete : Incomplete (WFOCL Option)
     OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
@@ -195,24 +193,31 @@ Another way is to enrich the annotation language, for example using propositiona
 ## Utility
 
 ```agda
-  oc-leaf : ∀ {i : Size} {A : 𝔸} → atoms A → OC Option (↑ i) A
-  oc-leaf a = a -< [] >-
-
-  -- alternative name that does not require writing tortoise shell braces
-  opt : ∀ {i : Size} {A : 𝔸} → Option → OC Option i A → OC Option (↑ i) A
-  opt = _❲_❳
-
+  {-|
+  Creates an artifact OC expression with a single child.
+  -}
   singleton : ∀ {i : Size} {A : 𝔸} → atoms A → OC Option i A → OC Option (↑ i) A
   singleton a e = a -< e ∷ [] >-
 
   open import Util.Named
 
+  {-|
+  Creates a constant configuration, fixed to the given boolean value.
+  -}
   all-oc : Bool → Configuration Option
   all-oc b _ = b
 
+  {-|
+  A configuration that includes every option.
+  We also give the configuration a name for reuse in demo applications and tests.
+  -}
   allyes-oc : Named (Configuration Option)
   allyes-oc = all-oc true called "all-yes"
 
+  {-|
+  A configuration that excludes every option.
+  We also give the configuration a name for reuse in demo applications and tests.
+  -}
   allno-oc : Named (Configuration Option)
   allno-oc = all-oc false called "all-no " --space intended for nicer printing lol
 ```
