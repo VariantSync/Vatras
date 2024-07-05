@@ -463,7 +463,7 @@ In fact, some of these postulates are an open issue [#6119](https://github.com/a
 
 ### Limitations
 
-- The library currently only supports abstract syntax for all languages. There are no parsers, so it is not yet possible to read in files or strings of concrete syntax.
+- The library currently only supports abstract syntax for all languages. There are no parsers, so it is not yet possible to read in files or strings of concrete syntax. This is not a claim of the paper though and would just be a nice additional feature.
 
 ## Troubleshooting
 
