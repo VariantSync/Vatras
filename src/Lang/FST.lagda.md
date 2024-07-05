@@ -1,9 +1,9 @@
+This module formalizes feature structure trees.
+We formalize the language, its semantics, and the typing to disallow duplicate neighbors.
+
+```agda
 open import Framework.Definitions
 
-{-
-This module formalizes feature structure trees.
-We formalized the language, its semantics, and the typing to disallow duplicate neighbors.
--}
 module Lang.FST (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
@@ -35,18 +35,30 @@ open import Framework.VariabilityLanguage
 
 open import Util.Function using (cong-app₂)
 open import Util.List using (++-tail)
+```
 
+## Basic Definitions
+
+We configure feature structure trees by choosing which features to include or exclude.
+```
 Conf : ℂ
 Conf = F → Bool
+```
 
+A single feature structure tree is just a rose tree (which is composed into other rose trees).
+```agda
 FST : Size → 𝔼
 FST i = Rose i
 
 fst-leaf = rose-leaf
+```
 
+We now define an equality relation that determines when to FST nodes should be composed:
+Exactly if their atoms are equal.
+We also prove that this relation is an equivalence relation.
+```agda
 {-|
-Equality relation that determines when to FST nodes
-should be composed: Exactly if their atoms are equal.
+Composition equality.
 -}
 infix 15 _≈_
 _≈_ : ∀ {A i} → Rel (FST i A) 0ℓ
@@ -63,7 +75,10 @@ _≈_ : ∀ {A i} → Rel (FST i A) 0ℓ
 
 ≈-trans : ∀ {A i} → {a b c : FST i A} → a ≈ b → b ≈ c → a ≈ c
 ≈-trans {A} {i} {(a -< _ >-)} {(.a -< _ >-)} {(.a -< _ >-)} refl refl = refl
+```
 
+Conversely, we can also state when two FSTs should not be composed.
+```agda
 infix 15 _≉_
 _≉_ : ∀ {A i} → Rel (FST i A) 0ℓ
 a ≉ b = ¬ (a ≈ b)
@@ -71,11 +86,26 @@ a ≉ b = ¬ (a ≈ b)
 ≉-sym : ∀ {A i} → {a b : FST i A} → a ≉ b → b ≉ a
 ≉-sym a≉b b≈a = a≉b (≈-sym b≈a)
 
-≉-ignores-children : ∀ {A i} → {a₁ a₂ b₁ b₂ : FST i A} → a₁ ≈ a₂ → b₁ ≈ b₂ → a₁ ≉ b₁ → a₂ ≉ b₂
+≉-ignores-children : ∀ {A i} → {a₁ a₂ b₁ b₂ : FST i A}
+  → a₁ ≈ a₂
+  → b₁ ≈ b₂
+  → a₁ ≉ b₁
+    -------
+  → a₂ ≉ b₂
 ≉-ignores-children a₁≈a₂ b₁≈b₂ a₁≉b₁ a₂≈b₂ = a₁≉b₁ (≈-trans a₁≈a₂ (≈-trans a₂≈b₂ (≈-sym b₁≈b₂)))
+```
 
--- TODO use standard library
--- Predicates for list containment.
+We now introduce some relations to determine whether there is a composition target
+for a given feature structure tree in a list of other feature structure tree.
+
+```
+{-|
+t ∈ ts
+if
+the list of feature structure trees ts contains at least one
+tree which has the same root as the tree t.
+TODO: Use standard library üredicates for list containment.
+-}
 infix 15 _∈_
 _∈_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∈ xs = Any (x ≈_) xs
@@ -85,7 +115,7 @@ _∉_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
 x ∉ xs = All (x ≉_) xs
 
 {-|
-xs ⊑ ys iff all elements in xs occur (somewhere) in ys
+xs ⊑ ys iff all elements in xs occur (somewhere) in ys.
 -}
 _⊑_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=
 xs ⊑ ys = All (_∈ ys) xs
@@ -93,18 +123,36 @@ xs ⊑ ys = All (_∈ ys) xs
 _⋢_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=n
 xs ⋢ ys = Any (_∉ ys) xs
 
-Disjoint : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=n
+{-|
+Two lists of FSTs are considered disjoint of none of the trees
+in the first list can be composed into an FST in the second list.
+-}
+Disjoint : ∀ {i A} → (xs ys : List (FST i A)) → Set₁
 Disjoint xs ys = All (_∉ ys) xs
+```
 
+## Properties
+
+We now prove some useful properties of the above statements.
+
+```agda
+{-|
+There is only one proof for x ∉ ys.
+-}
 ∉-deterministic : ∀ {A} {x : FST ∞ A} (ys : List (FST ∞ A))
   → (p₁ : x ∉ ys)
   → (p₂ : x ∉ ys)
+    -------------
   → p₁ ≡ p₂
 ∉-deterministic [] [] [] = refl
 ∉-deterministic {_} {x} (y ∷ ys) (x≉y₁ ∷ pa) (x≉y₂ ∷ pb)
   rewrite ∉-deterministic ys pa pb
   = refl
 
+{-|
+We can substitute the list of children in an FST while preserving
+inequality because inequality only cares about the atom.
+-}
 map-≉ : ∀ {i} {A} {b xs} (ys : List (FST i A)) (z : FST (↑ i) A)
   → b -< xs >- ≉ z
   → b -< ys >- ≉ z
@@ -126,6 +174,7 @@ disjoint-[]ʳ (x ∷ xs) = [] ∷ (disjoint-[]ʳ xs)
 disjoint-grow : ∀ {i A} (r : FST i A) (rs ls : List (FST i A))
   → Disjoint ls rs
   → r ∉ ls
+    --------------------
   → Disjoint ls (r ∷ rs)
 disjoint-grow r rs [] _ _ = []
 disjoint-grow r rs (l ∷ ls) (l∉rs ∷ d-ls-rs) (r≉l ∷ r∉ls)
@@ -133,6 +182,7 @@ disjoint-grow r rs (l ∷ ls) (l∉rs ∷ d-ls-rs) (r≉l ∷ r∉ls)
 
 disjoint-shiftʳ : ∀ {i A} (r : FST i A) (rs ls : List (FST i A))
   → Disjoint ls (r ∷ rs)
+    --------------------------
   → Disjoint ls (rs ++ r ∷ [])
 disjoint-shiftʳ r rs [] x = []
 disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
@@ -144,8 +194,12 @@ disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
       → x ∉ (zs ++ y ∷ [])
     step x y [] x≉y _ = x≉y ∷ []
     step x y (z ∷ zs) x≉y (x≉z ∷ x∉zs) = x≉z ∷ step x y zs x≉y x∉zs
+```
 
--- the syntax used in the paper for paths
+## Smart Constructors
+
+```agda
+-- the syntax used in the original paper for paths
 infixr 5 _．_
 _．_ : ∀ {A : 𝔸} → atoms A → (cs : List (FST ∞ A)) → List (FST ∞ A)
 a ． cs = a -< cs >- ∷ []
@@ -153,7 +207,11 @@ a ． cs = a -< cs >- ∷ []
 -- helper function when branching in paths
 branches : ∀ {A} → List (List (FST ∞ A)) → List (FST ∞ A)
 branches = concat
+```
 
+## Composition
+
+```agda
 module Impose (AtomSet : 𝔸) where
   FSTA : Size → Set₁
   FSTA i = FST i AtomSet
@@ -162,11 +220,17 @@ module Impose (AtomSet : 𝔸) where
     A = atoms AtomSet
     _≟_ = proj₂ AtomSet
 
+  {-|
+  Composition equality _≈_ is decidable.
+  -}
   _==_ : ∀ {i} → Decidable (_≈_ {AtomSet} {i})
   (a -< _ >-) == (b -< _ >-) = a ≟ b
 
   mutual
     infixr 5 _⊕_
+    {-|
+    Composition of lists of feature structure trees.
+    -}
     _⊕_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
     l ⊕ r = foldl _⊙_ l r
 
@@ -176,7 +240,7 @@ module Impose (AtomSet : 𝔸) where
     for easier reading.
     For our definition and proofs, we use the foldl formulation (see above)
     and prove that both definitions are equivalent (below).
-    TODO: inconsistent with paper, change the paper
+    TODO: slightly inconsistent with paper, adapt the paper for conditional-accept revision
     -}
     _⊕'_ : ∀ {i} → List (FSTA i) → List (FSTA i) → List (FSTA i)
     l ⊕' [] = l
@@ -194,7 +258,11 @@ module Impose (AtomSet : 𝔸) where
         xs ⊕' (y ∷ ys)
       ∎
 
-    -- TODO: inconsistent with paper, change the paper
+
+    {-|
+    Composition of an FST into a list of FSTs.
+    TODO: slightly inconsistent with paper, adapt the paper for conditional-accept revision
+    -}
     infixl 5 _⊙_
     _⊙_ : ∀ {i} → List (FSTA i) → FSTA i → List (FSTA i)
     [] ⊙ r = r ∷ []
@@ -202,6 +270,11 @@ module Impose (AtomSet : 𝔸) where
     ... | no _ = h ∷ (t ⊙ r)
     (a -< ca >- ∷ t) ⊙ .a -< cb >- | yes refl = a -< ca ⊕ cb >- ∷ t
 
+  {-|
+  A list of FSTs is considered unique if the FSTs are pairwise different regarding composition equality.
+  This basically encodes the restriction that FSTs cannot have neighbors with equal atoms.
+  To ensure this property recursively, we introduce two further definitions below.
+  -}
   Unique : ∀ {i} → List (FSTA i) → Set₁
   Unique = AllPairs _≉_
 
@@ -214,23 +287,31 @@ module Impose (AtomSet : 𝔸) where
 
     {-|
     A list of FSTs is well-formed if
-    - there are no duplicate atoms among the FSTs in the list,
-    - and all FSTs are well-formed
+    - there are no duplicate atoms at the roots of the FSTs in the list,
+    - and all FSTs are well-formed.
     -}
     AllWellFormed : ∀ {i} → List (FSTA i) → Set₁
     AllWellFormed cs = Unique cs × All WellFormed cs
 
   mutual
+    {-|
+    Composition _⊕_ preserves well-formedness.
+    -}
     ⊕-wf : ∀ {i} {ls rs : List (FSTA i)}
       → AllWellFormed ls
       → AllWellFormed rs
+        -----------------------
       → AllWellFormed (ls ⊕ rs)
     ⊕-wf ls-wf ([] , []) = ls-wf
     ⊕-wf ls-wf (_ ∷ u-rs , du-r ∷ du-rs) = ⊕-wf (⊙-wf ls-wf du-r) (u-rs , du-rs)
 
+    {-|
+    Composition _⊙_ preserves well-formedness.
+    -}
     ⊙-wf : ∀ {i} {l : List (FSTA i)} {r : FSTA i}
       → AllWellFormed l
       → WellFormed r
+        ---------------------
       → AllWellFormed (l ⊙ r)
     ⊙-wf ([] , []) du-r = [] ∷ [] , du-r ∷ []
     ⊙-wf {_} {h ∷ _} {r} (_ ∷ _ , _ ∷ _) _ with r == h
@@ -251,15 +332,23 @@ module Impose (AtomSet : 𝔸) where
         ind {_} {a} {_} {ca} {cb} {( t -< ct >-) ∷ ts} a≢b (b≢t ∷ b∉ts) | no   a≢t = b≢t ∷ (ind a≢b b∉ts)
 
   mutual
+    {-|
+    There is only one proof of WellFormed x.
+    -}
     WellFormed-deterministic : ∀ {x : FSTA ∞}
       → (a : WellFormed x)
       → (b : WellFormed x)
+        ------------------
       → a ≡ b
     WellFormed-deterministic {_ -< cs >- } a b = AllWellFormed-deterministic cs a b
 
+    {-|
+    There is only one proof of AllWellFormed xs.
+    -}
     AllWellFormed-deterministic : ∀ (xs : List (FSTA ∞))
       → (ua : AllWellFormed xs)
       → (ub : AllWellFormed xs)
+        -----------------------
       → ua ≡ ub
     AllWellFormed-deterministic [] ([] , []) ([] , []) = refl
     AllWellFormed-deterministic (x ∷ xs) (a-x∉xs ∷ a-u-xs , a-ur-x ∷ a-ur-xs) (b-x∉xs ∷ b-u-xs , b-ur-x ∷ b-ur-xs)
@@ -271,17 +360,27 @@ module Impose (AtomSet : 𝔸) where
       rewrite ∉-deterministic xs a-x∉xs b-x∉xs
       = refl
 
+  {-|
+  If an FST l with no composition target in rs is composed into rs,
+  the l will just be appended at the end of the list.
+  -}
   ⊙-stranger : ∀ {i} (l : FSTA i) (rs : List (FSTA i))
     → l ∉ rs
+      ----------------
     → rs ⊙ l ≡ rs ∷ʳ l
   ⊙-stranger l [] _ = refl
   ⊙-stranger l (r ∷ rs) (l≢r ∷ l∉rs) with l == r -- TODO: Is there an easier way to tell Agda that we already know l ≢ r?
   ... | yes l≡r = ⊥-elim (l≢r l≡r)
   ... | no  _   = Eq.cong (r ∷_) (⊙-stranger l rs l∉rs)
 
+  {-|
+  Composing disjoint lists of feature structure trees will just append on to the other,
+  assuming that the right list is unique to avoid self-composition.
+  -}
   ⊕-strangers : ∀ {i} (ls rs : List (FSTA i))
     → Unique rs
     → Disjoint rs ls
+      ------------------
     → ls ⊕ rs ≡ ls ++ rs
   ⊕-strangers ls [] _ _ rewrite ++-identityʳ ls = refl
   ⊕-strangers ls (r ∷ rs) (r∉rs ∷ u-rs) (r∉ls ∷ d-ls-rs)
@@ -295,6 +394,7 @@ module Impose (AtomSet : 𝔸) where
   ⊕-idˡ :
     ∀ {i} (rs : List (FSTA i))
     → Unique rs
+      -------------
     → [] ⊕ rs ≡ rs
   ⊕-idˡ rs u-rs = ⊕-strangers [] rs u-rs (disjoint-[]ʳ rs)
 
@@ -343,6 +443,11 @@ module Impose (AtomSet : 𝔸) where
       features : List Feature
   open SPL public
 
+  {-|
+  Given a configuration and a list of features,
+  obtain all feature structure forests selected by
+  the configuration.
+  -}
   select : Conf → List Feature → List FSF
   select _ [] = []
   select c (f ∷ fs) =
@@ -352,9 +457,13 @@ module Impose (AtomSet : 𝔸) where
 
   names : SPL → List F
   names spl = (map name) (features spl)
+```
 
-  ---- Algebra ----
+## Feature Structure Trees are a Feature Algeba
 
+We now prove that feature structure trees form a feature algebra.
+
+```agda
   𝟘 : FSF
   𝟘 = [] ⊚ ([] , [])
 
@@ -385,20 +494,24 @@ module Impose (AtomSet : 𝔸) where
   r-id : RightIdentity _≡_ 𝟘 _⊛_
   r-id (xs ⊚ (u-xs , ur-xs)) = refl
 
-  -- A predicate stating that a `P` is only true once in a list.
-  -- In contrast to `Any`, `Once` requires a proof that `P` is false for all
-  -- other elements in the list.
+  {-|
+  A predicate stating that a `P` is only true once in a list.
+  In contrast to `Any`, `Once` requires a proof that `P` is false for all
+  other elements in the list.
+  -}
   data Once {A : Set₁} (P : A → Set) : List A → Set₁ where
     here  : {x : A} → {xs : List A} →    P x →  All (¬_ ∘ P) xs → Once P (x ∷ xs)
     there : {x : A} → {xs : List A} → ¬ (P x) → Once      P  xs → Once P (x ∷ xs)
 
-  -- Decides wether the list `xs` contains the element `y`.
-  -- Containment is checked using `==`
-  -- (i.e., only the root artifact is checked, all children are ignored).
-  --
-  -- The returned predicate, in case that `y` is found in `xs`, is stronger than just containment (i.e., `Any (y ≈_)`).
-  -- This stronger proposition is required for some proofs and
-  -- is supported by the uniqueness constraint
+  {-|
+  Decides wether the list `xs` contains the element `y`.
+  Containment is checked using `==`
+  (i.e., only the root artifact is checked, all children are ignored).
+
+  The returned predicate, in case that `y` is found in `xs`, is stronger than just containment (i.e., `Any (y ≈_)`).
+  This stronger proposition is required for some proofs and
+  is supported by the uniqueness constraint
+  -}
   contains? : ∀ {i : Size} (xs : List (FSTA i)) (y : FSTA i)
     → Unique xs
     → y ∉ xs ⊎ Once (y ≈_) xs
@@ -700,6 +813,9 @@ module Impose (AtomSet : 𝔸) where
   idem : ∀ (x y : FSF) → x ⊛ y ⊛ x ≡ x ⊛ y
   idem (x ⊚ x-wf) (y ⊚ y-wf) = cong-app₂ _⊚_ (⊕-idem x y x-wf y-wf) AllWellFormed-deterministic
 
+  {-|
+  Finally, we conclude that feature structure forests form a feature algreba.
+  -}
   FST-is-FeatureAlgebra : FeatureAlgebra FSF _⊛_ 𝟘
   FST-is-FeatureAlgebra = record
     { monoid = record
@@ -716,7 +832,11 @@ module Impose (AtomSet : 𝔸) where
     }
     where
       open import Data.Product using (_,_)
+```
 
+## Semantics
+
+```agda
   {-|
   Semantics of FST product lines.
   Given a configuration c, select all FSFs whose feature is selected by c.
@@ -725,7 +845,11 @@ module Impose (AtomSet : 𝔸) where
   -}
   ⟦_⟧ : SPL → Conf → Rose ∞ AtomSet
   ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊛-all (select c features)) >-
+```
 
+## Show
+
+```agda
   open import Data.String using (String; _<+>_)
   open import Show.Lines hiding (map)
 
@@ -743,17 +867,27 @@ module Impose (AtomSet : 𝔸) where
       show-Feature feature = do
         > show-F (name feature) <+> "∷"
         indent 2 (show-FSF (forget-uniqueness (impl feature)))
+```
 
+## Feature Structure Trees are a Variability Language
+
+```agda
 FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf Impose.SPL
 FSTL-Sem {A} = Impose.⟦_⟧ A
 
 FSTL : VariabilityLanguage (Rose ∞)
 FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
+```
 
-{-|
-Proof that FST SPLs are an incomplete variability language, when
+## Feature Structure Trees are Incomplete
+
+We prove that FST SPLs are an incomplete variability language, when
 assuming rose trees as variant type.
--}
+The proof works similarly as for option calculus.
+The idea is that feature structure trees cannot encode variant maps
+with exactly two disjunct variants.
+
+```agda
 module IncompleteOnRose where
   open import Data.Fin using (zero; suc)
   open import Data.Nat as ℕ using (ℕ; zero; suc)
@@ -764,7 +898,7 @@ module IncompleteOnRose where
   variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
 
   variants-0-and-1 : VMap (Rose ∞) (ℕ , ℕ._≟_) 1
-  variants-0-and-1 zero = variant-0
+  variants-0-and-1 zero       = variant-0
   variants-0-and-1 (suc zero) = variant-1
 
   does-not-describe-variants-0-and-1 :
@@ -778,14 +912,18 @@ module IncompleteOnRose where
   FST-is-incomplete : Incomplete (Rose ∞) FSTL
   FST-is-incomplete complete with complete variants-0-and-1
   FST-is-incomplete complete | e , e⊆vs , vs⊆e = does-not-describe-variants-0-and-1 e (e⊆vs zero) (e⊆vs (suc zero))
+```
 
-{-|
-Theorem which states that FST SPLs can never
+## Neighbor Problem
+
+We finally formalize the neighbor problem.
+This theorem states that FST SPLs can never
 describe a variant in which two neighboring nodes have the same atom.
 This theorem is a specialized form in which this variant is fixed to
   a -< b, b >-
 for two any two atoms a, b.
--}
+
+```agda
 cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] FSTL-Sem e c ≡ a -< rose-leaf b ∷ rose-leaf b ∷ [] >-)
 cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
   ¬Unique b (Eq.subst (λ l → Unique l) (children-equality ⟦e⟧c≡neighbors) (lemma (⊛-all (select conf (features e)))))
@@ -797,3 +935,4 @@ cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
 
   ¬Unique : ∀ (a : atoms A) → ¬ Unique (a -< [] >- ∷ a -< [] >- ∷ [])
   ¬Unique a ((a≢a ∷ []) ∷ [] ∷ []) = a≢a refl
+```
