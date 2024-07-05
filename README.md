@@ -1,4 +1,4 @@
-﻿# Vatras -- On the Expressive Power of Languages for Static Variability
+﻿# Vatras - On the Expressive Power of Languages for Static Variability
 
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 
