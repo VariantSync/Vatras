@@ -1,6 +1,7 @@
 ﻿# Vatras - On the Expressive Power of Languages for Static Variability
 
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
+[![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
 
 > Note to the OOPSLA Artifact Reviewers:
 > This file is intended to be both the artifact's README file, as well as the "artifact documentation" for submission.
