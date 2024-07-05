@@ -184,7 +184,11 @@ VariantList-is-Complete vs =
 
 ### Soundness
 
-By proving that `vl-conf` is the inverse of `vl-fnoc`, we can reuse our encoding above to prove soundness as well:
+We can use a trick to prove soundness by reusing the above definitions for completeness.
+The trick is that `⟦ e ⟧ ∘ vl-conf` denotes a variant map because it takes a `Fin (suc n)` as input and produces a variant.
+We are then left to prove that this variant map exactly denotes the expression in e which is almost true by definition.
+It just requires playing with the configuration translation functions a bit, and to prove
+that `vl-conf` is the (semantic) inverse of `vl-fnoc`.
 
 ```agda
 -- vl-conf is inverse to vl-fnoc w.r.t. semantic equivalence of configurations.
