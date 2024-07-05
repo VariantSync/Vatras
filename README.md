@@ -60,8 +60,8 @@ The library and its demo were tested on standard laptops.
 
 ## Kick-the-Tires
 
-This section gives you a short "Getting Started" guide. 
-For full setup instructions, including detailed instructions on setting up dependencies, see the next section. 
+This section gives you a short "Getting Started" guide.
+For detailed instructions on setting up dependencies, see the next section.
 We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and we also tested the Docker setup on Windows 11 and macOS Ventura 13.0.1 (22A400) on an Apple M1 Pro.
 
 
@@ -76,25 +76,39 @@ git clone --recursive https://github.com/pmbittner/AgdaCCnOC.git
 
 There are **three alternative ways** to compile the library and run its small demo.
 **Either use Nix, Docker, or install Agda manually.**
-We **recommend Nix** because it creates a sandbox environment with all dependencies satisfied while not affecting your system setup (as does Docker), as well as giving you the opportunity to adapt and reuse the library in your own Agda projects (Docker requires to rebuild an image after every change).
-If you just want to run the demo or if you are on **Windows** and don't want to install WSL2, we recommend Docker.
+In general, we **recommend Nix** because it creates a sandbox environment with all dependencies satisfied while not affecting your system setup (as does Docker), as well as giving you the opportunity to adapt and reuse the library in your own Agda projects (Docker requires to rebuild an image after every change).
 
-There are no other software requirements apart from having either Nix, Docker, or Agda installed.
+- For **Windows** users, we recommend Docker. If you are familiar with Windows Subsystem for Linux (WSL2), you may safely use the other alternatives in WSL2, too. To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). 
+- For **Mac** users, we recommend Nix or Docker. (We experienced problems with installing Agda manually.)
+- For **Linux** users, any alternative is fine but we recommend Nix for the reasons mentioned above.
+
+There are no other software requirements apart from having either Nix, Docker, or Agda installed, depending on which alternative you choose..
 The only dependency of our library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory and is taken care of automatically by our [makefile](makefile).
 
 Note that building for the first time (or running `nix-shell`) will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min and a lot of terminal output).
 
 #### Alternative 1: Setup via Nix
 
-The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). To install WSL2, follow the [official instructions](https://learn.microsoft.com/de-de/windows/wsl/install). In the end, you should be able to open a Linux terminal where you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
+The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). When you open a WSL2 terminal terminal, you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
 
-When you have Nix installed on your system, you can get access to all necessary development utilities by opening a terminal, navigating to this directory, and then simply opening a Nix shell by typing
+When you have Nix installed on your system, open a terminal, navigate to this directory, and then simply open a Nix shell by typing
 ```shell
 nix-shell
 ```
+Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
+To compile the library and run the demo, simply run make:
+```shell
+make
+```
+The expected output is explained in detail in the Step-by-Step guide below.
+
 Alternatively, the demo can be compiled locally to [./result/bin](./result/bin):
 ```shell
 nix-build
+```
+and then run via:
+```shell
+./result/bin/Vatras
 ```
 
 #### Alternative 2: Setup via Docker
@@ -118,6 +132,10 @@ docker images
 ```
 and checking that an image called `vatras` is listed.
 
+You can then run the demo by running the Docker image:
+```shell
+docker run -t vatras
+```
 
 #### Alternative 3: Manual Setup
 
@@ -153,36 +171,16 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
    Agda version 2.6.4.3
    ```
    
-In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup.
-
-### Compiling the Library and Running the Demo
-> The following three alternatives depend on the setup you have chosen above. Please make sure to use the instructions meant for your setup. 
-
-#### Running the demo in a `nix-shell` or after a `manual setup`. 
-If you set up the environment using `nix-shell` or `manually`, you can compile and run the demo using `make`. 
+In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup, or check the troubleshooting instructions at the bottom of this file.
 
 To test whether your setup is correct, and to run the demo you may use our makefile.
 Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
-If you are using Nix, make sure to be in the `nix-shell` as described above.
 Then run
 ```shell
 make
 ```
 which will compile the library and run its small demo.
-The demo will then print a range of translations of variational expressions to the terminal.
 The expected output is explained in detail in the Step-by-Step guide below.
-
-#### Running the demo after `nix-build`
-If you already built the library locally with `nix-build`, you should run the demo's binary directly instead of using `make`.
-```shell
-./result/bin/Vatras
-```
-
-#### Running the demo with Docker
-You can run the demo by running the Docker image that you created during the setup:
-```shell
-docker run -t vatras
-```
 
 ## Step-by-Step Guide
 
