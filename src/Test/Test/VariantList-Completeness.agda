@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module Test.Test.VariantList-Completeness where
 
 open import Level using (Level; 0ℓ; Lift; lift) renaming (suc to lsuc)

@@ -1,11 +1,5 @@
 # Relating Option Calculus to Binary Choice Calculus
 
-## Options
-
-```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
 ## Module
 
 ```agda

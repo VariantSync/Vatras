@@ -1,11 +1,5 @@
 # Fixed Arity Choice Calculus
 
-## Options
-
-```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
 ## Module
 
 It's required that arity is at least one to have a semantic. However, we require

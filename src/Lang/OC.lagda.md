@@ -1,11 +1,5 @@
 # Option Calculus in Agda
 
-## Options
-
-```agda
-{-# OPTIONS --allow-unsolved-metas #-}
-```
-
 ## Module
 
 ```agda
