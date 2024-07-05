@@ -1,3 +1,8 @@
+{-|
+This module proves that option calculus cannot encode alternatives,
+at the example of natural numbers as the atom set.
+The proof is restricted to variants with alternatives at their root.
+-}
 module Lang.OC.Alternative where
 
 open import Data.List using (List; []; _∷_)

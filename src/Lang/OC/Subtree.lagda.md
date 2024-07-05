@@ -1,3 +1,7 @@
+# Subtrees in Variants and Option Calculus
+
+This module introduces reasoning on subtrees of variants and in option calculus.
+
 ```agda
 module Lang.OC.Subtree where
 
