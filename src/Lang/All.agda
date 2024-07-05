@@ -1,8 +1,9 @@
+{-|
+This module reexports all our language definitions as new modules.
+If you intend to work with more than one language in a file
+we recommend using this module to easily import the languages you need.
+-}
 module Lang.All where
-
-open import Size using (∞)
-open import Framework.Definitions using (𝔽; 𝔸)
-open import Framework.Variants using (Rose)
 
 import Lang.VariantList
 import Lang.CCC
@@ -23,6 +24,9 @@ module OC          = Lang.OC
 module Gruler      = Lang.Gruler
 
 module FST where
+  open import Size using (∞)
+  open import Framework.Definitions using (𝔽; 𝔸)
+  open import Framework.Variants using (Rose)
   open import Lang.FST hiding (FST; FSTL-Sem; Conf) public
 
   Configuration = Lang.FST.Conf
