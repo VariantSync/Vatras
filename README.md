@@ -288,7 +288,7 @@ Then add your new list to the `examples` list at the bottom of the file.
 
 ### Using our library in your own Agda projects
 
-#### Alternative 1: Installion via Nix
+#### Alternative 1: Installation via Nix
 
 When using Nix, you can use this repository as a library in you own project, by using `agda.withPackages`:
 ```nix
@@ -299,11 +299,11 @@ agda = nixpkgs.agda.withPackages [
   })
 ];
 ```
-Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this respository to minimize version conflicts.
+Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) created using [niv](https://github.com/nmattia/niv) provided in this repository to minimize version conflicts.
 
 #### Alternative 2: Manual installation
 
-After downloading this library, you can register it by appending the path of (Vatras.agda-lib)[Vatras.agda-lib] to the file `$AGDA_DIR/libraries`, creating it if necessary.
+After downloading this library, you can register it by appending the path of [Vatras.agda-lib](Vatras.agda-lib) to the file `$AGDA_DIR/libraries`, creating it if necessary.
 If the environment variable `AGDA_DIR` is unset, it defaults to `~/.agda` on unix-like systems and `C:\Users\USERNAME\AppData\Roaming\agda` or similar on Windows.
 After registering this library on your system, you can use it in your project by stating `Vatras` as a dependency in your Agda library file.
 An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
@@ -315,7 +315,7 @@ depend: Vatras
 include: SOME/PATH/IN/YOUR/PROJECT
 ```
 
-For details about Agda's library management, look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html).
+For details about Agda's library management, please have a look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html).
 
 ### Notes on Mechanized Proofs
 
@@ -453,7 +453,7 @@ In particular, we use sized types only in a very basic, inductive way and:
 
 For a non-crucial part of our framework, we included four postulates, which assume that two primitive operations from the standard library are invertible:
 
-- converting `String`s to lists of characters and vice versa
+- converting `String`s to lists of characters and vice versa,
 - converting characters to natural numbers and vice versa.
 
 These postulates can be found in [src/Util/String.agda](src/Util/String.agda).
@@ -544,7 +544,7 @@ make: *** [makefile:15: build] Error 42
 This error indicates that the `agda-stdlib` git submodule has not been set up correctly. 
 Executing `git submodule update --init` in the root of the repository should fix the problem. 
 
-## Where does the library name 'Vatras' name come from?
+## Where does the library name 'Vatras' come from?
 
 The name Vatras is (of course) an acronym, which stands for _VAriability language TRAnslationS_.
 Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who is praying to the god Adanos, who brings "some kind of equality" very loosely speaking.
