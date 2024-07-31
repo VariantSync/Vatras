@@ -263,7 +263,7 @@ The tutorials might also serve as copy-and-paste-templates for new definitions.
 
 1. [The New Language Tutorial](src/Tutorial/A_NewLanguage.lagda.md) explains how to define a new variability language, including syntax, semantics, and configuration.
 2. [The Translation Tutorial](src/Tutorial/B_Translation.lagda.md) explains how to compile/translate your language to another existing language and proving correctness.
-3. [The Proofs Tutorial](src/Tutorial/C_Proofs.lagda.md) explains how to proof completeness, soundness, and expressiveness, and how you can use your compiler to do so.
+3. [The Proofs Tutorial](src/Tutorial/C_Proofs.lagda.md) explains how to prove completeness, soundness, and expressiveness, and how you can use your compiler to do so.
 
 We recommend following the tutorials in order.
 
@@ -407,7 +407,7 @@ This generalization allows us to also formalize variability languages that
 
 > Note to the OOPSLA Artifact Reviewers:
 > During formalization, we noticed that the proof of VariantList ≽ FST is easier than Sound(FST) and 2CC ≽ FST.
-> Hence, we proof VariantList ≽ FST, conclude 2CC ≽ FST using transitivity and follow Sound(FST) from 2CC ≽ FST.
+> Hence, we prove VariantList ≽ FST, conclude 2CC ≽ FST using transitivity and follow Sound(FST) from 2CC ≽ FST.
 > We intend to adapt the proof in the paper to the formalized proof.
 
 #### Frameworks and Dependencies
