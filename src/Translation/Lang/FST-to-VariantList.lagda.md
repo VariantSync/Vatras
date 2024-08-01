@@ -43,7 +43,7 @@ module VL = VariantList (Rose ∞)
 open VL using (VariantList; VariantListL)
 ```
 
-Modified a configuration for one specific feature name.
+Modifies a configuration for one specific feature name.
 ```agda
 config-with : Bool → F → FST.Configuration F → FST.Configuration F
 config-with value f c f' with f ==ꟳ f'
