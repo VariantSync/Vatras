@@ -278,6 +278,39 @@ Our new relations can be converted back to the old ones by just forgetting the e
 ≅[]→≅ (A⊆[f]B , B⊆[f⁻¹]A) = ⊆[]→⊆ A⊆[f]B , ⊆[]→⊆ B⊆[f⁻¹]A
 ```
 
+
+As Agda implements constructive logic, the converse is also possible.
+```agda
+∈-index : ∀ {I : Set iℓ} {A : IndexedSet I} {a : Carrier}
+  → a ∈ A
+  → I
+∈-index (i , eq) = i
+
+∈→∈[] : ∀ {I : Set iℓ} {A : IndexedSet I} {a : Carrier}
+  → (p : a ∈ A)
+    ----------
+  → a ≈ A (∈-index p)
+∈→∈[] (i , eq) = eq
+
+⊆-index : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J}
+  → A ⊆ B
+  → I → J
+⊆-index A⊆B i = ∈-index (A⊆B i)
+
+⊆→⊆[] : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J}
+  → (subset : A ⊆ B)
+    -----------
+  → A ⊆[ ⊆-index subset ] B
+⊆→⊆[] A⊆B i = proj₂ (A⊆B i)
+
+≅→≅[] : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J}
+  → (eq : A ≅ B)
+    -----------------
+  → A ≅[ ⊆-index (proj₁ eq) ][ ⊆-index (proj₂ eq) ] B
+≅→≅[] (A⊆B , B⊆A) = (⊆→⊆[] A⊆B) , (⊆→⊆[] B⊆A)
+```
+
+
 If two indexed sets are pointwise equal, they are equivelent in terms of the identify function because
 indices do not have to be translated.
 

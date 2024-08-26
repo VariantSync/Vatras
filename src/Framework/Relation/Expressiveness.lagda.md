@@ -179,30 +179,14 @@ compiler-from-expressiveness : ∀ {L M : VariabilityLanguage V}
   → LanguageCompiler L M
 compiler-from-expressiveness {L} {M} exp = record
   { compile         = proj₁ ∘ exp
-  ; config-compiler = λ e → record { to = conf e ; from = fnoc e }
-  ; preserves       = λ e → ⊆-conf e , ⊆-fnoc e
+  ; config-compiler = λ e → record
+    { to   = ⊆-index (proj₁ (proj₂ (exp e)))
+    ; from = ⊆-index (proj₂ (proj₂ (exp e)))
+    }
+  ; preserves       = ≅→≅[] ∘ proj₂ ∘ exp
   }
   where
-    ⟦_⟧₁ = Semantics L
-    ⟦_⟧₂ = Semantics M
     open import Data.EqIndexedSet
-
-    conf : ∀ {A} → Expression L A → Config L → Config M
-    conf e c₁ = proj₁ (proj₁ (proj₂ (exp e)) c₁)
-
-    fnoc : ∀ {A} → Expression L A → Config M → Config L
-    fnoc e c₂ = proj₁ (proj₂ (proj₂ (exp e)) c₂)
-
-    eq : ∀ {A} → (e : Expression L A) → ⟦ e ⟧₁ ≅ ⟦ proj₁ (exp e) ⟧₂
-    eq e = proj₂ (exp e)
-
-    ⊆-conf : ∀ {A} → (e : Expression L A) → ⟦ e ⟧₁ ⊆[ conf e ] ⟦ proj₁ (exp e) ⟧₂
-    ⊆-conf e with eq e
-    ... | ⊆ , _ = proj₂ ∘ ⊆
-
-    ⊆-fnoc : ∀ {A} → (e : Expression L A) → ⟦ proj₁ (exp e) ⟧₂ ⊆[ fnoc e ] ⟦ e ⟧₁
-    ⊆-fnoc e with eq e
-    ... | _ , ⊇ = proj₂ ∘ ⊇
 
 {-|
 When M is not at least as expressive as L,
