@@ -13,7 +13,7 @@ module Framework.Properties.Soundness (V : 𝕍) where
 open import Data.Product using (∃-syntax; Σ-syntax)
 open import Relation.Nullary.Negation  using (¬_)
 open import Framework.VariabilityLanguage
-open import Framework.VariantMap V
+open import Framework.VariantGenerator V
 open import Data.EqIndexedSet
 ```
 
@@ -26,7 +26,7 @@ Sound : VariabilityLanguage V → Set₁
 Sound ⟪ E , _ , ⟦_⟧ ⟫ =
   ∀ {A} (e : E A)
     ----------------------------------
-  → ∃[ n ] Σ[ m ∈ VMap A n ] m ≅ ⟦ e ⟧
+  → ∃[ n ] Σ[ m ∈ VariantGenerator A n ] m ≅ ⟦ e ⟧
 ```
 
 We define unsoundness as the negation of soundness.

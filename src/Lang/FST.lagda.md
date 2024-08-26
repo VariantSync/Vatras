@@ -891,13 +891,13 @@ with exactly two disjunct variants.
 module IncompleteOnRose where
   open import Data.Fin using (zero; suc)
   open import Data.Nat as ℕ using (ℕ; zero; suc)
-  open import Framework.VariantMap using (VMap)
+  open import Framework.VariantGenerator using (VariantGenerator)
   open import Framework.Properties.Completeness using (Incomplete)
 
   variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
   variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
 
-  variants-0-and-1 : VMap (Rose ∞) (ℕ , ℕ._≟_) 1
+  variants-0-and-1 : VariantGenerator (Rose ∞) (ℕ , ℕ._≟_) 1
   variants-0-and-1 zero       = variant-0
   variants-0-and-1 (suc zero) = variant-1
 
