@@ -72,7 +72,7 @@ We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and w
 Clone the library and its submodules to a directory of your choice:
 > Note to the OOPSLA Artifact Reviewers: You must skip this step. This step is here for future users once the repository is published on Github. Instead, you should download the zip file we submitted.
 ```shell 
-git clone --recursive https://github.com/pmbittner/AgdaCCnOC.git 
+git clone --recursive https://github.com/pmbittner/Vatras.git
 ```
 
 There are **three alternative ways** to compile the library and run its small demo.
