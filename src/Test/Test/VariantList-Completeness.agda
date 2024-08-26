@@ -16,12 +16,12 @@ open import Framework.Variants using (Rose)
 Variant = Rose ∞
 open import Lang.All
 open VariantList Variant using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
-open import Framework.VariantMap Variant using (VMap)
+open import Framework.VariantGenerator Variant using (VariantGenerator)
 
-test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VMap A n)
+test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VariantGenerator A n)
 test-encode-conf i vs = ⟦ encode vs ⟧ (vl-conf i) ≡ vs i
 
-test-encode-fnoc : ∀ {A n} → Configuration → UnitTest (VMap A n)
+test-encode-fnoc : ∀ {A n} → Configuration → UnitTest (VariantGenerator A n)
 test-encode-fnoc c vs = ⟦ encode vs ⟧ c ≡ vs (vl-fnoc c)
 
 -- -- is there a better way to write these shortcuts?

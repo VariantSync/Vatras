@@ -1,5 +1,5 @@
 open import Framework.Definitions using (𝕍; 𝔸)
-module Framework.VariantMap (V : 𝕍) (A : 𝔸) where
+module Framework.VariantGenerator (V : 𝕍) (A : 𝔸) where
 
 open import Data.Fin using (Fin)
 open import Data.List using (List)
@@ -18,8 +18,8 @@ are finite (Fin) and non-empty (suc n) indexed sets.
 Using (suc n) here is a shortcut to ensure that the index set has at
 least one element and hence is not empty.
 -}
-VMap : ℕ → Set₁
-VMap n = IndexedSet (Fin (suc n))
+VariantGenerator : ℕ → Set₁
+VariantGenerator n = IndexedSet (Fin (suc n))
 
 {-|
 This function removes the first variant from a variant map.
@@ -27,7 +27,7 @@ Given that we use natural numbers as an index set for variant maps,
 variant maps have an implicit total order.
 Hence, we can distinguish the first element.
 -}
-remove-first : ∀ {n} → VMap (suc n) → VMap n
+remove-first : ∀ {n} → VariantGenerator (suc n) → VariantGenerator n
 remove-first set i = set (Data.Fin.suc i)
 
 {-|
@@ -36,6 +36,6 @@ Given that we use natural numbers as an index set for variant maps,
 variant maps have an implicit total order.
 Hence, we can distinguish the last element.
 -}
-remove-last : ∀ {n} → VMap (suc n) → VMap n
+remove-last : ∀ {n} → VariantGenerator (suc n) → VariantGenerator n
 remove-last set i = set (Data.Fin.inject₁ i)
 

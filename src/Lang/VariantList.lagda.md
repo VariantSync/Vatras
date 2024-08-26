@@ -87,7 +87,7 @@ To prove completeness, we have to show that lists of variants can express any va
 open import Util.Nat.AtLeast using (cappedFin)
 
 private
-  open import Framework.VariantMap V
+  open import Framework.VariantGenerator V
   variable
     n : ℕ
     A : 𝔸
@@ -95,9 +95,9 @@ private
 
 -- rules for translating a variant map to a list of variants
 infix 3 _⊢_⟶_
-data _⊢_⟶_ : ∀ (n : ℕ) → VMap A n → VariantList A → Set₁ where
+data _⊢_⟶_ : ∀ (n : ℕ) → VariantGenerator A n → VariantList A → Set₁ where
   -- a singleton set is translated to a singleton list
-  E-zero : ∀ {A} {V : VMap A zero}
+  E-zero : ∀ {A} {V : VariantGenerator A zero}
       ------------------------
     → zero ⊢ V ⟶ V zero ∷ []
 
@@ -107,13 +107,13 @@ data _⊢_⟶_ : ∀ (n : ℕ) → VMap A n → VariantList A → Set₁ where
   - remove that first variant from our set of variants
   - translate the rest recursively.
   -}
-  E-suc : ∀ {V : VMap A (suc n)}
+  E-suc : ∀ {V : VariantGenerator A (suc n)}
     → n ⊢ remove-first A V ⟶ e
       -------------------------------
     → suc n ⊢ V ⟶ V zero ∷ toList e
 
 {-| Proof that the encoding is deterministic -}
-determinism : ∀ {e₁ e₂ : VariantList A} {V : VMap A n}
+determinism : ∀ {e₁ e₂ : VariantList A} {V : VariantGenerator A n}
   → n ⊢ V ⟶ e₁
   → n ⊢ V ⟶ e₂
     -----------------
@@ -123,7 +123,7 @@ determinism (E-suc l) (E-suc r) rewrite determinism l r = refl
 
 -- smart constructor for totality proofs
 -- makes the implicit result expression e explicit
-return : ∀ {V : VMap A n}
+return : ∀ {V : VariantGenerator A n}
   →         n ⊢ V ⟶ e
     --------------------
   → ∃[ e ] (n ⊢ V ⟶ e)
@@ -131,14 +131,14 @@ return {e = e} ⟶e = e , ⟶e
 
 {-| Proof that the encoding is total and thus can be computed. -}
 total :
-  ∀ (V : VMap A n)
+  ∀ (V : VariantGenerator A n)
     --------------------
   → ∃[ e ] (n ⊢ V ⟶ e)
 total {n = zero}  vs = return E-zero
 total {n = suc n} vs = return (E-suc (proj₂ (total (remove-first _ vs))))
 
 {-| Encodes a set of variants into a list of variants. -}
-encode : VMap A n → VariantList A
+encode : VariantGenerator A n → VariantList A
 encode = proj₁ ∘ total
 
 -- translate configs

@@ -148,13 +148,13 @@ In particular, any set of variants that includes two entirely distinct variants 
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
   module IncompleteOnRose where
-    open import Framework.VariantMap (Rose ∞) (ℕ , ℕ._≟_)
+    open import Framework.VariantGenerator (Rose ∞) (ℕ , ℕ._≟_)
     open import Framework.Properties.Completeness (Rose ∞) using (Incomplete)
 
     variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
     variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
 
-    variants-0-and-1 : VMap 1
+    variants-0-and-1 : VariantGenerator 1
     variants-0-and-1 zero = variant-0
     variants-0-and-1 (suc zero) = variant-1
 ```

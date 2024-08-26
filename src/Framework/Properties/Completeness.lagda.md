@@ -13,7 +13,7 @@ module Framework.Properties.Completeness (V : 𝕍) where
 open import Data.Product using (Σ-syntax)
 open import Relation.Nullary.Negation using (¬_)
 open import Framework.VariabilityLanguage
-open import Framework.VariantMap V
+open import Framework.VariantGenerator V
 open import Data.EqIndexedSet
 ```
 
@@ -25,7 +25,7 @@ In particular, for every variant `v` in `m`, there exists a configuration `c` th
 ```agda
 Complete : VariabilityLanguage V → Set₁
 Complete ⟪ E , _ , ⟦_⟧ ⟫ =
-  ∀ {A} {n} (m : VMap A n)
+  ∀ {A} {n} (m : VariantGenerator A n)
     ----------------------
   → Σ[ e ∈ E A ] m ≅ ⟦ e ⟧
 ```
