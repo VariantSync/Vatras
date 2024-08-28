@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Vatras.Framework.Definitions
 module Vatras.Test.Experiments.FST-Experiments where
 
