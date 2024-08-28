@@ -15,61 +15,61 @@ awkDocumentationMap='
       ignore["holes:"]=1
 
       document(1,
-        "src/Util/String.agda:  where postulate trustMe : _",
+        "src/Vatras/Util/String.agda:  where postulate trustMe : _",
         "Also proposed in the Agda issue tracker to make String propositions provable. Only used in examples.")
       document(2,
-        "src/Util/String.agda:  where postulate trustMe : _",
+        "src/Vatras/Util/String.agda:  where postulate trustMe : _",
         "Also proposed in the Agda issue tracker to make String propositions provable. Only used in examples.")
       document(3,
-        "src/Util/String.agda:  where postulate trustMe : _",
+        "src/Vatras/Util/String.agda:  where postulate trustMe : _",
         "Also proposed in the Agda issue tracker to make String propositions provable. Only used in examples.")
       document(4,
-        "src/Util/String.agda:  where postulate trustMe : _",
+        "src/Vatras/Util/String.agda:  where postulate trustMe : _",
         "Also proposed in the Agda issue tracker to make String propositions provable. Only used in examples.")
       document(1,
-        "src/Show/Lines.agda:{-# NON_TERMINATING #-}",
+        "src/Vatras/Show/Lines.agda:{-# NON_TERMINATING #-}",
         "Only used for printing and thus not proof relevant. Also, NON_TERMINATING functions do not reduce during type checking.")
       document(1,
-        "src/Tutorial/A_NewLanguage.lagda.md:We are using the `{-# TERMINATING -#}` flag here:",
+        "src/Vatras/Tutorial/A_NewLanguage.lagda.md:We are using the `{-# TERMINATING -#}` flag here:",
         "This is actually a comment.")
       document(1,
-        "src/Tutorial/A_NewLanguage.lagda.md:{-# TERMINATING #-}",
+        "src/Vatras/Tutorial/A_NewLanguage.lagda.md:{-# TERMINATING #-}",
         "Simplification of the tutorial. Not used in the anything else.")
       document(1,
-        "src/Tutorial/A_NewLanguage.lagda.md:MyConfig = {!!}",
+        "src/Vatras/Tutorial/A_NewLanguage.lagda.md:MyConfig = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/A_NewLanguage.lagda.md:⟦_⟧ = {!!}",
+        "src/Vatras/Tutorial/A_NewLanguage.lagda.md:⟦_⟧ = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/B_Translation.lagda.md:conf e c²ᶜᶜ = {!!}",
+        "src/Vatras/Tutorial/B_Translation.lagda.md:conf e c²ᶜᶜ = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/B_Translation.lagda.md:fnoc e cᵐʸ = {!!}",
+        "src/Vatras/Tutorial/B_Translation.lagda.md:fnoc e cᵐʸ = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/B_Translation.lagda.md:preservation-⊆[] e c = {!!}",
+        "src/Vatras/Tutorial/B_Translation.lagda.md:preservation-⊆[] e c = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/B_Translation.lagda.md:preservation-⊇[] e c = {!!}",
+        "src/Vatras/Tutorial/B_Translation.lagda.md:preservation-⊇[] e c = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/B_Translation.lagda.md:translate (D ⟨ l , r ⟩) = {!!}",
+        "src/Vatras/Tutorial/B_Translation.lagda.md:translate (D ⟨ l , r ⟩) = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/B_Translation.lagda.md:translate (a -< cs >-)  = {!!}",
+        "src/Vatras/Tutorial/B_Translation.lagda.md:translate (a -< cs >-)  = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/C_Proofs.lagda.md:  {!!}   -- write down the proof of correctness in this hole",
+        "src/Vatras/Tutorial/C_Proofs.lagda.md:  {!!}   -- write down the proof of correctness in this hole",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/C_Proofs.lagda.md:  {!!} , -- write down the expression in this hole",
+        "src/Vatras/Tutorial/C_Proofs.lagda.md:  {!!} , -- write down the expression in this hole",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/C_Proofs.lagda.md:2CC≽MyLang = {!!}",
+        "src/Vatras/Tutorial/C_Proofs.lagda.md:2CC≽MyLang = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
       document(1,
-        "src/Tutorial/C_Proofs.lagda.md:MyLang-is-Sound = {!!}",
+        "src/Vatras/Tutorial/C_Proofs.lagda.md:MyLang-is-Sound = {!!}",
         "Intentional hole to be filled by you! Not used in anything other than the tutorial.")
 
       exitCode=0
