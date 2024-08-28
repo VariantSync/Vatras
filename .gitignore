@@ -8,7 +8,7 @@
 # build
 src/cc
 src/Main
-src/Everything.agda
+src/Vatras/Everything.agda
 
 # default nix-build symlink name
 /result

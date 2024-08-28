@@ -3,19 +3,19 @@
 andrun : build run
 
 check:
-	env AGDA_DIR="./libs" agda src/Main.agda
+	env AGDA_DIR="./libs" agda src/Vatras/Main.agda
 
 check-all:
 	./scripts/check-all.sh
 
-check-everything: src/Everything.agda
-	env AGDA_DIR="./libs" agda src/Everything.agda
+check-everything: src/Vatras/Everything.agda
+	env AGDA_DIR="./libs" agda src/Vatras/Everything.agda
 
 build:
-	env AGDA_DIR="./libs" agda --compile src/Main.agda
+	env AGDA_DIR="./libs" agda --compile src/Vatras/Main.agda
 
 build-2.6.4.3:
-	env AGDA_DIR="./libs" agda-2.6.4.3 --compile src/Main.agda
+	env AGDA_DIR="./libs" agda-2.6.4.3 --compile src/Vatras/Main.agda
 
 run:
 	./src/Main
@@ -24,14 +24,13 @@ clean:
 	rm -f src/Main
 	rm -rf _build
 	rm -rf src/MAlonzo
-	rm -f src/Everything.agda
+	rm -f src/Vatras/Everything.agda
 	find . -name "*.agdai" -type f -delete
 
-# Don't cache src/Everything.agda as it will break everytime some file is deleted
-.PHONY: src/Everything.agda
-src/Everything.agda:
-	echo '{-# OPTIONS --sized-types #-}' > src/Everything.agda
-	echo '{-# OPTIONS --allow-unsolved-metas #-}' >> src/Everything.agda
-	echo '{-# OPTIONS --guardedness #-}' >> src/Everything.agda
-	echo 'module Everything where' >> src/Everything.agda
-	find src -regextype posix-extended -regex '.*/.*\.l?agda(.md)?' -not -path 'src/Everything.agda' | sed -E 's|^src/|import |; s|\.l?agda(.md)?$$||; s|/|.|g' >> src/Everything.agda
+# Don't cache src/Vatras/Everything.agda as it will break everytime some file is deleted
+.PHONY: src/Vatras/Everything.agda
+src/Vatras/Everything.agda:
+	echo '{-# OPTIONS --allow-unsolved-metas #-}' > src/Vatras/Everything.agda
+	echo '{-# OPTIONS --guardedness #-}' >> src/Vatras/Everything.agda
+	echo 'module Vatras.Everything where' >> src/Vatras/Everything.agda
+	find src -regextype posix-extended -regex '.*/.*\.l?agda(.md)?' -not -path 'src/Vatras/Everything.agda' | sed -E 's|^src/|import |; s|\.l?agda(.md)?$$||; s|/|.|g' >> src/Vatras/Everything.agda
