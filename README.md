@@ -3,44 +3,6 @@
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
 
-> Note to the OOPSLA Artifact Reviewers:
-> This file is intended to be both the artifact's README file, as well as the "artifact documentation" for submission.
-> We occasionally add notes like this for information that is relevant only during the review process but not for the broader audience of the artifact in the future.
-> In particular, the artifact remains private as of now, to ensure our anonymity to research track PC until our conditionally accepted paper is fully accepted.
-> Once our paper is accepted, we will make our artifact publicly available on Github under an open source license and will archive it on Zenodo.
-> (When doing so, we will remove all "Note to the OOPSLA Artifact Reviewers" sections from this README.)
-
-> Note to the OOSPLA Artifact Reviewers:
-> This is a source code and proof artifact.
-> In our paper, we present theoretical and non-empirical research.
-> Our artifact formalizes the theoretical results but hence does not produce or analyze any empirical data.
-
-> Note to the OOPSLA Artifact Reviewers:
-> Some links in this document only work from within the repository because these links are relative, pointing to specific files or directories which are unavailable when reading this documentation as a standalone file.
-> We hence recommend opening the README.md in the submitted zip file in a program with Markdown support (e.g., VS Code).
-
-> Note to the OOPSLA Artifact Reviewers:
-> **We apply for _all_ badges**: **Artifacts Evaluated Functional+Reusable** as well as **Results Validated: Results Reproduced**.
-> (We plan to get the **Artifact Available** badge later on from the publisher as mentioned in the Call for Artifacts).
->
-> Functional: As explained throughout this README (in particular in our setup instructions and Reusability Guide below), our artifact is
-> (1) documented as explained in the section "Documentation" below
-> (2) consistent as explained in the section "Notes on Mechanized Proofs" and in particular its subsection "Paper-to-Library Correspondence",
-> (3) complete as explained in the "Paper-to-Library Correspondence" subsection as well, and
-> (4) exercisable in terms of a demo (section "Compiling and Running the Demo").
->
-> Reusable: Our "Reusability Guide" below motivates this badge in detail. In particular, we provide
-> a documented code base,
-> tutorials with exercises for getting to know the library,
-> instructions for changing the demo,
-> instructions for reusing the library in other Agda projects,
-> and detailed documentation on paper<->artifact correspondence.
->
-> Results Reproduced: We formalized **all** definitions, theorems, and proofs from our paper in this Agda library.
-> Therefore, this library verifies all claims in our paper.
-> Our "Notes on Mechanized Proofs" gives detailed information on our paper-to-artifact correspondence including a table that documents where and how every definition, theorem, or proof is formalized in Agda.
-> Moreover, our demo replays the round-trip running example of translating a configurable sandwich to the various languages (Section 3) using our compilers (Section 5).
-
 This is the supplementary Agda library, called Vatras, for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
 
 This library formalizes all results in our paper:
@@ -48,8 +10,6 @@ This library formalizes all results in our paper:
 - All formal languages for static software variability presented in our survey (**Section 3 + Table 1**) are formalized as algebraic datatypes.
 - The library implements our formal framework for language comparisons, including necessary data structures, theorems, and proofs (**Section 4**).
 - This library contains all theorems and proofs to establish the map of variability languages we find by comparing the languages from our survey with our framework (**Section 5**).
-
-  > Note to the OOPSLA Artifact Reviewers: At the time of submission, there were some proofs in our paper that are not marked as formalized in Agda (proof is not marked with a star ★). However, we finished all remaining proofs, so all theorems and proofs from the paper are formalized in Agda by now.
 
 Additionally, our library comes with a small demo.
 When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
@@ -70,7 +30,6 @@ We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and w
 
 ### Setup
 Clone the library and its submodules to a directory of your choice:
-> Note to the OOPSLA Artifact Reviewers: You must skip this step. This step is here for future users once the repository is published on Github. Instead, you should download the zip file we submitted.
 ```shell 
 git clone --recursive https://github.com/pmbittner/Vatras.git
 ```
@@ -319,16 +278,10 @@ For details about Agda's library management, please have a look at [Agda's packa
 
 ### Notes on Mechanized Proofs
 
-> Note to the OOPSLA Artifact Reviewers:
-> Here is where we explain everything regarding the guidelines on proof artifacts.
-
 #### Paper-to-Library Correspondence
 
 Our Agda formalization exhaustively formalizes all definitions, theorems, and proofs from our paper.
 The following table shows where each of the definitions, theorems, and proofs from the paper are formalized in this library.
-
-> Note to the OOPSLA Artifact Reviewers:
-> The table thereby demonstrates that our artifact is _consistent_ and _complete_, and reproduces the results from the paper formally.
 
 | statement       | notation in paper                 | name in our Agda Library                                           | file                                                                                                 | notes                                                                                                                                                              |
 |-----------------|-----------------------------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -404,11 +357,6 @@ This generalization allows us to also formalize variability languages that
 (1) have other variant types such as Gruler's language (see [src/Lang/Gruler.agda](src/Lang/Gruler.agda), Section 3.6 in the paper), or
 (2) are independent of the variant type, such as [clone and own](src/Lang/VariantList.lagda.md) (Section 5.2 in the paper).
 - Also generalizing over the annotation language `F : 𝔽` was rather easy in the paper (Section 3.3) but requires to carry around that `𝔽` explicitly in Agda in definitions and theorems a lot.
-
-> Note to the OOPSLA Artifact Reviewers:
-> During formalization, we noticed that the proof of VariantList ≽ FST is easier than Sound(FST) and 2CC ≽ FST.
-> Hence, we prove VariantList ≽ FST, conclude 2CC ≽ FST using transitivity and follow Sound(FST) from 2CC ≽ FST.
-> We intend to adapt the proof in the paper to the formalized proof.
 
 #### Frameworks and Dependencies
 
