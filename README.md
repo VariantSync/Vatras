@@ -1,5 +1,6 @@
 ﻿# Vatras - On the Expressive Power of Languages for Static Variability
 
+[![Check the Agda files](https://github.com/pmbittner/Vatras/actions/workflows/check.yml/badge.svg)](https://github.com/pmbittner/Vatras/actions/workflows/check.yml)
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
 
