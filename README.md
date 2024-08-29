@@ -26,7 +26,6 @@ This section gives you a short "Getting Started" guide.
 For detailed instructions on setting up dependencies, see the next section.
 We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and we also tested the Docker setup on Windows 11 and macOS Ventura 13.0.1 (22A400) on an Apple M1 Pro.
 
-
 > In case of problems, there is a "Troubleshooting" section at the bottom of this file.
 
 ### Setup
