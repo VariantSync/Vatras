@@ -36,7 +36,7 @@ We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and w
 ### Setup
 Clone the library and its submodules to a directory of your choice:
 ```shell 
-git clone --recursive https://github.com/pmbittner/Vatras.git
+git clone --recursive https://github.com/VariantSync/Vatras.git
 ```
 
 There are **three alternative ways** to compile the library and run its small demo.
