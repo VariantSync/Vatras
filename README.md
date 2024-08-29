@@ -4,7 +4,12 @@
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
 
-This is the supplementary Agda library, called Vatras, for our paper _On the Expressive Power of Languages for Static Variability_ conditionally accepted at Object-Oriented Programming, Systems, Languages & Applications 2024 (OOPSLA 2024). 
+<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
+<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
+
+Vatras is the supplementary Agda library for our OOPSLA'24 paper:
+
+> Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. _On the Expressive Power of Languages for Static Variability_. Object-Oriented Programming, Systems, Languages & Applications, 2024 (OOPSLA 2024).
 
 This library formalizes all results in our paper:
 
