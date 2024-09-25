@@ -139,6 +139,33 @@ less-expressive-from-soundness : ∀ {L M : VariabilityLanguage V}
   → L ⋡ M
 less-expressive-from-soundness L-sound M-unsound M≽L =
     M-unsound (soundness-by-expressiveness L-sound M≽L)
+
+{-|
+A language M that is not at least as expressive as any sound langauge L,
+can never be complete.
+
+Dual theorem to: unsoundness-from-less-expressive
+-}
+incompleteness-from-less-expressive : ∀ {L M : VariabilityLanguage V}
+  → Sound L
+  → M ⋡ L
+    ------------
+  → Incomplete M
+incompleteness-from-less-expressive L-sound M⋡L M-comp = M⋡L (expressiveness-by-completeness-and-soundness M-comp L-sound)
+
+{-|
+If there exists a complete language L that is not able to express everything
+M can express, then M must be unsound (i.e., there must be meanings in M that
+cannot be captured by L but since L is complete, it captures all meanings of interest).
+
+Dual theorem to: incompleteness-from-less-expressive
+-}
+unsoundness-from-less-expressive : ∀ {L M : VariabilityLanguage V}
+  → Complete L
+  → L ⋡ M
+    ----------
+  → Unsound M
+unsoundness-from-less-expressive L-comp L⋡M M-sound = L⋡M (expressiveness-by-completeness-and-soundness L-comp M-sound)
 ```
 
 Combined with `expressiveness-by-completeness`/`expressiveness-by-soundness` we can even further conclude that L is more expressive than M or vice versa:
