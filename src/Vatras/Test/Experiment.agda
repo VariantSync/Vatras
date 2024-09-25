@@ -31,6 +31,13 @@ ExperimentSetup ℓ = Σ[ A ∈ Set ℓ ] (Experiment A × List (Example A))
 setup : ∀ {ℓ} {A : Set ℓ} → Experiment A → List (Example A) → ExperimentSetup ℓ
 setup {ℓ} {A} program inputs = A , program , inputs
 
+run-experiment-plain : ∀ {ℓ} {A : Set ℓ} → Experiment A → Example A → Lines
+run-experiment-plain experiment example = do
+  > "Run Experiment " ++ getName experiment ++ " on " ++ getName example
+  linebreak
+  get experiment example
+  linebreak
+
 run-experiment : ∀ {ℓ} {A : Set ℓ} → Experiment A → Example A → Lines
 run-experiment experiment example = do
   linebreak
