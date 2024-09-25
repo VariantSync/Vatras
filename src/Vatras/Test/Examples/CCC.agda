@@ -59,6 +59,15 @@ cccex-complex1 = "complex1" ≔
              ⟩) ∷ []
       ⟩
 
+talk-sandwich : CCCExample
+talk-sandwich = "Sandwich running example from my talks" ≔
+  "\\swBread" -<
+    cc-leaves "Salad" ("\\swSalad" ∷ "\\circ" ∷ []) ∷
+    cc-leaf "\\swCheese" ∷
+    cc-leaves "Patty" ("\\swTofu" ∷ "\\swMeat" ∷ []) ∷
+    cc-leaves "Sauce" ("\\circ" ∷ "\\swMayo" ∷ "\\swKetchup" ∷ "\\swMayo\\swKetchup" ∷ []) ∷
+    [] >-
+
 cccex-all : List CCCExample
 cccex-all =
   cccex-binary ∷
