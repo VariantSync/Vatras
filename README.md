@@ -3,6 +3,7 @@
 [![Check the Agda files](https://github.com/pmbittner/Vatras/actions/workflows/check.yml/badge.svg)](https://github.com/pmbittner/Vatras/actions/workflows/check.yml)
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13502454.svg)](https://doi.org/10.5281/zenodo.13502454)
 
 <img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
 <img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
