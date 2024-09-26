@@ -13,6 +13,7 @@ open import Vatras.Lang.CCC as CCC using (CCC)
 open import Vatras.Lang.2CC using (2CC)
 open import Vatras.Lang.ADT
 open import Vatras.Translation.LanguageMap
+open import Vatras.Translation.Lang.2CC.Idempotence String String._≟_ using (eliminate-idempotent-choices)
 
 open import Vatras.Test.Experiment
 open import Vatras.Show.Lines
@@ -50,8 +51,11 @@ CCC-to-ADT ccc = adt
     bcc : STR2CC
     bcc = proj₁ (2CC≽CCC ccc)
 
+    bcc' : STR2CC
+    bcc' = eliminate-idempotent-choices bcc
+
     adt : STRADT
-    adt = proj₁ (ADT≽2CC bcc)
+    adt = proj₁ (ADT≽2CC bcc')
 
 tikz-export-experiment : Experiment STRCCC
 getName tikz-export-experiment = "Tikz-Export"
