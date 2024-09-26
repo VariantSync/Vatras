@@ -1,7 +1,7 @@
 open import Vatras.Framework.Definitions using (𝔸; 𝔽)
 open import Relation.Binary.Definitions using (DecidableEquality)
 
-module Vatras.Translation.Lang.2CC.Indifferent (Dimension : 𝔽) (_==_ : DecidableEquality Dimension) where
+module Vatras.Translation.Lang.2CC.Idempotence (Dimension : 𝔽) (_==_ : DecidableEquality Dimension) where
 
 import Data.List as List
 import Data.List.Properties as List
@@ -33,58 +33,58 @@ _≟_ {A = _ , _≟ₐ_} (a₁ -< cs₁ >-) (a₂ -< cs₂ >-) with a₁ ≟ₐ 
 (D₁ ⟨ l₁ , r₁ ⟩) ≟ (D₂ ⟨ l₂ , r₂ ⟩) | yes D₁≡d₂ | no l₁≢l₂ | _ = no λ where refl → l₁≢l₂ refl
 (D₁ ⟨ l₁ , r₁ ⟩) ≟ (D₂ ⟨ l₂ , r₂ ⟩) | no D₁≢d₂ | _ | _ = no λ where refl → D₁≢d₂ refl
 
-eliminate-indifferent : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → 2CC Dimension ∞ A
-eliminate-indifferent (a -< cs >-) = a -< List.map eliminate-indifferent cs >-
-eliminate-indifferent (D ⟨ l , r ⟩) with eliminate-indifferent l ≟ eliminate-indifferent r
-eliminate-indifferent (D ⟨ l , r ⟩) | yes l≡r = eliminate-indifferent l
-eliminate-indifferent (D ⟨ l , r ⟩) | no l≢r = D ⟨ eliminate-indifferent l , eliminate-indifferent r ⟩
+eliminate-idempotent-choices : ∀ {i : Size} {A : 𝔸} → 2CC Dimension i A → 2CC Dimension ∞ A
+eliminate-idempotent-choices (a -< cs >-) = a -< List.map eliminate-idempotent-choices cs >-
+eliminate-idempotent-choices (D ⟨ l , r ⟩) with eliminate-idempotent-choices l ≟ eliminate-idempotent-choices r
+eliminate-idempotent-choices (D ⟨ l , r ⟩) | yes l≡r = eliminate-idempotent-choices l
+eliminate-idempotent-choices (D ⟨ l , r ⟩) | no l≢r = D ⟨ eliminate-idempotent-choices l , eliminate-idempotent-choices r ⟩
 
-eliminate-indifferent-preserves
+eliminate-idempotent-choices-preserves
   : ∀ {i : Size} {A : 𝔸}
   → (e : 2CC Dimension i A)
-  → ⟦ eliminate-indifferent e ⟧ ≗ ⟦ e ⟧
-eliminate-indifferent-preserves (a -< cs >-) c =
-    ⟦ eliminate-indifferent (a -< cs >-) ⟧ c
+  → ⟦ eliminate-idempotent-choices e ⟧ ≗ ⟦ e ⟧
+eliminate-idempotent-choices-preserves (a -< cs >-) c =
+    ⟦ eliminate-idempotent-choices (a -< cs >-) ⟧ c
   ≡⟨⟩
-    ⟦ a -< List.map eliminate-indifferent cs >- ⟧ c
+    ⟦ a -< List.map eliminate-idempotent-choices cs >- ⟧ c
   ≡⟨⟩
-    a V.-< List.map (λ e → ⟦ e ⟧ c) (List.map eliminate-indifferent cs) >-
+    a V.-< List.map (λ e → ⟦ e ⟧ c) (List.map eliminate-idempotent-choices cs) >-
   ≡⟨ Eq.cong (a Rose.-<_>-) (List.map-∘ cs) ⟨
-    a V.-< List.map (λ e → ⟦ eliminate-indifferent e ⟧ c) cs >-
-  ≡⟨ Eq.cong (a Rose.-<_>-) (List.map-cong (λ e → eliminate-indifferent-preserves e c) cs) ⟩
+    a V.-< List.map (λ e → ⟦ eliminate-idempotent-choices e ⟧ c) cs >-
+  ≡⟨ Eq.cong (a Rose.-<_>-) (List.map-cong (λ e → eliminate-idempotent-choices-preserves e c) cs) ⟩
     a V.-< List.map (λ e → ⟦ e ⟧ c) cs >-
   ≡⟨⟩
     ⟦ a -< cs >- ⟧ c
   ∎
-eliminate-indifferent-preserves (D ⟨ l , r ⟩) c with eliminate-indifferent l ≟ eliminate-indifferent r
-eliminate-indifferent-preserves (D ⟨ l , r ⟩) c | no l≢r =
-    (if c D then ⟦ eliminate-indifferent l ⟧ c else ⟦ eliminate-indifferent r ⟧ c)
-  ≡⟨ Eq.cong₂ (if c D then_else_) (eliminate-indifferent-preserves l c) (eliminate-indifferent-preserves r c) ⟩
+eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c with eliminate-idempotent-choices l ≟ eliminate-idempotent-choices r
+eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c | no l≢r =
+    (if c D then ⟦ eliminate-idempotent-choices l ⟧ c else ⟦ eliminate-idempotent-choices r ⟧ c)
+  ≡⟨ Eq.cong₂ (if c D then_else_) (eliminate-idempotent-choices-preserves l c) (eliminate-idempotent-choices-preserves r c) ⟩
     (if c D then ⟦ l ⟧ c else ⟦ r ⟧ c)
   ≡⟨⟩
     ⟦ D ⟨ l , r ⟩ ⟧ c
   ∎
-eliminate-indifferent-preserves (D ⟨ l , r ⟩) c | yes l≡r with c D
-eliminate-indifferent-preserves (D ⟨ l , r ⟩) c | yes l≡r | true =
-    ⟦ eliminate-indifferent l ⟧ c
-  ≡⟨ eliminate-indifferent-preserves l c ⟩
+eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c | yes l≡r with c D
+eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c | yes l≡r | true =
+    ⟦ eliminate-idempotent-choices l ⟧ c
+  ≡⟨ eliminate-idempotent-choices-preserves l c ⟩
     ⟦ l ⟧ c
   ≡⟨⟩
     (if true then ⟦ l ⟧ c else ⟦ r ⟧ c)
   ∎
-eliminate-indifferent-preserves (D ⟨ l , r ⟩) c | yes l≡r | false =
-    ⟦ eliminate-indifferent l ⟧ c
+eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c | yes l≡r | false =
+    ⟦ eliminate-idempotent-choices l ⟧ c
   ≡⟨ Eq.cong₂ ⟦_⟧ l≡r refl ⟩
-    ⟦ eliminate-indifferent r ⟧ c
-  ≡⟨ eliminate-indifferent-preserves r c ⟩
+    ⟦ eliminate-idempotent-choices r ⟧ c
+  ≡⟨ eliminate-idempotent-choices-preserves r c ⟩
     ⟦ r ⟧ c
   ≡⟨⟩
     (if false then ⟦ l ⟧ c else ⟦ r ⟧ c)
   ∎
 
-Indifferent-Elimination : LanguageCompiler (2CCL Dimension) (2CCL Dimension)
-Indifferent-Elimination = record
-  { compile = eliminate-indifferent
+Idempotence-Elimination : LanguageCompiler (2CCL Dimension) (2CCL Dimension)
+Idempotence-Elimination = record
+  { compile = eliminate-idempotent-choices
   ; config-compiler = λ _ → record { to = id ; from = id }
-  ; preserves = λ e → ≅[]-sym (≗→≅[] (eliminate-indifferent-preserves e))
+  ; preserves = λ e → ≅[]-sym (≗→≅[] (eliminate-idempotent-choices-preserves e))
   }
