@@ -115,8 +115,8 @@ are parametric in the type of variants in the variant map.
 We will reuse `V` here which was defined in the first tutorial
 to be a rose tree just as in our paper.
 (Try looking it up using your editor, and feel free to
-change it if you like 🙂! (Some proofs might break but you
-can just replace them by a whole to experiment a bit)).
+change the value of `V` if you like 🙂! (Some proofs might break but you
+can just replace them by a hole to experiment a bit.))
 
 ```agda
 open import Vatras.Framework.Properties.Completeness V
