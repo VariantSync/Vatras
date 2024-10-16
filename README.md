@@ -24,11 +24,6 @@ This library formalizes all results in our paper:
 Additionally, our library comes with a small demo.
 When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
 
-## Hardware Dependencies
-
-There are no specific hardware dependencies.
-The library and its demo were tested on standard laptops.
-
 ## Kick-the-Tires
 
 This section gives you a short "Getting Started" guide.
