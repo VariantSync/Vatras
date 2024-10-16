@@ -17,11 +17,11 @@ Vatras is the supplementary Agda library for our OOPSLA'24 paper:
 
 This library formalizes all results in our paper:
 
-- All formal languages for static software variability presented in our survey (**Section 3 + Table 1**) are formalized as algebraic datatypes.
-- The library implements our formal framework for language comparisons, including necessary data structures, theorems, and proofs (**Section 4**).
-- This library contains all theorems and proofs to establish the map of variability languages we find by comparing the languages from our survey with our framework (**Section 5**).
+- All **formal languages for static software variability** presented in our survey (Section 3 + Table 1) are formalized as algebraic datatypes.
+- The library implements our **formal framework for language comparisons**, including necessary data structures, theorems, and proofs (Section 4).
+- This library contains **all theorems and proofs to establish the map of variability languages we find** by comparing the languages from our survey with our framework (Section 5).
 
-Additionally, our library comes with a small demo.
+Additionally, our library comes with a small **demo**, and **tutorials** for getting to know the library and for formalizing your own variability languages (see "Tutorials" section below).
 When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
 
 ## Kick-the-Tires
