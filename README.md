@@ -4,6 +4,9 @@
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13502454.svg)](https://doi.org/10.5281/zenodo.13502454)
+[![Preprint](https://img.shields.io/badge/Preprint-Read-purple)](https://github.com/SoftVarE-Group/Papers/raw/main/2024/2024-OOPSLA-Bittner.pdf)
+[![Paper](https://img.shields.io/badge/Paper-Read-purple)](https://doi.org/10.1145/3689747)
+[![Distinguished-Artifact](https://img.shields.io/badge/OOPSLA24-Distinguished%20Artifact-gold)](https://2024.splashcon.org/track/splash-2024-oopsla-artifacts#Chair-s-Report)
 
 <img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
 <img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
