@@ -10,7 +10,7 @@
 
 Vatras is the supplementary Agda library for our OOPSLA'24 paper:
 
-> Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. _On the Expressive Power of Languages for Static Variability_. Object-Oriented Programming, Systems, Languages & Applications, 2024 (OOPSLA 2024).
+> _On the Expressive Power of Languages for Static Variability_. Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. Object-Oriented Programming, Systems, Languages & Applications, 2024 (**OOPSLA 2024**).
 
 This library formalizes all results in our paper:
 
