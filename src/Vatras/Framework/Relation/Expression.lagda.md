@@ -78,7 +78,7 @@ L₁ , L₂ ⊢ e₁ ≤ e₂ = ⟦ e₁ ⟧₁ ⊆ ⟦ e₂ ⟧₂
 infix 5 _,_⊢_≤_
 
 {-|
-Two expressions denote equivalent variant maps.
+Two expressions denote equivalent variant generators.
 -}
 _,_⊢_≣_ :
   ∀ (L₁ L₂ : VariabilityLanguage V)

@@ -26,11 +26,11 @@ The intuition is that `M` can express everything `L` can express which in turn i
 Thus also `M` is complete.
 
 **Proof Sketch:**
-Let V be an arbitrary variant map.
+Let V be an arbitrary variant generator.
 Since L is complete, there exists an expression l ∈ L that describes V.
 By assumption, M is as expressive as L.
 Thus, there exists an expression m ∈ M that also describes V.
-Since V was picked arbitrarily, M can encode any variant map.
+Since V was picked arbitrarily, M can encode any variant generator.
 Thus, M is complete.
 
 Dual theorem to: soundness-by-expressiveness.
@@ -78,7 +78,7 @@ soundness-by-expressiveness L-sound M-to-L m with M-to-L m
 {-|
 A language L is unsound if it is at least as expressive as another unsound language M.
 The intuition is that there are expressions in M that describe something else
-than a variant map.
+than a variant generator.
 Since L is at least as expressive as M, L can also express these other things.
 Hence, L cannot be sound as well.
 
@@ -96,8 +96,8 @@ We can conclude that any complete language is at least as expressive as any othe
 
 **Proof sketch:**
 Given an arbitrary expression eˢ of our target language Lˢ, we have to show that there exists an expression e₊ in our complete language Lᶜ that is variant-equivalent to eˢ.
-By soundness of Lˢ we can compute the variant map of eˢ.
-By completeness of Lᶜ, we can encode any variant map as an expression eᶜ ∈ Lᶜ.
+By soundness of Lˢ we can compute the variant generator of eˢ.
+By completeness of Lᶜ, we can encode any variant generator as an expression eᶜ ∈ Lᶜ.
 -}
 expressiveness-by-completeness-and-soundness : ∀ {Lᶜ Lˢ : VariabilityLanguage V}
   → Complete Lᶜ

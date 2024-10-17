@@ -23,7 +23,7 @@ as well as a range of related relations `_≻_`, `_⋡_`, and proves relevant pr
 We also show that compilers for variability languages can be used as proofs
 of expressiveness and vice versa (because Agda uses constructive logic).
 
-We say that a language `L₁` is as expressive as another language `L₂` if for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same variant map.
+We say that a language `L₁` is as expressive as another language `L₂` if for any expression `e₂` in `L₂`, there exists an expression `e₁` in `L₁` that describes the same variant generator.
 ```agda
 {-|
 Our central expressiveness relation.
@@ -138,7 +138,7 @@ We now prove that:
 ```agda
 {-|
 A translation of expressions preserves semantics if
-the translated expression denotes the same variant map as the initial expression.
+the translated expression denotes the same variant generator as the initial expression.
 -}
 SemanticsPreserving : ∀ (L M : VariabilityLanguage V) → Expression L ⇒ₚ Expression M → Set₁
 SemanticsPreserving L M t = ∀ {A} (e : Expression L A) → L , M ⊢ e ≣ t e

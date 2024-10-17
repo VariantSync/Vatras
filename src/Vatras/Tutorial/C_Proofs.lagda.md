@@ -39,7 +39,7 @@ binary choice calculus `2CC` to our own language `MyLang`,
 and we have also proven this translation correct.
 By doing this, we have shown that our own language
 can express everything binary choice calculus can express
-(with respect to variant maps as a semantic domain).
+(with respect to variant generators as a semantic domain).
 We can hence conclude that our language is at least
 as expressive as binary choice calculus from having
 constructed our compiler.
@@ -108,10 +108,10 @@ A language is complete if there is an expression for
 every element in the respective semantic domain.
 For variability languages as formalized in our framework,
 this means that there must be an expression for every
-variant map (i.e., finite, non-empty set of variants).
+variant generator (i.e., finite, non-empty set of variants).
 
 Properties such as completeness, soundness, and expressiveness
-are parametric in the type of variants in the variant map.
+are parametric in the type of variants in the variant generator.
 We will reuse `V` here which was defined in the first tutorial
 to be a rose tree just as in our paper.
 (Try looking it up using your editor, and feel free to
@@ -164,7 +164,7 @@ You can read more on this process in our paper.
 A language is sound if any of its expressions
 denotes an element in the semantic domain.
 For variability languages as formalized in our framework,
-this means that there must be an variant map for every expression.
+this means that there must be an variant generator for every expression.
 
 By inspecting the `Framework.Proof.Transitive` module closely,
 you will see that proofs for soundness are exactly dual to the proofs

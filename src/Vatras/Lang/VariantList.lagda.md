@@ -81,7 +81,7 @@ These proofs will form the basis for proving these properties for other language
 
 ### Completeness
 
-To prove completeness, we have to show that lists of variants can express any variant map.
+To prove completeness, we have to show that lists of variants can express any variant generator.
 
 ```agda
 open import Vatras.Util.Nat.AtLeast using (cappedFin)
@@ -93,7 +93,7 @@ private
     A : 𝔸
     e : VariantList A
 
--- rules for translating a variant map to a list of variants
+-- rules for translating a variant generator to a list of variants
 infix 3 _⊢_⟶_
 data _⊢_⟶_ : ∀ (n : ℕ) → VariantGenerator A n → VariantList A → Set₁ where
   -- a singleton set is translated to a singleton list
@@ -185,8 +185,8 @@ VariantList-is-Complete vs =
 ### Soundness
 
 We can use a trick to prove soundness by reusing the above definitions for completeness.
-The trick is that `⟦ e ⟧ ∘ vl-conf` denotes a variant map because it takes a `Fin (suc n)` as input and produces a variant.
-We are then left to prove that this variant map exactly denotes the expression in e which is almost true by definition.
+The trick is that `⟦ e ⟧ ∘ vl-conf` denotes a variant generator because it takes a `Fin (suc n)` as input and produces a variant.
+We are then left to prove that this variant generator exactly denotes the expression in e which is almost true by definition.
 It just requires playing with the configuration translation functions a bit, and to prove
 that `vl-conf` is the (semantic) inverse of `vl-fnoc`.
 
