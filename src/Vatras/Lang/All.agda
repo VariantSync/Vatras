@@ -27,9 +27,7 @@ module FST where
   open import Size using (∞)
   open import Vatras.Framework.Definitions using (𝔽; 𝔸)
   open import Vatras.Framework.Variants using (Rose)
-  open import Vatras.Lang.FST hiding (FST; FSTL-Sem; Conf) public
-
-  Configuration = Vatras.Lang.FST.Conf
+  open import Vatras.Lang.FST hiding (⟦_⟧) public
 
   ⟦_⟧ : ∀ {F : 𝔽} {A : 𝔸} → Impose.SPL F A → Configuration F → Rose ∞ A
-  ⟦_⟧ {F} = Vatras.Lang.FST.FSTL-Sem F
+  ⟦_⟧ {F} = Vatras.Lang.FST.⟦_⟧ F
