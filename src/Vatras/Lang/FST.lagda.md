@@ -41,8 +41,8 @@ open import Vatras.Util.List using (++-tail)
 
 We configure feature structure trees by choosing which features to include or exclude.
 ```
-Conf : ℂ
-Conf = F → Bool
+Configuration : ℂ
+Configuration = F → Bool
 ```
 
 A single feature structure tree is just a rose tree (which is composed into other rose trees).
@@ -448,7 +448,7 @@ module Impose (AtomSet : 𝔸) where
   obtain all feature structure forests selected by
   the configuration.
   -}
-  select : Conf → List Feature → List FSF
+  select : Configuration → List Feature → List FSF
   select _ [] = []
   select c (f ∷ fs) =
     if c (name f)
@@ -843,7 +843,7 @@ We now prove that feature structure trees form a feature algebra.
   Then compose all those features.
   Finally, drop the uniqueness-typing to obtain a single variant.
   -}
-  ⟦_⟧ : SPL → Conf → Rose ∞ AtomSet
+  ⟦_⟧ : SPL → Configuration → Rose ∞ AtomSet
   ⟦ r ◀ features ⟧ c = r -< forget-uniqueness (⊛-all (select c features)) >-
 ```
 
@@ -872,11 +872,11 @@ We now prove that feature structure trees form a feature algebra.
 ## Feature Structure Trees are a Variability Language
 
 ```agda
-FSTL-Sem : 𝔼-Semantics (Rose ∞) Conf Impose.SPL
-FSTL-Sem {A} = Impose.⟦_⟧ A
+⟦_⟧ : 𝔼-Semantics (Rose ∞) Configuration Impose.SPL
+⟦_⟧ {A} = Impose.⟦_⟧ A
 
 FSTL : VariabilityLanguage (Rose ∞)
-FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
+FSTL = ⟪ Impose.SPL , Configuration , ⟦_⟧ ⟫
 ```
 
 ## Feature Structure Trees are Incomplete
@@ -904,8 +904,8 @@ module IncompleteOnRose where
   does-not-describe-variants-0-and-1 :
     ∀ {i : Size}
     → (e : Impose.SPL (ℕ , ℕ._≟_))
-    → ∃[ c ] (variant-0 ≡ FSTL-Sem e c)
-    → ∄[ c ] (variant-1 ≡ FSTL-Sem e c)
+    → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
+    → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
   does-not-describe-variants-0-and-1 (zero Impose.◀ features) _ ()
   does-not-describe-variants-0-and-1 (suc root Impose.◀ features) ()
 
@@ -924,7 +924,7 @@ This theorem is a specialized form in which this variant is fixed to
 for two any two atoms a, b.
 
 ```agda
-cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] FSTL-Sem e c ≡ a -< rose-leaf b ∷ rose-leaf b ∷ [] >-)
+cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] ⟦ e ⟧ c ≡ a -< rose-leaf b ∷ rose-leaf b ∷ [] >-)
 cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
   ¬Unique b (Eq.subst (λ l → Unique l) (children-equality ⟦e⟧c≡neighbors) (lemma (⊛-all (select conf (features e)))))
   where

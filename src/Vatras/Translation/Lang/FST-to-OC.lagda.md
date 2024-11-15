@@ -39,7 +39,6 @@ open import Vatras.Lang.All
 open OC using (OC; WFOCL; Root; _❲_❳; all-oc)
 open import Vatras.Lang.OC.Properties using (⟦e⟧ₒtrue≡just)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; both; neither; Implies; subtreeₒ; subtreeₒ-recurse)
-open import Vatras.Lang.FST using (FSTL-Sem)
 open FST using (FSTL)
 open FST.Impose
 
@@ -132,13 +131,13 @@ from `counter-example`. Agda can't compute with `==ꟳ` so we need the following
 two lemmas to sort out invalid definitions of `==ꟳ`. Then Agda can actually
 compute the semantics of `counter-example`.
 ```agda
-compute-counter-example-c₁ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
+compute-counter-example-c₁ : {v : Rose ∞ A} → FST.⟦ counter-example ⟧ c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
 compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _    | _     = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
 compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁  | true | false = p
 compute-counter-example-c₁ p | no f₁≢f₁  | _         | _    | _     = ⊥-elim (f₁≢f₁ refl)
 
-compute-counter-example-c₂ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
+compute-counter-example-c₂ : {v : Rose ∞ A} → FST.⟦ counter-example ⟧ c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₂ p with f₁ ==ꟳ f₂ | f₂ ==ꟳ f₂ | c₂ f₁ in c₂-f₁ | c₂ f₂ in c₂-f₂
 compute-counter-example-c₂ p | yes f₁≡f₂ | _         | _     | _    = ⊥-elim (f₁≢f₂ f₁≡f₂)
 compute-counter-example-c₂ p | no f₁≢f₂  | yes f₂≡f₂ | false | true = p
@@ -299,7 +298,7 @@ configurations which results in contradictions in every case.
 impossible : ∀ {F' : 𝔽}
   → (cs : List (OC F' ∞ A))
   → (c₁ c₂ : OC.Configuration F')
-  → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FSTL-Sem F counter-example c')
+  → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FST.⟦ counter-example ⟧ c')
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
   ⊎ 0 -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
   → ⊥
