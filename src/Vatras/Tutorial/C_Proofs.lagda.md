@@ -29,7 +29,7 @@ open import Vatras.Tutorial.A_NewLanguage
 open import Vatras.Tutorial.B_Translation
 
 open import Vatras.Lang.All
-open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩) renaming (⟦_⟧ to ⟦_⟧₂)
+open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 ```
 
 ## Proving Expressiveness

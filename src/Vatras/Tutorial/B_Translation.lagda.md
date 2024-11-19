@@ -30,7 +30,7 @@ as binary choice calculus (`2CC`).
 We hence want to translate binary choice calculus to our new language:
 ```agda
 open import Vatras.Lang.All
-open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩) renaming (⟦_⟧ to ⟦_⟧₂)
+open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 ```
 
 Translating a variability language requires two steps.
@@ -94,14 +94,14 @@ denotes a subset of the variants of the translated expression
 and vice versa.
 
 So our goal is to prove the following, where
-`⟦_⟧₂` is the semantics of `2CC`, and
+`2CC.⟦_⟧` is the semantics of `2CC`, and
 `⟦_⟧` is the semantics of `MyLang`.
 ```agda
 open import Vatras.Data.EqIndexedSet
 
 preservation : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
-  → ⟦ e ⟧₂ ≅ ⟦ translate e ⟧
+  → 2CC.⟦ e ⟧ ≅ ⟦ translate e ⟧
 ```
 
 `≅` is equality of indexed sets as defined in our paper.
@@ -118,11 +118,11 @@ directions as explained before.
 ```agda
 preservation-⊆ : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
-  → ⟦ e ⟧₂ ⊆ ⟦ translate e ⟧
+  → 2CC.⟦ e ⟧ ⊆ ⟦ translate e ⟧
 
 preservation-⊇ : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
-  → ⟦ translate e ⟧ ⊆ ⟦ e ⟧₂
+  → ⟦ translate e ⟧ ⊆ 2CC.⟦ e ⟧
 ```
 
 Both theorems require us to prove that
@@ -164,12 +164,12 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 preservation-⊆[] : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
-  → ⟦ e ⟧₂ ⊆[ conf e ] ⟦ translate e ⟧
+  → 2CC.⟦ e ⟧ ⊆[ conf e ] ⟦ translate e ⟧
 preservation-⊆[] e c = {!!}
 
 preservation-⊇[] : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
-  → ⟦ translate e ⟧ ⊆[ fnoc e ] ⟦ e ⟧₂
+  → ⟦ translate e ⟧ ⊆[ fnoc e ] 2CC.⟦ e ⟧
 preservation-⊇[] e c = {!!}
 ```
 
@@ -215,7 +215,7 @@ we can reuse our above definitions anyway.
 ```agda
 preservation[] : ∀ {A : 𝔸} {i : Size}
   → (e : 2CC F i A)
-  → ⟦ e ⟧₂ ≅[ conf e ][ fnoc e ] ⟦ translate e ⟧
+  → 2CC.⟦ e ⟧ ≅[ conf e ][ fnoc e ] ⟦ translate e ⟧
 preservation[] e = preservation-⊆[] e , preservation-⊇[] e
 ```
 
