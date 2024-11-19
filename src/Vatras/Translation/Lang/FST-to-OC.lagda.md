@@ -215,7 +215,7 @@ more-artifacts : ∀ {F' : 𝔽}
   → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
   → 1 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
 more-artifacts (a OC.-< cs' >- ∷ cs) cₙ v p = s≤s z≤n
-more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
+more-artifacts {F'} (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just F' e
 more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
 ```
 

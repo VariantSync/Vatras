@@ -67,5 +67,7 @@ module Gruler where
 
 module FST where
   open Vatras.Lang.FST using (FST; FSTL; Configuration) public
+  module _ where
+    open Vatras.Lang.FST ⊥ using (_．_; branches) public
   module _ {F : 𝔽} where
-    open Vatras.Lang.FST F hiding (FST; FSTL; Configuration) public
+    open Vatras.Lang.FST F hiding (FST; FSTL; Configuration; _．_; branches) public

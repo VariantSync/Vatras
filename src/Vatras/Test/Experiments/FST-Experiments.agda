@@ -20,13 +20,13 @@ open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
 open import Vatras.Framework.Variants using (show-rose)
 
-import Vatras.Lang.FST as FST
+open import Vatras.Lang.All
 open FST using (Configuration)
 
 module _ (F : 𝔽) (A : 𝔸) where
 -- (_≟_ : DecidableEquality A)
-  open FST.Impose F A
-  module FSTShow = FST.Impose.Show F A
+  open FST.Impose {F} A
+  module FSTShow = FST.Impose.Show {F} A
 
   exp :
       (F → String)
@@ -66,8 +66,8 @@ module Java where
   _≟-ast_ : DecidableEquality ASTNode
   _≟-ast_ = _≟ˢ_
 
-  open FST String using (_．_; branches)
-  open FST.Impose String (ASTNode , _≟-ast_)
+  open FST using (_．_; branches)
+  open FST.Impose {String} (ASTNode , _≟-ast_)
 
   module Calculator where
     fname-Add = "Add"

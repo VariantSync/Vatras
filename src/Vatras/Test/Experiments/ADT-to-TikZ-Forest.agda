@@ -9,9 +9,10 @@ open import Size using (∞)
 open import Function using (id)
 
 open import Vatras.Framework.Variants
-open import Vatras.Lang.CCC as CCC using (CCC)
-open import Vatras.Lang.2CC using (2CC)
-open import Vatras.Lang.ADT
+open import Vatras.Lang.All
+open CCC using (CCC)
+open 2CC using (2CC)
+open ADT using (ADT; leaf; _⟨_,_⟩)
 open import Vatras.Translation.LanguageMap
 open import Vatras.Translation.Lang.2CC.Idempotence String String._≟_ using (eliminate-idempotent-choices)
 
@@ -62,7 +63,7 @@ getName tikz-export-experiment = "Tikz-Export"
 get tikz-export-experiment (ccc called name) = do
   [ Center ]> "Input CCC expression:"
   linebreak
-  CCC.pretty String id ccc
+  CCC.pretty id ccc
   linebreak
   [ Center ]> "Tikz export of corresponding ADT:"
   linebreak
