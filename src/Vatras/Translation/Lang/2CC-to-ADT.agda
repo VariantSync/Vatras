@@ -83,7 +83,7 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
 preserves-≗ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (expr : 2CC D i A)
   → ADT.⟦ translate expr ⟧ ≗ 2CC.⟦ expr ⟧
-preserves-≗ {D = D} {A = A} (a 2CC.-< cs >-) config =
+preserves-≗ (a 2CC.-< cs >-) config =
     ADT.⟦ translate (a 2CCSyntax.-< cs >-) ⟧ config
   ≡⟨⟩
     ADT.⟦ push-down-artifact a (List.map translate cs) ⟧ config
