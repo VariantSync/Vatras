@@ -15,7 +15,8 @@ open import Size using (∞)
 
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Vatras.Framework.Variants as V hiding (_-<_>-)
-open import Vatras.Lang.OC
+open import Vatras.Lang.All
+open OC
 open import Vatras.Util.AuxProofs using (true≢false)
 ```
 

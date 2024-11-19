@@ -13,7 +13,7 @@ In our paper, we also only inspect the languages with `n ≥ 2`.
 ```agda
 open import Vatras.Framework.Definitions
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥)
-module Vatras.Lang.NCC where
+module Vatras.Lang.NCC (n : ℕ≥ 2) (Dimension : 𝔽) where
 ```
 
 ## Imports
@@ -36,9 +36,9 @@ open import Vatras.Framework.VariabilityLanguage
 ## Syntax
 
 ```agda
-data NCC (n : ℕ≥ 2) (Dimension : 𝔽) : Size → 𝔼 where
-   _-<_>- : ∀ {i A} → atoms A → List (NCC n Dimension i A) → NCC n Dimension (↑ i) A
-   _⟨_⟩ : ∀ {i A} → Dimension → Vec (NCC n Dimension i A) (ℕ≥.toℕ n) → NCC n Dimension (↑ i) A
+data NCC : Size → 𝔼 where
+   _-<_>- : ∀ {i A} → atoms A → List (NCC i A) → NCC (↑ i) A
+   _⟨_⟩ : ∀ {i A} → Dimension → Vec (NCC i A) (ℕ≥.toℕ n) → NCC (↑ i) A
 ```
 
 ## Semantics
@@ -50,59 +50,55 @@ The differences are:
 - We can then do a vector lookup instead of a list lookup in the semantics.
 
 ```agda
-Configuration : (n : ℕ≥ 2) → (Dimension : 𝔽) → ℂ
-Configuration n Dimension = Dimension → Fin (ℕ≥.toℕ n)
+Configuration : ℂ
+Configuration = Dimension → Fin (ℕ≥.toℕ n)
 
-⟦_⟧ : ∀ {i : Size} {Dimension : 𝔽} {n : ℕ≥ 2} → 𝔼-Semantics (Rose ∞) (Configuration n Dimension) (NCC n Dimension i)
+⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics (Rose ∞) Configuration (NCC i)
 ⟦ a -< cs >- ⟧ c = a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
 ⟦ D ⟨ cs ⟩   ⟧ c = ⟦ Vec.lookup cs (c D) ⟧ c
 
 {-|
 NCC is a variability language for all n ≥ 2.
 -}
-NCCL : ∀ {i : Size} (n : ℕ≥ 2) (Dimension : 𝔽) → VariabilityLanguage (Rose ∞)
-NCCL {i} n Dimension = ⟪ NCC n Dimension i , Configuration n Dimension , ⟦_⟧ ⟫
-```
-
-```agda
-module _ {n : ℕ≥ 2} {Dimension : 𝔽} where
+NCCL : ∀ {i : Size} → VariabilityLanguage (Rose ∞)
+NCCL {i} = ⟪ NCC i , Configuration , ⟦_⟧ ⟫
 ```
 
 ## Utility
 
 Recursively, collect all dimensions used in an n-CC expression:
 ```agda
-  open Data.List using (concatMap) renaming (_++_ to _++l_)
-  import Data.Vec as Vec
+open Data.List using (concatMap) renaming (_++_ to _++l_)
+import Data.Vec as Vec
 
-  dims : ∀ {i : Size} {A : 𝔸} → NCC n Dimension i A → List Dimension
-  dims (_ -< es >-) = concatMap dims es
-  dims (D ⟨ cs ⟩) = D ∷ concatMap dims (Vec.toList cs)
+dims : ∀ {i : Size} {A : 𝔸} → NCC i A → List Dimension
+dims (_ -< es >-) = concatMap dims es
+dims (D ⟨ cs ⟩) = D ∷ concatMap dims (Vec.toList cs)
 ```
 
 ## Show
 
 ```agda
-  open import Data.String as String using (String; _++_; intersperse)
-  module Pretty (show-D : Dimension → String) where
-    open import Vatras.Show.Lines
+open import Data.String as String using (String; _++_; intersperse)
+module Pretty (show-D : Dimension → String) where
+  open import Vatras.Show.Lines
 
-    show : ∀ {i} → NCC n Dimension i (String , String._≟_) → String
-    show (a -< [] >-) = a
-    show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
-    show (D ⟨ cs ⟩) = show-D D ++ "⟨" ++ (intersperse ", " (mapl show (Vec.toList cs))) ++ "⟩"
+  show : ∀ {i} → NCC i (String , String._≟_) → String
+  show (a -< [] >-) = a
+  show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
+  show (D ⟨ cs ⟩) = show-D D ++ "⟨" ++ (intersperse ", " (mapl show (Vec.toList cs))) ++ "⟩"
 
 
-    pretty : ∀ {i : Size} → NCC n Dimension i (String , String._≟_) → Lines
-    pretty (a -< [] >-) = > a
-    pretty (a -< es@(_ ∷ _) >-) = do
-      > a ++ "-<"
-      indent 2 do
-        intersperseCommas (mapl pretty es)
-      > ">-"
-    pretty (D ⟨ cs ⟩) = do
-      > show-D D ++ "⟨"
-      indent 2 do
-        intersperseCommas (mapl pretty (Vec.toList cs))
-      > "⟩"
+  pretty : ∀ {i : Size} → NCC i (String , String._≟_) → Lines
+  pretty (a -< [] >-) = > a
+  pretty (a -< es@(_ ∷ _) >-) = do
+    > a ++ "-<"
+    indent 2 do
+      intersperseCommas (mapl pretty es)
+    > ">-"
+  pretty (D ⟨ cs ⟩) = do
+    > show-D D ++ "⟨"
+    indent 2 do
+      intersperseCommas (mapl pretty (Vec.toList cs))
+    > "⟩"
 ```

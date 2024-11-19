@@ -143,11 +143,11 @@ preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤
 growCompiler : ∀ {i : Size} {D : 𝔽}
   → (n m : ℕ≥ 2)
   → n ℕ≥.≤ m
-  → LanguageCompiler (NCCL {i} n D) (NCCL {i} m D)
+  → LanguageCompiler (NCCL n D {i}) (NCCL m D {i})
 growCompiler n m n≤m .LanguageCompiler.compile = grow n m n≤m
 growCompiler n m n≤m .LanguageCompiler.config-compiler expr .to = conf n m n≤m
 growCompiler n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
 growCompiler n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
-growFrom2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} (sucs zero) D) (NCCL {i} n D)
+growFrom2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL (sucs zero) D {i}) (NCCL n D {i})
 growFrom2Compiler (sucs n) = growCompiler (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)

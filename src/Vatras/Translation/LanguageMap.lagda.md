@@ -288,10 +288,10 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
   open FST.IncompleteOnRose using (FST-is-incomplete)
 
   FST⋡2CC : FSTL F ⋡ 2CCL F
-  FST⋡2CC = less-expressive-from-completeness 2CC-is-complete (FST-is-incomplete F)
+  FST⋡2CC = less-expressive-from-completeness 2CC-is-complete FST-is-incomplete
 
   FST⋡VariantList : FSTL F ⋡ VariantListL Variant
-  FST⋡VariantList = less-expressive-from-completeness (VariantList-is-Complete Variant) (FST-is-incomplete F)
+  FST⋡VariantList = less-expressive-from-completeness (VariantList-is-Complete Variant) FST-is-incomplete
 
   2CC-cannot-be-compiled-to-FST : ¬ (LanguageCompiler (2CCL F) (FSTL F))
   2CC-cannot-be-compiled-to-FST = compiler-cannot-exist FST⋡2CC

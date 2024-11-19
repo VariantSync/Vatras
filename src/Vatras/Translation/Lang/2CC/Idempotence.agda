@@ -18,7 +18,8 @@ open Eq.≡-Reasoning
 open import Vatras.Data.EqIndexedSet using (≗→≅[]; ≅[]-sym)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.Variants as V using (Rose)
-open import Vatras.Lang.2CC
+open import Vatras.Lang.All
+open 2CC
 
 _≟_ : ∀ {i : Size} {A : 𝔸} → DecidableEquality (2CC Dimension i A)
 _≟_ {A = _ , _≟ₐ_} (a₁ -< cs₁ >-) (a₂ -< cs₂ >-) with a₁ ≟ₐ a₂ | List.≡-dec _≟_ cs₁ cs₂

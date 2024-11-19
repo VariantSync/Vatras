@@ -24,8 +24,10 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
-open import Vatras.Lang.2CC as 2CC using (2CC; 2CCL)
-open import Vatras.Lang.ADT as ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
+open import Vatras.Lang.All
+open 2CC using () renaming (2CC to 2CCSyntax) -- Necessary for disambiguation
+open 2CC using (2CC; 2CCL)
+open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
 push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT (Rose ∞) D A) → ADT (Rose ∞) D A
 push-down-artifact {A = A} a cs = go cs []
@@ -82,7 +84,7 @@ preserves-≗ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (expr : 2CC D i A)
   → ADT.⟦ translate expr ⟧ ≗ 2CC.⟦ expr ⟧
 preserves-≗ {D = D} {A = A} (a 2CC.-< cs >-) config =
-    ADT.⟦ translate (a 2CC.-< cs >-) ⟧ config
+    ADT.⟦ translate (a 2CCSyntax.-< cs >-) ⟧ config
   ≡⟨⟩
     ADT.⟦ push-down-artifact a (List.map translate cs) ⟧ config
   ≡⟨ ⟦push-down-artifact⟧ a (List.map translate cs) config ⟩
@@ -92,16 +94,16 @@ preserves-≗ {D = D} {A = A} (a 2CC.-< cs >-) config =
   ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-≗ e config) cs) ⟩
     a V.-< List.map (λ e → 2CC.⟦ e ⟧ config) cs >-
   ≡⟨⟩
-    2CC.⟦ a 2CC.-< cs >- ⟧ config
+    2CC.⟦ a 2CCSyntax.-< cs >- ⟧ config
   ∎
 preserves-≗ (d 2CC.⟨ l , r ⟩) config =
-    ADT.⟦ translate (d 2CC.⟨ l , r ⟩) ⟧ config
+    ADT.⟦ translate (d 2CCSyntax.⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
     ADT.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then ADT.⟦ translate l ⟧ config else ADT.⟦ translate r ⟧ config)
   ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-≗ l config) (preserves-≗ r config) ⟩
-    2CC.⟦ d 2CC.⟨ l , r ⟩ ⟧ config
+    2CC.⟦ d 2CCSyntax.⟨ l , r ⟩ ⟧ config
   ∎
 
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
@@ -109,7 +111,7 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → ADT.⟦ translate expr ⟧ ≅[ id ][ id ] 2CC.⟦ expr ⟧
 preserves expr = ≗→≅[] (preserves-≗ expr)
 
-2CC→ADT : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (2CCL {i} D) (ADTL (Rose ∞) D)
+2CC→ADT : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (2CCL D {i}) (ADTL (Rose ∞) D)
 2CC→ADT .LanguageCompiler.compile = translate
 2CC→ADT .LanguageCompiler.config-compiler expr .to = id
 2CC→ADT .LanguageCompiler.config-compiler expr .from = id

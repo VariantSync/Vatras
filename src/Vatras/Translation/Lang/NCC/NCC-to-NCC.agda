@@ -38,8 +38,8 @@ open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 open import Vatras.Translation.Lang.NCC.ShrinkTo2 using (shrinkTo2Compiler)
 open import Vatras.Translation.Lang.NCC.Grow using (growFrom2Compiler)
 
-NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→NCC n m = shrinkTo2Compiler n ⊕ growFrom2Compiler m
 
-NCC≽NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ≽ NCCL {i} n D
+NCC≽NCC : ∀ {i : Size} {D : 𝔽} → (n m : ℕ≥ 2) → NCCL m (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) ≽ NCCL n D {i}
 NCC≽NCC n m = expressiveness-from-compiler (NCC→NCC n m)

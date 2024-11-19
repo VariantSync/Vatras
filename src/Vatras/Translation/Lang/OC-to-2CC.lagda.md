@@ -358,8 +358,8 @@ preservesₒ-option-size :
   ∀ {n} {i} {A} {c} {a : atoms A} {ls : List (2CC F ∞ A)} {rs : Vec (OC F (↑ i) A) n}
   → (e : OC F i A)
     -----------------------------------------------------------------------------------------------------
-  →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i  } e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
-    ≡ Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {↑ i} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+  →   Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i = i  } e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
+    ≡ Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ catMaybes (⟦_⟧ₒ {i = ↑ i} e c ∷ map (flip ⟦_⟧ₒ c) (toList rs)))
 preservesₒ-option-size (Artifactₒ _ _) = refl
 preservesₒ-option-size (_ ❲ _ ❳)       = refl
 ```

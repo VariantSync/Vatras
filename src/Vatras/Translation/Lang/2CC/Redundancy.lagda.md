@@ -44,7 +44,8 @@ open import Vatras.Util.AuxProofs using (true≢false)
 
 open import Vatras.Data.EqIndexedSet using (≗→≅[]; ≅[]-sym)
 
-open import Vatras.Lang.2CC
+open import Vatras.Lang.All
+open 2CC
 ```
 
 A scope remembers any dominating outer choices.

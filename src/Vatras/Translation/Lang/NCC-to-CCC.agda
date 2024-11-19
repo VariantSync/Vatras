@@ -124,7 +124,7 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → CCC.⟦ translate n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-NCC→CCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (CCCL D)
+NCC→CCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (CCCL D)
 NCC→CCC n .LanguageCompiler.compile = translate n
 NCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
 NCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n

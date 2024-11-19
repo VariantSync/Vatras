@@ -137,7 +137,7 @@ NCC-rename : ∀ {i : Size} {D₁ D₂ : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (NCCL {i} n D₁) (NCCL {i} n D₂)
+  → LanguageCompiler (NCCL n D₁ {i}) (NCCL n D₂ {i})
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.compile = rename n f
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCC-map-config n f⁻¹
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCC-map-config n f
@@ -148,5 +148,5 @@ NCC-rename≽NCC : ∀ {i : Size} {D₁ D₂ : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → NCCL {i} n D₂ ≽ NCCL {i} n D₁
+  → NCCL n D₂ {i} ≽ NCCL n D₁ {i}
 NCC-rename≽NCC n f f⁻¹ is-inverse = expressiveness-from-compiler (NCC-rename n f f⁻¹ is-inverse)

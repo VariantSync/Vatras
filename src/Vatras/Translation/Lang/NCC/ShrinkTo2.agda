@@ -427,7 +427,7 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → NCC.⟦ shrinkTo2 n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-shrinkTo2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+shrinkTo2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 shrinkTo2Compiler n .LanguageCompiler.compile = shrinkTo2 n
 shrinkTo2Compiler n .LanguageCompiler.config-compiler expr .to = conf n
 shrinkTo2Compiler n .LanguageCompiler.config-compiler expr .from = fnoc n
