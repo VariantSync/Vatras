@@ -43,5 +43,5 @@ Configuration = F → Bool
                    then ⟦ l ⟧ c
                    else ⟦ r ⟧ c
 
-GrulerVL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
-GrulerVL {i} = ⟪ Gruler i , Configuration , ⟦_⟧ ⟫
+GrulerL : ∀ {i : Size} → VariabilityLanguage GrulerVariant
+GrulerL {i} = ⟪ Gruler i , Configuration , ⟦_⟧ ⟫
