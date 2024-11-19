@@ -3,6 +3,7 @@ module Vatras.Test.Test.VariantList-Completeness where
 open import Level using (Level; 0ℓ; Lift; lift) renaming (suc to lsuc)
 open import Size using (∞)
 
+open import Data.Empty.Polymorphic using (⊥)
 open import Data.Nat using (ℕ; suc)
 open import Data.Fin using (Fin) renaming (zero to f-zero; suc to f-suc)
 open import Data.Product using (_,_; proj₁; proj₂)
@@ -14,8 +15,8 @@ open import Vatras.Test.UnitTest
 
 open import Vatras.Framework.Variants using (Rose)
 Variant = Rose ∞
-import Vatras.Lang.VariantList
-open Vatras.Lang.VariantList Variant using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
+open import Vatras.Lang.All.Fixed ⊥ Variant
+open VariantList using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
 open import Vatras.Framework.VariantGenerator Variant using (VariantGenerator)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VariantGenerator A n)
