@@ -36,16 +36,16 @@ open import Vatras.Translation.Lang.NCC.Grow using (growFrom2Compiler)
 module 2Ary where
   translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
     → 2CC D i A
-    → NCC (sucs zero) D i A
+    → NCC D (sucs zero) i A
   translate (a -< cs >-) = a -< List.map translate cs >-
   translate (d ⟨ l , r ⟩) = d ⟨ translate l ∷ translate r ∷ [] ⟩
 
-  conf : ∀ {D : Set} → 2CC.Configuration D → NCC.Configuration (sucs zero) D
+  conf : ∀ {D : Set} → 2CC.Configuration D → NCC.Configuration D (sucs zero)
   conf config d with config d
   ... | true = zero
   ... | false = suc zero
 
-  fnoc : ∀ {D : Set} → NCC.Configuration (sucs zero) D → 2CC.Configuration D
+  fnoc : ∀ {D : Set} → NCC.Configuration D (sucs zero) → 2CC.Configuration D
   fnoc config d with config d
   ... | zero = true
   ... | suc zero = false
@@ -131,7 +131,7 @@ module 2Ary where
     → NCC.⟦ translate e ⟧ ≅[ fnoc ][ conf ] 2CC.⟦ e ⟧
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  2CC→NCC : ∀ {i : Size} {D : Set} → LanguageCompiler (2CCL D {i}) (NCCL (sucs zero) D {i})
+  2CC→NCC : ∀ {i : Size} {D : Set} → LanguageCompiler (2CCL D {i}) (NCCL D (sucs zero) {i})
   2CC→NCC .LanguageCompiler.compile = translate
   2CC→NCC .LanguageCompiler.config-compiler expr .to = conf
   2CC→NCC .LanguageCompiler.config-compiler expr .from = fnoc
@@ -139,8 +139,8 @@ module 2Ary where
 
 
 -- A generalization which translates to an arbitrary n instead of 2.
-2CC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL D {i}) (NCCL n D {i})
+2CC→NCC : ∀ {i : Size} {D : Set} → (n : ℕ≥ 2) → LanguageCompiler (2CCL D {i}) (NCCL D n {i})
 2CC→NCC n = 2Ary.2CC→NCC ⊕ growFrom2Compiler n
 
-NCC≽2CC : ∀ {D : Set} → (n : ℕ≥ 2) → NCCL n D ≽ 2CCL D
+NCC≽2CC : ∀ {D : Set} → (n : ℕ≥ 2) → NCCL D n ≽ 2CCL D
 NCC≽2CC n = expressiveness-from-compiler (2CC→NCC n)

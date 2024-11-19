@@ -40,29 +40,29 @@ open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 grow : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n m : ℕ≥ 2)
   → n ℕ≥.≤ m
-  → NCC n D i A
-  → NCC m D i A
+  → NCC D n i A
+  → NCC D m i A
 grow n m n≤m (a -< cs >-) = a -< List.map (grow n m n≤m) cs >-
 grow (sucs n) m n≤m (d ⟨ cs ⟩) = d ⟨ Vec.saturate n≤m (Vec.map (grow (sucs n) m n≤m) cs) ⟩
 
 conf : ∀ {D : 𝔽}
   → (n m : ℕ≥ 2)
   → n ℕ≥.≤ m
-  → NCC.Configuration n D
-  → NCC.Configuration m D
+  → NCC.Configuration D n
+  → NCC.Configuration D m
 conf (sucs n) (sucs m) n≤m config d = Fin.inject≤ (config d) n≤m
 
 fnoc : ∀ {D : 𝔽}
   → (n m : ℕ≥ 2)
   → n ℕ≥.≤ m
-  → NCC.Configuration m D
-  → NCC.Configuration n D
+  → NCC.Configuration D m
+  → NCC.Configuration D n
 fnoc (sucs n) (sucs m) n≤m config d = ℕ≥.cappedFin (Fin.toℕ (config d))
 
 preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n m : ℕ≥ 2)
   → (n≤m : n ℕ≥.≤ m)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ grow n m n≤m expr ⟧ ⊆[ fnoc n m n≤m ] NCC.⟦ expr ⟧
 preserves-⊆ n m n≤m (a -< cs >-) config =
     NCC.⟦ grow n m n≤m (a -< cs >-) ⟧ config
@@ -98,7 +98,7 @@ preserves-⊆ (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) config =
 preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n m : ℕ≥ 2)
   → (n≤m : n ℕ≥.≤ m)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ expr ⟧ ⊆[ conf n m n≤m ] NCC.⟦ grow n m n≤m expr ⟧
 preserves-⊇ n m n≤m (a -< cs >-) config =
     a V.-< List.map (λ e → NCC.⟦ e ⟧ config) cs >-
@@ -136,18 +136,18 @@ preserves-⊇ (sucs n) (sucs m) n≤m (d ⟨ cs ⟩) config =
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n m : ℕ≥ 2)
   → (n≤m : n ℕ≥.≤ m)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ grow n m n≤m expr ⟧ ≅[ fnoc n m n≤m ][ conf n m n≤m ] NCC.⟦ expr ⟧
 preserves n m n≤m expr = preserves-⊆ n m n≤m expr , preserves-⊇ n m n≤m expr
 
 growCompiler : ∀ {i : Size} {D : 𝔽}
   → (n m : ℕ≥ 2)
   → n ℕ≥.≤ m
-  → LanguageCompiler (NCCL n D {i}) (NCCL m D {i})
+  → LanguageCompiler (NCCL D n {i}) (NCCL D m {i})
 growCompiler n m n≤m .LanguageCompiler.compile = grow n m n≤m
 growCompiler n m n≤m .LanguageCompiler.config-compiler expr .to = conf n m n≤m
 growCompiler n m n≤m .LanguageCompiler.config-compiler expr .from = fnoc n m n≤m
 growCompiler n m n≤m .LanguageCompiler.preserves expr = ≅[]-sym (preserves n m n≤m expr)
 
-growFrom2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL (sucs zero) D {i}) (NCCL n D {i})
+growFrom2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL D (sucs zero) {i}) (NCCL D n {i})
 growFrom2Compiler (sucs n) = growCompiler (sucs zero) (sucs n) (ℕ≥.lift≤ z≤n)
