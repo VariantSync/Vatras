@@ -32,27 +32,27 @@ open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → NCC n D i A
+  → NCC D n i A
   → CCC D ∞ A
 translate n (a -< cs >-) = a -< List.map (translate n) cs >-
 translate (sucs n) (d ⟨ c ∷ cs ⟩) = d ⟨ List⁺.fromVec (Vec.map (translate (sucs n)) (c ∷ cs)) ⟩
 
 conf : ∀ {D : 𝔽}
   → (n : ℕ≥ 2)
-  → NCC.Configuration n D
+  → NCC.Configuration D n
   → CCC.Configuration D
 conf (sucs n) config d = Fin.toℕ (config d)
 
 fnoc : ∀ {D : 𝔽}
   → (n : ℕ≥ 2)
   → CCC.Configuration D
-  → NCC.Configuration n D
+  → NCC.Configuration D n
 fnoc (sucs n) config d = ℕ≥.cappedFin (config d)
 
 
 preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → CCC.⟦ translate n expr ⟧ ⊆[ fnoc n ] NCC.⟦ expr ⟧
 preserves-⊆ n (a -< cs >-) config =
     CCC.⟦ translate n (a -< cs >-) ⟧ config
@@ -85,7 +85,7 @@ preserves-⊆ (sucs n) (d ⟨ c ∷ cs ⟩) config =
 
 preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ expr ⟧ ⊆[ conf n ] CCC.⟦ translate n expr ⟧
 preserves-⊇ n (a -< cs >-) config =
     NCC.⟦ a -< cs >- ⟧ config
@@ -120,15 +120,15 @@ preserves-⊇ {D} {A} (sucs n) (d ⟨ c ∷ cs ⟩) config =
 
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → CCC.⟦ translate n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-NCC→CCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (CCCL D)
+NCC→CCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL D n {i}) (CCCL D)
 NCC→CCC n .LanguageCompiler.compile = translate n
 NCC→CCC n .LanguageCompiler.config-compiler expr .to = conf n
 NCC→CCC n .LanguageCompiler.config-compiler expr .from = fnoc n
 NCC→CCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
-CCC≽NCC : {D : 𝔽} → (n : ℕ≥ 2) → CCCL D ≽ NCCL n D
+CCC≽NCC : {D : 𝔽} → (n : ℕ≥ 2) → CCCL D ≽ NCCL D n
 CCC≽NCC n = expressiveness-from-compiler (NCC→CCC n)

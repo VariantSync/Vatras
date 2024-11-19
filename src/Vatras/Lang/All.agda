@@ -33,8 +33,8 @@ module CCC where
 
 module NCC where
   open Vatras.Lang.NCC using (NCC; NCCL; Configuration) public
-  module _ {n : ℕ≥ 2} {F : 𝔽} where
-    open Vatras.Lang.NCC n F hiding (NCC; NCCL; Configuration) public
+  module _ {F : 𝔽} {n : ℕ≥ 2} where
+    open Vatras.Lang.NCC F n hiding (NCC; NCCL; Configuration) public
 
 module 2CC where
   open Vatras.Lang.2CC using (2CC; 2CCL; Configuration) public

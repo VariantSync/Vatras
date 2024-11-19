@@ -48,7 +48,7 @@ Artifact = String , String._≟_
 
 open CCC-to-NCC using (⌈_⌉; numberOfAlternatives≤⌈_⌉)
 
-CCC→NCC-Exact : (e : CCC Feature ∞ Artifact) → NCC ⌈ e ⌉ Feature ∞ Artifact
+CCC→NCC-Exact : (e : CCC Feature ∞ Artifact) → NCC Feature ⌈ e ⌉ ∞ Artifact
 CCC→NCC-Exact e = CCC-to-NCC.translate ⌈ e ⌉ e (numberOfAlternatives≤⌈_⌉ e)
 
 

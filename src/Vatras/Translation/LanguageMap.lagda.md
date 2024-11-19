@@ -132,18 +132,18 @@ We need to require that there exists an injection between `F × ℕ` and the
 annotation language `F : 𝔽`to obtain expressiveness proofs which are independent
 of the annotation language `F`. Without this restriction some expressiveness
 theorems would sound like
-  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n (F × ℕ) ≽ CCCL F`
+  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL (F × ℕ) n ≽ CCCL F`
 whereas we would like to obtain
-  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n F ≽ CCCL F`
+  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL F n ≽ CCCL F`
 so we can also get
-  `NCC≋CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n F ≋ CCCL F`
+  `NCC≋CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL F n ≋ CCCL F`
 
 The intuition behind this restriction is that we may need to extend the set of
 annotations `F` by new annotations. For example, when labeling the individual
 choices in `NCC n` with new annotations while translating to `NCC 2` in
 `Translation.Lang.NCC.ShrinkTo2`. For practical applications, expressiveness
 theorems like
-  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL n (F × ℕ) ≽ CCCL F`
+  `NCC≽CCC : ∀ {F : 𝔽} → (n : ℕ≥ 2) → NCCL (F × ℕ) n ≽ CCCL F`
 make the changes in the feature model explicit. For theoretical results however,
 it is easier to assume that the set of annotations `F` is infinite, which is
 equivalent to the restriction used here (except if `F` is empty).
@@ -170,19 +170,19 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
       (Eq.cong proj₁ (f⁻¹∘f≗id (D , Fin.toℕ k)))
       (Eq.trans (Eq.cong (ℕ≥.cappedFin ∘ proj₂) (f⁻¹∘f≗id (D , Fin.toℕ k))) (ℕ≥.cappedFin-toℕ k))
 
-  CCC≽NCC : ∀ (n : ℕ≥ 2) → CCCL F ≽ NCCL n F
+  CCC≽NCC : ∀ (n : ℕ≥ 2) → CCCL F ≽ NCCL F n
   CCC≽NCC = NCC-to-CCC.CCC≽NCC
 
-  NCC≽CCC : ∀ (n : ℕ≥ 2) → NCCL n F ≽ CCCL F
+  NCC≽CCC : ∀ (n : ℕ≥ 2) → NCCL F n ≽ CCCL F
   NCC≽CCC n = ≽-trans (NCC-rename≽NCC n f f⁻¹ f⁻¹∘f≗id) (CCC-to-NCC.NCC≽CCC n)
 
-  NCC≽NCC : ∀ (n m : ℕ≥ 2) → NCCL n F ≽ NCCL m F
+  NCC≽NCC : ∀ (n m : ℕ≥ 2) → NCCL F n ≽ NCCL F m
   NCC≽NCC n m = ≽-trans (NCC-rename≽NCC n (f-Fin m) (f⁻¹-Fin m) (f⁻¹-Fin∘f-Fin≗id m)) (NCC-to-NCC.NCC≽NCC m n)
 
-  NCC≽2CC : ∀ (n : ℕ≥ 2) → NCCL n F ≽ 2CCL F
+  NCC≽2CC : ∀ (n : ℕ≥ 2) → NCCL F n ≽ 2CCL F
   NCC≽2CC n = 2CC-to-NCC.NCC≽2CC n
 
-  2CC≽NCC : ∀ (n : ℕ≥ 2) → 2CCL F ≽ NCCL n F
+  2CC≽NCC : ∀ (n : ℕ≥ 2) → 2CCL F ≽ NCCL F n
   2CC≽NCC n = ≽-trans (2CC-rename≽2CC (f-Fin n) (f⁻¹-Fin n) (f⁻¹-Fin∘f-Fin≗id n)) (NCC-to-2CC.2CC≽NCC n)
 
   CCC≽2CC : CCCL F ≽ 2CCL F
@@ -219,13 +219,13 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   2CC≽FST D _==_ = ≽-trans 2CC≽CCC (≽-trans (CCC≽VariantList D) (VariantList≽FST _==_))
 
 
-  CCC≋NCC : ∀ (n : ℕ≥ 2) → CCCL F ≋ NCCL n F
+  CCC≋NCC : ∀ (n : ℕ≥ 2) → CCCL F ≋ NCCL F n
   CCC≋NCC n = CCC≽NCC n , NCC≽CCC n
 
-  NCC≋NCC : ∀ (n m : ℕ≥ 2) → NCCL n F ≋ NCCL m F
+  NCC≋NCC : ∀ (n m : ℕ≥ 2) → NCCL F n ≋ NCCL F m
   NCC≋NCC n m = NCC≽NCC n m , NCC≽NCC m n
 
-  NCC≋2CC : ∀ (n : ℕ≥ 2) → NCCL n F ≋ 2CCL F
+  NCC≋2CC : ∀ (n : ℕ≥ 2) → NCCL F n ≋ 2CCL F
   NCC≋2CC n = NCC≽2CC n , 2CC≽NCC n
 
   CCC≋2CC : CCCL F ≋ 2CCL F
@@ -262,7 +262,7 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
   CCC-is-complete : Complete (CCCL F)
   CCC-is-complete = completeness-by-expressiveness (VariantList-is-Complete Variant) (CCC≽VariantList D)
 
-  NCC-is-complete : ∀ (n : ℕ≥ 2) → Complete (NCCL n F)
+  NCC-is-complete : ∀ (n : ℕ≥ 2) → Complete (NCCL F n)
   NCC-is-complete n = completeness-by-expressiveness CCC-is-complete (NCC≽CCC n)
 
   2CC-is-complete : Complete (2CCL F)
@@ -333,7 +333,7 @@ ADT-is-sound {F} _==_ = soundness-by-expressiveness (VariantList-is-Sound Varian
 2CC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (2CCL F)
 2CC-is-sound _==_ = soundness-by-expressiveness (ADT-is-sound _==_) 2CC-to-ADT.ADT≽2CC
 
-NCC-is-sound : ∀ {F : 𝔽} (n : ℕ≥ 2) (_==_ : DecidableEquality F) → Sound (NCCL n F)
+NCC-is-sound : ∀ {F : 𝔽} (n : ℕ≥ 2) (_==_ : DecidableEquality F) → Sound (NCCL F n)
 NCC-is-sound n _==_ = soundness-by-expressiveness (2CC-is-sound (decidableEquality-× _==_ Fin._≟_)) (NCC-to-2CC.2CC≽NCC n)
 
 CCC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (CCCL F)

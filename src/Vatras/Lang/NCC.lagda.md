@@ -13,7 +13,7 @@ In our paper, we also only inspect the languages with `n ≥ 2`.
 ```agda
 open import Vatras.Framework.Definitions
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥)
-module Vatras.Lang.NCC (n : ℕ≥ 2) (Dimension : 𝔽) where
+module Vatras.Lang.NCC (Dimension : 𝔽) (n : ℕ≥ 2) where
 ```
 
 ## Imports
