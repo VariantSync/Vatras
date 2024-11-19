@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions
 
-module Vatras.Lang.NADT (V : 𝕍) (F : 𝔽) where
+module Vatras.Lang.NADT (F : 𝔽) (V : 𝕍) where
 
 open import Data.Nat using (ℕ)
 open import Data.List.NonEmpty using (List⁺)

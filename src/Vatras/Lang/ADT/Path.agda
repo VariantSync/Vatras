@@ -30,7 +30,7 @@ open Eq.≡-Reasoning
 
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Util.Suffix using (_endswith_)
-open import Vatras.Lang.ADT V F using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
+open import Vatras.Lang.ADT F V using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
 
 -- A selection of a feature matches it to a boolean value.
 record Selection : Set where

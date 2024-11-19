@@ -85,14 +85,14 @@ open Vatras.Translation.LanguageMap.Expressiveness-String
 By transitivity, we can conlude that our variability language is
 also at least as expressive as algebraic decision trees.
 ```agda
-MyLang≽ADT : MyVarLang ≽ ADT.ADTL V F
+MyLang≽ADT : MyVarLang ≽ ADT.ADTL F V
 MyLang≽ADT = ≽-trans MyLang≽2CC 2CC≽ADT
 ```
 
 From an expressiveness proof, we can also reverse engineer the
 compiler that constitutes the proof:
 ```agda
-compile-to-ADT : LanguageCompiler (ADT.ADTL V F) MyVarLang
+compile-to-ADT : LanguageCompiler (ADT.ADTL F V) MyVarLang
 compile-to-ADT = compiler-from-expressiveness MyLang≽ADT
 ```
 

@@ -29,23 +29,23 @@ open 2CC using () renaming (2CC to 2CCSyntax) -- Necessary for disambiguation
 open 2CC using (2CC; 2CCL)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
-push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT (Rose ∞) D A) → ADT (Rose ∞) D A
+push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT D (Rose ∞) A) → ADT D (Rose ∞) A
 push-down-artifact {A = A} a cs = go cs []
   module push-down-artifact-Implementation where
-  go : ∀ {i : Size} {D : 𝔽} → List (ADT (Rose ∞) D A) → List (Rose ∞ A) → ADT (Rose ∞) D A
+  go : ∀ {i : Size} {D : 𝔽} → List (ADT D (Rose ∞) A) → List (Rose ∞ A) → ADT D (Rose ∞) A
   go [] vs = leaf (a V.-< List.reverse vs >-)
   go (leaf v ∷ cs) vs = go cs (v ∷ vs)
   go (d ⟨ c₁ , c₂ ⟩ ∷ cs) vs = d ⟨ go (c₁ ∷ cs) vs , go (c₂ ∷ cs) vs ⟩
 
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → 2CC D i A
-  → ADT (Rose ∞) D A
+  → ADT D (Rose ∞) A
 translate (a 2CC.-< cs >-) = push-down-artifact a (List.map translate cs)
 translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
 
 ⟦push-down-artifact⟧ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (a : atoms A)
-  → (cs : List (ADT (Rose ∞) D A))
+  → (cs : List (ADT D (Rose ∞) A))
   → (config : ADT.Configuration D)
   → ADT.⟦ push-down-artifact a cs ⟧ config ≡ a V.-< List.map (λ e → ADT.⟦ e ⟧ config) cs >-
 ⟦push-down-artifact⟧ {D = D} {A = A} a cs config = go' cs []
@@ -53,7 +53,7 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
   open push-down-artifact-Implementation
 
   go' : ∀ {i : Size}
-    → (cs' : List (ADT (Rose ∞) D A))
+    → (cs' : List (ADT D (Rose ∞) A))
     → (vs : List (Rose ∞ A))
     → ADT.⟦ go a cs cs' vs ⟧ config ≡ a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) cs' >-
   go' [] vs = Eq.sym (Eq.cong₂ V._-<_>- refl (Eq.trans (List.ʳ++-defn vs) (List.++-identityʳ (List.reverse vs))))
@@ -111,11 +111,11 @@ preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → ADT.⟦ translate expr ⟧ ≅[ id ][ id ] 2CC.⟦ expr ⟧
 preserves expr = ≗→≅[] (preserves-≗ expr)
 
-2CC→ADT : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (2CCL D {i}) (ADTL (Rose ∞) D)
+2CC→ADT : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (2CCL D {i}) (ADTL D (Rose ∞))
 2CC→ADT .LanguageCompiler.compile = translate
 2CC→ADT .LanguageCompiler.config-compiler expr .to = id
 2CC→ADT .LanguageCompiler.config-compiler expr .from = id
 2CC→ADT .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
-ADT≽2CC : ∀ {D : 𝔽} → ADTL (Rose ∞) D ≽ 2CCL D
+ADT≽2CC : ∀ {D : 𝔽} → ADTL D (Rose ∞) ≽ 2CCL D
 ADT≽2CC = expressiveness-from-compiler 2CC→ADT

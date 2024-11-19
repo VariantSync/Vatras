@@ -35,7 +35,7 @@ open Eq.≡-Reasoning
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Compiler
 open import Vatras.Data.EqIndexedSet using (_≅[_][_]_; ≐→≅[])
-open import Vatras.Lang.ADT V F
+open import Vatras.Lang.ADT F V
 open import Vatras.Lang.ADT.Path F V _==_
 
 {-

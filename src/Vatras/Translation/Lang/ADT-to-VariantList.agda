@@ -33,7 +33,7 @@ open import Vatras.Framework.Compiler
 open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Vatras.Framework.Properties.Soundness V using (Sound)
 open import Vatras.Framework.Proof.ForFree V using (soundness-by-expressiveness)
-open import Vatras.Lang.ADT V F as ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
+open import Vatras.Lang.ADT F V as ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 open import Vatras.Lang.VariantList V as VariantList using (VariantList; VariantListL; VariantList-is-Sound)
 
 open import Vatras.Lang.ADT.Path F V _==_

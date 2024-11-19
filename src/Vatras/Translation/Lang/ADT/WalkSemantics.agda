@@ -30,7 +30,7 @@ open import Vatras.Data.EqIndexedSet hiding (_∈_)
 open Vatras.Data.EqIndexedSet.≅-Reasoning
 
 open import Vatras.Framework.VariabilityLanguage
-open import Vatras.Lang.ADT V F using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
+open import Vatras.Lang.ADT F V using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
 open import Vatras.Lang.ADT.Path F V _==_
 open import Vatras.Translation.Lang.ADT.DeadElim F V _==_
 

@@ -2,7 +2,7 @@
 This module defines algebraic decision trees as defined in our paper.
 -}
 open import Vatras.Framework.Definitions
-module Vatras.Lang.ADT (V : 𝕍) (F : 𝔽) where
+module Vatras.Lang.ADT (F : 𝔽) (V : 𝕍) where
 
 open import Data.Bool using (Bool; if_then_else_)
 open import Vatras.Framework.VariabilityLanguage
