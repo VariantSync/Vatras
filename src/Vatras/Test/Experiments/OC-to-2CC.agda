@@ -19,8 +19,6 @@ open import Vatras.Framework.Variants using (Rose; show-rose)
 Feature = String
 
 open import Vatras.Lang.All
--- open import Vatras.Lang.OC Feature as OCL renaming (Configuration to Conf-oc)
--- open import Vatras.Lang.2CC as 2CCL
 open OC using (WFOC; WFOCL)
 open OC.Show id
 open 2CC using (2CCL)

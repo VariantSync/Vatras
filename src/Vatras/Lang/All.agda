@@ -21,7 +21,10 @@ open import Size using (∞)
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; 𝕍)
 open import Vatras.Framework.Variants using (Rose)
 
-module VariantList = Vatras.Lang.VariantList
+module VariantList where
+  open Vatras.Lang.VariantList hiding (Configuration) public
+  module _ where
+    open Vatras.Lang.VariantList (λ _ → ⊥) using (Configuration) public
 
 module CCC where
   open Vatras.Lang.CCC using (CCC; CCCL; Configuration) public

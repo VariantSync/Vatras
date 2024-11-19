@@ -33,12 +33,8 @@ open import Vatras.Framework.Compiler
 open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Vatras.Framework.Properties.Soundness V using (Sound)
 open import Vatras.Framework.Proof.ForFree V using (soundness-by-expressiveness)
-open import Vatras.Lang.ADT V F
-  using (ADT; ADTL; leaf; _⟨_,_⟩)
-  renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)
-open import Vatras.Lang.VariantList V
-  using (VariantList; VariantListL; VariantList-is-Sound)
-  renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Confₗ)
+open import Vatras.Lang.ADT V F as ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
+open import Vatras.Lang.VariantList V as VariantList using (VariantList; VariantListL; VariantList-is-Sound)
 
 open import Vatras.Lang.ADT.Path F V _==_
 open import Vatras.Translation.Lang.ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ; UndeadADT; UndeadADTL)
@@ -103,7 +99,7 @@ conf-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
 
 preservation-walk-to-list-conf : ∀ {A : 𝔸}
   → (e : ADT A)
-  → walk e ⊆[ conf e ] ⟦ tr e ⟧ₗ
+  → walk e ⊆[ conf e ] VariantList.⟦ tr e ⟧
 preservation-walk-to-list-conf .(leaf _) (.[] is-valid tleaf) = refl
 preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left t) =
   let c = pl is-valid t
@@ -111,9 +107,9 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left 
   begin
     walk l c
   ≡⟨ preservation-walk-to-list-conf l c ⟩
-    ⟦ tr l ⟧ₗ (conf l c)
+    VariantList.⟦ tr l ⟧ (conf l c)
   ≡⟨ find-or-last-append (tr l) (tr r) (conf-bounded l c) ⟨
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conf l c)
+    VariantList.⟦ tr l ⁺++⁺ tr r ⟧ (conf l c)
   ∎
 preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) =
   let c = pr is-valid t
@@ -121,37 +117,37 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right
   begin
     walk r c
   ≡⟨ preservation-walk-to-list-conf r c ⟩
-    ⟦ tr r ⟧ₗ (conf r c)
+    VariantList.⟦ tr r ⟧ (conf r c)
   ≡⟨ find-or-last-prepend-+ (conf r c) (tr l) (tr r) ⟨
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + (conf r c))
+    VariantList.⟦ tr l ⁺++⁺ tr r ⟧ (length (tr l) + (conf r c))
   ∎
 
 preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
   → (e : ADT A)
-  → ⟦ tr e ⟧ₗ ⊆[ fnoc e ] walk e
+  → VariantList.⟦ tr e ⟧ ⊆[ fnoc e ] walk e
 preservation-walk-to-list-fnoc (leaf v) i = refl
 preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
 ... | no ¬p =
   begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+    VariantList.⟦ tr (D ⟨ l , r ⟩) ⟧ i
   ≡⟨⟩
     find-or-last i ((tr l) ⁺++⁺ (tr r))
   ≡⟨ find-or-last-append (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
     find-or-last i (tr l)
   ≡⟨⟩
-    ⟦ tr l ⟧ₗ i
+    VariantList.⟦ tr l ⟧ i
   ≡⟨ preservation-walk-to-list-fnoc l i ⟩
     walk l (path (fnoc l i) is-valid valid (fnoc l i))
   ∎
 ... | yes len[tr-l]≤i  =
   begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+    VariantList.⟦ tr (D ⟨ l , r ⟩) ⟧ i
   ≡⟨⟩
     find-or-last i ((tr l) ⁺++⁺ (tr r))
   ≡⟨ find-or-last-prepend-∸ (tr l) (tr r) len[tr-l]≤i ⟩
     find-or-last (i ∸ length (tr l)) (tr r)
   ≡⟨⟩
-    ⟦ tr r ⟧ₗ (i ∸ length (tr l))
+    VariantList.⟦ tr r ⟧ (i ∸ length (tr l))
   ≡⟨ preservation-walk-to-list-fnoc r (i ∸ length (tr l)) ⟩
     walk r (path (fnoc r (i ∸ length (tr l))) is-valid valid (fnoc r (i ∸ length (tr l))))
   ∎
@@ -164,25 +160,25 @@ gathering all variants in leafs from left to right preserves semantics.
 -}
 preservation-walk-to-list : ∀ {A : 𝔸}
   → (e : ADT A)
-  → walk e ≅[ conf e ][ fnoc e ] ⟦ tr e ⟧ₗ
+  → walk e ≅[ conf e ][ fnoc e ] VariantList.⟦ tr e ⟧
 preservation-walk-to-list e = (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
 
-conf-undead-to-list : ∀ {A} → UndeadADT A → Conf₂ → ℕ
+conf-undead-to-list : ∀ {A} → UndeadADT A → ADT.Configuration → ℕ
 conf-undead-to-list e = conf (node e) ∘ Walk.fun-to-path (node e)
 
-fnoc-undead-to-list : ∀ {A} → UndeadADT A → ℕ → Conf₂
+fnoc-undead-to-list : ∀ {A} → UndeadADT A → ℕ → ADT.Configuration
 fnoc-undead-to-list e = Walk.path-to-fun (node e) ∘ fnoc (node e)
 
 preservation-undead-to-list : ∀ {A : 𝔸}
   → (e : UndeadADT A)
-  → ⟦ e ⟧ᵤ ≅[ conf-undead-to-list e ][ fnoc-undead-to-list e ] ⟦ tr-undead e ⟧ₗ
+  → ⟦ e ⟧ᵤ ≅[ conf-undead-to-list e ][ fnoc-undead-to-list e ] VariantList.⟦ tr-undead e ⟧
 preservation-undead-to-list e =
   ≅[]-begin
     ⟦ e ⟧ᵤ
   ≅[]⟨ Walk.preservation e ⟩
     walk (node e)
   ≅[]⟨ preservation-walk-to-list (node e) ⟩
-    ⟦ tr-undead e ⟧ₗ
+    VariantList.⟦ tr-undead e ⟧
   ≅[]-∎
 
 UndeadADT→VariantList : LanguageCompiler UndeadADTL VariantListL
