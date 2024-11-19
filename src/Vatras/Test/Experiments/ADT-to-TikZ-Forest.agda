@@ -24,7 +24,7 @@ STR = (String , String._≟_)
 
 STRCCC = CCC String ∞ STR
 STR2CC = 2CC String ∞ STR
-STRADT = ADT (Rose ∞) String STR
+STRADT = ADT String (Rose ∞) STR
 
 rose-to-tikz-forest : ∀ {i} {A : 𝔸} → (atoms A → String) → Rose i A → Lines
 rose-to-tikz-forest pretty-atom (a -< [] >-) = > "[" ++ pretty-atom a ++ "]"
@@ -34,7 +34,7 @@ rose-to-tikz-forest pretty-atom (a -< cs@(_ ∷ _) >-) = do
     lines (List.map (rose-to-tikz-forest pretty-atom) cs)
   > "]"
 
-adt-to-tikz-forest : ∀ {A : 𝔸} → {V : 𝕍} → {F : 𝔽} → (V A → Lines) → (F → String) → ADT V F A → Lines
+adt-to-tikz-forest : ∀ {A : 𝔸} → {V : 𝕍} → {F : 𝔽} → (V A → Lines) → (F → String) → ADT F V A → Lines
 adt-to-tikz-forest pretty-variant show-F (leaf v) = pretty-variant v
 adt-to-tikz-forest pretty-variant show-F (D ⟨ l , r ⟩) = do
   > "[" ++ show-F D

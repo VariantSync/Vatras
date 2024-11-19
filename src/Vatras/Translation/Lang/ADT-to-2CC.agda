@@ -28,11 +28,11 @@ open 2CC using () renaming (2CC to 2CCSyntax) -- Necessary for disambiguation
 open 2CC using (2CC; 2CCL)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
-translate : ∀ {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (2CCL F) → ADT (Rose ∞) F A → 2CC F ∞ A
+translate : ∀ {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (2CCL F) → ADT F (Rose ∞) A → 2CC F ∞ A
 translate Variant→2CC (ADT.leaf v) = LanguageCompiler.compile Variant→2CC v
 translate Variant→2CC (f ADT.⟨ l , r ⟩) = f 2CCSyntax.⟨ translate Variant→2CC l , translate Variant→2CC r ⟩
 
-preserves-≗ : ∀ {F : 𝔽} {A : 𝔸} → (Variant→2CC : VariantEncoder (Rose ∞) (2CCL F)) → (expr : ADT (Rose ∞) F A) → 2CC.⟦ translate Variant→2CC expr ⟧ ≗ ADT.⟦ expr ⟧
+preserves-≗ : ∀ {F : 𝔽} {A : 𝔸} → (Variant→2CC : VariantEncoder (Rose ∞) (2CCL F)) → (expr : ADT F (Rose ∞) A) → 2CC.⟦ translate Variant→2CC expr ⟧ ≗ ADT.⟦ expr ⟧
 preserves-≗ {A = A} Variant→2CC (ADT.leaf v) config =
     2CC.⟦ translate Variant→2CC (leaf v) ⟧ config
   ≡⟨⟩
@@ -40,7 +40,7 @@ preserves-≗ {A = A} Variant→2CC (ADT.leaf v) config =
   ≡⟨ proj₂ (LanguageCompiler.preserves Variant→2CC v) config ⟩
     v
   ≡⟨⟩
-    ADT.⟦ leaf {Rose ∞} v ⟧ config
+    ADT.⟦ leaf {V = Rose ∞} v ⟧ config
   ∎
 preserves-≗ Variant→2CC (f ADT.⟨ l , r ⟩) config =
     2CC.⟦ translate Variant→2CC (f ⟨ l , r ⟩) ⟧ config
@@ -54,14 +54,14 @@ preserves-≗ Variant→2CC (f ADT.⟨ l , r ⟩) config =
     ADT.⟦ f ⟨ l , r ⟩ ⟧ config
   ∎
 
-preserves : ∀ {F : 𝔽} {A : 𝔸} → (Variant→2CC : VariantEncoder (Rose ∞) (2CCL F)) → (expr : ADT (Rose ∞) F A) → 2CC.⟦ translate Variant→2CC expr ⟧ ≅[ id ][ id ] ADT.⟦ expr ⟧
+preserves : ∀ {F : 𝔽} {A : 𝔸} → (Variant→2CC : VariantEncoder (Rose ∞) (2CCL F)) → (expr : ADT F (Rose ∞) A) → 2CC.⟦ translate Variant→2CC expr ⟧ ≅[ id ][ id ] ADT.⟦ expr ⟧
 preserves Variant→2CC expr = ≗→≅[] (preserves-≗ Variant→2CC expr)
 
-ADT→2CC : ∀ {F : 𝔽} → VariantEncoder (Rose ∞) (2CCL F) → LanguageCompiler (ADTL (Rose ∞) F) (2CCL F)
+ADT→2CC : ∀ {F : 𝔽} → VariantEncoder (Rose ∞) (2CCL F) → LanguageCompiler (ADTL F (Rose ∞)) (2CCL F)
 ADT→2CC Variant→2CC .LanguageCompiler.compile = translate Variant→2CC
 ADT→2CC Variant→2CC .LanguageCompiler.config-compiler expr .to = id
 ADT→2CC Variant→2CC .LanguageCompiler.config-compiler expr .from = id
 ADT→2CC Variant→2CC .LanguageCompiler.preserves expr = ≅[]-sym (preserves Variant→2CC expr)
 
-2CC≽ADT : ∀ {F : 𝔽} → VariantEncoder (Rose ∞) (2CCL F) → 2CCL F ≽ ADTL (Rose ∞) F
+2CC≽ADT : ∀ {F : 𝔽} → VariantEncoder (Rose ∞) (2CCL F) → 2CCL F ≽ ADTL F (Rose ∞)
 2CC≽ADT Variant→2CC = expressiveness-from-compiler (ADT→2CC Variant→2CC)

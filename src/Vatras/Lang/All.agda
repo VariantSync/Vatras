@@ -43,17 +43,17 @@ module 2CC where
 
 module NADT where
   open Vatras.Lang.NADT using (NADT; NADTL) public
-  module _ where
-    open Vatras.Lang.NADT (λ _ → ⊥) using (Configuration) public
-  module _ {V : 𝕍} {F : 𝔽} where
-    open Vatras.Lang.NADT V F hiding (NADT; NADTL; Configuration) public
+  module _ (F : 𝔽) where
+    open Vatras.Lang.NADT F (λ _ → ⊥) using (Configuration) public
+  module _ {F : 𝔽} {V : 𝕍} where
+    open Vatras.Lang.NADT F V hiding (NADT; NADTL; Configuration) public
 
 module ADT where
   open Vatras.Lang.ADT using (ADT; ADTL) public
-  module _ where
-    open Vatras.Lang.ADT (λ _ → ⊥) using (Configuration) public
-  module _ {V : 𝕍} {F : 𝔽} where
-    open Vatras.Lang.ADT V F hiding (ADT; ADTL; Configuration) public
+  module _ (F : 𝔽) where
+    open Vatras.Lang.ADT F (λ _ → ⊥) using (Configuration) public
+  module _ {F : 𝔽} {V : 𝕍} where
+    open Vatras.Lang.ADT F V hiding (ADT; ADTL; Configuration) public
 
 module OC where
   open Vatras.Lang.OC using (OC; OCL; WFOC; WFOCL; Configuration) public

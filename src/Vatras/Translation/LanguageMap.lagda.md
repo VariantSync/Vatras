@@ -106,7 +106,7 @@ module _ {F : 𝔽} (D : F) where
   open VariantList-to-CCC.Translate F D using (VariantList→CCC) public
 
 open ADT-to-NADT using (ADT→NADT) public
-NADT→CCC : ∀ {F : 𝔽} → LanguageCompiler (NADTL Variant F) (CCCL F)
+NADT→CCC : ∀ {F : 𝔽} → LanguageCompiler (NADTL F Variant) (CCCL F)
 NADT→CCC {F} = NADT-to-CCC.NADT→CCC {F = F} CCC-Rose-encoder
 ```
 
@@ -191,13 +191,13 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   2CC≽CCC : 2CCL F ≽ CCCL F
   2CC≽CCC = ≽-trans (2CC-rename≽2CC f f⁻¹ f⁻¹∘f≗id) CCC-to-2CC.2CC≽CCC
 
-  2CC≽ADT : 2CCL F ≽ ADTL Variant F
+  2CC≽ADT : 2CCL F ≽ ADTL F Variant
   2CC≽ADT = ADT-to-2CC.2CC≽ADT (CCC-Rose-encoder ⊕ (CCC→2CC ⊕ 2CC-rename f f⁻¹ f⁻¹∘f≗id))
 
-  ADT≽2CC : ADTL Variant F ≽ 2CCL F
+  ADT≽2CC : ADTL F Variant ≽ 2CCL F
   ADT≽2CC = 2CC-to-ADT.ADT≽2CC
 
-  VariantList≽ADT : (_==_ : DecidableEquality F) → VariantListL Variant ≽ ADTL Variant F
+  VariantList≽ADT : (_==_ : DecidableEquality F) → VariantListL Variant ≽ ADTL F Variant
   VariantList≽ADT _==_ = ADT-to-VariantList.VariantList≽ADT F Variant _==_
 
   VariantList≽FST : (_==_ : DecidableEquality F) → VariantListL Variant ≽ FSTL F
@@ -206,10 +206,10 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   CCC≽VariantList : F → CCCL F ≽ VariantListL Variant
   CCC≽VariantList D = VariantList-to-CCC.Translate.CCC≽VariantList F D CCC-Rose-encoder
 
-  NADT≽ADT : NADTL Variant F ≽ ADTL Variant F
+  NADT≽ADT : NADTL F Variant ≽ ADTL F Variant
   NADT≽ADT = ADT-to-NADT.NADT≽ADT Variant
 
-  CCC≽NADT : ∀ {F : 𝔽} → CCCL F ≽ NADTL Variant F
+  CCC≽NADT : ∀ {F : 𝔽} → CCCL F ≽ NADTL F Variant
   CCC≽NADT {F} = NADT-to-CCC.CCC≽NADT {F} CCC-Rose-encoder
 
   2CC≽OC : 2CCL F ≽ WFOCL F
@@ -231,13 +231,13 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
   CCC≋2CC : CCCL F ≋ 2CCL F
   CCC≋2CC = CCC≽2CC , 2CC≽CCC
 
-  2CC≋ADT : 2CCL F ≋ ADTL Variant F
+  2CC≋ADT : 2CCL F ≋ ADTL F Variant
   2CC≋ADT = 2CC≽ADT , ADT≽2CC
 
-  ADT≋NADT : ADTL Variant F ≋ NADTL Variant F
+  ADT≋NADT : ADTL F Variant ≋ NADTL F Variant
   ADT≋NADT = ≽-trans ADT≽2CC (≽-trans 2CC≽CCC CCC≽NADT) , NADT≽ADT
 
-  ADT≋VariantList : DecidableEquality F → F → ADTL Variant F ≋ VariantListL Variant
+  ADT≋VariantList : DecidableEquality F → F → ADTL F Variant ≋ VariantListL Variant
   ADT≋VariantList _==_ D = ≽-trans ADT≽2CC (≽-trans 2CC≽CCC (CCC≽VariantList D)) , VariantList≽ADT _==_
 
   VariantList≋CCC : DecidableEquality F → F → VariantListL Variant ≋ CCCL F
@@ -268,10 +268,10 @@ module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f
   2CC-is-complete : Complete (2CCL F)
   2CC-is-complete = completeness-by-expressiveness CCC-is-complete 2CC≽CCC
 
-  ADT-is-complete : Complete (ADTL Variant F)
+  ADT-is-complete : Complete (ADTL F Variant)
   ADT-is-complete = completeness-by-expressiveness 2CC-is-complete ADT≽2CC
 
-  NADT-is-complete : Complete (NADTL Variant F)
+  NADT-is-complete : Complete (NADTL F Variant)
   NADT-is-complete = completeness-by-expressiveness ADT-is-complete NADT≽ADT
 
   open OC.IncompleteOnRose using (OC-is-incomplete)
@@ -327,7 +327,7 @@ module Completeness-String = Completeness diagonal-ℕ diagonal-ℕ⁻¹ diagona
 ```agda
 open VariantList using (VariantList-is-Sound) public
 
-ADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (ADTL Variant F)
+ADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (ADTL F Variant)
 ADT-is-sound {F} _==_ = soundness-by-expressiveness (VariantList-is-Sound Variant) (ADT-to-VariantList.VariantList≽ADT F Variant _==_)
 
 2CC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (2CCL F)
@@ -339,7 +339,7 @@ NCC-is-sound n _==_ = soundness-by-expressiveness (2CC-is-sound (decidableEquali
 CCC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (CCCL F)
 CCC-is-sound _==_ = soundness-by-expressiveness (2CC-is-sound (decidableEquality-× _==_ ℕ._≟_)) CCC-to-2CC.2CC≽CCC
 
-NADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (NADTL Variant F)
+NADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (NADTL F Variant)
 NADT-is-sound _==_ = soundness-by-expressiveness (CCC-is-sound _==_) (NADT-to-CCC.CCC≽NADT CCC-Rose-encoder)
 
 OC-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (WFOCL F)
