@@ -40,7 +40,7 @@ open OC using (OC; WFOCL; Root; _❲_❳; all-oc)
 open import Vatras.Lang.OC.Properties using (⟦e⟧ₒtrue≡just)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; both; neither; Implies; subtreeₒ; subtreeₒ-recurse)
 open FST using (FSTL)
-open FST.Impose
+open FST.Impose using (SPL; _◀_; _::_; _⊚_)
 
 V = Rose ∞
 open import Vatras.Framework.Relation.Expressiveness V using (_⋡_)
@@ -71,7 +71,7 @@ Hence, at least one inner child is required for a valid variant of
 this counter-example SPL (or no children in which case there is only the root).
 As FSTs require a fixed root artifact, the outermost artifact is always set to 0.
 ```agda
-counter-example : SPL F A
+counter-example : SPL A
 counter-example = 0 ◀ (
     (f₁ :: ((0 -< 0 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
   ∷ (f₂ :: ((0 -< 1 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))

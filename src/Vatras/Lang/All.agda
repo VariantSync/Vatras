@@ -12,22 +12,57 @@ import Vatras.Lang.2CC
 import Vatras.Lang.NADT
 import Vatras.Lang.ADT
 import Vatras.Lang.OC
+import Vatras.Lang.FST
 import Vatras.Lang.Gruler
 
+open import Data.Empty.Polymorphic using (⊥)
+open import Vatras.Util.Nat.AtLeast using (ℕ≥)
+open import Size using (∞)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; 𝕍)
+open import Vatras.Framework.Variants using (Rose)
+
 module VariantList = Vatras.Lang.VariantList
-module CCC         = Vatras.Lang.CCC
-module NCC         = Vatras.Lang.NCC
-module 2CC         = Vatras.Lang.2CC
-module NADT        = Vatras.Lang.NADT
-module ADT         = Vatras.Lang.ADT
-module OC          = Vatras.Lang.OC
-module Gruler      = Vatras.Lang.Gruler
+
+module CCC where
+  open Vatras.Lang.CCC using (CCC; CCCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.CCC F hiding (CCC; CCCL; Configuration) public
+
+module NCC where
+  open Vatras.Lang.NCC using (NCC; NCCL; Configuration) public
+  module _ {n : ℕ≥ 2} {F : 𝔽} where
+    open Vatras.Lang.NCC n F hiding (NCC; NCCL; Configuration) public
+
+module 2CC where
+  open Vatras.Lang.2CC using (2CC; 2CCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.2CC F hiding (2CC; 2CCL; Configuration) public
+
+module NADT where
+  open Vatras.Lang.NADT using (NADT; NADTL) public
+  module _ where
+    open Vatras.Lang.NADT (λ _ → ⊥) using (Configuration) public
+  module _ {V : 𝕍} {F : 𝔽} where
+    open Vatras.Lang.NADT V F hiding (NADT; NADTL; Configuration) public
+
+module ADT where
+  open Vatras.Lang.ADT using (ADT; ADTL) public
+  module _ where
+    open Vatras.Lang.ADT (λ _ → ⊥) using (Configuration) public
+  module _ {V : 𝕍} {F : 𝔽} where
+    open Vatras.Lang.ADT V F hiding (ADT; ADTL; Configuration) public
+
+module OC where
+  open Vatras.Lang.OC using (OC; OCL; WFOC; WFOCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.OC F hiding (OC; OCL; WFOC; WFOCL; Configuration) public
+
+module Gruler where
+  open Vatras.Lang.Gruler using (Gruler; GrulerL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.Gruler F hiding (Gruler; GrulerL; Configuration) public
 
 module FST where
-  open import Size using (∞)
-  open import Vatras.Framework.Definitions using (𝔽; 𝔸)
-  open import Vatras.Framework.Variants using (Rose)
-  open import Vatras.Lang.FST hiding (⟦_⟧) public
-
-  ⟦_⟧ : ∀ {F : 𝔽} {A : 𝔸} → Impose.SPL F A → Configuration F → Rose ∞ A
-  ⟦_⟧ {F} = Vatras.Lang.FST.⟦_⟧ F
+  open Vatras.Lang.FST using (FST; FSTL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.FST F hiding (FST; FSTL; Configuration) public

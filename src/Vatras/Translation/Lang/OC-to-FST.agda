@@ -31,4 +31,4 @@ neighbors = Root zero (zero -< [] >- ∷ zero -< [] >- ∷ [])
 FST⋡WFOC : FSTL F ⋡ WFOCL F
 FST⋡WFOC FST≽WFOC with FST≽WFOC neighbors
 ... | e , e⊆neighbors , neighbors⊆e with e⊆neighbors (λ a → true)
-... | conf , e≡neighbors = cannotEncodeNeighbors F zero zero (e , conf , Eq.sym e≡neighbors)
+... | conf , e≡neighbors = cannotEncodeNeighbors zero zero (e , conf , Eq.sym e≡neighbors)

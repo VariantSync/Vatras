@@ -120,7 +120,7 @@ preserves f f⁻¹ is-inverse expr = preserves-⊆ f expr and preserves-⊇ f f�
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (2CCL {i} D₁) (2CCL {i} D₂)
+  → LanguageCompiler (2CCL D₁ {i}) (2CCL D₂ {i})
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.compile = rename f
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = 2CC-map-config f⁻¹
 2CC-rename f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = 2CC-map-config f
@@ -130,5 +130,5 @@ preserves f f⁻¹ is-inverse expr = preserves-⊆ f expr and preserves-⊇ f f�
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → 2CCL {i} D₂ ≽ 2CCL {i} D₁
+  → 2CCL D₂ {i} ≽ 2CCL D₁ {i}
 2CC-rename≽2CC f f⁻¹ is-inverse = expressiveness-from-compiler (2CC-rename f f⁻¹ is-inverse)

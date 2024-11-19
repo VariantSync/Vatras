@@ -125,14 +125,14 @@ module 2Ary where
     → 2CC.⟦ translate expr ⟧ ≅[ fnoc ][ conf ] NCC.⟦ expr ⟧
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  NCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (NCCL {i} (sucs zero) D) (2CCL D)
+  NCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (NCCL (sucs zero) D {i}) (2CCL D)
   NCC→2CC .LanguageCompiler.compile = translate
   NCC→2CC .LanguageCompiler.config-compiler expr .to = conf
   NCC→2CC .LanguageCompiler.config-compiler expr .from = fnoc
   NCC→2CC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-NCC→2CC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (2CCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→2CC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL n D {i}) (2CCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→2CC n = NCC→NCC n (sucs zero) ⊕ 2Ary.NCC→2CC
 
 2CC≽NCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → 2CCL (IndexedDimension D n) ≽ NCCL n D

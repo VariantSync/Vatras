@@ -62,7 +62,7 @@ getName tikz-export-experiment = "Tikz-Export"
 get tikz-export-experiment (ccc called name) = do
   [ Center ]> "Input CCC expression:"
   linebreak
-  CCC.pretty id ccc
+  CCC.pretty String id ccc
   linebreak
   [ Center ]> "Tikz export of corresponding ADT:"
   linebreak

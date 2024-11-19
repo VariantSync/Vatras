@@ -367,7 +367,7 @@ preserves (sucs n) expr =
     CCC.⟦ expr ⟧
   ≅[]-∎
 
-CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL {i} D) (NCCL n (D × ℕ))
+CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL n (D × ℕ))
 CCC→NCC n .LanguageCompiler.compile = translate n
 CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n expr
 CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
