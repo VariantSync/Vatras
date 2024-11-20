@@ -153,7 +153,7 @@ We do not recommend doing this by hand because it is very tedious.
 In the framework, we did it by first proving
 ```agda
 _ : Complete (VariantList.VariantListL V)
-_ = VariantList-is-Complete "🍇" V
+_ = VariantList-is-Complete "🍇"
 ```
 and then translating `VariantList`s to the other languages,
 and proving completeness via `completeness-by-expressiveness` again.
@@ -203,7 +203,7 @@ Soundness can also be proven directly, but this is again cumbersome, and we
 only proved it directly for `VariantList` just as we did for completeness.
 ```agda
 _ : Sound (VariantList.VariantListL V)
-_ = VariantList-is-Sound V
+_ = VariantList-is-Sound
 ```
 
 </details>

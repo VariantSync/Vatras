@@ -6,20 +6,19 @@ we introduce to capture variability with exactly and only optional variability.
 ## Module
 
 ```agda
-open import Vatras.Framework.Definitions
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; 𝔼; ℂ)
 module Vatras.Lang.OC (Option : 𝔽) where
 ```
 
 ## Imports
 
 ```agda
-open import Data.Bool using (Bool; true; false; if_then_else_)
+open import Data.Bool using (Bool; if_then_else_)
 open import Data.List using (List; []; _∷_)
-open import Data.String as String using (String)
 open import Size using (Size; ∞; ↑_)
 open import Function using (_∘_)
 
-open import Vatras.Framework.Variants as V using (Rose; rose-leaf)
+open import Vatras.Framework.Variants as V using (Rose)
 open import Vatras.Framework.VariabilityLanguage
 ```
 
@@ -127,127 +126,4 @@ And now for the semantics of well-formed option calculus which just reuses the s
 
 WFOCL : ∀ {i : Size} → VariabilityLanguage (Rose ∞)
 WFOCL {i} = ⟪ WFOC i , Configuration , ⟦_⟧ ⟫
-```
-
-## Incompleteness
-
-```agda
-open import Data.Fin using (zero; suc)
-open import Data.Nat as ℕ using (ℕ; zero; suc)
-open import Data.Product   using (_,_; ∃-syntax; ∄-syntax)
-open import Vatras.Util.Existence using (_,_)
-open import Data.List.Relation.Unary.All using (_∷_; [])
-open import Data.Empty using (⊥)
-open import Relation.Binary.PropositionalEquality using (_≡_)
-```
-
-We prove incompleteness by showing that there exists at least one set of variants that cannot be described by option calculus.
-In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
-As our counter example, we use the set `{0, 1}` as our variants:
-```agda
-module IncompleteOnRose where
-  open import Vatras.Framework.VariantGenerator (Rose ∞) (ℕ , ℕ._≟_)
-  open import Vatras.Framework.Properties.Completeness (Rose ∞) using (Incomplete)
-
-  variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
-  variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
-
-  variants-0-and-1 : VariantGenerator 1
-  variants-0-and-1 zero = variant-0
-  variants-0-and-1 (suc zero) = variant-1
-```
-
-We stick to this concrete counter example instead of formulating the set of unrepresentable variants here to make the proof not more complicated than necessary.
-
-We now prove that any well-formed option calculus expression `e` cannot be configured to `0` and `1` at the same time. The reason is that the expression `e` always has a domain element at the top. This element is always included in the variant and cannot simultaneously be `0` and `1`.
-So we show that given an expression `e`, a proof that `e` can be configured to `0`, and a proof that `e` can be configured to `1`, we eventually conclude falsehood.
-
-```agda
-  does-not-describe-variants-0-and-1 :
-    ∀ {i : Size}
-    → (e : WFOC i (ℕ , ℕ._≟_))
-    → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
-    → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
-  -- If e has 0 as root, it may be configured to 0 but never to 1.
-  does-not-describe-variants-0-and-1 (Root 0 es) ∃c→v0≡⟦e⟧c ()
-  -- if e has a number larger than 1 at the top, it cannot be configured to yield 0.
-  does-not-describe-variants-0-and-1 (Root (suc n) es) ()
-```
-
-Finally, we can conclude incompleteness by showing that assuming completeness yields a contradiction using our definition above.
-We pattern match on the assumed completeness evidence to unveil the expression `e` and the proofs that it can be configured to `0` and `1`.
-
-```agda
-  OC-is-incomplete : Incomplete WFOCL
-  OC-is-incomplete assumed-completeness with assumed-completeness variants-0-and-1
-  ... | e , ∀n→∃c→vn≡⟦e⟧ , _ = does-not-describe-variants-0-and-1 e (∀n→∃c→vn≡⟦e⟧ zero) (∀n→∃c→vn≡⟦e⟧ (suc zero))
-```
-
-**This is an important result!**
-It shows that we need at least some constraints to be complete.
-This is a justification for choice calculus defining variability annotations with constraints (being alternative) instead of being pure annotations.
-Another way is to enrich the annotation language, for example using propositional logic.
-
-## Utility
-
-```agda
-{-|
-Creates an artifact OC expression with a single child.
--}
-singleton : ∀ {i : Size} {A : 𝔸} → atoms A → OC i A → OC (↑ i) A
-singleton a e = a -< e ∷ [] >-
-
-open import Vatras.Util.Named
-
-{-|
-Creates a constant configuration, fixed to the given boolean value.
--}
-all-oc : Bool → Configuration
-all-oc b _ = b
-
-{-|
-A configuration that includes every option.
-We also give the configuration a name for reuse in demo applications and tests.
--}
-allyes-oc : Named Configuration
-allyes-oc = all-oc true called "all-yes"
-
-{-|
-A configuration that excludes every option.
-We also give the configuration a name for reuse in demo applications and tests.
--}
-allno-oc : Named Configuration
-allno-oc = all-oc false called "all-no " --space intended for nicer printing lol
-```
-
-## Show
-
-```agda
-open import Vatras.Show.Lines hiding (map)
-open String using (_++_; intersperse)
-open import Function using (_∘_)
-
-module Show (print-opt : Option → String) where
-  show-oc : ∀ {i : Size} → OC i (String , String._≟_) → String
-  show-oc (s -< [] >-) = s
-  show-oc (s -< es@(_ ∷ _) >-) = s ++ "-<" ++ (intersperse ", " (map show-oc es)) ++ ">-"
-  show-oc (O ❲ e ❳) = print-opt O ++ "❲" ++ show-oc e ++ "❳"
-
-  show-wfoc : ∀ {i : Size} → WFOC i (String , String._≟_) → String
-  show-wfoc = show-oc ∘ forgetWF
-
-  pretty-oc : ∀ {i : Size} → OC i (String , String._≟_) → Lines
-  pretty-oc (s -< [] >-) = > s
-  pretty-oc (s -< es@(_ ∷ _) >-) = do
-    > s ++ "-<"
-    indent 2 do
-      intersperseCommas (map pretty-oc es)
-    > ">-"
-  pretty-oc (O ❲ e ❳) = do
-    > print-opt O ++ "❲"
-    indent 2 (pretty-oc e)
-    > "❳"
-
-  pretty-wfoc : ∀ {i : Size} → WFOC i (String , String._≟_) → Lines
-  pretty-wfoc = pretty-oc ∘ forgetWF
 ```

@@ -16,6 +16,8 @@ open ADT using (ADT; leaf; _⟨_,_⟩)
 open import Vatras.Translation.LanguageMap
 open import Vatras.Translation.Lang.2CC.Idempotence String String._≟_ using (eliminate-idempotent-choices)
 
+import Vatras.Lang.CCC.Show as CCCShow
+
 open import Vatras.Test.Experiment
 open import Vatras.Show.Lines
 open import Vatras.Util.Named
@@ -63,7 +65,7 @@ getName tikz-export-experiment = "Tikz-Export"
 get tikz-export-experiment (ccc called name) = do
   [ Center ]> "Input CCC expression:"
   linebreak
-  CCC.pretty id ccc
+  CCCShow.pretty id ccc
   linebreak
   [ Center ]> "Tikz export of corresponding ADT:"
   linebreak

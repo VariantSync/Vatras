@@ -16,7 +16,8 @@ open import Vatras.Test.UnitTest
 open import Vatras.Framework.Variants using (Rose)
 Variant = Rose ∞
 open import Vatras.Lang.All.Fixed ⊥ Variant
-open VariantList using (Configuration; ⟦_⟧; encode; vl-conf; vl-fnoc)
+open VariantList using (Configuration; ⟦_⟧)
+open import Vatras.Lang.VariantList.Properties {Variant} using (encode; vl-conf; vl-fnoc)
 open import Vatras.Framework.VariantGenerator Variant using (VariantGenerator)
 
 test-encode-conf : ∀ {A n} → Fin (suc n) → UnitTest (VariantGenerator A n)

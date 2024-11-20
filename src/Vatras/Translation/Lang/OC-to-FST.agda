@@ -17,7 +17,8 @@ import Relation.Binary.PropositionalEquality as Eq
 open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Lang.All
 open OC using (WFOC; Root; _-<_>-; WFOCL)
-open FST using (FSTL; cannotEncodeNeighbors)
+open FST using (FSTL)
+open import Vatras.Lang.FST.Properties using (cannotEncodeNeighbors)
 
 V = Rose ∞
 open import Vatras.Framework.Relation.Expressiveness V using (_⋡_)

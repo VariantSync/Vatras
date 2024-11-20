@@ -20,10 +20,11 @@ Feature = String
 
 open import Vatras.Lang.All
 open OC using (WFOC; WFOCL)
-open OC.Show id
+open import Vatras.Lang.OC.Util using (allyes-oc; allno-oc)
+open import Vatras.Lang.OC.Show id using (show-wfoc)
 open 2CC using (2CCL)
 open import Vatras.Translation.Lang.2CC.Redundancy Feature _≟_
-open 2CC.Pretty id
+open import Vatras.Lang.2CC.Show id using (pretty)
 
 open import Vatras.Translation.Lang.OC-to-2CC Feature using (compile; compile-configs)
 
@@ -45,16 +46,16 @@ OC→2CC-Test-conffnoc c = ForAllExamplesIn optex-all (test-translation-fnoc∘c
 
 -- agda computes this value automatically!
 -- Better: When we add a new example to optex-all, the test wont compile before we adapted it. So we can never forget to test it.
-OC→2CC-Test-allyes : RunTest OC→2CC-Test (get OC.allyes-oc)
+OC→2CC-Test-allyes : RunTest OC→2CC-Test (get allyes-oc)
 OC→2CC-Test-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
 
-OC→2CC-Test-allno : RunTest OC→2CC-Test (get OC.allno-oc)
+OC→2CC-Test-allno : RunTest OC→2CC-Test (get allno-oc)
 OC→2CC-Test-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
-OC→2CC-Test-conffnoc-allyes : RunTest OC→2CC-Test-conffnoc (get OC.allyes-oc)
+OC→2CC-Test-conffnoc-allyes : RunTest OC→2CC-Test-conffnoc (get allyes-oc)
 OC→2CC-Test-conffnoc-allyes = refl ∷ refl ∷ refl ∷ refl ∷ []
 
-OC→2CC-Test-conffnoc-allno : RunTest OC→2CC-Test-conffnoc (get OC.allno-oc)
+OC→2CC-Test-conffnoc-allno : RunTest OC→2CC-Test-conffnoc (get allno-oc)
 OC→2CC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 -- Translate an option calculus expression.
@@ -87,6 +88,6 @@ get     exp-oc-to-bcc ex@(name ≔ oc) = do
   linebreak
   > "Variants:"
   indent 2 do
-    show-eval (WFOCL Feature) (show-rose id) OC.allyes-oc ex
-    show-eval (WFOCL Feature) (show-rose id) OC.allno-oc  ex
+    show-eval (WFOCL Feature) (show-rose id) allyes-oc ex
+    show-eval (WFOCL Feature) (show-rose id) allno-oc  ex
   > "proven to be the same for the translated expression"

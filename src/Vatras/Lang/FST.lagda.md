@@ -29,7 +29,7 @@ open import Relation.Binary using (Decidable; DecidableEquality; Rel)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 
-open import Vatras.Framework.Variants using (Rose; _-<_>-; rose-leaf; children-equality)
+open import Vatras.Framework.Variants using (Rose; _-<_>-; rose-leaf)
 open import Vatras.Framework.Composition.FeatureAlgebra
 open import Vatras.Framework.VariabilityLanguage
 
@@ -877,62 +877,4 @@ We now prove that feature structure trees form a feature algebra.
 
 FSTL : VariabilityLanguage (Rose ∞)
 FSTL = ⟪ Impose.SPL , Configuration , ⟦_⟧ ⟫
-```
-
-## Feature Structure Trees are Incomplete
-
-We prove that FST SPLs are an incomplete variability language, when
-assuming rose trees as variant type.
-The proof works similarly as for option calculus.
-The idea is that feature structure trees cannot encode variant generators
-with exactly two disjunct variants.
-
-```agda
-module IncompleteOnRose where
-  open import Data.Fin using (zero; suc)
-  open import Data.Nat as ℕ using (ℕ; zero; suc)
-  open import Vatras.Framework.VariantGenerator using (VariantGenerator)
-  open import Vatras.Framework.Properties.Completeness using (Incomplete)
-
-  variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
-  variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
-
-  variants-0-and-1 : VariantGenerator (Rose ∞) (ℕ , ℕ._≟_) 1
-  variants-0-and-1 zero       = variant-0
-  variants-0-and-1 (suc zero) = variant-1
-
-  does-not-describe-variants-0-and-1 :
-    ∀ {i : Size}
-    → (e : Impose.SPL (ℕ , ℕ._≟_))
-    → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
-    → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
-  does-not-describe-variants-0-and-1 (zero Impose.◀ features) _ ()
-  does-not-describe-variants-0-and-1 (suc root Impose.◀ features) ()
-
-  FST-is-incomplete : Incomplete (Rose ∞) FSTL
-  FST-is-incomplete complete with complete variants-0-and-1
-  FST-is-incomplete complete | e , e⊆vs , vs⊆e = does-not-describe-variants-0-and-1 e (e⊆vs zero) (e⊆vs (suc zero))
-```
-
-## Neighbor Problem
-
-We finally formalize the neighbor problem.
-This theorem states that FST SPLs can never
-describe a variant in which two neighboring nodes have the same atom.
-This theorem is a specialized form in which this variant is fixed to
-  a -< b, b >-
-for two any two atoms a, b.
-
-```agda
-cannotEncodeNeighbors : ∀ {A : 𝔸} (a b : atoms A) → ∄[ e ] (∃[ c ] ⟦ e ⟧ c ≡ a -< rose-leaf b ∷ rose-leaf b ∷ [] >-)
-cannotEncodeNeighbors {A} a b (e , conf , ⟦e⟧c≡neighbors) =
-  ¬Unique b (Eq.subst (λ l → Unique l) (children-equality ⟦e⟧c≡neighbors) (lemma (⊛-all (select conf (features e)))))
-  where
-  open Impose A
-
-  lemma : ∀ (e : FSF) → Unique (forget-uniqueness e)
-  lemma (_ Impose.⊚ (unique , _)) = unique
-
-  ¬Unique : ∀ (a : atoms A) → ¬ Unique (a -< [] >- ∷ a -< [] >- ∷ [])
-  ¬Unique a ((a≢a ∷ []) ∷ [] ∷ []) = a≢a refl
 ```

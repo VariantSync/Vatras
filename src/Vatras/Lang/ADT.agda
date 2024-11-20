@@ -31,19 +31,3 @@ We do this by evaluating each choice until we hit a leaf.
 
 ADTL : VariabilityLanguage V
 ADTL = ⟪ ADT , Configuration , ⟦_⟧ ⟫
-
-open import Data.String as String using (String; _++_; intersperse)
-open import Data.Product using (_,_)
-open import Vatras.Show.Lines
-
-{-|
-Pretty printer for ADTs.
--}
-pretty : {A : 𝔸} → (V A → String) → (F → String) → ADT A → Lines
-pretty pretty-variant show-F (leaf v) = > pretty-variant v
-pretty pretty-variant show-F (D ⟨ l , r ⟩) = do
-  > show-F D ++ "⟨"
-  indent 2 do
-    appendToLastLine "," (pretty pretty-variant show-F l)
-    pretty pretty-variant show-F r
-  > "⟩"

@@ -36,7 +36,8 @@ open Eq.≡-Reasoning
 
 open import Vatras.Framework.Variants using (Rose; rose-leaf; _-<_>-; children-equality)
 open import Vatras.Lang.All
-open OC using (OC; WFOCL; Root; _❲_❳; all-oc)
+open OC using (OC; WFOCL; Root; _❲_❳)
+open import Vatras.Lang.OC.Util using (all-oc)
 open import Vatras.Lang.OC.Properties using (⟦e⟧ₒtrue≡just)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; both; neither; Implies; subtreeₒ; subtreeₒ-recurse)
 open FST using (FSTL)
@@ -215,7 +216,7 @@ more-artifacts : ∀ {F' : 𝔽}
   → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
   → 1 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
 more-artifacts (a OC.-< cs' >- ∷ cs) cₙ v p = s≤s z≤n
-more-artifacts {F'} (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just F' e
+more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
 more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
 ```
 
