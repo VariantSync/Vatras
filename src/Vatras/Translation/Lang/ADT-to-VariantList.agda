@@ -35,7 +35,8 @@ open import Vatras.Framework.Properties.Soundness V using (Sound)
 open import Vatras.Framework.Proof.ForFree V using (soundness-by-expressiveness)
 open import Vatras.Lang.All.Fixed F V
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
-open VariantList using (VariantList; VariantListL; VariantList-is-Sound)
+open VariantList using (VariantList; VariantListL)
+open import Vatras.Lang.VariantList.Properties using (VariantList-is-Sound)
 
 open import Vatras.Lang.ADT.Path F V _==_
 open import Vatras.Translation.Lang.ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ; UndeadADT; UndeadADTL)
@@ -199,4 +200,4 @@ VariantList≽ADT : VariantListL ≽ ADTL
 VariantList≽ADT = expressiveness-from-compiler ADT→VariantList
 
 ADT-is-sound : Sound ADTL
-ADT-is-sound = soundness-by-expressiveness VariantList-is-Sound VariantList≽ADT
+ADT-is-sound = soundness-by-expressiveness (VariantList-is-Sound {V}) VariantList≽ADT

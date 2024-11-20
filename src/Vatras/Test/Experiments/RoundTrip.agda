@@ -32,7 +32,13 @@ import Vatras.Translation.Lang.CCC-to-NCC
 module CCC-to-NCC = Vatras.Translation.Lang.CCC-to-NCC.Exact
 import Vatras.Translation.Lang.NCC-to-2CC
 open Vatras.Translation.Lang.NCC-to-2CC.2Ary using () renaming (NCC→2CC to NCC-2→2CC)
-open CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
+open import Vatras.Lang.CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
+
+open import Vatras.Lang.CCC.Show as ShowCCC
+open import Vatras.Lang.NCC.Show as ShowNCC
+open import Vatras.Lang.2CC.Show as Show2CC
+open import Vatras.Lang.ADT.Show as ShowADT
+open import Vatras.Lang.VariantList.Show {Rose ∞} as ShowVariantList
 
 open import Vatras.Show.Lines
 open import Vatras.Util.Named
@@ -79,17 +85,17 @@ round-trip : Experiment (CCC Feature ∞ (String , String._≟_))
 getName round-trip = "Translate CCC in one round-trip into equally expressive variability languages"
 get     round-trip ex@(name ≔ ccc) = do
   [ Center ]> "CCC, original expression"
-  let pretty-ccc = CCC.pretty id ccc
+  let pretty-ccc = ShowCCC.pretty id ccc
   overwrite-alignment-with Center
     (boxed (6 + width pretty-ccc) "" pretty-ccc)
 
   void-level do
-    ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (NCC.Pretty.pretty id)
-    ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (NCC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (2CC.Pretty.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (VariantList.pretty (Rose ∞) (show-rose id))
-    do            compile   variantList "CCC"         (VariantList→CCC "default feature" CCC-Rose-encoder)       (CCC.pretty id)
+    ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (ShowNCC.pretty id)
+    ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (ShowNCC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (Show2CC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ShowADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (ShowVariantList.pretty (show-rose id))
+    do            compile   variantList "CCC"         (VariantList→CCC "default feature" CCC-Rose-encoder)       (ShowCCC.pretty id)
   linebreak
 
 

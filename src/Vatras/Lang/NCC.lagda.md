@@ -19,18 +19,13 @@ module Vatras.Lang.NCC (Dimension : 𝔽) (n : ℕ≥ 2) where
 ## Imports
 
 ```agda
-open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Fin using (Fin)
-open import Data.List
-  using (List; []; _∷_; lookup)
-  renaming (map to mapl)
+open import Data.List as List using (List)
 open import Data.Vec as Vec using (Vec)
-open import Data.Product using (_,_)
-open import Function using (id)
 open import Size using (Size; ↑_; ∞)
 
 open import Vatras.Framework.Variants as V using (Rose)
-open import Vatras.Framework.VariabilityLanguage
+open import Vatras.Framework.VariabilityLanguage using (𝔼-Semantics; VariabilityLanguage; ⟪_,_,_⟫)
 ```
 
 ## Syntax
@@ -54,7 +49,7 @@ Configuration : ℂ
 Configuration = Dimension → Fin (ℕ≥.toℕ n)
 
 ⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics (Rose ∞) Configuration (NCC i)
-⟦ a -< cs >- ⟧ c = a V.-< mapl (λ e → ⟦ e ⟧ c) cs >-
+⟦ a -< cs >- ⟧ c = a V.-< List.map (λ e → ⟦ e ⟧ c) cs >-
 ⟦ D ⟨ cs ⟩   ⟧ c = ⟦ Vec.lookup cs (c D) ⟧ c
 
 {-|
@@ -62,43 +57,4 @@ NCC is a variability language for all n ≥ 2.
 -}
 NCCL : ∀ {i : Size} → VariabilityLanguage (Rose ∞)
 NCCL {i} = ⟪ NCC i , Configuration , ⟦_⟧ ⟫
-```
-
-## Utility
-
-Recursively, collect all dimensions used in an n-CC expression:
-```agda
-open Data.List using (concatMap) renaming (_++_ to _++l_)
-import Data.Vec as Vec
-
-dims : ∀ {i : Size} {A : 𝔸} → NCC i A → List Dimension
-dims (_ -< es >-) = concatMap dims es
-dims (D ⟨ cs ⟩) = D ∷ concatMap dims (Vec.toList cs)
-```
-
-## Show
-
-```agda
-open import Data.String as String using (String; _++_; intersperse)
-module Pretty (show-D : Dimension → String) where
-  open import Vatras.Show.Lines
-
-  show : ∀ {i} → NCC i (String , String._≟_) → String
-  show (a -< [] >-) = a
-  show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (intersperse ", " (mapl show es)) ++ ">-"
-  show (D ⟨ cs ⟩) = show-D D ++ "⟨" ++ (intersperse ", " (mapl show (Vec.toList cs))) ++ "⟩"
-
-
-  pretty : ∀ {i : Size} → NCC i (String , String._≟_) → Lines
-  pretty (a -< [] >-) = > a
-  pretty (a -< es@(_ ∷ _) >-) = do
-    > a ++ "-<"
-    indent 2 do
-      intersperseCommas (mapl pretty es)
-    > ">-"
-  pretty (D ⟨ cs ⟩) = do
-    > show-D D ++ "⟨"
-    indent 2 do
-      intersperseCommas (mapl pretty (Vec.toList cs))
-    > "⟩"
 ```

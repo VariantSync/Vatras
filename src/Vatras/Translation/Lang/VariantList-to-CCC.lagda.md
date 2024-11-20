@@ -31,7 +31,7 @@ open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Variants using (Rose; Variant-is-VL; encode-idemp)
 open import Vatras.Lang.All.Fixed Dimension (Rose ∞)
-open VariantList using (VariantList; VariantListL; VariantList-is-Complete)
+open VariantList using (VariantList; VariantListL)
 open CCC using () renaming (CCC to CCCSyntax)
 open CCC using (CCC; CCCL)
 
