@@ -20,7 +20,7 @@ open import Vatras.Data.EqIndexedSet
 ## Definitions
 
 A language is sound if every expression denotes an element in the semantic domain.
-For variability languages, this means that for any expression `e` there must exist a variant map `m` that is semantically equivalent.
+For variability languages, this means that for any expression `e` there must exist a variant generator `m` that is semantically equivalent.
 ```agda
 Sound : VariabilityLanguage V → Set₁
 Sound ⟪ E , _ , ⟦_⟧ ⟫ =

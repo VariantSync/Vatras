@@ -12,8 +12,8 @@ import Relation.Binary.PropositionalEquality as Eq
 open import Vatras.Data.EqIndexedSet {A = V A}
 
 {-|
-Variant maps constitute the semantic domain of variability languages.
-As a representative set, we use Fin (suc n) to ensure that variant maps
+Variant generators constitute the semantic domain of variability languages.
+As a representative set, we use Fin (suc n) to ensure that variant generators
 are finite (Fin) and non-empty (suc n) indexed sets.
 Using (suc n) here is a shortcut to ensure that the index set has at
 least one element and hence is not empty.
@@ -22,18 +22,18 @@ VariantGenerator : ℕ → Set₁
 VariantGenerator n = IndexedSet (Fin (suc n))
 
 {-|
-This function removes the first variant from a variant map.
-Given that we use natural numbers as an index set for variant maps,
-variant maps have an implicit total order.
+This function removes the first variant from a variant generator.
+Given that we use natural numbers as an index set for variant generators,
+variant generators have an implicit total order.
 Hence, we can distinguish the first element.
 -}
 remove-first : ∀ {n} → VariantGenerator (suc n) → VariantGenerator n
 remove-first set i = set (Data.Fin.suc i)
 
 {-|
-This function removes the last variant from a variant map.
-Given that we use natural numbers as an index set for variant maps,
-variant maps have an implicit total order.
+This function removes the last variant from a variant generator.
+Given that we use natural numbers as an index set for variant generators,
+variant generators have an implicit total order.
 Hence, we can distinguish the last element.
 -}
 remove-last : ∀ {n} → VariantGenerator (suc n) → VariantGenerator n

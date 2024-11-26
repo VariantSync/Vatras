@@ -20,7 +20,7 @@ open import Vatras.Data.EqIndexedSet
 ## Definitions
 
 A language is complete if for any element in its semantic domain, there exists an expression that denotes that element.
-For variability languages, this means that given a variant map `m` there must exist an expression `e` that describes all variants in `m`.
+For variability languages, this means that given a variant generator `m` there must exist an expression `e` that describes all variants in `m`.
 In particular, for every variant `v` in `m`, there exists a configuration `c` that configures `e` to `v`.
 ```agda
 Complete : VariabilityLanguage V → Set₁

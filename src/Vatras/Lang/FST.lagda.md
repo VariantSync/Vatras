@@ -884,7 +884,7 @@ FSTL = ⟪ Impose.SPL , Conf , FSTL-Sem ⟫
 We prove that FST SPLs are an incomplete variability language, when
 assuming rose trees as variant type.
 The proof works similarly as for option calculus.
-The idea is that feature structure trees cannot encode variant maps
+The idea is that feature structure trees cannot encode variant generators
 with exactly two disjunct variants.
 
 ```agda
