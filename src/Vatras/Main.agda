@@ -13,12 +13,12 @@ open import Vatras.Show.Lines hiding (map)
 open import Vatras.Show.Print
 
 open import Vatras.Test.Example using (Example)
-open import Vatras.Test.Experiment using (Experiment; ExperimentSetup; setup; run-setup)
+open import Vatras.Test.Experiment using (Experiment; ExperimentSetup; setup; run-setup; run-experiment-plain)
 
 open import Vatras.Lang.CCC using (CCC)
 open import Vatras.Lang.OC using (WFOC)
 
-open import Vatras.Test.Examples.CCC using (cccex-all)
+open import Vatras.Test.Examples.CCC using (cccex-all; talk-sandwich)
 open import Vatras.Test.Examples.OC using (optex-all)
 
 open import Vatras.Test.Experiments.CCC-to-2CC
@@ -27,6 +27,7 @@ open import Vatras.Test.Experiments.OC-to-2CC
 import Vatras.Test.Experiments.FST-Experiments as FSTs
 open FSTs.Java.Calculator using (toy-calculator-experiment; ex-all)
 open import Vatras.Test.Experiments.RoundTrip as RoundTrip using (round-trip)
+open import Vatras.Test.Experiments.ADT-to-TikZ-Forest
 
 {-|
 A list of programs that we want to run.
@@ -57,6 +58,12 @@ main_lines = do
   overwrite-alignment-with
     Center
     (lines (map run-setup experimentsToRun))
+  {-
+  Uncomment the following line, if you want to export the tikz code
+  of the sandwich ADT from our OOPSLA'24 talk,
+  which we used to highlight the combinatorial explosion problem.
+  -}
+  run-experiment-plain tikz-export-experiment talk-sandwich
 
 open import IO using (IO; Main; putStrLn)
 
