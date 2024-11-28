@@ -133,3 +133,13 @@ module _ (V : 𝕍) (A : 𝔸) {L : VariabilityLanguage V} (encoder : VariantEnc
     ≡⟨⟩
       v
     ∎
+
+-- atom containment
+open import Relation.Nullary.Decidable using (yes; no)
+open import Data.Bool using (Bool; true)
+open import Data.List using (or)
+
+has-atom : ∀ {A i} → atoms A → Rose i A → Bool
+has-atom {A , _≟_} a (b -< cs >-) with a ≟ b
+... | yes refl = true
+... | no x = or (map (has-atom b) cs)
