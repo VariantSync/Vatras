@@ -24,6 +24,7 @@ open Eq.≡-Reasoning using (step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Vatras.Lang.All
+-- TODO ugly hack
 open 2CC using () renaming (2CC to 2CCSyntax) -- Necessary for disambiguation
 open 2CC using (2CC; 2CCL)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)

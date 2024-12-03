@@ -23,6 +23,7 @@ open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Vatras.Lang.All
 open NADT using (NADT; NADTL; leaf; _⟨_⟩)
+-- TODO ugly hack
 open CCC using () renaming (CCC to CCCSyntax) -- Necessary for disambiguation
 open CCC using (CCC; CCCL; _-<_>-)
 

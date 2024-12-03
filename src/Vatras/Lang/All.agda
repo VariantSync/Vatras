@@ -65,6 +65,7 @@ module Gruler where
   module _ {F : 𝔽} where
     open Vatras.Lang.Gruler F hiding (Gruler; GrulerL; Configuration) public
 
+-- TODO deal with the anoying Impose module
 module FST where
   open Vatras.Lang.FST using (FST; FSTL; Configuration) public
   module _ where
