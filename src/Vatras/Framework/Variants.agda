@@ -7,7 +7,7 @@ module Vatras.Framework.Variants where
 
 open import Data.List using (List; []; _∷_; map)
 open import Data.Maybe using (nothing; just)
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.String using (String; _++_; intersperse)
 open import Data.Unit using (⊤; tt)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
@@ -80,8 +80,14 @@ RoseVL = Variant-is-VL (Rose ∞)
 {-|
 Lemma to conclude that the child lists of two equal rose trees must be equal as well.
 -}
+Rose-injective : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose ∞ A)} → a₁ -< cs₁ >- ≡ a₂ -< cs₂ >- → (a₁ ≡ a₂) × (cs₁ ≡ cs₂)
+Rose-injective refl = refl , refl
+
+{-|
+Lemma to conclude that the child lists of two equal rose trees must be equal as well.
+-}
 children-equality : ∀ {A : 𝔸} {a₁ a₂ : atoms A} {cs₁ cs₂ : List (Rose ∞ A)} → a₁ -< cs₁ >- ≡ a₂ -< cs₂ >- → cs₁ ≡ cs₂
-children-equality refl = refl
+children-equality = proj₂ ∘ Rose-injective
 
 {-|
 Show function for rose trees.
