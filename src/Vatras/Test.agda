@@ -1,4 +1,3 @@
-
 open import Vatras.Framework.Definitions using (𝔸; atoms)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 module Vatras.Test (A : 𝔸) (a₁ a₂ : atoms A) (a₁≢a₂ : a₁ ≢ a₂) where
@@ -15,10 +14,9 @@ import Data.List.Membership.Propositional as List
 import Data.List.Membership.Propositional.Properties as List
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
 import Data.List.NonEmpty.Properties as List⁺
-open import Data.Product using (_×_; _,_; Σ-syntax; proj₁; proj₂)
+open import Data.Product using (_,_; proj₁; proj₂)
 open import Function using (_∘_)
-open import Relation.Binary.Definitions using (DecidableEquality)
-open import Relation.Nullary.Decidable using (Dec; does; yes; no)
+open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Relation.Nullary.Negation using (¬_)
 open import Size using (Size; ∞)
 
@@ -26,18 +24,11 @@ open import Vatras.Data.EqIndexedSet using (_≅_; ≅-trans; ≅-sym; _⊆_; �
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 open import Vatras.Framework.VariantGenerator (Rose ∞) A using (VariantGenerator)
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
-open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
-open import Vatras.Framework.Properties.Soundness (Rose ∞) using (Sound)
 open import Vatras.Util.List using (find-or-last)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 open import Vatras.Lang.CCC.Util using (leaf)
-open import Vatras.Translation.LanguageMap
 
-record SizedLang : Set₂ where
-  field
-    Lang : VariabilityLanguage (Rose ∞)
-    size : Expression Lang A → ℕ
-open SizedLang
+open import Vatras.SyntacticExpressiveness A using (SizedLang; _>Expressive_)
 
 sizeCCC : ∀ {i} → CCC.CCC i A → ℕ
 sizeCCC (a CCC.CCC.-< cs >-) = suc (List.sum (List.map sizeCCC cs))
@@ -58,21 +49,6 @@ SizedADT = record
   { Lang = ADT.ADTL
   ; size = sizeADT
   }
-
-_≤Size_ : SizedLang → SizedLang → Set₁
-L₁ ≤Size L₂ =
-  Σ[ n ∈ ℕ ]
-  ∀ (e₂ : Expression (Lang L₂) A) →
-  Σ[ e₁ ∈ Expression (Lang L₁) A ]
-      Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
-    × size L₁ e₁ ≤ n * size L₂ e₂
-
-_≥Expressive_ : SizedLang → SizedLang → Set₁
-L₁ ≥Expressive L₂ = L₁ ≤Size L₂
-
-_>Expressive_ : SizedLang → SizedLang → Set₁
-L₁ >Expressive L₂ = ¬ (L₂ ≥Expressive L₁)
-
 
 e₁-cs : ℕ → ℕ → List (CCC.CCC ∞ A)
 e₁-cs zero D = []
