@@ -2,7 +2,7 @@ open import Vatras.Framework.Definitions using (𝔸; atoms)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 module Vatras.Test (A : 𝔸) (a₁ a₂ : atoms A) (a₁≢a₂ : a₁ ≢ a₂) where
 
-open import Data.Bool using (Bool; true; false)
+open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥-elim)
 open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; z≤n; s≤s; _<_; _≮_; _<?_; _+_; pred; _*_; _^_; _≟_)
 import Data.Nat.Properties as ℕ
@@ -26,18 +26,17 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) A using (VariantGenerat
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Util.List using (find-or-last)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
-open import Vatras.Lang.CCC.Util using (leaf)
 
 open import Vatras.SyntacticExpressiveness A using (SizedLang; _>Expressive_)
 
-sizeCCC : ∀ {i} → CCC.CCC i A → ℕ
-sizeCCC (a CCC.CCC.-< cs >-) = suc (List.sum (List.map sizeCCC cs))
-sizeCCC (D CCC.CCC.⟨ cs ⟩) = suc (List⁺.foldr₁ _+_ (List⁺.map sizeCCC cs))
+size2CC : ∀ {i} → 2CC.2CC i A → ℕ
+size2CC (a 2CC.2CC.-< cs >-) = suc (List.sum (List.map size2CC cs))
+size2CC (D 2CC.2CC.⟨ l , r ⟩) = suc (size2CC l + size2CC r)
 
-SizedCCC : SizedLang
-SizedCCC = record
-  { Lang = CCC.CCCL
-  ; size = sizeCCC
+Sized2CC : SizedLang
+Sized2CC = record
+  { Lang = 2CC.2CCL
+  ; size = size2CC
   }
 
 sizeADT : ADT.ADT A → ℕ
@@ -50,18 +49,18 @@ SizedADT = record
   ; size = sizeADT
   }
 
-e₁-cs : ℕ → ℕ → List (CCC.CCC ∞ A)
+e₁-cs : ℕ → ℕ → List (2CC.2CC ∞ A)
 e₁-cs zero D = []
-e₁-cs (suc n) D = D CCC.CCC.⟨ leaf a₁ ∷ leaf a₂ ∷ [] ⟩ ∷ e₁-cs n (suc D)
+e₁-cs (suc n) D = D 2CC.2CC.⟨ a₁ 2CC.2CC.-< [] >- , a₂ 2CC.2CC.-< [] >- ⟩ ∷ e₁-cs n (suc D)
 
-e₁ : ℕ → CCC.CCC ∞ A
-e₁ n = a₁ CCC.CCC.-< e₁-cs n zero >-
+e₁ : ℕ → 2CC.2CC ∞ A
+e₁ n = a₁ 2CC.2CC.-< e₁-cs n zero >-
 
-size-e₁-cs : ∀ n D → List.sum (List.map sizeCCC (e₁-cs n D)) ≡ n * 3
+size-e₁-cs : ∀ n D → List.sum (List.map size2CC (e₁-cs n D)) ≡ n * 3
 size-e₁-cs zero D = refl
 size-e₁-cs (suc n) D = Eq.cong (3 +_) (size-e₁-cs n (suc D))
 
-size-e₁ : ∀ n → sizeCCC (e₁ n) ≡ 1 + n * 3
+size-e₁ : ∀ n → size2CC (e₁ n) ≡ 1 + n * 3
 size-e₁ n = Eq.cong suc (size-e₁-cs n zero)
 
 variants-cs : ∀ n → Fin (2 ^ n) → List (Rose ∞ A)
@@ -73,24 +72,20 @@ variants-cs (suc n) i with Fin.toℕ i <? 2 ^ n
 variants : ∀ n → VariantGenerator (pred (2 ^ n))
 variants n i = a₁ Rose.-< variants-cs n (Eq.subst Fin (ℕ.suc-pred (2 ^ n) {{ℕ.>-nonZero (ℕ.m^n>0 2 n)}}) i) >-
 
-lemma1 : ∀ n → variants n ⊆ CCC.⟦ e₁ n ⟧
+lemma1 : ∀ n → variants n ⊆ 2CC.⟦ e₁ n ⟧
 lemma1 n i = config n i' , Eq.cong (a₁ Rose.-<_>-) (go n i' zero λ o → Eq.cong (config n i') (ℕ.+-identityʳ o))
   where
   i' = Eq.subst Fin (ℕ.suc-pred (2 ^ n) {{ℕ.>-nonZero (ℕ.m^n>0 2 n)}}) i
 
-  config : ∀ n → Fin (2 ^ n) → ℕ → ℕ
-  config zero zero k = 0
+  config : ∀ n → Fin (2 ^ n) → ℕ → Bool
+  config zero zero k = true
   config (suc n) i k with Fin.toℕ i <? 2 ^ n
-  config (suc n) i zero | yes i<2^n = 0
-  config (suc n) i zero | no i≮2^n = 1
+  config (suc n) i zero | yes i<2^n = true
+  config (suc n) i zero | no i≮2^n = false
   config (suc n) i (suc k) | yes i<2^n = config n (Fin.fromℕ< i<2^n) k
   config (suc n) i (suc k) | no i≮2^n = config n (Eq.subst Fin (ℕ.+-identityʳ (2 ^ n)) (Fin.reduce≥ i (ℕ.≮⇒≥ i≮2^n))) k
 
   open Eq.≡-Reasoning
-
-  boolToℕ : Bool → ℕ
-  boolToℕ true = 0
-  boolToℕ false = 1
 
   config-<2^m : ∀ m j D → (j<2^m : Fin.toℕ j < 2 ^ m) → config (suc m) j (suc D) ≡ config m (Fin.fromℕ< j<2^m) D
   config-<2^m m j D j<2^m with Fin.toℕ j <? 2 ^ m
@@ -102,32 +97,32 @@ lemma1 n i = config n i' , Eq.cong (a₁ Rose.-<_>-) (go n i' zero λ o → Eq.c
   ... | yes j<2^m = ⊥-elim (j≮2^m j<2^m)
   ... | no _ = refl
 
-  go : ∀ m j D → (∀ o → config n i' (o + D) ≡ config m j o) → variants-cs m j ≡ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m D)
+  go : ∀ m j D → (∀ o → config n i' (o + D) ≡ config m j o) → variants-cs m j ≡ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m D)
   go zero zero D p = refl
   go (suc m) j D p with Fin.toℕ j <? 2 ^ m | p 0
   ... | yes k<2^m | p' =
     begin
       a₁ Rose.-< [] >- ∷ variants-cs m (Fin.fromℕ< k<2^m)
     ≡⟨ Eq.cong (a₁ Rose.-< [] >- ∷_) (go m (Fin.fromℕ< k<2^m) (suc D) (λ o → Eq.trans (Eq.trans (Eq.cong (config n i') (ℕ.+-suc o D)) (p (suc o))) (config-<2^m m j o k<2^m))) ⟩
-      a₁ Rose.-< [] >- ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      a₁ Rose.-< [] >- ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      CCC.⟦ find-or-last 0 (leaf a₁ ∷ leaf a₂ ∷ []) ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
-    ≡⟨ Eq.cong (λ x → CCC.⟦ find-or-last x (leaf a₁ ∷ leaf a₂ ∷ []) ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
-      CCC.⟦ find-or-last (config n i' D) (leaf a₁ ∷ leaf a₂ ∷ []) ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      (if true then 2CC.⟦ a₁ 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ a₂ 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+    ≡⟨ Eq.cong (λ x → (if x then 2CC.⟦ a₁ 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ a₂ 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
+      (if config n i' D then 2CC.⟦ a₁ 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ a₂ 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      CCC.⟦ D CCC.CCC.⟨ leaf a₁ ∷ leaf a₂ ∷ [] ⟩ ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      2CC.⟦ D 2CC.2CC.⟨ a₁ 2CC.2CC.-< [] >- , a₂ 2CC.2CC.-< [] >- ⟩ ⟧ (config n i') ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ∎
   ... | no k≮2^m | p' =
     begin
       a₂ Rose.-< [] >- ∷ variants-cs m j'
     ≡⟨ Eq.cong (a₂ Rose.-< [] >- ∷_) (go m j' (suc D) (λ o → Eq.trans (Eq.trans (Eq.cong (config n i') (ℕ.+-suc o D)) (p (suc o))) (config-≮2^m m j o k≮2^m))) ⟩
-      a₂ Rose.-< [] >- ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      a₂ Rose.-< [] >- ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      CCC.⟦ find-or-last 1 (leaf a₁ ∷ leaf a₂ ∷ []) ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
-    ≡⟨ Eq.cong (λ x → CCC.⟦ find-or-last x (leaf a₁ ∷ leaf a₂ ∷ []) ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
-      CCC.⟦ find-or-last (config n i' D) (leaf a₁ ∷ leaf a₂ ∷ []) ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      (if false then 2CC.⟦ a₁ 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ a₂ 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+    ≡⟨ Eq.cong (λ x → (if x then 2CC.⟦ a₁ 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ a₂ 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
+      (if config n i' D then 2CC.⟦ a₁ 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ a₂ 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      CCC.⟦ D CCC.CCC.⟨ leaf a₁ ∷ leaf a₂ ∷ [] ⟩ ⟧ (config n i') ∷ List.map (λ e → CCC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      2CC.⟦ D 2CC.2CC.⟨ a₁ 2CC.2CC.-< [] >- , a₂ 2CC.2CC.-< [] >- ⟩ ⟧ (config n i') ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ∎
     where
     j' = Eq.subst Fin (ℕ.+-identityʳ (2 ^ m)) (Fin.reduce≥ j (ℕ.≮⇒≥ k≮2^m))
@@ -358,12 +353,12 @@ lemma4 (suc (suc n)) = go (suc n)
       16 ^ (1 + n)
     ∎
 
-lemma : ∀ n e₂ → CCC.CCCL , ADT.ADTL ⊢ e₁ (4 * n) ≣ e₂ → n * sizeCCC (e₁ (4 * n)) < sizeADT e₂
+lemma : ∀ n e₂ → 2CC.2CCL , ADT.ADTL ⊢ e₁ (4 * n) ≣ e₂ → n * size2CC (e₁ (4 * n)) < sizeADT e₂
 lemma zero (ADT.ADT.leaf v) (e₁⊆e₂ , e₂⊆e₁) = s≤s z≤n
 lemma zero (D ADT.ADT.⟨ l , r ⟩) (e₁⊆e₂ , e₂⊆e₁) = s≤s z≤n
 lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   begin-strict
-    n * sizeCCC (e₁ (4 * n))
+    n * size2CC (e₁ (4 * n))
   ≡⟨ Eq.cong (n *_) (size-e₁ (4 * n)) ⟩
     n * (1 + (4 * n) * 3)
   ≡⟨ ℕ.*-distribˡ-+ n 1 (4 * n * 3) ⟩
@@ -395,6 +390,6 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   open ℕ.≤-Reasoning
   n = suc m
 
-ADT<CCC : SizedCCC >Expressive SizedADT
-ADT<CCC (n , CCC→ADT) with CCC→ADT (e₁ (4 * n))
+ADT<2CC : Sized2CC >Expressive SizedADT
+ADT<2CC (n , 2CC→ADT) with 2CC→ADT (e₁ (4 * n))
 ... | e₂ , e₂≣e₁ , size-e₂≤size-e₁ = ℕ.≤⇒≯ size-e₂≤size-e₁ (lemma n e₂ (≅-sym e₂≣e₁))
