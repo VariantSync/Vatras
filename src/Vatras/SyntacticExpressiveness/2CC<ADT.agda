@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔸; atoms)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
-module Vatras.Test (A : 𝔸) (a₁ a₂ : atoms A) (a₁≢a₂ : a₁ ≢ a₂) where
+module Vatras.SyntacticExpressiveness.2CC<ADT (A : 𝔸) (a₁ a₂ : atoms A) (a₁≢a₂ : a₁ ≢ a₂) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥-elim)
