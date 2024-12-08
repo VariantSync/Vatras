@@ -9,6 +9,9 @@ open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.SyntacticExpressiveness A using (SizedLang)
 
+sizeRose : ∀ {i} → Rose i A → ℕ
+sizeRose (a Rose.-< cs >-) = suc (List.sum (List.map sizeRose cs))
+
 size2CC : ∀ {i} → 2CC.2CC i A → ℕ
 size2CC (a 2CC.2CC.-< cs >-) = suc (List.sum (List.map size2CC cs))
 size2CC (D 2CC.2CC.⟨ l , r ⟩) = suc (size2CC l + size2CC r)
@@ -20,7 +23,7 @@ Sized2CC = record
   }
 
 sizeADT : ADT.ADT A → ℕ
-sizeADT (ADT.ADT.leaf v) = suc zero -- TODO also count the variant
+sizeADT (ADT.ADT.leaf v) = suc (sizeRose v)
 sizeADT (D ADT.ADT.⟨ l , r ⟩) = suc (sizeADT l + sizeADT r)
 
 SizedADT : SizedLang
