@@ -26,28 +26,8 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) A using (VariantGenerat
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Util.List using (find-or-last)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
-
-open import Vatras.SyntacticExpressiveness A using (SizedLang; _≱Size_)
-
-size2CC : ∀ {i} → 2CC.2CC i A → ℕ
-size2CC (a 2CC.2CC.-< cs >-) = suc (List.sum (List.map size2CC cs))
-size2CC (D 2CC.2CC.⟨ l , r ⟩) = suc (size2CC l + size2CC r)
-
-Sized2CC : SizedLang
-Sized2CC = record
-  { Lang = 2CC.2CCL
-  ; size = size2CC
-  }
-
-sizeADT : ADT.ADT A → ℕ
-sizeADT (ADT.ADT.leaf v) = suc zero -- TODO also count the variant
-sizeADT (D ADT.ADT.⟨ l , r ⟩) = suc (sizeADT l + sizeADT r)
-
-SizedADT : SizedLang
-SizedADT = record
-  { Lang = ADT.ADTL
-  ; size = sizeADT
-  }
+open import Vatras.SyntacticExpressiveness A using (_≱Size_)
+open import Vatras.SyntacticExpressiveness.Sizes ℕ A using (Sized2CC; size2CC; SizedADT; sizeADT)
 
 e₁-cs : ℕ → ℕ → List (2CC.2CC ∞ A)
 e₁-cs zero D = []
