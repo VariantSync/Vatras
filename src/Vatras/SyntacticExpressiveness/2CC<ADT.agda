@@ -26,8 +26,9 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) A using (VariantGenerat
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Util.List using (find-or-last)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
-open import Vatras.SyntacticExpressiveness A using (_≱Size_)
+open import Vatras.SyntacticExpressiveness A using (_≱Size_; _<Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ A using (Sized2CC; size2CC; SizedADT; sizeADT)
+open import Vatras.SyntacticExpressiveness.2CC≤ADT ℕ A using (2CC≤ADT)
 
 e₁-cs : ℕ → ℕ → List (2CC.2CC ∞ A)
 e₁-cs zero D = []
@@ -129,7 +130,7 @@ ADT-leaf-count-lemma D l r =
   open Eq.≡-Reasoning
 
 leafs-≤-size : (e₂ : ADT.ADT A) → ADT-leaf-count e₂ ≤ sizeADT e₂
-leafs-≤-size (ADT.ADT.leaf v) = ℕ.≤-refl
+leafs-≤-size (ADT.ADT.leaf v) = s≤s z≤n
 leafs-≤-size (D ADT.ADT.⟨ l , r ⟩) =
   begin
     ADT-leaf-count (D ADT.ADT.⟨ l , r ⟩)
@@ -370,5 +371,8 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   open ℕ.≤-Reasoning
   n = suc m
 
-ADT<2CC : Sized2CC ≱Size SizedADT
-ADT<2CC n = e₁ (4 * n) , λ e₂ e₁≣e₂ → lemma n e₂ e₁≣e₂
+2CC≱ADT : Sized2CC ≱Size SizedADT
+2CC≱ADT n = e₁ (4 * n) , λ e₂ e₁≣e₂ → lemma n e₂ e₁≣e₂
+
+2CC<ADT : Sized2CC <Size SizedADT
+2CC<ADT = 2CC≤ADT , 2CC≱ADT
