@@ -27,7 +27,7 @@ open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Util.List using (find-or-last)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 
-open import Vatras.SyntacticExpressiveness A using (SizedLang; _>Expressive_)
+open import Vatras.SyntacticExpressiveness A using (SizedLang; _≱Size_)
 
 size2CC : ∀ {i} → 2CC.2CC i A → ℕ
 size2CC (a 2CC.2CC.-< cs >-) = suc (List.sum (List.map size2CC cs))
@@ -390,6 +390,5 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   open ℕ.≤-Reasoning
   n = suc m
 
-ADT<2CC : Sized2CC >Expressive SizedADT
-ADT<2CC (n , 2CC→ADT) with 2CC→ADT (e₁ (4 * n))
-... | e₂ , e₂≣e₁ , size-e₂≤size-e₁ = ℕ.≤⇒≯ size-e₂≤size-e₁ (lemma n e₂ (≅-sym e₂≣e₁))
+ADT<2CC : Sized2CC ≱Size SizedADT
+ADT<2CC n = e₁ (4 * n) , λ e₂ e₁≣e₂ → lemma n e₂ e₁≣e₂
