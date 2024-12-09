@@ -96,27 +96,17 @@ get     round-trip ex@(name ≔ ccc) = do
 ex-trivial : Example (CCC Feature ∞ Artifact)
 ex-trivial = "trivial" ≔ "D" ⟨ "l" -< [] >- ∷ "r" -< [] >- ∷ [] ⟩
 
+item : String → CCC Feature ∞ Artifact
+item a = a -< [] >-
+
 ex-sandwich : Example (CCC Feature ∞ Artifact)
 ex-sandwich = "Sandwich Recipe" ≔
-  "🍞"
-    -< "Salad?"
-         ⟨ "🥗" -< [] >-
-         ∷ "ε" -< [] >-
-         ∷ []
-         ⟩
-    ∷  "🧀" -< [] >-
-    ∷  "Patty?"
-         ⟨ "🍖" -< [] >-
-         ∷ "🧆" -< [] >-
-         ∷ []
-         ⟩
-    ∷  "Sauce?"
-         ⟨ "ε" -< [] >-
-         ∷ "🥚" -< [] >-
-         ∷ "🍅" -< [] >-
-         ∷ "🍅🥚" -< [] >-
-         ∷ []
-         ⟩
+  "🍞" -<
+       "Salad" ⟨ item "🥗" ∷ item "ε" ∷ [] ⟩
+    ∷  item "🧀"
+    ∷  "Patty" ⟨ item "🍖" ∷ item "🧆" ∷ [] ⟩
+    ∷  "Sauce" ⟨ item "ε"  ∷ item "🥚" ∷
+                 item "🍅" ∷ item "🍅🥚" ∷ [] ⟩
     ∷ []
     >-
 
