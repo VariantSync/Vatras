@@ -225,3 +225,8 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
 
 ≱→¬= : (L₁ L₂ : SizedLang) → L₁ ≱Size L₂ → ¬ (L₁ =Size L₂)
 ≱→¬= L₁ L₂ L₁≠L₂ (L₁≤L₂ , L₂≤L₁) = ≱→¬≤ L₁ L₂ L₁≠L₂ L₂≤L₁
+
+≤→¬≱ : (L₁ L₂ : SizedLang) → L₁ ≤Size L₂ → ¬ (L₂ ≱Size L₁)
+≤→¬≱ L₁ L₂ (n , L₂→L₁) L₂≱L₁ with L₂≱L₁ n
+≤→¬≱ L₁ L₂ (n , L₂→L₁) L₂≱L₁ | e₂ , e₂< with L₂→L₁ e₂
+≤→¬≱ L₁ L₂ (n , L₂→L₁) L₂≱L₁ | e₂ , e₂< | e₁ , e₂≣e₁ , e₁≤e₂ = ℕ.n≮n (n * size L₂ e₂) (ℕ.≤-trans (e₂< e₁ (≅-sym e₂≣e₁)) e₁≤e₂)
