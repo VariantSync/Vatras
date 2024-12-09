@@ -6,7 +6,7 @@ module Vatras.Util.List where
 open import Data.Bool using (Bool; true; false)
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
-open import Data.Nat.Properties using (m≤m+n)
+open import Data.Nat.Properties as ℕ using (m≤m+n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
 open import Data.List.Properties using (map-id; length-++)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
@@ -15,7 +15,6 @@ open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Function using (id; _∘_; flip)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
-open Eq.≡-Reasoning
 
 -- true iff the given list is empty
 empty? : ∀ {A : Set} → List A → Bool
@@ -69,6 +68,8 @@ map-find-or-last f (suc i) (x ∷ y ∷ zs) =
   ≡⟨⟩
     (find-or-last (suc i) ∘ map⁺ f) (x ∷ y ∷ zs)
   ∎
+  where
+  open Eq.≡-Reasoning
 
 find-or-last⇒lookup : ∀ {ℓ} {A : Set ℓ} {i : ℕ}
   → (x : A)
@@ -128,7 +129,26 @@ find-or-last-prepend-∸ {n = suc n} (x ∷ z ∷ zs) ys (s≤s smol) =
   ≡⟨⟩
     find-or-last (suc n ∸ List⁺.length (x ∷ z ∷ zs)) ys
   ∎
+  where
+  open Eq.≡-Reasoning
 
 -- Todo: Contribute this to Agda stdlib
 map⁺-id : ∀ {ℓ} {A : Set ℓ} → map⁺ id ≗ id {A = List⁺ A}
 map⁺-id (head ∷ tail) = Eq.cong (head ∷_) (map-id tail)
+
+sum-map-≤ : ∀ {ℓ} {A : Set ℓ} (f g : A → ℕ) (xs : List A) → (∀ x → f x ≤ g x) → List.sum (List.map f xs) ≤ List.sum (List.map g xs)
+sum-map-≤ f g [] f≤g = z≤n
+sum-map-≤ f g (x ∷ xs) f≤g =
+  begin
+    List.sum (List.map f (x ∷ xs))
+  ≡⟨⟩
+    f x + List.sum (List.map f xs)
+  ≤⟨ ℕ.+-monoˡ-≤ (List.sum (List.map f xs)) (f≤g x) ⟩
+    g x + List.sum (List.map f xs)
+  ≤⟨ ℕ.+-monoʳ-≤ (g x) (sum-map-≤ f g xs f≤g) ⟩
+    g x + List.sum (List.map g xs)
+  ≡⟨⟩
+    List.sum (List.map g (x ∷ xs))
+  ∎
+  where
+  open ℕ.≤-Reasoning
