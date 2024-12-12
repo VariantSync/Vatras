@@ -5,6 +5,9 @@
 *.#*
 .dir-locals.el
 
+# emacs' agda mode
+src/agda2-mode*
+
 # build
 src/cc
 src/Main
