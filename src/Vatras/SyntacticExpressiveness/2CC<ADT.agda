@@ -10,6 +10,10 @@ open import Data.List as List using (List; []; _∷_)
 import Data.List.Properties as List
 import Data.List.Membership.Propositional as List
 import Data.List.Membership.Propositional.Properties as List
+import Data.List.Relation.Binary.Subset.Propositional as List
+open import Data.List.Relation.Unary.Any using (here; there)
+import Data.List.Relation.Unary.AllPairs.Properties as AllPairs
+open import Data.List.Relation.Unary.Unique.Propositional using (Unique)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
 import Data.List.NonEmpty.Properties as List⁺
 open import Data.Product using (_,_; proj₁; proj₂)
@@ -24,7 +28,7 @@ open import Vatras.Framework.Definitions using (𝔸; NAT)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 open import Vatras.Framework.VariantGenerator (Rose ∞) NAT using (VariantGenerator)
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
-open import Vatras.Util.List using (find-or-last)
+import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 open import Vatras.SyntacticExpressiveness using (_≱Size_; _<Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (Sized2CC; size2CC; SizedADT; sizeADT)
@@ -53,8 +57,8 @@ variants-cs (suc n) i with Fin.toℕ i <? 2 ^ n
 variants : ∀ n → VariantGenerator (pred (2 ^ n))
 variants n i = 0 Rose.-< variants-cs n (Eq.subst Fin (ℕ.suc-pred (2 ^ n) {{ℕ.>-nonZero (ℕ.m^n>0 2 n)}}) i) >-
 
-lemma1 : ∀ n → variants n ⊆ 2CC.⟦ e₁ n ⟧
-lemma1 n i = config n i' , Eq.cong (0 Rose.-<_>-) (go n i' zero λ o → Eq.cong (config n i') (ℕ.+-identityʳ o))
+variants⊆e₁ : ∀ n → variants n ⊆ 2CC.⟦ e₁ n ⟧
+variants⊆e₁ n i = config n i' , Eq.cong (0 Rose.-<_>-) (go n i' zero λ o → Eq.cong (config n i') (ℕ.+-identityʳ o))
   where
   i' = Eq.subst Fin (ℕ.suc-pred (2 ^ n) {{ℕ.>-nonZero (ℕ.m^n>0 2 n)}}) i
 
@@ -167,36 +171,16 @@ ADT-leaf-count≤ₗ D l r =
   where
   open ℕ.≤-Reasoning
 
-length-++-≤ₗ : ∀ {ℓ} {A : Set ℓ} (xs ys : List A) → List.length xs ≤ List.length (xs List.++ ys)
-length-++-≤ₗ xs ys = Eq.subst (_ ≤_) (Eq.sym (List.length-++ xs)) (ℕ.m≤m+n (List.length xs) (List.length ys))
-
-lookup-++ᵣ : ∀ {ℓ} {A : Set ℓ} (xs ys : List A) i → List.lookup xs i ≡ List.lookup (xs List.++ ys) (Fin.inject≤ i (length-++-≤ₗ xs ys))
-lookup-++ᵣ (x ∷ xs) ys zero = refl
-lookup-++ᵣ (x ∷ xs) ys (suc i) = lookup-++ᵣ xs ys i
-
-lookup-++ₗ : ∀ {ℓ} {A : Set ℓ} (xs ys : List A) i → List.lookup ys i ≡ List.lookup (xs List.++ ys) (Fin.cast (Eq.sym (List.length-++ xs)) (List.length xs Fin.↑ʳ i))
-lookup-++ₗ [] ys i = Eq.cong (List.lookup ys) (Eq.sym (Fin.cast-is-id refl i))
-lookup-++ₗ (x ∷ xs) ys i = lookup-++ₗ xs ys i
-
 ADT-leaf∈⟦⟧ : ∀ v e₂ → v ∈ ADT.⟦ e₂ ⟧ → v ∈ listToIndexedSet (ADT-leafs e₂)
 ADT-leaf∈⟦⟧ v (ADT.ADT.leaf .v) (c , refl) = zero , refl
 ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) with c D
 ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | true with ADT-leaf∈⟦⟧ v l (c , p)
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | true | (i , p') = Fin.inject≤ i (ADT-leaf-count≤ₗ D l r) , Eq.trans p' (lookup-++ᵣ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
+ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | true | (i , p') = Fin.inject≤ i (ADT-leaf-count≤ₗ D l r) , Eq.trans p' (List.lookup-++ᵣ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
 ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | false with ADT-leaf∈⟦⟧ v r (c , p)
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | false | (i , p') = (Fin.cast (Eq.sym (ADT-leaf-count-lemma D l r)) (ADT-leaf-count l Fin.↑ʳ i)) , Eq.trans p' (lookup-++ₗ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
+ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | false | (i , p') = (Fin.cast (Eq.sym (ADT-leaf-count-lemma D l r)) (ADT-leaf-count l Fin.↑ʳ i)) , Eq.trans p' (List.lookup-++ₗ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
 
 ADT-leaf⊆⟦⟧ : ∀ e₂ → ADT.⟦ e₂ ⟧ ⊆ listToIndexedSet (ADT-leafs e₂)
 ADT-leaf⊆⟦⟧ e₂ i = ADT-leaf∈⟦⟧ (ADT.⟦ e₂ ⟧ i) e₂ (i , refl)
-
-open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
-import Data.List.Relation.Unary.AllPairs.Properties as AllPairs
-open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.List.Relation.Unary.All using (All; []; _∷_)
-import Data.List.Relation.Binary.Subset.Propositional as List
-
-Unique : ∀ {ℓ} {A : Set ℓ} → List A → Set ℓ
-Unique xs = AllPairs _≢_ xs
 
 Fin-reduce≥-injective : ∀ {m n} (i : Fin (m + n)) (j : Fin (m + n)) (m≤i : m ≤ Fin.toℕ i) (m≤j : m ≤ Fin.toℕ j) → Fin.reduce≥ i m≤i ≡ Fin.reduce≥ j m≤j → i ≡ j
 Fin-reduce≥-injective {zero} {.(suc _)} zero j m≤i m≤j i≡j = i≡j
@@ -223,59 +207,25 @@ IndexedSet-⊆⇒List-⊆ gen l gen⊆l {x} (here refl) with gen⊆l zero
 ... | i , x∈l = Eq.subst (List._∈ (List⁺.toList l)) (Eq.sym x∈l) (List.∈-lookup {xs = List⁺.toList l} i)
 IndexedSet-⊆⇒List-⊆ {suc n} gen l gen⊆l {x} (there x∈gen) = IndexedSet-⊆⇒List-⊆ {n} (gen ∘ suc) l (gen⊆l ∘ suc) x∈gen
 
-lemma5 : ∀ {ℓ} {A : Set ℓ} (u v : A) (xs ys : List A) → u ≢ v → u List.∈ (xs List.++ List.[ v ] List.++ ys) → u List.∈ (xs List.++ ys)
-lemma5 u v [] ys u≢v (here u≡v) = ⊥-elim (u≢v u≡v)
-lemma5 u v [] ys u≢v (there u∈ys) = u∈ys
-lemma5 u v (x ∷ xs) ys u≢v (here u≡x) = here u≡x
-lemma5 u v (x ∷ xs) ys u≢v (there u∈xs++v∷ys) = there (lemma5 u v xs ys u≢v u∈xs++v∷ys)
-
-∈∧∉⇒≢ : ∀ {ℓ} {A : Set ℓ} {y z : A} (xs : List A) → y List.∈ xs → All (z ≢_) xs → y ≢ z
-∈∧∉⇒≢ (x ∷ xs) (here y≡x) (y≢x ∷ z∉xs) y≡z = y≢x (Eq.trans (Eq.sym y≡z) y≡x)
-∈∧∉⇒≢ (x ∷ xs) (there y∈xs) (y≢x ∷ z∉xs) y≡z = ∈∧∉⇒≢ xs y∈xs z∉xs y≡z
-
-length≤ : ∀ {ℓ} {A : Set ℓ} (xs ys : List A) → Unique xs → xs List.⊆ ys → List.length xs ≤ List.length ys
-length≤ [] ys unique-xs xs⊆ys = z≤n
-length≤ (x ∷ xs) ys unique-xs xs⊆ys with List.∈-∃++ (xs⊆ys (here refl))
-length≤ (x ∷ xs) ys (x∉xs ∷ unique-xs) xs⊆ys | l , r , ys≡l++x∷r =
-  begin
-    List.length (x ∷ xs)
-  ≡⟨⟩
-    suc (List.length xs)
-  ≤⟨ s≤s (length≤ xs (l List.++ r) unique-xs λ {y} y∈xs → lemma5 y x l r (∈∧∉⇒≢ xs y∈xs x∉xs) (Eq.subst (y List.∈_) ys≡l++x∷r (xs⊆ys (there y∈xs)))) ⟩
-    suc (List.length (l List.++ r))
-  ≡⟨ Eq.cong suc (List.length-++ l) ⟩
-    suc (List.length l + List.length r)
-  ≡⟨ ℕ.+-suc (List.length l) (List.length r) ⟨
-    List.length l + suc (List.length r)
-  ≡⟨⟩
-    List.length l + List.length (x ∷ r)
-  ≡⟨ List.length-++ l ⟨
-    List.length (l List.++ (x ∷ r))
-  ≡⟨ Eq.cong List.length ys≡l++x∷r ⟨
-    List.length ys
-  ∎
-  where
-  open ℕ.≤-Reasoning
-
-lemma3 : ∀ n l → variants n ⊆ listToIndexedSet l → 2 ^ n ≤ List⁺.length l
-lemma3 n l variants⊆l =
+variants⊆⇒2^n≤ : ∀ n l → variants n ⊆ listToIndexedSet l → 2 ^ n ≤ List⁺.length l
+variants⊆⇒2^n≤ n l variants⊆l =
   begin
     2 ^ n
   ≡⟨ ℕ.suc-pred (2 ^ n) {{ℕ.>-nonZero (ℕ.m^n>0 2 n)}} ⟨
     suc (pred (2 ^ n))
   ≡⟨ List.length-tabulate (variants n) ⟨
     List.length (List.tabulate (variants n))
-  ≤⟨ length≤ (List.tabulate (variants n)) (List⁺.toList l) (variants-unique n) (IndexedSet-⊆⇒List-⊆ (variants n) l variants⊆l) ⟩
+  ≤⟨ List.length≤ (List.tabulate (variants n)) (List⁺.toList l) (variants-unique n) (IndexedSet-⊆⇒List-⊆ (variants n) l variants⊆l) ⟩
     List⁺.length l
   ∎
   where
   open ℕ.≤-Reasoning
 
-lemma2 : ∀ n e₂ → variants n ⊆ ADT.⟦ e₂ ⟧ → 2 ^ n ≤ sizeADT e₂
-lemma2 n e₂ variants⊆e₂ =
+variants⊆e₂⇒2^n≤e₂ : ∀ n e₂ → variants n ⊆ ADT.⟦ e₂ ⟧ → 2 ^ n ≤ sizeADT e₂
+variants⊆e₂⇒2^n≤e₂ n e₂ variants⊆e₂ =
   begin
     2 ^ n
-  ≤⟨ lemma3 n (ADT-leafs e₂) (⊆-trans variants⊆e₂ (ADT-leaf⊆⟦⟧ e₂)) ⟩
+  ≤⟨ variants⊆⇒2^n≤ n (ADT-leafs e₂) (⊆-trans variants⊆e₂ (ADT-leaf⊆⟦⟧ e₂)) ⟩
     ADT-leaf-count e₂
   ≤⟨ leafs-≤-size e₂ ⟩
     sizeADT e₂
@@ -283,10 +233,10 @@ lemma2 n e₂ variants⊆e₂ =
   where
   open ℕ.≤-Reasoning
 
-lemma4 : ∀ n → 13 * (n * n) < 16 ^ n
-lemma4 zero = s≤s z≤n
-lemma4 (suc zero) = ℕ.+-monoʳ-≤ 14 z≤n
-lemma4 (suc (suc n)) = go (suc n)
+13*n^2<16^n : ∀ n → 13 * (n * n) < 16 ^ n
+13*n^2<16^n zero = s≤s z≤n
+13*n^2<16^n (suc zero) = ℕ.+-monoʳ-≤ 14 z≤n
+13*n^2<16^n (suc (suc n)) = go (suc n)
   where
   open ℕ.≤-Reasoning
 
@@ -328,7 +278,7 @@ lemma4 (suc (suc n)) = go (suc n)
       16 * (4 * (n * n))
     ≤⟨ ℕ.*-monoʳ-≤ 16 (ℕ.*-monoˡ-≤ (n * n) (ℕ.+-monoʳ-≤ 4 (z≤n {9}))) ⟩
       16 * (13 * (n * n))
-    <⟨ ℕ.*-monoʳ-< 16 (lemma4 n) ⟩
+    <⟨ ℕ.*-monoʳ-< 16 (13*n^2<16^n n) ⟩
       16 * 16 ^ n
     ≡⟨⟩
       16 ^ (1 + n)
@@ -360,11 +310,11 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
     n * n + 12 * (n * n)
   ≡⟨⟩
     13 * (n * n)
-  <⟨ lemma4 n ⟩
+  <⟨ 13*n^2<16^n n ⟩
     16 ^ n
   ≡⟨ ℕ.^-*-assoc 2 4 n ⟩
     2 ^ (4 * n)
-  ≤⟨ lemma2 (4 * n) e₂ (⊆-trans (lemma1 (4 * n)) e₁⊆e₂) ⟩
+  ≤⟨ variants⊆e₂⇒2^n≤e₂ (4 * n) e₂ (⊆-trans (variants⊆e₁ (4 * n)) e₁⊆e₂) ⟩
     sizeADT e₂
   ∎
   where

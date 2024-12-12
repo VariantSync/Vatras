@@ -4,19 +4,26 @@ Utilities for lists.
 module Vatras.Util.List where
 
 open import Data.Bool using (Bool; true; false)
-open import Data.Fin using (Fin)
+open import Data.Empty using (⊥-elim)
+open import Data.Fin as Fin using (Fin; zero; suc)
+import Data.Fin.Properties as Fin
 open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _*_; _⊔_; _≤_; _<_; s≤s; z≤n)
 open import Data.Nat.Properties as ℕ using (m≤m+n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
 open import Data.List.Properties using (map-id; length-++)
 open import Data.List.Membership.Propositional using (_∈_)
+import Data.List.Membership.Propositional.Properties as List
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
+open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_)
+open import Data.List.Relation.Unary.All using (All; _∷_)
 open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.List.Relation.Unary.Unique.Propositional using (Unique; _∷_)
+open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Function using (id; _∘_; flip; const)
 
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; _≢_; refl)
 
 -- true iff the given list is empty
 empty? : ∀ {A : Set} → List A → Bool
@@ -39,10 +46,76 @@ max-≤ n (x ∷ xs) (there x∈xs) = ℕ.≤-trans (max-≤ n xs x∈xs) (ℕ.m
 ⁺++⁺-length-≤ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A) → List⁺.length xs ≤ List⁺.length (xs ⁺++⁺ ys)
 ⁺++⁺-length-≤ xs ys rewrite ⁺++⁺-length xs ys = m≤m+n (List⁺.length xs) (List⁺.length ys)
 
+length-++-≤ₗ : ∀ {ℓ} {A : Set ℓ}
+  → (xs ys : List A)
+  → List.length xs ≤ List.length (xs List.++ ys)
+length-++-≤ₗ xs ys = Eq.subst (_ ≤_) (Eq.sym (length-++ xs)) (ℕ.m≤m+n (List.length xs) (List.length ys))
+
+lookup-++ᵣ : ∀ {ℓ} {A : Set ℓ}
+  → (xs ys : List A)
+  → (i : Fin (List.length xs))
+  → List.lookup xs i ≡ List.lookup (xs List.++ ys) (Fin.inject≤ i (length-++-≤ₗ xs ys))
+lookup-++ᵣ (x ∷ xs) ys zero = refl
+lookup-++ᵣ (x ∷ xs) ys (suc i) = lookup-++ᵣ xs ys i
+
+lookup-++ₗ : ∀ {ℓ} {A : Set ℓ}
+  → (xs ys : List A)
+  → (i : Fin (List.length ys))
+  → List.lookup ys i ≡ List.lookup (xs List.++ ys) (Fin.cast (Eq.sym (length-++ xs)) (List.length xs Fin.↑ʳ i))
+lookup-++ₗ [] ys i = Eq.cong (List.lookup ys) (Eq.sym (Fin.cast-is-id refl i))
+lookup-++ₗ (x ∷ xs) ys i = lookup-++ₗ xs ys i
+
 ++-tail : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
   → (xs ++ y ∷ []) ++ ys ≡ xs ++ y ∷ ys
 ++-tail y ys [] = refl
 ++-tail y ys (x ∷ xs) = Eq.cong (x ∷_) (++-tail y ys xs)
+
+∈xs++v∷ys⇒∈xs++ys : ∀ {ℓ} {A : Set ℓ}
+  → (u v : A)
+  → (xs ys : List A)
+  → u ≢ v
+  → u ∈ (xs List.++ List.[ v ] List.++ ys)
+  → u ∈ (xs List.++ ys)
+∈xs++v∷ys⇒∈xs++ys u v [] ys u≢v (here u≡v) = ⊥-elim (u≢v u≡v)
+∈xs++v∷ys⇒∈xs++ys u v [] ys u≢v (there u∈ys) = u∈ys
+∈xs++v∷ys⇒∈xs++ys u v (x ∷ xs) ys u≢v (here u≡x) = here u≡x
+∈xs++v∷ys⇒∈xs++ys u v (x ∷ xs) ys u≢v (there u∈xs++v∷ys) = there (∈xs++v∷ys⇒∈xs++ys u v xs ys u≢v u∈xs++v∷ys)
+
+∈∧∉⇒≢ : ∀ {ℓ} {A : Set ℓ} {y z : A}
+  → (xs : List A)
+  → y ∈ xs
+  → All (z ≢_) xs
+  → y ≢ z
+∈∧∉⇒≢ (x ∷ xs) (here y≡x) (y≢x ∷ z∉xs) y≡z = y≢x (Eq.trans (Eq.sym y≡z) y≡x)
+∈∧∉⇒≢ (x ∷ xs) (there y∈xs) (y≢x ∷ z∉xs) y≡z = ∈∧∉⇒≢ xs y∈xs z∉xs y≡z
+
+length≤ : ∀ {ℓ} {A : Set ℓ}
+  → (xs ys : List A)
+  → Unique xs
+  → xs ⊆ ys
+  → List.length xs ≤ List.length ys
+length≤ [] ys unique-xs xs⊆ys = z≤n
+length≤ (x ∷ xs) ys unique-xs xs⊆ys with List.∈-∃++ (xs⊆ys (here refl))
+length≤ (x ∷ xs) ys (x∉xs ∷ unique-xs) xs⊆ys | l , r , ys≡l++x∷r =
+  begin
+    List.length (x ∷ xs)
+  ≡⟨⟩
+    suc (List.length xs)
+  ≤⟨ s≤s (length≤ xs (l List.++ r) unique-xs λ {y} y∈xs → ∈xs++v∷ys⇒∈xs++ys y x l r (∈∧∉⇒≢ xs y∈xs x∉xs) (Eq.subst (y ∈_) ys≡l++x∷r (xs⊆ys (there y∈xs)))) ⟩
+    suc (List.length (l List.++ r))
+  ≡⟨ Eq.cong suc (length-++ l) ⟩
+    suc (List.length l + List.length r)
+  ≡⟨ ℕ.+-suc (List.length l) (List.length r) ⟨
+    List.length l + suc (List.length r)
+  ≡⟨⟩
+    List.length l + List.length (x ∷ r)
+  ≡⟨ length-++ l ⟨
+    List.length (l List.++ (x ∷ r))
+  ≡⟨ Eq.cong List.length ys≡l++x∷r ⟨
+    List.length ys
+  ∎
+  where
+  open ℕ.≤-Reasoning
 
 -- Do not touch this function. its definition is very fragile and just refactoring it can break proofs.
 find-or-last : ∀ {ℓ} {A : Set ℓ} → ℕ → List⁺ A → A
