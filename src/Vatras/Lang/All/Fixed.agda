@@ -2,6 +2,8 @@ open import Vatras.Framework.Definitions using (𝔽; 𝕍)
 
 module Vatras.Lang.All.Fixed (F : 𝔽) (V : 𝕍) where
 
+open import Vatras.Util.Nat.AtLeast using (ℕ≥)
+
 import Vatras.Lang.VariantList
 import Vatras.Lang.CCC
 import Vatras.Lang.NCC
@@ -14,7 +16,10 @@ import Vatras.Lang.Gruler
 
 module VariantList = Vatras.Lang.VariantList V
 module CCC = Vatras.Lang.CCC F
-module NCC = Vatras.Lang.NCC F
+module NCC where
+  open Vatras.Lang.NCC F using (NCC; NCCL; Configuration) public
+  module _ {n : ℕ≥ 2} where
+    open Vatras.Lang.NCC F n hiding (NCC; NCCL; Configuration) public
 module 2CC = Vatras.Lang.2CC F
 module NADT = Vatras.Lang.NADT F V
 module ADT = Vatras.Lang.ADT F V
