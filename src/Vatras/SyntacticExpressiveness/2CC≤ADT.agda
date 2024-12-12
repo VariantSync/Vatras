@@ -1,28 +1,18 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 module Vatras.SyntacticExpressiveness.2CC≤ADT (F : 𝔽) where
 
-open import Data.Bool using (Bool; true; false; if_then_else_)
-open import Data.Empty using (⊥-elim)
-open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; z≤n; s≤s; _<_; _≮_; _<?_; _+_; pred; _*_; _^_; _≟_)
+open import Data.Nat using (suc; _≤_; s≤s; _+_)
 import Data.Nat.Properties as ℕ
-open import Data.Fin as Fin using (Fin; zero; suc)
-import Data.Fin.Properties as Fin
-open import Data.List as List using (List; []; _∷_)
+import Data.List as List
 import Data.List.Properties as List
-import Data.List.Membership.Propositional as List
-import Data.List.Membership.Propositional.Properties as List
-open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
-import Data.List.NonEmpty.Properties as List⁺
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_,_)
 open import Function using (_∘_)
-open import Relation.Nullary.Decidable using (Dec; yes; no)
-open import Relation.Nullary.Negation using (¬_)
+import Relation.Binary.PropositionalEquality as Eq
 open import Size using (Size; ∞)
 
-open import Vatras.Data.EqIndexedSet using (_≅_; ≅-trans; ≅-sym; ≅[]→≅; _⊆_; ⊆-trans; _∈_)
-open import Vatras.Framework.Variants using (Rose; Rose-injective)
-open import Vatras.Util.List using (find-or-last; sum-map-≤)
+open import Vatras.Data.EqIndexedSet using (≅-sym; ≅[]→≅)
+open import Vatras.Framework.Variants using (Rose)
+import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.Translation.Lang.2CC.Rename using (2CC-rename)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
@@ -30,7 +20,6 @@ open import Vatras.Translation.LanguageMap using (ADT→2CC)
 open import Vatras.SyntacticExpressiveness using (_≤Size_)
 open import Vatras.SyntacticExpressiveness.Sizes F using (sizeRose; Sized2CC; size2CC; SizedADT; sizeADT)
 open import Vatras.Lang.2CC.Encode using (encode; encoder)
-open import Vatras.Framework.Compiler using (_⊕_)
 
 ADT→2CC' : LanguageCompiler ADT.ADTL 2CC.2CCL
 ADT→2CC' = ADT→2CC encoder
@@ -45,7 +34,7 @@ lemma2 (a Rose.-< cs >-) =
     suc (List.sum (List.map size2CC (List.map encode cs)))
   ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
     suc (List.sum (List.map (size2CC ∘ encode) cs))
-  ≤⟨ s≤s (sum-map-≤ (size2CC ∘ encode) sizeRose cs lemma2) ⟩
+  ≤⟨ s≤s (List.sum-map-≤ (size2CC ∘ encode) sizeRose cs lemma2) ⟩
     suc (List.sum (List.map sizeRose cs))
   ≡⟨⟩
     sizeRose (a Rose.-< cs >-)
