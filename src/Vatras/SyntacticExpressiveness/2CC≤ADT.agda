@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
-module Vatras.SyntacticExpressiveness.2CC≤ADT (F : 𝔽) (A : 𝔸) where
+module Vatras.SyntacticExpressiveness.2CC≤ADT (F : 𝔽) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥-elim)
@@ -22,22 +22,20 @@ open import Size using (Size; ∞)
 
 open import Vatras.Data.EqIndexedSet using (_≅_; ≅-trans; ≅-sym; ≅[]→≅; _⊆_; ⊆-trans; _∈_)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
-open import Vatras.Framework.VariantGenerator (Rose ∞) A using (VariantGenerator)
-open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Util.List using (find-or-last; sum-map-≤)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.Translation.Lang.2CC.Rename using (2CC-rename)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Translation.LanguageMap using (ADT→2CC)
-open import Vatras.SyntacticExpressiveness A using (_≤Size_)
-open import Vatras.SyntacticExpressiveness.Sizes F A using (sizeRose; Sized2CC; size2CC; SizedADT; sizeADT)
+open import Vatras.SyntacticExpressiveness using (_≤Size_)
+open import Vatras.SyntacticExpressiveness.Sizes F using (sizeRose; Sized2CC; size2CC; SizedADT; sizeADT)
 open import Vatras.Lang.2CC.Encode using (encode; encoder)
 open import Vatras.Framework.Compiler using (_⊕_)
 
 ADT→2CC' : LanguageCompiler ADT.ADTL 2CC.2CCL
 ADT→2CC' = ADT→2CC encoder
 
-lemma2 : ∀ {i} (v : Rose i A) → size2CC (encode v) ≤ sizeRose v
+lemma2 : ∀ {i : Size} {A : 𝔸} (v : Rose i A) → size2CC (encode v) ≤ sizeRose v
 lemma2 (a Rose.-< cs >-) =
   begin
     size2CC (encode (a Rose.-< cs >-))
@@ -55,7 +53,7 @@ lemma2 (a Rose.-< cs >-) =
   where
   open ℕ.≤-Reasoning
 
-lemma : ∀ (adt : ADT.ADT A) → size2CC (LanguageCompiler.compile ADT→2CC' adt) ≤ sizeADT adt
+lemma : ∀ {A : 𝔸} → (adt : ADT.ADT A) → size2CC (LanguageCompiler.compile ADT→2CC' adt) ≤ sizeADT adt
 lemma (ADT.ADT.leaf v) = ℕ.m≤n⇒m≤1+n (lemma2 v)
 lemma (D ADT.ADT.⟨ l , r ⟩) =
   begin
@@ -73,4 +71,4 @@ lemma (D ADT.ADT.⟨ l , r ⟩) =
   open ℕ.≤-Reasoning
 
 2CC≤ADT : Sized2CC ≤Size SizedADT
-2CC≤ADT = 1 , λ adt → LanguageCompiler.compile ADT→2CC' adt , ≅-sym (≅[]→≅ (LanguageCompiler.preserves ADT→2CC' adt)) , Eq.subst (size2CC (LanguageCompiler.compile ADT→2CC' adt )≤_) (Eq.sym (ℕ.+-identityʳ (sizeADT adt))) (lemma adt)
+2CC≤ADT = 1 , λ A adt → LanguageCompiler.compile ADT→2CC' adt , ≅-sym (≅[]→≅ (LanguageCompiler.preserves ADT→2CC' adt)) , Eq.subst (size2CC (LanguageCompiler.compile ADT→2CC' adt )≤_) (Eq.sym (ℕ.+-identityʳ (sizeADT adt))) (lemma adt)
