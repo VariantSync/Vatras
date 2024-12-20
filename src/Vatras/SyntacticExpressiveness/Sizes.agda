@@ -5,6 +5,7 @@ open import Data.Nat using (ℕ; suc; zero; _+_)
 import Data.List as List
 import Data.List.NonEmpty as List⁺
 import Data.Vec as Vec
+open import Function using (_∘_)
 open import Size using (Size; ∞)
 
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
@@ -53,4 +54,13 @@ SizedADT : SizedLang
 SizedADT = record
   { Lang = ADT.ADTL
   ; size = sizeADT
+  }
+
+sizeFST : {A : 𝔸} → FST.Impose.SPL A → ℕ
+sizeFST (root FST.Impose.◀ features) = 1 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) features)
+
+SizedFST : SizedLang
+SizedFST = record
+  { Lang = FST.FSTL
+  ; size = sizeFST
   }
