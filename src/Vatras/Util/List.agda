@@ -17,7 +17,6 @@ open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++�
 open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_)
 open import Data.List.Relation.Unary.All using (All; _∷_)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.List.Relation.Unary.Unique.Propositional using (Unique; _∷_)
 open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
@@ -89,33 +88,36 @@ lookup-++ₗ (x ∷ xs) ys i = lookup-++ₗ xs ys i
 ∈∧∉⇒≢ (x ∷ xs) (here y≡x) (y≢x ∷ z∉xs) y≡z = y≢x (Eq.trans (Eq.sym y≡z) y≡x)
 ∈∧∉⇒≢ (x ∷ xs) (there y∈xs) (y≢x ∷ z∉xs) y≡z = ∈∧∉⇒≢ xs y∈xs z∉xs y≡z
 
-length≤ : ∀ {ℓ} {A : Set ℓ}
-  → (xs ys : List A)
-  → Unique xs
-  → xs ⊆ ys
-  → List.length xs ≤ List.length ys
-length≤ [] ys unique-xs xs⊆ys = z≤n
-length≤ (x ∷ xs) ys unique-xs xs⊆ys with List.∈-∃++ (xs⊆ys (here refl))
-length≤ (x ∷ xs) ys (x∉xs ∷ unique-xs) xs⊆ys | l , r , ys≡l++x∷r =
-  begin
-    List.length (x ∷ xs)
-  ≡⟨⟩
-    suc (List.length xs)
-  ≤⟨ s≤s (length≤ xs (l List.++ r) unique-xs λ {y} y∈xs → ∈xs++v∷ys⇒∈xs++ys y x l r (∈∧∉⇒≢ xs y∈xs x∉xs) (Eq.subst (y ∈_) ys≡l++x∷r (xs⊆ys (there y∈xs)))) ⟩
-    suc (List.length (l List.++ r))
-  ≡⟨ Eq.cong suc (length-++ l) ⟩
-    suc (List.length l + List.length r)
-  ≡⟨ ℕ.+-suc (List.length l) (List.length r) ⟨
-    List.length l + suc (List.length r)
-  ≡⟨⟩
-    List.length l + List.length (x ∷ r)
-  ≡⟨ length-++ l ⟨
-    List.length (l List.++ (x ∷ r))
-  ≡⟨ Eq.cong List.length ys≡l++x∷r ⟨
-    List.length ys
-  ∎
-  where
-  open ℕ.≤-Reasoning
+module _ where
+  open import Data.List.Relation.Unary.Unique.Propositional using (Unique; _∷_)
+
+  length≤ : ∀ {ℓ} {A : Set ℓ}
+    → (xs ys : List A)
+    → Unique xs
+    → xs ⊆ ys
+    → List.length xs ≤ List.length ys
+  length≤ [] ys unique-xs xs⊆ys = z≤n
+  length≤ (x ∷ xs) ys unique-xs xs⊆ys with List.∈-∃++ (xs⊆ys (here refl))
+  length≤ (x ∷ xs) ys (x∉xs ∷ unique-xs) xs⊆ys | l , r , ys≡l++x∷r =
+    begin
+      List.length (x ∷ xs)
+    ≡⟨⟩
+      suc (List.length xs)
+    ≤⟨ s≤s (length≤ xs (l List.++ r) unique-xs λ {y} y∈xs → ∈xs++v∷ys⇒∈xs++ys y x l r (∈∧∉⇒≢ xs y∈xs x∉xs) (Eq.subst (y ∈_) ys≡l++x∷r (xs⊆ys (there y∈xs)))) ⟩
+      suc (List.length (l List.++ r))
+    ≡⟨ Eq.cong suc (length-++ l) ⟩
+      suc (List.length l + List.length r)
+    ≡⟨ ℕ.+-suc (List.length l) (List.length r) ⟨
+      List.length l + suc (List.length r)
+    ≡⟨⟩
+      List.length l + List.length (x ∷ r)
+    ≡⟨ length-++ l ⟨
+      List.length (l List.++ (x ∷ r))
+    ≡⟨ Eq.cong List.length ys≡l++x∷r ⟨
+      List.length ys
+    ∎
+    where
+    open ℕ.≤-Reasoning
 
 -- Do not touch this function. its definition is very fragile and just refactoring it can break proofs.
 find-or-last : ∀ {ℓ} {A : Set ℓ} → ℕ → List⁺ A → A
@@ -235,26 +237,33 @@ sum-replicate : (n m : ℕ) → List.sum (List.replicate n m) ≡ n * m
 sum-replicate zero m = refl
 sum-replicate (suc n) m = Eq.cong (m +_) (sum-replicate n m)
 
-sum-map-≤ : ∀ {ℓ} {A : Set ℓ}
-  → (f g : A → ℕ)
+sum-map-≤-with∈ : ∀ {ℓ} {A : Set ℓ}
+  → {f g : A → ℕ}
   → (xs : List A)
-  → (∀ x → f x ≤ g x)
+  → (∀ (x : A) → x ∈ xs → f x ≤ g x)
   → List.sum (List.map f xs) ≤ List.sum (List.map g xs)
-sum-map-≤ f g [] f≤g = z≤n
-sum-map-≤ f g (x ∷ xs) f≤g =
+sum-map-≤-with∈ {f = f} {g = g} [] f≤g = ℕ.≤-refl
+sum-map-≤-with∈ {f = f} {g = g} (x ∷ xs) f≤g =
   begin
     List.sum (List.map f (x ∷ xs))
   ≡⟨⟩
     f x + List.sum (List.map f xs)
-  ≤⟨ ℕ.+-monoˡ-≤ (List.sum (List.map f xs)) (f≤g x) ⟩
+  ≤⟨ ℕ.+-monoˡ-≤ (List.sum (List.map f xs)) (f≤g x (here refl)) ⟩
     g x + List.sum (List.map f xs)
-  ≤⟨ ℕ.+-monoʳ-≤ (g x) (sum-map-≤ f g xs f≤g) ⟩
+  ≤⟨ ℕ.+-monoʳ-≤ (g x) (sum-map-≤-with∈ xs (λ y y∈ys → f≤g y (there y∈ys))) ⟩
     g x + List.sum (List.map g xs)
   ≡⟨⟩
     List.sum (List.map g (x ∷ xs))
   ∎
   where
   open ℕ.≤-Reasoning
+
+sum-map-≤ : ∀ {ℓ} {A : Set ℓ}
+  → (f g : A → ℕ)
+  → (xs : List A)
+  → (∀ x → f x ≤ g x)
+  → List.sum (List.map f xs) ≤ List.sum (List.map g xs)
+sum-map-≤ f g xs f≤g = sum-map-≤-with∈ xs λ x x∈xs → f≤g x
 
 sum-map-< :
   ∀ {ℓ} {A : Set ℓ}
@@ -310,3 +319,35 @@ sum-* n (x ∷ xs) =
   ∎
   where
   open Eq.≡-Reasoning
+
+module _ where
+  open import Data.List.Relation.Binary.Sublist.Propositional using (_⊇_; []; _∷_; _∷ʳ_)
+  import Data.List.Relation.Binary.Sublist.Propositional.Properties as Sublist
+  open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+  open import Relation.Binary using (Rel; _Respects_)
+
+  AllPairs-resp-⊆ : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} → {R : Rel A ℓ₂} → (AllPairs R) Respects _⊇_
+  AllPairs-resp-⊆ [] [] = []
+  AllPairs-resp-⊆ (y ∷ʳ xs⊇ys) (All-x ∷ AllPairs-xs) = AllPairs-resp-⊆ xs⊇ys AllPairs-xs
+  AllPairs-resp-⊆ {x = .(_ ∷ _)} {.(_ ∷ _)} (refl ∷ xs⊇ys) (All-x ∷ AllPairs-xs) = Sublist.All-resp-⊆ xs⊇ys All-x ∷ AllPairs-resp-⊆ xs⊇ys AllPairs-xs
+
+map-applyUpTo : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂}
+  → (f : A → B)
+  → (g : ℕ → A)
+  → (n : ℕ)
+  → List.map f (List.applyUpTo g n) ≡ List.applyUpTo (f ∘ g) n
+map-applyUpTo f g zero = refl
+map-applyUpTo f g (suc n) = Eq.cong (f (g zero) ∷_) (map-applyUpTo f (g ∘ suc) n)
+
+map-upTo : ∀ {ℓ₁} {A : Set ℓ₁}
+  → (f : ℕ → A)
+  → (n : ℕ)
+  → List.map f (List.upTo n) ≡ List.applyUpTo f n
+map-upTo f n = map-applyUpTo f id n
+
+applyUpTo-cong : ∀ {ℓ₁} {A : Set ℓ₁}
+  → {f g : ℕ → A}
+  → f ≗ g
+  → List.applyUpTo f ≗ List.applyUpTo g
+applyUpTo-cong f≗g zero = refl
+applyUpTo-cong f≗g (suc n) = Eq.cong₂ _∷_ (f≗g zero) (applyUpTo-cong (f≗g ∘ suc) n)
