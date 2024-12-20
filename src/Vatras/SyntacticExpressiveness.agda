@@ -1,5 +1,6 @@
 module Vatras.SyntacticExpressiveness where
 
+open import Data.Empty using (⊥-elim)
 open import Data.Nat as ℕ using (ℕ; _≤_; _>_; _<_; _*_)
 import Data.Nat.Properties as ℕ
 open import Data.Product using (_×_; _,_; Σ-syntax; proj₁; proj₂)
@@ -8,11 +9,12 @@ import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Binary.Structures using (IsEquivalence; IsPreorder; IsPartialOrder; IsStrictPartialOrder)
 open import Size using (∞)
 
-open import Vatras.Data.EqIndexedSet using (≅-refl; ≅-sym; ≅-trans)
+open import Vatras.Data.EqIndexedSet using (≅-refl; ≅-sym; ≅-trans; ≅→≅[]; ⊆-index)
 open import Vatras.Framework.Definitions using (𝔸)
 open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
+open import Vatras.Framework.Compiler using (LanguageCompiler)
 
 record SizedLang : Set₂ where
   field
@@ -195,3 +197,19 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
 ≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ with L₂≱L₁ n
 ≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ | A , e₂ , e₂< with L₂→L₁ A e₂
 ≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ | A , e₂ , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (n * size L₂ e₂) (ℕ.≤-trans (e₂< e₁ (≅-sym e₂≅e₁)) e₁≤e₂)
+
+≤→Compiler : {L₁ L₂ : SizedLang} → L₁ ≤Size L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
+≤→Compiler (n , e₂→e₁) = record
+  { compile = λ {A} e₂ → proj₁ (e₂→e₁ A e₂)
+  ; config-compiler = λ {A} e₂ → record
+    { to = ⊆-index (proj₂ (proj₁ (proj₂ (e₂→e₁ A e₂))))
+    ; from = ⊆-index (proj₁ (proj₁ (proj₂ (e₂→e₁ A e₂))))
+    }
+  ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (e₂→e₁ A e₂))))
+  }
+
+¬Compiler→¬≤ : {L₁ L₂ : SizedLang} → ¬ LanguageCompiler (Lang L₁) (Lang L₂) → ¬ L₂ ≤Size L₁
+¬Compiler→¬≤ ¬Compiler L₂≤L₁ = ¬Compiler (≤→Compiler L₂≤L₁)
+
+¬Compiler→≤ : {L₁ L₂ : SizedLang} → {A : 𝔸} → (e₂ : Expression (Lang L₂) A) → (∀ (e₁ : Expression (Lang L₁) A) → ¬ Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂) → L₂ ≱Size L₁
+¬Compiler→≤ {A = A} e₂ e₁≇e₂ n = A , e₂ , λ e₁ e₂≅e₁ → ⊥-elim (e₁≇e₂ e₁ (≅-sym e₂≅e₁))
