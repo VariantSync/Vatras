@@ -191,10 +191,10 @@ Fin-reduce≥-injective {suc m} {suc n} (suc i) (suc j) m≤i m≤j i≡j = Eq.c
 variants-cs-unique : ∀ n i j → i ≢ j → variants-cs n i ≢ variants-cs n j
 variants-cs-unique zero zero zero i≢j = ⊥-elim (i≢j refl)
 variants-cs-unique (suc n) i j i≢j cs-i≡cs-j with Fin.toℕ i <? 2 ^ n | Fin.toℕ j <? 2 ^ n
-... | yes i<2^n | yes j<2^n = variants-cs-unique n (Fin.fromℕ< i<2^n) (Fin.fromℕ< j<2^n) (i≢j ∘ Fin.toℕ-injective ∘ Fin.fromℕ<-injective _ _ i<2^n j<2^n) (proj₂ (List.∷-injective cs-i≡cs-j))
-... | yes i<2^n | no j≮2^n = ℕ.0≢1+n (proj₁ (Rose-injective (proj₁ (List.∷-injective cs-i≡cs-j))))
-... | no i≮2^n | yes j<2^n = ℕ.0≢1+n (Eq.sym (proj₁ (Rose-injective (proj₁ (List.∷-injective cs-i≡cs-j)))))
-... | no i≮2^n | no j≮2^n = variants-cs-unique n (Eq.subst Fin (ℕ.+-identityʳ (2 ^ n)) (Fin.reduce≥ i (ℕ.≮⇒≥ i≮2^n))) (Eq.subst Fin (ℕ.+-identityʳ (2 ^ n)) (Fin.reduce≥ j (ℕ.≮⇒≥ j≮2^n))) (i≢j ∘ Fin-reduce≥-injective i j (ℕ.≮⇒≥ i≮2^n) (ℕ.≮⇒≥ j≮2^n) ∘ Eq.subst-injective (ℕ.+-identityʳ (2 ^ n))) (proj₂ (List.∷-injective cs-i≡cs-j))
+... | yes i<2^n | yes j<2^n = variants-cs-unique n (Fin.fromℕ< i<2^n) (Fin.fromℕ< j<2^n) (i≢j ∘ Fin.toℕ-injective ∘ Fin.fromℕ<-injective _ _ i<2^n j<2^n) (List.∷-injectiveʳ cs-i≡cs-j)
+... | yes i<2^n | no j≮2^n = ℕ.0≢1+n (proj₁ (Rose-injective (List.∷-injectiveˡ cs-i≡cs-j)))
+... | no i≮2^n | yes j<2^n = ℕ.0≢1+n (Eq.sym (proj₁ (Rose-injective (List.∷-injectiveˡ cs-i≡cs-j))))
+... | no i≮2^n | no j≮2^n = variants-cs-unique n (Eq.subst Fin (ℕ.+-identityʳ (2 ^ n)) (Fin.reduce≥ i (ℕ.≮⇒≥ i≮2^n))) (Eq.subst Fin (ℕ.+-identityʳ (2 ^ n)) (Fin.reduce≥ j (ℕ.≮⇒≥ j≮2^n))) (i≢j ∘ Fin-reduce≥-injective i j (ℕ.≮⇒≥ i≮2^n) (ℕ.≮⇒≥ j≮2^n) ∘ Eq.subst-injective (ℕ.+-identityʳ (2 ^ n))) (List.∷-injectiveʳ cs-i≡cs-j)
 
 variants-unique : ∀ n → Unique (List.tabulate (variants n))
 variants-unique n = AllPairs.tabulate⁺ {f = variants n} go

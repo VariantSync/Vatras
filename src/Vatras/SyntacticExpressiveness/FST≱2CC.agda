@@ -174,8 +174,8 @@ big-artifact-children : ∀ {i : Size}
   → c List.∈ cs
   → big-artifact (suc n) j ∈ 2CC.⟦ a 2CC.2CC.-< cs >- ⟧
   → Σ[ j' ∈ ℕ ] big-artifact n j' ∈ 2CC.⟦ c ⟧
-big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₂ (here refl) (conf , artifact≡cs) = j , conf , proj₁ (List.∷-injective (proj₂ (Rose-injective artifact≡cs)))
-big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₃ (there (here refl)) (conf , artifact≡cs) = j + 2 ^ n , conf , proj₁ (List.∷-injective (proj₂ (List.∷-injective (proj₂ (Rose-injective artifact≡cs)))))
+big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₂ (here refl) (conf , artifact≡cs) = j , conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))
+big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₃ (there (here refl)) (conf , artifact≡cs) = j + 2 ^ n , conf , List.∷-injectiveˡ (List.∷-injectiveʳ (proj₂ (Rose-injective artifact≡cs)))
 
 big-artifact∈e₂⇒2^n≤e₂ : ∀ {i : Size}
   → (n j : ℕ)
@@ -245,7 +245,7 @@ artifact-0∈e₂⇒2^n≤e₂ n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡c
     2 ^ suc n
   ≡⟨ ℕ.+-∸-assoc 1 {2 ^ suc n} {1} (ℕ.m^n>0 2 (suc n)) ⟩
     suc (2 ^ suc n ∸ 1)
-  ≤⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n zero c (conf , proj₁ (List.∷-injective (proj₂ (Rose-injective artifact≡cs))))) ⟩
+  ≤⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n zero c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs)))) ⟩
     suc (size2CC c)
   ≡⟨ Eq.cong suc (ℕ.+-identityʳ (size2CC c)) ⟨
     suc (size2CC c + 0)
@@ -293,7 +293,7 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
 2^n≤size2CC-artifact n j a (c ∷ cs) (conf , artifact≡cs) =
   begin
     2 ^ suc n
-  ≤⟨ artifact-0∈e₂⇒2^n≤e₂ n c (conf , proj₁ (List.∷-injective (proj₂ (Rose-injective artifact≡cs)))) ⟩
+  ≤⟨ artifact-0∈e₂⇒2^n≤e₂ n c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))) ⟩
     size2CC c
   ≤⟨ ℕ.m≤m+n (size2CC c) (List.sum (List.map size2CC cs)) ⟩
     size2CC c + List.sum (List.map size2CC cs)
@@ -320,7 +320,7 @@ impossible-artifact-sizes n (c ∷ cs) []         (c₂ ∷ cs₂) cs₁≢cs₂
 impossible-artifact-sizes n []       (c₁ ∷ cs₁) []         cs₁≢cs₂ (i , ())     (j , cs₂≡cs)
 impossible-artifact-sizes n (c ∷ cs) (c₁ ∷ cs₁) []         cs₁≢cs₂ (i , cs₁≡cs) (j , ())
 impossible-artifact-sizes n (c ∷ cs) (c₁ ∷ cs₁) (c₂ ∷ cs₂) cs₁≢cs₂ (i , cs₁≡cs) (j , cs₂≡cs) =
-  impossible-artifact-sizes n cs cs₁ cs₂ (cs₁≢cs₂ ∘ Eq.cong suc) (i , proj₂ (List.∷-injective cs₁≡cs)) (j , proj₂ (List.∷-injective cs₂≡cs))
+  impossible-artifact-sizes n cs cs₁ cs₂ (cs₁≢cs₂ ∘ Eq.cong suc) (i , List.∷-injectiveʳ cs₁≡cs) (j , List.∷-injectiveʳ cs₂≡cs)
 
 split-sizes : ∀ {i : Size}
   → (n : ℕ)
