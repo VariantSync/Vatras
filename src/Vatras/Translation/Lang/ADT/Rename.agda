@@ -43,7 +43,7 @@ rename : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → ADT D₁ V A
   → ADT D₂ V A
 rename f (leaf v) = leaf v
-rename f (d ADT.⟨ l , r ⟩) = f d ⟨ rename f l , rename f r ⟩
+rename f (d ⟨ l , r ⟩) = f d ⟨ rename f l , rename f r ⟩
 
 preserves-⊆ : ∀ {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)

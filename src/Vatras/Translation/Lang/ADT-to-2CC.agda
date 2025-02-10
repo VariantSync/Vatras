@@ -24,16 +24,15 @@ open Eq.≡-Reasoning using (step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Vatras.Lang.All
-open 2CC using () renaming (2CC to 2CCSyntax) -- Necessary for disambiguation
-open 2CC using (2CC; 2CCL)
+open 2CC using (2CC; 2CCL; _⟨_,_⟩)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
 translate : ∀ {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (2CCL F) → ADT F (Rose ∞) A → 2CC F ∞ A
-translate Variant→2CC (ADT.leaf v) = LanguageCompiler.compile Variant→2CC v
-translate Variant→2CC (f ADT.⟨ l , r ⟩) = f 2CCSyntax.⟨ translate Variant→2CC l , translate Variant→2CC r ⟩
+translate Variant→2CC (leaf v) = LanguageCompiler.compile Variant→2CC v
+translate Variant→2CC (f ⟨ l , r ⟩) = f ⟨ translate Variant→2CC l , translate Variant→2CC r ⟩
 
 preserves-≗ : ∀ {F : 𝔽} {A : 𝔸} → (Variant→2CC : VariantEncoder (Rose ∞) (2CCL F)) → (expr : ADT F (Rose ∞) A) → 2CC.⟦ translate Variant→2CC expr ⟧ ≗ ADT.⟦ expr ⟧
-preserves-≗ {A = A} Variant→2CC (ADT.leaf v) config =
+preserves-≗ {A = A} Variant→2CC (leaf v) config =
     2CC.⟦ translate Variant→2CC (leaf v) ⟧ config
   ≡⟨⟩
     2CC.⟦ LanguageCompiler.compile Variant→2CC v ⟧ config
@@ -42,10 +41,10 @@ preserves-≗ {A = A} Variant→2CC (ADT.leaf v) config =
   ≡⟨⟩
     ADT.⟦ leaf {V = Rose ∞} v ⟧ config
   ∎
-preserves-≗ Variant→2CC (f ADT.⟨ l , r ⟩) config =
+preserves-≗ Variant→2CC (f ⟨ l , r ⟩) config =
     2CC.⟦ translate Variant→2CC (f ⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
-    2CC.⟦ f 2CCSyntax.⟨ translate Variant→2CC l , translate Variant→2CC r ⟩ ⟧ config
+    2CC.⟦ f ⟨ translate Variant→2CC l , translate Variant→2CC r ⟩ ⟧ config
   ≡⟨⟩
     (if config f then 2CC.⟦ translate Variant→2CC l ⟧ config else 2CC.⟦ translate Variant→2CC r ⟧ config)
   ≡⟨ Eq.cong₂ (if config f then_else_) (preserves-≗ Variant→2CC l config) (preserves-≗ Variant→2CC r config) ⟩

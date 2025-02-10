@@ -25,8 +25,7 @@ open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Vatras.Lang.All
-open 2CC using () renaming (2CC to 2CCSyntax) -- Necessary for disambiguation
-open 2CC using (2CC; 2CCL)
+open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
 push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT D (Rose ∞) A) → ADT D (Rose ∞) A
@@ -40,8 +39,8 @@ push-down-artifact {A = A} a cs = go cs []
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → 2CC D i A
   → ADT D (Rose ∞) A
-translate (a 2CC.-< cs >-) = push-down-artifact a (List.map translate cs)
-translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
+translate (a -< cs >-) = push-down-artifact a (List.map translate cs)
+translate (d ⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
 
 ⟦push-down-artifact⟧ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (a : atoms A)
@@ -83,8 +82,8 @@ translate (d 2CC.⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
 preserves-≗ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (expr : 2CC D i A)
   → ADT.⟦ translate expr ⟧ ≗ 2CC.⟦ expr ⟧
-preserves-≗ (a 2CC.-< cs >-) config =
-    ADT.⟦ translate (a 2CCSyntax.-< cs >-) ⟧ config
+preserves-≗ (a -< cs >-) config =
+    ADT.⟦ translate (a -< cs >-) ⟧ config
   ≡⟨⟩
     ADT.⟦ push-down-artifact a (List.map translate cs) ⟧ config
   ≡⟨ ⟦push-down-artifact⟧ a (List.map translate cs) config ⟩
@@ -94,16 +93,16 @@ preserves-≗ (a 2CC.-< cs >-) config =
   ≡⟨ Eq.cong₂ V._-<_>- refl (List.map-cong (λ e → preserves-≗ e config) cs) ⟩
     a V.-< List.map (λ e → 2CC.⟦ e ⟧ config) cs >-
   ≡⟨⟩
-    2CC.⟦ a 2CCSyntax.-< cs >- ⟧ config
+    2CC.⟦ a -< cs >- ⟧ config
   ∎
-preserves-≗ (d 2CC.⟨ l , r ⟩) config =
-    ADT.⟦ translate (d 2CCSyntax.⟨ l , r ⟩) ⟧ config
+preserves-≗ (d ⟨ l , r ⟩) config =
+    ADT.⟦ translate (d ⟨ l , r ⟩) ⟧ config
   ≡⟨⟩
     ADT.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then ADT.⟦ translate l ⟧ config else ADT.⟦ translate r ⟧ config)
   ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-≗ l config) (preserves-≗ r config) ⟩
-    2CC.⟦ d 2CCSyntax.⟨ l , r ⟩ ⟧ config
+    2CC.⟦ d ⟨ l , r ⟩ ⟧ config
   ∎
 
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}

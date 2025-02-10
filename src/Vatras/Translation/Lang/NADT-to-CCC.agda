@@ -23,12 +23,11 @@ open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
 open import Vatras.Lang.All
 open NADT using (NADT; NADTL; leaf; _⟨_⟩)
-open CCC using () renaming (CCC to CCCSyntax) -- Necessary for disambiguation
-open CCC using (CCC; CCCL; _-<_>-)
+open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 
 translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (CCCL F) → NADT F (Rose ∞) i A → CCC F ∞ A
 translate Variant→CCC (leaf v) = LanguageCompiler.compile Variant→CCC v
-translate Variant→CCC (f ⟨ alternatives ⟩) = f CCCSyntax.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
+translate Variant→CCC (f ⟨ alternatives ⟩) = f ⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
 
 preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT F (Rose ∞) i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
 preserves-≗ {A = A} Variant→CCC (leaf v) config =
@@ -43,7 +42,7 @@ preserves-≗ {A = A} Variant→CCC (leaf v) config =
 preserves-≗ Variant→CCC (f ⟨ alternatives ⟩) config =
     CCC.⟦ translate Variant→CCC (f ⟨ alternatives ⟩) ⟧ config
   ≡⟨⟩
-    CCC.⟦ f CCCSyntax.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
+    CCC.⟦ f ⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
   ≡⟨⟩
     CCC.⟦ List.find-or-last (config f) (List⁺.map (translate Variant→CCC) alternatives) ⟧ config
   ≡⟨ Eq.cong₂ CCC.⟦_⟧ (List.map-find-or-last (translate Variant→CCC) (config f) alternatives) refl ⟨

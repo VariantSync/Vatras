@@ -36,7 +36,7 @@ open Eq.≡-Reasoning
 
 open import Vatras.Framework.Variants using (Rose; rose-leaf; _-<_>-; children-equality)
 open import Vatras.Lang.All
-open OC using (OC; WFOCL; Root; _❲_❳)
+open OC using (OC; WFOCL; Root; _❲_❳; _-<_>-)
 open import Vatras.Lang.OC.Util using (all-oc)
 open import Vatras.Lang.OC.Properties using (⟦e⟧ₒtrue≡just)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; both; neither; Implies; subtreeₒ; subtreeₒ-recurse)
@@ -183,16 +183,16 @@ shared-artifact : ∀ {F' : 𝔽}
   → just (0 -< rose-leaf 0 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
   → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
   → just (0 -< [] >-) ≡ OC.⟦ e ⟧ₒ (c₁ ∧ c₂)
-shared-artifact (0 OC.-< cs >-) c₁ c₂ p₁ p₂
+shared-artifact (0 -< cs >-) c₁ c₂ p₁ p₂
   with OC.⟦ cs ⟧ₒ-recurse c₁
      | OC.⟦ cs ⟧ₒ-recurse c₂
      | OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
      | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
      | subtreeₒ-recurse cs (c₁ ∧ c₂) c₂ (implies-∧₂ {c₁ = c₁})
-shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | []    | _              | _      = refl
-shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
-shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
-shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
+shared-artifact (0 -< cs >-) c₁ c₂ refl refl | _ | _ | []    | _              | _      = refl
+shared-artifact (0 -< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
+shared-artifact (f ❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
+shared-artifact (f ❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
 ```
 
 ### `more-artifacts` case
@@ -215,9 +215,9 @@ more-artifacts : ∀ {F' : 𝔽}
   → (v : Rose ∞ A)
   → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
   → 1 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
-more-artifacts (a OC.-< cs' >- ∷ cs) cₙ v p = s≤s z≤n
-more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
-more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
+more-artifacts (a -< cs' >- ∷ cs) cₙ v p = s≤s z≤n
+more-artifacts (e@(f ❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
+more-artifacts (e@(f ❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
 ```
 
 ### Putting the pieces together
@@ -262,21 +262,21 @@ induction : ∀ {F' : 𝔽}
   → [] ≡ OC.⟦ cs ⟧ₒ-recurse c₃
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
   ⊎ 0 -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
-induction (_ OC.-< _ >- ∷ cs) c₁ c₂ c₃ p₁ p₂ ()
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ with OC.⟦ e ⟧ₒ c₁ in ⟦e⟧c₁ | OC.⟦ e ⟧ₒ c₂ in ⟦e⟧c₂ | OC.⟦ e ⟧ₒ c₃
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing with induction cs c₁ c₂ c₃ p₁ p₂ p₃
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p with OC.⟦ e ⟧ₒ (all-oc true)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | just _ = inj₁ (ℕ.≤-trans p (ℕ.n≤1+n _))
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | nothing = inj₁ p
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p with OC.⟦ e ⟧ₒ (c₁ ∧ c₂) | OC.⟦ e ⟧ₒ c₁ | subtreeₒ e (c₁ ∧ c₂) c₁ implies-∧₁
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p | nothing | nothing | neither = inj₂ p
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing with OC.⟦ e ⟧ₒ c₂ | ⟦e⟧c₂ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₂ (all-oc true) (λ f p → refl)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₁ (rose-leaf 0) p₁))
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing with OC.⟦ e ⟧ₒ c₁ | ⟦e⟧c₁ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₁ (all-oc true) (λ f p → refl)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₂ (rose-leaf 1) p₂))
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing with List.∷-injectiveʳ p₁
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ with OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) in ⟦cs⟧c₁∧c₂ | OC.⟦ cs ⟧ₒ-recurse c₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ | .[] | .[] | [] = inj₂ (
+induction (_ -< _ >- ∷ cs) c₁ c₂ c₃ p₁ p₂ ()
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ with OC.⟦ e ⟧ₒ c₁ in ⟦e⟧c₁ | OC.⟦ e ⟧ₒ c₂ in ⟦e⟧c₂ | OC.⟦ e ⟧ₒ c₃
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing with induction cs c₁ c₂ c₃ p₁ p₂ p₃
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p with OC.⟦ e ⟧ₒ (all-oc true)
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | just _ = inj₁ (ℕ.≤-trans p (ℕ.n≤1+n _))
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | nothing = inj₁ p
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p with OC.⟦ e ⟧ₒ (c₁ ∧ c₂) | OC.⟦ e ⟧ₒ c₁ | subtreeₒ e (c₁ ∧ c₂) c₁ implies-∧₁
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p | nothing | nothing | neither = inj₂ p
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing with OC.⟦ e ⟧ₒ c₂ | ⟦e⟧c₂ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₂ (all-oc true) (λ f p → refl)
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₁ (rose-leaf 0) p₁))
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing with OC.⟦ e ⟧ₒ c₁ | ⟦e⟧c₁ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₁ (all-oc true) (λ f p → refl)
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₂ (rose-leaf 1) p₂))
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing with List.∷-injectiveʳ p₁
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ with OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) in ⟦cs⟧c₁∧c₂ | OC.⟦ cs ⟧ₒ-recurse c₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ | .[] | .[] | [] = inj₂ (
     0 -< [] >- ∷ []
   ≡⟨ Eq.cong₂ _∷_ refl ⟦cs⟧c₁∧c₂ ⟨
     0 -< [] >- ∷ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)

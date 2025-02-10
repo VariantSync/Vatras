@@ -32,8 +32,7 @@ open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Variants using (Rose; Variant-is-VL; encode-idemp)
 open import Vatras.Lang.All.Fixed Dimension (Rose ∞)
 open VariantList using (VariantList; VariantListL)
-open CCC using () renaming (CCC to CCCSyntax)
-open CCC using (CCC; CCCL)
+open CCC using (CCC; CCCL; _⟨_⟩)
 
 open import Vatras.Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
@@ -47,7 +46,7 @@ module Translate
   open LanguageCompiler embed using (compile; preserves) renaming (conf to v-conf)
 
   translate : ∀ {A} → VariantList A → CCC ∞ A
-  translate vs =  𝔻 CCCSyntax.⟨ map⁺ compile vs ⟩
+  translate vs =  𝔻 ⟨ map⁺ compile vs ⟩
 
   conf : VariantList.Configuration → CCC.Configuration
   conf cₗ _ = cₗ
@@ -99,7 +98,7 @@ module Translate
       ≡⟨⟩
         CCC.⟦ find-or-last (c 𝔻)  (compile v ∷ compile w ∷ map compile zs) ⟧ c
       ≡⟨⟩
-        CCC.⟦ 𝔻 CCCSyntax.⟨ map⁺ compile (v ∷ w ∷ zs) ⟩ ⟧ c
+        CCC.⟦ 𝔻 ⟨ map⁺ compile (v ∷ w ∷ zs) ⟩ ⟧ c
       ∎
       where
         c = λ _ → suc n
