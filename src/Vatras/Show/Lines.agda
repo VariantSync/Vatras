@@ -3,7 +3,8 @@ This module introduces our pretty printing monad.
 -}
 module Vatras.Show.Lines where
 
-open import Data.Bool using (true; false; if_then_else_)
+open import Data.Bool using (true; false; if_then_else_; _∧_)
+open import Data.Char as Char using (Char)
 open import Data.Nat using (ℕ; _*_; _∸_; ⌊_/2⌋; ⌈_/2⌉; _≤ᵇ_)
 open import Data.List as List using (List; _∷_; [_]; concat; splitAt; _∷ʳ_)
 open import Data.Maybe using (nothing; just)
@@ -34,11 +35,40 @@ open Line public
 manipulate : (String → String) → Line → Line
 manipulate f l = record l { content = f (content l) }
 
-align : ℕ → Line → Line
-align width line = manipulate (fromAlignment (alignment line) width) line
+-- Rough approximation for how monospaced fonts are typically rendered.
+-- Only currently used characters are included so this will need to be extended
+-- if more/different symbols/emojis are used.
+charWidth : Char → ℕ
+charWidth c =
+  -- All the symbols starting at the Emoticons block.
+  if (0x1f300 ≤ᵇ codePoint) ∧ (codePoint ≤ᵇ 0x1fbff)
+  then 2
+  else 1
+  where
+  codePoint = Char.toℕ c
+
+stringLength : String → ℕ
+stringLength line = List.sum (List.map charWidth (Data.String.toList line))
 
 length : Line → ℕ
-length line = Data.String.length (content line)
+length line = stringLength (content line)
+
+-- Align the given line to have the given width.
+-- This will add spaces before and/or after the line depending on the line's alignment.
+-- also see: Data.String.Base.fromAlignment
+align : ℕ → Line → Line
+align width line =
+  manipulate
+  (fromAlignment
+    (alignment line)
+    -- We use the fromAlignment function of the standard library,
+    -- which considers all characters to have width 1.
+    -- If the line contains characters with width > 1 (e.g., emojis),
+    -- then fromAlignment would add too much padding. So we have to
+    -- decrease the padding value accordingly.
+    (width ∸ (length line ∸ Data.String.length (content line)))
+    )
+  line
 
 {-|
 Lines monad.
@@ -126,7 +156,7 @@ infix 1 >_
 infix 1 >∷_
 
 phantom : String → String
-phantom s = replicate (Data.String.length s) ' '
+phantom s = replicate (stringLength s) ' '
 
 mantle : String → String → Lines → Lines
 mantle prefix suffix = map (manipulate (λ s → prefix ++ s ++ suffix))
@@ -188,7 +218,7 @@ boxed width title content =
       tr = '╮'
       br = '╯'
 
-      total-titlebar-len = width ∸ (Data.String.length title) ∸ 4 -- 2x whitespace + 2x corners
+      total-titlebar-len = width ∸ (stringLength title) ∸ 4 -- 2x whitespace + 2x corners
       left-titlebar-len  = ⌊ total-titlebar-len /2⌋
       right-titlebar-len = ⌈ total-titlebar-len /2⌉
 
@@ -198,7 +228,7 @@ boxed width title content =
 
       title-spacing = fromChar (if (title == "") then h else ' ')
       header = (replicate left-titlebar-len h) ++ title-spacing ++ title ++ title-spacing ++ (replicate right-titlebar-len h)
-      footer = replicate (Data.String.length header) h
+      footer = replicate (stringLength header) h
   in do
     -- print the header of the box
     > (fromChar tl) ++ header ++ (fromChar tr)
