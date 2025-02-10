@@ -17,6 +17,7 @@ import Vatras.Lang.Gruler
 module VariantList = Vatras.Lang.VariantList V
 module CCC = Vatras.Lang.CCC F
 module NCC where
+  -- Similar as in `Vatras.Lang.All`, we make the arity argument implicit for usablity.
   open Vatras.Lang.NCC F using (NCC; NCCL; Configuration) public
   module _ {n : ℕ≥ 2} where
     open Vatras.Lang.NCC F n hiding (NCC; NCCL; Configuration) public

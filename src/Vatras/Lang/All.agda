@@ -1,7 +1,13 @@
 {-|
 This module reexports all our language definitions as new modules.
-If you intend to work with more than one language in a file
-we recommend using this module to easily import the languages you need.
+Instead of directly importing the language modules,
+we recommend importing this module if you do not want to apply the module parameters.
+
+For convenience, we change explicit module parameters to implicit ones where useful.
+The rule of thumb is:
+  Types use explicit arguments whereas functions use implicit arguments.
+In case you want to instantiate these module parameters with a fixed value,
+you can use `Vatras.Lang.All.Fixed` instead of this module.
 -}
 module Vatras.Lang.All where
 
@@ -20,6 +26,12 @@ open import Vatras.Util.Nat.AtLeast using (ℕ≥)
 open import Size using (∞)
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; 𝕍)
 open import Vatras.Framework.Variants using (Rose)
+
+{-
+Some definitions do not make use of the module parameter.
+In such cases explicit arguments would be confusing and implicit paramters would lead to unsolved metas.
+Hence, we assert that these parameters are unused by passing `⊥` for `𝔽` or `λ _ → ⊥` for `𝔸`.
+-}
 
 module VariantList where
   open Vatras.Lang.VariantList using (VariantList; VariantListL; Clone-and-Own) public
