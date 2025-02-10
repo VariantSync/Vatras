@@ -53,8 +53,22 @@ stringLength line = List.sum (List.map charWidth (Data.String.toList line))
 length : Line → ℕ
 length line = stringLength (content line)
 
+-- Align the given line to have the given width.
+-- This will add spaces before and/or after the line depending on the line's alignment.
+-- also see: Data.String.Base.fromAlignment
 align : ℕ → Line → Line
-align width line = manipulate (fromAlignment (alignment line) (width ∸ (length line ∸ Data.String.length (content line)))) line
+align width line =
+  manipulate
+  (fromAlignment
+    (alignment line)
+    -- We use the fromAlignment function of the standard library,
+    -- which considers all characters to have width 1.
+    -- If the line contains characters with width > 1 (e.g., emojis),
+    -- then fromAlignment would add too much padding. So we have to
+    -- decrease the padding value accordingly.
+    (width ∸ (length line ∸ Data.String.length (content line)))
+    )
+  line
 
 {-|
 Lines monad.
