@@ -9,7 +9,7 @@
     },
 }:
 pkgs.agdaPackages.mkDerivation {
-  version = "1.0";
+  version = "2.0";
   pname = "Vatras";
   src = with pkgs.lib.fileset;
     toSource {
