@@ -50,168 +50,6 @@ A single feature structure tree is just a rose tree (which is composed into othe
 FST : Size → 𝔼
 FST i = Rose i
 
-fst-leaf = rose-leaf
-```
-
-We now define an equality relation that determines when to FST nodes should be composed:
-Exactly if their atoms are equal.
-We also prove that this relation is an equivalence relation.
-```agda
-{-|
-Composition equality.
--}
-infix 15 _≈_
-_≈_ : ∀ {A i} → Rel (FST i A) 0ℓ
-(a -< _ >-) ≈ (b -< _ >-) = a ≡ b
-
-≈-refl : ∀ {A i} → {a : FST i A} → a ≈ a
-≈-refl {A} {.(↑ _)} {_ -< _ >- } = refl
-
-≈-reflexive : ∀ {A i} → {a b : FST i A} → a ≡ b → a ≈ b
-≈-reflexive {A} {.(↑ _)} {_ -< _ >- } refl = refl
-
-≈-sym : ∀ {A i} → {a b : FST i A} → a ≈ b → b ≈ a
-≈-sym {A} {i} {(a -< _ >-)} {(.a -< _ >-)} refl = refl
-
-≈-trans : ∀ {A i} → {a b c : FST i A} → a ≈ b → b ≈ c → a ≈ c
-≈-trans {A} {i} {(a -< _ >-)} {(.a -< _ >-)} {(.a -< _ >-)} refl refl = refl
-```
-
-Conversely, we can also state when two FSTs should not be composed.
-```agda
-infix 15 _≉_
-_≉_ : ∀ {A i} → Rel (FST i A) 0ℓ
-a ≉ b = ¬ (a ≈ b)
-
-≉-sym : ∀ {A i} → {a b : FST i A} → a ≉ b → b ≉ a
-≉-sym a≉b b≈a = a≉b (≈-sym b≈a)
-
-≉-ignores-children : ∀ {A i} → {a₁ a₂ b₁ b₂ : FST i A}
-  → a₁ ≈ a₂
-  → b₁ ≈ b₂
-  → a₁ ≉ b₁
-    -------
-  → a₂ ≉ b₂
-≉-ignores-children a₁≈a₂ b₁≈b₂ a₁≉b₁ a₂≈b₂ = a₁≉b₁ (≈-trans a₁≈a₂ (≈-trans a₂≈b₂ (≈-sym b₁≈b₂)))
-```
-
-We now introduce some relations to determine whether there is a composition target
-for a given feature structure tree in a list of other feature structure tree.
-
-```
-{-|
-t ∈ ts
-if
-the list of feature structure trees ts contains at least one
-tree which has the same root as the tree t.
-TODO: Use standard library üredicates for list containment.
--}
-infix 15 _∈_
-_∈_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
-x ∈ xs = Any (x ≈_) xs
-
-infix 15 _∉_
-_∉_ : ∀ {i A} → FST i A → List (FST i A) → Set₁
-x ∉ xs = All (x ≉_) xs
-
-{-|
-xs ⊑ ys iff all elements in xs occur (somewhere) in ys.
--}
-_⊑_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=
-xs ⊑ ys = All (_∈ ys) xs
-
-_⋢_ : ∀ {i A} → (xs ys : List (FST i A)) → Set₁ --\squb=n
-xs ⋢ ys = Any (_∉ ys) xs
-
-{-|
-Two lists of FSTs are considered disjoint of none of the trees
-in the first list can be composed into an FST in the second list.
--}
-Disjoint : ∀ {i A} → (xs ys : List (FST i A)) → Set₁
-Disjoint xs ys = All (_∉ ys) xs
-```
-
-## Properties
-
-We now prove some useful properties of the above statements.
-
-```agda
-{-|
-There is only one proof for x ∉ ys.
--}
-∉-deterministic : ∀ {A} {x : FST ∞ A} (ys : List (FST ∞ A))
-  → (p₁ : x ∉ ys)
-  → (p₂ : x ∉ ys)
-    -------------
-  → p₁ ≡ p₂
-∉-deterministic [] [] [] = refl
-∉-deterministic {_} {x} (y ∷ ys) (x≉y₁ ∷ pa) (x≉y₂ ∷ pb)
-  rewrite ∉-deterministic ys pa pb
-  = refl
-
-{-|
-We can substitute the list of children in an FST while preserving
-inequality because inequality only cares about the atom.
--}
-map-≉ : ∀ {i} {A} {b xs} (ys : List (FST i A)) (z : FST (↑ i) A)
-  → b -< xs >- ≉ z
-  → b -< ys >- ≉ z
-map-≉ ys (z -< zs >-) z≉z refl = z≉z refl
-
-map-∉ : ∀ {i} {A : 𝔸} {b : atoms A} {cs cs' : List (FST i A)} {xs : List (FST (↑ i) A)}
-  → b -< cs  >- ∉ xs
-  → b -< cs' >- ∉ xs
-map-∉ [] = []
-map-∉ {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-≉ cs' x px ∷ map-∉ pxs
-
-disjoint-[]ˡ : ∀ {i A} (xs : List (FST i A)) → Disjoint [] xs
-disjoint-[]ˡ _ = []
-
-disjoint-[]ʳ : ∀ {i A} (xs : List (FST i A)) → Disjoint xs []
-disjoint-[]ʳ [] = []
-disjoint-[]ʳ (x ∷ xs) = [] ∷ (disjoint-[]ʳ xs)
-
-disjoint-grow : ∀ {i A} (r : FST i A) (rs ls : List (FST i A))
-  → Disjoint ls rs
-  → r ∉ ls
-    --------------------
-  → Disjoint ls (r ∷ rs)
-disjoint-grow r rs [] _ _ = []
-disjoint-grow r rs (l ∷ ls) (l∉rs ∷ d-ls-rs) (r≉l ∷ r∉ls)
-  = (≉-sym r≉l ∷ l∉rs) ∷ disjoint-grow r rs ls d-ls-rs r∉ls
-
-disjoint-shiftʳ : ∀ {i A} (r : FST i A) (rs ls : List (FST i A))
-  → Disjoint ls (r ∷ rs)
-    --------------------------
-  → Disjoint ls (rs ++ r ∷ [])
-disjoint-shiftʳ r rs [] x = []
-disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
-  = step l r rs l≉r l∉rs ∷ disjoint-shiftʳ r rs ls d-ls-rrs
-  where
-    step : ∀ {i A} (x y : FST i A) (zs : List (FST i A))
-      → x ≉ y
-      → x ∉ zs
-      → x ∉ (zs ++ y ∷ [])
-    step x y [] x≉y _ = x≉y ∷ []
-    step x y (z ∷ zs) x≉y (x≉z ∷ x∉zs) = x≉z ∷ step x y zs x≉y x∉zs
-```
-
-## Smart Constructors
-
-```agda
--- the syntax used in the original paper for paths
-infixr 5 _．_
-_．_ : ∀ {A : 𝔸} → atoms A → (cs : List (FST ∞ A)) → List (FST ∞ A)
-a ． cs = a -< cs >- ∷ []
-
--- helper function when branching in paths
-branches : ∀ {A} → List (List (FST ∞ A)) → List (FST ∞ A)
-branches = concat
-```
-
-## Composition
-
-```agda
 module Impose (AtomSet : 𝔸) where
   FSTA : Size → Set₁
   FSTA i = FST i AtomSet
@@ -220,12 +58,175 @@ module Impose (AtomSet : 𝔸) where
     A = atoms AtomSet
     _≟_ = proj₂ AtomSet
 
+  fst-leaf : A → FSTA ∞
+  fst-leaf = rose-leaf
+```
+
+We now define an equality relation that determines when to FST nodes should be composed:
+Exactly if their atoms are equal.
+We also prove that this relation is an equivalence relation.
+```agda
+  {-|
+  Composition equality.
+  -}
+  infix 15 _≈_
+  _≈_ : ∀ {i} → Rel (FSTA i) 0ℓ
+  (a -< _ >-) ≈ (b -< _ >-) = a ≡ b
+
+  ≈-refl : ∀ {i} → {a : FSTA i} → a ≈ a
+  ≈-refl {.(↑ _)} {_ -< _ >- } = refl
+
+  ≈-reflexive : ∀ {i} → {a b : FSTA i} → a ≡ b → a ≈ b
+  ≈-reflexive {.(↑ _)} {_ -< _ >- } refl = refl
+
+  ≈-sym : ∀ {i} → {a b : FSTA i} → a ≈ b → b ≈ a
+  ≈-sym {i} {(a -< _ >-)} {(.a -< _ >-)} refl = refl
+
+  ≈-trans : ∀ {i} → {a b c : FSTA i} → a ≈ b → b ≈ c → a ≈ c
+  ≈-trans {i} {(a -< _ >-)} {(.a -< _ >-)} {(.a -< _ >-)} refl refl = refl
+
   {-|
   Composition equality _≈_ is decidable.
   -}
-  _==_ : ∀ {i} → Decidable (_≈_ {AtomSet} {i})
+  _==_ : ∀ {i} → Decidable (_≈_ {i})
   (a -< _ >-) == (b -< _ >-) = a ≟ b
+```
 
+Conversely, we can also state when two FSTs should not be composed.
+```agda
+  infix 15 _≉_
+  _≉_ : ∀ {i} → Rel (FSTA i) 0ℓ
+  a ≉ b = ¬ (a ≈ b)
+
+  ≉-sym : ∀ {i} → {a b : FSTA i} → a ≉ b → b ≉ a
+  ≉-sym a≉b b≈a = a≉b (≈-sym b≈a)
+
+  ≉-ignores-children : ∀ {i} → {a₁ a₂ b₁ b₂ : FSTA i}
+    → a₁ ≈ a₂
+    → b₁ ≈ b₂
+    → a₁ ≉ b₁
+      -------
+    → a₂ ≉ b₂
+  ≉-ignores-children a₁≈a₂ b₁≈b₂ a₁≉b₁ a₂≈b₂ = a₁≉b₁ (≈-trans a₁≈a₂ (≈-trans a₂≈b₂ (≈-sym b₁≈b₂)))
+```
+
+We now introduce some relations to determine whether there is a composition target
+for a given feature structure tree in a list of other feature structure tree.
+
+```
+  {-|
+  t ∈ ts
+  if
+  the list of feature structure trees ts contains at least one
+  tree which has the same root as the tree t.
+  TODO: Use standard library üredicates for list containment.
+  -}
+  infix 15 _∈_
+  _∈_ : ∀ {i} → FSTA i → List (FSTA i) → Set₁
+  x ∈ xs = Any (x ≈_) xs
+
+  infix 15 _∉_
+  _∉_ : ∀ {i} → FSTA i → List (FSTA i) → Set₁
+  x ∉ xs = All (x ≉_) xs
+
+  {-|
+  xs ⊑ ys iff all elements in xs occur (somewhere) in ys.
+  -}
+  _⊑_ : ∀ {i} → (xs ys : List (FSTA i)) → Set₁ --\squb=
+  xs ⊑ ys = All (_∈ ys) xs
+
+  _⋢_ : ∀ {i} → (xs ys : List (FSTA i)) → Set₁ --\squb=n
+  xs ⋢ ys = Any (_∉ ys) xs
+
+  {-|
+  Two lists of FSTs are considered disjoint of none of the trees
+  in the first list can be composed into an FST in the second list.
+  -}
+  Disjoint : ∀ {i} → (xs ys : List (FSTA i)) → Set₁
+  Disjoint xs ys = All (_∉ ys) xs
+```
+
+## Properties
+
+We now prove some useful properties of the above statements.
+
+```agda
+  {-|
+  There is only one proof for x ∉ ys.
+  -}
+  ∉-deterministic : ∀ {x : FSTA ∞} (ys : List (FSTA ∞))
+    → (p₁ : x ∉ ys)
+    → (p₂ : x ∉ ys)
+      -------------
+    → p₁ ≡ p₂
+  ∉-deterministic [] [] [] = refl
+  ∉-deterministic {x} (y ∷ ys) (x≉y₁ ∷ pa) (x≉y₂ ∷ pb)
+    rewrite ∉-deterministic ys pa pb
+    = refl
+
+  {-|
+  We can substitute the list of children in an FST while preserving
+  inequality because inequality only cares about the atom.
+  -}
+  map-≉ : ∀ {i} {b xs} (ys : List (FSTA i)) (z : FSTA (↑ i))
+    → b -< xs >- ≉ z
+    → b -< ys >- ≉ z
+  map-≉ ys (z -< zs >-) z≉z refl = z≉z refl
+
+  map-∉ : ∀ {i} {b : A} {cs cs' : List (FSTA i)} {xs : List (FSTA (↑ i))}
+    → b -< cs  >- ∉ xs
+    → b -< cs' >- ∉ xs
+  map-∉ [] = []
+  map-∉ {cs' = cs'} {xs = x ∷ xs} (px ∷ pxs) = map-≉ cs' x px ∷ map-∉ pxs
+
+  disjoint-[]ˡ : ∀ {i} (xs : List (FSTA i)) → Disjoint [] xs
+  disjoint-[]ˡ _ = []
+
+  disjoint-[]ʳ : ∀ {i} (xs : List (FSTA i)) → Disjoint xs []
+  disjoint-[]ʳ [] = []
+  disjoint-[]ʳ (x ∷ xs) = [] ∷ (disjoint-[]ʳ xs)
+
+  disjoint-grow : ∀ {i} (r : FSTA i) (rs ls : List (FSTA i))
+    → Disjoint ls rs
+    → r ∉ ls
+      --------------------
+    → Disjoint ls (r ∷ rs)
+  disjoint-grow r rs [] _ _ = []
+  disjoint-grow r rs (l ∷ ls) (l∉rs ∷ d-ls-rs) (r≉l ∷ r∉ls)
+    = (≉-sym r≉l ∷ l∉rs) ∷ disjoint-grow r rs ls d-ls-rs r∉ls
+
+  disjoint-shiftʳ : ∀ {i} (r : FSTA i) (rs ls : List (FSTA i))
+    → Disjoint ls (r ∷ rs)
+      --------------------------
+    → Disjoint ls (rs ++ r ∷ [])
+  disjoint-shiftʳ r rs [] x = []
+  disjoint-shiftʳ r rs (l ∷ ls) ((l≉r ∷ l∉rs) ∷ d-ls-rrs)
+    = step l r rs l≉r l∉rs ∷ disjoint-shiftʳ r rs ls d-ls-rrs
+    where
+      step : ∀ {i} (x y : FSTA i) (zs : List (FSTA i))
+        → x ≉ y
+        → x ∉ zs
+        → x ∉ (zs ++ y ∷ [])
+      step x y [] x≉y _ = x≉y ∷ []
+      step x y (z ∷ zs) x≉y (x≉z ∷ x∉zs) = x≉z ∷ step x y zs x≉y x∉zs
+```
+
+## Smart Constructors
+
+```agda
+  -- the syntax used in the original paper for paths
+  infixr 5 _．_
+  _．_ : A → (cs : List (FSTA ∞)) → List (FSTA ∞)
+  a ． cs = a -< cs >- ∷ []
+
+  -- helper function when branching in paths
+  branches : List (List (FSTA ∞)) → List (FSTA ∞)
+  branches = concat
+```
+
+## Composition
+
+```agda
   mutual
     infixr 5 _⊕_
     {-|

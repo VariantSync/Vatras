@@ -22,9 +22,10 @@ open import Vatras.Framework.Definitions using (𝔽; 𝔸; 𝕍)
 open import Vatras.Framework.Variants using (Rose)
 
 module VariantList where
-  open Vatras.Lang.VariantList hiding (Configuration) public
-  module _ where
-    open Vatras.Lang.VariantList (λ _ → ⊥) using (Configuration) public
+  open Vatras.Lang.VariantList using (VariantList; VariantListL; Clone-and-Own) public
+  open Vatras.Lang.VariantList (λ _ → ⊥) using (Configuration) public
+  module _ {V : 𝕍} where
+    open Vatras.Lang.VariantList V hiding (VariantList; VariantListL; Clone-and-Own; Configuration) public
 
 module CCC where
   open Vatras.Lang.CCC using (CCC; CCCL; Configuration) public
@@ -60,14 +61,13 @@ module OC where
   module _ {F : 𝔽} where
     open Vatras.Lang.OC F hiding (OC; OCL; WFOC; WFOCL; Configuration) public
 
+module FST where
+  open Vatras.Lang.FST using (FSTL; FST; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.FST F using (⟦_⟧) public
+    module Impose = Vatras.Lang.FST.Impose F
+
 module Gruler where
   open Vatras.Lang.Gruler using (Gruler; GrulerL; Configuration) public
   module _ {F : 𝔽} where
     open Vatras.Lang.Gruler F hiding (Gruler; GrulerL; Configuration) public
-
-module FST where
-  open Vatras.Lang.FST using (FST; FSTL; Configuration) public
-  module _ where
-    open Vatras.Lang.FST ⊥ using (_．_; branches) public
-  module _ {F : 𝔽} where
-    open Vatras.Lang.FST F hiding (FST; FSTL; Configuration; _．_; branches) public

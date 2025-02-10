@@ -66,7 +66,6 @@ module Java where
   _≟-ast_ : DecidableEquality ASTNode
   _≟-ast_ = _≟ˢ_
 
-  open FST using (_．_; branches)
   open FST.Impose {String} (ASTNode , _≟-ast_)
 
   module Calculator where
