@@ -36,12 +36,12 @@ open Eq.≡-Reasoning
 
 open import Vatras.Framework.Variants using (Rose; rose-leaf; _-<_>-; children-equality)
 open import Vatras.Lang.All
-open OC using (OC; WFOCL; Root; _❲_❳; all-oc)
+open OC using (OC; WFOCL; Root; _❲_❳; _-<_>-)
+open import Vatras.Lang.OC.Util using (all-oc)
 open import Vatras.Lang.OC.Properties using (⟦e⟧ₒtrue≡just)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; both; neither; Implies; subtreeₒ; subtreeₒ-recurse)
-open import Vatras.Lang.FST using (FSTL-Sem)
 open FST using (FSTL)
-open FST.Impose
+open FST.Impose using (SPL; _◀_; _::_; _⊚_)
 
 V = Rose ∞
 open import Vatras.Framework.Relation.Expressiveness V using (_⋡_)
@@ -72,7 +72,7 @@ Hence, at least one inner child is required for a valid variant of
 this counter-example SPL (or no children in which case there is only the root).
 As FSTs require a fixed root artifact, the outermost artifact is always set to 0.
 ```agda
-counter-example : SPL F A
+counter-example : SPL A
 counter-example = 0 ◀ (
     (f₁ :: ((0 -< 0 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
   ∷ (f₂ :: ((0 -< 1 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
@@ -132,13 +132,13 @@ from `counter-example`. Agda can't compute with `==ꟳ` so we need the following
 two lemmas to sort out invalid definitions of `==ꟳ`. Then Agda can actually
 compute the semantics of `counter-example`.
 ```agda
-compute-counter-example-c₁ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
+compute-counter-example-c₁ : {v : Rose ∞ A} → FST.⟦ counter-example ⟧ c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
 compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _    | _     = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
 compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁  | true | false = p
 compute-counter-example-c₁ p | no f₁≢f₁  | _         | _    | _     = ⊥-elim (f₁≢f₁ refl)
 
-compute-counter-example-c₂ : {v : Rose ∞ A} → FSTL-Sem F counter-example c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
+compute-counter-example-c₂ : {v : Rose ∞ A} → FST.⟦ counter-example ⟧ c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₂ p with f₁ ==ꟳ f₂ | f₂ ==ꟳ f₂ | c₂ f₁ in c₂-f₁ | c₂ f₂ in c₂-f₂
 compute-counter-example-c₂ p | yes f₁≡f₂ | _         | _     | _    = ⊥-elim (f₁≢f₂ f₁≡f₂)
 compute-counter-example-c₂ p | no f₁≢f₂  | yes f₂≡f₂ | false | true = p
@@ -183,16 +183,16 @@ shared-artifact : ∀ {F' : 𝔽}
   → just (0 -< rose-leaf 0 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
   → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
   → just (0 -< [] >-) ≡ OC.⟦ e ⟧ₒ (c₁ ∧ c₂)
-shared-artifact (0 OC.-< cs >-) c₁ c₂ p₁ p₂
+shared-artifact (0 -< cs >-) c₁ c₂ p₁ p₂
   with OC.⟦ cs ⟧ₒ-recurse c₁
      | OC.⟦ cs ⟧ₒ-recurse c₂
      | OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
      | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
      | subtreeₒ-recurse cs (c₁ ∧ c₂) c₂ (implies-∧₂ {c₁ = c₁})
-shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | []    | _              | _      = refl
-shared-artifact (0 OC.-< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
-shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
-shared-artifact (f OC.❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
+shared-artifact (0 -< cs >-) c₁ c₂ refl refl | _ | _ | []    | _              | _      = refl
+shared-artifact (0 -< cs >-) c₁ c₂ refl refl | _ | _ | _ ∷ _ | subtrees _ ∷ _ | () ∷ _
+shared-artifact (f ❲ e ❳) c₁ c₂ p₁ p₂ with c₁ f | c₂ f
+shared-artifact (f ❲ e ❳) c₁ c₂ p₁ p₂ | true | true = shared-artifact e c₁ c₂ p₁ p₂
 ```
 
 ### `more-artifacts` case
@@ -215,9 +215,9 @@ more-artifacts : ∀ {F' : 𝔽}
   → (v : Rose ∞ A)
   → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
   → 1 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
-more-artifacts (a OC.-< cs' >- ∷ cs) cₙ v p = s≤s z≤n
-more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
-more-artifacts (e@(f OC.❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
+more-artifacts (a -< cs' >- ∷ cs) cₙ v p = s≤s z≤n
+more-artifacts (e@(f ❲ e' ❳) ∷ cs) cₙ v p with OC.⟦ e ⟧ₒ (all-oc true) | ⟦e⟧ₒtrue≡just e
+more-artifacts (e@(f ❲ e' ❳) ∷ cs) cₙ v p | .(just _) | _ , refl = s≤s z≤n
 ```
 
 ### Putting the pieces together
@@ -262,21 +262,21 @@ induction : ∀ {F' : 𝔽}
   → [] ≡ OC.⟦ cs ⟧ₒ-recurse c₃
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
   ⊎ 0 -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
-induction (_ OC.-< _ >- ∷ cs) c₁ c₂ c₃ p₁ p₂ ()
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ with OC.⟦ e ⟧ₒ c₁ in ⟦e⟧c₁ | OC.⟦ e ⟧ₒ c₂ in ⟦e⟧c₂ | OC.⟦ e ⟧ₒ c₃
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing with induction cs c₁ c₂ c₃ p₁ p₂ p₃
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p with OC.⟦ e ⟧ₒ (all-oc true)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | just _ = inj₁ (ℕ.≤-trans p (ℕ.n≤1+n _))
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | nothing = inj₁ p
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p with OC.⟦ e ⟧ₒ (c₁ ∧ c₂) | OC.⟦ e ⟧ₒ c₁ | subtreeₒ e (c₁ ∧ c₂) c₁ implies-∧₁
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p | nothing | nothing | neither = inj₂ p
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing with OC.⟦ e ⟧ₒ c₂ | ⟦e⟧c₂ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₂ (all-oc true) (λ f p → refl)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₁ (rose-leaf 0) p₁))
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing with OC.⟦ e ⟧ₒ c₁ | ⟦e⟧c₁ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₁ (all-oc true) (λ f p → refl)
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₂ (rose-leaf 1) p₂))
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing with List.∷-injectiveʳ p₁
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ with OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) in ⟦cs⟧c₁∧c₂ | OC.⟦ cs ⟧ₒ-recurse c₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
-induction (e@(_ OC.❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ | .[] | .[] | [] = inj₂ (
+induction (_ -< _ >- ∷ cs) c₁ c₂ c₃ p₁ p₂ ()
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ with OC.⟦ e ⟧ₒ c₁ in ⟦e⟧c₁ | OC.⟦ e ⟧ₒ c₂ in ⟦e⟧c₂ | OC.⟦ e ⟧ₒ c₃
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing with induction cs c₁ c₂ c₃ p₁ p₂ p₃
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p with OC.⟦ e ⟧ₒ (all-oc true)
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | just _ = inj₁ (ℕ.≤-trans p (ℕ.n≤1+n _))
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₁ p | nothing = inj₁ p
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p with OC.⟦ e ⟧ₒ (c₁ ∧ c₂) | OC.⟦ e ⟧ₒ c₁ | subtreeₒ e (c₁ ∧ c₂) c₁ implies-∧₁
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | nothing | nothing | inj₂ p | nothing | nothing | neither = inj₂ p
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing with OC.⟦ e ⟧ₒ c₂ | ⟦e⟧c₂ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₂ (all-oc true) (λ f p → refl)
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | nothing | just _  | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₁ (rose-leaf 0) p₁))
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing with OC.⟦ e ⟧ₒ c₁ | ⟦e⟧c₁ | OC.⟦ e ⟧ₒ (all-oc true) | subtreeₒ e c₁ (all-oc true) (λ f p → refl)
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | nothing | nothing | just _ | _ | .(just _) | both _ = inj₁ (s≤s (more-artifacts cs c₂ (rose-leaf 1) p₂))
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing with List.∷-injectiveʳ p₁
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ with OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) in ⟦cs⟧c₁∧c₂ | OC.⟦ cs ⟧ₒ-recurse c₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
+induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ | .[] | .[] | [] = inj₂ (
     0 -< [] >- ∷ []
   ≡⟨ Eq.cong₂ _∷_ refl ⟦cs⟧c₁∧c₂ ⟨
     0 -< [] >- ∷ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
@@ -299,7 +299,7 @@ configurations which results in contradictions in every case.
 impossible : ∀ {F' : 𝔽}
   → (cs : List (OC F' ∞ A))
   → (c₁ c₂ : OC.Configuration F')
-  → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FSTL-Sem F counter-example c')
+  → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FST.⟦ counter-example ⟧ c')
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
   ⊎ 0 -< [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
   → ⊥

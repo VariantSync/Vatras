@@ -20,12 +20,6 @@ open import Size using (∞)
 open import Vatras.Show.Lines
 
 -- open import Framework.Annotation.Name using (Dimension)
--- open import Vatras.Lang.CCC
---   renaming (Configuration to Configurationₙ;
---             ⟦_⟧ to ⟦_⟧ₙ)
--- open import Vatras.Lang.2CC
---   renaming (Configuration to Configuration₂;
---             ⟦_⟧ to ⟦_⟧₂)
 
 -- open import Vatras.Framework.Definitions using (ℂ)
 -- open import Translation.CCC-to-2CC  using (CCC→2CC)

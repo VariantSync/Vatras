@@ -20,20 +20,20 @@ open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
 open import Vatras.Framework.Variants using (show-rose)
 
-import Vatras.Lang.FST as FST
-open FST using (Conf)
+open import Vatras.Lang.All
+open FST using (Configuration)
 
 module _ (F : 𝔽) (A : 𝔸) where
 -- (_≟_ : DecidableEquality A)
-  open FST.Impose F A
-  module FSTShow = FST.Impose.Show F A
+  open FST.Impose {F} A
+  module FSTShow = FST.Impose.Show {F} A
 
   exp :
       (F → String)
     → (atoms A → String)
-    → List (Conf F)
+    → List (Configuration F)
     → Experiment SPL
-  getName (exp _ _ _) = "Configure FST example"
+  getName (exp _ _ _) = "Configuration FST example"
   get (exp show-N show-A configs) (example-name ≔ forest) =
     let open FSTShow show-N show-A
     in
@@ -49,10 +49,10 @@ module _ (F : 𝔽) (A : 𝔸) where
       indent 2 do
         > show-rose show-A (⟦ forest ⟧ c)
 
-pick-all : ∀ {N} → Conf N
+pick-all : ∀ {N} → Configuration N
 pick-all _ = true
 
-pick-only : ∀ {N} → DecidableEquality N → N → Conf N
+pick-only : ∀ {N} → DecidableEquality N → N → Configuration N
 pick-only _==_ n n' = does (n == n')
 
 module Java where
@@ -66,8 +66,7 @@ module Java where
   _≟-ast_ : DecidableEquality ASTNode
   _≟-ast_ = _≟ˢ_
 
-  open FST String using (_．_; branches)
-  open FST.Impose String (ASTNode , _≟-ast_)
+  open FST.Impose {String} (ASTNode , _≟-ast_)
 
   module Calculator where
     fname-Add = "Add"

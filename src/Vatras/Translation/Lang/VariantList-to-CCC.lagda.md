@@ -30,11 +30,9 @@ open Eq.≡-Reasoning
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Variants using (Rose; Variant-is-VL; encode-idemp)
-open import Vatras.Lang.All
-open VariantList (Rose ∞)
-  using (VariantList; VariantListL; VariantList-is-Complete)
-  renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Cₗ)
-open CCC renaming (Configuration to Cᶜ)
+open import Vatras.Lang.All.Fixed Dimension (Rose ∞)
+open VariantList using (VariantList; VariantListL)
+open CCC using (CCC; CCCL; _⟨_⟩)
 
 open import Vatras.Util.List using (find-or-last; map-find-or-last; map⁺-id)
 ```
@@ -43,17 +41,17 @@ open import Vatras.Util.List using (find-or-last; map-find-or-last; map⁺-id)
 
 ```agda
 module Translate
-  (embed : LanguageCompiler (Variant-is-VL (Rose ∞)) (CCCL Dimension))
+  (embed : LanguageCompiler (Variant-is-VL (Rose ∞)) CCCL)
   where
   open LanguageCompiler embed using (compile; preserves) renaming (conf to v-conf)
 
-  translate : ∀ {A} → VariantList A → CCC Dimension ∞ A
+  translate : ∀ {A} → VariantList A → CCC ∞ A
   translate vs =  𝔻 ⟨ map⁺ compile vs ⟩
 
-  conf : Cₗ → Cᶜ Dimension
+  conf : VariantList.Configuration → CCC.Configuration
   conf cₗ _ = cₗ
 
-  fnoc : Cᶜ Dimension → Cₗ
+  fnoc : CCC.Configuration → VariantList.Configuration
   fnoc c = c 𝔻
 ```
 
@@ -66,7 +64,7 @@ module Translate
 
     -- The proofs for preserves-⊆ and preserves-⊇ are highly similar and contain copy-and-paste. I could not yet see though how to properly abstract to reuse.
     preserves-⊆ : ∀ (l : VariantList A)
-      → ⟦ l ⟧ₗ ⊆[ conf ] ⟦ translate l ⟧
+      → VariantList.⟦ l ⟧ ⊆[ conf ] CCC.⟦ translate l ⟧
     preserves-⊆ (v ∷ []) n
       rewrite encode-idemp (Rose ∞) A embed (λ _ → n) v
       = refl
@@ -75,9 +73,9 @@ module Translate
       = refl
     preserves-⊆ (v ∷ w ∷ zs) (suc n) =
       begin
-        ⟦ v ∷ w ∷ zs ⟧ₗ (suc n)
+        VariantList.⟦ v ∷ w ∷ zs ⟧ (suc n)
       ≡⟨⟩
-        ⟦ w ∷ zs ⟧ₗ n
+        VariantList.⟦ w ∷ zs ⟧ n
       ≡⟨⟩
         find-or-last n (w ∷ zs)
       ≡⟨ Eq.cong (find-or-last n) (
@@ -94,28 +92,28 @@ module Translate
       ≡⟨ map-find-or-last ⟦⟧c n tail-in-ccc ⟨
         ⟦⟧c (find-or-last n tail-in-ccc)
       ≡⟨⟩
-        ⟦ find-or-last n (compile w ∷ map compile zs) ⟧ c
+        CCC.⟦ find-or-last n (compile w ∷ map compile zs) ⟧ c
       ≡⟨⟩
-        ⟦ find-or-last (suc n) (compile v ∷ compile w ∷ map compile zs) ⟧ c
+        CCC.⟦ find-or-last (suc n) (compile v ∷ compile w ∷ map compile zs) ⟧ c
       ≡⟨⟩
-        ⟦ find-or-last (c 𝔻)  (compile v ∷ compile w ∷ map compile zs) ⟧ c
+        CCC.⟦ find-or-last (c 𝔻)  (compile v ∷ compile w ∷ map compile zs) ⟧ c
       ≡⟨⟩
-        ⟦ 𝔻 ⟨ map⁺ compile (v ∷ w ∷ zs) ⟩ ⟧ c
+        CCC.⟦ 𝔻 ⟨ map⁺ compile (v ∷ w ∷ zs) ⟩ ⟧ c
       ∎
       where
         c = λ _ → suc n
-        ⟦⟧c = flip ⟦_⟧ c
+        ⟦⟧c = flip CCC.⟦_⟧ c
         tail-in-ccc = compile w ∷ map compile zs
 
     preserves-⊇ : ∀ (l : VariantList A)
-      → ⟦ translate l ⟧ ⊆[ fnoc ] ⟦ l ⟧ₗ
+      → CCC.⟦ translate l ⟧ ⊆[ fnoc ] VariantList.⟦ l ⟧
     preserves-⊇ (v ∷ []) c -- This proof is the same as for the preserves-⊆ (so look there if you want to see a step by step proof)
       rewrite encode-idemp (Rose ∞) A embed c v
       = refl
     preserves-⊇ (v ∷ w ∷ zs) c with c 𝔻
     ... | zero = encode-idemp (Rose ∞) A embed c v
     ... | suc i =
-      let ⟦⟧c = flip ⟦_⟧ c
+      let ⟦⟧c = flip CCC.⟦_⟧ c
           tail = w ∷ zs
           tail-in-ccc = map⁺ compile tail
       in sym $
@@ -130,12 +128,12 @@ module Translate
       ≡⟨ sym (map-find-or-last ⟦⟧c i tail-in-ccc) ⟩
         ⟦⟧c (find-or-last i tail-in-ccc)
       ≡⟨⟩
-        ⟦_⟧ (find-or-last i tail-in-ccc) c
+        CCC.⟦_⟧ (find-or-last i tail-in-ccc) c
       ≡⟨⟩
-        ⟦ find-or-last i tail-in-ccc ⟧ c
+        CCC.⟦ find-or-last i tail-in-ccc ⟧ c
       ∎
 
-  VariantList→CCC : LanguageCompiler VariantListL (CCCL Dimension)
+  VariantList→CCC : LanguageCompiler VariantListL CCCL
   VariantList→CCC = record
     { compile = translate
     ; config-compiler = λ _ → record { to = conf ; from = fnoc }
@@ -146,6 +144,6 @@ module Translate
 
   open import Vatras.Framework.Relation.Expressiveness (Rose ∞) using (_≽_)
 
-  CCC≽VariantList : CCCL Dimension ≽ VariantListL
+  CCC≽VariantList : CCCL ≽ VariantListL
   CCC≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→CCC e)
 ```

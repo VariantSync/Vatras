@@ -21,15 +21,15 @@ import Vatras.Util.List as List
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
 open IndexedSet using (_≅[_][_]_; ≅[]-sym; ≗→≅[])
 
-open import Vatras.Lang.NADT as NADT using (NADT; NADTL; leaf; _⟨_⟩)
-open import Vatras.Lang.CCC as CCC using (CCC; CCCL; _-<_>-)
+open import Vatras.Lang.All
+open NADT using (NADT; NADTL; leaf; _⟨_⟩)
+open CCC using (CCC; CCCL; _-<_>-; _⟨_⟩)
 
-
-translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (CCCL F) → NADT (Rose ∞) F i A → CCC F ∞ A
+translate : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → VariantEncoder (Rose ∞) (CCCL F) → NADT F (Rose ∞) i A → CCC F ∞ A
 translate Variant→CCC (leaf v) = LanguageCompiler.compile Variant→CCC v
-translate Variant→CCC (f ⟨ alternatives ⟩) = f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
+translate Variant→CCC (f ⟨ alternatives ⟩) = f ⟨ List⁺.map (translate Variant→CCC) alternatives ⟩
 
-preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT (Rose ∞) F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
+preserves-≗ : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT F (Rose ∞) i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≗ NADT.⟦ expr ⟧
 preserves-≗ {A = A} Variant→CCC (leaf v) config =
     CCC.⟦ translate Variant→CCC (leaf v) ⟧ config
   ≡⟨⟩
@@ -37,12 +37,12 @@ preserves-≗ {A = A} Variant→CCC (leaf v) config =
   ≡⟨ proj₂ (LanguageCompiler.preserves Variant→CCC v) config ⟩
     v
   ≡⟨⟩
-    NADT.⟦ leaf {Rose ∞} v ⟧ config
+    NADT.⟦ leaf {V = Rose ∞} v ⟧ config
   ∎
 preserves-≗ Variant→CCC (f ⟨ alternatives ⟩) config =
     CCC.⟦ translate Variant→CCC (f ⟨ alternatives ⟩) ⟧ config
   ≡⟨⟩
-    CCC.⟦ f CCC.⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
+    CCC.⟦ f ⟨ List⁺.map (translate Variant→CCC) alternatives ⟩ ⟧ config
   ≡⟨⟩
     CCC.⟦ List.find-or-last (config f) (List⁺.map (translate Variant→CCC) alternatives) ⟧ config
   ≡⟨ Eq.cong₂ CCC.⟦_⟧ (List.map-find-or-last (translate Variant→CCC) (config f) alternatives) refl ⟨
@@ -53,14 +53,14 @@ preserves-≗ Variant→CCC (f ⟨ alternatives ⟩) config =
     NADT.⟦ f ⟨ alternatives ⟩ ⟧ config
   ∎
 
-preserves : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT (Rose ∞) F i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≅[ id ][ id ] NADT.⟦ expr ⟧
+preserves : ∀ {i : Size} {F : 𝔽} {A : 𝔸} → (Variant→CCC : VariantEncoder (Rose ∞) (CCCL F)) → (expr : NADT F (Rose ∞) i A) → CCC.⟦ translate Variant→CCC expr ⟧ ≅[ id ][ id ] NADT.⟦ expr ⟧
 preserves Variant→CCC expr = ≗→≅[] (preserves-≗ Variant→CCC expr)
 
-NADT→CCC : ∀ {i : Size} {F : 𝔽} → VariantEncoder (Rose ∞) (CCCL F) → LanguageCompiler (NADTL (Rose ∞) F) (CCCL F)
+NADT→CCC : ∀ {i : Size} {F : 𝔽} → VariantEncoder (Rose ∞) (CCCL F) → LanguageCompiler (NADTL F (Rose ∞)) (CCCL F)
 NADT→CCC Variant→CCC .LanguageCompiler.compile = translate Variant→CCC
 NADT→CCC Variant→CCC .LanguageCompiler.config-compiler expr .to = id
 NADT→CCC Variant→CCC .LanguageCompiler.config-compiler expr .from = id
 NADT→CCC Variant→CCC .LanguageCompiler.preserves expr = ≅[]-sym (preserves Variant→CCC expr)
 
-CCC≽NADT : ∀ {F : 𝔽} → VariantEncoder (Rose ∞) (CCCL F) → CCCL F ≽ NADTL (Rose ∞) F
+CCC≽NADT : ∀ {F : 𝔽} → VariantEncoder (Rose ∞) (CCCL F) → CCCL F ≽ NADTL F (Rose ∞)
 CCC≽NADT Variant→CCC = expressiveness-from-compiler (NADT→CCC Variant→CCC)

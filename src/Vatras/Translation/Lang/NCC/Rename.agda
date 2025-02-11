@@ -43,22 +43,22 @@ open NCC using (NCC; NCCL; _-<_>-; _⟨_⟩)
 NCC-map-config : ∀ {D₁ D₂ : Set}
   → (n : ℕ≥ 2)
   → (D₂ → D₁)
-  → NCC.Configuration n D₁
-  → NCC.Configuration n D₂
+  → NCC.Configuration D₁ n
+  → NCC.Configuration D₂ n
 NCC-map-config n f config = config ∘ f
 
 rename : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → (D₁ → D₂)
-  → NCC n D₁ i A
-  → NCC n D₂ i A
+  → NCC D₁ n i A
+  → NCC D₂ n i A
 rename n f (a -< cs >-) = a -< List.map (rename n f) cs >-
 rename n f (d ⟨ cs ⟩) = f d ⟨ Vec.map (rename n f) cs ⟩
 
 preserves-⊆ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → (f : D₁ → D₂)
-  → (expr : NCC n D₁ i A)
+  → (expr : NCC D₁ n i A)
   → NCC.⟦ rename n f expr ⟧ ⊆[ NCC-map-config n f ] NCC.⟦ expr ⟧
 preserves-⊆ n f (a -< cs >-) config =
     NCC.⟦ rename n f (a -< cs >-) ⟧ config
@@ -92,7 +92,7 @@ preserves-⊇ : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → (expr : NCC n D₁ i A)
+  → (expr : NCC D₁ n i A)
   → NCC.⟦ expr ⟧ ⊆[ NCC-map-config n f⁻¹ ] NCC.⟦ rename n f expr ⟧
 preserves-⊇ n f f⁻¹ is-inverse (a -< cs >-) config =
     NCC.⟦ a -< cs >- ⟧ config
@@ -128,7 +128,7 @@ preserves : ∀ {i : Size} {D₁ D₂ : 𝔽} {A : 𝔸}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → (e : NCC n D₁ i A)
+  → (e : NCC D₁ n i A)
   → NCC.⟦ rename n f e ⟧ ≅[ NCC-map-config n f ][ NCC-map-config n f⁻¹ ] NCC.⟦ e ⟧
 preserves n f f⁻¹ is-inverse expr = preserves-⊆ n f expr , preserves-⊇ n f f⁻¹ is-inverse expr
 
@@ -137,7 +137,7 @@ NCC-rename : ∀ {i : Size} {D₁ D₂ : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → LanguageCompiler (NCCL {i} n D₁) (NCCL {i} n D₂)
+  → LanguageCompiler (NCCL D₁ n {i}) (NCCL D₂ n {i})
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.compile = rename n f
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .to = NCC-map-config n f⁻¹
 NCC-rename n f f⁻¹ is-inverse .LanguageCompiler.config-compiler expr .from = NCC-map-config n f
@@ -148,5 +148,5 @@ NCC-rename≽NCC : ∀ {i : Size} {D₁ D₂ : Set}
   → (f : D₁ → D₂)
   → (f⁻¹ : D₂ → D₁)
   → f⁻¹ ∘ f ≗ id
-  → NCCL {i} n D₂ ≽ NCCL {i} n D₁
+  → NCCL D₂ n {i} ≽ NCCL D₁ n {i}
 NCC-rename≽NCC n f f⁻¹ is-inverse = expressiveness-from-compiler (NCC-rename n f f⁻¹ is-inverse)

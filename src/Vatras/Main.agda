@@ -15,9 +15,6 @@ open import Vatras.Show.Print
 open import Vatras.Test.Example using (Example)
 open import Vatras.Test.Experiment using (Experiment; ExperimentSetup; setup; run-setup; run-experiment-plain)
 
-open import Vatras.Lang.CCC using (CCC)
-open import Vatras.Lang.OC using (WFOC)
-
 open import Vatras.Test.Examples.CCC using (cccex-all; talk-sandwich)
 open import Vatras.Test.Examples.OC using (optex-all)
 

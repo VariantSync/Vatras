@@ -8,7 +8,8 @@ open import Size using (Size; ↑_; ∞)
 -- open import Framework.Annotation.Name using (Option)
 open import Vatras.Framework.Definitions using (𝔸; 𝔽)
 open import Vatras.Lang.All
-open OC
+open OC using (WFOC; Root; _❲_❳; opt; oc-leaf)
+open import Vatras.Lang.OC.Util using (singleton)
 
 open import Vatras.Test.Example
 

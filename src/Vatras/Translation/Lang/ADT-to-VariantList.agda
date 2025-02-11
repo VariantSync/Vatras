@@ -33,12 +33,10 @@ open import Vatras.Framework.Compiler
 open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 open import Vatras.Framework.Properties.Soundness V using (Sound)
 open import Vatras.Framework.Proof.ForFree V using (soundness-by-expressiveness)
-open import Vatras.Lang.ADT
-  using (ADT; ADTL; leaf; _⟨_,_⟩)
-  renaming (⟦_⟧ to ⟦_⟧₂; Configuration to Conf₂)
-open import Vatras.Lang.VariantList V
-  using (VariantList; VariantListL; VariantList-is-Sound)
-  renaming (⟦_⟧ to ⟦_⟧ₗ; Configuration to Confₗ)
+open import Vatras.Lang.All.Fixed F V
+open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
+open VariantList using (VariantList; VariantListL)
+open import Vatras.Lang.VariantList.Properties using (VariantList-is-Sound)
 
 open import Vatras.Lang.ADT.Path F V _==_
 open import Vatras.Translation.Lang.ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ; UndeadADT; UndeadADTL)
@@ -53,24 +51,24 @@ This is correct only if the ADT is undead.
 Otherwise, also dead variants will be part of
 the resulting list.
 -}
-tr : ∀ {A : 𝔸} → ADT V F A → VariantList A
+tr : ∀ {A : 𝔸} → ADT A → VariantList A
 tr (leaf v) = v ∷ []
 tr (D ⟨ l , r ⟩) = tr l ⁺++⁺ tr r
 
 tr-undead : ∀ {A : 𝔸} → UndeadADT A → VariantList A
 tr-undead = tr ∘ node
 
-toVariantList : ∀ {A : 𝔸} → ADT V F A → VariantList A
+toVariantList : ∀ {A : 𝔸} → ADT A → VariantList A
 toVariantList = tr-undead ∘ kill-dead
 
 -- Converts a path to in the input ADT to the index in the resulting list.
-conf : ∀ {A} → (e : ADT V F A) → PathConfig e → ℕ
+conf : ∀ {A} → (e : ADT A) → PathConfig e → ℕ
 conf .(leaf _) (.[] is-valid tleaf) = 0
 conf (D ⟨ l , _ ⟩) ((_ ∷ pl) is-valid walk-left  t) = conf l (pl is-valid t)
 conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) = length (tr l) + conf r (pr is-valid t)
 
 -- Converts an index from the resulting list back to a path in the input ADT.
-fnoc : ∀ {A} → (e : ADT V F A) → ℕ → PathConfig e
+fnoc : ∀ {A} → (e : ADT A) → ℕ → PathConfig e
 fnoc (leaf v) _ = [] is-valid tleaf
 fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
 fnoc (D ⟨ l , r ⟩) i | no _ {-left-} with fnoc l i
@@ -80,7 +78,7 @@ fnoc (D ⟨ l , r ⟩) i | yes _  {-right-} with fnoc r (i ∸ (length (tr l)))
 
 -- The index of a path will never be out of bounds.
 conf-bounded : ∀ {A}
-  → (e : ADT V F A)
+  → (e : ADT A)
   → (c : PathConfig e)
   → conf e c < length (tr e)
 conf-bounded (leaf v) (.[] is-valid tleaf) = s≤s z≤n
@@ -102,8 +100,8 @@ conf-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
     go rewrite ⁺++⁺-length (tr l) (tr r) = gox
 
 preservation-walk-to-list-conf : ∀ {A : 𝔸}
-  → (e : ADT V F A)
-  → walk e ⊆[ conf e ] ⟦ tr e ⟧ₗ
+  → (e : ADT A)
+  → walk e ⊆[ conf e ] VariantList.⟦ tr e ⟧
 preservation-walk-to-list-conf .(leaf _) (.[] is-valid tleaf) = refl
 preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left t) =
   let c = pl is-valid t
@@ -111,9 +109,9 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pl) is-valid walk-left 
   begin
     walk l c
   ≡⟨ preservation-walk-to-list-conf l c ⟩
-    ⟦ tr l ⟧ₗ (conf l c)
+    VariantList.⟦ tr l ⟧ (conf l c)
   ≡⟨ find-or-last-append (tr l) (tr r) (conf-bounded l c) ⟨
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (conf l c)
+    VariantList.⟦ tr l ⁺++⁺ tr r ⟧ (conf l c)
   ∎
 preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right t) =
   let c = pr is-valid t
@@ -121,37 +119,37 @@ preservation-walk-to-list-conf (D ⟨ l , r ⟩) ((_ ∷ pr) is-valid walk-right
   begin
     walk r c
   ≡⟨ preservation-walk-to-list-conf r c ⟩
-    ⟦ tr r ⟧ₗ (conf r c)
+    VariantList.⟦ tr r ⟧ (conf r c)
   ≡⟨ find-or-last-prepend-+ (conf r c) (tr l) (tr r) ⟨
-    ⟦ tr l ⁺++⁺ tr r ⟧ₗ (length (tr l) + (conf r c))
+    VariantList.⟦ tr l ⁺++⁺ tr r ⟧ (length (tr l) + (conf r c))
   ∎
 
 preservation-walk-to-list-fnoc : ∀ {A : 𝔸}
-  → (e : ADT V F A)
-  → ⟦ tr e ⟧ₗ ⊆[ fnoc e ] walk e
+  → (e : ADT A)
+  → VariantList.⟦ tr e ⟧ ⊆[ fnoc e ] walk e
 preservation-walk-to-list-fnoc (leaf v) i = refl
 preservation-walk-to-list-fnoc (D ⟨ l , r ⟩) i with length (tr l) ≤? i
 ... | no ¬p =
   begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+    VariantList.⟦ tr (D ⟨ l , r ⟩) ⟧ i
   ≡⟨⟩
     find-or-last i ((tr l) ⁺++⁺ (tr r))
   ≡⟨ find-or-last-append (tr l) (tr r) (≰⇒> ¬p) ⟩ -- this is satisfied by eq
     find-or-last i (tr l)
   ≡⟨⟩
-    ⟦ tr l ⟧ₗ i
+    VariantList.⟦ tr l ⟧ i
   ≡⟨ preservation-walk-to-list-fnoc l i ⟩
     walk l (path (fnoc l i) is-valid valid (fnoc l i))
   ∎
 ... | yes len[tr-l]≤i  =
   begin
-    ⟦ tr (D ⟨ l , r ⟩) ⟧ₗ i
+    VariantList.⟦ tr (D ⟨ l , r ⟩) ⟧ i
   ≡⟨⟩
     find-or-last i ((tr l) ⁺++⁺ (tr r))
   ≡⟨ find-or-last-prepend-∸ (tr l) (tr r) len[tr-l]≤i ⟩
     find-or-last (i ∸ length (tr l)) (tr r)
   ≡⟨⟩
-    ⟦ tr r ⟧ₗ (i ∸ length (tr l))
+    VariantList.⟦ tr r ⟧ (i ∸ length (tr l))
   ≡⟨ preservation-walk-to-list-fnoc r (i ∸ length (tr l)) ⟩
     walk r (path (fnoc r (i ∸ length (tr l))) is-valid valid (fnoc r (i ∸ length (tr l))))
   ∎
@@ -163,26 +161,26 @@ down them, then simply converting a ADT to a variant list by
 gathering all variants in leafs from left to right preserves semantics.
 -}
 preservation-walk-to-list : ∀ {A : 𝔸}
-  → (e : ADT V F A)
-  → walk e ≅[ conf e ][ fnoc e ] ⟦ tr e ⟧ₗ
+  → (e : ADT A)
+  → walk e ≅[ conf e ][ fnoc e ] VariantList.⟦ tr e ⟧
 preservation-walk-to-list e = (preservation-walk-to-list-conf e , preservation-walk-to-list-fnoc e)
 
-conf-undead-to-list : ∀ {A} → UndeadADT A → Conf₂ F → ℕ
+conf-undead-to-list : ∀ {A} → UndeadADT A → ADT.Configuration → ℕ
 conf-undead-to-list e = conf (node e) ∘ Walk.fun-to-path (node e)
 
-fnoc-undead-to-list : ∀ {A} → UndeadADT A → ℕ → Conf₂ F
+fnoc-undead-to-list : ∀ {A} → UndeadADT A → ℕ → ADT.Configuration
 fnoc-undead-to-list e = Walk.path-to-fun (node e) ∘ fnoc (node e)
 
 preservation-undead-to-list : ∀ {A : 𝔸}
   → (e : UndeadADT A)
-  → ⟦ e ⟧ᵤ ≅[ conf-undead-to-list e ][ fnoc-undead-to-list e ] ⟦ tr-undead e ⟧ₗ
+  → ⟦ e ⟧ᵤ ≅[ conf-undead-to-list e ][ fnoc-undead-to-list e ] VariantList.⟦ tr-undead e ⟧
 preservation-undead-to-list e =
   ≅[]-begin
     ⟦ e ⟧ᵤ
   ≅[]⟨ Walk.preservation e ⟩
     walk (node e)
   ≅[]⟨ preservation-walk-to-list (node e) ⟩
-    ⟦ tr-undead e ⟧ₗ
+    VariantList.⟦ tr-undead e ⟧
   ≅[]-∎
 
 UndeadADT→VariantList : LanguageCompiler UndeadADTL VariantListL
@@ -195,11 +193,11 @@ UndeadADT→VariantList = record
   ; preserves = preservation-undead-to-list
   }
 
-ADT→VariantList : LanguageCompiler (ADTL V F) VariantListL
+ADT→VariantList : LanguageCompiler ADTL VariantListL
 ADT→VariantList = DeadElim.kill-dead-compiler ⊕ UndeadADT→VariantList
 
-VariantList≽ADT : VariantListL ≽ ADTL V F
+VariantList≽ADT : VariantListL ≽ ADTL
 VariantList≽ADT = expressiveness-from-compiler ADT→VariantList
 
-ADT-is-sound : Sound (ADTL V F)
-ADT-is-sound = soundness-by-expressiveness VariantList-is-Sound VariantList≽ADT
+ADT-is-sound : Sound ADTL
+ADT-is-sound = soundness-by-expressiveness (VariantList-is-Sound {V}) VariantList≽ADT

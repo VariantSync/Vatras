@@ -123,7 +123,7 @@ module Exact where
       → (n : ℕ≥ 2)
       → (expr : CCC D i A)
       → NumberOfAlternatives≤ n {i} expr
-      → NCC n D i A
+      → NCC D n i A
     translate n (a -< cs >-) (maxArtifact max-cs) = a -< zipWith n (translate n) cs max-cs >-
     translate (sucs n) (d ⟨ c ∷ cs ⟩) (maxChoice max≤n (max-c ∷ max-cs)) =
       d ⟨ Vec.saturate max≤n (translate (sucs n) c max-c ∷ Vec.cast (length-zipWith (sucs n) cs max-cs) (Vec.fromList (zipWith (sucs n) (translate (sucs n)) cs max-cs))) ⟩
@@ -177,10 +177,10 @@ module Exact where
   zipWith⇒map n f (c ∷ cs) (max-c ∷ max-cs) = Eq.cong₂ _∷_ refl (zipWith⇒map n f cs max-cs)
 
 
-  conf : ∀ {D : 𝔽} → (n : ℕ≥ 2) → CCC.Configuration D → NCC.Configuration n D
+  conf : ∀ {D : 𝔽} → (n : ℕ≥ 2) → CCC.Configuration D → NCC.Configuration D n
   conf (sucs n) config d = ℕ≥.cappedFin (config d)
 
-  fnoc : ∀ {D : 𝔽} → (n : ℕ≥ 2) → NCC.Configuration n D → CCC.Configuration D
+  fnoc : ∀ {D : 𝔽} → (n : ℕ≥ 2) → NCC.Configuration D n → CCC.Configuration D
   fnoc n config d = Fin.toℕ (config d)
 
   preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
@@ -325,7 +325,7 @@ Fin→ℕ⁻¹-Fin→ℕ (sucs n) (d , i) = Eq.cong₂ _,_ refl (ℕ≥.cappedFi
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
-  → NCC n (D × ℕ) ∞ A
+  → NCC (D × ℕ) n ∞ A
 translate (sucs n) expr =
   NCC-rename.compile (sucs n) (Fin→ℕ ⌈ expr ⌉) (Fin→ℕ⁻¹ ⌈ expr ⌉) (Fin→ℕ⁻¹-Fin→ℕ ⌈ expr ⌉)
     (NCC→NCC.compile ⌈ expr ⌉ (sucs n)
@@ -335,7 +335,7 @@ conf : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
   → CCC.Configuration D
-  → NCC.Configuration n (D × ℕ)
+  → NCC.Configuration (D × ℕ) n
 conf n expr =
   NCC-map-config n (Fin→ℕ⁻¹ ⌈ expr ⌉)
   ∘ NCC→NCC.conf ⌈ expr ⌉ n (Exact.translate ⌈ expr ⌉ expr (numberOfAlternatives≤⌈_⌉ expr))
@@ -344,7 +344,7 @@ conf n expr =
 fnoc : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
   → CCC D i A
-  → NCC.Configuration n (D × ℕ)
+  → NCC.Configuration (D × ℕ) n
   → CCC.Configuration D
 fnoc n expr =
   Exact.fnoc ⌈ expr ⌉
@@ -367,11 +367,11 @@ preserves (sucs n) expr =
     CCC.⟦ expr ⟧
   ≅[]-∎
 
-CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL {i} D) (NCCL n (D × ℕ))
+CCC→NCC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (CCCL D {i}) (NCCL (D × ℕ) n)
 CCC→NCC n .LanguageCompiler.compile = translate n
 CCC→NCC n .LanguageCompiler.config-compiler expr .to = conf n expr
 CCC→NCC n .LanguageCompiler.config-compiler expr .from = fnoc n expr
 CCC→NCC n .LanguageCompiler.preserves expr = ≅[]-sym (preserves n expr)
 
-NCC≽CCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → NCCL n (D × ℕ) ≽ CCCL D
+NCC≽CCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → NCCL (D × ℕ) n ≽ CCCL D
 NCC≽CCC n = expressiveness-from-compiler (CCC→NCC n)
