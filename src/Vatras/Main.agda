@@ -60,7 +60,7 @@ main_lines = do
   of the sandwich ADT from our OOPSLA'24 talk,
   which we used to highlight the combinatorial explosion problem.
   -}
-  run-experiment-plain tikz-export-experiment talk-sandwich
+  -- run-experiment-plain tikz-export-experiment talk-sandwich
 
 open import IO using (IO; Main; putStrLn)
 
