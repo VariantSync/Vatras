@@ -33,6 +33,7 @@ module CCC-to-NCC = Vatras.Translation.Lang.CCC-to-NCC.Exact
 import Vatras.Translation.Lang.NCC-to-2CC
 open Vatras.Translation.Lang.NCC-to-2CC.2Ary using () renaming (NCC→2CC to NCC-2→2CC)
 open import Vatras.Lang.CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
+open import Vatras.Translation.Lang.2CC.Idempotence using (Idempotence-Elimination)
 
 open import Vatras.Lang.CCC.Show as ShowCCC
 open import Vatras.Lang.NCC.Show as ShowNCC
@@ -90,12 +91,14 @@ get     round-trip ex@(name ≔ ccc) = do
     (boxed (6 + width pretty-ccc) "" pretty-ccc)
 
   void-level do
-    ncc         ← translate ccc         "NCC"         CCC→NCC-Exact                                              (ShowNCC.pretty id)
-    ncc2        ← compile   ncc         "NCC"         (shrinkTo2Compiler ⌈ ccc ⌉)                                (ShowNCC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    2cc         ← compile   ncc2        "2CC"         NCC-2→2CC                                                  (Show2CC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    adt         ← compile   2cc         "ADT"         2CC→ADT                                                    (ShowADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
-    variantList ← compile   adt         "VariantList" (ADT→VariantList (decidableEquality-× String._≟_ Fin._≟_)) (ShowVariantList.pretty (show-rose id))
-    do            compile   variantList "CCC"         (VariantList→CCC "default feature" CCC-Rose-encoder)       (ShowCCC.pretty id)
+    let eq = decidableEquality-× String._≟_ Fin._≟_
+    ncc         ← translate ccc         "NCC"                        CCC→NCC-Exact                                        (ShowNCC.pretty id)
+    ncc2        ← compile   ncc         "NCC"                        (shrinkTo2Compiler ⌈ ccc ⌉)                          (ShowNCC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    2cc         ← compile   ncc2        "2CC"                        NCC-2→2CC                                            (Show2CC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    2ccClean    ← compile   2cc         "2CC w/o idempotent choices" (Idempotence-Elimination _ eq)                       (Show2CC.pretty (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    adt         ← compile   2ccClean    "ADT"                        2CC→ADT                                              (ShowADT.pretty (show-rose id) (String.diagonal-ℕ ∘ map₂ Fin.toℕ))
+    variantList ← compile   adt         "VariantList"                (ADT→VariantList eq)                                 (ShowVariantList.pretty (show-rose id))
+    do            compile   variantList "CCC"                        (VariantList→CCC "default feature" CCC-Rose-encoder) (ShowCCC.pretty id)
   linebreak
 
 
