@@ -180,7 +180,7 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
   ~-trans : Transitive _~_
   ~-trans (i≤j , j≤i) (j≤k , k≤j) = ≤-trans i≤j j≤k , ≤-trans k≤j j≤i
 
-  -- From the above we can conclude that introduction equivalence is an equivalence relation (not mentioned in the paper).
+  -- From the above we can conclude that introduction equivalence is an equivalence relation (not explicitly mentioned in the paper).
   ~-IsEquivalence : IsEquivalence _~_
   ~-IsEquivalence = record
     { refl  = ~-refl
@@ -207,10 +207,10 @@ record FeatureAlgebra {c} (I : Set c) (sum : Op₂ I) (𝟘 : I) : Set (suc c) w
 
   {-
   Lemma 8:
-  Introduction sum is commutative with respec to introduction equivalence.
+  Introduction sum is commutative with respect to introduction equivalence.
   This means that on both sides, we have introductions that both "contain" the same introduction
   but maybe in a different order (so the results are not propositionally equal).
-  Note that in general, introduction sum is not commutative with respect to proposition equality
+  Note that in general, introduction sum is not commutative with respect to propositional equality
   (i.e., the syntax of the actual introduction type).
   -}
   quasi-commutativity : ∀ i₂ i₁ → i₂ ⊕ i₁ ~ i₁ ⊕ i₂
