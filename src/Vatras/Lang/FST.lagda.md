@@ -262,7 +262,6 @@ We now prove some useful properties of the above statements.
 
     {-|
     Composition of an FST into a list of FSTs.
-    TODO: slightly inconsistent with paper, adapt the paper for conditional-accept revision
     -}
     infixl 5 _⊙_
     _⊙_ : ∀ {i} → List (FSTA i) → FSTA i → List (FSTA i)
