@@ -502,7 +502,8 @@ Executing `git submodule update --init` in the root of the repository should fix
 ## Where does the library name 'Vatras' come from?
 
 The name Vatras is (of course) an acronym, which stands for _VAriability language TRAnslationS_.
-Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who is praying to the god Adanos, who brings "some kind of equality" very loosely speaking.
+Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who stems from the city of Varant, which almost sounds like _Variant_.
+Vatras is praying to the god Adanos, who brings some kind of equality or balance loosely speaking.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
