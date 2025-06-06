@@ -3,7 +3,8 @@ This module proves that option calculus cannot encode alternatives,
 at the example of natural numbers as the atom set.
 The proof is restricted to variants with alternatives at their root.
 -}
-module Vatras.Lang.OC.Alternative where
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
+module Vatras.Lang.OC.Alternative {F : 𝔽} where
 
 open import Data.List using (List; []; _∷_)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
@@ -14,17 +15,16 @@ open import Data.Product using (_,_; ∃-syntax)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open import Size using (∞)
 
-open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Vatras.Framework.Variants using (Rose; rose-leaf; _-<_>-; children-equality)
-open import Vatras.Lang.All
-open OC using (WFOC; Root; all-oc)
+open import Vatras.Lang.OC F as OC using (WFOC; Root)
+open import Vatras.Lang.OC.Util using (all-oc)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; subtreeₒ-recurse)
 
 A : 𝔸
 A = ℕ , _≟_
 
-cannotEncodeAlternative : ∀ {F : 𝔽}
-  → (e : WFOC F ∞ A)
+cannotEncodeAlternative :
+    (e : WFOC ∞ A)
   → (∃[ c ] zero -< rose-leaf      zero  ∷ [] >- ≡ OC.⟦ e ⟧ c)
   → (∃[ c ] zero -< rose-leaf (suc zero) ∷ [] >- ≡ OC.⟦ e ⟧ c)
   → (zero -< [] >- ≡ OC.⟦ e ⟧ (all-oc false))

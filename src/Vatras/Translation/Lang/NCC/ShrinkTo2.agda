@@ -49,26 +49,26 @@ open import Vatras.Framework.Annotation.IndexedDimension
 
 shrinkTo2 : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → NCC n D i A
-  → NCC (sucs zero) (IndexedDimension D n) ∞ A
+  → NCC D n i A
+  → NCC (IndexedDimension D n) (sucs zero) ∞ A
 shrinkTo2 n (a -< cs >-) = a -< List.map (shrinkTo2 n) cs >-
 shrinkTo2 {i} {D} {A} (sucs n) (d ⟨ cs ⟩) = go n (ℕ.n<1+n n) cs
   module shrinkTo2-Implementation where
-  go : {i : Size} → (m : ℕ) → (m≤n : m < suc n) → Vec (NCC (sucs n) D i A) (suc (suc m)) → NCC (sucs zero) (D × Fin (suc n)) ∞ A
+  go : {i : Size} → (m : ℕ) → (m≤n : m < suc n) → Vec (NCC D (sucs n) i A) (suc (suc m)) → NCC (D × Fin (suc n)) (sucs zero) ∞ A
   go zero m≤n (l ∷ r ∷ []) = (d , Fin.opposite (Fin.fromℕ< {zero} m≤n)) ⟨ shrinkTo2 (sucs n) l ∷ shrinkTo2 (sucs n) r ∷ [] ⟩
   go (suc m) m≤n (c ∷ cs) = (d , Fin.opposite (Fin.fromℕ< {suc m} m≤n)) ⟨ shrinkTo2 (sucs n) c ∷ go m (<-trans (ℕ.n<1+n m) m≤n) cs ∷ [] ⟩
 
 conf : ∀ {D : 𝔽}
   → (n : ℕ≥ 2)
-  → NCC.Configuration n D
-  → NCC.Configuration (sucs zero) (IndexedDimension D n)
+  → NCC.Configuration D n
+  → NCC.Configuration (IndexedDimension D n) (sucs zero)
 conf (sucs n) config (d , m) with config d Fin.≟ (Fin.inject₁ m)
 ... | yes _ = zero
 ... | no _ = suc zero
 
 module ConfLemmas where
   config≡0' : ∀ {D : 𝔽} {d : D} {n : ℕ}
-    → (config : NCC.Configuration (sucs n) D)
+    → (config : NCC.Configuration D (sucs n))
     → (j : Fin (suc n))
     → config d ≡ (Fin.inject₁ j)
     → conf (sucs n) config (d , j) ≡ zero
@@ -77,7 +77,7 @@ module ConfLemmas where
   ... | no config-d≢j = ⊥-elim (config-d≢j config-d≡j)
 
   config≡1' : ∀ {D : 𝔽} {d : D} {n : ℕ}
-    → (config : NCC.Configuration (sucs n) D)
+    → (config : NCC.Configuration D (sucs n))
     → (j : Fin (suc n))
     → config d ≢ (Fin.inject₁ j)
     → conf (sucs n) config (d , j) ≡ suc zero
@@ -87,8 +87,8 @@ module ConfLemmas where
 
 fnoc : ∀ {D : 𝔽}
   → (n : ℕ≥ 2)
-  → NCC.Configuration (sucs zero) (IndexedDimension D n)
-  → NCC.Configuration n D
+  → NCC.Configuration (IndexedDimension D n) (sucs zero)
+  → NCC.Configuration D n
 fnoc (sucs n) config d = go n (ℕ.n<1+n n)
   module fnoc-Implementation where
   go : (m : ℕ) → m < suc n → Fin (suc (suc n))
@@ -99,7 +99,7 @@ fnoc (sucs n) config d = go n (ℕ.n<1+n n)
 
 module FnocLemmas where
   config≡0 : ∀ {D : 𝔽} {d : D} {n : ℕ}
-    → (config : NCC.Configuration (sucs zero) (D × Fin (suc n)))
+    → (config : NCC.Configuration (D × Fin (suc n)) (sucs zero))
     → (j : Fin (suc n))
     → fnoc (sucs n) config d ≡ Fin.inject₁ j
     → config (d , j) ≡ zero
@@ -114,7 +114,7 @@ module FnocLemmas where
     go' (suc m) m<n go≡j | suc zero = go' m (<-trans (ℕ.n<1+n m) m<n) go≡j
 
   config≡1 : ∀ {D : 𝔽} {d : D} {n : ℕ}
-    → (config : NCC.Configuration (sucs zero) (D × Fin (suc n)))
+    → (config : NCC.Configuration (D × Fin (suc n)) (sucs zero))
     → (j : Fin (suc n))
     → j Fin.< fnoc (sucs n) config d
     → config (d , j) ≡ suc zero
@@ -149,7 +149,7 @@ module FnocLemmas where
 
 preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ shrinkTo2 n expr ⟧ ⊆[ fnoc n ] NCC.⟦ expr ⟧
 preserves-⊆ (sucs n) (a -< cs >-) config =
     NCC.⟦ shrinkTo2 (sucs n) (a -< cs >-) ⟧ config
@@ -190,7 +190,7 @@ preserves-⊆ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
     : {i : Size}
     → (m : ℕ)
     → (m≤n : m < suc n)
-    → (cs' : Vec (NCC (sucs n) D i A) (suc (suc m)))
+    → (cs' : Vec (NCC D (sucs n) i A) (suc (suc m)))
     → (j : Fin (suc (suc m)))
     → m + Fin.toℕ (fnoc (sucs n) config d) ≡ Fin.toℕ j + n
     → NCC.⟦ go n d cs m m≤n cs' ⟧ config ≡ NCC.⟦ Vec.lookup cs' j ⟧ (fnoc (sucs n) config)
@@ -280,7 +280,7 @@ preserves-⊆ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
 
 preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ expr ⟧ ⊆[ conf n ] NCC.⟦ shrinkTo2 n expr ⟧
 preserves-⊇ (sucs n) (a -< cs >-) config =
     NCC.⟦ a -< cs >- ⟧ config
@@ -319,7 +319,7 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
     : {i : Size}
     → (m : ℕ)
     → (m≤n : m < suc n)
-    → (cs' : Vec (NCC (sucs n) D i A) (suc (suc m)))
+    → (cs' : Vec (NCC D (sucs n) i A) (suc (suc m)))
     → (j : Fin (suc (suc m)))
     → m + Fin.toℕ (config d) ≡ Fin.toℕ j + n
     → NCC.⟦ go n d cs m m≤n cs' ⟧ (conf (sucs n) config) ≡ NCC.⟦ Vec.lookup cs' j ⟧ config
@@ -423,11 +423,11 @@ preserves-⊇ {D = D} {A = A} (sucs n) (d ⟨ cs ⟩) config =
 
 preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (n : ℕ≥ 2)
-  → (expr : NCC n D i A)
+  → (expr : NCC D n i A)
   → NCC.⟦ shrinkTo2 n expr ⟧ ≅[ fnoc n ][ conf n ] NCC.⟦ expr ⟧
 preserves n expr = preserves-⊆ n expr , preserves-⊇ n expr
 
-shrinkTo2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (NCCL (sucs zero) (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+shrinkTo2Compiler : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL D n {i}) (NCCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))) (sucs zero))
 shrinkTo2Compiler n .LanguageCompiler.compile = shrinkTo2 n
 shrinkTo2Compiler n .LanguageCompiler.config-compiler expr .to = conf n
 shrinkTo2Compiler n .LanguageCompiler.config-compiler expr .from = fnoc n

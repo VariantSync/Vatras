@@ -35,7 +35,8 @@ open Eq.≡-Reasoning
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Compiler
 open import Vatras.Data.EqIndexedSet using (_≅[_][_]_; ≐→≅[])
-open import Vatras.Lang.ADT
+open import Vatras.Lang.All.Fixed F V
+open ADT using (ADT; leaf; _⟨_,_⟩; ADTL; Configuration; ⟦_⟧)
 open import Vatras.Lang.ADT.Path F V _==_
 
 {-
@@ -43,7 +44,7 @@ A ADT is undead if it does not contain any dead branches.
 This is the case if any path from the root to a leaf does not contain
 a feature name twice.
 -}
-Undead : ∀ {A} (e : ADT V F A) → Set₁
+Undead : ∀ {A} (e : ADT A) → Set₁
 Undead e = ∀ (p : Path) → p starts-at e → Unique p
 
 {-
@@ -57,7 +58,7 @@ undead-leaf .[] tleaf = []
 {-
 If a choice is undead, so is its left alternative.
 -}
-undead-left : ∀ {A} {D} {l r : ADT V F A}
+undead-left : ∀ {A} {D} {l r : ADT A}
   → Undead (D ⟨ l , r ⟩)
     --------------------
   → Undead l
@@ -67,7 +68,7 @@ undead-left {D = D} u-chc p t with u-chc (D ↣ true ∷ p) (walk-left t)
 {-
 If a choice is undead, so is its right alternative.
 -}
-undead-right : ∀ {A} {D} {l r : ADT V F A}
+undead-right : ∀ {A} {D} {l r : ADT A}
   → Undead (D ⟨ l , r ⟩)
     --------------------
   → Undead r
@@ -79,7 +80,7 @@ If two expressions l and r are undead and do
 not contain the feature name D,
 then the choice D ⟨ l , r ⟩ is undead, too.
 -}
-undead-choice : ∀ {A} {D} {l r : ADT V F A}
+undead-choice : ∀ {A} {D} {l r : ADT A}
   → Undead l
   → Undead r
     -- It might be handy to introduce a new predicate for containment of feature names in expressions D ∈ l later.
@@ -93,15 +94,15 @@ undead-choice u-l u-r D∉l D∉r (.(_ ↣ false) ∷ p) (walk-right t) = ∉→
 record UndeadADT (A : 𝔸) : Set₁ where
   constructor _⊚_ -- \oo
   field
-    node   : ADT V F A
+    node   : ADT A
     undead : Undead node
 open UndeadADT public
 
-⟦_⟧ᵤ : 𝔼-Semantics V (Configuration F) UndeadADT
+⟦_⟧ᵤ : 𝔼-Semantics V Configuration UndeadADT
 ⟦_⟧ᵤ = ⟦_⟧ ∘ node
 
 UndeadADTL : VariabilityLanguage V
-UndeadADTL = ⟪ UndeadADT , Configuration F , ⟦_⟧ᵤ ⟫
+UndeadADTL = ⟪ UndeadADT , Configuration , ⟦_⟧ᵤ ⟫
 
 {-
 Kills all dead branches within a given expression,
@@ -109,8 +110,8 @@ assuming that some features were already defined.
 -}
 kill-dead-below : ∀ {A}
   → (defined : Path)
-  → ADT V F A
-  → ADT V F A
+  → ADT A
+  → ADT A
 kill-dead-below _ (leaf v) = leaf v
 kill-dead-below defined (D ⟨ l , r ⟩) with D ∈? defined
 --- The current choice was already encountered above this choice.
@@ -135,7 +136,7 @@ kill-dead-eliminates-defined-features : ∀ {A}
   → (defined : Path)
   → (D : F)
   → D ∈ defined
-  → (e : ADT V F A)
+  → (e : ADT A)
   → D ∉' kill-dead-below defined e
 kill-dead-eliminates-defined-features _ _ _ (leaf _) .[] tleaf ()
 kill-dead-eliminates-defined-features defined _ _ (D' ⟨ _ , _ ⟩) _ _ _ with D' ∈? defined
@@ -162,7 +163,7 @@ is undead.
 -}
 kill-dead-correct : ∀ {A}
   → (defined : Path)
-  → (e : ADT V F A)
+  → (e : ADT A)
   → Undead (kill-dead-below defined e)
 kill-dead-correct _ (leaf v) = undead-leaf
 kill-dead-correct defined (D ⟨ _ , _ ⟩) with D ∈? defined
@@ -180,14 +181,14 @@ kill-dead-correct defined (D ⟨ l , r ⟩) | no  D∉defined =
 Dead branch elimination of ADTs.
 -}
 kill-dead : ∀ {A}
-  → ADT V F A
+  → ADT A
   → UndeadADT A
 kill-dead e = kill-dead-below [] e ⊚ kill-dead-correct [] e
 
 kill-dead-preserves-below-partial-configs : ∀ {A : 𝔸}
-  → (e : ADT V F A)
+  → (e : ADT A)
   → (defined : Path)
-  → (c : Configuration F)
+  → (c : Configuration)
   → defined ⊑ c
   → ⟦ e ⟧ c ≡ ⟦ kill-dead-below defined e ⟧ c
 kill-dead-preserves-below-partial-configs (leaf _) _ _ _ = refl
@@ -203,11 +204,11 @@ kill-dead-preserves-below-partial-configs (D ⟨ l , r ⟩) def c def⊑c | no D
 ... | false = kill-dead-preserves-below-partial-configs r ((D ↣ false) ∷ def) c (eq ∷ def⊑c)
 
 kill-dead-preserves : ∀ {A : 𝔸}
-  → (e : ADT V F A)
+  → (e : ADT A)
   → ⟦ e ⟧ ≅[ id ][ id ] ⟦ kill-dead e ⟧ᵤ
 kill-dead-preserves e = ≐→≅[] (λ c → kill-dead-preserves-below-partial-configs e [] c [])
 
-kill-dead-compiler : LanguageCompiler (ADTL V F) UndeadADTL
+kill-dead-compiler : LanguageCompiler ADTL UndeadADTL
 kill-dead-compiler = record
   { compile = kill-dead
   ; config-compiler = λ _ → record { to = id ; from = id }

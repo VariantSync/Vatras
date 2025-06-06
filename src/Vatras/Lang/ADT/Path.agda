@@ -30,7 +30,7 @@ open Eq.≡-Reasoning
 
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Util.Suffix using (_endswith_)
-open import Vatras.Lang.ADT using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
+open import Vatras.Lang.ADT F V using (ADT; leaf; _⟨_,_⟩; Configuration; ⟦_⟧)
 
 -- A selection of a feature matches it to a boolean value.
 record Selection : Set where
@@ -127,17 +127,17 @@ Note: The symmetry between the rules walk-left and walk-right causes many
       However, we cannot merge the rules into a single rule
       because we have to recurse on either the left or right alternative (not both).
 -}
-data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT V F A) → Set₁ where
+data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT A) → Set₁ where
   tleaf : ∀ {A} {v : V A}
       ------------------
     → [] starts-at (leaf v)
 
-  walk-left : ∀ {A} {D : F} {l r : ADT V F A} {pl : Path}
+  walk-left : ∀ {A} {D : F} {l r : ADT A} {pl : Path}
     → pl starts-at l
       -------------------------------------
     → ((D ↣ true) ∷ pl) starts-at (D ⟨ l , r ⟩)
 
-  walk-right : ∀ {A} {D : F} {l r : ADT V F A} {pr : Path}
+  walk-right : ∀ {A} {D : F} {l r : ADT A} {pr : Path}
     → pr starts-at r
       --------------------------------------
     → ((D ↣ false) ∷ pr) starts-at (D ⟨ l , r ⟩)
@@ -146,14 +146,14 @@ data _starts-at_ : ∀ {A} → (p : Path) → (e : ADT V F A) → Set₁ where
 An expression does not contain a feature name
 if all paths do not contain that feature name.
 -}
-_∉'_ : ∀{A} → F → ADT V F A → Set₁
+_∉'_ : ∀{A} → F → ADT A → Set₁
 D ∉' e = ∀ (p : Path) → p starts-at e → D ∉ p
 
 {-
 A path serves as a configuration for an expression e
 if it starts at that expression and ends at a leaf.
 -}
-record PathConfig {A} (e : ADT V F A) : Set₁ where
+record PathConfig {A} (e : ADT A) : Set₁ where
   constructor _is-valid_
   field
     path : Path
@@ -166,7 +166,7 @@ This walk may be illegal by choosing different alternatives for the same choice 
 For example in D ⟨ D ⟨ 1 , dead ⟩ , 2 ⟩ we can reach 'dead' via (D ↣ true ∷ D ↣ false ∷ []).
 However, walking like this is fine as long as the path is unique as we will later prove.
 -}
-walk : ∀ {A} → (e : ADT V F A) → PathConfig e → V A
+walk : ∀ {A} → (e : ADT A) → PathConfig e → V A
 walk (leaf v) ([] is-valid tleaf) = v
 walk (D ⟨ l , _ ⟩) ((.(D ↣ true ) ∷ pl) is-valid walk-left  t) = walk l (pl is-valid t)
 walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-valid walk-right t) = walk r (pr is-valid t)
@@ -175,7 +175,7 @@ walk (D ⟨ _ , r ⟩) ((.(D ↣ false) ∷ pr) is-valid walk-right t) = walk r 
 An expression a is a sub-expression of b
 iff all valid paths from a lead to paths from b.
 -}
-_subexprof_ : ∀ {A} → ADT V F A → ADT V F A → Set₁
+_subexprof_ : ∀ {A} → ADT A → ADT A → Set₁
 a subexprof b = ∀ (pa : Path) → pa starts-at a → ∃[ pb ] ((pb starts-at b) × (pb endswith pa))
 
 {-
@@ -184,14 +184,14 @@ if the configuration returns the same
 result for the given feature as dictated
 by the selection.
 -}
-matches : Configuration F → Selection → Set
+matches : Configuration → Selection → Set
 matches c (f ↣ val) = c f ≡ val
 
 {-
 Predicate that tells whether a path matches a configuration.
 This essentially makes the given path a partial configuration.
 -}
-_⊑_ : Path → Configuration F → Set
+_⊑_ : Path → Configuration → Set
 p ⊑ c = All (matches c) p
 
 {-

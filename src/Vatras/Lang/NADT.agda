@@ -1,11 +1,12 @@
-module Vatras.Lang.NADT where
+open import Vatras.Framework.Definitions
+
+module Vatras.Lang.NADT (F : 𝔽) (V : 𝕍) where
 
 open import Data.Nat using (ℕ)
 open import Data.List.NonEmpty using (List⁺)
 open import Function using (id)
 open import Size using (Size; ↑_)
 
-open import Vatras.Framework.Definitions
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Variants using (GrulerVariant)
 open import Vatras.Util.List using (find-or-last)
@@ -16,22 +17,22 @@ to choices with an arbitrary number of alternatives (at least one though) just
 as in core choice calculus CCC.
 This language is to ADT, what CCC is to 2CC.
 -}
-data NADT (V : 𝕍) (F : 𝔽) : Size → 𝔼 where
-  leaf : ∀ {i A} → V A → NADT V F (↑ i) A
-  _⟨_⟩ : ∀ {i A} → F → List⁺ (NADT V F i A) → NADT V F (↑ i) A
+data NADT : Size → 𝔼 where
+  leaf : ∀ {i A} → V A → NADT (↑ i) A
+  _⟨_⟩ : ∀ {i A} → F → List⁺ (NADT i A) → NADT (↑ i) A
 
 -- configurations pick an alternative to select
-Configuration : (F : 𝔽) → ℂ
-Configuration F = F → ℕ
+Configuration : ℂ
+Configuration = F → ℕ
 
 {-|
 The semantics of NADTs has the same semantics as
 ADTs have for leaf,
 CCC has for choices.
 -}
-⟦_⟧ : ∀ {i : Size} {V : 𝕍} {F : 𝔽} → 𝔼-Semantics V (Configuration F) (NADT V F i)
+⟦_⟧ : ∀ {i : Size} → 𝔼-Semantics V Configuration (NADT i)
 ⟦ leaf v   ⟧ conf = v
 ⟦ f ⟨ cs ⟩ ⟧ conf = ⟦ find-or-last (conf f) cs ⟧ conf
 
-NADTL : ∀ {i : Size} (V : 𝕍) (F : 𝔽) → VariabilityLanguage V
-NADTL {i} V F = ⟪ NADT V F i , Configuration F , ⟦_⟧ ⟫
+NADTL : ∀ {i : Size} → VariabilityLanguage V
+NADTL {i} = ⟪ NADT i , Configuration , ⟦_⟧ ⟫

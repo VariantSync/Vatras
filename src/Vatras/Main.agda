@@ -15,9 +15,6 @@ open import Vatras.Show.Print
 open import Vatras.Test.Example using (Example)
 open import Vatras.Test.Experiment using (Experiment; ExperimentSetup; setup; run-setup; run-experiment-plain)
 
-open import Vatras.Lang.CCC using (CCC)
-open import Vatras.Lang.OC using (WFOC)
-
 open import Vatras.Test.Examples.CCC using (cccex-all; talk-sandwich)
 open import Vatras.Test.Examples.OC using (optex-all)
 
@@ -63,7 +60,7 @@ main_lines = do
   of the sandwich ADT from our OOPSLA'24 talk,
   which we used to highlight the combinatorial explosion problem.
   -}
-  run-experiment-plain tikz-export-experiment talk-sandwich
+  -- run-experiment-plain tikz-export-experiment talk-sandwich
 
 open import IO using (IO; Main; putStrLn)
 

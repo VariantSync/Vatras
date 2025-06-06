@@ -34,22 +34,22 @@ open import Vatras.Framework.Annotation.IndexedDimension
 open import Vatras.Translation.Lang.NCC.NCC-to-NCC using (NCC→NCC)
 
 module 2Ary where
-  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → NCC (sucs zero) D i A → 2CC D ∞ A
+  translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → NCC D (sucs zero) i A → 2CC D ∞ A
   translate (a -< cs >-) = a -< List.map translate cs >-
   translate (d ⟨ l ∷ r ∷ [] ⟩) = d ⟨ translate l , translate r ⟩
 
-  conf : ∀ {D : 𝔽} → NCC.Configuration (sucs zero) D → 2CC.Configuration D
+  conf : ∀ {D : 𝔽} → NCC.Configuration D (sucs zero) → 2CC.Configuration D
   conf config d with config d
   ... | zero = true
   ... | suc zero = false
 
-  fnoc : ∀ {D : 𝔽} → 2CC.Configuration D → NCC.Configuration (sucs zero) D
+  fnoc : ∀ {D : 𝔽} → 2CC.Configuration D → NCC.Configuration D (sucs zero)
   fnoc config d with config d
   ... | true = zero
   ... | false = suc zero
 
   preserves-⊆ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-    → (expr : NCC (sucs zero) D i A)
+    → (expr : NCC D (sucs zero) i A)
     → 2CC.⟦ translate expr ⟧ ⊆[ fnoc ] NCC.⟦ expr ⟧
   preserves-⊆ (a -< cs >-) config =
       2CC.⟦ translate (a -< cs >-) ⟧ config
@@ -86,7 +86,7 @@ module 2Ary where
     ... | false = refl
 
   preserves-⊇ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-    → (expr : NCC (sucs zero) D i A)
+    → (expr : NCC D (sucs zero) i A)
     → NCC.⟦ expr ⟧ ⊆[ conf ] 2CC.⟦ translate expr ⟧
   preserves-⊇ (a -< cs >-) config =
       NCC.⟦ a -< cs >- ⟧ config
@@ -121,19 +121,19 @@ module 2Ary where
     ... | suc zero = refl
 
   preserves : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-    → (expr : NCC (sucs zero) D i A)
+    → (expr : NCC D (sucs zero) i A)
     → 2CC.⟦ translate expr ⟧ ≅[ fnoc ][ conf ] NCC.⟦ expr ⟧
   preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-  NCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (NCCL {i} (sucs zero) D) (2CCL D)
+  NCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (NCCL D (sucs zero) {i}) (2CCL D)
   NCC→2CC .LanguageCompiler.compile = translate
   NCC→2CC .LanguageCompiler.config-compiler expr .to = conf
   NCC→2CC .LanguageCompiler.config-compiler expr .from = fnoc
   NCC→2CC .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
 
-NCC→2CC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL {i} n D) (2CCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
+NCC→2CC : ∀ {i : Size} {D : 𝔽} → (n : ℕ≥ 2) → LanguageCompiler (NCCL D n {i}) (2CCL (D × Fin (ℕ≥.toℕ (ℕ≥.pred n))))
 NCC→2CC n = NCC→NCC n (sucs zero) ⊕ 2Ary.NCC→2CC
 
-2CC≽NCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → 2CCL (IndexedDimension D n) ≽ NCCL n D
+2CC≽NCC : ∀ {D : 𝔽} → (n : ℕ≥ 2) → 2CCL (IndexedDimension D n) ≽ NCCL D n
 2CC≽NCC n = expressiveness-from-compiler (NCC→2CC n)

@@ -27,6 +27,110 @@ This library formalizes all results in our paper:
 Additionally, our library comes with a small **demo**, and **tutorials** for getting to know the library and for formalizing your own variability languages (see "Tutorials" section below).
 When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
 
+## Overview: What is Static Variability and What is Vatras?
+
+Vatras is a library to study and compare meta-languages for specifying variability in source code and data.
+Some software systems are configurable _before_ they are compiled, i.e., statically.
+A common way example for implementing static variability is by conditional compilation, as for example possible with the C preprocessor.
+For instance, the following [code snippet from the Linux kernel](https://github.com/torvalds/linux/blob/e271ed52b344ac02d4581286961d0c40acc54c03/include/linux/console.h#L479-L486)
+
+```C
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+extern bool console_srcu_read_lock_is_held(void);
+#else
+static inline bool console_srcu_read_lock_is_held(void)
+{
+  return 1;
+}
+#endif
+```
+
+replaces the function `console_srcu_read_lock_is_held` with a default implementation in case a particular feature should be debugged.
+Essentially, the code snippet above does not denote a single `C` program but two `C` programs, each using one of two alternatives for the function `console_srcu_read_lock_is_held`.
+
+To model and analyze static variability, researchers have formalized various formal languages, including formalisms for conditional compilation.
+For example, the _choice calculus_ is a small language to formalize conditional compilation in terms of a singly syntactic term, referred to as a _choice_.
+A choice `F ⟨ l , r ⟩` specifies two alternatives `l` and `r` for a feature or configuration option `F`.
+Encoding the example above in choice calculus yields
+
+```
+CONFIG_DEBUG_LOCK_ALLOC ⟨ 
+  extern bool console_srcu_read_lock_is_held(void);
+,
+  static inline bool console_srcu_read_lock_is_held(void)
+  {
+    return 1;
+  }
+⟩
+```
+
+Apart from source code, static configuration processes emerge in many other areas, including our daily lives. 
+For instance, some restaurants offer your to configure your meal.
+Sticking to the choice calculus, we may for example specify a configurable sandwich that _always_ has bread 🍞 and cheese, _maybe_ has salad 🥗 (expressed as a choice between Salad 🥗 and an empty value `ε`), _either_ has a meat 🍖 or falafel 🧆 patty, and has _any_ combination of mayonnaise 🥚 and ketchup 🍅 as follows:
+
+```
+🍞-< 
+  Salad⟨ 🥗, ε ⟩,
+  🧀,
+  Patty⟨ 🍖, 🧆 ⟩,
+  Sauce⟨ ε, 🥚, 🍅, 🍅🥚 ⟩
+  >-
+```
+where the Y-brackets of the outer expression `🍞-< ... >-` denote that the ingredients go _within_ the bread (i.e., we build a tree where the ingredients are sub-expressions of bread).
+
+The goal of Vatras is to formalize and _compare_ languages for static variabilty.
+To this end, we formalize the syntax and semantics of the choice calculus, some of its dialects, and many more formal languages for static variability.
+For instance, writing out the above sandwich expression in our Agda formalization of the choice calculus, closely resembles the original expressions (most boilerplate comes from explicit list syntax):
+
+``` agda
+sandwich : CCC Feature ∞ Artifact
+sandwich =
+  "🍞" -<
+       "Salad" ⟨ leaf "🥗" ∷ leaf "ε" ∷ [] ⟩
+    ∷  leaf "🧀"
+    ∷  "Patty" ⟨ leaf "🍖" ∷ leaf "🧆" ∷ [] ⟩
+    ∷  "Sauce" ⟨ leaf "ε"  ∷ leaf "🥚" ∷ leaf "🍅" ∷ leaf "🍅🥚" ∷ [] ⟩
+    ∷ []
+  >-
+  where
+    leaf : String → CCC Feature ∞ Artifact
+    leaf a = a -< [] >-
+```
+
+We may configure our sandwich in terms of the semantics `⟦_⟧` for choice calculus.
+The semantics is a function takes a configuration as input to produce a variant.
+For our sandwich example, a configuration decides for each configuration option `Salad`, `Patty`, and `Sauce` which alternative to pick.
+A variant is a sandwich without any conditional elements left (i.e., a term without choices).
+From a configuration, we can derive the respective sandwich variant, and we can use Agda to prove that the semantics derive the variant we expect:
+
+``` agda
+config : Feature → ℕ
+config "Salad" = 0
+config "Patty" = 1
+config "Sauce" = 2
+config _ = 0
+
+config-makes-falafel-ketchup-sandwich :
+  ⟦ sandwich ⟧ config ≡
+    "🍞" -<
+         leaf "🥗"
+      ∷  leaf "🧀"
+      ∷  leaf "🧆"
+      ∷  leaf "🍅"
+      ∷ []
+    >-
+config-makes-falafel-ketchup-sandwich = refl
+```
+
+Vatras enables semantic comparisons of variability languages based on a meta-theory centered around the three fundamental yet unexplored properties of completeness, soundness, and expressiveness.
+Completeness serves as a lower bound (i.e., a language can express at least a given semantic domain),
+soundness serves as an upper bound (i.e., a language can express at most a given semantic domain),
+and expressiveness serves as a relative comparison (i.e., a language can express at least the semantic domain of another language).
+Proofs of these properties come as _encodings_ for completeness (i.e., a function that creates a variational expression from a set of variants), _enumerations_ for soundness (i.e., a function that enumerates all variants denoted by a variational expression), and _compilers_ between languages for expressiveness.
+Vatras includes a range of proofs of these properties for existing languages as explained in our respective paper.
+As a showcase, Vatras will show a roundtrip translation of the configurable sandwich specification above when you run it.
+Details on the features implemented in Vatras, including tutorials for integrating new languages, can be found in the **Reusability Guide** below.
+
 ## Kick-the-Tires
 
 This section gives you a short "Getting Started" guide.
@@ -502,7 +606,8 @@ Executing `git submodule update --init` in the root of the repository should fix
 ## Where does the library name 'Vatras' come from?
 
 The name Vatras is (of course) an acronym, which stands for _VAriability language TRAnslationS_.
-Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who is praying to the god Adanos, who brings "some kind of equality" very loosely speaking.
+Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who stems from the city of Varant, which almost sounds like _Variant_.
+Vatras is praying to the god Adanos, who brings some kind of equality or balance loosely speaking.
 
 [agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
 [agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3

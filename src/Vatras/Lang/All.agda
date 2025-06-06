@@ -1,7 +1,13 @@
 {-|
 This module reexports all our language definitions as new modules.
-If you intend to work with more than one language in a file
-we recommend using this module to easily import the languages you need.
+Instead of directly importing the language modules,
+we recommend importing this module if you do not want to apply the module parameters.
+
+For convenience, we change explicit module parameters to implicit ones where useful.
+The rule of thumb is:
+  Types use explicit arguments whereas functions use implicit arguments.
+In case you want to instantiate these module parameters with a fixed value,
+you can use `Vatras.Lang.All.Fixed` instead of this module.
 -}
 module Vatras.Lang.All where
 
@@ -12,24 +18,68 @@ import Vatras.Lang.2CC
 import Vatras.Lang.NADT
 import Vatras.Lang.ADT
 import Vatras.Lang.OC
+import Vatras.Lang.FST
 import Vatras.Lang.Gruler
 
-module VariantList = Vatras.Lang.VariantList
-module CCC         = Vatras.Lang.CCC
-module NCC         = Vatras.Lang.NCC
-module 2CC         = Vatras.Lang.2CC
-module NADT        = Vatras.Lang.NADT
-module ADT         = Vatras.Lang.ADT
-module OC          = Vatras.Lang.OC
-module Gruler      = Vatras.Lang.Gruler
+open import Data.Empty.Polymorphic using (⊥)
+open import Vatras.Util.Nat.AtLeast using (ℕ≥)
+open import Size using (∞)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; 𝕍)
+open import Vatras.Framework.Variants using (Rose)
+
+{-
+Some definitions do not make use of the module parameter.
+In such cases explicit arguments would be confusing and implicit paramters would lead to unsolved metas.
+Hence, we assert that these parameters are unused by passing `⊥` for `𝔽` or `λ _ → ⊥` for `𝔸`.
+-}
+
+module VariantList where
+  open Vatras.Lang.VariantList using (VariantList; VariantListL; Clone-and-Own) public
+  open Vatras.Lang.VariantList (λ _ → ⊥) using (Configuration) public
+  module _ {V : 𝕍} where
+    open Vatras.Lang.VariantList V hiding (VariantList; VariantListL; Clone-and-Own; Configuration) public
+
+module CCC where
+  open Vatras.Lang.CCC using (CCC; CCCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.CCC F hiding (CCC; CCCL; Configuration) public
+
+module NCC where
+  open Vatras.Lang.NCC using (NCC; NCCL; Configuration) public
+  module _ {F : 𝔽} {n : ℕ≥ 2} where
+    open Vatras.Lang.NCC F n hiding (NCC; NCCL; Configuration) public
+
+module 2CC where
+  open Vatras.Lang.2CC using (2CC; 2CCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.2CC F hiding (2CC; 2CCL; Configuration) public
+
+module NADT where
+  open Vatras.Lang.NADT using (NADT; NADTL) public
+  module _ (F : 𝔽) where
+    open Vatras.Lang.NADT F (λ _ → ⊥) using (Configuration) public
+  module _ {F : 𝔽} {V : 𝕍} where
+    open Vatras.Lang.NADT F V hiding (NADT; NADTL; Configuration) public
+
+module ADT where
+  open Vatras.Lang.ADT using (ADT; ADTL) public
+  module _ (F : 𝔽) where
+    open Vatras.Lang.ADT F (λ _ → ⊥) using (Configuration) public
+  module _ {F : 𝔽} {V : 𝕍} where
+    open Vatras.Lang.ADT F V hiding (ADT; ADTL; Configuration) public
+
+module OC where
+  open Vatras.Lang.OC using (OC; OCL; WFOC; WFOCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.OC F hiding (OC; OCL; WFOC; WFOCL; Configuration) public
 
 module FST where
-  open import Size using (∞)
-  open import Vatras.Framework.Definitions using (𝔽; 𝔸)
-  open import Vatras.Framework.Variants using (Rose)
-  open import Vatras.Lang.FST hiding (FST; FSTL-Sem; Conf) public
+  open Vatras.Lang.FST using (FSTL; FST; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.FST F using (⟦_⟧) public
+    module Impose = Vatras.Lang.FST.Impose F
 
-  Configuration = Vatras.Lang.FST.Conf
-
-  ⟦_⟧ : ∀ {F : 𝔽} {A : 𝔸} → Impose.SPL F A → Configuration F → Rose ∞ A
-  ⟦_⟧ {F} = Vatras.Lang.FST.FSTL-Sem F
+module Gruler where
+  open Vatras.Lang.Gruler using (Gruler; GrulerL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.Gruler F hiding (Gruler; GrulerL; Configuration) public

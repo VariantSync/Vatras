@@ -9,11 +9,14 @@ open import Size using (∞)
 open import Function using (id)
 
 open import Vatras.Framework.Variants
-open import Vatras.Lang.CCC as CCC using (CCC)
-open import Vatras.Lang.2CC using (2CC)
-open import Vatras.Lang.ADT
+open import Vatras.Lang.All
+open CCC using (CCC)
+open 2CC using (2CC)
+open ADT using (ADT; leaf; _⟨_,_⟩)
 open import Vatras.Translation.LanguageMap
 open import Vatras.Translation.Lang.2CC.Idempotence String String._≟_ using (eliminate-idempotent-choices)
+
+import Vatras.Lang.CCC.Show as CCCShow
 
 open import Vatras.Test.Experiment
 open import Vatras.Show.Lines
@@ -24,7 +27,7 @@ STR = (String , String._≟_)
 
 STRCCC = CCC String ∞ STR
 STR2CC = 2CC String ∞ STR
-STRADT = ADT (Rose ∞) String STR
+STRADT = ADT String (Rose ∞) STR
 
 rose-to-tikz-forest : ∀ {i} {A : 𝔸} → (atoms A → String) → Rose i A → Lines
 rose-to-tikz-forest pretty-atom (a -< [] >-) = > "[" ++ pretty-atom a ++ "]"
@@ -34,7 +37,7 @@ rose-to-tikz-forest pretty-atom (a -< cs@(_ ∷ _) >-) = do
     lines (List.map (rose-to-tikz-forest pretty-atom) cs)
   > "]"
 
-adt-to-tikz-forest : ∀ {A : 𝔸} → {V : 𝕍} → {F : 𝔽} → (V A → Lines) → (F → String) → ADT V F A → Lines
+adt-to-tikz-forest : ∀ {A : 𝔸} → {V : 𝕍} → {F : 𝔽} → (V A → Lines) → (F → String) → ADT F V A → Lines
 adt-to-tikz-forest pretty-variant show-F (leaf v) = pretty-variant v
 adt-to-tikz-forest pretty-variant show-F (D ⟨ l , r ⟩) = do
   > "[" ++ show-F D
@@ -62,7 +65,7 @@ getName tikz-export-experiment = "Tikz-Export"
 get tikz-export-experiment (ccc called name) = do
   [ Center ]> "Input CCC expression:"
   linebreak
-  CCC.pretty id ccc
+  CCCShow.pretty id ccc
   linebreak
   [ Center ]> "Tikz export of corresponding ADT:"
   linebreak

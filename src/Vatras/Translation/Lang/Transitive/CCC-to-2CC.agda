@@ -18,7 +18,7 @@ import Vatras.Translation.Lang.NCC-to-2CC
 open Vatras.Translation.Lang.NCC-to-2CC.2Ary using (NCC→2CC)
 
 
-CCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (CCCL {i} D) (2CCL (D × ℕ))
+CCC→2CC : ∀ {i : Size} {D : 𝔽} → LanguageCompiler (CCCL D {i}) (2CCL (D × ℕ))
 CCC→2CC = CCC→NCC (sucs zero) ⊕ NCC→2CC
 
 2CC≽CCC : ∀ {D : 𝔽} → 2CCL (D × ℕ) ≽ CCCL D

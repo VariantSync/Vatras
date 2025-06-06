@@ -29,7 +29,7 @@ open import Vatras.Tutorial.A_NewLanguage
 open import Vatras.Tutorial.B_Translation
 
 open import Vatras.Lang.All
-open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩) renaming (⟦_⟧ to ⟦_⟧₂)
+open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 ```
 
 ## Proving Expressiveness
@@ -85,14 +85,14 @@ open Vatras.Translation.LanguageMap.Expressiveness-String
 By transitivity, we can conlude that our variability language is
 also at least as expressive as algebraic decision trees.
 ```agda
-MyLang≽ADT : MyVarLang ≽ ADT.ADTL V F
+MyLang≽ADT : MyVarLang ≽ ADT.ADTL F V
 MyLang≽ADT = ≽-trans MyLang≽2CC 2CC≽ADT
 ```
 
 From an expressiveness proof, we can also reverse engineer the
 compiler that constitutes the proof:
 ```agda
-compile-to-ADT : LanguageCompiler (ADT.ADTL V F) MyVarLang
+compile-to-ADT : LanguageCompiler (ADT.ADTL F V) MyVarLang
 compile-to-ADT = compiler-from-expressiveness MyLang≽ADT
 ```
 
@@ -153,7 +153,7 @@ We do not recommend doing this by hand because it is very tedious.
 In the framework, we did it by first proving
 ```agda
 _ : Complete (VariantList.VariantListL V)
-_ = VariantList-is-Complete "🍇" V
+_ = VariantList-is-Complete "🍇"
 ```
 and then translating `VariantList`s to the other languages,
 and proving completeness via `completeness-by-expressiveness` again.
@@ -203,7 +203,7 @@ Soundness can also be proven directly, but this is again cumbersome, and we
 only proved it directly for `VariantList` just as we did for completeness.
 ```agda
 _ : Sound (VariantList.VariantListL V)
-_ = VariantList-is-Sound V
+_ = VariantList-is-Sound
 ```
 
 </details>

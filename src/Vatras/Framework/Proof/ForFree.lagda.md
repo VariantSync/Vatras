@@ -16,7 +16,8 @@ open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage)
 open import Vatras.Framework.Properties.Completeness V
 open import Vatras.Framework.Properties.Soundness V
 open import Vatras.Framework.Relation.Expressiveness V
-open import Vatras.Data.EqIndexedSet
+-- All properties here follow from transitivity and symmetry of ≅.
+open import Vatras.Data.EqIndexedSet using (≅-trans; ≅-sym)
 ```
 
 ```agda

@@ -27,12 +27,12 @@ import Vatras.Data.EqIndexedSet as IndexedSet
 open IndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 
 open import Vatras.Lang.All
-open ADT using (ADT; ADTL; _⟨_,_⟩)
+open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 open NADT using (NADT; NADTL; leaf; _⟨_⟩)
 
-translate : ∀ {F : 𝔽} {A : 𝔸} → ADT V F A → NADT V F ∞ A
-translate (ADT.leaf a) = leaf a
-translate (f ADT.⟨ l , r ⟩) = f ⟨ translate l ∷ translate r ∷ [] ⟩
+translate : ∀ {F : 𝔽} {A : 𝔸} → ADT F V A → NADT F V ∞ A
+translate (leaf a) = leaf a
+translate (f ⟨ l , r ⟩) = f ⟨ translate l ∷ translate r ∷ [] ⟩
 
 conf : ∀ {F : 𝔽} → ADT.Configuration F → CCC.Configuration F
 conf config f with config f
@@ -44,9 +44,9 @@ fnoc config f with config f
 ... | zero = true
 ... | suc _ = false
 
-preserves-⊆ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT V F A) → NADT.⟦ translate expr ⟧ ⊆[ fnoc ] ADT.⟦ expr ⟧
-preserves-⊆ (ADT.leaf v) config = refl
-preserves-⊆ (f ADT.⟨ l , r ⟩) config =
+preserves-⊆ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT F V A) → NADT.⟦ translate expr ⟧ ⊆[ fnoc ] ADT.⟦ expr ⟧
+preserves-⊆ (leaf v) config = refl
+preserves-⊆ (f ⟨ l , r ⟩) config =
     NADT.⟦ f ⟨ translate l ∷ translate r ∷ [] ⟩ ⟧ config
   ≡⟨⟩
     NADT.⟦ List.find-or-last (config f) (translate l ∷ translate r ∷ []) ⟧ config
@@ -65,8 +65,8 @@ preserves-⊆ (f ADT.⟨ l , r ⟩) config =
   ... | zero = refl
   ... | suc _ = refl
 
-preserves-⊇ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT V F A) → ADT.⟦ expr ⟧ ⊆[ conf ] NADT.⟦ translate expr ⟧
-preserves-⊇ (ADT.leaf v) config = refl
+preserves-⊇ : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT F V A) → ADT.⟦ expr ⟧ ⊆[ conf ] NADT.⟦ translate expr ⟧
+preserves-⊇ (leaf v) config = refl
 preserves-⊇ (f ⟨ l , r ⟩) config =
     ADT.⟦ f ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
@@ -86,14 +86,14 @@ preserves-⊇ (f ⟨ l , r ⟩) config =
   ... | true = refl
   ... | false = refl
 
-preserves : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT V F A) → NADT.⟦ translate expr ⟧ ≅[ fnoc ][ conf ] ADT.⟦ expr ⟧
+preserves : ∀ {F : 𝔽} {A : 𝔸} → (expr : ADT F V A) → NADT.⟦ translate expr ⟧ ≅[ fnoc ][ conf ] ADT.⟦ expr ⟧
 preserves expr = preserves-⊆ expr and preserves-⊇ expr
 
-ADT→NADT : ∀ {i : Size} {F : 𝔽} → LanguageCompiler (ADTL V F) (NADTL V F)
+ADT→NADT : ∀ {i : Size} {F : 𝔽} → LanguageCompiler (ADTL F V) (NADTL F V)
 ADT→NADT .LanguageCompiler.compile = translate
 ADT→NADT .LanguageCompiler.config-compiler expr .to = conf
 ADT→NADT .LanguageCompiler.config-compiler expr .from = fnoc
 ADT→NADT .LanguageCompiler.preserves expr = ≅[]-sym (preserves expr)
 
-NADT≽ADT : ∀ {F : 𝔽} → NADTL V F ≽ ADTL V F
+NADT≽ADT : ∀ {F : 𝔽} → NADTL F V ≽ ADTL F V
 NADT≽ADT = expressiveness-from-compiler ADT→NADT
