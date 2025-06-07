@@ -32,6 +32,9 @@ Rose trees are sized for termination checking.
 data Rose : Size → 𝕍 where
   _-<_>- : ∀ {i} {A : 𝔸} → atoms A → List (Rose i A) → Rose (↑ i) A
 
+Forest : 𝕍
+Forest A = List (Rose ∞ A)
+
 {-|
 Variants for gruler's language also form trees but opposed to rose trees,
 nodes are binary and data is stored only in leaves.
