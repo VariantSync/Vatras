@@ -257,7 +257,7 @@ module Expressiveness-String = Expressiveness diagonal-ℕ diagonal-ℕ⁻¹ dia
 module Completeness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (D : F) where
   open Expressiveness f f⁻¹ f⁻¹∘f≗id
 
-  open import Vatras.Lang.VariantList.Properties {Variant} using (VariantList-is-Complete) public
+  open import Vatras.Lang.VariantList.Properties Variant using (VariantList-is-Complete) public
 
   CCC-is-complete : Complete (CCCL F)
   CCC-is-complete = completeness-by-expressiveness VariantList-is-Complete (CCC≽VariantList D)
@@ -325,7 +325,7 @@ module Completeness-String = Completeness diagonal-ℕ diagonal-ℕ⁻¹ diagona
 ```
 
 ```agda
-open import Vatras.Lang.VariantList.Properties {Variant} using (VariantList-is-Sound) public
+open import Vatras.Lang.VariantList.Properties Variant using (VariantList-is-Sound) public
 
 ADT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (ADTL F Variant)
 ADT-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (ADT-to-VariantList.VariantList≽ADT F Variant _==_)
