@@ -5,7 +5,7 @@ These proofs will form the basis for proving these properties for other language
 
 ```
 open import Vatras.Framework.Definitions using (𝕍; 𝔸)
-module Vatras.Lang.VariantList.Properties {V : 𝕍} where
+module Vatras.Lang.VariantList.Properties (V : 𝕍) where
 
 open import Function using (_∘_)
 open import Data.Nat using (ℕ; zero; suc)
