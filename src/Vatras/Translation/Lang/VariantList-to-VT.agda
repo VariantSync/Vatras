@@ -13,16 +13,13 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym;
 open Eq.≡-Reasoning
 open import Function using (_$_)
 
--- TODO: Move to separate module or reuse indexeddimension
-Numbered : Set → Set
-Numbered F = F × ℕ
-
 open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp)
+open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
 
 open import Vatras.Lang.VariantList Forest as VariantList using (VariantList; VariantListL)
 open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Complete)
-open import Vatras.Lang.VT (Numbered F)
-open import Vatras.Lang.VT.Encode (Numbered F)
+open import Vatras.Lang.VT (Indexed F)
+open import Vatras.Lang.VT.Encode (Indexed F)
 
 open import Vatras.Data.Prop using (var)
 open import Vatras.Data.EqIndexedSet
