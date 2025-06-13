@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions
-module Vatras.Lang.VariationTree.Encode (F : 𝔽) where
+module Vatras.Lang.VT.Encode (F : 𝔽) where
 
 open import Data.Bool using (true)
 open import Data.List using (List; []; _∷_; _++_; map; concat; concatMap)
@@ -11,7 +11,7 @@ open import Size using (∞)
 open import Function using (_∘_)
 
 open import Vatras.Framework.Variants using (Forest; Rose; _-<_>-; Variant-is-VL; VariantEncoder)
-open import Vatras.Lang.VariationTree F
+open import Vatras.Lang.VT F
 
 open import Vatras.Data.EqIndexedSet using (_≅[_][_]_; irrelevant-index-≅)
 open import Vatras.Framework.Relation.Function using (_⇔_; to; from)
