@@ -10,7 +10,6 @@ module Vatras.Translation.Lang.2CC-to-ADT where
 open import Size using (Size; ∞)
 import Vatras.Data.EqIndexedSet as IndexedSet
 open import Data.Bool as Bool using (if_then_else_)
-import Data.Bool.Properties as Bool
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 import Data.List.Properties as List
 open import Vatras.Framework.Compiler using (LanguageCompiler)
@@ -28,56 +27,15 @@ open import Vatras.Lang.All
 open 2CC using (2CC; 2CCL; _-<_>-; _⟨_,_⟩)
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 
-push-down-artifact : ∀ {i : Size} {D : 𝔽} {A : 𝔸} → atoms A → List (ADT D (Rose ∞) A) → ADT D (Rose ∞) A
-push-down-artifact {A = A} a cs = go cs []
-  module push-down-artifact-Implementation where
-  go : ∀ {i : Size} {D : 𝔽} → List (ADT D (Rose ∞) A) → List (Rose ∞ A) → ADT D (Rose ∞) A
-  go [] vs = leaf (a V.-< List.reverse vs >-)
-  go (leaf v ∷ cs) vs = go cs (v ∷ vs)
-  go (d ⟨ c₁ , c₂ ⟩ ∷ cs) vs = d ⟨ go (c₁ ∷ cs) vs , go (c₂ ∷ cs) vs ⟩
+module Pushdown {F : 𝔽} where
+  open import Vatras.Lang.ADT.Pushdown F (Rose ∞) V._-<_>- public
+open Pushdown
 
 translate : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → 2CC D i A
   → ADT D (Rose ∞) A
 translate (a -< cs >-) = push-down-artifact a (List.map translate cs)
 translate (d ⟨ l , r ⟩) = d ⟨ translate l , translate r ⟩
-
-⟦push-down-artifact⟧ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
-  → (a : atoms A)
-  → (cs : List (ADT D (Rose ∞) A))
-  → (config : ADT.Configuration D)
-  → ADT.⟦ push-down-artifact a cs ⟧ config ≡ a V.-< List.map (λ e → ADT.⟦ e ⟧ config) cs >-
-⟦push-down-artifact⟧ {D = D} {A = A} a cs config = go' cs []
-  where
-  open push-down-artifact-Implementation
-
-  go' : ∀ {i : Size}
-    → (cs' : List (ADT D (Rose ∞) A))
-    → (vs : List (Rose ∞ A))
-    → ADT.⟦ go a cs cs' vs ⟧ config ≡ a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) cs' >-
-  go' [] vs = Eq.sym (Eq.cong₂ V._-<_>- refl (Eq.trans (List.ʳ++-defn vs) (List.++-identityʳ (List.reverse vs))))
-  go' (leaf v ∷ cs') vs = Eq.trans (go' cs' (v ∷ vs)) (Eq.cong₂ V._-<_>- refl (List.++-ʳ++ List.[ v ] {ys = vs}))
-  go' ((d ⟨ c₁ , c₂ ⟩) ∷ cs') vs =
-      ADT.⟦ d ⟨ go a cs (c₁ ∷ cs') vs , go a cs (c₂ ∷ cs') vs ⟩ ⟧ config
-    ≡⟨⟩
-      (if config d
-        then ADT.⟦ go a cs (c₁ ∷ cs') vs ⟧ config
-        else ADT.⟦ go a cs (c₂ ∷ cs') vs ⟧ config)
-    ≡⟨ Eq.cong₂ (if config d then_else_) (go' (c₁ ∷ cs') vs) (go' (c₂ ∷ cs') vs) ⟩
-      (if config d
-        then a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c₁ ∷ cs') >-
-        else a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c₂ ∷ cs') >-)
-    ≡⟨ Bool.if-float (λ c → a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (c ∷ cs') >-) (config d) ⟨
-      a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) ((if config d then c₁ else c₂) ∷ cs') >-
-    ≡⟨⟩
-      a V.-< vs ʳ++ ADT.⟦ if config d then c₁ else c₂ ⟧ config ∷ List.map (λ e → ADT.⟦ e ⟧ config) cs' >-
-    ≡⟨ Eq.cong₂ V._-<_>- refl (Eq.cong₂ _ʳ++_ {x = vs} refl (Eq.cong₂ _∷_ (Bool.if-float (λ e → ADT.⟦ e ⟧ config) (config d)) refl)) ⟩
-      a V.-< vs ʳ++ (if config d then ADT.⟦ c₁ ⟧ config else ADT.⟦ c₂ ⟧ config) ∷ List.map (λ e → ADT.⟦ e ⟧ config) cs' >-
-    ≡⟨⟩
-      a V.-< vs ʳ++ ADT.⟦ d ⟨ c₁ , c₂ ⟩ ⟧ config ∷ List.map (λ e → ADT.⟦ e ⟧ config) cs' >-
-    ≡⟨⟩
-      a V.-< vs ʳ++ List.map (λ e → ADT.⟦ e ⟧ config) (d ⟨ c₁ , c₂ ⟩ ∷ cs') >-
-    ∎
 
 preserves-≗ : ∀ {i : Size} {D : 𝔽} {A : 𝔸}
   → (expr : 2CC D i A)
