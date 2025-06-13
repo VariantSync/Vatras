@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸)
 -- We assume the existence of at least one atom
-module Vatras.Translation.Lang.VariantList-to-VariationTree (F : 𝔽) (f : F) where
+module Vatras.Translation.Lang.VariantList-to-VT (F : 𝔽) (f : F) where
 
 open import Data.Bool as Bool using (if_then_else_; true; false)
 open import Data.List as List using (List; []; _∷_; _++_; map; concat; concatMap)
@@ -21,8 +21,8 @@ open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp
 
 open import Vatras.Lang.VariantList Forest as VariantList using (VariantList; VariantListL)
 open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Complete)
-open import Vatras.Lang.VariationTree (Numbered F)
-open import Vatras.Lang.VariationTree.Encode (Numbered F)
+open import Vatras.Lang.VT (Numbered F)
+open import Vatras.Lang.VT.Encode (Numbered F)
 
 open import Vatras.Data.Prop using (var)
 open import Vatras.Data.EqIndexedSet

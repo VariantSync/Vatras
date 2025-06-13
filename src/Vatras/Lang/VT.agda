@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions
-module Vatras.Lang.VariationTree (F : 𝔽) where
+module Vatras.Lang.VT (F : 𝔽) where
 
 open import Data.Bool using (if_then_else_)
 open import Data.List using (List; []; _∷_; map; concatMap)
