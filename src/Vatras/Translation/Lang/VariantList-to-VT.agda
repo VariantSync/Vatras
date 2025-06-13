@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸)
--- We assume the existence of at least one atom
+-- We assume the existence of at least one atom.
 module Vatras.Translation.Lang.VariantList-to-VT (F : 𝔽) (f : F) where
 
 open import Data.Bool as Bool using (if_then_else_; true; false)
@@ -7,27 +7,26 @@ open import Data.List as List using (List; []; _∷_; _++_; map; concat; concatM
 open import Data.List.Properties using (++-identityʳ)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; _∷⁺_)
 open import Data.Nat using (ℕ; zero; suc; _≡ᵇ_; _+_; _≤_; _<_; s≤s; z≤n; _∸_)
-open import Data.Nat.Properties using (+-suc; +-identityʳ; m≤n+m; ≤-refl; m≤n⇒m≤n+o; ≡⇒≡ᵇ; n∸n≡0; +-comm)
-open import Data.Product using (_×_; _,_)
+open import Data.Nat.Properties using (+-suc; +-identityʳ; m≤n+m; ≤-refl; ≡⇒≡ᵇ; n∸n≡0)
+open import Data.Product using (_,_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; cong)
 open Eq.≡-Reasoning
-open import Function using (_$_)
+
+open import Vatras.Data.Prop using (var)
+open import Vatras.Data.EqIndexedSet
+open import Vatras.Util.List using (find-or-last)
 
 open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp)
 open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
+open import Vatras.Framework.Compiler using (LanguageCompiler)
+open import Vatras.Framework.Proof.ForFree Forest using (completeness-by-expressiveness)
+open import Vatras.Framework.Properties.Completeness Forest using (Complete)
+open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_)
 
 open import Vatras.Lang.VariantList Forest as VariantList using (VariantList; VariantListL)
 open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Complete)
 open import Vatras.Lang.VT (Indexed F)
 open import Vatras.Lang.VT.Encode (Indexed F)
-
-open import Vatras.Data.Prop using (var)
-open import Vatras.Data.EqIndexedSet
-open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Framework.Properties.Completeness Forest using (Complete)
-open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_)
-open import Vatras.Framework.Proof.ForFree Forest using (completeness-by-expressiveness)
-open import Vatras.Util.List using (find-or-last)
 
 -- TODO: contribute these functions to stl, and temporarily move them to utilities
 module TODO_STL where
@@ -124,15 +123,15 @@ module Preservation (A : 𝔸) where
 
   preserves-⊆ : ∀ (l : VariantList A)
     → VariantList.⟦ l ⟧ ⊆[ conf ] ⟦ translate l ⟧
-  preserves-⊆ (x ∷ xs) i = sym $
+  preserves-⊆ (x ∷ xs) i =
     begin
-      ⟦ translate (x ∷ xs) ⟧ (conf i)
-    ≡⟨⟩
-      configure-all (conf i) (translate' zero x xs)
-    ≡⟨ cong (λ eq → configure-all (conf eq) (translate' zero x xs)) (+-identityʳ i) ⟨
-      configure-all (conf (i + zero)) (translate' zero x xs)
-    ≡⟨ translate'-preserves-conf x xs zero i ⟩
       VariantList.⟦ x ∷ xs ⟧ i
+    ≡⟨ translate'-preserves-conf x xs zero i ⟨
+      configure-all (conf (i + zero)) (translate' zero x xs)
+    ≡⟨ cong (λ eq → configure-all (conf eq) (translate' zero x xs)) (+-identityʳ i) ⟩
+      configure-all (conf i) (translate' zero x xs)
+    ≡⟨⟩
+      ⟦ translate (x ∷ xs) ⟧ (conf i)
     ∎
 
   translate'-preserves-fnoc : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (c : Conf) →
