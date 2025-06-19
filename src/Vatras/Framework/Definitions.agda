@@ -61,3 +61,14 @@ and hence expressions are parameterized in the type of this atomic data.
 -}
 𝔼 : Set₂
 𝔼 = 𝔸 → Set₁
+
+-- some default atoms
+module _ where
+  open import Data.String using (String; _≟_)
+  STRING : 𝔸
+  STRING = String and _≟_
+
+module _ where
+  open import Data.Nat using (ℕ; _≟_)
+  NAT : 𝔸
+  NAT = ℕ and _≟_
