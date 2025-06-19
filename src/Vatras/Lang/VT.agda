@@ -31,6 +31,9 @@ data UnrootedVT : 𝔼 where
 data VT : 𝔼 where
   if-true[_] : ∀ {A} → List (UnrootedVT A) → VT A
 
+vt-leaf : ∀ {A} → atoms A → UnrootedVT A
+vt-leaf a = a -< [] >-
+
 mutual
   -- corresponds to ⟦_⟧*
   {-# TERMINATING #-}
