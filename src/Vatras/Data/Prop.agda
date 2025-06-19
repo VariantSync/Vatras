@@ -32,13 +32,3 @@ eval (var p) c = c p
 eval (¬ p)   c = Bool.not (eval p c)
 eval (p ∧ q) c = (eval p c) Bool.∧ (eval q c)
 
-module Properties where
-  open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
-  open import Data.Product using (Σ)
-  open Eq.≡-Reasoning
-
-  Satisfying : ∀ {F} → Prop F → Assignment F → Set
-  Satisfying p a = eval p a ≡ Bool.true
-
-  Satisfiable : ∀ {F} → Prop F → Set
-  Satisfiable {F} p = Σ (Assignment F) (Satisfying p)
