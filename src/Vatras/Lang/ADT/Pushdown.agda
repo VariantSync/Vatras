@@ -1,6 +1,11 @@
 open import Vatras.Framework.Definitions using (𝔸; 𝔽; 𝕍; atoms)
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 
+{-|
+This module provides a function for inserting artifacts at the top of ADTs.
+This operation means that any produced variant will have the given atom at the top.
+The parameter of this module is the constructor for adding an atom on top of existing variants.
+-}
 module Vatras.Lang.ADT.Pushdown (F : 𝔽) (V : 𝕍)
   (_-<_>- : ∀ {A} → atoms A → List (V A) → V A)
   where
