@@ -53,6 +53,12 @@ data GrulerVariant : 𝕍 where
 rose-leaf : ∀ {A : 𝔸} → atoms A → Rose ∞ A
 rose-leaf {A} a = a -< [] >-
 
+forest-leaf : ∀ {A : 𝔸} → atoms A → Forest A
+forest-leaf a = rose-leaf a ∷ []
+
+forest-singleton : ∀ {A : 𝔸} → atoms A → Forest A → Forest A
+forest-singleton a l = a -< l >- ∷ []
+
 {-|
 Interestingly, variants are also variability languages
 (and it does not matter how variants actually look like).
