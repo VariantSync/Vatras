@@ -3,7 +3,7 @@ module Vatras.Util.AuxProofs where
 open import Level using (Level)
 open import Function using (id; _∘_)
 
-open import Data.Bool using (Bool; false; true; if_then_else_; not)
+open import Data.Bool using (Bool; false; true; if_then_else_; not; _∧_)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
@@ -95,6 +95,11 @@ if-flip : ∀ {ℓ} {A : Set ℓ} (x : Bool) (a b : A)
   → (if not x then a else b) ≡ (if x then b else a)
 if-flip false a b = refl
 if-flip true  a b = refl
+
+if-∧ : ∀ {ℓ} {A : Set ℓ} (x y : Bool) (a b : A)
+  → (if x ∧ y then a else b) ≡ (if x then (if y then a else b) else b)
+if-∧ false _ _ _ = refl
+if-∧ true  _ _ _ = refl
 
 ----- Properties of Vectors
 
