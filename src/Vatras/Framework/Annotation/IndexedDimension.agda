@@ -6,6 +6,7 @@ IndexedDimension is used for conversions from NCC to NCC with lower arity (in pa
 module Vatras.Framework.Annotation.IndexedDimension where
 
 open import Data.Fin using (Fin)
+open import Data.Nat using (ℕ)
 open import Data.Product using (_×_)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥; toℕ; pred)
 open import Vatras.Framework.Definitions using (𝔽)
@@ -16,3 +17,6 @@ D with indices i ∈ ℕ, where 2 ≤ n.
 -}
 IndexedDimension : (D : 𝔽) → (n : ℕ≥ 2) → 𝔽
 IndexedDimension D n = D × Fin (toℕ (pred n))
+
+Indexed : 𝔽 → 𝔽
+Indexed F = F × ℕ

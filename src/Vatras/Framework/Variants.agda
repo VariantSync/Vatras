@@ -32,6 +32,9 @@ Rose trees are sized for termination checking.
 data Rose : Size → 𝕍 where
   _-<_>- : ∀ {i} {A : 𝔸} → atoms A → List (Rose i A) → Rose (↑ i) A
 
+Forest : 𝕍
+Forest A = List (Rose ∞ A)
+
 {-|
 Variants for gruler's language also form trees but opposed to rose trees,
 nodes are binary and data is stored only in leaves.
@@ -49,6 +52,12 @@ data GrulerVariant : 𝕍 where
 -- smart constructor for leaf nodes in rose trees
 rose-leaf : ∀ {A : 𝔸} → atoms A → Rose ∞ A
 rose-leaf {A} a = a -< [] >-
+
+forest-leaf : ∀ {A : 𝔸} → atoms A → Forest A
+forest-leaf a = rose-leaf a ∷ []
+
+forest-singleton : ∀ {A : 𝔸} → atoms A → Forest A → Forest A
+forest-singleton a l = a -< l >- ∷ []
 
 {-|
 Interestingly, variants are also variability languages
