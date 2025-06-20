@@ -1,5 +1,6 @@
 {-|
 Traversable instance on non-empty lists.
+part of the STL now: Data.List.NonEmpty.Effectful
 -}
 module Vatras.Util.NonEmptyTraversable where
 
