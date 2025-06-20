@@ -13,23 +13,23 @@ Conf = Assignment F
 
 data UnrootedVT : 𝔼 where
   _-<_>- : ∀ {A}
-    → atoms A
-    → List (UnrootedVT A)
+    → (a : atoms A)
+    → (l : List (UnrootedVT A))
     → UnrootedVT A
 
   if[_]then[_] : ∀ {A}
-    → Prop F
-    → List (UnrootedVT A)
+    → (p : Prop F)
+    → (l : List (UnrootedVT A))
     → UnrootedVT A
 
   if[_]then[_]else[_] : ∀ {A}
-    → Prop F
-    → List (UnrootedVT A)
-    → List (UnrootedVT A)
+    → (p : Prop F)
+    → (l : List (UnrootedVT A))
+    → (r : List (UnrootedVT A))
     → UnrootedVT A
 
 data VT : 𝔼 where
-  if-true[_] : ∀ {A} → List (UnrootedVT A) → VT A
+  if-true[_] : ∀ {A} → (l : List (UnrootedVT A)) → VT A
 
 vt-leaf : ∀ {A} → atoms A → UnrootedVT A
 vt-leaf a = a -< [] >-
