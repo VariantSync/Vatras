@@ -49,10 +49,10 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
 
 ↓-presʳ : ∀ {A} (P : Prop F) (l r : ADT F A)
   → elim-sem P l r ≗ ⟦ ↓ P ⟨ l , r ⟩ ⟧
-↓-presʳ true l r c = refl
-↓-presʳ false l r c = refl
+↓-presʳ true    l r c = refl
+↓-presʳ false   l r c = refl
 ↓-presʳ (var x) l r c = refl
-↓-presʳ (¬ P) l r c =
+↓-presʳ (¬ P)   l r c =
     elim-sem (¬ P) l r c
   ≡⟨⟩
     (if not (eval P c) then ⟦ l ⟧ c else ⟦ r ⟧ c)
@@ -84,11 +84,11 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
 mutual
   ↓-presˡ : ∀ {A} (P : Prop F) (l r : ADT (Prop F) A)
     → ⟦ P ⟨ l , r ⟩ ⟧ₚ ≗ elim-sem P (elim-formulas l) (elim-formulas r)
-  ↓-presˡ true    l r = preserves l
-  ↓-presˡ false   l r = preserves r
-  ↓-presˡ (var x) l r c = cong₂ (if c x then_else_) (preserves l c) (preserves r c)
-  ↓-presˡ (¬ P)   l r c = cong₂ (if not (eval P c) then_else_) (preserves l c) (preserves r c)
-  ↓-presˡ (P ∧ Q) l r c = cong₂ (if eval P c and eval Q c then_else_) (preserves l c) (preserves r c)
+  ↓-presˡ true    l r c = preserves l c
+  ↓-presˡ false   l r c = preserves r c
+  ↓-presˡ (var x) l r c = cong₂ (if _ then_else_) (preserves l c) (preserves r c)
+  ↓-presˡ (¬ P)   l r c = cong₂ (if _ then_else_) (preserves l c) (preserves r c)
+  ↓-presˡ (P ∧ Q) l r c = cong₂ (if _ then_else_) (preserves l c) (preserves r c)
 
   preserves
     : ∀ {A}
