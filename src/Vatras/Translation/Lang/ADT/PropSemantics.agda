@@ -3,7 +3,7 @@ module Vatras.Translation.Lang.ADT.PropSemantics (F : 𝔽) (V : 𝕍) where
 
 open import Data.Bool using (true; false; if_then_else_; not) renaming (_∧_ to _and_)
 open import Function using (id; _∘_)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl; cong; cong₂)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning
 
 import Vatras.Lang.ADT
@@ -14,7 +14,7 @@ open ADT hiding (⟦_⟧)
 open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Data.Prop
 open import Vatras.Lang.ADT.Prop F V
-open import Vatras.Util.AuxProofs using (if-flip; if-∧)
+open import Vatras.Util.AuxProofs using (if-flip; if-∧; if-cong; if-congˡ)
 open import Vatras.Framework.Compiler
 
 
@@ -73,7 +73,7 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
     (if eval P c then (if eval Q c then ⟦ l ⟧ c else ⟦ r ⟧ c) else ⟦ r ⟧ c)
   ≡⟨⟩
     (if eval P c then elim-sem Q l r c else ⟦ r ⟧ c)
-  ≡⟨ cong (if eval P c then_else ⟦ r ⟧ c) (↓-presʳ Q l r c) ⟩
+  ≡⟨ if-congˡ (eval P c) (↓-presʳ Q l r c) ⟩
     (if eval P c then ⟦ ↓ Q ⟨ l , r ⟩ ⟧ c else ⟦ r ⟧ c)
   ≡⟨⟩
     elim-sem P ↓ Q ⟨ l , r ⟩ r c
@@ -86,9 +86,9 @@ mutual
     → ⟦ P ⟨ l , r ⟩ ⟧ₚ ≗ elim-sem P (elim-formulas l) (elim-formulas r)
   ↓-presˡ true    l r c = preserves l c
   ↓-presˡ false   l r c = preserves r c
-  ↓-presˡ (var x) l r c = cong₂ (if _ then_else_) (preserves l c) (preserves r c)
-  ↓-presˡ (¬ P)   l r c = cong₂ (if _ then_else_) (preserves l c) (preserves r c)
-  ↓-presˡ (P ∧ Q) l r c = cong₂ (if _ then_else_) (preserves l c) (preserves r c)
+  ↓-presˡ (var x) l r c = if-cong _ (preserves l c) (preserves r c)
+  ↓-presˡ (¬ P)   l r c = if-cong _ (preserves l c) (preserves r c)
+  ↓-presˡ (P ∧ Q) l r c = if-cong _ (preserves l c) (preserves r c)
 
   preserves
     : ∀ {A}
