@@ -101,6 +101,22 @@ if-∧ : ∀ {ℓ} {A : Set ℓ} (x y : Bool) (a b : A)
 if-∧ false _ _ _ = refl
 if-∧ true  _ _ _ = refl
 
+if-congˡ : ∀ {ℓ} {A : Set ℓ} {a b c : A} x
+  → a ≡ c
+  → (if x then a else b) ≡ (if x then c else b)
+if-congˡ _ refl = refl
+
+if-congʳ : ∀ {ℓ} {A : Set ℓ} {a b d : A} x
+  → b ≡ d
+  → (if x then a else b) ≡ (if x then a else d)
+if-congʳ _ refl = refl
+
+if-cong : ∀ {ℓ} {A : Set ℓ} {a b c d : A} x
+  → a ≡ c
+  → b ≡ d
+  → (if x then a else b) ≡ (if x then c else d)
+if-cong _ refl refl = refl
+
 ----- Properties of Vectors
 
 module Vec where
