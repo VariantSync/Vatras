@@ -4,20 +4,25 @@ module Vatras.Translation.Lang.VT-to-ADT (F : 𝔽) where
 open import Data.Bool using (true; false; if_then_else_)
 open import Data.List as List using (List; []; _∷_; _++_; map; concat; concatMap)
 open import Data.List.Properties using (++-identityʳ; ++-assoc)
-open import Function using (flip)
+open import Data.Product using (_,_)
+open import Function using (id; _∘_; flip)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl; cong; cong₂)
 open Eq.≡-Reasoning
 
 open import Vatras.Data.Prop
+open import Vatras.Data.EqIndexedSet using (≗→≅[]; ≗→≅)
 open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp; rose-leaf; forest-leaf; forest-singleton; _-<_>-)
+open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.ADT (Prop F) Forest as ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
-open import Vatras.Lang.VT F as VT using (VT; UnrootedVT; ⟦_⟧; _-<_>-; if-true[_]; if[_]then[_]; if[_]then[_]else[_]; vt-leaf; configure; configure-all)
+open import Vatras.Lang.VT F as VT
 open import Vatras.Util.AuxProofs using (if-cong)
 
-open import Vatras.Lang.ADT.Prop F Forest using (⟦_⟧ₚ)
+open import Vatras.Lang.ADT.Prop F Forest using (⟦_⟧ₚ; PropADTL)
 open import Vatras.Lang.ADT.Merge Forest (_++_) as Merge
 open Merge.Named (Prop F) using (_⊕_)
 open Merge.Prop F using (⊕-specₚ)
+
+open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_)
 
 module _ {A : 𝔸} where
   -- artifact atom, artifact children, artifact neighbors
@@ -89,6 +94,16 @@ module _ {A : 𝔸} where
 
   preserves : ∀ (vt : VT A) → ⟦ vt ⟧ ≗ ⟦ translate vt ⟧ₚ
   preserves if-true[ xs ] c = preserves-all xs c
+
+VT→PropADT : LanguageCompiler VariationTreeVL PropADTL
+VT→PropADT = record
+  { compile = translate
+  ; config-compiler = λ _ → record { to = id ; from = id }
+  ; preserves = ≗→≅[] ∘ preserves
+  }
+
+PropADT≽VT : PropADTL ≽ VariationTreeVL
+PropADT≽VT e = translate e , ≗→≅ (preserves e)
 
 module Test {A : 𝔸} where
   module Forest (a b : atoms A) where
