@@ -10,33 +10,61 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; ref
 open Eq.≡-Reasoning
 
 open import Vatras.Data.Prop
-open import Vatras.Data.EqIndexedSet using (≗→≅[]; ≗→≅)
+open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Framework.Variants using (Forest; _-<_>-)
-open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Lang.ADT (Prop F) Forest as ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
+open import Vatras.Framework.Compiler as Compiler using (LanguageCompiler)
+import Vatras.Lang.ADT
+open Vatras.Lang.ADT (Prop F) Forest using (ADT; leaf; _⟨_,_⟩)
+open Vatras.Lang.ADT       F  Forest using (ADTL)
 open import Vatras.Lang.VT F as VT
-open import Vatras.Util.AuxProofs using (if-cong)
 
 open import Vatras.Lang.ADT.Prop F Forest using (⟦_⟧ₚ; PropADTL)
-open import Vatras.Lang.ADT.Merge Forest (_++_) as Merge
+import Vatras.Lang.ADT.Merge Forest (_++_) as Merge
 open Merge.Named (Prop F) using (_⊕_)
 open Merge.Prop F using (⊕-specₚ)
 
-open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_)
+open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; ≽-trans; expressiveness-from-compiler)
+open import Vatras.Translation.Lang.ADT.PropSemantics F Forest using (formula-elim-compiler; PropADT≽ADT)
 
 -- artifact atom, artifact children, artifact neighbors
-pushy : ∀ {A} → atoms A → ADT A → ADT A → ADT A
-pushy a (leaf v)      (leaf v')     = leaf (a -< v >- ∷ v')
-pushy a c@(leaf v)    (D ⟨ l , r ⟩) = D ⟨ pushy a c l , pushy a c r ⟩
-pushy a (D ⟨ l , r ⟩) n             = D ⟨ pushy a l n , pushy a r n ⟩
+{-|
+This function creates an ADT such that the given atom is at the top of all variants described
+by the first given ADT (i.e., these are supposed to be children of the atom), with the variants in the
+second ADT being the right neighbors.
+For a formal specification, see push-down-left-spec below.
+-}
+push-down-left : ∀ {A} → atoms A → ADT A → ADT A → ADT A
+push-down-left a (leaf v)      (leaf v')     = leaf (a -< v >- ∷ v')
+push-down-left a c@(leaf v)    (D ⟨ l , r ⟩) = D ⟨ push-down-left a c l , push-down-left a c r ⟩
+push-down-left a (D ⟨ l , r ⟩) n             = D ⟨ push-down-left a l n , push-down-left a r n ⟩
+
+-- formal specification of push-down-left: It should create an ADT such that for any configuration c, there is an artifact at the top of left
+push-down-left-spec : ∀ {A} (a : atoms A) (l n : ADT A) c
+  → ⟦ push-down-left a l n ⟧ₚ c ≡ a -< ⟦ l ⟧ₚ c >- ∷ ⟦ n ⟧ₚ c
+push-down-left-spec a (leaf v) (leaf v') c = refl
+push-down-left-spec a (D ⟨ l , r ⟩) n c with eval D c
+... | true  = push-down-left-spec a l n c
+... | false = push-down-left-spec a r n c
+push-down-left-spec a x@(leaf v) (D ⟨ l , r ⟩) c with eval D c
+... | true  = push-down-left-spec a x l c
+... | false = push-down-left-spec a x r c
+
 
 mutual
+  {-|
+  We need this auxiliary function to prove termination.
+  Given two lists l, r of neighboring variation tree nodes, we translate
+  cannot translate them via
+    translate-all (l ++ r)
+  but translate both lists first, and them compose the result
+    translate-all l ⊕ translate-all r.
+  -}
   translate-both : ∀ {A} → (l r : List (UnrootedVT A)) → ADT A
   translate-both l r = translate-all l ⊕ translate-all r
 
   translate-all : ∀ {A} → List (UnrootedVT A) → ADT A
   translate-all []                               = leaf []
-  translate-all (a -< l >- ∷ xs)                 = pushy a (translate-all l) (translate-all xs)
+  translate-all (a -< l >- ∷ xs)                 = push-down-left a (translate-all l) (translate-all xs)
   translate-all (if[ p ]then[ l ] ∷ xs)          = p ⟨ translate-both l xs , translate-all xs ⟩
   translate-all (if[ p ]then[ l ]else[ r ] ∷ xs) = p ⟨ translate-both l xs , translate-both r xs ⟩
 
@@ -44,17 +72,6 @@ translate : ∀ {A} → VT A → ADT A
 translate if-true[ xs ] = translate-all xs
 
 -- Preservation Proofs --
-
--- formal specification of pushy: It should create an ADT such that for any configuration c, there is an artifact at the top of left
-pushy-preserves : ∀ {A} (a : atoms A) (l n : ADT A) c
-  → ⟦ pushy a l n ⟧ₚ c ≡ a -< ⟦ l ⟧ₚ c >- ∷ ⟦ n ⟧ₚ c
-pushy-preserves a (leaf v) (leaf v') c = refl
-pushy-preserves a (D ⟨ l , r ⟩) n c with eval D c
-... | true  = pushy-preserves a l n c
-... | false = pushy-preserves a r n c
-pushy-preserves a x@(leaf v) (D ⟨ l , r ⟩) c with eval D c
-... | true  = pushy-preserves a x l c
-... | false = pushy-preserves a x r c
 
 preserves-all : ∀ {A} (vts : List (UnrootedVT A)) → flip configure-all vts ≗ ⟦ translate-all vts ⟧ₚ
 preserves-all [] c = refl
@@ -66,8 +83,8 @@ preserves-all (a -< l >- ∷ xs) c =
     a -< configure-all c l >- ∷ ⟦ translate-all xs ⟧ₚ c
   ≡⟨ cong (λ z → a -< z >- ∷ _) (preserves-all l c) ⟩
     a -< ⟦ translate-all l ⟧ₚ c >- ∷ ⟦ translate-all xs ⟧ₚ c
-  ≡⟨ pushy-preserves a (translate-all l) (translate-all xs) c ⟨
-    ⟦ pushy a (translate-all l) (translate-all xs) ⟧ₚ c
+  ≡⟨ push-down-left-spec a (translate-all l) (translate-all xs) c ⟨
+    ⟦ push-down-left a (translate-all l) (translate-all xs) ⟧ₚ c
   ∎
 preserves-all (if[ p ]then[ l ] ∷ xs) c with eval p c
 ... | true  =
@@ -80,7 +97,8 @@ preserves-all (if[ p ]then[ l ] ∷ xs) c with eval p c
     ⟦ translate-both l xs ⟧ₚ c
   ∎
 ... | false = preserves-all xs c
-preserves-all (if[ p ]then[ l ]else[ r ] ∷ xs) c with eval p c -- the cases for the choice alternatives are analogous to the first option case above
+-- The cases for the choice alternatives are analogous to the first option case above.
+preserves-all (if[ p ]then[ l ]else[ r ] ∷ xs) c with eval p c
 ... | true
   rewrite preserves-all l c
         | preserves-all xs c
@@ -103,8 +121,17 @@ VT→PropADT = record
   }
 
 PropADT≽VT : PropADTL ≽ VariationTreeVL
-PropADT≽VT e = translate e , ≗→≅ (preserves e)
+PropADT≽VT = expressiveness-from-compiler VT→PropADT
 
+VT→ADT : LanguageCompiler VariationTreeVL ADTL
+VT→ADT = VT→PropADT Compiler.⊕ formula-elim-compiler
+
+ADT≽VT : ADTL ≽ VariationTreeVL
+ADT≽VT = ≽-trans PropADT≽ADT PropADT≽VT
+
+{-|
+This module contains some tests for the translation function to see it in action.
+-}
 module Test {A : 𝔸} where
   open Vatras.Framework.Variants using (rose-leaf; forest-leaf; forest-singleton)
 
