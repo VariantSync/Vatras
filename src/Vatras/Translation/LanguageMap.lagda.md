@@ -21,19 +21,27 @@ open import Relation.Binary using (DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≢_; _≗_)
 open import Relation.Nullary.Negation using (¬_)
 
-open import Vatras.Framework.Variants using (Rose; Variant-is-VL)
+open import Vatras.Framework.Variants using (Rose; Forest; Variant-is-VL)
 Variant = Rose ∞
 
 open import Vatras.Framework.Annotation.IndexedDimension
 open import Vatras.Framework.Compiler
 open import Vatras.Framework.Definitions using (𝕍; 𝔽)
 open import Vatras.Framework.Relation.Expressiveness Variant using (_≽_; ≽-trans; _≻_; _⋡_; _≋_; compiler-cannot-exist)
-open import Vatras.Framework.Proof.ForFree Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
-open import Vatras.Framework.Properties.Completeness Variant using (Complete)
-open import Vatras.Framework.Properties.Soundness Variant using (Sound)
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Vatras.Util.AuxProofs using (decidableEquality-×)
 open import Vatras.Util.String using (diagonal-ℕ; diagonal-ℕ⁻¹; diagonal-ℕ-proof)
+
+import Vatras.Framework.Proof.ForFree
+open Vatras.Framework.Proof.ForFree Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
+open Vatras.Framework.Proof.ForFree using () renaming (soundness-by-expressiveness to soundness-by-expressiveness-on)
+
+import Vatras.Framework.Properties.Completeness
+import Vatras.Framework.Properties.Soundness
+open Vatras.Framework.Properties.Completeness Variant using (Complete)
+open Vatras.Framework.Properties.Soundness Variant using (Sound)
+open Vatras.Framework.Properties.Completeness using () renaming (Complete to Complete-on)
+open Vatras.Framework.Properties.Soundness using () renaming (Sound to Sound-on)
 
 open import Vatras.Lang.All
 open VariantList using (VariantListL)
@@ -44,6 +52,7 @@ open NADT using (NADTL)
 open ADT using (ADTL)
 open OC using (WFOCL)
 open FST using (FSTL)
+open VT using (VTL)
 
 open import Vatras.Lang.CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 open import Vatras.Translation.Lang.NCC.Rename using (NCC-rename≽NCC)
@@ -69,6 +78,8 @@ import Vatras.Translation.Lang.OC-to-2CC as OC-to-2CC
 import Vatras.Translation.Lang.OC-to-FST as OC-to-FST
 import Vatras.Translation.Lang.FST-to-OC as FST-to-OC
 import Vatras.Translation.Lang.FST-to-VariantList as FST-to-VariantList
+import Vatras.Translation.Lang.VariantList-to-VT as VariantList-to-VT
+import Vatras.Translation.Lang.VT-to-ADT as VT-to-ADT
 ```
 
 
@@ -347,4 +358,22 @@ OC-is-sound {F} _==_ = soundness-by-expressiveness (2CC-is-sound _==_) (OC-to-2C
 
 FST-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (FSTL F)
 FST-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (FST-to-VariantList.VariantList≽FST F _==_)
+```
+
+Variation Trees assume variants to be forests of rose trees.
+We hence cannot directly integrate it into the circle of compilers above.
+Yet, variant lists and ADTs are generic in their type of variants and hence can also denote forests.
+```agda
+open import Vatras.Lang.VariantList.Properties
+  using ()
+  renaming (VariantList-is-Sound to VariantList-is-sound-on; VariantList-is-Complete to VariantList-is-complete-on)
+
+ADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (ADTL F V)
+ADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (VariantList-is-sound-on V) (ADT-to-VariantList.VariantList≽ADT F V _==_)
+
+VT-is-complete : ∀ (F : 𝔽) (f : F) → Complete-on Forest (VTL (Indexed F))
+VT-is-complete F f = VariantList-to-VT.VT-is-complete F f
+
+VT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound-on Forest (VTL F)
+VT-is-sound {F} _==_ = soundness-by-expressiveness-on Forest (ADT-is-sound-on Forest _==_) (VT-to-ADT.ADT≽VT F)
 ```
