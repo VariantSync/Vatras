@@ -171,7 +171,7 @@ module Preservation (A : 𝔸) where
       VariantList.⟦ x ∷ xs ⟧ (fnoc (List⁺.length (x ∷ xs)) c)
     ∎
 
-VariantList→VT : LanguageCompiler VariantListL VariationTreeVL
+VariantList→VT : LanguageCompiler VariantListL VTL
 VariantList→VT = record
   { compile = translate
   ; config-compiler = λ e → record { to = conf ; from = fnoc (List⁺.length e) }
@@ -180,8 +180,8 @@ VariantList→VT = record
       preserves-⊆ e , preserves-⊇ e
   }
 
-VT≽VariantList : VariationTreeVL ≽ VariantListL
+VT≽VariantList : VTL ≽ VariantListL
 VT≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→VT e)
 
-VT-is-Complete : Complete VariationTreeVL
+VT-is-Complete : Complete VTL
 VT-is-Complete = completeness-by-expressiveness (VariantList-is-Complete) VT≽VariantList

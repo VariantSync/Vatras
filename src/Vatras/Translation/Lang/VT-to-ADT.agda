@@ -113,20 +113,20 @@ preserves-all (if[ p ]then[ l ]else[ r ] ∷ xs) c with eval p c
 preserves : ∀ {A} (vt : VT A) → ⟦ vt ⟧ ≗ ⟦ translate vt ⟧ₚ
 preserves if-true[ xs ] c = preserves-all xs c
 
-VT→PropADT : LanguageCompiler VariationTreeVL PropADTL
+VT→PropADT : LanguageCompiler VTL PropADTL
 VT→PropADT = record
   { compile = translate
   ; config-compiler = λ _ → record { to = id ; from = id }
   ; preserves = ≗→≅[] ∘ preserves
   }
 
-PropADT≽VT : PropADTL ≽ VariationTreeVL
+PropADT≽VT : PropADTL ≽ VTL
 PropADT≽VT = expressiveness-from-compiler VT→PropADT
 
-VT→ADT : LanguageCompiler VariationTreeVL ADTL
+VT→ADT : LanguageCompiler VTL ADTL
 VT→ADT = VT→PropADT Compiler.⊕ formula-elim-compiler
 
-ADT≽VT : ADTL ≽ VariationTreeVL
+ADT≽VT : ADTL ≽ VTL
 ADT≽VT = ≽-trans PropADT≽ADT PropADT≽VT
 
 {-|

@@ -57,5 +57,5 @@ mutual
 ⟦_⟧ : ∀ {A} → VT A → Conf → Forest A
 ⟦ if-true[ x ] ⟧ c = configure-all c x
 
-VariationTreeVL : VariabilityLanguage Forest
-VariationTreeVL = ⟪ VT , Conf , ⟦_⟧ ⟫
+VTL : VariabilityLanguage Forest
+VTL = ⟪ VT , Conf , ⟦_⟧ ⟫

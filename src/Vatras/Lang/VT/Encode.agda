@@ -89,7 +89,7 @@ preserves {A} v = irrelevant-index-≅ v
   (to confs)
   (from confs)
 
-encoder : VariantEncoder Forest VariationTreeVL
+encoder : VariantEncoder Forest VTL
 encoder = record
   { compile = encode
   ; config-compiler = λ _ → confs
