@@ -13,16 +13,13 @@ open Eq.≡-Reasoning
 open import Function using (_∘_)
 
 open import Vatras.Data.Prop
+open import Vatras.Util.AuxProofs using (true≢false)
 
 all-true : Assignment F
 all-true _ = Bool.true
 
 all-false : Assignment F
 all-false _ = Bool.false
-
-module _ where
-  false≢true : Bool.false ≡ Bool.true → ⊥
-  false≢true ()
 
 NonContradiction :
   ∀ {b} {p : Prop F} (a : Assignment F)
@@ -35,7 +32,7 @@ NonContradiction' :
   → eval p a ≡ Bool.true
   → eval p a ≡ Bool.false
   → ⊥
-NonContradiction' _ _ t f = false≢true (trans (sym f) t)
+NonContradiction' _ _ t f = true≢false (trans (sym f) t) refl
 
 Satisfying : Prop F → Assignment F → Set
 Satisfying p a = eval p a ≡ Bool.true
