@@ -3,11 +3,11 @@ open import Vatras.Framework.Definitions using (𝔽; 𝔸)
 module Vatras.Translation.Lang.VariantList-to-VT (F : 𝔽) (f : F) where
 
 open import Data.Bool as Bool using (if_then_else_; true; false)
-open import Data.List as List using (List; []; _∷_; _++_; map; concat; concatMap)
+open import Data.List as List using (List; []; _∷_; _++_)
 open import Data.List.Properties using (++-identityʳ)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; _∷⁺_)
 open import Data.Nat using (ℕ; zero; suc; _≡ᵇ_; _+_; _≤_; _<_; s≤s; z≤n; _∸_)
-open import Data.Nat.Properties using (+-suc; +-identityʳ; m≤n+m; ≤-refl; ≡⇒≡ᵇ; n∸n≡0)
+open import Data.Nat.Properties using (+-suc; +-identityʳ; ≤-refl; n∸n≡0)
 open import Data.Product using (_,_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; cong)
 open Eq.≡-Reasoning
@@ -15,6 +15,7 @@ open Eq.≡-Reasoning
 open import Vatras.Data.Prop using (var)
 open import Vatras.Data.EqIndexedSet
 open import Vatras.Util.List using (find-or-last)
+open import Vatras.Util.AuxProofs using (∸-suc; ≤-sucʳ; ≡ᵇ-refl; m+n≢ᵇn)
 
 open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp)
 open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
@@ -27,28 +28,6 @@ open import Vatras.Lang.VariantList Forest as VariantList using (VariantList; Va
 open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Complete)
 open import Vatras.Lang.VT (Indexed F)
 open import Vatras.Lang.VT.Encode (Indexed F)
-
--- TODO: contribute these functions to stl, and temporarily move them to utilities
-module TODO_STL where
-  ∸-suc : ∀ n m → m ≤ n → suc n ∸ m ≡ suc (n ∸ m)
-  ∸-suc n         .zero       z≤n = refl
-  ∸-suc (suc n) (suc m) (s≤s n≤m) = ∸-suc n m n≤m
-
-  ≤-sucʳ : ∀ {m n} → m ≤ n → m ≤ suc n
-  ≤-sucʳ z≤n       = z≤n
-  ≤-sucʳ (s≤s leq) = s≤s (≤-sucʳ leq)
-
-  ≡ᵇ-refl : ∀ n → (n ≡ᵇ n) ≡ true
-  ≡ᵇ-refl zero    = refl
-  ≡ᵇ-refl (suc n) = ≡ᵇ-refl n
-
-  ≡ᵇ-< : ∀ {m n} → n < m → (m ≡ᵇ n) ≡ false
-  ≡ᵇ-< {.(suc _)} {zero}  (s≤s _) = refl
-  ≡ᵇ-< {suc m}    {suc n} (s≤s x) = ≡ᵇ-< x
-
-  m+n≢ᵇn : ∀ i n → (suc i + n ≡ᵇ n) ≡ false
-  m+n≢ᵇn i n = ≡ᵇ-< (s≤s (m≤n+m n i))
-open TODO_STL
 
 translate' : ∀ {A} → ℕ → Forest A → List (Forest A) → List (UnrootedVT A)
 translate' n x []       = encode-forest x

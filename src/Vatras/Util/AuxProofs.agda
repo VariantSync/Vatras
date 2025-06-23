@@ -6,7 +6,7 @@ open import Function using (id; _∘_)
 open import Data.Bool using (Bool; false; true; if_then_else_; not; _∧_)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
-open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0)
+open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.List.Properties using (length-++)
 open import Data.Product using (_×_; _,_)
@@ -17,7 +17,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; _≗_; refl)
 open Eq.≡-Reasoning
 
--- Some logic helpers
+----- Some logic helpers
 
 true≢false : ∀ {a : Bool}
   → a ≡ true
@@ -25,11 +25,19 @@ true≢false : ∀ {a : Bool}
   → a ≢ false
 true≢false refl ()
 
------ Some aritmetic properties
+----- Some arithmetic properties
+-- TODO: Contribute some of these functions to STL
 
-n≡ᵇn : ∀ (n : ℕ) → (n ≡ᵇ n) ≡ true
-n≡ᵇn zero = refl
-n≡ᵇn (suc n) = n≡ᵇn n
+≡ᵇ-refl : ∀ (n : ℕ) → (n ≡ᵇ n) ≡ true
+≡ᵇ-refl zero = refl
+≡ᵇ-refl (suc n) = ≡ᵇ-refl n
+
+≡ᵇ-< : ∀ {m n} → n < m → (m ≡ᵇ n) ≡ false
+≡ᵇ-< {.(suc _)} {zero}  (s≤s _) = refl
+≡ᵇ-< {suc m}    {suc n} (s≤s x) = ≡ᵇ-< x
+
+m+n≢ᵇn : ∀ i n → (suc i + n ≡ᵇ n) ≡ false
+m+n≢ᵇn i n = ≡ᵇ-< (s≤s (m≤n+m n i))
 
 <-cong-+ˡ : ∀ {m n} (a : ℕ) → m < n → a + m < a + n
 <-cong-+ˡ zero x = x
@@ -68,6 +76,14 @@ n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
 n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
+
+∸-suc : ∀ n m → m ≤ n → suc n ∸ m ≡ suc (n ∸ m)
+∸-suc n         .zero       z≤n = refl
+∸-suc (suc n) (suc m) (s≤s n≤m) = ∸-suc n m n≤m
+
+≤-sucʳ : ∀ {m n} → m ≤ n → m ≤ suc n
+≤-sucʳ z≤n       = z≤n
+≤-sucʳ (s≤s leq) = s≤s (≤-sucʳ leq)
 
 ----- Properties of if_then_else
 -- TODO: Contribute to STL
