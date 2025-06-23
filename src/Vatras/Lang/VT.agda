@@ -35,12 +35,18 @@ vt-leaf : ∀ {A} → atoms A → UnrootedVT A
 vt-leaf a = a -< [] >-
 
 mutual
-  -- corresponds to ⟦_⟧*
+  {-|
+  Corresponds to ⟦_⟧* from the dissertation of Paul Bittner.
+  To prove termination and to simplify proofs, this definition is an inlined variant of
+    configure-all c ts = concatMap (configure c) ts
+  -}
   configure-all : ∀ {A} → Configuration → List (UnrootedVT A) → Forest A
   configure-all c [] = []
   configure-all c (x ∷ xs) = configure c x ++ configure-all c xs
 
-  -- corresponds to ⟦_⟧ on artifacts, options, and choices
+  {-|
+  Corresponds to ⟦_⟧ on artifacts, options, and choices from the dissertation of Paul Bittner.
+  -}
   configure :
     ∀ {A} → Configuration → UnrootedVT A → Forest A
   configure c (a -< cs >-)        = a -< configure-all c cs >- ∷ []
@@ -53,7 +59,9 @@ mutual
     then configure-all c t
     else configure-all c e
 
--- corresponds to ⟦_⟧ on the root term
+{-|
+Corresponds to ⟦_⟧ on the root term from the dissertation of Paul Bittner.
+-}
 ⟦_⟧ : ∀ {A} → VT A → Configuration → Forest A
 ⟦ if-true[ x ] ⟧ c = configure-all c x
 
