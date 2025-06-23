@@ -2,6 +2,7 @@ open import Vatras.Framework.Definitions using (𝔽; 𝕍; 𝔸)
 module Vatras.Translation.Lang.ADT.PropSemantics (F : 𝔽) (V : 𝕍) where
 
 open import Data.Bool using (true; false; if_then_else_; not) renaming (_∧_ to _and_)
+open import Data.Product using (_,_)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning
@@ -16,7 +17,7 @@ open import Vatras.Data.Prop
 open import Vatras.Lang.ADT.Prop F V
 open import Vatras.Util.AuxProofs using (if-flip; if-∧; if-cong; if-congˡ)
 open import Vatras.Framework.Compiler
-
+open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 
 {-|
 Elimination of formulas in choices.
@@ -109,3 +110,6 @@ formula-elim-compiler = record
   ; config-compiler = λ _ → record { to = id ; from = id }
   ; preserves = ≗→≅[] ∘ preserves
   }
+
+PropADT≽ADT : ADTL F ≽ PropADTL
+PropADT≽ADT = expressiveness-from-compiler formula-elim-compiler
