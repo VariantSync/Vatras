@@ -2,35 +2,39 @@ open import Vatras.Framework.Definitions
 module Vatras.Lang.VT.Encode (F : 𝔽) where
 
 open import Data.Bool using (true)
-open import Data.List using (List; []; _∷_; _++_; map)
+open import Data.List using (List; []; _∷_; _++_)
 open import Data.Unit using (⊤; tt)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong₂)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong; cong₂)
 open Eq.≡-Reasoning
 open import Size using (∞)
-open import Function using (_∘_)
 
 open import Vatras.Framework.Variants using (Forest; Rose; _-<_>-; Variant-is-VL; VariantEncoder)
 open import Vatras.Lang.VT F
 
 open import Vatras.Data.EqIndexedSet using (_≅[_][_]_; irrelevant-index-≅)
 open import Vatras.Framework.Relation.Function using (_⇔_; to; from)
-open import Vatras.Framework.VariabilityLanguage using (Semantics; Config)
 
-{-|
-Encodes a tree as a non-variational UnrootedVT.
-Configuring the resulting expression will always yield
-the input tree.
--}
-{-# TERMINATING #-}
-encode-tree : ∀ {A} → Rose ∞ A → UnrootedVT A
-encode-tree (a -< cs >-) = a -< map encode-tree cs >-
+mutual
+  {-|
+  Encodes a tree as a non-variational UnrootedVT.
+  Configuring the resulting expression will always yield
+  the input tree.
+  To prove termination, this definition is an inlined variant of
+    a -< map encode-tree xs >-
+  -}
+  encode-tree : ∀ {A} → Rose ∞ A → UnrootedVT A
+  encode-tree (a -< [] >-)     = a -< [] >-
+  encode-tree (a -< x ∷ xs >-) = a -< encode-tree x ∷ encode-forest xs >-
 
-{-|
-Encodes all trees in a forest to a non-variational
-UnrootedVT each, using 'encode-tree' defined above.
--}
-encode-forest : ∀ {A} → Forest A → List (UnrootedVT A)
-encode-forest = map encode-tree
+  {-|
+  Encodes all trees in a forest to a non-variational
+  UnrootedVT each, using 'encode-tree' defined above.
+  To prove termination, this definition is an inlined variant of
+    map encode-tree.
+  -}
+  encode-forest : ∀ {A} → Forest A → List (UnrootedVT A)
+  encode-forest []       = []
+  encode-forest (x ∷ xs) = encode-tree x ∷ encode-forest xs
 
 encode : ∀ {A} → Forest A → VT A
 encode x = if-true[ encode-forest x ]
@@ -38,11 +42,12 @@ encode x = if-true[ encode-forest x ]
 mutual
   encode-tree-preserves : ∀ {A} → (T : Rose ∞ A) (c : Configuration)
     → configure c (encode-tree T) ≡ T ∷ []
-  encode-tree-preserves (a -< cs >-) c = Eq.cong (λ eq → (a -< eq >-) ∷ []) (encode-forest-preserves cs c)
+  encode-tree-preserves (a -< [] >-)     c = refl
+  encode-tree-preserves (a -< x ∷ xs >-) c = cong (λ eq → (a -< eq >-) ∷ []) (encode-forest-preserves (x ∷ xs) c)
 
   encode-forest-preserves : ∀ {A} (V : Forest A) (c : Configuration)
     → configure-all c (encode-forest V) ≡ V
-  encode-forest-preserves [] _ = refl
+  encode-forest-preserves []       _ = refl
   encode-forest-preserves (x ∷ xs) c =
     begin
       configure-all c (encode-forest (x ∷ xs))
