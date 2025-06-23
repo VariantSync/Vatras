@@ -2,7 +2,7 @@ open import Vatras.Framework.Definitions
 module Vatras.Lang.VT (F : 𝔽) where
 
 open import Data.Bool using (if_then_else_)
-open import Data.List using (List; []; _∷_; map; concatMap)
+open import Data.List using (List; []; _∷_; _++_)
 
 open import Vatras.Data.Prop
 open import Vatras.Framework.Variants using (Rose; Forest; _-<_>-)
@@ -36,9 +36,9 @@ vt-leaf a = a -< [] >-
 
 mutual
   -- corresponds to ⟦_⟧*
-  {-# TERMINATING #-}
   configure-all : ∀ {A} → Configuration → List (UnrootedVT A) → Forest A
-  configure-all c ts = concatMap (configure c) ts
+  configure-all c [] = []
+  configure-all c (x ∷ xs) = configure c x ++ configure-all c xs
 
   -- corresponds to ⟦_⟧ on artifacts, options, and choices
   configure :

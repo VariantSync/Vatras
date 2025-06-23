@@ -2,10 +2,9 @@ open import Vatras.Framework.Definitions
 module Vatras.Lang.VT.Encode (F : 𝔽) where
 
 open import Data.Bool using (true)
-open import Data.List using (List; []; _∷_; _++_; map; concat; concatMap)
-open import Data.List.Properties using (concatMap-map)
+open import Data.List using (List; []; _∷_; _++_; map)
 open import Data.Unit using (⊤; tt)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong₂)
 open Eq.≡-Reasoning
 open import Size using (∞)
 open import Function using (_∘_)
@@ -48,22 +47,10 @@ mutual
     begin
       configure-all c (encode-forest (x ∷ xs))
     ≡⟨⟩
-      configure-all c (map encode-tree (x ∷ xs))
+      configure c (encode-tree x) ++ configure-all c (encode-forest xs)
+    ≡⟨ cong₂ _++_ (encode-tree-preserves x c) (encode-forest-preserves xs c) ⟩
+      (x ∷ []) ++ xs
     ≡⟨⟩
-      concatMap (configure c) (map encode-tree (x ∷ xs))
-    ≡⟨ concatMap-map (configure c) (encode-tree) (x ∷ xs) ⟩
-      concatMap (configure c ∘ encode-tree) (x ∷ xs)
-    ≡⟨⟩
-      concat ((configure c (encode-tree x) ∷ map (configure c ∘ encode-tree) xs))
-    ≡⟨⟩
-      (configure c (encode-tree x)) ++ (concatMap (configure c ∘ encode-tree) xs)
-    ≡⟨ Eq.cong (_++ _) (encode-tree-preserves x c) ⟩
-      (x ∷ []) ++ (concatMap (configure c ∘ encode-tree) xs)
-    ≡⟨⟩
-      x ∷ (concatMap (configure c ∘ encode-tree) xs)
-    ≡⟨ Eq.cong (x ∷_) (concatMap-map (configure c) encode-tree xs) ⟨
-      x ∷ (concatMap (configure c) (map encode-tree xs))
-    ≡⟨ Eq.cong (x ∷_) (encode-forest-preserves xs c) ⟩
       x ∷ xs
     ∎
 
