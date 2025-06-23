@@ -8,8 +8,8 @@ open import Vatras.Data.Prop
 open import Vatras.Framework.Variants using (Rose; Forest; _-<_>-)
 open import Vatras.Framework.VariabilityLanguage
 
-Conf : Set
-Conf = Assignment F
+Configuration : Set
+Configuration = Assignment F
 
 data UnrootedVT : 𝔼 where
   _-<_>- : ∀ {A}
@@ -37,12 +37,12 @@ vt-leaf a = a -< [] >-
 mutual
   -- corresponds to ⟦_⟧*
   {-# TERMINATING #-}
-  configure-all : ∀ {A} → Conf → List (UnrootedVT A) → Forest A
+  configure-all : ∀ {A} → Configuration → List (UnrootedVT A) → Forest A
   configure-all c ts = concatMap (configure c) ts
 
   -- corresponds to ⟦_⟧ on artifacts, options, and choices
   configure :
-    ∀ {A} → Conf → UnrootedVT A → Forest A
+    ∀ {A} → Configuration → UnrootedVT A → Forest A
   configure c (a -< cs >-)        = a -< configure-all c cs >- ∷ []
   configure c (if[ p ]then[ t ])  =
     if (eval p c)
@@ -54,8 +54,8 @@ mutual
     else configure-all c e
 
 -- corresponds to ⟦_⟧ on the root term
-⟦_⟧ : ∀ {A} → VT A → Conf → Forest A
+⟦_⟧ : ∀ {A} → VT A → Configuration → Forest A
 ⟦ if-true[ x ] ⟧ c = configure-all c x
 
 VTL : VariabilityLanguage Forest
-VTL = ⟪ VT , Conf , ⟦_⟧ ⟫
+VTL = ⟪ VT , Configuration , ⟦_⟧ ⟫

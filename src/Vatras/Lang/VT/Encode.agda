@@ -37,11 +37,11 @@ encode : ∀ {A} → Forest A → VT A
 encode x = if-true[ encode-forest x ]
 
 mutual
-  encode-tree-preserves : ∀ {A} → (T : Rose ∞ A) (c : Conf)
+  encode-tree-preserves : ∀ {A} → (T : Rose ∞ A) (c : Configuration)
     → configure c (encode-tree T) ≡ T ∷ []
   encode-tree-preserves (a -< cs >-) c = Eq.cong (λ eq → (a -< eq >-) ∷ []) (encode-forest-preserves cs c)
 
-  encode-forest-preserves : ∀ {A} (V : Forest A) (c : Conf)
+  encode-forest-preserves : ∀ {A} (V : Forest A) (c : Configuration)
     → configure-all c (encode-forest V) ≡ V
   encode-forest-preserves [] _ = refl
   encode-forest-preserves (x ∷ xs) c =
@@ -67,7 +67,7 @@ mutual
       x ∷ xs
     ∎
 
-encode-preserves : ∀ {A} (V : Forest A) (c : Conf)
+encode-preserves : ∀ {A} (V : Forest A) (c : Configuration)
     → ⟦ encode V ⟧ c ≡ V
 encode-preserves = encode-forest-preserves
 
@@ -75,7 +75,7 @@ encode-preserves = encode-forest-preserves
 Translating configurations is trivial because their values never matter.
 We can do anything here.
 -}
-confs : ⊤ ⇔ Conf
+confs : ⊤ ⇔ Configuration
 confs = record
   { to = λ where tt _ → true
   ; from = λ _ → tt

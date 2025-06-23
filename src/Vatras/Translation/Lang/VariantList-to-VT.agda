@@ -62,20 +62,20 @@ translate' n x (y ∷ ys) =
 translate : ∀ {A} → VariantList A → VT A
 translate (x ∷ xs) = if-true[ translate' zero x xs ]
 
-conf : ℕ → Conf
+conf : ℕ → Configuration
 conf i (_ , j) = i ≡ᵇ j
 
-fnoci : (offset max i : ℕ) → Conf → ℕ
+fnoci : (offset max i : ℕ) → Configuration → ℕ
 fnoci offset max zero c = max
 fnoci offset max (suc i) c =
   if c (f , offset + (max ∸ suc i))
   then max ∸ suc i
   else fnoci offset max i c
 
-fnoc : (max : ℕ) → Conf → ℕ
+fnoc : (max : ℕ) → Configuration → ℕ
 fnoc max = fnoci zero max max
 
-fnoci-invariant : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List⁺ A) (n m i : ℕ) (c : Conf) →
+fnoci-invariant : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List⁺ A) (n m i : ℕ) (c : Configuration) →
     i ≤ m →
     find-or-last (fnoci (suc n)      m  i c) (     xs)
   ≡ find-or-last (fnoci      n  (suc m) i c) (x ∷⁺ xs)
@@ -134,7 +134,7 @@ module Preservation (A : 𝔸) where
       ⟦ translate (x ∷ xs) ⟧ (conf i)
     ∎
 
-  translate'-preserves-fnoc : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (c : Conf) →
+  translate'-preserves-fnoc : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (c : Configuration) →
       configure-all c (translate' n x xs)
     ≡ VariantList.⟦ x ∷ xs ⟧ (fnoci n (List⁺.length (x ∷ xs)) (List⁺.length (x ∷ xs)) c)
   translate'-preserves-fnoc x [] n c = encode-idemp Forest A encoder c x
