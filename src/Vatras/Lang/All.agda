@@ -20,6 +20,7 @@ import Vatras.Lang.ADT
 import Vatras.Lang.OC
 import Vatras.Lang.FST
 import Vatras.Lang.Gruler
+import Vatras.Lang.VT
 
 open import Data.Empty.Polymorphic using (⊥)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
@@ -83,3 +84,8 @@ module Gruler where
   open Vatras.Lang.Gruler using (Gruler; GrulerL; Configuration) public
   module _ {F : 𝔽} where
     open Vatras.Lang.Gruler F hiding (Gruler; GrulerL; Configuration) public
+
+module VT where
+  open Vatras.Lang.VT using (VT; UnrootedVT; VTL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.VT F hiding (VT; UnrootedVT; VTL; Configuration) public
