@@ -56,6 +56,19 @@ SizedADT = record
   ; size = sizeADT
   }
 
+sizeOC : ∀ {i : Size} {A : 𝔸} → OC.OC i A → ℕ
+sizeOC (a OC.-< cs >-) = suc (List.sum (List.map sizeOC cs))
+sizeOC (D OC.❲ c ❳) = suc (sizeOC c)
+
+sizeWFOC : ∀ {i : Size} {A : 𝔸} → OC.WFOC i A → ℕ
+sizeWFOC (OC.Root a cs) = suc (List.sum (List.map sizeOC cs))
+
+SizedWFOC : SizedLang
+SizedWFOC = record
+  { Lang = OC.WFOCL
+  ; size = sizeWFOC
+  }
+
 sizeFST : {A : 𝔸} → FST.Impose.SPL A → ℕ
 sizeFST (root FST.Impose.◀ features) = 1 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) features)
 
