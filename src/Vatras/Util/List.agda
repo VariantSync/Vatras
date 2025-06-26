@@ -351,3 +351,7 @@ applyUpTo-cong : ∀ {ℓ₁} {A : Set ℓ₁}
   → List.applyUpTo f ≗ List.applyUpTo g
 applyUpTo-cong f≗g zero = refl
 applyUpTo-cong f≗g (suc n) = Eq.cong₂ _∷_ (f≗g zero) (applyUpTo-cong (f≗g ∘ suc) n)
+
+applyUpTo-∷ʳ⁺ : ∀ {ℓ} {A : Set ℓ} (f : ℕ → A) (n : ℕ) → List.applyUpTo f n List.∷ʳ f n ≡ List.applyUpTo f (suc n)
+applyUpTo-∷ʳ⁺ f zero = refl
+applyUpTo-∷ʳ⁺ f (suc n) = Eq.cong (f 0 ∷_) (applyUpTo-∷ʳ⁺ (f ∘ suc) n)
