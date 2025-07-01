@@ -39,9 +39,6 @@ true≢false refl ()
 m+n≢ᵇn : ∀ i n → (suc i + n ≡ᵇ n) ≡ false
 m+n≢ᵇn i n = ≡ᵇ-< (s≤s (m≤n+m n i))
 
-<-cong-+ˡ : ∀ {m n} (a : ℕ) → m < n → a + m < a + n
-<-cong-+ˡ zero x = x
-<-cong-+ˡ (suc a) x = s≤s (<-cong-+ˡ a x)
 
 n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
