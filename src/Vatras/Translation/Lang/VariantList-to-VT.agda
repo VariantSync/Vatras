@@ -60,7 +60,7 @@ fnoci-invariant : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List⁺ A) (n m i : ℕ)
   ≡ find-or-last (fnoci      n  (suc m) i c) (x ∷⁺ xs)
 fnoci-invariant x xs n m zero c z≤n = refl
 fnoci-invariant x xs n (suc m) (suc i) c (s≤s i≤m)
-  rewrite ∸-suc m i i≤m
+  rewrite ∸-suc i≤m
         | sym (+-suc n (m ∸ i))
         with c (f , n + suc (m ∸ i))
 ... | true  = refl
