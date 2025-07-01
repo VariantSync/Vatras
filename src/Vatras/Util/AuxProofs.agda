@@ -66,7 +66,7 @@ n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
 
 ----- Properties of if_then_else
--- TODO: Contribute to STL
+-- TODO: These are contributed to STL now. Update our STL dependency and replace these by their STL counterpart.
 
 if-idemp : ∀ {ℓ} {A : Set ℓ} {a : A}
   → (c : Bool)
