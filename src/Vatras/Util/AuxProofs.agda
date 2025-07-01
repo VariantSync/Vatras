@@ -39,6 +39,9 @@ true≢false refl ()
 m+n≢ᵇn : ∀ i n → (suc i + n ≡ᵇ n) ≡ false
 m+n≢ᵇn i n = ≡ᵇ-< (s≤s (m≤n+m n i))
 
+≤-suc : ∀ {m n} → m ≤ n → m ≤ suc n
+≤-suc z≤n       = z≤n
+≤-suc (s≤s leq) = s≤s (≤-suc leq)
 
 n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
@@ -77,10 +80,6 @@ n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
 ∸-suc : ∀ n m → m ≤ n → suc n ∸ m ≡ suc (n ∸ m)
 ∸-suc n         .zero       z≤n = refl
 ∸-suc (suc n) (suc m) (s≤s n≤m) = ∸-suc n m n≤m
-
-≤-sucʳ : ∀ {m n} → m ≤ n → m ≤ suc n
-≤-sucʳ z≤n       = z≤n
-≤-sucʳ (s≤s leq) = s≤s (≤-sucʳ leq)
 
 ----- Properties of if_then_else
 -- TODO: Contribute to STL

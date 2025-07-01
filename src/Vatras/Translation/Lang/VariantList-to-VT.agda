@@ -15,7 +15,7 @@ open Eq.≡-Reasoning
 open import Vatras.Data.Prop using (var)
 open import Vatras.Data.EqIndexedSet
 open import Vatras.Util.List using (find-or-last)
-open import Vatras.Util.AuxProofs using (∸-suc; ≤-sucʳ; ≡ᵇ-refl; m+n≢ᵇn)
+open import Vatras.Util.AuxProofs using (∸-suc; ≤-suc; ≡ᵇ-refl; m+n≢ᵇn)
 
 open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp)
 open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
@@ -64,7 +64,7 @@ fnoci-invariant x xs n (suc m) (suc i) c (s≤s i≤m)
         | sym (+-suc n (m ∸ i))
         with c (f , n + suc (m ∸ i))
 ... | true  = refl
-... | false = fnoci-invariant x xs n (suc m) i c (≤-sucʳ i≤m)
+... | false = fnoci-invariant x xs n (suc m) i c (≤-suc i≤m)
 
 module Preservation (A : 𝔸) where
   translate'-preserves-conf : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (i : ℕ) →
