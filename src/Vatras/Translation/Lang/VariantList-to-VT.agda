@@ -29,6 +29,15 @@ open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Comp
 open import Vatras.Lang.VT (Indexed F)
 open import Vatras.Lang.VT.Encode (Indexed F)
 
+{-|
+This function encodes a non-empty list of forests into a rootless variation tree.
+This encoding produces n-1 choices where n is the number of forests to encode.
+
+Arguments:
+1. Next available index for new feature names.
+2. Head of list of forests to encode
+3. Tail of list of forests to encode
+-}
 translate' : ∀ {A} → ℕ → Forest A → List (Forest A) → List (UnrootedVT A)
 translate' n x []       = encode-forest x
 translate' n x (y ∷ ys) =
@@ -41,9 +50,21 @@ translate' n x (y ∷ ys) =
 translate : ∀ {A} → VariantList A → VT A
 translate (x ∷ xs) = if-true[ translate' zero x xs ]
 
+{-|
+A variation tree created by "translate" from a list l produces a forest
+from the list at index i when exactly the feature (f , i) is set to true.
+-}
 conf : ℕ → Configuration
 conf i (_ , j) = i ≡ᵇ j
 
+{-|
+From a configuration, we can compute the index of the produced variant in the initial list.
+To do so, we have to inspect the feature at each choice from 0 up to "max", where "max" is the
+index of the feature in the last choice.
+To prove termination, we start with index i = max (see fnoc) and decrease i step by step.
+To inspect the features in ascending order though, we hence have to inspect the configuration c at point "max - i" at each step.
+The "offset" value is needed for induction to specify at which point in a sublist we are currently at (i.e., how far we recursed).
+-}
 fnoci : (offset max i : ℕ) → Configuration → ℕ
 fnoci offset max zero c = max
 fnoci offset max (suc i) c =
@@ -54,6 +75,9 @@ fnoci offset max (suc i) c =
 fnoc : (max : ℕ) → Configuration → ℕ
 fnoc max = fnoci zero max max
 
+{-|
+The values for "max" and "offset" balance out.
+-}
 fnoci-invariant : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List⁺ A) (n m i : ℕ) (c : Configuration) →
     i ≤ m →
     find-or-last (fnoci (suc n)      m  i c) (     xs)
