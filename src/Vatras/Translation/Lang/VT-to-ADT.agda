@@ -51,10 +51,10 @@ push-down-left-spec a x@(leaf v) (D ⟨ l , r ⟩) c with eval D c
 mutual
   {-|
   We need this auxiliary function to prove termination.
-  Given two lists l, r of neighboring variation tree nodes, we translate
-  cannot translate them via
+  Given two lists l, r of neighboring variation tree nodes,
+  we cannot translate them via
     translate-all (l ++ r)
-  but translate both lists first, and them compose the result
+  but can translate both lists first, and them compose the result
     translate-all l ⊕ translate-all r.
   -}
   translate-both : ∀ {A} → (l r : List (UnrootedVT A)) → ADT A
