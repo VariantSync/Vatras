@@ -184,7 +184,7 @@ VariantList→VT = record
   }
 
 VT≽VariantList : VTL ≽ VariantListL
-VT≽VariantList {A} e = translate e , ≅[]→≅ (LanguageCompiler.preserves VariantList→VT e)
+VT≽VariantList = expressiveness-from-compiler VariantList→VT
 
 VT-is-complete : Complete VTL
 VT-is-complete = completeness-by-expressiveness (VariantList-is-Complete) VT≽VariantList
