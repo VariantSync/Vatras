@@ -7,11 +7,7 @@ open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Lang.ADT (Prop F) V
 
 ⟦_⟧ₚ : 𝔼-Semantics V (Assignment F) ADT
-⟦ leaf v      ⟧ₚ c = v
-⟦ D ⟨ l , r ⟩ ⟧ₚ c =
-  if eval D c
-  then ⟦ l ⟧ₚ c
-  else ⟦ r ⟧ₚ c
+⟦ e ⟧ₚ c = ⟦ e ⟧ (λ D → eval D c)
 
 PropADTL : VariabilityLanguage V
 PropADTL = ⟪ ADT , Assignment F , ⟦_⟧ₚ ⟫
