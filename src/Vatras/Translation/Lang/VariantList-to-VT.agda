@@ -7,7 +7,7 @@ open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.Properties using (++-identityʳ)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; _∷⁺_)
 open import Data.Nat using (ℕ; zero; suc; _≡ᵇ_; _+_; _≤_; s≤s; z≤n; _∸_)
-open import Data.Nat.Properties using (+-suc; +-identityʳ; ≤-refl; n∸n≡0)
+open import Data.Nat.Properties using (+-suc; +-identityʳ; ≤-refl; n∸n≡0; m≤n⇒m≤1+n; +-∸-assoc)
 open import Data.Product using (_,_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; cong)
 open Eq.≡-Reasoning
@@ -15,7 +15,7 @@ open Eq.≡-Reasoning
 open import Vatras.Data.Prop using (var)
 open import Vatras.Data.EqIndexedSet
 open import Vatras.Util.List using (find-or-last)
-open import Vatras.Util.AuxProofs using (∸-suc; ≤-suc; ≡ᵇ-refl; m+n≢ᵇn)
+open import Vatras.Util.AuxProofs using (≡ᵇ-refl; m+n≢ᵇn)
 
 open import Vatras.Framework.Variants using (Forest; encode-idemp)
 open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
@@ -84,11 +84,11 @@ fnoci-invariant : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List⁺ A) (n m i : ℕ)
   ≡ find-or-last (fnoci      n  (suc m) i c) (x ∷⁺ xs)
 fnoci-invariant x xs n m zero c z≤n = refl
 fnoci-invariant x xs n (suc m) (suc i) c (s≤s i≤m)
-  rewrite ∸-suc i≤m
+  rewrite +-∸-assoc 1 i≤m
         | sym (+-suc n (m ∸ i))
         with c (f , n + suc (m ∸ i))
 ... | true  = refl
-... | false = fnoci-invariant x xs n (suc m) i c (≤-suc i≤m)
+... | false = fnoci-invariant x xs n (suc m) i c (m≤n⇒m≤1+n i≤m)
 
 module Preservation (A : 𝔸) where
   translate'-preserves-conf : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (i : ℕ) →

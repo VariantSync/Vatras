@@ -6,7 +6,7 @@ open import Function using (id; _∘_)
 open import Data.Bool using (Bool; false; true; if_then_else_; not; _∧_)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
-open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m)
+open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m; +-∸-assoc)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.List.Properties using (length-++)
 open import Data.Product using (_×_; _,_)
@@ -39,14 +39,6 @@ true≢false refl ()
 m+n≢ᵇn : ∀ i n → (suc i + n ≡ᵇ n) ≡ false
 m+n≢ᵇn i n = ≡ᵇ-< (s≤s (m≤n+m n i))
 
-∸-suc : ∀ {n m} → m ≤ n → suc n ∸ m ≡ suc (n ∸ m)
-∸-suc z≤n = refl
-∸-suc (s≤s n≤m) = ∸-suc n≤m
-
-≤-suc : ∀ {m n} → m ≤ n → m ≤ suc n
-≤-suc z≤n       = z≤n
-≤-suc (s≤s leq) = s≤s (≤-suc leq)
-
 n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
 n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
@@ -57,7 +49,7 @@ n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
     suc (suc m-1 ∸ suc n)
   ≡⟨ Eq.cong suc refl ⟩
     suc (m-1 ∸ n)
-  ≡⟨ ∸-suc n<m-1 ⟨
+  ≡⟨ +-∸-assoc 1 n<m-1 ⟨
     suc m-1 ∸ n
   ∎
 
