@@ -23,8 +23,7 @@ mutual
     a -< map encode-tree xs >-
   -}
   encode-tree : ∀ {A} → Rose ∞ A → UnrootedVT A
-  encode-tree (a -< [] >-)     = a -< [] >-
-  encode-tree (a -< x ∷ xs >-) = a -< encode-tree x ∷ encode-forest xs >-
+  encode-tree (a -< xs >-) = a -< encode-forest xs >-
 
   {-|
   Encodes all trees in a forest to a non-variational
@@ -42,8 +41,7 @@ encode x = if-true[ encode-forest x ]
 mutual
   encode-tree-preserves : ∀ {A} → (T : Rose ∞ A) (c : Configuration)
     → configure c (encode-tree T) ≡ T ∷ []
-  encode-tree-preserves (a -< [] >-)     c = refl
-  encode-tree-preserves (a -< x ∷ xs >-) c = cong (λ eq → (a -< eq >-) ∷ []) (encode-forest-preserves (x ∷ xs) c)
+  encode-tree-preserves (a -< xs >-) c = Eq.cong (λ x → (a -< x >- ∷ [])) (encode-forest-preserves xs c)
 
   encode-forest-preserves : ∀ {A} (V : Forest A) (c : Configuration)
     → configure-all c (encode-forest V) ≡ V
