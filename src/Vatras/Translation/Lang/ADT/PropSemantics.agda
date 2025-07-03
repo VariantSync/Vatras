@@ -77,7 +77,7 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
   ≡⟨ if-congˡ (eval P c) (↓-presʳ Q l r c) ⟩
     (if eval P c then ⟦ ↓ Q ⟨ l , r ⟩ ⟧ c else ⟦ r ⟧ c)
   ≡⟨⟩
-    elim-sem P ↓ Q ⟨ l , r ⟩ r c
+    elim-sem P (↓ Q ⟨ l , r ⟩) r c
   ≡⟨ ↓-presʳ P (↓ Q ⟨ l , r ⟩) r c ⟩
     ⟦ ↓ P ⟨ ↓ Q ⟨ l , r ⟩ , r ⟩ ⟧ c
   ∎

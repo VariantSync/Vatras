@@ -47,8 +47,7 @@ mutual
   {-|
   Corresponds to ⟦_⟧ on artifacts, options, and choices from the dissertation of Paul Bittner.
   -}
-  configure :
-    ∀ {A} → Configuration → UnrootedVT A → Forest A
+  configure : ∀ {A} → Configuration → UnrootedVT A → Forest A
   configure c (a -< cs >-)        = a -< configure-all c cs >- ∷ []
   configure c (if[ p ]then[ t ])  =
     if (eval p c)

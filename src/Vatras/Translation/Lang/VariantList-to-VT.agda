@@ -92,7 +92,7 @@ fnoci-invariant x xs n (suc m) (suc i) c (s≤s i≤m)
 
 module Preservation (A : 𝔸) where
   translate'-preserves-conf : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (i : ℕ) →
-    configure-all (conf (i + n)) (translate' n x xs ) ≡ VariantList.⟦ x ∷ xs ⟧ i
+    configure-all (conf (i + n)) (translate' n x xs) ≡ VariantList.⟦ x ∷ xs ⟧ i
   translate'-preserves-conf x [] n i =
     begin
       configure-all (conf (i + n)) (encode-forest x)
@@ -187,4 +187,4 @@ VT≽VariantList : VTL ≽ VariantListL
 VT≽VariantList = expressiveness-from-compiler VariantList→VT
 
 VT-is-complete : Complete VTL
-VT-is-complete = completeness-by-expressiveness (VariantList-is-Complete) VT≽VariantList
+VT-is-complete = completeness-by-expressiveness VariantList-is-Complete VT≽VariantList
