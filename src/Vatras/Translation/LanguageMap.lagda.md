@@ -371,8 +371,8 @@ open import Vatras.Lang.VariantList.Properties
 ADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (ADTL F V)
 ADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (VariantList-is-sound-on V) (ADT-to-VariantList.VariantList≽ADT F V _==_)
 
-VT-is-complete : ∀ (F : 𝔽) (f : F) → Complete-on Forest (VTL (Indexed F))
-VT-is-complete F f = VariantList-to-VT.VT-is-complete F f
+VT-is-complete : Complete-on Forest (VTL ℕ)
+VT-is-complete = VariantList-to-VT.VT-is-complete
 
 VT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound-on Forest (VTL F)
 VT-is-sound {F} _==_ = soundness-by-expressiveness-on Forest (ADT-is-sound-on Forest _==_) (VT-to-ADT.ADT≽VT F)

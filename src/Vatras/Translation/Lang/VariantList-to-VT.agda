@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸)
 -- We assume the existence of at least one atom.
-module Vatras.Translation.Lang.VariantList-to-VT (F : 𝔽) (f : F) where
+module Vatras.Translation.Lang.VariantList-to-VT where
 
 open import Data.Bool as Bool using (if_then_else_; true; false)
 open import Data.List using (List; []; _∷_; _++_)
@@ -26,8 +26,8 @@ open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; expres
 
 open import Vatras.Lang.VariantList Forest as VariantList using (VariantList; VariantListL)
 open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Complete)
-open import Vatras.Lang.VT (Indexed F)
-open import Vatras.Lang.VT.Encode (Indexed F)
+open import Vatras.Lang.VT ℕ
+open import Vatras.Lang.VT.Encode ℕ
 
 {-|
 This function encodes a non-empty list of forests into a rootless variation tree.
@@ -41,7 +41,7 @@ Arguments:
 translate' : ∀ {A} → ℕ → Forest A → List (Forest A) → List (UnrootedVT A)
 translate' n x []       = encode-forest x
 translate' n x (y ∷ ys) =
-  if[ var (f , n) ]then[
+  if[ var n ]then[
     encode-forest x
   ]else[
     translate' (suc n) y ys
@@ -52,10 +52,10 @@ translate (x ∷ xs) = if-true[ translate' zero x xs ]
 
 {-|
 A variation tree created by "translate" from a list l produces a forest
-from the list at index i when exactly the feature (f , i) is set to true.
+from the list at index i when exactly the feature i is set to true.
 -}
 conf : ℕ → Configuration
-conf i (_ , j) = i ≡ᵇ j
+conf = _≡ᵇ_
 
 {-|
 From a configuration, we can compute the index of the produced variant in the initial list.
@@ -68,7 +68,7 @@ The "offset" value is needed for induction to specify at which point in a sublis
 fnoci : (offset max i : ℕ) → Configuration → ℕ
 fnoci offset max zero c = max
 fnoci offset max (suc i) c =
-  if c (f , offset + (max ∸ suc i))
+  if c (offset + (max ∸ suc i))
   then max ∸ suc i
   else fnoci offset max i c
 
@@ -86,7 +86,7 @@ fnoci-invariant x xs n m zero c z≤n = refl
 fnoci-invariant x xs n (suc m) (suc i) c (s≤s i≤m)
   rewrite +-∸-assoc 1 i≤m
         | sym (+-suc n (m ∸ i))
-        with c (f , n + suc (m ∸ i))
+        with c (n + suc (m ∸ i))
 ... | true  = refl
 ... | false = fnoci-invariant x xs n (suc m) i c (m≤n⇒m≤1+n i≤m)
 
@@ -141,7 +141,7 @@ module Preservation (A : 𝔸) where
       configure-all c (translate' n x xs)
     ≡ VariantList.⟦ x ∷ xs ⟧ (fnoci n (List⁺.length (x ∷ xs)) (List⁺.length (x ∷ xs)) c)
   translate'-preserves-fnoc x [] n c = encode-idemp Forest A encoder c x
-  translate'-preserves-fnoc x (y ∷ ys) n c with c (f , n) in eq
+  translate'-preserves-fnoc x (y ∷ ys) n c with c n in eq
   ... | true rewrite n∸n≡0 (List⁺.length (y ∷ ys)) | +-identityʳ n | eq =
     begin
       configure-all c (encode-forest x) ++ []
