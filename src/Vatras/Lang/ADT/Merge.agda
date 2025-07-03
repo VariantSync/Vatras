@@ -3,19 +3,18 @@ module Vatras.Lang.ADT.Merge
   (V : 𝕍)
   (_+ᵥ_ : ∀ {A} → V A → V A → V A)
   where
-open import Data.Bool using (Bool; if_then_else_; true; false)
+
+open import Data.Bool using (if_then_else_; true; false)
 open import Data.Bool.Properties using (if-float)
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≗_)
 open Relation.Binary.PropositionalEquality.≡-Reasoning
 
-open import Vatras.Framework.Relation.Expression V
-open import Vatras.Util.AuxProofs using (if-cong; if-swap)
+open import Vatras.Util.AuxProofs using (if-cong)
 
 import Vatras.Lang.ADT
-module ADT F = Vatras.Lang.ADT F V
 
 module Named (F : 𝔽) where
-  open ADT F
+  open Vatras.Lang.ADT F V
 
   {-|
   Merges two ADTs.
@@ -98,7 +97,7 @@ module Named (F : 𝔽) where
 
 module Prop (F : 𝔽) where
   open import Vatras.Data.Prop
-  open ADT (Prop F)
+  open Vatras.Lang.ADT (Prop F) V
   open import Vatras.Lang.ADT.Prop F V
   open Named (Prop F)
 

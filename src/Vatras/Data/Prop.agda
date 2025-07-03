@@ -1,6 +1,6 @@
 module Vatras.Data.Prop where
 
-open import Data.Bool as Bool using (Bool; if_then_else_)
+open import Data.Bool as Bool using (Bool)
 
 data Prop (F : Set) : Set where
   true  : Prop F

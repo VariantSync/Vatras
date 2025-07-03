@@ -1,15 +1,13 @@
-open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; NAT)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
 module Vatras.Translation.Lang.VT-to-ADT (F : 𝔽) where
 
-open import Data.Bool using (true; false; if_then_else_)
-open import Data.List as List using (List; []; _∷_; _++_)
-open import Data.List.Properties using (++-identityʳ; ++-assoc)
-open import Data.Product using (_,_)
+open import Data.Bool using (true; false)
+open import Data.List using (List; []; _∷_; _++_)
 open import Function using (id; _∘_; flip)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl; cong; cong₂)
 open Eq.≡-Reasoning
 
-open import Vatras.Data.Prop
+open import Vatras.Data.Prop using (Prop; eval)
 open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Framework.Variants using (Forest; _-<_>-)
 open import Vatras.Framework.Compiler as Compiler using (LanguageCompiler)

@@ -3,10 +3,10 @@ open import Vatras.Framework.Definitions using (𝔽; 𝔸)
 module Vatras.Translation.Lang.VariantList-to-VT (F : 𝔽) (f : F) where
 
 open import Data.Bool as Bool using (if_then_else_; true; false)
-open import Data.List as List using (List; []; _∷_; _++_)
+open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.Properties using (++-identityʳ)
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; _∷⁺_)
-open import Data.Nat using (ℕ; zero; suc; _≡ᵇ_; _+_; _≤_; _<_; s≤s; z≤n; _∸_)
+open import Data.Nat using (ℕ; zero; suc; _≡ᵇ_; _+_; _≤_; s≤s; z≤n; _∸_)
 open import Data.Nat.Properties using (+-suc; +-identityʳ; ≤-refl; n∸n≡0)
 open import Data.Product using (_,_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; sym; cong)
@@ -17,12 +17,12 @@ open import Vatras.Data.EqIndexedSet
 open import Vatras.Util.List using (find-or-last)
 open import Vatras.Util.AuxProofs using (∸-suc; ≤-suc; ≡ᵇ-refl; m+n≢ᵇn)
 
-open import Vatras.Framework.Variants using (Forest; Variant-is-VL; encode-idemp)
+open import Vatras.Framework.Variants using (Forest; encode-idemp)
 open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.Proof.ForFree Forest using (completeness-by-expressiveness)
 open import Vatras.Framework.Properties.Completeness Forest using (Complete)
-open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_)
+open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; expressiveness-from-compiler)
 
 open import Vatras.Lang.VariantList Forest as VariantList using (VariantList; VariantListL)
 open import Vatras.Lang.VariantList.Properties Forest using (VariantList-is-Complete)

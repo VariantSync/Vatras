@@ -1,7 +1,7 @@
 module Vatras.Data.Prop.Properties {F : Set} where
 
-open import Data.Bool as Bool using ()
-open import Data.Bool.Properties using (∧-comm; ∧-zeroˡ; ∧-zeroʳ)
+import Data.Bool as Bool
+open import Data.Bool.Properties using (∧-comm; ∧-zeroʳ)
 open import Data.Empty using (⊥)
 open import Data.Product as Product using (Σ; _×_; ∃-syntax; _,_)
 open import Data.Sum as Sum using (_⊎_) renaming (inj₁ to left; inj₂ to right)
@@ -9,8 +9,6 @@ open import Data.Sum as Sum using (_⊎_) renaming (inj₁ to left; inj₂ to ri
 open import Relation.Nullary.Negation renaming (¬_ to never)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong; sym; trans)
 open Eq.≡-Reasoning
-
-open import Function using (_∘_)
 
 open import Vatras.Data.Prop
 open import Vatras.Util.AuxProofs using (true≢false)

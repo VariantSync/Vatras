@@ -4,9 +4,9 @@ module Vatras.Lang.VT (F : 𝔽) where
 open import Data.Bool using (if_then_else_)
 open import Data.List using (List; []; _∷_; _++_)
 
-open import Vatras.Data.Prop
-open import Vatras.Framework.Variants using (Rose; Forest; _-<_>-)
-open import Vatras.Framework.VariabilityLanguage
+open import Vatras.Data.Prop using (Prop; Assignment; eval)
+open import Vatras.Framework.Variants using (Forest; _-<_>-)
+open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; ⟪_,_,_⟫)
 
 Configuration : Set
 Configuration = Assignment F

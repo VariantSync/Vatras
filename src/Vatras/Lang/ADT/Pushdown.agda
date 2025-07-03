@@ -10,14 +10,13 @@ module Vatras.Lang.ADT.Pushdown (F : 𝔽) (V : 𝕍)
   (_-<_>- : ∀ {A} → atoms A → List (V A) → V A)
   where
 
-open import Data.Bool as Bool using (if_then_else_)
+open import Data.Bool using (if_then_else_)
 import Data.Bool.Properties as Bool
 import Data.List.Properties as List
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≗_)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 open Eq.≡-Reasoning using (step-≡-⟨; step-≡-⟩; step-≡-∣; _∎)
-open import Size using (Size; ∞)
+open import Size using (Size)
 
-open import Vatras.Framework.Variants as V using (Rose)
 open import Vatras.Lang.ADT F V
 
 push-down-artifact : ∀ {i : Size} {A : 𝔸} → atoms A → List (ADT A) → ADT A

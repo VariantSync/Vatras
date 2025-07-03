@@ -1,10 +1,10 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝕍; 𝔸)
 module Vatras.Translation.Lang.ADT.PropSemantics (F : 𝔽) (V : 𝕍) where
 
-open import Data.Bool using (true; false; if_then_else_; not) renaming (_∧_ to _and_)
+open import Data.Bool using (if_then_else_; not) renaming (_∧_ to _and_)
 open import Data.Product using (_,_)
 open import Function using (id; _∘_)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
+open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
 open Eq.≡-Reasoning
 
 import Vatras.Lang.ADT
@@ -16,7 +16,7 @@ open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Data.Prop
 open import Vatras.Lang.ADT.Prop F V
 open import Vatras.Util.AuxProofs using (if-flip; if-∧; if-cong; if-congˡ)
-open import Vatras.Framework.Compiler
+open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
 
 {-|
