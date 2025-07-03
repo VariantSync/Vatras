@@ -85,11 +85,7 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
 mutual
   ↓-presˡ : ∀ {A} (P : Prop F) (l r : ADT (Prop F) A)
     → ⟦ P ⟨ l , r ⟩ ⟧ₚ ≗ elim-sem P (elim-formulas l) (elim-formulas r)
-  ↓-presˡ true    l r c = preserves l c
-  ↓-presˡ false   l r c = preserves r c
-  ↓-presˡ (var x) l r c = if-cong _ (preserves l c) (preserves r c)
-  ↓-presˡ (¬ P)   l r c = if-cong _ (preserves l c) (preserves r c)
-  ↓-presˡ (P ∧ Q) l r c = if-cong _ (preserves l c) (preserves r c)
+  ↓-presˡ P l r c = if-cong _ (preserves l c) (preserves r c)
 
   preserves
     : ∀ {A}
