@@ -30,7 +30,7 @@ NonContradiction' :
   → eval p a ≡ Bool.true
   → eval p a ≡ Bool.false
   → ⊥
-NonContradiction' _ _ t f = true≢false (trans (sym f) t) refl
+NonContradiction' _ _ = true≢false
 
 Satisfying : Prop F → Assignment F → Set
 Satisfying p a = eval p a ≡ Bool.true
