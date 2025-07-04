@@ -23,9 +23,9 @@ module Named (F : 𝔽) where
   This operations inherits all properties of the variant composition (e.g., commutativity, associativity etc).
   -}
   _⊕_ : ∀ {A} → ADT A → ADT A → ADT A
-  leaf l         ⊕ leaf r         = leaf (l +ᵥ r)
-  leaf l         ⊕ (E ⟨ el , er ⟩) = E ⟨ leaf l ⊕ el , leaf l ⊕ er ⟩
-  (D ⟨ dl , dr ⟩) ⊕ r              = D ⟨ dl ⊕ r , dr ⊕ r ⟩
+  leaf l          ⊕ leaf r          = leaf (l +ᵥ r)
+  leaf l          ⊕ (E ⟨ el , er ⟩) = E ⟨ leaf l ⊕ el , leaf l ⊕ er ⟩
+  (D ⟨ dl , dr ⟩) ⊕ r               = D ⟨ dl ⊕ r , dr ⊕ r ⟩
 
   ⊕-spec : ∀ {A} (l r : ADT A) (c : Configuration) →
      ⟦ l ⊕ r ⟧ c ≡ ⟦ l ⟧ c +ᵥ ⟦ r ⟧ c
