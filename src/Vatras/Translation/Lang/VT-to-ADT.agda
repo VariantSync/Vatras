@@ -71,14 +71,14 @@ translate if-true[ xs ] = translate-all xs
 
 -- Preservation Proofs --
 
-preserves-all : ∀ {A} (vts : List (UnrootedVT A)) → flip configure-all vts ≗ ⟦ translate-all vts ⟧ₚ
+preserves-all : ∀ {A} (vts : List (UnrootedVT A)) → configure-all vts ≗ ⟦ translate-all vts ⟧ₚ
 preserves-all [] c = refl
 preserves-all (a -< l >- ∷ xs) c =
-    flip configure-all (a -< l >- ∷ xs) c
+    configure-all (a -< l >- ∷ xs) c
   ≡⟨⟩
-    a -< configure-all c l >- ∷ configure-all c xs
+    a -< configure-all l c >- ∷ configure-all xs c
   ≡⟨ cong (_ ∷_) (preserves-all xs c) ⟩
-    a -< configure-all c l >- ∷ ⟦ translate-all xs ⟧ₚ c
+    a -< configure-all l c >- ∷ ⟦ translate-all xs ⟧ₚ c
   ≡⟨ cong (λ z → a -< z >- ∷ _) (preserves-all l c) ⟩
     a -< ⟦ translate-all l ⟧ₚ c >- ∷ ⟦ translate-all xs ⟧ₚ c
   ≡⟨ push-down-left-spec a (translate-all l) (translate-all xs) c ⟨
@@ -86,7 +86,7 @@ preserves-all (a -< l >- ∷ xs) c =
   ∎
 preserves-all (if[ p ]then[ l ] ∷ xs) c with eval p c
 ... | true  =
-    configure-all c l ++ configure-all c xs
+    configure-all l c ++ configure-all xs c
   ≡⟨ cong₂ _++_ (preserves-all l c) (preserves-all xs c) ⟩
     ⟦ translate-all l ⟧ₚ c ++ ⟦ translate-all xs ⟧ₚ c
   ≡⟨ ⊕-specₚ (translate-all l) (translate-all xs) c ⟨

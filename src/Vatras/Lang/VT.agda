@@ -40,29 +40,29 @@ mutual
   To prove termination and to simplify proofs, this definition is an inlined variant of
     configure-all c ts = concatMap (configure c) ts
   -}
-  configure-all : ∀ {A} → Configuration → List (UnrootedVT A) → Forest A
-  configure-all c [] = []
-  configure-all c (x ∷ xs) = configure c x ++ configure-all c xs
+  configure-all : ∀ {A} → List (UnrootedVT A) → Configuration → Forest A
+  configure-all [] c       = []
+  configure-all (x ∷ xs) c = configure x c ++ configure-all xs c
 
   {-|
   Corresponds to ⟦_⟧ on artifacts, options, and choices from the dissertation of Paul Bittner.
   -}
-  configure : ∀ {A} → Configuration → UnrootedVT A → Forest A
-  configure c (a -< cs >-)        = a -< configure-all c cs >- ∷ []
-  configure c (if[ p ]then[ t ])  =
+  configure : ∀ {A} → UnrootedVT A → Configuration → Forest A
+  configure (a -< cs >-)       c = a -< configure-all cs c >- ∷ []
+  configure (if[ p ]then[ t ]) c =
     if (eval p c)
-    then configure-all c t
+    then configure-all t c
     else []
-  configure c (if[ p ]then[ t ]else[ e ]) =
+  configure (if[ p ]then[ t ]else[ e ]) c =
     if (eval p c)
-    then configure-all c t
-    else configure-all c e
+    then configure-all t c
+    else configure-all e c
 
 {-|
 Corresponds to ⟦_⟧ on the root term from the dissertation of Paul Bittner.
 -}
 ⟦_⟧ : ∀ {A} → VT A → Configuration → Forest A
-⟦ if-true[ x ] ⟧ c = configure-all c x
+⟦ if-true[ x ] ⟧ = configure-all x
 
 VTL : VariabilityLanguage Forest
 VTL = ⟪ VT , Configuration , ⟦_⟧ ⟫

@@ -40,17 +40,17 @@ encode x = if-true[ encode-forest x ]
 
 mutual
   encode-tree-preserves : ∀ {A} → (T : Rose ∞ A) (c : Configuration)
-    → configure c (encode-tree T) ≡ T ∷ []
+    → configure (encode-tree T) c ≡ T ∷ []
   encode-tree-preserves (a -< xs >-) c = Eq.cong (λ x → (a -< x >- ∷ [])) (encode-forest-preserves xs c)
 
   encode-forest-preserves : ∀ {A} (V : Forest A) (c : Configuration)
-    → configure-all c (encode-forest V) ≡ V
+    → configure-all (encode-forest V) c ≡ V
   encode-forest-preserves []       _ = refl
   encode-forest-preserves (x ∷ xs) c =
     begin
-      configure-all c (encode-forest (x ∷ xs))
+      configure-all (encode-forest (x ∷ xs)) c
     ≡⟨⟩
-      configure c (encode-tree x) ++ configure-all c (encode-forest xs)
+      configure (encode-tree x) c ++ configure-all (encode-forest xs) c
     ≡⟨ cong₂ _++_ (encode-tree-preserves x c) (encode-forest-preserves xs c) ⟩
       (x ∷ []) ++ xs
     ≡⟨⟩

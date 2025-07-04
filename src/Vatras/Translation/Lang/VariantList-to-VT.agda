@@ -92,10 +92,10 @@ fnoci-invariant x xs n (suc m) (suc i) c (s≤s i≤m)
 
 module Preservation (A : 𝔸) where
   translate'-preserves-conf : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (i : ℕ) →
-    configure-all (conf (i + n)) (translate' n x xs) ≡ VariantList.⟦ x ∷ xs ⟧ i
+    configure-all (translate' n x xs) (conf (i + n)) ≡ VariantList.⟦ x ∷ xs ⟧ i
   translate'-preserves-conf x [] n i =
     begin
-      configure-all (conf (i + n)) (encode-forest x)
+      configure-all (encode-forest x) (conf (i + n))
     ≡⟨ encode-idemp Forest A encoder (conf (i + n)) x ⟩
       x
     ≡⟨⟩
@@ -103,9 +103,9 @@ module Preservation (A : 𝔸) where
     ∎
   translate'-preserves-conf x (y ∷ ys) n zero rewrite ≡ᵇ-refl n =
     begin
-      configure-all (conf n) (encode-forest x) ++ []
+      configure-all (encode-forest x) (conf n) ++ []
     ≡⟨ ++-identityʳ _ ⟩
-      configure-all (conf n) (encode-forest x)
+      configure-all (encode-forest x) (conf n)
     ≡⟨ encode-idemp Forest A encoder (conf n) x ⟩
       x
     ≡⟨⟩
@@ -113,11 +113,11 @@ module Preservation (A : 𝔸) where
     ∎
   translate'-preserves-conf x (y ∷ ys) n (suc i) rewrite m+n≢ᵇn i n =
     begin
-      configure-all (conf (suc i + n)) (translate' (suc n) y ys) ++ []
+      configure-all (translate' (suc n) y ys) (conf (suc i + n)) ++ []
     ≡⟨ ++-identityʳ _ ⟩
-      configure-all (conf (suc i + n)) (translate' (suc n) y ys)
-    ≡⟨ cong (λ eq → configure-all (conf eq) (translate' (suc n) y ys)) (+-suc i n) ⟨
-      configure-all (conf (i + suc n)) (translate' (suc n) y ys)
+      configure-all (translate' (suc n) y ys) (conf (suc i + n))
+    ≡⟨ cong (λ eq → configure-all (translate' (suc n) y ys) (conf eq)) (+-suc i n) ⟨
+      configure-all (translate' (suc n) y ys) (conf (i + suc n))
     ≡⟨ translate'-preserves-conf y ys (suc n) i ⟩
       VariantList.⟦ y ∷ ys ⟧ i
     ≡⟨⟩
@@ -130,31 +130,31 @@ module Preservation (A : 𝔸) where
     begin
       VariantList.⟦ x ∷ xs ⟧ i
     ≡⟨ translate'-preserves-conf x xs zero i ⟨
-      configure-all (conf (i + zero)) (translate' zero x xs)
-    ≡⟨ cong (λ eq → configure-all (conf eq) (translate' zero x xs)) (+-identityʳ i) ⟩
-      configure-all (conf i) (translate' zero x xs)
+      configure-all (translate' zero x xs) (conf (i + zero))
+    ≡⟨ cong (λ eq → configure-all (translate' zero x xs) (conf eq)) (+-identityʳ i) ⟩
+      configure-all (translate' zero x xs) (conf i)
     ≡⟨⟩
       ⟦ translate (x ∷ xs) ⟧ (conf i)
     ∎
 
   translate'-preserves-fnoc : ∀ (x : Forest A) (xs : List (Forest A)) (n : ℕ) (c : Configuration) →
-      configure-all c (translate' n x xs)
+      configure-all (translate' n x xs) c
     ≡ VariantList.⟦ x ∷ xs ⟧ (fnoci n (List⁺.length (x ∷ xs)) (List⁺.length (x ∷ xs)) c)
   translate'-preserves-fnoc x [] n c = encode-idemp Forest A encoder c x
   translate'-preserves-fnoc x (y ∷ ys) n c with c n in eq
   ... | true rewrite n∸n≡0 (List⁺.length (y ∷ ys)) | +-identityʳ n | eq =
     begin
-      configure-all c (encode-forest x) ++ []
+      configure-all (encode-forest x) c ++ []
     ≡⟨ ++-identityʳ _ ⟩
-      configure-all c (encode-forest x)
+      configure-all (encode-forest x) c
     ≡⟨ encode-idemp Forest A encoder c x ⟩
       x
     ∎
   ... | false rewrite n∸n≡0 (List⁺.length (y ∷ ys)) | +-identityʳ n | eq =
     begin
-      configure-all c (translate' (suc n) y ys) ++ []
+      configure-all (translate' (suc n) y ys) c ++ []
     ≡⟨ ++-identityʳ _ ⟩
-      configure-all c (translate' (suc n) y ys)
+      configure-all (translate' (suc n) y ys) c
     ≡⟨ translate'-preserves-fnoc y ys (suc n) c ⟩
       VariantList.⟦     y ∷ ys ⟧
         (fnoci (suc n) (List⁺.length (    y ∷ ys)) (List⁺.length (y ∷ ys)) c)
@@ -169,7 +169,7 @@ module Preservation (A : 𝔸) where
     begin
       ⟦ translate (x ∷ xs) ⟧ c
     ≡⟨⟩
-      configure-all c (translate' zero x xs)
+      configure-all (translate' zero x xs) c
     ≡⟨ translate'-preserves-fnoc x xs zero c ⟩
       VariantList.⟦ x ∷ xs ⟧ (fnoc (List⁺.length (x ∷ xs)) c)
     ∎
