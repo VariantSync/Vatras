@@ -9,7 +9,6 @@ data Prop (F : Set) : Set where
   ¬_    : Prop F → Prop F
   _∧_   : Prop F → Prop F → Prop F
 
-infix 24 var
 infix 23 ¬_
 infix 22 _∧_
 
