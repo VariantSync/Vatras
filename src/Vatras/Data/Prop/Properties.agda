@@ -6,7 +6,7 @@ open import Data.Empty using (⊥)
 open import Data.Product as Product using (Σ; _×_; ∃-syntax; _,_)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
 
-open import Relation.Nullary.Negation renaming (¬_ to never)
+open import Relation.Nullary.Negation renaming (¬_ to negate)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong; sym; trans)
 open Eq.≡-Reasoning
 
@@ -68,7 +68,7 @@ Nonconst : Prop F → Set
 Nonconst p = Satisfiable p × Falsifiable p
 
 Nonconst' : Prop F → Set
-Nonconst' p = never (Const p)
+Nonconst' p = negate (Const p)
 
 Nonconst→Nonconst' : ∀ {p} → Nonconst p → Nonconst' p
 Nonconst→Nonconst' {p} (_ , (a , a-makes-false)) (inj₁ taut ) = NonContradiction' p a (taut a) a-makes-false
