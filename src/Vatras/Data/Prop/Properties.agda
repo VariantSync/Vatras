@@ -4,7 +4,7 @@ import Data.Bool as Bool
 open import Data.Bool.Properties using (∧-comm; ∧-zeroʳ)
 open import Data.Empty using (⊥)
 open import Data.Product as Product using (Σ; _×_; ∃-syntax; _,_)
-open import Data.Sum as Sum using (_⊎_) renaming (inj₁ to left; inj₂ to right)
+open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
 
 open import Relation.Nullary.Negation renaming (¬_ to never)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong; sym; trans)
@@ -57,12 +57,12 @@ Const' : Prop F → Set
 Const' p = ∃[ b ] (∀ a → eval p a ≡ b)
 
 Const→Const' : ∀ {p} → Const p → Const' p
-Const→Const' (left  taut ) = Bool.true  , taut
-Const→Const' (right contr) = Bool.false , contr
+Const→Const' (inj₁ taut ) = Bool.true  , taut
+Const→Const' (inj₂ contr) = Bool.false , contr
 
 Const'→Const : ∀ {p} → Const' p → Const p
-Const'→Const (Bool.true  , taut ) = left  taut
-Const'→Const (Bool.false , contr) = right contr
+Const'→Const (Bool.true  , taut ) = inj₁ taut
+Const'→Const (Bool.false , contr) = inj₂ contr
 
 Nonconst : Prop F → Set
 Nonconst p = Satisfiable p × Falsifiable p
@@ -71,8 +71,8 @@ Nonconst' : Prop F → Set
 Nonconst' p = never (Const p)
 
 Nonconst→Nonconst' : ∀ {p} → Nonconst p → Nonconst' p
-Nonconst→Nonconst' {p} (_ , (a , a-makes-false)) (left taut)   = NonContradiction' p a (taut a) a-makes-false
-Nonconst→Nonconst' {p} ((a , a-makes-true) , _)  (right contr) = NonContradiction' p a a-makes-true (contr a)
+Nonconst→Nonconst' {p} (_ , (a , a-makes-false)) (inj₁ taut ) = NonContradiction' p a (taut a) a-makes-false
+Nonconst→Nonconst' {p} ((a , a-makes-true) , _)  (inj₂ contr) = NonContradiction' p a a-makes-true (contr a)
 
 sat-∧ˡ : ∀ p q
   → Tautology p
