@@ -1,7 +1,7 @@
 module Vatras.Data.Prop.Properties {F : Set} where
 
 import Data.Bool as Bool
-open import Data.Bool.Properties using (∧-comm; ∧-zeroʳ)
+open import Data.Bool.Properties using (∧-comm; ∧-zeroˡ; ∧-zeroʳ)
 open import Data.Empty using (⊥)
 open import Data.Product as Product using (Σ; _×_; ∃-syntax; _,_)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
@@ -95,10 +95,19 @@ sat-∧ʳ p q taut-q (a , sat) = a , (
   eval p a Bool.∧ Bool.true ≡⟨ cong (Bool._∧ Bool.true) sat ⟩
   Bool.true                 ∎)
 
-fal-∧ : ∀ p q
+fal-∧ˡ : ∀ p q
+  → Falsifiable p
+  → Falsifiable (p ∧ q)
+fal-∧ˡ p q (a , unsat) = a , (
+  eval (p ∧ q) a             ≡⟨⟩
+  eval p a   Bool.∧ eval q a ≡⟨ cong (Bool._∧ eval q a) unsat ⟩
+  Bool.false Bool.∧ eval q a ≡⟨ ∧-zeroˡ (eval q a) ⟩
+  Bool.false                 ∎)
+
+fal-∧ʳ : ∀ p q
   → Falsifiable q
   → Falsifiable (p ∧ q)
-fal-∧ p q (a , unsat) = a , (
+fal-∧ʳ p q (a , unsat) = a , (
   eval (p ∧ q) a             ≡⟨⟩
   eval p a Bool.∧ eval q a   ≡⟨ cong (eval p a Bool.∧_) unsat ⟩
   eval p a Bool.∧ Bool.false ≡⟨ ∧-zeroʳ (eval p a) ⟩
