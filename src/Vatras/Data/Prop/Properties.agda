@@ -4,7 +4,7 @@ import Data.Bool as Bool
 open import Data.Bool.Properties using (∧-comm; ∧-zeroˡ; ∧-zeroʳ)
 open import Data.Empty using (⊥)
 open import Data.Product as Product using (Σ; _×_; ∃-syntax; _,_)
-open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Relation.Nullary.Negation renaming (¬_ to negate)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; cong; sym; trans)
