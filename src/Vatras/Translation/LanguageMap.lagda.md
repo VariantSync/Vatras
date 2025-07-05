@@ -34,7 +34,7 @@ open import Vatras.Util.String using (diagonal-ℕ; diagonal-ℕ⁻¹; diagonal-
 
 import Vatras.Framework.Proof.ForFree
 open Vatras.Framework.Proof.ForFree Variant using (less-expressive-from-completeness; completeness-by-expressiveness; soundness-by-expressiveness)
-open Vatras.Framework.Proof.ForFree using () renaming (soundness-by-expressiveness to soundness-by-expressiveness-on)
+open Vatras.Framework.Proof.ForFree using () renaming (completeness-by-expressiveness to completeness-by-expressiveness-on; soundness-by-expressiveness to soundness-by-expressiveness-on)
 
 import Vatras.Framework.Properties.Completeness
 import Vatras.Framework.Properties.Soundness
@@ -57,6 +57,7 @@ open VT using (VTL)
 open import Vatras.Lang.CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 open import Vatras.Translation.Lang.NCC.Rename using (NCC-rename≽NCC)
 open import Vatras.Translation.Lang.2CC.Rename using (2CC-rename; 2CC-rename≽2CC)
+open import Vatras.Translation.Lang.VT.Rename using (VT-rename≽VT)
 
 import Vatras.Translation.Lang.CCC-to-NCC as CCC-to-NCC
 import Vatras.Translation.Lang.NCC-to-CCC as NCC-to-CCC
@@ -371,8 +372,12 @@ open import Vatras.Lang.VariantList.Properties
 ADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (ADTL F V)
 ADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (VariantList-is-sound-on V) (ADT-to-VariantList.VariantList≽ADT F V _==_)
 
-VT-is-complete : Complete-on Forest (VTL ℕ)
-VT-is-complete = VariantList-to-VT.VT-is-complete
+VTℕ-is-complete : Complete-on Forest (VTL ℕ)
+VTℕ-is-complete = VariantList-to-VT.VT-is-complete
+
+VT-is-complete : {F : 𝔽} (f : ℕ → F) (f⁻¹ : F → ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id)
+  → Complete-on Forest (VTL F)
+VT-is-complete f f⁻¹ f⁻¹∘f≗id = completeness-by-expressiveness-on Forest VTℕ-is-complete (VT-rename≽VT f f⁻¹ f⁻¹∘f≗id)
 
 VT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound-on Forest (VTL F)
 VT-is-sound {F} _==_ = soundness-by-expressiveness-on Forest (ADT-is-sound-on Forest _==_) (VT-to-ADT.ADT≽VT F)
