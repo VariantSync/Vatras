@@ -66,17 +66,11 @@ and hence expressions are parameterized in the type of this atomic data.
 module _ where
   open import Data.String using (String; _≟_)
 
-  _String≟_ : DecidableEquality String
-  _String≟_ = _≟_
-
   STRING : 𝔸
-  STRING = String and _String≟_
+  STRING = String and _≟_
 
 module _ where
   open import Data.Nat using (ℕ; _≟_)
 
-  _ℕ≟_ : DecidableEquality ℕ
-  _ℕ≟_ = _≟_
-
   NAT : 𝔸
-  NAT = ℕ and _ℕ≟_
+  NAT = ℕ and _≟_
