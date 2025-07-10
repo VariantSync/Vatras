@@ -18,7 +18,7 @@ open import Function using (_∘_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.NonEmpty using (List⁺; _∷_; _⁺++⁺_; length)
 open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _<_; _≤?_; z≤n; s≤s)
-open import Data.Nat.Properties using (≤-trans; ≰⇒>; m≤m+n)
+open import Data.Nat.Properties using (≤-trans; ≰⇒>; m≤m+n; +-monoʳ-<)
 open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (yes; no)
@@ -36,14 +36,13 @@ open import Vatras.Framework.Proof.ForFree V using (soundness-by-expressiveness)
 open import Vatras.Lang.All.Fixed F V
 open ADT using (ADT; ADTL; leaf; _⟨_,_⟩)
 open VariantList using (VariantList; VariantListL)
-open import Vatras.Lang.VariantList.Properties using (VariantList-is-Sound)
+open import Vatras.Lang.VariantList.Properties V using (VariantList-is-Sound)
 
 open import Vatras.Lang.ADT.Path F V _==_
 open import Vatras.Translation.Lang.ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ; UndeadADT; UndeadADTL)
 open import Vatras.Translation.Lang.ADT.WalkSemantics F V _==_ as Walk using ()
 
 open import Vatras.Util.List using (find-or-last; ⁺++⁺-length; ⁺++⁺-length-≤; find-or-last-append; find-or-last-prepend-+; find-or-last-prepend-∸)
-open import Vatras.Util.AuxProofs using (<-cong-+ˡ)
 
 {-
 This translates a ADT to a VariantList.
@@ -93,7 +92,7 @@ conf-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
 
     -- add (length (tr l)) to both sides on the left
     gox : length (tr l) + conf r c < length (tr l) + length (tr r)
-    gox = <-cong-+ˡ (length (tr l)) rb
+    gox = +-monoʳ-< (length (tr l)) rb
 
     -- use the sum rule for ⁺++⁺ on the right hand side
     go : length (tr l) + conf r c < length (tr l ⁺++⁺ tr r)
@@ -200,4 +199,4 @@ VariantList≽ADT : VariantListL ≽ ADTL
 VariantList≽ADT = expressiveness-from-compiler ADT→VariantList
 
 ADT-is-sound : Sound ADTL
-ADT-is-sound = soundness-by-expressiveness (VariantList-is-Sound {V}) VariantList≽ADT
+ADT-is-sound = soundness-by-expressiveness VariantList-is-Sound VariantList≽ADT

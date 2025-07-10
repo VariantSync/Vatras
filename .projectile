@@ -1,0 +1,6 @@
+;; This file stores project information for the Projectile package in Emacs.
+;; If you do not use emacs, you can ignore this file.
+
+;; ignore some files from indexing:
+-.agdai
+-src/MAlonzo

@@ -27,7 +27,7 @@ This library formalizes all results in our paper:
 Additionally, our library comes with a small **demo**, and **tutorials** for getting to know the library and for formalizing your own variability languages (see "Tutorials" section below).
 When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
 
-## Overview: What is Static Variability and What is Vatras?
+## What is Static Variability and What is Vatras?
 
 Vatras is a library to study and compare meta-languages for specifying variability in source code and data.
 Some software systems are configurable _before_ they are compiled, i.e., statically.
