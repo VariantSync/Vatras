@@ -10,14 +10,14 @@ open import Data.Product
 open import Size
   using (Size; ∞; ↑_)
 
-open import Vatras.Framework.Definitions using (𝔸; atoms)
+open import Vatras.Framework.Definitions using (𝔸; atoms; STRING)
 
 open import Vatras.Lang.All
 open CCC -- use strings as dimensions
 open import Vatras.Test.Example
 
 CCCExample : Set₁
-CCCExample = Example (CCC String ∞ (String , String._≟_))
+CCCExample = Example (CCC String ∞ STRING)
 
 -- some smart constructors
 ccA : ∀ {i : Size} {A : 𝔸} → List⁺ (CCC String i A) → CCC String (↑ i) A

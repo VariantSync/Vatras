@@ -322,7 +322,7 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   n = suc m
 
 2CC≱ADT : Sized2CC ≱Size SizedADT
-2CC≱ADT n = (ℕ , ℕ._≟_) , e₁ (4 * n) , lemma n
+2CC≱ADT n = NAT , e₁ (4 * n) , lemma n
 
 2CC<ADT : Sized2CC <Size SizedADT
 2CC<ADT = 2CC≤ADT , 2CC≱ADT

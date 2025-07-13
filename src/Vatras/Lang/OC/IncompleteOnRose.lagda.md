@@ -1,5 +1,5 @@
 ```agda
-open import Vatras.Framework.Definitions using (𝔽)
+open import Vatras.Framework.Definitions using (𝔽; NAT)
 module Vatras.Lang.OC.IncompleteOnRose {Option : 𝔽} where
 
 open import Size using (Size; ∞)
@@ -9,7 +9,7 @@ open import Data.Product using (_,_; ∃-syntax; ∄-syntax)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 
 open import Vatras.Framework.Variants using (Rose; rose-leaf)
-open import Vatras.Framework.VariantGenerator (Rose ∞) (ℕ , ℕ._≟_) using (VariantGenerator)
+open import Vatras.Framework.VariantGenerator (Rose ∞) NAT
 open import Vatras.Framework.Properties.Completeness (Rose ∞) using (Incomplete)
 open import Vatras.Lang.OC Option using (WFOC; Root; ⟦_⟧; WFOCL)
 ```
@@ -18,8 +18,8 @@ We prove incompleteness by showing that there exists at least one set of variant
 In particular, any set of variants that includes two entirely distinct variants cannot be expressed because options cannot encode constraints such as alternatives in choice calculus.
 As our counter example, we use the set `{0, 1}` as our variants:
 ```agda
-variant-0 = rose-leaf {A = (ℕ , ℕ._≟_)} 0
-variant-1 = rose-leaf {A = (ℕ , ℕ._≟_)} 1
+variant-0 = rose-leaf {A = NAT} 0
+variant-1 = rose-leaf {A = NAT} 1
 
 variants-0-and-1 : VariantGenerator 1
 variants-0-and-1 zero = variant-0
@@ -34,7 +34,7 @@ So we show that given an expression `e`, a proof that `e` can be configured to `
 ```agda
 does-not-describe-variants-0-and-1 :
   ∀ {i : Size}
-  → (e : WFOC i (ℕ , ℕ._≟_))
+  → (e : WFOC i NAT)
   → ∃[ c ] (variant-0 ≡ ⟦ e ⟧ c)
   → ∄[ c ] (variant-1 ≡ ⟦ e ⟧ c)
 -- If e has 0 as root, it may be configured to 0 but never to 1.

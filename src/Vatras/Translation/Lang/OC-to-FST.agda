@@ -3,7 +3,7 @@ This module provides an example of neighboring artifacts with equal atoms and
 uses the `cannotEncodeNeighbors` lemma from `FST` to show that there are
 expressions in `WFOC` that cannot be encoded in `FST`.
 -}
-open import Vatras.Framework.Definitions using (𝔽; 𝔸)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; NAT)
 
 module Vatras.Translation.Lang.OC-to-FST (F : 𝔽) where
 
@@ -23,10 +23,7 @@ open import Vatras.Lang.FST.Properties using (cannotEncodeNeighbors)
 V = Rose ∞
 open import Vatras.Framework.Relation.Expressiveness V using (_⋡_)
 
-A : 𝔸
-A = ℕ , _≟_
-
-neighbors : WFOC F ∞ A
+neighbors : WFOC F ∞ NAT
 neighbors = Root zero (zero -< [] >- ∷ zero -< [] >- ∷ [])
 
 FST⋡WFOC : FSTL F ⋡ WFOCL F
