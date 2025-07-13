@@ -56,7 +56,7 @@ module Impose (AtomSet : 𝔸) where
 
   private
     A = atoms AtomSet
-    _≟_ = proj₂ AtomSet
+    _≟_ = atomsEqual? AtomSet
 
   fst-leaf : A → FSTA ∞
   fst-leaf = rose-leaf

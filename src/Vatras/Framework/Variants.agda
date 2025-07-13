@@ -16,7 +16,7 @@ open Eq.≡-Reasoning
 open import Function using (id; _∘_; flip)
 open import Size using (Size; ↑_; ∞)
 
-open import Vatras.Framework.Definitions using (𝕍; 𝔸; atoms)
+open import Vatras.Framework.Definitions using (𝕍; 𝔸; atoms; atomsEqual?)
 open import Vatras.Framework.VariabilityLanguage
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open LanguageCompiler
@@ -155,6 +155,6 @@ open import Data.Bool using (Bool; true)
 open import Data.List using (or)
 
 has-atom : ∀ {A i} → atoms A → Rose i A → Bool
-has-atom {A , _≟_} a (b -< cs >-) with a ≟ b
+has-atom {A} a (b -< cs >-) with atomsEqual? A a b
 ... | yes refl = true
 ... | no x = or (map (has-atom b) cs)

@@ -1,7 +1,9 @@
 module Vatras.Framework.Definitions where
 
 open import Data.Maybe using (Maybe; just)
+open import Data.Nat as ℕ using (ℕ)
 open import Data.Product using (_×_; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+open import Data.String as String using (String)
 open import Data.Unit using (⊤; tt) public
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
@@ -20,12 +22,12 @@ the core definitions because it is quite reasonable.
 Any actual data we can think of to plug in here (e.g., strings, tokens or
 nodes of an abstract syntax tree) can be checked for equality.
 -}
-𝔸 : Set₁
-𝔸 = Σ Set DecidableEquality
-
--- retrieve the set of atoms from an atom type 𝔸
-atoms : 𝔸 → Set
-atoms = proj₁
+record 𝔸 : Set₁ where
+  no-eta-equality
+  field
+    atoms : Set
+    atomsEqual? : DecidableEquality atoms
+open 𝔸 public
 
 {-|
 Variant Language.
@@ -63,14 +65,14 @@ and hence expressions are parameterized in the type of this atomic data.
 𝔼 = 𝔸 → Set₁
 
 -- some default atoms
-module _ where
-  open import Data.String using (String; _≟_)
+STRING : 𝔸
+STRING = record
+  { atoms = String
+  ; atomsEqual? = String._≟_
+  }
 
-  STRING : 𝔸
-  STRING = String and _≟_
-
-module _ where
-  open import Data.Nat using (ℕ; _≟_)
-
-  NAT : 𝔸
-  NAT = ℕ and _≟_
+NAT : 𝔸
+NAT = record
+  { atoms = ℕ
+  ; atomsEqual? = ℕ._≟_
+  }
