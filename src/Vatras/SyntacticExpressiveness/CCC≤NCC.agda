@@ -1,7 +1,7 @@
-open import Vatras.Framework.Definitions using (𝔽; 𝔸)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atomSize)
 module Vatras.SyntacticExpressiveness.CCC≤NCC (F : 𝔽) where
 
-open import Data.Nat as ℕ using (suc; _≤_; s≤s)
+open import Data.Nat as ℕ using (suc; _≤_; s≤s; _+_)
 import Data.Nat.Properties as ℕ
 import Data.List as List
 open import Data.Vec as Vec using (_∷_)
@@ -25,17 +25,17 @@ open import Vatras.SyntacticExpressiveness using (_≤Size_)
 open import Vatras.SyntacticExpressiveness.Sizes F using (SizedNCC; sizeNCC; SizedCCC; sizeCCC)
 
 lemma : ∀ {i : Size} {A : 𝔸} (n : ℕ≥ 2) (ncc : NCC.NCC n i A) → sizeCCC (LanguageCompiler.compile (NCC→CCC n) ncc) ≤ sizeNCC n ncc
-lemma (sucs n) (a NCC.NCC.-< cs >-) =
+lemma {A = A} (sucs n) (a NCC.NCC.-< cs >-) =
   begin
     sizeCCC (LanguageCompiler.compile (NCC→CCC (sucs n)) (a NCC.NCC.-< cs >-))
   ≡⟨⟩
     sizeCCC (a CCC.CCC.-< List.map (LanguageCompiler.compile (NCC→CCC (sucs n))) cs >-)
   ≡⟨⟩
-    suc (List.sum (List.map sizeCCC (List.map (LanguageCompiler.compile (NCC→CCC (sucs n))) cs)))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
-    suc (List.sum (List.map (sizeCCC ∘ LanguageCompiler.compile (NCC→CCC (sucs n))) cs))
-  ≤⟨ s≤s (List.sum-map-≤ (sizeCCC ∘ LanguageCompiler.compile (NCC→CCC (sucs n))) (sizeNCC (sucs n)) cs (lemma (sucs n))) ⟩
-    suc (List.sum (List.map (sizeNCC (sucs n)) cs))
+    suc (atomSize A a + List.sum (List.map sizeCCC (List.map (LanguageCompiler.compile (NCC→CCC (sucs n))) cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
+    suc (atomSize A a + List.sum (List.map (sizeCCC ∘ LanguageCompiler.compile (NCC→CCC (sucs n))) cs))
+  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (atomSize A a) (List.sum-map-≤ (sizeCCC ∘ LanguageCompiler.compile (NCC→CCC (sucs n))) (sizeNCC (sucs n)) cs (lemma (sucs n)))) ⟩
+    suc (atomSize A a + List.sum (List.map (sizeNCC (sucs n)) cs))
   ≡⟨⟩
     sizeNCC (sucs n) (a NCC.NCC.-< cs >-)
   ∎

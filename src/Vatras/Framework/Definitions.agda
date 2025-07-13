@@ -27,6 +27,7 @@ record 𝔸 : Set₁ where
   field
     atoms : Set
     atomsEqual? : DecidableEquality atoms
+    atomSize : atoms → ℕ
 open 𝔸 public
 
 {-|
@@ -69,10 +70,19 @@ STRING : 𝔸
 STRING = record
   { atoms = String
   ; atomsEqual? = String._≟_
+  ; atomSize = String.length
   }
 
 NAT : 𝔸
 NAT = record
   { atoms = ℕ
   ; atomsEqual? = ℕ._≟_
+  ; atomSize = id
+  }
+
+NAT' : 𝔸
+NAT' = record
+  { atoms = ℕ
+  ; atomsEqual? = ℕ._≟_
+  ; atomSize = λ _ → 0
   }

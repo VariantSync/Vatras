@@ -70,6 +70,7 @@ module Java where
   A = record
     { atoms = ASTNode
     ; atomsEqual? = _≟-ast_
+    ; atomSize = String.length
     }
   open FST.Impose {String} A
 

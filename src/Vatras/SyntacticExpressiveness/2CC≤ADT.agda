@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
 module Vatras.SyntacticExpressiveness.2CC≤ADT (F : 𝔽) where
 
 open import Data.Nat using (suc; _≤_; s≤s; _+_)
@@ -25,17 +25,17 @@ ADT→2CC' : LanguageCompiler ADT.ADTL 2CC.2CCL
 ADT→2CC' = ADT→2CC encoder
 
 lemma2 : ∀ {i : Size} {A : 𝔸} (v : Rose i A) → size2CC (encode v) ≤ sizeRose v
-lemma2 (a Rose.-< cs >-) =
+lemma2 {A = A} (a Rose.-< cs >-) =
   begin
     size2CC (encode (a Rose.-< cs >-))
   ≡⟨⟩
     size2CC (a 2CC.2CC.-< List.map encode cs >-)
   ≡⟨⟩
-    suc (List.sum (List.map size2CC (List.map encode cs)))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
-    suc (List.sum (List.map (size2CC ∘ encode) cs))
-  ≤⟨ s≤s (List.sum-map-≤ (size2CC ∘ encode) sizeRose cs lemma2) ⟩
-    suc (List.sum (List.map sizeRose cs))
+    suc (atomSize A a + List.sum (List.map size2CC (List.map encode cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
+    suc (atomSize A a + List.sum (List.map (size2CC ∘ encode) cs))
+  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (atomSize A a) (List.sum-map-≤ (size2CC ∘ encode) sizeRose cs lemma2)) ⟩
+    suc (atomSize A a + List.sum (List.map sizeRose cs))
   ≡⟨⟩
     sizeRose (a Rose.-< cs >-)
   ∎

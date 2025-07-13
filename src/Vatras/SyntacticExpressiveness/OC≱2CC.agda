@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔽; 𝔸; NAT)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; NAT')
 -- TODO abstract over (F : 𝔽) using a map (ℕ → 𝔽)
 module Vatras.SyntacticExpressiveness.OC≱2CC where
 
@@ -32,15 +32,15 @@ open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC)
 
-options : ℕ → List (OC.OC ∞ NAT)
+options : ℕ → List (OC.OC ∞ NAT')
 options zero = []
 options (suc n) = n OC.❲ suc n OC.-< [] >- ❳ ∷ options n
 
-exponential-oc : ℕ → OC.OC ∞ NAT
+exponential-oc : ℕ → OC.OC ∞ NAT'
 exponential-oc zero = 0 OC.-< [] >-
 exponential-oc (suc n) = 0 OC.-< exponential-oc n ∷ exponential-oc n ∷ [] >-
 
-oc : ℕ → OC.WFOC ∞ NAT
+oc : ℕ → OC.WFOC ∞ NAT'
 oc n = OC.Root zero (exponential-oc n ∷ options n)
 
 size-options : ∀ n → List.sum (List.map sizeOC (options n)) ≡ 2 * n
@@ -94,15 +94,15 @@ size-oc n =
   where
   open Eq.≡-Reasoning
 
-exponential-artifact : ℕ → Rose ∞ NAT
+exponential-artifact : ℕ → Rose ∞ NAT'
 exponential-artifact zero = 0 Rose.-< [] >-
 exponential-artifact (suc n) = 0 Rose.-< exponential-artifact n ∷ exponential-artifact n ∷ [] >-
 
-variant-cs : ℕ → List (Rose ∞ NAT)
+variant-cs : ℕ → List (Rose ∞ NAT')
 variant-cs zero = []
 variant-cs (suc i) = suc i Rose.-< [] >- ∷ variant-cs i
 
-variant : ℕ → ℕ → Rose ∞ NAT
+variant : ℕ → ℕ → Rose ∞ NAT'
 variant n i = 0 Rose.-< exponential-artifact n ∷ variant-cs i >-
 
 length-variants-cs : ∀ n → List.length (variant-cs n) ≡ n
@@ -110,7 +110,7 @@ length-variants-cs zero = Eq.refl
 length-variants-cs (suc n) = Eq.cong suc (length-variants-cs n)
 
 variant∈e⇒length-cs
-  : ∀ {i} (n l : ℕ) (a : ℕ) (cs : List (2CC.2CC i NAT))
+  : ∀ {i} (n l : ℕ) (a : ℕ) (cs : List (2CC.2CC i NAT'))
   → variant n l ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
   → List.length cs ≡ suc l
 variant∈e⇒length-cs n l a cs (c , v≡e) =
@@ -126,7 +126,7 @@ variant∈e⇒length-cs n l a cs (c , v≡e) =
   open Eq.≡-Reasoning
 
 exponential-artifact∈e⇒length-cs
-  : ∀ {i} (n : ℕ) (a : ℕ) (cs : List (2CC.2CC i NAT))
+  : ∀ {i} (n : ℕ) (a : ℕ) (cs : List (2CC.2CC i NAT'))
   → exponential-artifact (suc n) ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
   → List.length cs ≡ 2
 exponential-artifact∈e⇒length-cs n a cs (c , v≡e) =
@@ -143,7 +143,7 @@ exponential-artifact∈e⇒length-cs n a cs (c , v≡e) =
 
 exponential-big
   : ∀ {i : Size} (n l : ℕ)
-  → (2cc : 2CC.2CC i NAT)
+  → (2cc : 2CC.2CC i NAT')
   → exponential-artifact n ∈ 2CC.⟦ 2cc ⟧
   → 2 ^ (suc n) ∸ 1 ≤ size2CC 2cc
 exponential-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) with c D
@@ -174,7 +174,7 @@ exponential-big (suc n) l (a 2CC.-< c₁ ∷ c₂ ∷ [] >-) (c , v≡2cc) | Eq.
 
 exponentially-big
   : ∀ {i : Size} (n l : ℕ)
-  → (2cc : 2CC.2CC i NAT)
+  → (2cc : 2CC.2CC i NAT')
   → variant n l ∈ 2CC.⟦ 2cc ⟧
   → 2 ^ n < size2CC 2cc
 exponentially-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) with c D
@@ -203,7 +203,7 @@ exponentially-big n l (a 2CC.-< c₁ ∷ cs >-) (c , v≡2cc) | Eq.refl =
   open ℕ.≤-Reasoning
 
 partition : ∀ {i : Size} (n D : ℕ)
-  → (c₁ c₂ : 2CC.2CC i NAT)
+  → (c₁ c₂ : 2CC.2CC i NAT')
   → (ls : List ℕ)
   → Unique ls
   → All (λ l → variant n l ∈ 2CC.⟦ D 2CC.⟨ c₁ , c₂ ⟩ ⟧) ls
@@ -220,7 +220,7 @@ partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls�
   ls₁ , l ∷ ls₂ , there ∘ ls₁⊆ls , Subset.∷⁺ʳ l ls₂⊆ls , Eq.trans (ℕ.+-suc (List.length ls₁) (List.length ls₂)) (Eq.cong suc ls₁+ls₂≡ls) , unique-ls₁ , ls₁∈l , All.anti-mono ls₂⊆ls l∉ls ∷ unique-ls₂ , (c , l≡2cc) ∷ ls₂∈r
 
 big : ∀ {i : Size} (n : ℕ)
-  → (2cc : 2CC.2CC i NAT)
+  → (2cc : 2CC.2CC i NAT')
   → (ls : List ℕ)
   → Unique ls
   → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) ls
@@ -311,7 +311,7 @@ conf n i = i <ᵇ n
 
 ⊆⇒All∈ : ∀ {i} n l
   → l ≤ suc n
-  → (2cc : 2CC.2CC i NAT)
+  → (2cc : 2CC.2CC i NAT')
   → OC.⟦ oc n ⟧ ⊆ 2CC.⟦ 2cc ⟧
   → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) (List.upTo l)
 ⊆⇒All∈ n zero l≤m 2cc oc⊆2cc = []
@@ -338,11 +338,11 @@ conf n i = i <ᵇ n
   where
   open ℕ.≤-Reasoning
 
-size2CC>0 : ∀ {i} (2cc : 2CC.2CC i NAT) → 0 < size2CC 2cc
+size2CC>0 : ∀ {i} (2cc : 2CC.2CC i NAT') → 0 < size2CC 2cc
 size2CC>0 (a 2CC.-< cs >-) = s≤s z≤n
 size2CC>0 (D 2CC.⟨ l , r ⟩) = s≤s z≤n
 
-goal : ∀ {i} (n : ℕ) (2cc : 2CC.2CC i NAT)
+goal : ∀ {i} (n : ℕ) (2cc : 2CC.2CC i NAT')
   → OC.⟦ oc (4 * n) ⟧ ≅ 2CC.⟦ 2cc ⟧
   → n * sizeWFOC (oc (4 * n)) < size2CC 2cc
 goal zero 2cc 2cc≅oc = size2CC>0 2cc
@@ -386,4 +386,4 @@ goal n@(suc _) 2cc (oc⊆2cc , 2cc⊆oc) =
   open ℕ.≤-Reasoning
 
 OC≱2CC : SizedWFOC ≱Size Sized2CC
-OC≱2CC n = NAT , oc (4 * n) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc
+OC≱2CC n = NAT' , oc (4 * n) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc

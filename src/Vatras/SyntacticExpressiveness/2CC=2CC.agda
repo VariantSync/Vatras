@@ -12,7 +12,7 @@ open import Size using (Size)
 
 open import Vatras.Util.Nat.AtLeast using (sucs)
 open import Vatras.Data.EqIndexedSet using (≅[]→≅)
-open import Vatras.Framework.Definitions using (𝔽; 𝔸)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atomSize)
 open import Vatras.Lang.All
 open import Vatras.Translation.Lang.2CC.Rename using (rename) renaming (preserves to rename-preserves)
 import Vatras.Translation.Lang.2CC-to-NCC
@@ -26,17 +26,17 @@ module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹
   rename-preserves-size2CC : ∀ {i : Size} {A : 𝔸}
     → (e : 2CC.2CC F₂ i A)
     → size2CC F₁ (rename f e) ≡ size2CC F₂ e
-  rename-preserves-size2CC (a 2CC.2CC.-< cs >-) =
+  rename-preserves-size2CC {A = A} (a 2CC.2CC.-< cs >-) =
     begin
       size2CC F₁ (rename f (a 2CC.2CC.-< cs >-))
     ≡⟨⟩
       size2CC F₁ (a 2CC.2CC.-< List.map (rename f) cs >-)
     ≡⟨⟩
-      suc (List.sum (List.map (size2CC F₁) (List.map (rename f) cs)))
-    ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
-      suc (List.sum (List.map (size2CC F₁ ∘ rename f) cs))
-    ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-cong rename-preserves-size2CC cs) ⟩
-      suc (List.sum (List.map (size2CC F₂) cs))
+      suc (atomSize A a + List.sum (List.map (size2CC F₁) (List.map (rename f) cs)))
+    ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
+      suc (atomSize A a + List.sum (List.map (size2CC F₁ ∘ rename f) cs))
+    ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-cong rename-preserves-size2CC cs) ⟩
+      suc (atomSize A a + List.sum (List.map (size2CC F₂) cs))
     ≡⟨⟩
       size2CC F₂ (a 2CC.2CC.-< cs >-)
     ∎
@@ -72,17 +72,17 @@ module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹
 2CC→NCC-preserves-size : ∀ {i : Size} {A : 𝔸} {F : 𝔽}
   → (e : 2CC.2CC F i A)
   → sizeNCC F (sucs zero) (2CC→NCC e) ≡ size2CC F e
-2CC→NCC-preserves-size {F = F} (a 2CC.2CC.-< cs >-) =
+2CC→NCC-preserves-size {A = A} {F = F} (a 2CC.2CC.-< cs >-) =
   begin
     sizeNCC F (sucs zero) (2CC→NCC (a 2CC.2CC.-< cs >-))
   ≡⟨⟩
     sizeNCC F (sucs zero) (a NCC.NCC.-< List.map 2CC→NCC cs >-)
   ≡⟨⟩
-    suc (List.sum (List.map (sizeNCC F (sucs zero)) (List.map 2CC→NCC cs)))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
-    suc (List.sum (List.map (sizeNCC F (sucs zero) ∘ 2CC→NCC) cs))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-cong 2CC→NCC-preserves-size cs) ⟩
-    suc (List.sum (List.map (size2CC F) cs))
+    suc (atomSize A a + List.sum (List.map (sizeNCC F (sucs zero)) (List.map 2CC→NCC cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
+    suc (atomSize A a + List.sum (List.map (sizeNCC F (sucs zero) ∘ 2CC→NCC) cs))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-cong 2CC→NCC-preserves-size cs) ⟩
+    suc (atomSize A a + List.sum (List.map (size2CC F) cs))
   ≡⟨⟩
     size2CC F (a 2CC.2CC.-< cs >-)
   ∎
@@ -110,17 +110,17 @@ module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹
 NCC→2CC-preserves-size : ∀ {i : Size} {A : 𝔸} {F : 𝔽}
   → (e : NCC.NCC F (sucs zero) i A)
   → size2CC F (NCC→2CC e) ≡ sizeNCC F (sucs zero) e
-NCC→2CC-preserves-size {F = F} (a NCC.NCC.-< cs >-) =
+NCC→2CC-preserves-size {A = A} {F = F} (a NCC.NCC.-< cs >-) =
   begin
     size2CC F (NCC→2CC (a NCC.NCC.-< cs >-))
   ≡⟨⟩
     size2CC F (a 2CC.2CC.-< List.map NCC→2CC cs >-)
   ≡⟨⟩
-    suc (List.sum (List.map (size2CC F) (List.map NCC→2CC cs)))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
-    suc (List.sum (List.map (size2CC F ∘ NCC→2CC) cs))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-cong NCC→2CC-preserves-size cs) ⟩
-    suc (List.sum (List.map (sizeNCC F (sucs zero)) cs))
+    suc (atomSize A a + List.sum (List.map (size2CC F) (List.map NCC→2CC cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
+    suc (atomSize A a + List.sum (List.map (size2CC F ∘ NCC→2CC) cs))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-cong NCC→2CC-preserves-size cs) ⟩
+    suc (atomSize A a + List.sum (List.map (sizeNCC F (sucs zero)) cs))
   ≡⟨⟩
     sizeNCC F (sucs zero) (a NCC.NCC.-< cs >-)
   ∎

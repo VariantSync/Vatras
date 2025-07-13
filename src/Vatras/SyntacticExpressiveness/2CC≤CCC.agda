@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≢_)
 open import Data.Nat as ℕ using (ℕ; zero; suc; pred; _≤_; z≤n; s≤s; _<_; _>_; _+_; _∸_; _*_; _<?_; _≤ᵇ_; _^_; _⊔_)
@@ -137,27 +137,31 @@ translate (D CCC.CCC.⟨ c ∷ cs ⟩) = choice-list D zero (translate c) (List.
 translate-size : ∀ {i : Size} {A : 𝔸}
   → (ccc : CCC.CCC F i A)
   → size2CC (F × ℕ) (translate ccc) < 2 * sizeCCC F ccc
-translate-size (a CCC.CCC.-< cs >-) =
+translate-size {A = A} (a CCC.CCC.-< cs >-) =
   begin-strict
     size2CC (F × ℕ) (translate (a CCC.CCC.-< cs >-))
   ≡⟨⟩
     size2CC (F × ℕ) (a 2CC.2CC.-< List.map translate cs >-)
   ≡⟨⟩
-    suc (List.sum (List.map (size2CC (F × ℕ)) (List.map translate cs)))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟨
-    suc (List.sum (List.map (size2CC (F × ℕ) ∘ translate) cs))
-  ≤⟨ s≤s (List.sum-map-≤ (size2CC (F × ℕ) ∘ translate) (λ c → 2 * sizeCCC F c) cs (ℕ.<⇒≤ ∘ translate-size)) ⟩
-    suc (List.sum (List.map (λ c → 2 * sizeCCC F c) cs))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-∘ cs) ⟩
-    suc (List.sum (List.map (2 *_) (List.map (sizeCCC F) cs)))
-  ≡⟨ Eq.cong suc (List.sum-* 2 (List.map (sizeCCC F) cs)) ⟩
-    suc (2 * (List.sum (List.map (sizeCCC F) cs)))
+    suc (atomSize A a + List.sum (List.map (size2CC (F × ℕ)) (List.map translate cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
+    suc (atomSize A a + List.sum (List.map (size2CC (F × ℕ) ∘ translate) cs))
+  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (atomSize A a) (List.sum-map-≤ (size2CC (F × ℕ) ∘ translate) (λ c → 2 * sizeCCC F c) cs (ℕ.<⇒≤ ∘ translate-size))) ⟩
+    suc (atomSize A a + List.sum (List.map (λ c → 2 * sizeCCC F c) cs))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟩
+    suc (atomSize A a + List.sum (List.map (2 *_) (List.map (sizeCCC F) cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + x)) (List.sum-* 2 (List.map (sizeCCC F) cs)) ⟩
+    suc (atomSize A a + 2 * List.sum (List.map (sizeCCC F) cs))
+  ≤⟨ s≤s (ℕ.+-monoˡ-≤ (2 * List.sum (List.map (sizeCCC F) cs)) (ℕ.m≤m+n (atomSize A a) (1 * atomSize A a))) ⟩
+    suc (atomSize A a + 1 * atomSize A a + 2 * List.sum (List.map (sizeCCC F) cs))
   ≡⟨⟩
-    1 + 2 * (List.sum (List.map (sizeCCC F) cs))
-  <⟨ ℕ.+-monoˡ-< (2 * (List.sum (List.map (sizeCCC F) cs))) {x = 1} {y = 2} (ℕ.n<1+n 1) ⟩
-    2 + 2 * (List.sum (List.map (sizeCCC F) cs))
-  ≡⟨ ℕ.*-suc 2 (List.sum (List.map (sizeCCC F) cs)) ⟨
-    2 * (suc (List.sum (List.map (sizeCCC F) cs)))
+    suc (2 * atomSize A a + 2 * List.sum (List.map (sizeCCC F) cs))
+  ≡⟨ Eq.cong suc (ℕ.*-distribˡ-+ 2 (atomSize A a) (List.sum (List.map (sizeCCC F) cs))) ⟨
+    1 + 2 * (atomSize A a + List.sum (List.map (sizeCCC F) cs))
+  <⟨ ℕ.+-monoˡ-< (2 * (atomSize A a + List.sum (List.map (sizeCCC F) cs))) {x = 1} {y = 2} (ℕ.n<1+n 1) ⟩
+    2 + 2 * (atomSize A a + List.sum (List.map (sizeCCC F) cs))
+  ≡⟨ ℕ.*-suc 2 (atomSize A a + List.sum (List.map (sizeCCC F) cs)) ⟨
+    2 * (suc (atomSize A a + List.sum (List.map (sizeCCC F) cs)))
   ≡⟨⟩
     2 * sizeCCC F (a CCC.CCC.-< cs >-)
   ∎

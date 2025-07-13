@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
+open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
 module Vatras.SyntacticExpressiveness.Sizes (F : 𝔽) where
 
 open import Data.Nat using (ℕ; suc; zero; _+_)
@@ -14,10 +14,10 @@ open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.SyntacticExpressiveness using (SizedLang)
 
 sizeRose : ∀ {i : Size} {A : 𝔸} → Rose i A → ℕ
-sizeRose (a Rose.-< cs >-) = suc (List.sum (List.map sizeRose cs))
+sizeRose {A = A} (a Rose.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeRose cs))
 
 size2CC : ∀ {i : Size} {A : 𝔸} → 2CC.2CC i A → ℕ
-size2CC (a 2CC.2CC.-< cs >-) = suc (List.sum (List.map size2CC cs))
+size2CC {A = A} (a 2CC.2CC.-< cs >-) = suc (atomSize A a + List.sum (List.map size2CC cs))
 size2CC (D 2CC.2CC.⟨ l , r ⟩) = suc (size2CC l + size2CC r)
 
 Sized2CC : SizedLang
@@ -27,7 +27,7 @@ Sized2CC = record
   }
 
 sizeNCC : ∀ {i : Size} {A : 𝔸} (n : ℕ≥ 2) → NCC.NCC n i A → ℕ
-sizeNCC n (a NCC.NCC.-< cs >-) = suc (List.sum (List.map (sizeNCC n) cs))
+sizeNCC {A = A} n (a NCC.NCC.-< cs >-) = suc (atomSize A a + List.sum (List.map (sizeNCC n) cs))
 sizeNCC n (D NCC.NCC.⟨ cs ⟩) = suc (Vec.sum (Vec.map (sizeNCC n) cs))
 
 SizedNCC : ℕ≥ 2 → SizedLang
@@ -37,7 +37,7 @@ SizedNCC n = record
   }
 
 sizeCCC : ∀ {i : Size} {A : 𝔸} → CCC.CCC i A → ℕ
-sizeCCC (a CCC.CCC.-< cs >-) = suc (List.sum (List.map sizeCCC cs))
+sizeCCC {A = A} (a CCC.CCC.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeCCC cs))
 sizeCCC (D CCC.CCC.⟨ cs ⟩) = suc (List.sum (List.map sizeCCC (List⁺.toList cs)))
 
 SizedCCC : SizedLang
@@ -57,7 +57,7 @@ SizedADT = record
   }
 
 sizeOC : ∀ {i : Size} {A : 𝔸} → OC.OC i A → ℕ
-sizeOC (a OC.-< cs >-) = suc (List.sum (List.map sizeOC cs))
+sizeOC {A = A} (a OC.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeOC cs))
 sizeOC (D OC.❲ c ❳) = suc (sizeOC c)
 
 sizeWFOC : ∀ {i : Size} {A : 𝔸} → OC.WFOC i A → ℕ

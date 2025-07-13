@@ -26,14 +26,14 @@ open import Relation.Nullary.Negation using (¬_)
 open import Size using (Size; ∞)
 
 open import Vatras.Data.EqIndexedSet using (_⊆_; ⊆-trans; _∈_)
-open import Vatras.Framework.Definitions using (𝔸; NAT)
+open import Vatras.Framework.Definitions using (𝔸; NAT')
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST)
 
-open FST.Impose NAT hiding (Unique; _∈_)
+open FST.Impose NAT' hiding (Unique; _∈_)
 
 -- TODO duplicated from 2CC≤CCC
 >⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ℕ.≤ᵇ n))
@@ -153,7 +153,7 @@ variant n i = 0 Rose.-< List.applyUpTo (artifact n) i >-
   → (n j : ℕ)
   → {a₁ a₂ : ℕ}
   → (cs₁ : List (FSTA ∞))
-  → (cs₂ : List (2CC.2CC i NAT))
+  → (cs₂ : List (2CC.2CC i NAT'))
   → (a₁ Rose.-< cs₁ >-) ∈ 2CC.⟦ a₂ 2CC.2CC.-< cs₂ >- ⟧
   → cs₁ ∈ (λ conf → List.map (λ c → 2CC.⟦ c ⟧ conf) cs₂)
 ∈-children n j cs₁ cs₂ (conf , cs₁≡cs₂) = conf , proj₂ (Rose-injective cs₁≡cs₂)
@@ -161,7 +161,7 @@ variant n i = 0 Rose.-< List.applyUpTo (artifact n) i >-
 artifact-child-count : ∀ {i : Size}
   → (n j : ℕ)
   → (a : ℕ)
-  → (cs : List (2CC.2CC i NAT))
+  → (cs : List (2CC.2CC i NAT'))
   → big-artifact (suc n) j ∈ 2CC.⟦ a 2CC.2CC.-< cs >- ⟧
   → List.length cs ≡ 2
 artifact-child-count n j a (c₁ ∷ c₂ ∷ []) artifact∈cs = refl
@@ -169,8 +169,8 @@ artifact-child-count n j a (c₁ ∷ c₂ ∷ []) artifact∈cs = refl
 big-artifact-children : ∀ {i : Size}
   → (n j : ℕ)
   → (a : ℕ)
-  → (cs : List (2CC.2CC i NAT))
-  → (c : 2CC.2CC i NAT)
+  → (cs : List (2CC.2CC i NAT'))
+  → (c : 2CC.2CC i NAT')
   → c List.∈ cs
   → big-artifact (suc n) j ∈ 2CC.⟦ a 2CC.2CC.-< cs >- ⟧
   → Σ[ j' ∈ ℕ ] big-artifact n j' ∈ 2CC.⟦ c ⟧
@@ -179,7 +179,7 @@ big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₃ (there (here refl)) (co
 
 big-artifact∈e₂⇒2^n≤e₂ : ∀ {i : Size}
   → (n j : ℕ)
-  → (e₂ : 2CC.2CC i NAT)
+  → (e₂ : 2CC.2CC i NAT')
   → big-artifact n j ∈ 2CC.⟦ e₂ ⟧
   → 2 ^ suc n ∸ 1 ≤ size2CC e₂
 big-artifact∈e₂⇒2^n≤e₂ zero j e₂ artifact∈e₂ = 1≤size2CC e₂
@@ -237,7 +237,7 @@ big-artifact∈e₂⇒2^n≤e₂ (suc n) j (D 2CC.2CC.⟨ l , r ⟩) (conf , art
 
 artifact-0∈e₂⇒2^n≤e₂ : ∀ {i : Size}
   → (n : ℕ)
-  → (e₂ : 2CC.2CC i NAT)
+  → (e₂ : 2CC.2CC i NAT')
   → artifact n zero ∈ 2CC.⟦ e₂ ⟧
   → 2 ^ suc n ≤ size2CC e₂
 artifact-0∈e₂⇒2^n≤e₂ n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡cs) =
@@ -287,7 +287,7 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
 2^n≤size2CC-artifact : ∀ {i : Size}
   → (n j : ℕ)
   → (a : ℕ)
-  → (cs : List (2CC.2CC i NAT))
+  → (cs : List (2CC.2CC i NAT'))
   → variant n (suc j) ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
   → 2 ^ suc n ≤ size2CC (a 2CC.-< cs >-)
 2^n≤size2CC-artifact n j a (c ∷ cs) (conf , artifact≡cs) =
@@ -309,7 +309,7 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
 
 impossible-artifact-sizes : ∀ {i : Size}
   → (n : ℕ)
-  → (cs : List (2CC.2CC i NAT))
+  → (cs : List (2CC.2CC i NAT'))
   → (cs₁ cs₂ : List (FSTA ∞))
   → List.length cs₁ ≢ List.length cs₂
   → cs₁ ∈ (λ conf → List.map (λ c → 2CC.⟦ c ⟧ conf) cs)
@@ -325,7 +325,7 @@ impossible-artifact-sizes n (c ∷ cs) (c₁ ∷ cs₁) (c₂ ∷ cs₂) cs₁�
 split-sizes : ∀ {i : Size}
   → (n : ℕ)
   → (D : ℕ)
-  → (l r : 2CC.2CC i NAT)
+  → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
   → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧
   → List ℕ × List ℕ
@@ -338,7 +338,7 @@ split-sizes n D l r (size ∷ sizes) artifact⊆l,r | conf , artifact≡l,r | fa
 split-sizes⊆ : ∀ {i : Size}
   → (n : ℕ)
   → (D : ℕ)
-  → (l r : 2CC.2CC i NAT)
+  → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
   → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧)
   → ((variant n ∘′ suc ∘′ List.lookup (proj₁ (split-sizes n D l r sizes artifact∈l,r))) ⊆ 2CC.⟦ l ⟧)
@@ -364,7 +364,7 @@ split-sizes⊆ n D l r (size ∷ sizes) artifact⊆l,r | conf , artifact≡l,r |
 split-sizes-length : ∀ {i : Size}
   → (n : ℕ)
   → (D : ℕ)
-  → (l r : 2CC.2CC i NAT)
+  → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
   → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧)
   → List.length sizes ≤ List.length (proj₁ (split-sizes n D l r sizes artifact∈l,r)) + List.length (proj₂ (split-sizes n D l r sizes artifact∈l,r))
@@ -388,7 +388,7 @@ split-sizes-length n D l r (size ∷ sizes) artifact∈l,r | conf , artifact≡l
 split-sizes-sublist : ∀ {i : Size}
   → (n : ℕ)
   → (D : ℕ)
-  → (l r : 2CC.2CC i NAT)
+  → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
   → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧)
   → proj₁ (split-sizes n D l r sizes artifact∈l,r) Sublist.⊆ sizes
@@ -401,7 +401,7 @@ split-sizes-sublist n D l r (size ∷ sizes) artifact∈l,r | conf , artifact≡
 
 n*2^n≤size2CC : ∀ {i : Size}
   → (n : ℕ)
-  → (e₂ : 2CC.2CC i NAT)
+  → (e₂ : 2CC.2CC i NAT')
   → (sizes : List ℕ)
   → Unique sizes
   → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ e₂ ⟧
@@ -694,8 +694,8 @@ variants⊆e₁ : ∀ (m : ℕ) → (variant m ∘ suc ∘ List.lookup (List.upT
 variants⊆e₁ m size = Prod.map₂ (Eq.trans (Eq.cong (variant m ∘ suc) (List.lookup-upTo m size))) (variant∈e₁ m (Fin.toℕ size) (ℕ.≤-trans (Fin.toℕ≤n size) (ℕ.≤-reflexive (List.length-upTo m))))
 
 FST≱2CC : SizedFST ≱Size Sized2CC
-FST≱2CC zero = NAT , e₁ zero , λ e₂ e₁≅e₂ → 1≤size2CC e₂
-FST≱2CC (suc n) = NAT , e₁ m , λ e₂ e₁≅e₂ →
+FST≱2CC zero = NAT' , e₁ zero , λ e₂ e₁≅e₂ → 1≤size2CC e₂
+FST≱2CC (suc n) = NAT' , e₁ m , λ e₂ e₁≅e₂ →
   begin-strict
     suc n * sizeFST (e₁ m)
   ≡⟨ Eq.cong (suc n *_) (size-e₁ m) ⟩
