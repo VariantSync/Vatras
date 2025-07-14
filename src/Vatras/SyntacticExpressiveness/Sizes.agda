@@ -61,7 +61,7 @@ sizeOC {A = A} (a OC.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeOC c
 sizeOC (D OC.❲ c ❳) = suc (sizeOC c)
 
 sizeWFOC : ∀ {i : Size} {A : 𝔸} → OC.WFOC i A → ℕ
-sizeWFOC (OC.Root a cs) = suc (List.sum (List.map sizeOC cs))
+sizeWFOC {A = A} (OC.Root a cs) = suc (atomSize A a + List.sum (List.map sizeOC cs))
 
 SizedWFOC : SizedLang
 SizedWFOC = record

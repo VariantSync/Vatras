@@ -3,7 +3,7 @@ module Vatras.SyntacticExpressiveness.FST≱2CC where
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_)
 import Data.Bool.Properties as Bool
 open import Data.Empty using (⊥-elim)
-open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; z≤n; s≤s; _>_; _+_; _∸_; _*_; _^_)
+open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; _<_; z≤n; s≤s; _>_; _+_; _∸_; _*_; _^_)
 import Data.Nat.Properties as ℕ
 open import Data.Fin as Fin using (Fin; zero; suc)
 import Data.Fin.Properties as Fin
@@ -17,6 +17,7 @@ open import Data.List.Relation.Unary.AllPairs using ([]; _∷_)
 open import Data.List.Relation.Unary.Unique.Propositional using (Unique)
 import Data.List.Relation.Unary.Unique.Propositional.Properties as Unique
 open import Data.Product as Prod using (_×_; _,_; proj₁; proj₂; Σ-syntax)
+import Data.Product.Properties as Prod
 open import Data.Unit using (tt)
 open import Function using (_∘_; _∘′_; const)
 open import Function.Bundles using (Equivalence)
@@ -26,12 +27,19 @@ open import Relation.Nullary.Negation using (¬_)
 open import Size using (Size; ∞)
 
 open import Vatras.Data.EqIndexedSet using (_⊆_; ⊆-trans; _∈_)
-open import Vatras.Framework.Definitions using (𝔸; NAT')
+open import Vatras.Framework.Definitions using (𝔸; NAT; atomSize)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST)
+
+NAT' : 𝔸
+NAT' = record
+  { atoms = ℕ × ℕ
+  ; atomsEqual? = Prod.≡-dec ℕ._≟_ ℕ._≟_
+  ; atomSize = proj₂
+  }
 
 open FST.Impose NAT' hiding (Unique; _∈_)
 
@@ -41,33 +49,14 @@ open FST.Impose NAT' hiding (Unique; _∈_)
 >⇒¬≤ᵇ (s≤s (s≤s m>n)) = >⇒¬≤ᵇ (s≤s m>n)
 
 big-artifact : ℕ → ℕ → FSTA ∞
-big-artifact zero i = i Rose.-< [] >-
-big-artifact (suc n) i = i Rose.-< big-artifact n i ∷ big-artifact n (i + 2 ^ n) ∷ [] >-
+big-artifact n i = (i , 2 ^ n) Rose.-< [] >-
 
 artifact : ℕ → ℕ → FSTA ∞
-artifact n zero = 0 Rose.-< big-artifact n zero ∷ [] >-
-artifact n (suc i) = suc i Rose.-< [] >-
-
-big-artifact-≉ : (n i : ℕ) → big-artifact n i ≉ big-artifact n (i + 2 ^ n)
-big-artifact-≉ zero i i≡i+2^n = ℕ.1+n≢n (Eq.sym (Eq.trans i≡i+2^n (ℕ.+-comm i 1)))
-big-artifact-≉ (suc n) i i≡i+2^n = ℕ.1+n≰n (
-  begin-strict
-    i
-  <⟨ ℕ.n<1+n i ⟩
-    1 + i
-  ≡⟨ ℕ.+-comm 1 i ⟩
-    i + 1
-  ≤⟨ ℕ.+-monoʳ-≤ i (ℕ.m^n>0 2 (suc n)) ⟩
-    i + 2 ^ suc n
-  ≡⟨ i≡i+2^n ⟨
-    i
-  ∎)
-  where
-  open ℕ.≤-Reasoning
+artifact n zero = (0 , 0) Rose.-< big-artifact n zero ∷ [] >-
+artifact n (suc i) = (suc i , 0) Rose.-< [] >-
 
 big-artifact-wf : (n i : ℕ) → WellFormed (big-artifact n i)
-big-artifact-wf zero i = [] , []
-big-artifact-wf (suc n) i = (big-artifact-≉ n i ∷ []) ∷ [] ∷ [] , big-artifact-wf n i ∷ big-artifact-wf n (i + 2 ^ n) ∷ []
+big-artifact-wf n i = [] , []
 
 artifact-wf : (n i : ℕ) → WellFormed (artifact n i)
 artifact-wf n zero = [] ∷ [] , big-artifact-wf n zero ∷ []
@@ -77,40 +66,25 @@ feature : ℕ → ℕ → FSF
 feature n i = (artifact n i ∷ []) ⊚ ([] ∷ [] , artifact-wf n i ∷ [])
 
 e₁ : ℕ → SPL
-e₁ n = 0 ◀ List.applyUpTo (λ i → i :: feature n i) (suc n)
+e₁ n = (0 , 0) ◀ List.applyUpTo (λ i → i :: feature n i) (suc n)
 
 size-big-artifact :
   ∀ (n i : ℕ)
-  → sizeRose (big-artifact n i) ≡ 2 ^ suc n ∸ 1
-size-big-artifact zero i = refl
-size-big-artifact (suc n) i =
+  → sizeRose (big-artifact n i) ≡ suc (2 ^ n)
+size-big-artifact n i =
   begin
-    sizeRose (big-artifact (suc n) i)
+    sizeRose (big-artifact n i)
   ≡⟨⟩
-    sizeRose (i Rose.-< big-artifact n i ∷ big-artifact n (i + 2 ^ n) ∷ [] >-)
-  ≡⟨⟩
-    suc (sizeRose (big-artifact n i) + (sizeRose (big-artifact n (i + 2 ^ n)) + 0))
-  ≡⟨ Eq.cong (λ x → suc (sizeRose (big-artifact n i) + x)) (ℕ.+-identityʳ (sizeRose (big-artifact n (i + 2 ^ n)))) ⟩
-    suc (sizeRose (big-artifact n i) + (sizeRose (big-artifact n (i + 2 ^ n))))
-  ≡⟨ Eq.cong₂ (λ x y → suc (x + y)) (size-big-artifact n i) (size-big-artifact n (i + 2 ^ n)) ⟩
-    suc ((2 ^ suc n ∸ 1) + (2 ^ suc n ∸ 1))
-  ≡⟨ Eq.cong (_+ (2 ^ suc n ∸ 1)) (ℕ.+-∸-assoc 1 {2 ^ suc n} {1} (ℕ.m^n>0 2 (suc n))) ⟨
-    2 ^ suc n + (2 ^ suc n ∸ 1)
-  ≡⟨ ℕ.+-∸-assoc (2 ^ suc n) {2 ^ suc n} {1} (ℕ.m^n>0 2 (suc n)) ⟨
-    (2 ^ suc n + 2 ^ suc n) ∸ 1
-  ≡⟨ Eq.cong (λ x → (2 ^ suc n + x) ∸ 1) (ℕ.+-identityʳ (2 ^ suc n)) ⟨
-    (2 ^ suc n + (2 ^ suc n + 0)) ∸ 1
-  ≡⟨⟩
-    2 * 2 ^ suc n ∸ 1
-  ≡⟨⟩
-    2 ^ suc (suc n) ∸ 1
+    suc (2 ^ n) + 0
+  ≡⟨ ℕ.+-identityʳ (suc (2 ^ n)) ⟩
+    suc (2 ^ n)
   ∎
   where
   open Eq.≡-Reasoning
 
 size-e₁ :
   ∀ (n : ℕ)
-  → sizeFST (e₁ n) ≡ 2 + 2 ^ suc n + 2 * n
+  → sizeFST (e₁ n) ≡ 4 + 2 ^ n + 2 * n
 size-e₁ n =
   begin
     sizeFST (e₁ n)
@@ -127,23 +101,21 @@ size-e₁ n =
   ≡⟨ Eq.cong (λ x → x + List.sum (List.map (λ i → suc (sizeRose (artifact n (suc i)))) (List.upTo n))) (ℕ.+-identityʳ (3 + sizeRose (big-artifact n zero))) ⟩
     3 + sizeRose (big-artifact n zero) + List.sum (List.map (const 2) (List.upTo n))
   ≡⟨ Eq.cong (λ x → 3 + x + List.sum (List.map (const 2) (List.upTo n))) (size-big-artifact n zero) ⟩
-    3 + (2 ^ suc n ∸ 1) + List.sum (List.map (const 2) (List.upTo n))
-  ≡⟨ Eq.cong (λ x → 3 + (2 ^ suc n ∸ 1) + List.sum x) (List.map-const 2 (List.upTo n)) ⟩
-    3 + (2 ^ suc n ∸ 1) + List.sum (List.replicate (List.length (List.upTo n)) 2)
-  ≡⟨ Eq.cong (λ x → 3 + (2 ^ suc n ∸ 1) + List.sum (List.replicate x 2)) (List.length-upTo n) ⟩
-    3 + (2 ^ suc n ∸ 1) + List.sum (List.replicate n 2)
-  ≡⟨ Eq.cong (λ x → 3 + (2 ^ suc n ∸ 1) + x) (List.sum-replicate n 2) ⟩
-    3 + (2 ^ suc n ∸ 1) + n * 2
-  ≡⟨ Eq.cong (λ x → 2 + (x + n * 2)) (ℕ.+-∸-assoc 1 {2 ^ suc n} {1} (ℕ.m^n>0 2 (suc n))) ⟨
-    2 + 2 ^ suc n + n * 2
-  ≡⟨ Eq.cong (λ x → 2 + 2 ^ suc n + x) (ℕ.*-comm n 2) ⟩
-    2 + 2 ^ suc n + 2 * n
+    4 + 2 ^ n + List.sum (List.map (const 2) (List.upTo n))
+  ≡⟨ Eq.cong (λ x → 4 + 2 ^ n + List.sum x) (List.map-const 2 (List.upTo n)) ⟩
+    4 + 2 ^ n + List.sum (List.replicate (List.length (List.upTo n)) 2)
+  ≡⟨ Eq.cong (λ x → 4 + 2 ^ n + List.sum (List.replicate x 2)) (List.length-upTo n) ⟩
+    4 + 2 ^ n + List.sum (List.replicate n 2)
+  ≡⟨ Eq.cong (λ x → 4 + 2 ^ n + x) (List.sum-replicate n 2) ⟩
+    4 + 2 ^ n + n * 2
+  ≡⟨ Eq.cong (4 + 2 ^ n +_) (ℕ.*-comm n 2) ⟩
+    4 + 2 ^ n + 2 * n
   ∎
   where
   open Eq.≡-Reasoning
 
 variant : ℕ → ℕ → FSTA ∞
-variant n i = 0 Rose.-< List.applyUpTo (artifact n) i >-
+variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) i >-
 
 1≤size2CC : ∀ {i : Size} {A : 𝔸} → (e : 2CC.2CC i A) → 1 ≤ size2CC e
 1≤size2CC (a 2CC.2CC.-< cs >-) = s≤s z≤n
@@ -151,67 +123,38 @@ variant n i = 0 Rose.-< List.applyUpTo (artifact n) i >-
 
 ∈-children : ∀ {i : Size}
   → (n j : ℕ)
-  → {a₁ a₂ : ℕ}
+  → {a₁ a₂ : ℕ × ℕ}
   → (cs₁ : List (FSTA ∞))
   → (cs₂ : List (2CC.2CC i NAT'))
   → (a₁ Rose.-< cs₁ >-) ∈ 2CC.⟦ a₂ 2CC.2CC.-< cs₂ >- ⟧
   → cs₁ ∈ (λ conf → List.map (λ c → 2CC.⟦ c ⟧ conf) cs₂)
 ∈-children n j cs₁ cs₂ (conf , cs₁≡cs₂) = conf , proj₂ (Rose-injective cs₁≡cs₂)
 
-artifact-child-count : ∀ {i : Size}
-  → (n j : ℕ)
-  → (a : ℕ)
-  → (cs : List (2CC.2CC i NAT'))
-  → big-artifact (suc n) j ∈ 2CC.⟦ a 2CC.2CC.-< cs >- ⟧
-  → List.length cs ≡ 2
-artifact-child-count n j a (c₁ ∷ c₂ ∷ []) artifact∈cs = refl
-
-big-artifact-children : ∀ {i : Size}
-  → (n j : ℕ)
-  → (a : ℕ)
-  → (cs : List (2CC.2CC i NAT'))
-  → (c : 2CC.2CC i NAT')
-  → c List.∈ cs
-  → big-artifact (suc n) j ∈ 2CC.⟦ a 2CC.2CC.-< cs >- ⟧
-  → Σ[ j' ∈ ℕ ] big-artifact n j' ∈ 2CC.⟦ c ⟧
-big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₂ (here refl) (conf , artifact≡cs) = j , conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))
-big-artifact-children n j a (x₂ ∷ x₃ ∷ []) .x₃ (there (here refl)) (conf , artifact≡cs) = j + 2 ^ n , conf , List.∷-injectiveˡ (List.∷-injectiveʳ (proj₂ (Rose-injective artifact≡cs)))
-
 big-artifact∈e₂⇒2^n≤e₂ : ∀ {i : Size}
   → (n j : ℕ)
   → (e₂ : 2CC.2CC i NAT')
   → big-artifact n j ∈ 2CC.⟦ e₂ ⟧
-  → 2 ^ suc n ∸ 1 ≤ size2CC e₂
-big-artifact∈e₂⇒2^n≤e₂ zero j e₂ artifact∈e₂ = 1≤size2CC e₂
-big-artifact∈e₂⇒2^n≤e₂ (suc n) j (a 2CC.2CC.-< cs >-) artifact∈e₂ =
-  begin
-    2 ^ suc (suc n) ∸ 1
-  ≡⟨ ℕ.+-∸-assoc 1 {2 ^ suc (suc n)} {2} (ℕ.m≤m*n 2 (2 ^ suc n) {{ℕ.>-nonZero (ℕ.m^n>0 2 (suc n))}}) ⟩
-    suc (2 ^ suc (suc n) ∸ 2)
+  → 2 ^ n < size2CC e₂
+big-artifact∈e₂⇒2^n≤e₂ n j (a 2CC.2CC.-< cs >-) (conf , artifact≡e₂) with proj₁ (Rose-injective artifact≡e₂)
+big-artifact∈e₂⇒2^n≤e₂ n j (.(j , 2 ^ n) 2CC.-< cs >-) (conf , artifact≡e₂) | refl =
+  begin-strict
+    2 ^ n
+  <⟨ ℕ.n<1+n (2 ^ n) ⟩
+    suc (2 ^ n)
+  ≤⟨ s≤s (ℕ.m≤m+n (2 ^ n) (List.sum (List.map size2CC cs))) ⟩
+    suc (2 ^ n + List.sum (List.map size2CC cs))
   ≡⟨⟩
-    suc (2 * 2 ^ suc n ∸ 2)
-  ≡⟨ Eq.cong suc (ℕ.*-distribˡ-∸ 2 (2 ^ suc n) 1) ⟨
-    suc (2 * (2 ^ suc n ∸ 1))
-  ≡⟨ Eq.cong (λ x → suc (x * (2 ^ suc n ∸ 1))) (artifact-child-count n j a cs artifact∈e₂) ⟨
-    suc (List.length cs * (2 ^ suc n ∸ 1))
-  ≡⟨ Eq.cong suc (List.sum-replicate (List.length cs) (2 ^ suc n ∸ 1)) ⟨
-    suc (List.sum (List.replicate (List.length cs) (2 ^ suc n ∸ 1)))
-  ≡⟨ Eq.cong (λ x → suc (List.sum x)) (List.map-const (2 ^ suc n ∸ 1) cs) ⟨
-    suc (List.sum (List.map (const (2 ^ suc n ∸ 1)) cs))
-  ≤⟨ s≤s (List.sum-map-≤-with∈ cs (λ c c∈cs → big-artifact∈e₂⇒2^n≤e₂ n (proj₁ (big-artifact-children n j a cs c c∈cs artifact∈e₂)) c (proj₂ (big-artifact-children n j a cs c c∈cs artifact∈e₂)))) ⟩
-    suc (List.sum (List.map size2CC cs))
-  ≡⟨⟩
-    size2CC (a 2CC.2CC.-< cs >-)
+    size2CC ((j , 2 ^ n) 2CC.2CC.-< cs >-)
   ∎
   where
   open ℕ.≤-Reasoning
-big-artifact∈e₂⇒2^n≤e₂ (suc n) j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) with conf D
-big-artifact∈e₂⇒2^n≤e₂ (suc n) j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) | true =
-  begin
-    2 ^ suc (suc n) ∸ 1
+big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) with conf D
+big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) | true =
+  begin-strict
+    2 ^ n
   <⟨ s≤s ℕ.≤-refl ⟩
-    suc (2 ^ suc (suc n) ∸ 1)
-  ≤⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ (suc n) j l (conf , artifact≡e₂)) ⟩
+    suc (2 ^ n)
+  <⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n j l (conf , artifact≡e₂)) ⟩
     suc (size2CC l)
   ≤⟨ s≤s (ℕ.m≤m+n (size2CC l) (size2CC r)) ⟩
     suc (size2CC l + size2CC r)
@@ -220,12 +163,12 @@ big-artifact∈e₂⇒2^n≤e₂ (suc n) j (D 2CC.2CC.⟨ l , r ⟩) (conf , art
   ∎
   where
   open ℕ.≤-Reasoning
-big-artifact∈e₂⇒2^n≤e₂ (suc n) j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) | false =
-  begin
-    2 ^ suc (suc n) ∸ 1
-  <⟨ s≤s ℕ.≤-refl ⟩
-    suc (2 ^ suc (suc n) ∸ 1)
-  ≤⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ (suc n) j r (conf , artifact≡e₂)) ⟩
+big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) | false =
+  begin-strict
+    2 ^ n
+  <⟨ ℕ.n<1+n (2 ^ n) ⟩
+    suc (2 ^ n)
+  <⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n j r (conf , artifact≡e₂)) ⟩
     suc (size2CC r)
   ≤⟨ s≤s (ℕ.m≤n+m (size2CC r) (size2CC l)) ⟩
     suc (size2CC l + size2CC r)
@@ -239,16 +182,18 @@ artifact-0∈e₂⇒2^n≤e₂ : ∀ {i : Size}
   → (n : ℕ)
   → (e₂ : 2CC.2CC i NAT')
   → artifact n zero ∈ 2CC.⟦ e₂ ⟧
-  → 2 ^ suc n ≤ size2CC e₂
+  → 2 ^ n ≤ size2CC e₂
 artifact-0∈e₂⇒2^n≤e₂ n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡cs) =
   begin
-    2 ^ suc n
-  ≡⟨ ℕ.+-∸-assoc 1 {2 ^ suc n} {1} (ℕ.m^n>0 2 (suc n)) ⟩
-    suc (2 ^ suc n ∸ 1)
-  ≤⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n zero c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs)))) ⟩
+    2 ^ n
+  <⟨ ℕ.n<1+n (2 ^ n) ⟩
+    suc (2 ^ n)
+  <⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n zero c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs)))) ⟩
     suc (size2CC c)
   ≡⟨ Eq.cong suc (ℕ.+-identityʳ (size2CC c)) ⟨
     suc (size2CC c + 0)
+  ≤⟨ s≤s (ℕ.m≤n+m (size2CC c + 0) (atomSize NAT' a)) ⟩
+    suc (atomSize NAT' a + (size2CC c + 0))
   ≡⟨⟩
     size2CC (a 2CC.2CC.-< c ∷ [] >-)
   ∎
@@ -257,9 +202,9 @@ artifact-0∈e₂⇒2^n≤e₂ n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡c
 artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) with conf D
 artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | true =
   begin
-    2 ^ suc n
-  <⟨ s≤s ℕ.≤-refl ⟩
-    suc (2 ^ suc n)
+    2 ^ n
+  <⟨ ℕ.n<1+n (2 ^ n) ⟩
+    suc (2 ^ n)
   ≤⟨ s≤s (artifact-0∈e₂⇒2^n≤e₂ n l (conf , artifact≡cs)) ⟩
     suc (size2CC l)
   ≤⟨ s≤s (ℕ.m≤m+n (size2CC l) (size2CC r)) ⟩
@@ -271,9 +216,9 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
   open ℕ.≤-Reasoning
 artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | false =
   begin
-    2 ^ suc n
-  <⟨ s≤s ℕ.≤-refl ⟩
-    suc (2 ^ suc n)
+    2 ^ n
+  <⟨ ℕ.n<1+n (2 ^ n) ⟩
+    suc (2 ^ n)
   ≤⟨ s≤s (artifact-0∈e₂⇒2^n≤e₂ n r (conf , artifact≡cs)) ⟩
     suc (size2CC r)
   ≤⟨ s≤s (ℕ.m≤n+m (size2CC r) (size2CC l)) ⟩
@@ -286,13 +231,13 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
 
 2^n≤size2CC-artifact : ∀ {i : Size}
   → (n j : ℕ)
-  → (a : ℕ)
+  → (a : ℕ × ℕ)
   → (cs : List (2CC.2CC i NAT'))
   → variant n (suc j) ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
-  → 2 ^ suc n ≤ size2CC (a 2CC.-< cs >-)
+  → 2 ^ n ≤ size2CC (a 2CC.-< cs >-)
 2^n≤size2CC-artifact n j a (c ∷ cs) (conf , artifact≡cs) =
   begin
-    2 ^ suc n
+    2 ^ n
   ≤⟨ artifact-0∈e₂⇒2^n≤e₂ n c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))) ⟩
     size2CC c
   ≤⟨ ℕ.m≤m+n (size2CC c) (List.sum (List.map size2CC cs)) ⟩
@@ -301,6 +246,8 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
     List.sum (List.map size2CC (c ∷ cs))
   <⟨ s≤s ℕ.≤-refl ⟩
     suc (List.sum (List.map size2CC (c ∷ cs)))
+  ≤⟨ s≤s (ℕ.m≤n+m (List.sum (List.map size2CC (c ∷ cs))) (atomSize NAT' a)) ⟩
+    suc (atomSize NAT' a + List.sum (List.map size2CC (c ∷ cs)))
   ≡⟨⟩
     size2CC (a 2CC.-< c ∷ cs >-)
   ∎
@@ -407,7 +354,7 @@ n*2^n≤size2CC : ∀ {i : Size}
   → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ e₂ ⟧
   → List.length sizes * 2 ^ n ≤ size2CC e₂
 n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) [] unique-sizes sizes⊆e₂ = z≤n
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆e₂ = ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-comm (2 ^ n) 0)) (ℕ.≤-trans (ℕ.^-monoʳ-≤ 2 (ℕ.n≤1+n n)) (2^n≤size2CC-artifact n s₁ a cs (sizes⊆e₂ zero)))
+n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆e₂ = ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-comm (2 ^ n) 0)) (2^n≤size2CC-artifact n s₁ a cs (sizes⊆e₂ zero))
 n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ ∷ s₁∉sizes) ∷ unique-sizes) sizes⊆e₂ = ⊥-elim
   (impossible-artifact-sizes
     n
@@ -442,25 +389,6 @@ n*2^n≤size2CC n (D 2CC.2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆e₂ =
     suc (size2CC l + size2CC r)
   ≡⟨⟩
     size2CC (D 2CC.2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-
-1+n≤2^n : ∀ (n : ℕ) → suc n ≤ 2 ^ n
-1+n≤2^n zero = ℕ.≤-refl
-1+n≤2^n (suc n) =
-  begin
-    suc (suc n)
-  ≡⟨⟩
-    1 + suc n
-  ≤⟨ ℕ.+-monoʳ-≤ 1 (1+n≤2^n n) ⟩
-    1 + 2 ^ n
-  ≤⟨ ℕ.+-monoˡ-≤ (2 ^ n) (ℕ.m^n>0 2 n) ⟩
-    2 ^ n + 2 ^ n
-  ≡⟨ Eq.cong (2 ^ n +_) (ℕ.+-identityʳ (2 ^ n)) ⟨
-    2 ^ n + (2 ^ n + 0)
-  ≡⟨⟩
-    2 ^ suc n
   ∎
   where
   open ℕ.≤-Reasoning
@@ -602,7 +530,7 @@ artifacts⊙artifact n (suc i) k | no _ =
   ∎
   where
   open Eq.≡-Reasoning
-artifacts⊙artifact n (suc i) (suc k) | yes artifact-1+i+k≈artifact-k = ⊥-elim (ℕ.1+n≰n (ℕ.≤-trans (ℕ.m≤n+m (suc k) i) (ℕ.≤-reflexive (ℕ.suc-injective artifact-1+i+k≈artifact-k))))
+artifacts⊙artifact n (suc i) (suc k) | yes artifact-1+i+k≈artifact-k = ⊥-elim (ℕ.1+n≰n (ℕ.≤-trans (ℕ.m≤n+m (suc k) i) (ℕ.≤-reflexive (ℕ.suc-injective (Prod.,-injectiveˡ artifact-1+i+k≈artifact-k)))))
 
 artifact⊕artifacts :
   ∀ (n i k : ℕ)
@@ -673,7 +601,7 @@ variant∈e₁ :
   ∀ (n i : ℕ)
   → i ≤ n
   → variant n (suc i) ∈ FST.⟦ e₁ n ⟧
-variant∈e₁ n i i≤n = e₁-config i , Eq.cong (0 Rose.-<_>-) (
+variant∈e₁ n i i≤n = e₁-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   begin
     List.applyUpTo (artifact n) (suc i)
   ≡⟨ foldr-⊕-artifacts n (suc i) ⟩
@@ -693,66 +621,57 @@ variant∈e₁ n i i≤n = e₁-config i , Eq.cong (0 Rose.-<_>-) (
 variants⊆e₁ : ∀ (m : ℕ) → (variant m ∘ suc ∘ List.lookup (List.upTo m)) ⊆ FST.⟦ e₁ m ⟧
 variants⊆e₁ m size = Prod.map₂ (Eq.trans (Eq.cong (variant m ∘ suc) (List.lookup-upTo m size))) (variant∈e₁ m (Fin.toℕ size) (ℕ.≤-trans (Fin.toℕ≤n size) (ℕ.≤-reflexive (List.length-upTo m))))
 
+2*n≤2^n : (n : ℕ) → 2 * n ≤ 2 ^ n
+2*n≤2^n zero = ℕ.n≤1+n zero
+2*n≤2^n (suc zero) = ℕ.≤-refl
+2*n≤2^n (suc n@(suc _)) =
+  begin
+    2 * suc n
+  ≡⟨ ℕ.*-suc 2 n ⟩
+    2 + 2 * n
+  ≤⟨ ℕ.+-monoˡ-≤ (2 * n) (ℕ.m≤m*n 2 n) ⟩
+    2 * n + 2 * n
+  ≡⟨ Eq.cong (2 * n +_) (ℕ.+-identityʳ (2 * n)) ⟨
+    2 * n + (2 * n + 0)
+  ≡⟨⟩
+    2 * (2 * n)
+  ≤⟨ ℕ.*-monoʳ-≤ 2 (2*n≤2^n n) ⟩
+    2 * 2 ^ n
+  ≡⟨ ℕ.^-distribˡ-+-* 2 1 n ⟩
+    2 ^ suc n
+  ∎
+  where
+  open ℕ.≤-Reasoning
+
 FST≱2CC : SizedFST ≱Size Sized2CC
 FST≱2CC zero = NAT' , e₁ zero , λ e₂ e₁≅e₂ → 1≤size2CC e₂
 FST≱2CC (suc n) = NAT' , e₁ m , λ e₂ e₁≅e₂ →
   begin-strict
     suc n * sizeFST (e₁ m)
-  ≡⟨ Eq.cong (suc n *_) (size-e₁ m) ⟩
-    suc n * (2 + 2 ^ suc m + 2 * m)
-  ≡⟨⟩
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * (8 * suc n))
-  ≤⟨ ℕ.*-monoʳ-≤ (suc n) (ℕ.+-monoʳ-≤ 2 (ℕ.+-monoʳ-≤ (2 ^ suc (8 * suc n)) (ℕ.*-monoʳ-≤ 2 (ℕ.*-monoʳ-≤ 8 (1+n≤2^n n))))) ⟩
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * (8 * 2 ^ n))
-  ≤⟨ ℕ.*-monoʳ-≤ (suc n) (ℕ.+-monoʳ-≤ 2 (ℕ.+-monoʳ-≤ (2 ^ suc (8 * suc n)) (ℕ.*-monoʳ-≤ 2 (ℕ.*-monoʳ-≤ 8 (ℕ.^-monoʳ-≤ 2 (ℕ.m≤n*m n 8)))))) ⟩
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * (8 * 2 ^ (8 * n)))
-  ≤⟨ ℕ.*-monoʳ-≤ (suc n) (ℕ.+-monoʳ-≤ 2 (ℕ.+-monoʳ-≤ (2 ^ suc (8 * suc n)) (ℕ.*-monoʳ-≤ 2 (ℕ.*-monoʳ-≤ 8 (ℕ.^-monoʳ-≤ 2 (ℕ.m≤n+m (8 * n) 6)))))) ⟩
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * (8 * 2 ^ (6 + 8 * n)))
-  ≡⟨⟩
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * (2 ^ 3 * 2 ^ (6 + 8 * n)))
-  ≡⟨ Eq.cong (λ x → suc n * (2 + 2 ^ suc (8 * suc n) + 2 * x)) (ℕ.^-distribˡ-+-* 2 3 (6 + 8 * n)) ⟨
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * 2 ^ (3 + (6 + 8 * n)))
-  ≡⟨⟩
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * 2 ^ suc (8 + 8 * n))
-  ≡⟨ Eq.cong (λ x → suc n * (2 + 2 ^ suc (8 * suc n) + 2 * 2 ^ suc x)) (ℕ.*-suc 8 n) ⟨
-    suc n * (2 + 2 ^ suc (8 * suc n) + 2 * 2 ^ suc (8 * suc n))
-  <⟨ ℕ.*-monoʳ-< (suc n) (ℕ.+-monoˡ-< (2 * 2 ^ suc (8 * suc n)) (ℕ.+-monoˡ-< (2 ^ suc (8 * suc n)) (ℕ.*-monoʳ-< 2 (ℕ.≤-trans (ℕ.n<1+n 1) (
-      begin
-        2
-      ≡⟨⟩
-        1 + 1
-      ≤⟨ ℕ.+-monoʳ-≤ 1 (ℕ.m^n>0 2 (n + 7 * suc n)) ⟩
-        1 + 2 ^ (n + 7 * suc n)
-      ≤⟨ ℕ.+-monoˡ-≤ (2 ^ (n + 7 * suc n)) (ℕ.m^n>0 2 (n + 7 * suc n)) ⟩
-        2 ^ (n + 7 * suc n) + 2 ^ (n + 7 * suc n)
-      ≡⟨ Eq.cong (2 ^ (n + 7 * suc n) +_) (ℕ.+-identityʳ (2 ^ (n + 7 * suc n))) ⟨
-        2 ^ (n + 7 * suc n) + (2 ^ (n + 7 * suc n) + 0)
-      ≡⟨⟩
-        2 * 2 ^ (n + 7 * suc n)
-      ∎))))) ⟩
-    suc n * (2 * (2 * (2 ^ (n + 7 * suc n))) + 2 ^ suc (8 * suc n) + 2 * 2 ^ suc (8 * suc n))
-  ≡⟨⟩
-    suc n * (2 ^ suc (suc n + 7 * suc n) + 2 ^ suc (8 * suc n) + 2 * 2 ^ suc (8 * suc n))
-  ≡⟨⟩
-    suc n * (2 ^ suc (8 * suc n) + 2 ^ suc (8 * suc n) + 2 * 2 ^ suc (8 * suc n))
-  ≡⟨ Eq.cong (suc n *_) (ℕ.+-assoc (2 ^ suc (8 * suc n)) (2 ^ suc (8 * suc n)) (2 * 2 ^ suc (8 * suc n))) ⟩
-    suc n * (2 ^ suc (8 * suc n) + (2 ^ suc (8 * suc n) + 2 * 2 ^ suc (8 * suc n)))
-  ≡⟨⟩
-    suc n * (4 * (2 ^ suc (8 * suc n)))
-  ≡⟨ ℕ.*-assoc (suc n) 4 (2 ^ suc (8 * suc n)) ⟨
-    suc n * 4 * (2 ^ suc (8 * suc n))
-  ≡⟨ Eq.cong (_* 2 ^ suc (8 * suc n)) (ℕ.*-comm (suc n) 4) ⟩
-    4 * suc n * (2 ^ suc (8 * suc n))
-  ≡⟨⟩
-    4 * suc n * (2 * 2 ^ (8 * suc n))
-  ≡⟨ ℕ.*-assoc (4 * suc n) 2 (2 ^ (8 * suc n)) ⟨
-    4 * suc n * 2 * 2 ^ (8 * suc n)
-  ≡⟨ Eq.cong (_* 2 ^ (8 * suc n)) (ℕ.*-comm (4 * suc n) 2) ⟩
-    (2 * (4 * suc n)) * 2 ^ (8 * suc n)
-  ≡⟨ Eq.cong (_* 2 ^ (8 * suc n)) (ℕ.*-assoc 2 4 (suc n)) ⟨
-    2 * 4 * suc n * 2 ^ (8 * suc n)
-  ≡⟨⟩
-    8 * suc n * 2 ^ (8 * suc n)
+  <⟨ ℕ.*-monoʳ-< (suc n) (
+    begin-strict
+      sizeFST (e₁ m)
+    ≡⟨ size-e₁ m ⟩
+      4 + 2 ^ m + 2 * m
+    ≤⟨ ℕ.+-monoʳ-≤ (4 + 2 ^ m) (2*n≤2^n m) ⟩
+      4 + 2 ^ m + 2 ^ m
+    ≤⟨ ℕ.+-monoˡ-≤ (2 ^ m) (ℕ.+-monoˡ-≤ (2 ^ m) (ℕ.m≤m*n 4 (2 ^ m) {{ℕ.>-nonZero (ℕ.m^n>0 2 m)}})) ⟩
+      4 * 2 ^ m + 2 ^ m + 2 ^ m
+    ≡⟨ Eq.cong (λ x → 4 * 2 ^ m + x + x) (ℕ.*-identityˡ (2 ^ m)) ⟨
+      4 * 2 ^ m + 1 * 2 ^ m + 1 * 2 ^ m
+    ≡⟨ Eq.cong (_+ 1 * 2 ^ m) (ℕ.*-distribʳ-+ (2 ^ m) 4 1) ⟨
+      5 * 2 ^ m + 1 * 2 ^ m
+    ≡⟨ ℕ.*-distribʳ-+ (2 ^ m) 5 1 ⟨
+      6 * 2 ^ m
+    <⟨ ℕ.*-monoˡ-< (2 ^ m) ⦃ ℕ.>-nonZero (ℕ.m^n>0 2 m) ⦄ (ℕ.n<1+n 6) ⟩
+      7 * 2 ^ m
+    ∎)
+  ⟩
+    suc n * (7 * 2 ^ m)
+  ≡⟨ ℕ.*-assoc (suc n) 7 (2 ^ m) ⟨
+    suc n * 7 * 2 ^ m
+  ≡⟨ Eq.cong (_* 2 ^ m) (ℕ.*-comm (suc n) 7) ⟩
+    7 * suc n * 2 ^ m
   ≡⟨⟩
     m * 2 ^ m
   ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo m) ⟨
@@ -762,4 +681,4 @@ FST≱2CC (suc n) = NAT' , e₁ m , λ e₂ e₁≅e₂ →
   ∎
   where
   open ℕ.≤-Reasoning
-  m = 8 * (suc n)
+  m = 7 * suc n
