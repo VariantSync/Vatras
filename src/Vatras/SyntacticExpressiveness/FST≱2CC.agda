@@ -65,8 +65,8 @@ artifact-wf n (suc i) = [] , []
 feature : ℕ → ℕ → FSF
 feature n i = (artifact n i ∷ []) ⊚ ([] ∷ [] , artifact-wf n i ∷ [])
 
-e₁ : ℕ → SPL
-e₁ n = (0 , 0) ◀ List.applyUpTo (λ i → i :: feature n i) (suc n)
+fst : ℕ → SPL
+fst n = (0 , 0) ◀ List.applyUpTo (λ i → i :: feature n i) (suc n)
 
 size-big-artifact :
   ∀ (n i : ℕ)
@@ -82,12 +82,12 @@ size-big-artifact n i =
   where
   open Eq.≡-Reasoning
 
-size-e₁ :
+size-fst :
   ∀ (n : ℕ)
-  → sizeFST (e₁ n) ≡ 4 + 2 ^ n + 2 * n
-size-e₁ n =
+  → sizeFST (fst n) ≡ 4 + 2 ^ n + 2 * n
+size-fst n =
   begin
-    sizeFST (e₁ n)
+    sizeFST (fst n)
   ≡⟨⟩
     suc (List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → i :: feature n i) (suc n))))
   ≡⟨⟩
@@ -130,13 +130,13 @@ variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) i >-
   → cs₁ ∈ (λ conf → List.map (λ c → 2CC.⟦ c ⟧ conf) cs₂)
 ∈-children n j cs₁ cs₂ (conf , cs₁≡cs₂) = conf , proj₂ (Rose-injective cs₁≡cs₂)
 
-big-artifact∈e₂⇒2^n≤e₂ : ∀ {i : Size}
+big-artifact∈2cc⇒2^n≤2cc : ∀ {i : Size}
   → (n j : ℕ)
-  → (e₂ : 2CC.2CC i NAT')
-  → big-artifact n j ∈ 2CC.⟦ e₂ ⟧
-  → 2 ^ n < size2CC e₂
-big-artifact∈e₂⇒2^n≤e₂ n j (a 2CC.2CC.-< cs >-) (conf , artifact≡e₂) with proj₁ (Rose-injective artifact≡e₂)
-big-artifact∈e₂⇒2^n≤e₂ n j (.(j , 2 ^ n) 2CC.-< cs >-) (conf , artifact≡e₂) | refl =
+  → (2cc : 2CC.2CC i NAT')
+  → big-artifact n j ∈ 2CC.⟦ 2cc ⟧
+  → 2 ^ n < size2CC 2cc
+big-artifact∈2cc⇒2^n≤2cc n j (a 2CC.2CC.-< cs >-) (conf , artifact≡2cc) with proj₁ (Rose-injective artifact≡2cc)
+big-artifact∈2cc⇒2^n≤2cc n j (.(j , 2 ^ n) 2CC.-< cs >-) (conf , artifact≡2cc) | refl =
   begin-strict
     2 ^ n
   <⟨ ℕ.n<1+n (2 ^ n) ⟩
@@ -148,13 +148,13 @@ big-artifact∈e₂⇒2^n≤e₂ n j (.(j , 2 ^ n) 2CC.-< cs >-) (conf , artifac
   ∎
   where
   open ℕ.≤-Reasoning
-big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) with conf D
-big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) | true =
+big-artifact∈2cc⇒2^n≤2cc n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡2cc) with conf D
+big-artifact∈2cc⇒2^n≤2cc n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡2cc) | true =
   begin-strict
     2 ^ n
   <⟨ s≤s ℕ.≤-refl ⟩
     suc (2 ^ n)
-  <⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n j l (conf , artifact≡e₂)) ⟩
+  <⟨ s≤s (big-artifact∈2cc⇒2^n≤2cc n j l (conf , artifact≡2cc)) ⟩
     suc (size2CC l)
   ≤⟨ s≤s (ℕ.m≤m+n (size2CC l) (size2CC r)) ⟩
     suc (size2CC l + size2CC r)
@@ -163,12 +163,12 @@ big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact�
   ∎
   where
   open ℕ.≤-Reasoning
-big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡e₂) | false =
+big-artifact∈2cc⇒2^n≤2cc n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡2cc) | false =
   begin-strict
     2 ^ n
   <⟨ ℕ.n<1+n (2 ^ n) ⟩
     suc (2 ^ n)
-  <⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n j r (conf , artifact≡e₂)) ⟩
+  <⟨ s≤s (big-artifact∈2cc⇒2^n≤2cc n j r (conf , artifact≡2cc)) ⟩
     suc (size2CC r)
   ≤⟨ s≤s (ℕ.m≤n+m (size2CC r) (size2CC l)) ⟩
     suc (size2CC l + size2CC r)
@@ -178,17 +178,17 @@ big-artifact∈e₂⇒2^n≤e₂ n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact�
   where
   open ℕ.≤-Reasoning
 
-artifact-0∈e₂⇒2^n≤e₂ : ∀ {i : Size}
+artifact-0∈2cc⇒2^n≤2cc : ∀ {i : Size}
   → (n : ℕ)
-  → (e₂ : 2CC.2CC i NAT')
-  → artifact n zero ∈ 2CC.⟦ e₂ ⟧
-  → 2 ^ n ≤ size2CC e₂
-artifact-0∈e₂⇒2^n≤e₂ n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡cs) =
+  → (2cc : 2CC.2CC i NAT')
+  → artifact n zero ∈ 2CC.⟦ 2cc ⟧
+  → 2 ^ n ≤ size2CC 2cc
+artifact-0∈2cc⇒2^n≤2cc n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡cs) =
   begin
     2 ^ n
   <⟨ ℕ.n<1+n (2 ^ n) ⟩
     suc (2 ^ n)
-  <⟨ s≤s (big-artifact∈e₂⇒2^n≤e₂ n zero c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs)))) ⟩
+  <⟨ s≤s (big-artifact∈2cc⇒2^n≤2cc n zero c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs)))) ⟩
     suc (size2CC c)
   ≡⟨ Eq.cong suc (ℕ.+-identityʳ (size2CC c)) ⟨
     suc (size2CC c + 0)
@@ -199,13 +199,13 @@ artifact-0∈e₂⇒2^n≤e₂ n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡c
   ∎
   where
   open ℕ.≤-Reasoning
-artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) with conf D
-artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | true =
+artifact-0∈2cc⇒2^n≤2cc n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) with conf D
+artifact-0∈2cc⇒2^n≤2cc n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | true =
   begin
     2 ^ n
   <⟨ ℕ.n<1+n (2 ^ n) ⟩
     suc (2 ^ n)
-  ≤⟨ s≤s (artifact-0∈e₂⇒2^n≤e₂ n l (conf , artifact≡cs)) ⟩
+  ≤⟨ s≤s (artifact-0∈2cc⇒2^n≤2cc n l (conf , artifact≡cs)) ⟩
     suc (size2CC l)
   ≤⟨ s≤s (ℕ.m≤m+n (size2CC l) (size2CC r)) ⟩
     suc (size2CC l + size2CC r)
@@ -214,12 +214,12 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
   ∎
   where
   open ℕ.≤-Reasoning
-artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | false =
+artifact-0∈2cc⇒2^n≤2cc n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | false =
   begin
     2 ^ n
   <⟨ ℕ.n<1+n (2 ^ n) ⟩
     suc (2 ^ n)
-  ≤⟨ s≤s (artifact-0∈e₂⇒2^n≤e₂ n r (conf , artifact≡cs)) ⟩
+  ≤⟨ s≤s (artifact-0∈2cc⇒2^n≤2cc n r (conf , artifact≡cs)) ⟩
     suc (size2CC r)
   ≤⟨ s≤s (ℕ.m≤n+m (size2CC r) (size2CC l)) ⟩
     suc (size2CC l + size2CC r)
@@ -238,7 +238,7 @@ artifact-0∈e₂⇒2^n≤e₂ n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs
 2^n≤size2CC-artifact n j a (c ∷ cs) (conf , artifact≡cs) =
   begin
     2 ^ n
-  ≤⟨ artifact-0∈e₂⇒2^n≤e₂ n c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))) ⟩
+  ≤⟨ artifact-0∈2cc⇒2^n≤2cc n c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))) ⟩
     size2CC c
   ≤⟨ ℕ.m≤m+n (size2CC c) (List.sum (List.map size2CC cs)) ⟩
     size2CC c + List.sum (List.map size2CC cs)
@@ -348,14 +348,14 @@ split-sizes-sublist n D l r (size ∷ sizes) artifact∈l,r | conf , artifact≡
 
 n*2^n≤size2CC : ∀ {i : Size}
   → (n : ℕ)
-  → (e₂ : 2CC.2CC i NAT')
+  → (2cc : 2CC.2CC i NAT')
   → (sizes : List ℕ)
   → Unique sizes
-  → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ e₂ ⟧
-  → List.length sizes * 2 ^ n ≤ size2CC e₂
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) [] unique-sizes sizes⊆e₂ = z≤n
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆e₂ = ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-comm (2 ^ n) 0)) (2^n≤size2CC-artifact n s₁ a cs (sizes⊆e₂ zero))
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ ∷ s₁∉sizes) ∷ unique-sizes) sizes⊆e₂ = ⊥-elim
+  → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ 2cc ⟧
+  → List.length sizes * 2 ^ n ≤ size2CC 2cc
+n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) [] unique-sizes sizes⊆2cc = z≤n
+n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆2cc = ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-comm (2 ^ n) 0)) (2^n≤size2CC-artifact n s₁ a cs (sizes⊆2cc zero))
+n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ ∷ s₁∉sizes) ∷ unique-sizes) sizes⊆2cc = ⊥-elim
   (impossible-artifact-sizes
     n
     cs
@@ -370,20 +370,20 @@ n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ �
       ≡⟨ List.length-applyUpTo (artifact n) (suc s₂) ⟩
         suc s₂
       ∎)))
-    (∈-children n (suc s₁) (List.applyUpTo (artifact n) (suc s₁)) cs (sizes⊆e₂ zero))
-    (∈-children n (suc s₂) (List.applyUpTo (artifact n) (suc s₂)) cs (sizes⊆e₂ (suc zero)))
+    (∈-children n (suc s₁) (List.applyUpTo (artifact n) (suc s₁)) cs (sizes⊆2cc zero))
+    (∈-children n (suc s₂) (List.applyUpTo (artifact n) (suc s₂)) cs (sizes⊆2cc (suc zero)))
   )
   where open Eq.≡-Reasoning
-n*2^n≤size2CC n (D 2CC.2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆e₂ =
+n*2^n≤size2CC n (D 2CC.2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆2cc =
   begin
     List.length sizes * 2 ^ n
-  ≤⟨ ℕ.*-monoˡ-≤ (2 ^ n) (split-sizes-length n D l r sizes sizes⊆e₂) ⟩
-    (List.length (proj₁ (split-sizes n D l r sizes sizes⊆e₂)) + List.length (proj₂ (split-sizes n D l r sizes sizes⊆e₂))) * 2 ^ n
-  ≡⟨ ℕ.*-distribʳ-+ (2 ^ n) (List.length (proj₁ (split-sizes n D l r sizes sizes⊆e₂))) (List.length (proj₂ (split-sizes n D l r sizes sizes⊆e₂))) ⟩
-    List.length (proj₁ (split-sizes n D l r sizes sizes⊆e₂)) * 2 ^ n + List.length (proj₂ (split-sizes n D l r sizes sizes⊆e₂)) * 2 ^ n
-  ≤⟨ ℕ.+-monoʳ-≤ (List.length (proj₁ (split-sizes n D l r sizes sizes⊆e₂)) * 2 ^ n) (n*2^n≤size2CC n r (proj₂ (split-sizes n D l r sizes sizes⊆e₂)) (List.AllPairs-resp-⊆ (proj₂ (split-sizes-sublist n D l r sizes sizes⊆e₂)) unique-sizes) (proj₂ (split-sizes⊆ n D l r sizes sizes⊆e₂))) ⟩
-    List.length (proj₁ (split-sizes n D l r sizes sizes⊆e₂)) * 2 ^ n + size2CC r
-  ≤⟨ ℕ.+-monoˡ-≤ (size2CC r) (n*2^n≤size2CC n l (proj₁ (split-sizes n D l r sizes sizes⊆e₂)) (List.AllPairs-resp-⊆ (proj₁ (split-sizes-sublist n D l r sizes sizes⊆e₂)) unique-sizes) (proj₁ (split-sizes⊆ n D l r sizes sizes⊆e₂))) ⟩
+  ≤⟨ ℕ.*-monoˡ-≤ (2 ^ n) (split-sizes-length n D l r sizes sizes⊆2cc) ⟩
+    (List.length (proj₁ (split-sizes n D l r sizes sizes⊆2cc)) + List.length (proj₂ (split-sizes n D l r sizes sizes⊆2cc))) * 2 ^ n
+  ≡⟨ ℕ.*-distribʳ-+ (2 ^ n) (List.length (proj₁ (split-sizes n D l r sizes sizes⊆2cc))) (List.length (proj₂ (split-sizes n D l r sizes sizes⊆2cc))) ⟩
+    List.length (proj₁ (split-sizes n D l r sizes sizes⊆2cc)) * 2 ^ n + List.length (proj₂ (split-sizes n D l r sizes sizes⊆2cc)) * 2 ^ n
+  ≤⟨ ℕ.+-monoʳ-≤ (List.length (proj₁ (split-sizes n D l r sizes sizes⊆2cc)) * 2 ^ n) (n*2^n≤size2CC n r (proj₂ (split-sizes n D l r sizes sizes⊆2cc)) (List.AllPairs-resp-⊆ (proj₂ (split-sizes-sublist n D l r sizes sizes⊆2cc)) unique-sizes) (proj₂ (split-sizes⊆ n D l r sizes sizes⊆2cc))) ⟩
+    List.length (proj₁ (split-sizes n D l r sizes sizes⊆2cc)) * 2 ^ n + size2CC r
+  ≤⟨ ℕ.+-monoˡ-≤ (size2CC r) (n*2^n≤size2CC n l (proj₁ (split-sizes n D l r sizes sizes⊆2cc)) (List.AllPairs-resp-⊆ (proj₁ (split-sizes-sublist n D l r sizes sizes⊆2cc)) unique-sizes) (proj₁ (split-sizes⊆ n D l r sizes sizes⊆2cc))) ⟩
     size2CC l + size2CC r
   <⟨ s≤s ℕ.≤-refl ⟩
     suc (size2CC l + size2CC r)
@@ -393,27 +393,27 @@ n*2^n≤size2CC n (D 2CC.2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆e₂ =
   where
   open ℕ.≤-Reasoning
 
-e₁-config : ℕ → ℕ → Bool
-e₁-config i f = f ℕ.≤ᵇ i
+fst-config : ℕ → ℕ → Bool
+fst-config i f = f ℕ.≤ᵇ i
 
 select-applyUpTo-feature :
   ∀ (k n i : ℕ)
   → i ≤ n
-  → select (e₁-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
+  → select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
   ≡ List.applyUpTo (λ m → feature k m) (suc i)
 select-applyUpTo-feature k n i i≤n =
   begin
-    select (e₁-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
-  ≡⟨ Eq.cong (λ x → select (e₁-config i) (List.applyUpTo (λ m → m :: feature k m) (suc x))) (ℕ.m+[n∸m]≡n i≤n) ⟨
-    select (e₁-config i) (List.applyUpTo (λ m → m :: feature k m) (suc (i + (n ∸ i))))
+    select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
+  ≡⟨ Eq.cong (λ x → select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc x))) (ℕ.m+[n∸m]≡n i≤n) ⟨
+    select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc (i + (n ∸ i))))
   ≡⟨⟩
-    select (e₁-config i) (List.applyUpTo (λ m → m :: feature k m) (suc i + offset))
+    select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc i + offset))
   ≡⟨ selects-init (suc i) zero refl ⟩
     List.applyUpTo (λ m → feature k m) (suc i)
   ∎
   where
-  e₁-config≡true : ∀ (j i' : ℕ) → j + suc i' ≡ suc i → e₁-config i (j + zero) ≡ true
-  e₁-config≡true j i' j+i'≡i = Equivalence.to Bool.T-≡ (ℕ.≤⇒≤ᵇ (ℕ.≤-pred (
+  fst-config≡true : ∀ (j i' : ℕ) → j + suc i' ≡ suc i → fst-config i (j + zero) ≡ true
+  fst-config≡true j i' j+i'≡i = Equivalence.to Bool.T-≡ (ℕ.≤⇒≤ᵇ (ℕ.≤-pred (
     begin
       suc j + zero
     ≤⟨ ℕ.+-monoʳ-≤ (suc j) z≤n ⟩
@@ -432,35 +432,35 @@ select-applyUpTo-feature k n i i≤n =
   offset = n ∸ i
 
   deselects-tail : ∀ (i' j : ℕ)
-    → select (e₁-config i) (List.applyUpTo (λ m → j + m + suc i :: feature k (j + m + suc i)) i')
+    → select (fst-config i) (List.applyUpTo (λ m → j + m + suc i :: feature k (j + m + suc i)) i')
     ≡ []
   deselects-tail zero j = refl
   deselects-tail (suc i') j =
     begin
-      select (e₁-config i) (List.applyUpTo (λ m → j + m + suc i :: feature k (j + m + suc i)) (suc i'))
+      select (fst-config i) (List.applyUpTo (λ m → j + m + suc i :: feature k (j + m + suc i)) (suc i'))
     ≡⟨⟩
-      (if e₁-config i (j + zero + suc i)
-      then feature k (j + zero + suc i) ∷ select (e₁-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')
-      else                                select (e₁-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i'))
-    ≡⟨ Eq.cong (if_then feature k (j + zero + suc i) ∷ select (e₁-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i') else select (e₁-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')) (Equivalence.to Bool.T-not-≡ (>⇒¬≤ᵇ (ℕ.m≤n⇒m≤o+n (j + zero) (ℕ.n<1+n i)))) ⟩
-      select (e₁-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')
-    ≡⟨ Eq.cong (λ x → select (e₁-config i) x) (List.applyUpTo-cong (λ m → Eq.cong (λ x → x + suc i :: feature k (x + suc i)) (ℕ.+-suc j m)) i') ⟩
-      select (e₁-config i) (List.applyUpTo (λ m → suc j + m + suc i :: feature k (suc j + m + suc i)) i')
+      (if fst-config i (j + zero + suc i)
+      then feature k (j + zero + suc i) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')
+      else                                select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i'))
+    ≡⟨ Eq.cong (if_then feature k (j + zero + suc i) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i') else select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')) (Equivalence.to Bool.T-not-≡ (>⇒¬≤ᵇ (ℕ.m≤n⇒m≤o+n (j + zero) (ℕ.n<1+n i)))) ⟩
+      select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')
+    ≡⟨ Eq.cong (λ x → select (fst-config i) x) (List.applyUpTo-cong (λ m → Eq.cong (λ x → x + suc i :: feature k (x + suc i)) (ℕ.+-suc j m)) i') ⟩
+      select (fst-config i) (List.applyUpTo (λ m → suc j + m + suc i :: feature k (suc j + m + suc i)) i')
     ≡⟨ deselects-tail i' (suc j) ⟩
       []
     ∎
 
   selects-init : ∀ (i' j : ℕ)
     → j + i' ≡ suc i
-    → select (e₁-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) (i' + offset))
+    → select (fst-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) (i' + offset))
     ≡ List.applyUpTo (λ m → feature k (j + m)) i'
   selects-init zero j j+i'≡i =
     begin
-      select (e₁-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) offset)
-    ≡⟨ Eq.cong (select (e₁-config i)) (List.applyUpTo-cong (λ m → Eq.cong (λ x → x :: feature k x) (ℕ.+-comm j m)) offset) ⟩
-      select (e₁-config i) (List.applyUpTo (λ m → m + j :: feature k (m + j)) offset)
-    ≡⟨ Eq.cong (select (e₁-config i)) (List.applyUpTo-cong (λ m → Eq.cong (λ x → m + x :: feature k (m + x)) (Eq.trans (Eq.sym (ℕ.+-identityʳ j)) j+i'≡i)) offset) ⟩
-      select (e₁-config i) (List.applyUpTo (λ m → m + suc i :: feature k (m + suc i)) offset)
+      select (fst-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) offset)
+    ≡⟨ Eq.cong (select (fst-config i)) (List.applyUpTo-cong (λ m → Eq.cong (λ x → x :: feature k x) (ℕ.+-comm j m)) offset) ⟩
+      select (fst-config i) (List.applyUpTo (λ m → m + j :: feature k (m + j)) offset)
+    ≡⟨ Eq.cong (select (fst-config i)) (List.applyUpTo-cong (λ m → Eq.cong (λ x → m + x :: feature k (m + x)) (Eq.trans (Eq.sym (ℕ.+-identityʳ j)) j+i'≡i)) offset) ⟩
+      select (fst-config i) (List.applyUpTo (λ m → m + suc i :: feature k (m + suc i)) offset)
     ≡⟨ deselects-tail offset zero ⟩
       []
     ≡⟨⟩
@@ -468,17 +468,17 @@ select-applyUpTo-feature k n i i≤n =
     ∎
   selects-init (suc i') j j+i'≡i =
     begin
-      select (e₁-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) (suc i' + offset))
+      select (fst-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) (suc i' + offset))
     ≡⟨⟩
-      select (e₁-config i) ((j + zero :: feature k (j + zero)) ∷ List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
+      select (fst-config i) ((j + zero :: feature k (j + zero)) ∷ List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
     ≡⟨⟩
-      (if e₁-config i (j + zero)
-      then feature k (j + zero) ∷ select (e₁-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
-      else                        select (e₁-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset)))
-    ≡⟨ Eq.cong (if_then feature k (j + zero) ∷ select (e₁-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset)) else select (e₁-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))) (e₁-config≡true j i' j+i'≡i) ⟩
-      feature k (j + zero) ∷ select (e₁-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
-    ≡⟨ Eq.cong (λ x → feature k (j + zero) ∷ select (e₁-config i) x) (List.applyUpTo-cong (λ m → Eq.cong₂ _::_ (ℕ.+-suc j m) (Eq.cong (feature k) (ℕ.+-suc j m))) (i' + offset)) ⟩
-      feature k (j + zero) ∷ select (e₁-config i) (List.applyUpTo (λ m → suc j + m :: feature k (suc j + m)) (i' + offset))
+      (if fst-config i (j + zero)
+      then feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
+      else                        select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset)))
+    ≡⟨ Eq.cong (if_then feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset)) else select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))) (fst-config≡true j i' j+i'≡i) ⟩
+      feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
+    ≡⟨ Eq.cong (λ x → feature k (j + zero) ∷ select (fst-config i) x) (List.applyUpTo-cong (λ m → Eq.cong₂ _::_ (ℕ.+-suc j m) (Eq.cong (feature k) (ℕ.+-suc j m))) (i' + offset)) ⟩
+      feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → suc j + m :: feature k (suc j + m)) (i' + offset))
     ≡⟨ Eq.cong (feature k (j + zero) ∷_) (selects-init i' (suc j) (Eq.trans (Eq.sym (ℕ.+-suc j i')) j+i'≡i)) ⟩
       feature k (j + zero) ∷ List.applyUpTo (λ m → feature k (suc j + m)) i'
     ≡⟨ Eq.cong (feature k (j + zero) ∷_) (List.applyUpTo-cong (λ m → Eq.cong (feature k) (Eq.sym (ℕ.+-suc j m))) i') ⟩
@@ -597,11 +597,11 @@ foldr-⊕-artifacts n i = go i zero
       List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n (j + m) ∷ []) (suc i))
     ∎
 
-variant∈e₁ :
+variant∈fst :
   ∀ (n i : ℕ)
   → i ≤ n
-  → variant n (suc i) ∈ FST.⟦ e₁ n ⟧
-variant∈e₁ n i i≤n = e₁-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
+  → variant n (suc i) ∈ FST.⟦ fst n ⟧
+variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   begin
     List.applyUpTo (artifact n) (suc i)
   ≡⟨ foldr-⊕-artifacts n (suc i) ⟩
@@ -613,13 +613,13 @@ variant∈e₁ n i i≤n = e₁-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   ≡⟨ forget-uniqueness-⊛-all (List.applyUpTo (feature n) (suc i)) ⟨
     forget-uniqueness (⊛-all (List.applyUpTo (feature n) (suc i)))
   ≡⟨ Eq.cong (λ x → forget-uniqueness (⊛-all x)) (select-applyUpTo-feature n n i i≤n) ⟨
-    forget-uniqueness (⊛-all (select (e₁-config i) (List.applyUpTo (λ m → m :: feature n m) (suc n))))
+    forget-uniqueness (⊛-all (select (fst-config i) (List.applyUpTo (λ m → m :: feature n m) (suc n))))
   ∎)
   where
   open Eq.≡-Reasoning
 
-variants⊆e₁ : ∀ (m : ℕ) → (variant m ∘ suc ∘ List.lookup (List.upTo m)) ⊆ FST.⟦ e₁ m ⟧
-variants⊆e₁ m size = Prod.map₂ (Eq.trans (Eq.cong (variant m ∘ suc) (List.lookup-upTo m size))) (variant∈e₁ m (Fin.toℕ size) (ℕ.≤-trans (Fin.toℕ≤n size) (ℕ.≤-reflexive (List.length-upTo m))))
+variants⊆fst : ∀ (m : ℕ) → (variant m ∘ suc ∘ List.lookup (List.upTo m)) ⊆ FST.⟦ fst m ⟧
+variants⊆fst m size = Prod.map₂ (Eq.trans (Eq.cong (variant m ∘ suc) (List.lookup-upTo m size))) (variant∈fst m (Fin.toℕ size) (ℕ.≤-trans (Fin.toℕ≤n size) (ℕ.≤-reflexive (List.length-upTo m))))
 
 2*n≤2^n : (n : ℕ) → 2 * n ≤ 2 ^ n
 2*n≤2^n zero = ℕ.n≤1+n zero
@@ -644,14 +644,14 @@ variants⊆e₁ m size = Prod.map₂ (Eq.trans (Eq.cong (variant m ∘ suc) (Lis
   open ℕ.≤-Reasoning
 
 FST≱2CC : SizedFST ≱Size Sized2CC
-FST≱2CC zero = NAT' , e₁ zero , λ e₂ e₁≅e₂ → 1≤size2CC e₂
-FST≱2CC (suc n) = NAT' , e₁ m , λ e₂ e₁≅e₂ →
+FST≱2CC zero = NAT' , fst zero , λ 2cc fst≅2cc → 1≤size2CC 2cc
+FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
   begin-strict
-    suc n * sizeFST (e₁ m)
+    suc n * sizeFST (fst m)
   <⟨ ℕ.*-monoʳ-< (suc n) (
     begin-strict
-      sizeFST (e₁ m)
-    ≡⟨ size-e₁ m ⟩
+      sizeFST (fst m)
+    ≡⟨ size-fst m ⟩
       4 + 2 ^ m + 2 * m
     ≤⟨ ℕ.+-monoʳ-≤ (4 + 2 ^ m) (2*n≤2^n m) ⟩
       4 + 2 ^ m + 2 ^ m
@@ -676,8 +676,8 @@ FST≱2CC (suc n) = NAT' , e₁ m , λ e₂ e₁≅e₂ →
     m * 2 ^ m
   ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo m) ⟨
     List.length (List.upTo m) * 2 ^ m
-  ≤⟨ n*2^n≤size2CC m e₂ (List.upTo m) (Unique.upTo⁺ m) (⊆-trans (variants⊆e₁ m) (proj₁ e₁≅e₂)) ⟩
-    size2CC e₂
+  ≤⟨ n*2^n≤size2CC m 2cc (List.upTo m) (Unique.upTo⁺ m) (⊆-trans (variants⊆fst m) (proj₁ fst≅2cc)) ⟩
+    size2CC 2cc
   ∎
   where
   open ℕ.≤-Reasoning
