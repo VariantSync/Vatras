@@ -101,11 +101,11 @@ size-fst n =
   open Eq.≡-Reasoning
 
 variant : ℕ → ℕ → FSTA ∞
-variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) i >-
+variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) (suc i) >-
 
 size-variant
   : (n i : ℕ)
-  → 2 ^ n < sizeRose (variant n (suc i))
+  → 2 ^ n < sizeRose (variant n i)
 size-variant n i =
   begin-strict
     2 ^ n
@@ -118,7 +118,7 @@ size-variant n i =
   ≡⟨⟩
     1 + sizeRose (artifact n zero) + List.sum (List.map sizeRose (List.applyUpTo (artifact n ∘ suc) i))
   ≡⟨⟩
-    sizeRose (variant n (suc i))
+    sizeRose (variant n i)
   ∎
   where
   open ℕ.≤-Reasoning
@@ -130,7 +130,7 @@ size-variant n i =
 -- TODO duplicated in OC≱2CC
 variant∈e⇒length-cs
   : ∀ {i} (n l : ℕ) (a : ℕ × ℕ) (cs : List (2CC.2CC i NAT'))
-  → variant n (suc l) ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
+  → variant n l ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
   → List.length cs ≡ suc l
 variant∈e⇒length-cs n l a cs (c , v≡e) =
     List.length cs
@@ -149,12 +149,12 @@ partition : ∀ {i : Size} (n D : ℕ)
   → (c₁ c₂ : 2CC.2CC i NAT')
   → (ls : List ℕ)
   → List.Unique ls
-  → All (λ l → variant n (suc l) ∈ 2CC.⟦ D 2CC.⟨ c₁ , c₂ ⟩ ⟧) ls
+  → All (λ l → variant n l ∈ 2CC.⟦ D 2CC.⟨ c₁ , c₂ ⟩ ⟧) ls
   → ∃[ ls₁ ] ∃[ ls₂ ]
     ls₁ Subset.⊆ ls × ls₂ Subset.⊆ ls
   × List.length ls₁ + List.length ls₂ ≡ List.length ls
-  × List.Unique ls₁ × All (λ l → variant n (suc l) ∈ 2CC.⟦ c₁ ⟧) ls₁
-  × List.Unique ls₂ × All (λ l → variant n (suc l) ∈ 2CC.⟦ c₂ ⟧) ls₂
+  × List.Unique ls₁ × All (λ l → variant n l ∈ 2CC.⟦ c₁ ⟧) ls₁
+  × List.Unique ls₂ × All (λ l → variant n l ∈ 2CC.⟦ c₂ ⟧) ls₂
 partition n D c₁ c₂ [] unique-ls ls⊆2cc =
   [] , [] ,
   Subset.⊆-refl , Subset.⊆-refl ,
@@ -189,7 +189,7 @@ big : ∀ {i : Size} (n : ℕ)
   → (2cc : 2CC.2CC i NAT')
   → (ls : List ℕ)
   → List.Unique ls
-  → All (λ l → variant n (suc l) ∈ 2CC.⟦ 2cc ⟧) ls
+  → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) ls
   → List.length ls * 2 ^ n < size2CC 2cc
 big n (a 2CC.-< cs >-) [] unique-ls all-∈ = s≤s z≤n
 big n (a 2CC.-< cs >-) (l₁ ∷ []) unique-ls all-∈ =
@@ -198,8 +198,8 @@ big n (a 2CC.-< cs >-) (l₁ ∷ []) unique-ls all-∈ =
   ≡⟨ ℕ.*-identityˡ (2 ^ n) ⟩
     2 ^ n
   <⟨ size-variant n l₁ ⟩
-    sizeRose (variant n (suc l₁))
-  ≤⟨ 2CC.reflectsVariantSize (variant n (suc l₁)) (a 2CC.-< cs >-) (All.lookup all-∈ (here Eq.refl)) ⟩
+    sizeRose (variant n l₁)
+  ≤⟨ 2CC.reflectsVariantSize (variant n l₁) (a 2CC.-< cs >-) (All.lookup all-∈ (here Eq.refl)) ⟩
     size2CC (a 2CC.-< cs >-)
   ∎
   where
@@ -354,7 +354,7 @@ unique-variant n m (suc i) =
 variant∈fst :
   ∀ (n i : ℕ)
   → i ≤ n
-  → variant n (suc i) ∈ FST.⟦ fst n ⟧
+  → variant n i ∈ FST.⟦ fst n ⟧
 variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   begin
     List.applyUpTo (artifact n) (suc i)
@@ -382,7 +382,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   → k + l ≤ suc n
   → (2cc : 2CC.2CC i NAT')
   → FST.⟦ fst n ⟧ ⊆ 2CC.⟦ 2cc ⟧
-  → All (λ l → variant n (suc l) ∈ 2CC.⟦ 2cc ⟧) (List.applyUpTo (k +_) l)
+  → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) (List.applyUpTo (k +_) l)
 ⊆⇒All∈ n zero k l≤n 2cc fst⊆2cc = []
 ⊆⇒All∈ n (suc l) k l≤n 2cc fst⊆2cc with variant∈fst n k (ℕ.≤-pred (
   begin
@@ -399,11 +399,11 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
 ⊆⇒All∈ n (suc l) k l≤n 2cc fst⊆2cc | fst-conf , variant≡fst with fst⊆2cc fst-conf
 ⊆⇒All∈ n (suc l) k l≤n 2cc fst⊆2cc | fst-conf , variant≡fst | 2cc-conf , fst≡2cc =
   (2cc-conf , Eq.subst
-    (λ x → variant n (suc x) ≡ 2CC.⟦ 2cc ⟧ 2cc-conf)
+    (λ x → variant n x ≡ 2CC.⟦ 2cc ⟧ 2cc-conf)
     (Eq.sym (ℕ.+-identityʳ k))
     (Eq.trans variant≡fst fst≡2cc))
   ∷ Eq.subst
-    (All (λ l → variant n (suc l) ∈ 2CC.⟦ 2cc ⟧))
+    (All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧))
     (List.applyUpTo-cong (λ l → Eq.sym (ℕ.+-suc k l)) l)
     (⊆⇒All∈ n l (suc k) (ℕ.≤-trans (ℕ.≤-reflexive (Eq.sym (ℕ.+-suc k l))) l≤n) 2cc fst⊆2cc)
 
