@@ -26,7 +26,7 @@ open import Size using (Size; ∞)
 
 import Vatras.Util.List as List
 open import Vatras.Data.EqIndexedSet using (_≅_; _∈_; _⊆_)
-open import Vatras.Framework.Variants using (Rose; Rose-injective)
+open import Vatras.Framework.Variants using (Rose; children-equality)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
@@ -58,22 +58,16 @@ size-oc : ∀ (n : ℕ) → sizeWFOC (oc n) ≡ 2 ^ n + 2 * suc n
 size-oc n =
     sizeWFOC (oc n)
   ≡⟨⟩
-    suc (atomSize NAT 0 + (List.sum (List.map sizeOC ((2 ^ n) OC.-< [] >- ∷ options n))))
+    1 + List.sum (List.map sizeOC ((2 ^ n) OC.-< [] >- ∷ options n))
   ≡⟨⟩
-    suc (List.sum (List.map sizeOC ((2 ^ n) OC.-< [] >- ∷ options n)))
+    1 + sizeOC {A = NAT} ((2 ^ n) OC.-< [] >-) + List.sum (List.map sizeOC (options n))
   ≡⟨⟩
-    suc (sizeOC {A = NAT} ((2 ^ n) OC.-< [] >-) + List.sum (List.map sizeOC (options n)))
+    2 + atomSize NAT (2 ^ n) + 0 + List.sum (List.map sizeOC (options n))
   ≡⟨⟩
-    suc (suc (atomSize NAT (2 ^ n) + List.sum (List.map (sizeOC {A = NAT}) [])) + List.sum (List.map sizeOC (options n)))
-  ≡⟨⟩
-    2 + (atomSize NAT (2 ^ n) + List.sum (List.map (sizeOC {A = NAT}) []) + List.sum (List.map sizeOC (options n)))
-  ≡⟨⟩
-    2 + ((2 ^ n + 0) + List.sum (List.map sizeOC (options n)))
-  ≡⟨ Eq.cong (λ x → 2 + (x + List.sum (List.map sizeOC (options n)))) (ℕ.+-identityʳ (2 ^ n)) ⟩
-    2 + (2 ^ n + List.sum (List.map sizeOC (options n)))
-  ≡⟨ Eq.cong (λ x → 2 + (2 ^ n + x)) (size-options n) ⟩
-    2 + (2 ^ n + 2 * n)
-  ≡⟨ ℕ.+-assoc 2 (2 ^ n) (2 * n) ⟩
+    2 + (2 ^ n + 0) + List.sum (List.map sizeOC (options n))
+  ≡⟨ Eq.cong (λ x → 2 + (2 ^ n + 0) + x) (size-options n) ⟩
+    2 + (2 ^ n + 0) + 2 * n
+  ≡⟨ Eq.cong (λ x → 2 + x + 2 * n) (ℕ.+-identityʳ (2 ^ n)) ⟩
     2 + 2 ^ n + 2 * n
   ≡⟨ Eq.cong (_+ 2 * n) (ℕ.+-comm 2 (2 ^ n)) ⟩
     2 ^ n + 2 + 2 * n
@@ -102,7 +96,7 @@ variant∈e⇒length-cs n l a cs (c , v≡e) =
     List.length cs
   ≡⟨ List.length-map (λ e → 2CC.⟦ e ⟧ c) cs ⟨
     List.length (List.map (λ e → 2CC.⟦ e ⟧ c) cs)
-  ≡⟨ Eq.cong List.length (proj₂ (Rose-injective v≡e)) ⟨
+  ≡⟨ Eq.cong List.length (children-equality v≡e) ⟨
     List.length (exponential-artifact n ∷ variant-cs l)
   ≡⟨⟩
     suc (List.length (variant-cs l))
@@ -142,12 +136,34 @@ partition : ∀ {i : Size} (n D : ℕ)
   × List.length ls₁ + List.length ls₂ ≡ List.length ls
   × Unique ls₁ × All (λ l → variant n l ∈ 2CC.⟦ c₁ ⟧) ls₁
   × Unique ls₂ × All (λ l → variant n l ∈ 2CC.⟦ c₂ ⟧) ls₂
-partition n D c₁ c₂ [] unique-ls ls⊆2cc = [] , [] , Subset.⊆-refl , Subset.⊆-refl , Eq.refl , [] , [] , [] , []
-partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls⊆2cc) with c D | partition n D c₁ c₂ ls unique-ls ls⊆2cc
-partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls⊆2cc) | true | ls₁ , ls₂ , ls₁⊆ls , ls₂⊆ls , ls₁+ls₂≡ls , unique-ls₁ , ls₁∈l , unique-ls₂ , ls₂∈r =
-  l ∷ ls₁ , ls₂ , Subset.∷⁺ʳ l ls₁⊆ls , there ∘ ls₂⊆ls , Eq.cong suc ls₁+ls₂≡ls , All.anti-mono ls₁⊆ls l∉ls ∷ unique-ls₁ , (c , l≡2cc) ∷ ls₁∈l , unique-ls₂ , ls₂∈r
-partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls⊆2cc) | false | ls₁ , ls₂ , ls₁⊆ls , ls₂⊆ls , ls₁+ls₂≡ls , unique-ls₁ , ls₁∈l , unique-ls₂ , ls₂∈r =
-  ls₁ , l ∷ ls₂ , there ∘ ls₁⊆ls , Subset.∷⁺ʳ l ls₂⊆ls , Eq.trans (ℕ.+-suc (List.length ls₁) (List.length ls₂)) (Eq.cong suc ls₁+ls₂≡ls) , unique-ls₁ , ls₁∈l , All.anti-mono ls₂⊆ls l∉ls ∷ unique-ls₂ , (c , l≡2cc) ∷ ls₂∈r
+partition n D c₁ c₂ [] unique-ls ls⊆2cc =
+  [] , [] ,
+  Subset.⊆-refl , Subset.⊆-refl ,
+  Eq.refl ,
+  [] , [] ,
+  [] , []
+partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls⊆2cc)
+  with partition n D c₁ c₂ ls unique-ls ls⊆2cc
+... | ls₁ , ls₂ ,
+      ls₁⊆ls , ls₂⊆ls ,
+      ls₁+ls₂≡ls ,
+      unique-ls₁ , ls₁∈l ,
+      unique-ls₂ , ls₂∈r
+  with c D
+... | true =
+  l ∷ ls₁ , ls₂ ,
+  Subset.∷⁺ʳ l ls₁⊆ls , there ∘ ls₂⊆ls ,
+  Eq.cong suc ls₁+ls₂≡ls ,
+  All.anti-mono ls₁⊆ls l∉ls ∷ unique-ls₁ , (c , l≡2cc) ∷ ls₁∈l ,
+  unique-ls₂ , ls₂∈r
+... | false =
+  ls₁ , l ∷ ls₂ ,
+  there ∘ ls₁⊆ls , Subset.∷⁺ʳ l ls₂⊆ls ,
+  Eq.trans
+    (ℕ.+-suc (List.length ls₁) (List.length ls₂))
+    (Eq.cong suc ls₁+ls₂≡ls) ,
+  unique-ls₁ , ls₁∈l ,
+  All.anti-mono ls₂⊆ls l∉ls ∷ unique-ls₂ , (c , l≡2cc) ∷ ls₂∈r
 
 big : ∀ {i : Size} (n : ℕ)
   → (2cc : 2CC.2CC i NAT)
@@ -173,7 +189,12 @@ big n (a 2CC.-< cs >-) (l₁ ∷ l₂ ∷ ls) ((l₁≢l₂ ∷ l₁∉ls) ∷ u
     (Eq.sym (variant∈e⇒length-cs n l₁ a cs (All.lookup all-∈ (here Eq.refl))))
     (variant∈e⇒length-cs n l₂ a cs (All.lookup all-∈ (there (here Eq.refl)))))))
 big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ with partition n D l r ls unique-ls all-∈
-big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ | ls₁ , ls₂ , _ , _ , ls₁+ls₂≡ls , unique-ls₁ , ls₁∈l , unique-ls₂ , ls₂∈r =
+big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈
+  | ls₁ , ls₂ ,
+    _ , _ ,
+    ls₁+ls₂≡ls ,
+    unique-ls₁ , ls₁∈l ,
+    unique-ls₂ , ls₂∈r =
   begin-strict
     List.length ls * 2 ^ n
   <⟨ ℕ.n<1+n (List.length ls * 2 ^ n) ⟩
@@ -193,6 +214,17 @@ big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ | ls₁ , ls₂ , _ , _ , ls₁
 conf : ℕ → OC.Configuration
 conf n i = i <ᵇ n
 
+⟦options⟧-tail : ∀ n l
+  → n ≤ l
+  → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n))
+  ≡ variant-cs n
+⟦options⟧-tail zero l n≤l = Eq.refl
+⟦options⟧-tail (suc n) l n<l with ℕ.<ᵇ-reflects-< n l
+⟦options⟧-tail (suc n) l n<l | reflects-n<l with n <ᵇ l
+⟦options⟧-tail (suc n) l n<l | ofʸ n<l' | .true =
+  Eq.cong (0 Rose.-< [] >- ∷_) (⟦options⟧-tail n l (ℕ.<⇒≤ n<l))
+⟦options⟧-tail (suc n) l n<l | ofⁿ n≮l | .false = ⊥-elim (n≮l n<l)
+
 ⟦options⟧ : ∀ n l
   → l ≤ n
   → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n))
@@ -202,17 +234,15 @@ conf n i = i <ᵇ n
 ⟦options⟧ (suc n) l l≤n | no n≮l with n ℕ.<ᵇ l | ℕ.<ᵇ-reflects-< n l
 ⟦options⟧ (suc n) l l≤n | no n≮l | .false | ofⁿ n≮l' = ⟦options⟧ n l (ℕ.≮⇒≥ n≮l)
 ⟦options⟧ (suc n) l l≤n | no n≮l | .true | ofʸ n<l = ⊥-elim (n≮l n<l)
-⟦options⟧ (suc n) l l≤n | yes n<l = Eq.trans (go (suc n) l n<l) (Eq.cong variant-cs (ℕ.≤∧≮⇒≡ n<l (ℕ.≤⇒≯ l≤n)))
+⟦options⟧ (suc n) l l≤n | yes n<l =
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options (suc n)))
+  ≡⟨ ⟦options⟧-tail (suc n) l n<l ⟩
+    variant-cs (suc n)
+  ≡⟨ Eq.cong variant-cs (ℕ.≤∧≮⇒≡ n<l (ℕ.≤⇒≯ l≤n)) ⟩
+    variant-cs l
+  ∎
   where
-  go : ∀ n l
-    → n ≤ l
-    → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n))
-    ≡ variant-cs n
-  go zero l n≤l = Eq.refl
-  go (suc n) l n<l with ℕ.<ᵇ-reflects-< n l
-  go (suc n) l n<l | reflects-n<l with n <ᵇ l
-  go (suc n) l n<l | ofʸ n<l' | .true = Eq.cong (0 Rose.-< [] >- ∷_) (go n l (ℕ.<⇒≤ n<l))
-  go (suc n) l n<l | ofⁿ n≮l | .false = ⊥-elim (n≮l n<l)
+  open Eq.≡-Reasoning
 
 ⟦oc⟧ : ∀ n l → l ≤ n → OC.⟦ oc n ⟧ (conf l) ≡ variant n l
 ⟦oc⟧ n l l≤n =
@@ -220,11 +250,7 @@ conf n i = i <ᵇ n
   ≡⟨⟩
     0 Rose.-< OC.⟦ (2 ^ n) OC.-< [] >- ∷ options n ⟧ₒ-recurse (conf l) >-
   ≡⟨⟩
-    0 Rose.-< List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) ((2 ^ n) OC.-< [] >- ∷ options n)) >-
-  ≡⟨⟩
-    0 Rose.-< List.catMaybes (just (exponential-artifact n) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n)) >-
-  ≡⟨⟩
-    0 Rose.-< exponential-artifact n ∷ List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n)) >-
+    0 Rose.-< exponential-artifact n ∷ OC.⟦ options n ⟧ₒ-recurse (conf l) >-
   ≡⟨ Eq.cong (λ x → 0 Rose.-< exponential-artifact n ∷ x >-) (⟦options⟧ n l l≤n) ⟩
     0 Rose.-< exponential-artifact n ∷ variant-cs l >-
   ≡⟨⟩
@@ -238,8 +264,17 @@ conf n i = i <ᵇ n
   → (2cc : 2CC.2CC i NAT)
   → OC.⟦ oc n ⟧ ⊆ 2CC.⟦ 2cc ⟧
   → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) (List.upTo l)
-⊆⇒All∈ n zero l≤m 2cc oc⊆2cc = []
-⊆⇒All∈ n (suc l) (s≤s l≤m) 2cc oc⊆2cc = Eq.subst (All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧)) (List.applyUpTo-∷ʳ⁺ id l) (All.∷ʳ⁺ (⊆⇒All∈ n l (ℕ.<⇒≤ (s≤s l≤m)) 2cc oc⊆2cc) (Eq.subst (_∈ 2CC.⟦ 2cc ⟧) (⟦oc⟧ n l l≤m) (oc⊆2cc (conf l))))
+⊆⇒All∈ n zero l≤n 2cc oc⊆2cc = []
+⊆⇒All∈ n (suc l) (s≤s l≤n) 2cc oc⊆2cc =
+  Eq.subst
+    (All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧))
+    (List.applyUpTo-∷ʳ⁺ id l)
+    (All.∷ʳ⁺
+      (⊆⇒All∈ n l (ℕ.<⇒≤ (s≤s l≤n)) 2cc oc⊆2cc)
+      (Eq.subst
+        (_∈ 2CC.⟦ 2cc ⟧)
+        (⟦oc⟧ n l l≤n)
+        (oc⊆2cc (conf l))))
 
 4*n<16^n : ∀ n → 4 * n < 16 ^ n
 4*n<16^n zero = s≤s z≤n
@@ -291,7 +326,13 @@ goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
     suc (4 * n) * 2 ^ (4 * n)
   ≡⟨ Eq.cong (_* 2 ^ (4 * n)) (List.length-upTo (suc (4 * n))) ⟨
     List.length (List.upTo (suc (4 * n))) * 2 ^ (4 * n)
-  <⟨ big (4 * n) 2cc (List.upTo (suc (4 * n))) (Unique.applyUpTo⁺₁ id (suc (4 * n)) (λ i<j j<n → ℕ.<⇒≢ i<j)) (⊆⇒All∈ (4 * n) (suc (4 * n)) ℕ.≤-refl 2cc oc⊆2cc) ⟩
+  <⟨ big
+      (4 * n)
+      2cc
+      (List.upTo (suc (4 * n)))
+      (Unique.applyUpTo⁺₁ id (suc (4 * n)) (λ i<j j<n → ℕ.<⇒≢ i<j))
+      (⊆⇒All∈ (4 * n) (suc (4 * n)) ℕ.≤-refl 2cc oc⊆2cc)
+  ⟩
     size2CC 2cc
   ∎
   where
