@@ -29,8 +29,9 @@ open import Vatras.Data.EqIndexedSet using (_≅_; _∈_; _⊆_)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
+import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
-open import Vatras.SyntacticExpressiveness.Sizes ℕ using (SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC)
+open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC)
 
 options : ℕ → List (OC.OC ∞ NAT)
 options zero = []
@@ -114,38 +115,22 @@ variant∈e⇒length-cs n l a cs (c , v≡e) =
   where
   open Eq.≡-Reasoning
 
-exponential-big
-  : ∀ {i : Size} (n l : ℕ)
-  → (2cc : 2CC.2CC i NAT)
-  → exponential-artifact n ∈ 2CC.⟦ 2cc ⟧
-  → suc (2 ^ n) ≤ size2CC 2cc
-exponential-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) with c D
-exponential-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) | true = ℕ.≤-trans (exponential-big n l c₁ (c , v≡2cc)) (ℕ.≤-trans (ℕ.m≤m+n (size2CC c₁) (size2CC c₂)) (ℕ.m≤n+m (size2CC c₁ + size2CC c₂) 1))
-exponential-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) | false = ℕ.≤-trans (exponential-big n l c₂ (c , v≡2cc)) (ℕ.m≤n+m (size2CC c₂) (suc (size2CC c₁)))
-exponential-big n l (.(2 ^ n) 2CC.-< [] >-) (c , Eq.refl) = ℕ.≤-reflexive (Eq.cong suc (Eq.sym (ℕ.+-identityʳ (2 ^ n))))
-
-exponentially-big
-  : ∀ {i : Size} (n l : ℕ)
-  → (2cc : 2CC.2CC i NAT)
-  → variant n l ∈ 2CC.⟦ 2cc ⟧
-  → 2 ^ n < size2CC 2cc
-exponentially-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) with c D
-exponentially-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) | true = ℕ.≤-trans (exponentially-big n l c₁ (c , v≡2cc)) (ℕ.≤-trans (ℕ.m≤m+n (size2CC c₁) (size2CC c₂)) (ℕ.m≤n+m (size2CC c₁ + size2CC c₂) 1))
-exponentially-big n l (D 2CC.⟨ c₁ , c₂ ⟩) (c , v≡2cc) | false =  ℕ.≤-trans (exponentially-big n l c₂ (c , v≡2cc)) (ℕ.m≤n+m (size2CC c₂) (suc (size2CC c₁)))
-exponentially-big n l (a 2CC.-< cs >-) (c , v≡2cc) with variant∈e⇒length-cs n l a cs (c , v≡2cc)
-exponentially-big n l (a 2CC.-< c₁ ∷ cs >-) (c , v≡2cc) | Eq.refl =
+variant-size
+  : (n l : ℕ)
+  → 2 ^ n < sizeRose (variant n l)
+variant-size n l =
   begin-strict
     2 ^ n
-  <⟨ ℕ.m<n+m (2 ^ n) (s≤s z≤n) ⟩
-    suc (2 ^ n)
-  ≤⟨ exponential-big n l c₁ (c , proj₁ (List.∷-injective (proj₂ (Rose-injective v≡2cc)))) ⟩
-    size2CC c₁
-  ≤⟨ ℕ.m≤m+n (size2CC c₁) (List.sum (List.map size2CC cs)) ⟩
-    size2CC c₁ + List.sum (List.map size2CC cs)
-  ≤⟨ ℕ.m≤n+m (size2CC c₁ + List.sum (List.map size2CC cs)) (suc (atomSize NAT a)) ⟩
-    suc (atomSize NAT a + (size2CC c₁ + List.sum (List.map size2CC cs)))
+  ≡⟨ ℕ.+-identityʳ (2 ^ n) ⟨
+    2 ^ n + 0
+  ≤⟨ ℕ.m≤m+n (2 ^ n + 0) _ ⟩
+    2 ^ n + 0 + List.sum (List.map sizeRose (variant-cs l))
+  <⟨ ℕ.m<n+m (2 ^ n + 0 + List.sum (List.map sizeRose (variant-cs l))) {2} (s≤s z≤n) ⟩
+    2 + (2 ^ n + 0 + List.sum (List.map sizeRose (variant-cs l)))
   ≡⟨⟩
-    size2CC (a 2CC.2CC.-< c₁ ∷ cs >-)
+    1 + (sizeRose (exponential-artifact n) + List.sum (List.map sizeRose (variant-cs l)))
+  ≡⟨⟩
+    sizeRose (variant n l)
   ∎
   where
   open ℕ.≤-Reasoning
@@ -174,8 +159,22 @@ big : ∀ {i : Size} (n : ℕ)
   → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) ls
   → List.length ls * 2 ^ n < size2CC 2cc
 big n (a 2CC.-< cs >-) [] unique-ls all-∈ = s≤s z≤n
-big n (a 2CC.-< cs >-) (l₁ ∷ []) unique-ls all-∈ = Eq.subst (_< size2CC (a 2CC.-< cs >-)) (Eq.sym (ℕ.+-identityʳ (2 ^ n))) (exponentially-big n l₁ (a 2CC.-< cs >-) (All.lookup all-∈ (here Eq.refl)))
-big n (a 2CC.-< cs >-) (l₁ ∷ l₂ ∷ ls) ((l₁≢l₂ ∷ l₁∉ls) ∷ unique-ls) all-∈ = ⊥-elim (l₁≢l₂ (ℕ.suc-injective (Eq.trans (Eq.sym (variant∈e⇒length-cs n l₁ a cs (All.lookup all-∈ (here Eq.refl)))) (variant∈e⇒length-cs n l₂ a cs (All.lookup all-∈ (there (here Eq.refl)))))))
+big n (a 2CC.-< cs >-) (l₁ ∷ []) unique-ls all-∈ =
+  begin-strict
+    1 * 2 ^ n
+  ≡⟨ ℕ.*-identityˡ (2 ^ n) ⟩
+    2 ^ n
+  <⟨ variant-size n l₁ ⟩
+    sizeRose (variant n l₁)
+  ≤⟨ 2CC.reflectsVariantSize (variant n l₁) (a 2CC.-< cs >-) (All.lookup all-∈ (here Eq.refl)) ⟩
+    size2CC (a 2CC.2CC.-< cs >-)
+  ∎
+  where
+  open ℕ.≤-Reasoning
+big n (a 2CC.-< cs >-) (l₁ ∷ l₂ ∷ ls) ((l₁≢l₂ ∷ l₁∉ls) ∷ unique-ls) all-∈ =
+  ⊥-elim (l₁≢l₂ (ℕ.suc-injective (Eq.trans
+    (Eq.sym (variant∈e⇒length-cs n l₁ a cs (All.lookup all-∈ (here Eq.refl))))
+    (variant∈e⇒length-cs n l₂ a cs (All.lookup all-∈ (there (here Eq.refl)))))))
 big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ with partition n D l r ls unique-ls all-∈
 big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ | ls₁ , ls₂ , _ , _ , ls₁+ls₂≡ls , unique-ls₁ , ls₁∈l , unique-ls₂ , ls₂∈r =
   begin-strict

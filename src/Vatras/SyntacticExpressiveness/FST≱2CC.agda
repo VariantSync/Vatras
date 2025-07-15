@@ -31,6 +31,7 @@ open import Vatras.Framework.Definitions using (𝔸; NAT; atomSize)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
+import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST)
 
@@ -117,6 +118,28 @@ size-fst n =
 variant : ℕ → ℕ → FSTA ∞
 variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) i >-
 
+size-variant
+  : (n i : ℕ)
+  → 2 ^ n ≤ sizeRose (variant n (suc i))
+size-variant n i =
+  begin
+    2 ^ n
+  ≡⟨ ℕ.+-identityʳ (2 ^ n) ⟨
+    2 ^ n + 0
+  ≡⟨ ℕ.+-identityʳ (2 ^ n + 0) ⟨
+    2 ^ n + 0 + 0
+  <⟨ ℕ.m<n+m (2 ^ n + 0 + 0) {3} (s≤s z≤n) ⟩
+    3 + (2 ^ n + 0 + 0)
+  ≤⟨ ℕ.m≤m+n (3 + (2 ^ n + 0 + 0)) _ ⟩
+    3 + (2 ^ n + 0 + 0) + List.sum (List.map sizeRose (List.applyUpTo (artifact n ∘ suc) i))
+  ≡⟨⟩
+    1 + sizeRose (artifact n zero) + List.sum (List.map sizeRose (List.applyUpTo (artifact n ∘ suc) i))
+  ≡⟨⟩
+    sizeRose (variant n (suc i))
+  ∎
+  where
+  open ℕ.≤-Reasoning
+
 1≤size2CC : ∀ {i : Size} {A : 𝔸} → (e : 2CC.2CC i A) → 1 ≤ size2CC e
 1≤size2CC (a 2CC.2CC.-< cs >-) = s≤s z≤n
 1≤size2CC (D 2CC.2CC.⟨ l , r ⟩) = s≤s z≤n
@@ -129,130 +152,6 @@ variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) i >-
   → (a₁ Rose.-< cs₁ >-) ∈ 2CC.⟦ a₂ 2CC.2CC.-< cs₂ >- ⟧
   → cs₁ ∈ (λ conf → List.map (λ c → 2CC.⟦ c ⟧ conf) cs₂)
 ∈-children n j cs₁ cs₂ (conf , cs₁≡cs₂) = conf , proj₂ (Rose-injective cs₁≡cs₂)
-
-big-artifact∈2cc⇒2^n≤2cc : ∀ {i : Size}
-  → (n j : ℕ)
-  → (2cc : 2CC.2CC i NAT')
-  → big-artifact n j ∈ 2CC.⟦ 2cc ⟧
-  → 2 ^ n < size2CC 2cc
-big-artifact∈2cc⇒2^n≤2cc n j (a 2CC.2CC.-< cs >-) (conf , artifact≡2cc) with proj₁ (Rose-injective artifact≡2cc)
-big-artifact∈2cc⇒2^n≤2cc n j (.(j , 2 ^ n) 2CC.-< cs >-) (conf , artifact≡2cc) | refl =
-  begin-strict
-    2 ^ n
-  <⟨ ℕ.n<1+n (2 ^ n) ⟩
-    suc (2 ^ n)
-  ≤⟨ s≤s (ℕ.m≤m+n (2 ^ n) (List.sum (List.map size2CC cs))) ⟩
-    suc (2 ^ n + List.sum (List.map size2CC cs))
-  ≡⟨⟩
-    size2CC ((j , 2 ^ n) 2CC.2CC.-< cs >-)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-big-artifact∈2cc⇒2^n≤2cc n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡2cc) with conf D
-big-artifact∈2cc⇒2^n≤2cc n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡2cc) | true =
-  begin-strict
-    2 ^ n
-  <⟨ s≤s ℕ.≤-refl ⟩
-    suc (2 ^ n)
-  <⟨ s≤s (big-artifact∈2cc⇒2^n≤2cc n j l (conf , artifact≡2cc)) ⟩
-    suc (size2CC l)
-  ≤⟨ s≤s (ℕ.m≤m+n (size2CC l) (size2CC r)) ⟩
-    suc (size2CC l + size2CC r)
-  ≡⟨⟩
-    size2CC (D 2CC.2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-big-artifact∈2cc⇒2^n≤2cc n j (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡2cc) | false =
-  begin-strict
-    2 ^ n
-  <⟨ ℕ.n<1+n (2 ^ n) ⟩
-    suc (2 ^ n)
-  <⟨ s≤s (big-artifact∈2cc⇒2^n≤2cc n j r (conf , artifact≡2cc)) ⟩
-    suc (size2CC r)
-  ≤⟨ s≤s (ℕ.m≤n+m (size2CC r) (size2CC l)) ⟩
-    suc (size2CC l + size2CC r)
-  ≡⟨⟩
-    size2CC (D 2CC.2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-
-artifact-0∈2cc⇒2^n≤2cc : ∀ {i : Size}
-  → (n : ℕ)
-  → (2cc : 2CC.2CC i NAT')
-  → artifact n zero ∈ 2CC.⟦ 2cc ⟧
-  → 2 ^ n ≤ size2CC 2cc
-artifact-0∈2cc⇒2^n≤2cc n (a 2CC.2CC.-< c ∷ [] >-) (conf , artifact≡cs) =
-  begin
-    2 ^ n
-  <⟨ ℕ.n<1+n (2 ^ n) ⟩
-    suc (2 ^ n)
-  <⟨ s≤s (big-artifact∈2cc⇒2^n≤2cc n zero c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs)))) ⟩
-    suc (size2CC c)
-  ≡⟨ Eq.cong suc (ℕ.+-identityʳ (size2CC c)) ⟨
-    suc (size2CC c + 0)
-  ≤⟨ s≤s (ℕ.m≤n+m (size2CC c + 0) (atomSize NAT' a)) ⟩
-    suc (atomSize NAT' a + (size2CC c + 0))
-  ≡⟨⟩
-    size2CC (a 2CC.2CC.-< c ∷ [] >-)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-artifact-0∈2cc⇒2^n≤2cc n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) with conf D
-artifact-0∈2cc⇒2^n≤2cc n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | true =
-  begin
-    2 ^ n
-  <⟨ ℕ.n<1+n (2 ^ n) ⟩
-    suc (2 ^ n)
-  ≤⟨ s≤s (artifact-0∈2cc⇒2^n≤2cc n l (conf , artifact≡cs)) ⟩
-    suc (size2CC l)
-  ≤⟨ s≤s (ℕ.m≤m+n (size2CC l) (size2CC r)) ⟩
-    suc (size2CC l + size2CC r)
-  ≡⟨⟩
-    size2CC (D 2CC.2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-artifact-0∈2cc⇒2^n≤2cc n (D 2CC.2CC.⟨ l , r ⟩) (conf , artifact≡cs) | false =
-  begin
-    2 ^ n
-  <⟨ ℕ.n<1+n (2 ^ n) ⟩
-    suc (2 ^ n)
-  ≤⟨ s≤s (artifact-0∈2cc⇒2^n≤2cc n r (conf , artifact≡cs)) ⟩
-    suc (size2CC r)
-  ≤⟨ s≤s (ℕ.m≤n+m (size2CC r) (size2CC l)) ⟩
-    suc (size2CC l + size2CC r)
-  ≡⟨⟩
-    size2CC (D 2CC.2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-
-2^n≤size2CC-artifact : ∀ {i : Size}
-  → (n j : ℕ)
-  → (a : ℕ × ℕ)
-  → (cs : List (2CC.2CC i NAT'))
-  → variant n (suc j) ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
-  → 2 ^ n ≤ size2CC (a 2CC.-< cs >-)
-2^n≤size2CC-artifact n j a (c ∷ cs) (conf , artifact≡cs) =
-  begin
-    2 ^ n
-  ≤⟨ artifact-0∈2cc⇒2^n≤2cc n c (conf , List.∷-injectiveˡ (proj₂ (Rose-injective artifact≡cs))) ⟩
-    size2CC c
-  ≤⟨ ℕ.m≤m+n (size2CC c) (List.sum (List.map size2CC cs)) ⟩
-    size2CC c + List.sum (List.map size2CC cs)
-  ≡⟨⟩
-    List.sum (List.map size2CC (c ∷ cs))
-  <⟨ s≤s ℕ.≤-refl ⟩
-    suc (List.sum (List.map size2CC (c ∷ cs)))
-  ≤⟨ s≤s (ℕ.m≤n+m (List.sum (List.map size2CC (c ∷ cs))) (atomSize NAT' a)) ⟩
-    suc (atomSize NAT' a + List.sum (List.map size2CC (c ∷ cs)))
-  ≡⟨⟩
-    size2CC (a 2CC.-< c ∷ cs >-)
-  ∎
-  where
-  open ℕ.≤-Reasoning
 
 impossible-artifact-sizes : ∀ {i : Size}
   → (n : ℕ)
@@ -354,7 +253,18 @@ n*2^n≤size2CC : ∀ {i : Size}
   → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ 2cc ⟧
   → List.length sizes * 2 ^ n ≤ size2CC 2cc
 n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) [] unique-sizes sizes⊆2cc = z≤n
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆2cc = ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-comm (2 ^ n) 0)) (2^n≤size2CC-artifact n s₁ a cs (sizes⊆2cc zero))
+n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆2cc =
+  begin
+    1 * 2 ^ n
+  ≡⟨ ℕ.*-identityˡ (2 ^ n) ⟩
+    2 ^ n
+  ≤⟨ size-variant n s₁ ⟩
+    sizeRose (variant n (suc s₁))
+  ≤⟨ 2CC.reflectsVariantSize (variant n (suc s₁)) (a 2CC.2CC.-< cs >-) (sizes⊆2cc zero) ⟩
+    size2CC (a 2CC.-< cs >-)
+  ∎
+  where
+  open ℕ.≤-Reasoning
 n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ ∷ s₁∉sizes) ∷ unique-sizes) sizes⊆2cc = ⊥-elim
   (impossible-artifact-sizes
     n
