@@ -89,15 +89,10 @@ exponential-artifact : ℕ → Rose ∞ NAT
 exponential-artifact n = (2 ^ n) Rose.-< [] >-
 
 variant-cs : ℕ → List (Rose ∞ NAT)
-variant-cs zero = []
-variant-cs (suc i) = 0 Rose.-< [] >- ∷ variant-cs i
+variant-cs i = List.replicate i (0 Rose.-< [] >-)
 
 variant : ℕ → ℕ → Rose ∞ NAT
 variant n i = 0 Rose.-< exponential-artifact n ∷ variant-cs i >-
-
-length-variants-cs : ∀ n → List.length (variant-cs n) ≡ n
-length-variants-cs zero = Eq.refl
-length-variants-cs (suc n) = Eq.cong suc (length-variants-cs n)
 
 variant∈e⇒length-cs
   : ∀ {i} (n l : ℕ) (a : ℕ) (cs : List (2CC.2CC i NAT))
@@ -109,7 +104,9 @@ variant∈e⇒length-cs n l a cs (c , v≡e) =
     List.length (List.map (λ e → 2CC.⟦ e ⟧ c) cs)
   ≡⟨ Eq.cong List.length (proj₂ (Rose-injective v≡e)) ⟨
     List.length (exponential-artifact n ∷ variant-cs l)
-  ≡⟨ Eq.cong suc (length-variants-cs l) ⟩
+  ≡⟨⟩
+    suc (List.length (variant-cs l))
+  ≡⟨ Eq.cong suc (List.length-replicate l) ⟩
     suc l
   ∎
   where
