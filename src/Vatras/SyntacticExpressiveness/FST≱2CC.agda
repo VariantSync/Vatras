@@ -123,7 +123,9 @@ size-variant n i =
   where
   open ℕ.≤-Reasoning
 
-1≤size2CC : ∀ {i : Size} {A : 𝔸} → (e : 2CC.2CC i A) → 1 ≤ size2CC e
+1≤size2CC : ∀ {i : Size} {A : 𝔸}
+  → (e : 2CC.2CC i A)
+  → 1 ≤ size2CC e
 1≤size2CC (a 2CC.-< cs >-) = s≤s z≤n
 1≤size2CC (D 2CC.⟨ l , r ⟩) = s≤s z≤n
 
@@ -347,7 +349,10 @@ unique-variant n m (suc i) =
       m + 1
     ≤⟨ ℕ.+-monoˡ-≤ 1 m≤m' ⟩
       m' + 1
-    ∎)) ∷ Eq.subst (λ x → All (_≉_ (artifact n (m + zero))) (List.concatMap forget-uniqueness x)) (List.applyUpTo-cong (λ k → Eq.cong (feature n) (Eq.sym (ℕ.+-suc m' (suc k)))) i') (go i' (suc m') (ℕ.≤-trans m≤m' (ℕ.n≤1+n m')))
+    ∎)) ∷ Eq.subst
+      (λ x → All (_≉_ (artifact n (m + zero))) (List.concatMap forget-uniqueness x))
+      (List.applyUpTo-cong (λ k → Eq.cong (feature n) (Eq.sym (ℕ.+-suc m' (suc k)))) i')
+      (go i' (suc m') (ℕ.≤-trans m≤m' (ℕ.n≤1+n m')))
     where
     open ℕ.≤-Reasoning
 
@@ -462,7 +467,13 @@ FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
     m * 2 ^ m
   ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo m) ⟨
     List.length (List.upTo m) * 2 ^ m
-  <⟨ big m 2cc (List.upTo m) (Unique.applyUpTo⁺₁ id m (λ i<j j<n → ℕ.<⇒≢ i<j)) (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₁ fst≅2cc)) ⟩
+  <⟨ big
+      m
+      2cc
+      (List.upTo m)
+      (Unique.applyUpTo⁺₁ id m (λ i<j j<n → ℕ.<⇒≢ i<j))
+      (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₁ fst≅2cc))
+  ⟩
     size2CC 2cc
   ∎
   where
