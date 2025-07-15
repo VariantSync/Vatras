@@ -25,9 +25,10 @@ import Data.Product.Properties as Prod
 open import Data.Unit using (tt)
 open import Function using (_∘_; _∘′_; const; id)
 open import Function.Bundles using (Equivalence)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
-open import Relation.Nullary.Decidable using (yes; no)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; _≢_; refl)
+open import Relation.Nullary.Decidable using (Dec; yes; no)
 open import Relation.Nullary.Negation using (¬_)
+open import Relation.Unary using (Decidable)
 open import Size using (Size; ∞)
 
 open import Vatras.Data.EqIndexedSet using (_⊆_; ⊆-trans; _∈_)
@@ -48,11 +49,7 @@ NAT' = record
 
 open FST.Impose NAT' hiding (_∈_)
 open import Vatras.Lang.FST.Composition ℕ NAT' using (⊛-all-unique)
-
--- TODO duplicated from 2CC≤CCC
->⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ℕ.≤ᵇ n))
->⇒¬≤ᵇ (s≤s z≤n) = tt
->⇒¬≤ᵇ (s≤s (s≤s m>n)) = >⇒¬≤ᵇ (s≤s m>n)
+open import Vatras.Lang.FST.Util ℕ NAT' using (select≗filter)
 
 artifact : ℕ → ℕ → FSTA ∞
 artifact n zero = (0 , 2 ^ n) Rose.-< [] >-
@@ -242,90 +239,48 @@ select-applyUpTo-feature :
   → select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
   ≡ List.applyUpTo (feature k) (suc i)
 select-applyUpTo-feature k n i i≤n =
-  begin
     select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
-  ≡⟨ Eq.cong (λ x → select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc x))) (ℕ.m+[n∸m]≡n i≤n) ⟨
-    select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc (i + (n ∸ i))))
-  ≡⟨⟩
-    select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc i + offset))
-  ≡⟨ selects-init (suc i) zero refl ⟩
+  ≡⟨ select≗filter (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n)) ⟩
+    List.map impl (List.filter P? (List.applyUpTo (λ m → m :: feature k m) (suc n)))
+  ≡⟨ Eq.cong (λ x → List.map impl (List.filterᵇ (fst-config i ∘ name) (List.applyUpTo (λ m → m :: feature k m) (suc x)))) (ℕ.m+[n∸m]≡n i≤n) ⟨
+    List.map impl (List.filter P? (List.applyUpTo (λ m → m :: feature k m) (suc i + (n ∸ i))))
+  ≡⟨ Eq.cong (λ x → List.map impl (List.filterᵇ (fst-config i ∘ name) x)) (List.applyUpTo-++⁺ (λ m → m :: feature k m) (suc i) (n ∸ i)) ⟩
+    List.map impl (List.filter P?
+      (  List.applyUpTo (λ m → m :: feature k m) (suc i)
+      ++ List.applyUpTo (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i)))
+  ≡⟨ Eq.cong (List.map impl) (List.filter-++ (Bool.T? ∘ fst-config i ∘ name)
+      (List.applyUpTo (λ m → m :: feature k m) (suc i))
+      (List.applyUpTo (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i)) )
+  ⟩
+    List.map impl
+      (  List.filter P? (List.applyUpTo (λ m → m :: feature k m) (suc i))
+      ++ List.filter P? (List.applyUpTo (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i)))
+  ≡⟨ Eq.cong (List.map impl) (Eq.cong₂ _++_
+      (List.filter-all P?
+        (All.applyUpTo⁺₁ (λ m → m :: feature k m) (suc i) P-true))
+      (List.filter-none P?
+        (All.applyUpTo⁺₂ (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i) P-false)))
+  ⟩
+    List.map impl (List.applyUpTo (λ m → m :: feature k m) (suc i) ++ [])
+  ≡⟨ Eq.cong (List.map impl) (List.++-identityʳ (List.applyUpTo (λ m → m :: feature k m) (suc i))) ⟩
+    List.map impl (List.applyUpTo (λ m → m :: feature k m) (suc i))
+  ≡⟨ List.map-applyUpTo impl (λ m → m :: feature k m) (suc i) ⟩
     List.applyUpTo (feature k) (suc i)
   ∎
   where
-  fst-config≡true : ∀ (j i' : ℕ) → j + suc i' ≡ suc i → fst-config i (j + zero) ≡ true
-  fst-config≡true j i' j+i'≡i = Equivalence.to Bool.T-≡ (ℕ.≤⇒≤ᵇ (ℕ.≤-pred (
-    begin
-      suc j + zero
-    ≤⟨ ℕ.+-monoʳ-≤ (suc j) z≤n ⟩
-      suc j + i'
-    ≡⟨ ℕ.+-suc j i' ⟨
-      j + suc i'
-    ≡⟨ j+i'≡i ⟩
-      suc i
-    ∎)))
-    where
-    open ℕ.≤-Reasoning
-
   open Eq.≡-Reasoning
 
-  offset : ℕ
-  offset = n ∸ i
+  P : (f : Feature) → Set
+  P = Bool.T ∘ fst-config i ∘ name
 
-  deselects-tail : ∀ (i' j : ℕ)
-    → select (fst-config i) (List.applyUpTo (λ m → j + m + suc i :: feature k (j + m + suc i)) i')
-    ≡ []
-  deselects-tail zero j = refl
-  deselects-tail (suc i') j =
-    begin
-      select (fst-config i) (List.applyUpTo (λ m → j + m + suc i :: feature k (j + m + suc i)) (suc i'))
-    ≡⟨⟩
-      (if fst-config i (j + zero + suc i)
-      then feature k (j + zero + suc i) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')
-      else                                select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i'))
-    ≡⟨ Eq.cong (if_then feature k (j + zero + suc i) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i') else select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')) (Equivalence.to Bool.T-not-≡ (>⇒¬≤ᵇ (ℕ.m≤n⇒m≤o+n (j + zero) (ℕ.n<1+n i)))) ⟩
-      select (fst-config i) (List.applyUpTo (λ m → j + suc m + suc i :: feature k (j + suc m + suc i)) i')
-    ≡⟨ Eq.cong (λ x → select (fst-config i) x) (List.applyUpTo-cong (λ m → Eq.cong (λ x → x + suc i :: feature k (x + suc i)) (ℕ.+-suc j m)) i') ⟩
-      select (fst-config i) (List.applyUpTo (λ m → suc j + m + suc i :: feature k (suc j + m + suc i)) i')
-    ≡⟨ deselects-tail i' (suc j) ⟩
-      []
-    ∎
+  P? : Decidable P
+  P? = Bool.T? ∘ fst-config i ∘ name
 
-  selects-init : ∀ (i' j : ℕ)
-    → j + i' ≡ suc i
-    → select (fst-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) (i' + offset))
-    ≡ List.applyUpTo (λ m → feature k (j + m)) i'
-  selects-init zero j j+i'≡i =
-    begin
-      select (fst-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) offset)
-    ≡⟨ Eq.cong (select (fst-config i)) (List.applyUpTo-cong (λ m → Eq.cong (λ x → x :: feature k x) (ℕ.+-comm j m)) offset) ⟩
-      select (fst-config i) (List.applyUpTo (λ m → m + j :: feature k (m + j)) offset)
-    ≡⟨ Eq.cong (select (fst-config i)) (List.applyUpTo-cong (λ m → Eq.cong (λ x → m + x :: feature k (m + x)) (Eq.trans (Eq.sym (ℕ.+-identityʳ j)) j+i'≡i)) offset) ⟩
-      select (fst-config i) (List.applyUpTo (λ m → m + suc i :: feature k (m + suc i)) offset)
-    ≡⟨ deselects-tail offset zero ⟩
-      []
-    ≡⟨⟩
-      List.applyUpTo (λ m → feature k (j + m)) zero
-    ∎
-  selects-init (suc i') j j+i'≡i =
-    begin
-      select (fst-config i) (List.applyUpTo (λ m → j + m :: feature k (j + m)) (suc i' + offset))
-    ≡⟨⟩
-      select (fst-config i) ((j + zero :: feature k (j + zero)) ∷ List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
-    ≡⟨⟩
-      (if fst-config i (j + zero)
-      then feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
-      else                        select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset)))
-    ≡⟨ Eq.cong (if_then feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset)) else select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))) (fst-config≡true j i' j+i'≡i) ⟩
-      feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → j + suc m :: feature k (j + suc m)) (i' + offset))
-    ≡⟨ Eq.cong (λ x → feature k (j + zero) ∷ select (fst-config i) x) (List.applyUpTo-cong (λ m → Eq.cong₂ _::_ (ℕ.+-suc j m) (Eq.cong (feature k) (ℕ.+-suc j m))) (i' + offset)) ⟩
-      feature k (j + zero) ∷ select (fst-config i) (List.applyUpTo (λ m → suc j + m :: feature k (suc j + m)) (i' + offset))
-    ≡⟨ Eq.cong (feature k (j + zero) ∷_) (selects-init i' (suc j) (Eq.trans (Eq.sym (ℕ.+-suc j i')) j+i'≡i)) ⟩
-      feature k (j + zero) ∷ List.applyUpTo (λ m → feature k (suc j + m)) i'
-    ≡⟨ Eq.cong (feature k (j + zero) ∷_) (List.applyUpTo-cong (λ m → Eq.cong (feature k) (Eq.sym (ℕ.+-suc j m))) i') ⟩
-      feature k (j + zero) ∷ List.applyUpTo (λ m → feature k (j + suc m)) i'
-    ≡⟨⟩
-      List.applyUpTo (λ m → feature k (j + m)) (suc i')
-    ∎
+  P-true : {j : ℕ} → j < suc i → P (j :: feature k j)
+  P-true (s≤s j≤i) = ℕ.≤⇒≤ᵇ j≤i
+
+  P-false : (j : ℕ) → ¬ P (suc i + j :: feature k (suc i + j))
+  P-false j p = ℕ.<⇒≱ (ℕ.≤ᵇ⇒≤ (suc i + j) i p) (ℕ.m≤m+n i j)
 
 unique-variant : ∀ n m i → Unique (List.concatMap forget-uniqueness (List.applyUpTo (λ k → feature n (m + k)) i))
 unique-variant n m zero = []
