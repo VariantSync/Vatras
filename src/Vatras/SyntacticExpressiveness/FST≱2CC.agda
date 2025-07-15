@@ -141,15 +141,15 @@ size-variant n i =
   open ℕ.≤-Reasoning
 
 1≤size2CC : ∀ {i : Size} {A : 𝔸} → (e : 2CC.2CC i A) → 1 ≤ size2CC e
-1≤size2CC (a 2CC.2CC.-< cs >-) = s≤s z≤n
-1≤size2CC (D 2CC.2CC.⟨ l , r ⟩) = s≤s z≤n
+1≤size2CC (a 2CC.-< cs >-) = s≤s z≤n
+1≤size2CC (D 2CC.⟨ l , r ⟩) = s≤s z≤n
 
 ∈-children : ∀ {i : Size}
   → (n j : ℕ)
   → {a₁ a₂ : ℕ × ℕ}
   → (cs₁ : List (FSTA ∞))
   → (cs₂ : List (2CC.2CC i NAT'))
-  → (a₁ Rose.-< cs₁ >-) ∈ 2CC.⟦ a₂ 2CC.2CC.-< cs₂ >- ⟧
+  → (a₁ Rose.-< cs₁ >-) ∈ 2CC.⟦ a₂ 2CC.-< cs₂ >- ⟧
   → cs₁ ∈ (λ conf → List.map (λ c → 2CC.⟦ c ⟧ conf) cs₂)
 ∈-children n j cs₁ cs₂ (conf , cs₁≡cs₂) = conf , proj₂ (Rose-injective cs₁≡cs₂)
 
@@ -173,7 +173,7 @@ split-sizes : ∀ {i : Size}
   → (D : ℕ)
   → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
-  → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧
+  → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.⟨ l , r ⟩ ⟧
   → List ℕ × List ℕ
 split-sizes n D l r [] artifact∈l,r = [] , []
 split-sizes n D l r (size ∷ sizes) artifact⊆l,r with artifact⊆l,r zero
@@ -186,7 +186,7 @@ split-sizes⊆ : ∀ {i : Size}
   → (D : ℕ)
   → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
-  → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧)
+  → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.⟨ l , r ⟩ ⟧)
   → ((variant n ∘′ suc ∘′ List.lookup (proj₁ (split-sizes n D l r sizes artifact∈l,r))) ⊆ 2CC.⟦ l ⟧)
   × ((variant n ∘′ suc ∘′ List.lookup (proj₂ (split-sizes n D l r sizes artifact∈l,r))) ⊆ 2CC.⟦ r ⟧)
 split-sizes⊆ n D l r [] artifact∈l,r = (λ where ()) , (λ where ())
@@ -212,7 +212,7 @@ split-sizes-length : ∀ {i : Size}
   → (D : ℕ)
   → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
-  → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧)
+  → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.⟨ l , r ⟩ ⟧)
   → List.length sizes ≤ List.length (proj₁ (split-sizes n D l r sizes artifact∈l,r)) + List.length (proj₂ (split-sizes n D l r sizes artifact∈l,r))
 split-sizes-length n D l r [] artifact∈l,r = z≤n
 split-sizes-length n D l r (size ∷ sizes) artifact⊆l,r with artifact⊆l,r zero
@@ -236,7 +236,7 @@ split-sizes-sublist : ∀ {i : Size}
   → (D : ℕ)
   → (l r : 2CC.2CC i NAT')
   → (sizes : List ℕ)
-  → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.2CC.⟨ l , r ⟩ ⟧)
+  → (artifact∈l,r : (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ D 2CC.⟨ l , r ⟩ ⟧)
   → proj₁ (split-sizes n D l r sizes artifact∈l,r) Sublist.⊆ sizes
   × proj₂ (split-sizes n D l r sizes artifact∈l,r) Sublist.⊆ sizes
 split-sizes-sublist n D l r [] artifact∈l,r = [] , []
@@ -252,20 +252,20 @@ n*2^n≤size2CC : ∀ {i : Size}
   → Unique sizes
   → (variant n ∘ suc ∘ List.lookup sizes) ⊆ 2CC.⟦ 2cc ⟧
   → List.length sizes * 2 ^ n ≤ size2CC 2cc
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) [] unique-sizes sizes⊆2cc = z≤n
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆2cc =
+n*2^n≤size2CC n (a 2CC.-< cs >-) [] unique-sizes sizes⊆2cc = z≤n
+n*2^n≤size2CC n (a 2CC.-< cs >-) (s₁ ∷ []) unique-sizes sizes⊆2cc =
   begin
     1 * 2 ^ n
   ≡⟨ ℕ.*-identityˡ (2 ^ n) ⟩
     2 ^ n
   ≤⟨ size-variant n s₁ ⟩
     sizeRose (variant n (suc s₁))
-  ≤⟨ 2CC.reflectsVariantSize (variant n (suc s₁)) (a 2CC.2CC.-< cs >-) (sizes⊆2cc zero) ⟩
+  ≤⟨ 2CC.reflectsVariantSize (variant n (suc s₁)) (a 2CC.-< cs >-) (sizes⊆2cc zero) ⟩
     size2CC (a 2CC.-< cs >-)
   ∎
   where
   open ℕ.≤-Reasoning
-n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ ∷ s₁∉sizes) ∷ unique-sizes) sizes⊆2cc = ⊥-elim
+n*2^n≤size2CC n (a 2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ ∷ s₁∉sizes) ∷ unique-sizes) sizes⊆2cc = ⊥-elim
   (impossible-artifact-sizes
     n
     cs
@@ -284,7 +284,7 @@ n*2^n≤size2CC n (a 2CC.2CC.-< cs >-) (s₁ ∷ s₂ ∷ sizes) ((s₁≢s₂ �
     (∈-children n (suc s₂) (List.applyUpTo (artifact n) (suc s₂)) cs (sizes⊆2cc (suc zero)))
   )
   where open Eq.≡-Reasoning
-n*2^n≤size2CC n (D 2CC.2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆2cc =
+n*2^n≤size2CC n (D 2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆2cc =
   begin
     List.length sizes * 2 ^ n
   ≤⟨ ℕ.*-monoˡ-≤ (2 ^ n) (split-sizes-length n D l r sizes sizes⊆2cc) ⟩
@@ -298,7 +298,7 @@ n*2^n≤size2CC n (D 2CC.2CC.⟨ l , r ⟩) sizes unique-sizes sizes⊆2cc =
   <⟨ s≤s ℕ.≤-refl ⟩
     suc (size2CC l + size2CC r)
   ≡⟨⟩
-    size2CC (D 2CC.2CC.⟨ l , r ⟩)
+    size2CC (D 2CC.⟨ l , r ⟩)
   ∎
   where
   open ℕ.≤-Reasoning
