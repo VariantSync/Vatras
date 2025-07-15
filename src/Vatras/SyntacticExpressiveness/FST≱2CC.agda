@@ -49,18 +49,12 @@ open FST.Impose NAT' hiding (Unique; _∈_)
 >⇒¬≤ᵇ (s≤s z≤n) = tt
 >⇒¬≤ᵇ (s≤s (s≤s m>n)) = >⇒¬≤ᵇ (s≤s m>n)
 
-big-artifact : ℕ → ℕ → FSTA ∞
-big-artifact n i = (i , 2 ^ n) Rose.-< [] >-
-
 artifact : ℕ → ℕ → FSTA ∞
-artifact n zero = (0 , 0) Rose.-< big-artifact n zero ∷ [] >-
+artifact n zero = (0 , 2 ^ n) Rose.-< [] >-
 artifact n (suc i) = (suc i , 0) Rose.-< [] >-
 
-big-artifact-wf : (n i : ℕ) → WellFormed (big-artifact n i)
-big-artifact-wf n i = [] , []
-
 artifact-wf : (n i : ℕ) → WellFormed (artifact n i)
-artifact-wf n zero = [] ∷ [] , big-artifact-wf n zero ∷ []
+artifact-wf n zero = [] , []
 artifact-wf n (suc i) = [] , []
 
 feature : ℕ → ℕ → FSF
@@ -69,48 +63,34 @@ feature n i = (artifact n i ∷ []) ⊚ ([] ∷ [] , artifact-wf n i ∷ [])
 fst : ℕ → SPL
 fst n = (0 , 0) ◀ List.applyUpTo (λ i → i :: feature n i) (suc n)
 
-size-big-artifact :
-  ∀ (n i : ℕ)
-  → sizeRose (big-artifact n i) ≡ suc (2 ^ n)
-size-big-artifact n i =
-  begin
-    sizeRose (big-artifact n i)
-  ≡⟨⟩
-    suc (2 ^ n) + 0
-  ≡⟨ ℕ.+-identityʳ (suc (2 ^ n)) ⟩
-    suc (2 ^ n)
-  ∎
-  where
-  open Eq.≡-Reasoning
-
 size-fst :
   ∀ (n : ℕ)
-  → sizeFST (fst n) ≡ 4 + 2 ^ n + 2 * n
+  → sizeFST (fst n) ≡ 3 + 2 ^ n + 2 * n
 size-fst n =
   begin
     sizeFST (fst n)
   ≡⟨⟩
-    suc (List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → i :: feature n i) (suc n))))
+    1 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → i :: feature n i) (suc n)))
   ≡⟨⟩
-    suc (suc (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → suc i :: feature n (suc i)) n)))
-  ≡⟨ Eq.cong (λ x → suc (suc (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) x))) (List.map-upTo (λ i → suc i :: feature n (suc i)) n) ⟨
-    suc (suc (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.map (λ i → suc i :: feature n (suc i)) (List.upTo n))))
-  ≡⟨ Eq.cong (λ x → suc (suc (sizeRose (artifact n zero) + 0) + List.sum x)) (List.map-∘ (List.upTo n)) ⟨
-    3 + sizeRose (big-artifact n zero) + 0 + 0 + List.sum (List.map (λ i → suc (sizeRose (artifact n (suc i)) + 0)) (List.upTo n))
-  ≡⟨ Eq.cong₂ (λ x y → x + 0 + List.sum y) (ℕ.+-identityʳ (3 + sizeRose (big-artifact n zero))) (List.map-cong (λ i → Eq.cong suc (ℕ.+-identityʳ (sizeRose (artifact n (suc i))))) (List.upTo n)) ⟩
-    3 + sizeRose (big-artifact n zero) + 0 + List.sum (List.map (λ i → suc (sizeRose (artifact n (suc i)))) (List.upTo n))
-  ≡⟨ Eq.cong (λ x → x + List.sum (List.map (λ i → suc (sizeRose (artifact n (suc i)))) (List.upTo n))) (ℕ.+-identityʳ (3 + sizeRose (big-artifact n zero))) ⟩
-    3 + sizeRose (big-artifact n zero) + List.sum (List.map (const 2) (List.upTo n))
-  ≡⟨ Eq.cong (λ x → 3 + x + List.sum (List.map (const 2) (List.upTo n))) (size-big-artifact n zero) ⟩
-    4 + 2 ^ n + List.sum (List.map (const 2) (List.upTo n))
-  ≡⟨ Eq.cong (λ x → 4 + 2 ^ n + List.sum x) (List.map-const 2 (List.upTo n)) ⟩
-    4 + 2 ^ n + List.sum (List.replicate (List.length (List.upTo n)) 2)
-  ≡⟨ Eq.cong (λ x → 4 + 2 ^ n + List.sum (List.replicate x 2)) (List.length-upTo n) ⟩
-    4 + 2 ^ n + List.sum (List.replicate n 2)
-  ≡⟨ Eq.cong (λ x → 4 + 2 ^ n + x) (List.sum-replicate n 2) ⟩
-    4 + 2 ^ n + n * 2
-  ≡⟨ Eq.cong (4 + 2 ^ n +_) (ℕ.*-comm n 2) ⟩
-    4 + 2 ^ n + 2 * n
+    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → suc i :: feature n (suc i)) n))
+  ≡⟨ Eq.cong (λ x → 2 + (sizeRose (artifact n zero) + 0 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) x))) (List.map-upTo (λ i → suc i :: feature n (suc i)) n) ⟨
+    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.map (λ i → suc i :: feature n (suc i)) (List.upTo n)))
+  ≡⟨ Eq.cong (λ x → 2 + (sizeRose (artifact n zero) + 0) + List.sum x) (List.map-∘ (List.upTo n)) ⟨
+    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (λ i → suc (sizeRose (artifact n (suc i)) + 0)) (List.upTo n))
+  ≡⟨⟩
+    3 + (2 ^ n + 0 + 0) + List.sum (List.map (const 2) (List.upTo n))
+  ≡⟨ Eq.cong (λ x → 3 + x + List.sum (List.map (const 2) (List.upTo n))) (ℕ.+-identityʳ (2 ^ n + 0)) ⟩
+    3 + (2 ^ n + 0) + List.sum (List.map (const 2) (List.upTo n))
+  ≡⟨ Eq.cong (λ x → 3 + x + List.sum (List.map (const 2) (List.upTo n))) (ℕ.+-identityʳ (2 ^ n)) ⟩
+    3 + 2 ^ n + List.sum (List.map (const 2) (List.upTo n))
+  ≡⟨ Eq.cong (λ x → 3 + 2 ^ n + List.sum x) (List.map-const 2 (List.upTo n)) ⟩
+    3 + 2 ^ n + List.sum (List.replicate (List.length (List.upTo n)) 2)
+  ≡⟨ Eq.cong (λ x → 3 + 2 ^ n + List.sum (List.replicate x 2)) (List.length-upTo n) ⟩
+    3 + 2 ^ n + List.sum (List.replicate n 2)
+  ≡⟨ Eq.cong (λ x → 3 + 2 ^ n + x) (List.sum-replicate n 2) ⟩
+    3 + 2 ^ n + n * 2
+  ≡⟨ Eq.cong (3 + 2 ^ n +_) (ℕ.*-comm n 2) ⟩
+    3 + 2 ^ n + 2 * n
   ∎
   where
   open Eq.≡-Reasoning
@@ -126,12 +106,10 @@ size-variant n i =
     2 ^ n
   ≡⟨ ℕ.+-identityʳ (2 ^ n) ⟨
     2 ^ n + 0
-  ≡⟨ ℕ.+-identityʳ (2 ^ n + 0) ⟨
-    2 ^ n + 0 + 0
-  <⟨ ℕ.m<n+m (2 ^ n + 0 + 0) {3} (s≤s z≤n) ⟩
-    3 + (2 ^ n + 0 + 0)
-  ≤⟨ ℕ.m≤m+n (3 + (2 ^ n + 0 + 0)) _ ⟩
-    3 + (2 ^ n + 0 + 0) + List.sum (List.map sizeRose (List.applyUpTo (artifact n ∘ suc) i))
+  <⟨ ℕ.m<n+m (2 ^ n + 0) {2} (s≤s z≤n) ⟩
+    2 + (2 ^ n + 0)
+  ≤⟨ ℕ.m≤m+n (2 + (2 ^ n + 0)) _ ⟩
+    2 + (2 ^ n + 0) + List.sum (List.map sizeRose (List.applyUpTo (artifact n ∘ suc) i))
   ≡⟨⟩
     1 + sizeRose (artifact n zero) + List.sum (List.map sizeRose (List.applyUpTo (artifact n ∘ suc) i))
   ≡⟨⟩
@@ -562,26 +540,26 @@ FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
     begin-strict
       sizeFST (fst m)
     ≡⟨ size-fst m ⟩
-      4 + 2 ^ m + 2 * m
-    ≤⟨ ℕ.+-monoʳ-≤ (4 + 2 ^ m) (2*n≤2^n m) ⟩
-      4 + 2 ^ m + 2 ^ m
-    ≤⟨ ℕ.+-monoˡ-≤ (2 ^ m) (ℕ.+-monoˡ-≤ (2 ^ m) (ℕ.m≤m*n 4 (2 ^ m) {{ℕ.>-nonZero (ℕ.m^n>0 2 m)}})) ⟩
-      4 * 2 ^ m + 2 ^ m + 2 ^ m
-    ≡⟨ Eq.cong (λ x → 4 * 2 ^ m + x + x) (ℕ.*-identityˡ (2 ^ m)) ⟨
-      4 * 2 ^ m + 1 * 2 ^ m + 1 * 2 ^ m
-    ≡⟨ Eq.cong (_+ 1 * 2 ^ m) (ℕ.*-distribʳ-+ (2 ^ m) 4 1) ⟨
-      5 * 2 ^ m + 1 * 2 ^ m
-    ≡⟨ ℕ.*-distribʳ-+ (2 ^ m) 5 1 ⟨
+      3 + 2 ^ m + 2 * m
+    ≤⟨ ℕ.+-monoʳ-≤ (3 + 2 ^ m) (2*n≤2^n m) ⟩
+      3 + 2 ^ m + 2 ^ m
+    ≤⟨ ℕ.+-monoˡ-≤ (2 ^ m) (ℕ.+-monoˡ-≤ (2 ^ m) (ℕ.m≤m*n 3 (2 ^ m) {{ℕ.>-nonZero (ℕ.m^n>0 2 m)}})) ⟩
+      3 * 2 ^ m + 2 ^ m + 2 ^ m
+    ≡⟨ Eq.cong (λ x → 3 * 2 ^ m + x + x) (ℕ.*-identityˡ (2 ^ m)) ⟨
+      3 * 2 ^ m + 1 * 2 ^ m + 1 * 2 ^ m
+    ≡⟨ Eq.cong (_+ 1 * 2 ^ m) (ℕ.*-distribʳ-+ (2 ^ m) 3 1) ⟨
+      4 * 2 ^ m + 1 * 2 ^ m
+    ≡⟨ ℕ.*-distribʳ-+ (2 ^ m) 4 1 ⟨
+      5 * 2 ^ m
+    <⟨ ℕ.*-monoˡ-< (2 ^ m) ⦃ ℕ.>-nonZero (ℕ.m^n>0 2 m) ⦄ (ℕ.n<1+n 5) ⟩
       6 * 2 ^ m
-    <⟨ ℕ.*-monoˡ-< (2 ^ m) ⦃ ℕ.>-nonZero (ℕ.m^n>0 2 m) ⦄ (ℕ.n<1+n 6) ⟩
-      7 * 2 ^ m
     ∎)
   ⟩
-    suc n * (7 * 2 ^ m)
-  ≡⟨ ℕ.*-assoc (suc n) 7 (2 ^ m) ⟨
-    suc n * 7 * 2 ^ m
-  ≡⟨ Eq.cong (_* 2 ^ m) (ℕ.*-comm (suc n) 7) ⟩
-    7 * suc n * 2 ^ m
+    suc n * (6 * 2 ^ m)
+  ≡⟨ ℕ.*-assoc (suc n) 6 (2 ^ m) ⟨
+    suc n * 6 * 2 ^ m
+  ≡⟨ Eq.cong (_* 2 ^ m) (ℕ.*-comm (suc n) 6) ⟩
+    6 * suc n * 2 ^ m
   ≡⟨⟩
     m * 2 ^ m
   ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo m) ⟨
@@ -591,4 +569,4 @@ FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
   ∎
   where
   open ℕ.≤-Reasoning
-  m = 7 * suc n
+  m = 6 * suc n
