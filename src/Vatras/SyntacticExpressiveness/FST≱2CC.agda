@@ -7,7 +7,7 @@ open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; _<_; z≤n; s≤s; _>_
 import Data.Nat.Properties as ℕ
 open import Data.Fin as Fin using (Fin; zero; suc)
 import Data.Fin.Properties as Fin
-open import Data.List as List using (List; []; _∷_)
+open import Data.List as List using (List; []; _∷_; _++_)
 import Data.List.Properties as List
 import Data.List.Membership.Propositional as List
 open import Data.List.Relation.Binary.Sublist.Propositional as Sublist using ([]; _∷_; _∷ʳ_)
@@ -16,8 +16,9 @@ import Data.List.Relation.Binary.Subset.Propositional.Properties as Subset
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
-open import Data.List.Relation.Unary.AllPairs using ([]; _∷_)
-open import Data.List.Relation.Unary.Unique.Propositional using (Unique)
+open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+import Data.List.Relation.Unary.AllPairs.Properties as AllPairs
+import Data.List.Relation.Unary.Unique.Propositional as List
 import Data.List.Relation.Unary.Unique.Propositional.Properties as Unique
 open import Data.Product as Prod using (_×_; _,_; proj₁; proj₂; Σ-syntax; ∃-syntax)
 import Data.Product.Properties as Prod
@@ -45,7 +46,8 @@ NAT' = record
   ; atomSize = proj₂
   }
 
-open FST.Impose NAT' hiding (Unique; _∈_)
+open FST.Impose NAT' hiding (_∈_)
+open import Vatras.Lang.FST.Composition ℕ NAT' using (⊛-all-unique)
 
 -- TODO duplicated from 2CC≤CCC
 >⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ℕ.≤ᵇ n))
@@ -146,13 +148,13 @@ variant∈e⇒length-cs n l a cs (c , v≡e) =
 partition : ∀ {i : Size} (n D : ℕ)
   → (c₁ c₂ : 2CC.2CC i NAT')
   → (ls : List ℕ)
-  → Unique ls
+  → List.Unique ls
   → All (λ l → variant n (suc l) ∈ 2CC.⟦ D 2CC.⟨ c₁ , c₂ ⟩ ⟧) ls
   → ∃[ ls₁ ] ∃[ ls₂ ]
     ls₁ Subset.⊆ ls × ls₂ Subset.⊆ ls
   × List.length ls₁ + List.length ls₂ ≡ List.length ls
-  × Unique ls₁ × All (λ l → variant n (suc l) ∈ 2CC.⟦ c₁ ⟧) ls₁
-  × Unique ls₂ × All (λ l → variant n (suc l) ∈ 2CC.⟦ c₂ ⟧) ls₂
+  × List.Unique ls₁ × All (λ l → variant n (suc l) ∈ 2CC.⟦ c₁ ⟧) ls₁
+  × List.Unique ls₂ × All (λ l → variant n (suc l) ∈ 2CC.⟦ c₂ ⟧) ls₂
 partition n D c₁ c₂ [] unique-ls ls⊆2cc =
   [] , [] ,
   Subset.⊆-refl , Subset.⊆-refl ,
@@ -186,7 +188,7 @@ partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls�
 big : ∀ {i : Size} (n : ℕ)
   → (2cc : 2CC.2CC i NAT')
   → (ls : List ℕ)
-  → Unique ls
+  → List.Unique ls
   → All (λ l → variant n (suc l) ∈ 2CC.⟦ 2cc ⟧) ls
   → List.length ls * 2 ^ n < size2CC 2cc
 big n (a 2CC.-< cs >-) [] unique-ls all-∈ = s≤s z≤n
@@ -323,115 +325,31 @@ select-applyUpTo-feature k n i i≤n =
       List.applyUpTo (λ m → feature k (j + m)) (suc i')
     ∎
 
-forget-uniqueness-⊛-all :
-  ∀ (as : List FSF)
-  → forget-uniqueness (⊛-all as) ≡ List.foldr _⊕_ [] (List.map forget-uniqueness as)
-forget-uniqueness-⊛-all [] = refl
-forget-uniqueness-⊛-all (a ∷ as) =
-  begin
-    forget-uniqueness (⊛-all (a ∷ as))
-  ≡⟨⟩
-    forget-uniqueness (a ⊛ (⊛-all as))
-  ≡⟨⟩
-    forget-uniqueness a ⊕ forget-uniqueness (⊛-all as)
-  ≡⟨ Eq.cong (λ x → forget-uniqueness a ⊕ x) (forget-uniqueness-⊛-all as) ⟩
-    forget-uniqueness a ⊕ List.foldr _⊕_ [] (List.map forget-uniqueness as)
-  ≡⟨⟩
-    List.foldr _⊕_ [] (forget-uniqueness a ∷ List.map forget-uniqueness as)
-  ≡⟨⟩
-    List.foldr _⊕_ [] (List.map forget-uniqueness (a ∷ as))
-  ∎
+unique-variant : ∀ n m i → Unique (List.concatMap forget-uniqueness (List.applyUpTo (λ k → feature n (m + k)) i))
+unique-variant n m zero = []
+unique-variant n m (suc i) =
+  go i m ℕ.≤-refl
+  ∷ Eq.subst
+    (λ x → Unique (List.concatMap forget-uniqueness x))
+    (List.applyUpTo-cong (λ k → Eq.cong (feature n) (Eq.sym (ℕ.+-suc m k))) i)
+    (unique-variant n (suc m) i)
   where
-  open Eq.≡-Reasoning
+  artifacts-≉ : ∀ {i} {j} → i ≢ j → artifact n i ≉ artifact n j
+  artifacts-≉ {zero} {zero} i≢j refl = i≢j refl
+  artifacts-≉ {suc i} {suc j} i≢j refl = i≢j refl
 
-artifacts⊙artifact :
-  ∀ (n i k : ℕ)
-  → List.applyUpTo (λ m → artifact n (m + k)) i ⊙ artifact n (i + k)
-  ≡ List.applyUpTo (λ m → artifact n (m + k)) (suc i)
-artifacts⊙artifact n zero k = refl
-artifacts⊙artifact n (suc i) k with artifact n (suc i + k) == artifact n k
-artifacts⊙artifact n (suc i) k | no _ =
-  begin
-    artifact n k ∷ (List.applyUpTo (λ m → artifact n (suc m + k)) i ⊙ artifact n (suc i + k))
-  ≡⟨ Eq.cong (λ x → artifact n k ∷ (x ⊙ artifact n (suc i + k))) (List.applyUpTo-cong (λ m → Eq.cong (artifact n) (ℕ.+-suc m k)) i) ⟨
-    artifact n k ∷ (List.applyUpTo (λ m → artifact n (m + suc k)) i ⊙ artifact n (suc i + k))
-  ≡⟨ Eq.cong (λ x → artifact n k ∷ (List.applyUpTo (λ m → artifact n (m + suc k)) i ⊙ artifact n x)) (ℕ.+-suc i k) ⟨
-    artifact n k ∷ (List.applyUpTo (λ m → artifact n (m + suc k)) i ⊙ artifact n (i + suc k))
-  ≡⟨ Eq.cong (artifact n k ∷_) (artifacts⊙artifact n i (suc k)) ⟩
-    artifact n k ∷ List.applyUpTo (λ m → artifact n (m + suc k)) (suc i)
-  ≡⟨ Eq.cong (artifact n k ∷_) (List.applyUpTo-cong (λ m → Eq.cong (artifact n) (ℕ.+-suc m k)) (suc i)) ⟩
-    artifact n k ∷ List.applyUpTo (λ m → artifact n (suc m + k)) (suc i)
-  ≡⟨⟩
-    List.applyUpTo (λ m → artifact n (m + k)) (suc (suc i))
-  ∎
-  where
-  open Eq.≡-Reasoning
-artifacts⊙artifact n (suc i) (suc k) | yes artifact-1+i+k≈artifact-k = ⊥-elim (ℕ.1+n≰n (ℕ.≤-trans (ℕ.m≤n+m (suc k) i) (ℕ.≤-reflexive (ℕ.suc-injective (Prod.,-injectiveˡ artifact-1+i+k≈artifact-k)))))
-
-artifact⊕artifacts :
-  ∀ (n i k : ℕ)
-  → (artifact n k ∷ []) ⊕ List.applyUpTo (λ m → artifact n (suc m + k)) i
-  ≡ List.applyUpTo (λ m → artifact n (m + k)) (suc i)
-artifact⊕artifacts n i k = go 1 i k
-  where
-  go : ∀ (i j k : ℕ)
-    → List.applyUpTo (λ m → artifact n (m + k)) i ⊕ List.applyUpTo (λ m → artifact n (i + m + k)) j
-    ≡ List.applyUpTo (λ m → artifact n (m + k)) (i + j)
-  go i zero k = Eq.cong (List.applyUpTo (λ m → artifact n (m + k))) (Eq.sym (ℕ.+-identityʳ i))
-  go i (suc j) k =
-    begin
-      List.applyUpTo (λ m → artifact n (m + k)) i ⊕ List.applyUpTo (λ m → artifact n (i + m + k)) (suc j)
-    ≡⟨⟩
-      List.applyUpTo (λ m → artifact n (m + k)) i ⊕ (artifact n (i + zero + k) ∷ List.applyUpTo (λ m → artifact n (i + suc m + k)) j)
-    ≡⟨ Eq.cong (λ x → List.applyUpTo (λ m → artifact n (m + k)) i ⊕ (artifact n (x + k) ∷ List.applyUpTo (λ m → artifact n (i + suc m + k)) j)) (ℕ.+-identityʳ i) ⟩
-      List.applyUpTo (λ m → artifact n (m + k)) i ⊕ (artifact n (i + k) ∷ List.applyUpTo (λ m → artifact n (i + suc m + k)) j)
-    ≡⟨⟩
-      (List.applyUpTo (λ m → artifact n (m + k)) i ⊙ artifact n (i + k)) ⊕ List.applyUpTo (λ m → artifact n (i + suc m + k)) j
-    ≡⟨ Eq.cong (_⊕ List.applyUpTo (λ m → artifact n (i + suc m + k)) j) (artifacts⊙artifact n i k) ⟩
-      List.applyUpTo (λ m → artifact n (m + k)) (suc i) ⊕ List.applyUpTo (λ m → artifact n (i + suc m + k)) j
-    ≡⟨ Eq.cong (λ x → List.applyUpTo (λ m → artifact n (m + k)) (suc i) ⊕ x) (List.applyUpTo-cong (λ m → Eq.cong (λ x → artifact n (x + k)) (ℕ.+-suc i m)) j) ⟩
-      List.applyUpTo (λ m → artifact n (m + k)) (suc i) ⊕ List.applyUpTo (λ m → artifact n (suc i + m + k)) j
-    ≡⟨ go (suc i) j k ⟩
-      List.applyUpTo (λ m → artifact n (m + k)) (suc i + j)
-    ≡⟨ Eq.cong (List.applyUpTo (λ m → artifact n (m + k))) (ℕ.+-suc i j) ⟨
-      List.applyUpTo (λ m → artifact n (m + k)) (i + suc j)
-    ∎
+  go : ∀ i' m' → m ≤ m' → All (_≉_ (artifact n (m + zero))) (List.concatMap forget-uniqueness (List.applyUpTo (λ k → feature n (m' + suc k)) i'))
+  go zero m' m≤m' = []
+  go (suc i') m' m≤m' = artifacts-≉ (ℕ.<⇒≢ (
+    begin-strict
+      m + 0
+    <⟨ ℕ.+-monoʳ-< m (ℕ.n<1+n 0) ⟩
+      m + 1
+    ≤⟨ ℕ.+-monoˡ-≤ 1 m≤m' ⟩
+      m' + 1
+    ∎)) ∷ Eq.subst (λ x → All (_≉_ (artifact n (m + zero))) (List.concatMap forget-uniqueness x)) (List.applyUpTo-cong (λ k → Eq.cong (feature n) (Eq.sym (ℕ.+-suc m' (suc k)))) i') (go i' (suc m') (ℕ.≤-trans m≤m' (ℕ.n≤1+n m')))
     where
-    open Eq.≡-Reasoning
-
-foldr-⊕-artifacts :
-  ∀ (n i : ℕ)
-  → List.applyUpTo (artifact n) i
-  ≡ List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n m ∷ []) i)
-foldr-⊕-artifacts n i = go i zero
-  where
-  open Eq.≡-Reasoning
-
-  go :
-    ∀ (i j : ℕ)
-    → List.applyUpTo (λ m → artifact n (j + m)) i
-    ≡ List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n (j + m) ∷ []) i)
-  go zero j = refl
-  go (suc i) j =
-    begin
-      List.applyUpTo (λ m → artifact n (j + m)) (suc i)
-    ≡⟨ List.applyUpTo-cong (λ m → Eq.cong (artifact n) (ℕ.+-comm j m)) (suc i) ⟩
-      List.applyUpTo (λ m → artifact n (m + j)) (suc i)
-    ≡⟨ artifact⊕artifacts n i j ⟨
-      (artifact n j ∷ []) ⊕ List.applyUpTo (λ m → artifact n (suc m + j)) i
-    ≡⟨ Eq.cong ((artifact n j ∷ []) ⊕_) (List.applyUpTo-cong (λ m → Eq.cong (λ x → artifact n (suc x)) (ℕ.+-comm m j)) i) ⟩
-      (artifact n j ∷ []) ⊕ List.applyUpTo (λ m → artifact n (suc j + m)) i
-    ≡⟨ Eq.cong ((artifact n j ∷ []) ⊕_) (go i (suc j)) ⟩
-      (artifact n j ∷ []) ⊕ List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n (suc j + m) ∷ []) i)
-    ≡⟨ Eq.cong (λ x → (artifact n j ∷ []) ⊕ List.foldr _⊕_ [] x) (List.applyUpTo-cong (λ m → Eq.cong (λ x → artifact n x ∷ []) (ℕ.+-suc j m)) i) ⟨
-      (artifact n j ∷ []) ⊕ List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n (j + suc m) ∷ []) i)
-    ≡⟨⟩
-      List.foldr _⊕_ [] ((artifact n j ∷ []) ∷ List.applyUpTo (λ m → artifact n (j + suc m) ∷ []) i)
-    ≡⟨ Eq.cong (λ x → List.foldr _⊕_ [] ((artifact n x ∷ []) ∷ List.applyUpTo (λ m → artifact n (j + suc m) ∷ []) i)) (ℕ.+-identityʳ j) ⟨
-      List.foldr _⊕_ [] ((artifact n (j + zero) ∷ []) ∷ List.applyUpTo (λ m → artifact n (j + suc m) ∷ []) i)
-    ≡⟨⟩
-      List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n (j + m) ∷ []) (suc i))
-    ∎
+    open ℕ.≤-Reasoning
 
 variant∈fst :
   ∀ (n i : ℕ)
@@ -440,13 +358,19 @@ variant∈fst :
 variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   begin
     List.applyUpTo (artifact n) (suc i)
-  ≡⟨ foldr-⊕-artifacts n (suc i) ⟩
-    List.foldr _⊕_ [] (List.applyUpTo (λ m → artifact n m ∷ []) (suc i))
+  ≡⟨ List.map-applyUpTo (artifact n) id (suc i) ⟨
+    List.map (artifact n) (List.upTo (suc i))
+  ≡⟨ List.concat-[-] (List.map (artifact n) (List.upTo (suc i))) ⟨
+    List.concat (List.map (_∷ []) (List.map (artifact n) (List.upTo (suc i))))
+  ≡⟨ Eq.cong List.concat (List.map-∘ {g = (_∷ [])} (List.upTo (suc i))) ⟨
+    List.concat (List.map (λ k → artifact n k ∷ []) (List.upTo (suc i)))
   ≡⟨⟩
-    List.foldr _⊕_ [] (List.applyUpTo (forget-uniqueness ∘ feature n) (suc i))
-  ≡⟨ Eq.cong (λ x → List.foldr _⊕_ [] x) (List.map-applyUpTo forget-uniqueness (feature n) (suc i)) ⟨
-    List.foldr _⊕_ [] (List.map forget-uniqueness (List.applyUpTo (feature n) (suc i)))
-  ≡⟨ forget-uniqueness-⊛-all (List.applyUpTo (feature n) (suc i)) ⟨
+    List.concat (List.map (λ k → forget-uniqueness (feature n k)) (List.upTo (suc i)))
+  ≡⟨ Eq.cong List.concat (List.map-∘ {g = forget-uniqueness} {f = feature n} (List.upTo (suc i))) ⟩
+    List.concatMap forget-uniqueness (List.map (feature n) (List.upTo (suc i)))
+  ≡⟨ Eq.cong (List.concatMap forget-uniqueness) (List.map-applyUpTo (feature n) id (suc i)) ⟩
+    List.concatMap forget-uniqueness (List.applyUpTo (feature n) (suc i))
+  ≡⟨ ⊛-all-unique (List.applyUpTo (feature n) (suc i)) (unique-variant n zero (suc i)) ⟨
     forget-uniqueness (⊛-all (List.applyUpTo (feature n) (suc i)))
   ≡⟨ Eq.cong (λ x → forget-uniqueness (⊛-all x)) (select-applyUpTo-feature n n i i≤n) ⟨
     forget-uniqueness (⊛-all (select (fst-config i) (List.applyUpTo (λ m → m :: feature n m) (suc n))))

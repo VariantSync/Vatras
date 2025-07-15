@@ -15,7 +15,8 @@ open import Data.List.Membership.Propositional using (_∈_)
 import Data.List.Membership.Propositional.Properties as List
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
 open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_)
-open import Data.List.Relation.Unary.All using (All; _∷_)
+open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
+import Data.List.Relation.Unary.All.Properties as All
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Product using (_,_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
@@ -323,13 +324,42 @@ sum-* n (x ∷ xs) =
 module _ where
   open import Data.List.Relation.Binary.Sublist.Propositional using (_⊇_; []; _∷_; _∷ʳ_)
   import Data.List.Relation.Binary.Sublist.Propositional.Properties as Sublist
-  open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+  open import Data.List.Relation.Unary.AllPairs as AllPairs using (AllPairs; []; _∷_)
   open import Relation.Binary using (Rel; _Respects_)
 
   AllPairs-resp-⊆ : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} → {R : Rel A ℓ₂} → (AllPairs R) Respects _⊇_
   AllPairs-resp-⊆ [] [] = []
   AllPairs-resp-⊆ (y ∷ʳ xs⊇ys) (All-x ∷ AllPairs-xs) = AllPairs-resp-⊆ xs⊇ys AllPairs-xs
   AllPairs-resp-⊆ {x = .(_ ∷ _)} {.(_ ∷ _)} (refl ∷ xs⊇ys) (All-x ∷ AllPairs-xs) = Sublist.All-resp-⊆ xs⊇ys All-x ∷ AllPairs-resp-⊆ xs⊇ys AllPairs-xs
+
+  AllPairs-++⁻ˡ : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → A → Set ℓ₂}
+    → (xs : List A) {ys : List A}
+    → AllPairs P (xs ++ ys)
+    → AllPairs P xs
+  AllPairs-++⁻ˡ [] allPairs = []
+  AllPairs-++⁻ˡ (x ∷ xs) (P-x ∷ allPairs) = All.++⁻ˡ xs P-x ∷ AllPairs-++⁻ˡ xs allPairs
+
+  AllPairs-++⁻ʳ : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → A → Set ℓ₂}
+    → (xs : List A) {ys : List A}
+    → AllPairs P (xs ++ ys)
+    → AllPairs P ys
+  AllPairs-++⁻ʳ [] allPairs = allPairs
+  AllPairs-++⁻ʳ (x ∷ xs) allPairs = AllPairs-++⁻ʳ xs (AllPairs.tail allPairs)
+
+  AllPairs⇒AllAll : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → A → Set ℓ₂}
+    → (xs ys : List A)
+    → AllPairs P (xs ++ ys)
+    → All (λ y → All (P y) ys) xs
+  AllPairs⇒AllAll [] ys allPairs = []
+  AllPairs⇒AllAll (x ∷ xs) ys (P-x ∷ allPairs) = All.++⁻ʳ xs P-x ∷ AllPairs⇒AllAll xs ys allPairs
+
+  AllAll-comm : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → A → Set ℓ₂}
+    → (xs ys : List A)
+    → (∀ {x} {y} → P x y → P y x)
+    → All (λ y → All (P y) xs) ys
+    → All (λ y → All (P y) ys) xs
+  AllAll-comm [] ys sym all-all = []
+  AllAll-comm (x ∷ xs) ys sym all-all = All.map (λ All-P-y-xs → sym (All.head All-P-y-xs)) all-all ∷ AllAll-comm xs ys sym (All.map All.tail all-all)
 
 map-applyUpTo : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂}
   → (f : A → B)
