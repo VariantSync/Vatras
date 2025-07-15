@@ -236,7 +236,7 @@ select-applyUpTo-feature :
   ∀ (k n i : ℕ)
   → i ≤ n
   → select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
-  ≡ List.applyUpTo (λ m → feature k m) (suc i)
+  ≡ List.applyUpTo (feature k) (suc i)
 select-applyUpTo-feature k n i i≤n =
   begin
     select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
@@ -245,7 +245,7 @@ select-applyUpTo-feature k n i i≤n =
   ≡⟨⟩
     select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc i + offset))
   ≡⟨ selects-init (suc i) zero refl ⟩
-    List.applyUpTo (λ m → feature k m) (suc i)
+    List.applyUpTo (feature k) (suc i)
   ∎
   where
   fst-config≡true : ∀ (j i' : ℕ) → j + suc i' ≡ suc i → fst-config i (j + zero) ≡ true
