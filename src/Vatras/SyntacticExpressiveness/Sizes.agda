@@ -1,7 +1,7 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
 module Vatras.SyntacticExpressiveness.Sizes (F : 𝔽) where
 
-open import Data.Nat using (ℕ; suc; zero; _+_)
+open import Data.Nat using (ℕ; suc; zero; _+_; _>_; s≤s; z≤n)
 import Data.List as List
 import Data.List.NonEmpty as List⁺
 import Data.Vec as Vec
@@ -19,6 +19,10 @@ sizeRose {A = A} (a Rose.-< cs >-) = suc (atomSize A a + List.sum (List.map size
 size2CC : ∀ {i : Size} {A : 𝔸} → 2CC.2CC i A → ℕ
 size2CC {A = A} (a 2CC.2CC.-< cs >-) = suc (atomSize A a + List.sum (List.map size2CC cs))
 size2CC (D 2CC.2CC.⟨ l , r ⟩) = suc (size2CC l + size2CC r)
+
+size2CC>0 : ∀ {i : Size} {A : 𝔸} → (2cc : 2CC.2CC i A) → size2CC 2cc > 0
+size2CC>0 (a 2CC.-< cs >-) = s≤s z≤n
+size2CC>0 (D 2CC.⟨ l , r ⟩) = s≤s z≤n
 
 Sized2CC : SizedLang
 Sized2CC = record
@@ -39,6 +43,10 @@ SizedNCC n = record
 sizeCCC : ∀ {i : Size} {A : 𝔸} → CCC.CCC i A → ℕ
 sizeCCC {A = A} (a CCC.CCC.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeCCC cs))
 sizeCCC (D CCC.CCC.⟨ cs ⟩) = suc (List.sum (List.map sizeCCC (List⁺.toList cs)))
+
+sizeCCC>0 : ∀ {i : Size} {A : 𝔸} → (ccc : CCC.CCC i A) → sizeCCC ccc > 0
+sizeCCC>0 (a CCC.-< cs >-) = s≤s z≤n
+sizeCCC>0 (D CCC.⟨ cs ⟩) = s≤s z≤n
 
 SizedCCC : SizedLang
 SizedCCC = record

@@ -27,7 +27,7 @@ import Vatras.Util.List as List
 open import Vatras.Lang.All
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.SyntacticExpressiveness using (_≤Size_)
-open import Vatras.SyntacticExpressiveness.Sizes using (sizeRose; Sized2CC; size2CC; SizedCCC; sizeCCC)
+open import Vatras.SyntacticExpressiveness.Sizes using (sizeRose; Sized2CC; size2CC; SizedCCC; sizeCCC; sizeCCC>0)
 
 >⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ≤ᵇ n))
 >⇒¬≤ᵇ (s≤s z≤n) = tt
@@ -73,10 +73,6 @@ fnoc-rec-true config D zero n fnoc<limit+n = ⊥-elim (ℕ.n≮n n fnoc<limit+n)
 fnoc-rec-true config D (suc limit) n fnoc<limit+n with config (D , n) in config-n
 fnoc-rec-true config D (suc limit) n fnoc<limit+n | true = config-n
 fnoc-rec-true config D (suc limit) n fnoc<limit+n | false = fnoc-rec-true config D limit (suc n) (ℕ.≤-trans fnoc<limit+n (ℕ.≤-reflexive (Eq.sym (ℕ.+-suc limit n))))
-
-1≤sizeCCC : ∀ {i : Size} {A : 𝔸} → (e : CCC.CCC F i A) → 1 ≤ sizeCCC F e
-1≤sizeCCC (a CCC.CCC.-< cs >-) = s≤s z≤n
-1≤sizeCCC (D CCC.CCC.⟨ cs ⟩) = s≤s z≤n
 
 max-dimension : ∀ {i : Size} {A : 𝔸} → CCC.CCC F i A → ℕ
 max-dimension (a CCC.CCC.-< cs >-) = List.max (List.map max-dimension cs)
@@ -193,7 +189,7 @@ translate-size (D CCC.CCC.⟨ c ∷ cs ⟩) =
       List.sum (List.replicate (List.length (c ∷ cs)) 1)
     ≡⟨ Eq.cong List.sum (List.map-const 1 (c ∷ cs)) ⟨
       List.sum (List.map (const 1) (c ∷ cs))
-    ≤⟨ List.sum-map-≤ (const 1) (sizeCCC F) (c ∷ cs) 1≤sizeCCC ⟩
+    ≤⟨ List.sum-map-≤ (const 1) (sizeCCC F) (c ∷ cs) (sizeCCC>0 F) ⟩
       List.sum (List.map (sizeCCC F) (c ∷ cs))
     ≤⟨ ℕ.m≤n*m (List.sum (List.map (sizeCCC F) (c ∷ cs))) 2 ⟩
       2 * List.sum (List.map (sizeCCC F) (c ∷ cs))

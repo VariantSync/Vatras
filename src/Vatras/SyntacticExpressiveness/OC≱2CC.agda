@@ -34,7 +34,7 @@ open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
-open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC)
+open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
 
 options : ℕ → List (OC.OC ∞ NAT)
 options zero = []
@@ -209,10 +209,6 @@ conf n i = i <ᵇ n
   ∎
   where
   open ℕ.≤-Reasoning
-
-size2CC>0 : ∀ {i} (2cc : 2CC.2CC i NAT) → 0 < size2CC 2cc
-size2CC>0 (a 2CC.-< cs >-) = s≤s z≤n
-size2CC>0 (D 2CC.⟨ l , r ⟩) = s≤s z≤n
 
 goal : ∀ {i} (n : ℕ) (2cc : 2CC.2CC i NAT)
   → OC.⟦ oc (4 * n) ⟧ ≅ 2CC.⟦ 2cc ⟧

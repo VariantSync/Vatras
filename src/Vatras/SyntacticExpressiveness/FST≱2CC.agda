@@ -39,7 +39,7 @@ import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
-open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST)
+open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
 
 NAT' : 𝔸
 NAT' = record
@@ -135,13 +135,6 @@ variant-≉ n {l₁} {l₂} l₁≢l₂ v₁≡v₂ = l₁≢l₂ (
   ∎)
   where
   open Eq.≡-Reasoning
-
--- duplicated in OC≱2CC as size2CC>0
-1≤size2CC : ∀ {i : Size} {A : 𝔸}
-  → (e : 2CC.2CC i A)
-  → 1 ≤ size2CC e
-1≤size2CC (a 2CC.-< cs >-) = s≤s z≤n
-1≤size2CC (D 2CC.⟨ l , r ⟩) = s≤s z≤n
 
 fst-config : ℕ → ℕ → Bool
 fst-config i f = f ℕ.≤ᵇ i
@@ -303,7 +296,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   open ℕ.≤-Reasoning
 
 FST≱2CC : SizedFST ≱Size Sized2CC
-FST≱2CC zero = NAT' , fst zero , λ 2cc fst≅2cc → 1≤size2CC 2cc
+FST≱2CC zero = NAT' , fst zero , λ 2cc fst≅2cc → size2CC>0 2cc
 FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
   begin-strict
     suc n * sizeFST (fst m)
