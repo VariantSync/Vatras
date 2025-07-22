@@ -41,17 +41,10 @@ import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
 
-NAT' : 𝔸
-NAT' = record
-  { atoms = ℕ × ℕ
-  ; atomsEqual? = Prod.≡-dec ℕ._≟_ ℕ._≟_
-  ; atomSize = proj₂
-  }
-
-open FST.Impose NAT' hiding (_∈_)
-open import Vatras.Lang.FST.Composition ℕ NAT' using (⊛-all-unique)
-open import Vatras.Lang.FST.Util ℕ NAT' using (select≗filter)
-open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT' using (unique-lengths⇒m*sizeRose≤size2CC) renaming (_≉_ to _≉'_)
+open FST.Impose NAT hiding (_∈_)
+open import Vatras.Lang.FST.Composition ℕ NAT using (⊛-all-unique)
+open import Vatras.Lang.FST.Util ℕ NAT using (select≗filter)
+open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (unique-lengths⇒m*sizeRose≤size2CC) renaming (_≉_ to _≉'_)
 
 artifact : ℕ → ℕ → FSTA ∞
 artifact n zero = (0 , 2 ^ n) Rose.-< [] >-
@@ -102,7 +95,6 @@ size-fst n =
 variant : ℕ → ℕ → FSTA ∞
 variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) (suc i) >-
 
--- TODO called variant-size in OC≱2CC
 size-variant
   : (n i : ℕ)
   → 2 ^ n ≤ sizeRose (variant n i)
@@ -246,7 +238,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
 
 ⊆⇒All∈ : ∀ {i} n l k
   → k + l ≤ suc n
-  → (2cc : 2CC.2CC i NAT')
+  → (2cc : 2CC.2CC i NAT)
   → FST.⟦ fst n ⟧ ⊆ 2CC.⟦ 2cc ⟧
   → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) (List.applyUpTo (k +_) l)
 ⊆⇒All∈ n zero k l≤n 2cc fst⊆2cc = []
@@ -296,8 +288,8 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   open ℕ.≤-Reasoning
 
 FST≱2CC : SizedFST ≱Size Sized2CC
-FST≱2CC zero = NAT' , fst zero , λ 2cc fst≅2cc → size2CC>0 2cc
-FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
+FST≱2CC zero = NAT , fst zero , λ 2cc fst≅2cc → size2CC>0 2cc
+FST≱2CC (suc n) = NAT , fst m , λ 2cc fst≅2cc →
   begin-strict
     suc n * sizeFST (fst m)
   <⟨ ℕ.*-monoʳ-< (suc n) (

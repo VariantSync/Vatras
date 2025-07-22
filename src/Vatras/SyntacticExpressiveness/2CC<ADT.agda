@@ -24,14 +24,7 @@ open import Relation.Nullary.Negation using (¬_)
 open import Size using (Size; ∞)
 
 open import Vatras.Data.EqIndexedSet using (_≅_; ≅-trans; ≅-sym; _⊆_; ⊆-trans; _∈_)
-open import Vatras.Framework.Definitions using (𝔸)
-
-NAT' : 𝔸
-NAT' = record
-  { atoms = ℕ
-  ; atomsEqual? = ℕ._≟_
-  ; atomSize = λ _ → 0
-  }
+open import Vatras.Framework.Definitions using (𝔸; NAT')
 
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 open import Vatras.Framework.VariantGenerator (Rose ∞) NAT' using (VariantGenerator)

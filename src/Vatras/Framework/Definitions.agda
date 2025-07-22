@@ -1,11 +1,12 @@
 module Vatras.Framework.Definitions where
 
 open import Data.Maybe using (Maybe; just)
-open import Data.Nat as ℕ using (ℕ)
+open import Data.Nat as ℕ using (ℕ; zero)
 open import Data.Product using (_×_; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+import Data.Product.Properties as Product
 open import Data.String as String using (String)
 open import Data.Unit using (⊤; tt) public
-open import Function using (id; _∘_)
+open import Function using (id; _∘_; const)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Nullary.Negation using (¬_)
@@ -75,14 +76,14 @@ STRING = record
 
 NAT : 𝔸
 NAT = record
-  { atoms = ℕ
-  ; atomsEqual? = ℕ._≟_
-  ; atomSize = id
+  { atoms = ℕ × ℕ
+  ; atomsEqual? = Product.≡-dec ℕ._≟_ ℕ._≟_
+  ; atomSize = proj₂
   }
 
 NAT' : 𝔸
 NAT' = record
   { atoms = ℕ
   ; atomsEqual? = ℕ._≟_
-  ; atomSize = λ _ → 0
+  ; atomSize = const zero
   }

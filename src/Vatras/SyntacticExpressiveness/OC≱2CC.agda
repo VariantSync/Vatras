@@ -38,10 +38,10 @@ open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; SizedWFOC;
 
 options : ℕ → List (OC.OC ∞ NAT)
 options zero = []
-options (suc n) = n OC.❲ 0 OC.-< [] >- ❳ ∷ options n
+options (suc n) = n OC.❲ (0 , 0) OC.-< [] >- ❳ ∷ options n
 
 oc : ℕ → OC.WFOC ∞ NAT
-oc n = OC.Root zero ((2 ^ n) OC.-< [] >- ∷ options n)
+oc n = OC.Root (0 , 0) ((0 , 2 ^ n) OC.-< [] >- ∷ options n)
 
 size-options : ∀ n → List.sum (List.map sizeOC (options n)) ≡ 2 * n
 size-options zero = Eq.refl
@@ -61,11 +61,11 @@ size-oc : ∀ (n : ℕ) → sizeWFOC (oc n) ≡ 2 ^ n + 2 * suc n
 size-oc n =
     sizeWFOC (oc n)
   ≡⟨⟩
-    1 + List.sum (List.map sizeOC ((2 ^ n) OC.-< [] >- ∷ options n))
+    1 + List.sum (List.map sizeOC ((0 , 2 ^ n) OC.-< [] >- ∷ options n))
   ≡⟨⟩
-    1 + sizeOC {A = NAT} ((2 ^ n) OC.-< [] >-) + List.sum (List.map sizeOC (options n))
+    1 + sizeOC {A = NAT} ((0 , 2 ^ n) OC.-< [] >-) + List.sum (List.map sizeOC (options n))
   ≡⟨⟩
-    2 + atomSize NAT (2 ^ n) + 0 + List.sum (List.map sizeOC (options n))
+    2 + atomSize NAT (0 , 2 ^ n) + 0 + List.sum (List.map sizeOC (options n))
   ≡⟨⟩
     2 + (2 ^ n + 0) + List.sum (List.map sizeOC (options n))
   ≡⟨ Eq.cong (λ x → 2 + (2 ^ n + 0) + x) (size-options n) ⟩
@@ -83,18 +83,18 @@ size-oc n =
   open Eq.≡-Reasoning
 
 exponential-artifact : ℕ → Rose ∞ NAT
-exponential-artifact n = (2 ^ n) Rose.-< [] >-
+exponential-artifact n = (0 , 2 ^ n) Rose.-< [] >-
 
 variant-cs : ℕ → List (Rose ∞ NAT)
-variant-cs i = List.replicate i (0 Rose.-< [] >-)
+variant-cs i = List.replicate i ((0 , 0) Rose.-< [] >-)
 
 variant : ℕ → ℕ → Rose ∞ NAT
-variant n i = 0 Rose.-< exponential-artifact n ∷ variant-cs i >-
+variant n i = (0 , 0) Rose.-< exponential-artifact n ∷ variant-cs i >-
 
-variant-size
+size-variant
   : (n l : ℕ)
   → 2 ^ n ≤ sizeRose (variant n l)
-variant-size n l =
+size-variant n l =
   begin
     2 ^ n
   ≡⟨ ℕ.+-identityʳ (2 ^ n) ⟨
@@ -124,23 +124,23 @@ variant-≉ n {l₁} {l₂} l₁≢l₂ v₁≡v₂ = l₁≢l₂ (
   where
   open Eq.≡-Reasoning
 
-conf : ℕ → OC.Configuration
-conf n i = i <ᵇ n
+config : ℕ → OC.Configuration
+config n i = i <ᵇ n
 
 ⟦options⟧-tail : ∀ n l
   → n ≤ l
-  → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n))
+  → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
   ≡ variant-cs n
 ⟦options⟧-tail zero l n≤l = Eq.refl
 ⟦options⟧-tail (suc n) l n<l with ℕ.<ᵇ-reflects-< n l
 ⟦options⟧-tail (suc n) l n<l | reflects-n<l with n <ᵇ l
 ⟦options⟧-tail (suc n) l n<l | ofʸ n<l' | .true =
-  Eq.cong (0 Rose.-< [] >- ∷_) (⟦options⟧-tail n l (ℕ.<⇒≤ n<l))
+  Eq.cong ((0 , 0) Rose.-< [] >- ∷_) (⟦options⟧-tail n l (ℕ.<⇒≤ n<l))
 ⟦options⟧-tail (suc n) l n<l | ofⁿ n≮l | .false = ⊥-elim (n≮l n<l)
 
 ⟦options⟧ : ∀ n l
   → l ≤ n
-  → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options n))
+  → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
   ≡ variant-cs l
 ⟦options⟧ zero .zero z≤n = Eq.refl
 ⟦options⟧ (suc n) l l≤n with n ℕ.<? l
@@ -148,7 +148,7 @@ conf n i = i <ᵇ n
 ⟦options⟧ (suc n) l l≤n | no n≮l | .false | ofⁿ n≮l' = ⟦options⟧ n l (ℕ.≮⇒≥ n≮l)
 ⟦options⟧ (suc n) l l≤n | no n≮l | .true | ofʸ n<l = ⊥-elim (n≮l n<l)
 ⟦options⟧ (suc n) l l≤n | yes n<l =
-    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (conf l)) (options (suc n)))
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options (suc n)))
   ≡⟨ ⟦options⟧-tail (suc n) l n<l ⟩
     variant-cs (suc n)
   ≡⟨ Eq.cong variant-cs (ℕ.≤∧≮⇒≡ n<l (ℕ.≤⇒≯ l≤n)) ⟩
@@ -157,15 +157,15 @@ conf n i = i <ᵇ n
   where
   open Eq.≡-Reasoning
 
-⟦oc⟧ : ∀ n l → l ≤ n → OC.⟦ oc n ⟧ (conf l) ≡ variant n l
+⟦oc⟧ : ∀ n l → l ≤ n → OC.⟦ oc n ⟧ (config l) ≡ variant n l
 ⟦oc⟧ n l l≤n =
-    OC.⟦ oc n ⟧ (conf l)
+    OC.⟦ oc n ⟧ (config l)
   ≡⟨⟩
-    0 Rose.-< OC.⟦ (2 ^ n) OC.-< [] >- ∷ options n ⟧ₒ-recurse (conf l) >-
+    (0 , 0) Rose.-< OC.⟦ (0 , 2 ^ n) OC.-< [] >- ∷ options n ⟧ₒ-recurse (config l) >-
   ≡⟨⟩
-    0 Rose.-< exponential-artifact n ∷ OC.⟦ options n ⟧ₒ-recurse (conf l) >-
-  ≡⟨ Eq.cong (λ x → 0 Rose.-< exponential-artifact n ∷ x >-) (⟦options⟧ n l l≤n) ⟩
-    0 Rose.-< exponential-artifact n ∷ variant-cs l >-
+    (0 , 0) Rose.-< exponential-artifact n ∷ OC.⟦ options n ⟧ₒ-recurse (config l) >-
+  ≡⟨ Eq.cong (λ x → (0 , 0) Rose.-< exponential-artifact n ∷ x >-) (⟦options⟧ n l l≤n) ⟩
+    (0 , 0) Rose.-< exponential-artifact n ∷ variant-cs l >-
   ≡⟨⟩
     variant n l
   ∎
@@ -187,7 +187,7 @@ conf n i = i <ᵇ n
       (Eq.subst
         (_∈ 2CC.⟦ 2cc ⟧)
         (⟦oc⟧ n l l≤n)
-        (oc⊆2cc (conf l))))
+        (oc⊆2cc (config l))))
 
 4*n<16^n : ∀ n → 4 * n < 16 ^ n
 4*n<16^n zero = s≤s z≤n
@@ -240,7 +240,7 @@ goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
        2cc
        (List.upTo (suc m))
        (variant m)
-       (variant-size m)
+       (size-variant m)
        (variant-≉ (suc m))
        (Unique.applyUpTo⁺₁ id (suc m) (λ i<j j<n → ℕ.<⇒≢ i<j))
        (⊆⇒All∈ m (suc m) ℕ.≤-refl 2cc oc⊆2cc)

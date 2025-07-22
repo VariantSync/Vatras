@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔽; NAT)
+open import Vatras.Framework.Definitions using (𝔽; NAT')
 module Vatras.Lang.FST.NoBaseArtifacts {F : 𝔽} where
 
 open import Data.Bool using (true; false)
@@ -16,12 +16,12 @@ open import Vatras.Framework.VariantGenerator using (VariantGenerator)
 open import Vatras.Framework.Properties.Completeness using (Incomplete)
 import Vatras.Lang.FST as FST
 
-open FST.Impose F NAT
+open FST.Impose F NAT'
 
-variant : Rose ∞ NAT
+variant : Rose ∞ NAT'
 variant = 0 Rose.-< 0 Rose.-< [] >- ∷ [] >-
 
-variantGenerator : VariantGenerator (Rose ∞) NAT 0
+variantGenerator : VariantGenerator (Rose ∞) NAT' 0
 variantGenerator zero = variant
 
 select-false : ∀ features → select (λ f → false) features ≡ []

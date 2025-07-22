@@ -3,7 +3,7 @@ This module proves that option calculus cannot encode alternatives,
 at the example of natural numbers as the atom set.
 The proof is restricted to variants with alternatives at their root.
 -}
-open import Vatras.Framework.Definitions using (𝔽; NAT)
+open import Vatras.Framework.Definitions using (𝔽; NAT')
 module Vatras.Lang.OC.Alternative {F : 𝔽} where
 
 open import Data.List using (List; []; _∷_)
@@ -21,7 +21,7 @@ open import Vatras.Lang.OC.Util using (all-oc)
 open import Vatras.Lang.OC.Subtree using (Subtree; subtrees; subtreeₒ-recurse)
 
 cannotEncodeAlternative :
-    (e : WFOC ∞ NAT)
+    (e : WFOC ∞ NAT')
   → (∃[ c ] zero -< rose-leaf      zero  ∷ [] >- ≡ OC.⟦ e ⟧ c)
   → (∃[ c ] zero -< rose-leaf (suc zero) ∷ [] >- ≡ OC.⟦ e ⟧ c)
   → (zero -< [] >- ≡ OC.⟦ e ⟧ (all-oc false))
@@ -29,14 +29,14 @@ cannotEncodeAlternative :
   ⊎ Subtree (zero -< rose-leaf (suc zero) ∷ rose-leaf zero ∷ [] >-) (OC.⟦ e ⟧ (all-oc true))
 cannotEncodeAlternative e@(Root zero cs) p₁ p₂ p₃ = Sum.map subtrees subtrees (mergeSubtrees' (sublist p₁) (sublist p₂))
   where
-  sublist : ∀ {a : ℕ} {v : Rose ∞ NAT} → (∃[ c ] a -< v ∷ [] >- ≡ OC.⟦ e ⟧ c) → Sublist Subtree (v ∷ []) (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
+  sublist : ∀ {a : ℕ} {v : Rose ∞ NAT'} → (∃[ c ] a -< v ∷ [] >- ≡ OC.⟦ e ⟧ c) → Sublist Subtree (v ∷ []) (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
   sublist (c₁ , p₁) =
     Eq.subst
       (λ cs' → Sublist Subtree cs' (OC.⟦ cs ⟧ₒ-recurse (all-oc true)))
       (children-equality (Eq.sym p₁))
       (subtreeₒ-recurse cs c₁ (all-oc true) (λ f p → refl))
 
-  mergeSubtrees' : ∀ {cs : List (Rose ∞ NAT)}
+  mergeSubtrees' : ∀ {cs : List (Rose ∞ NAT')}
     → Sublist Subtree (rose-leaf zero ∷ []) cs
     → Sublist Subtree (rose-leaf (suc zero) ∷ []) cs
     → Sublist Subtree (rose-leaf zero ∷ rose-leaf (suc zero) ∷ []) cs

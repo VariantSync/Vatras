@@ -1,7 +1,7 @@
 # Option calculus is not as expressive as feature structure trees
 
 ```agda
-open import Vatras.Framework.Definitions using (𝔽; NAT)
+open import Vatras.Framework.Definitions using (𝔽; NAT')
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_; refl)
 
@@ -69,7 +69,7 @@ Hence, at least one inner child is required for a valid variant of
 this counter-example SPL (or no children in which case there is only the root).
 As FSTs require a fixed root artifact, the outermost artifact is always set to 0.
 ```agda
-counter-example : SPL NAT
+counter-example : SPL NAT'
 counter-example = 0 ◀ (
     (f₁ :: ((0 -< 0 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
   ∷ (f₂ :: ((0 -< 1 -< [] >- ∷ [] >- ∷ []) ⊚ ([] ∷ [] , (([] ∷ []) , (([] , []) ∷ [])) ∷ [])))
@@ -129,13 +129,13 @@ from `counter-example`. Agda can't compute with `==ꟳ` so we need the following
 two lemmas to sort out invalid definitions of `==ꟳ`. Then Agda can actually
 compute the semantics of `counter-example`.
 ```agda
-compute-counter-example-c₁ : {v : Rose ∞ NAT} → FST.⟦ counter-example ⟧ c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
+compute-counter-example-c₁ : {v : Rose ∞ NAT'} → FST.⟦ counter-example ⟧ c₁ ≡ v → 0 -< 0 -< 0 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₁ p with f₁ ==ꟳ f₁ | f₂ ==ꟳ f₁ | c₁ f₁ in c₁-f₁ | c₁ f₂ in c₁-f₂
 compute-counter-example-c₁ p | yes f₁≡f₁ | yes f₂≡f₁ | _    | _     = ⊥-elim (f₁≢f₂ (Eq.sym f₂≡f₁))
 compute-counter-example-c₁ p | yes f₁≡f₁ | no f₂≢f₁  | true | false = p
 compute-counter-example-c₁ p | no f₁≢f₁  | _         | _    | _     = ⊥-elim (f₁≢f₁ refl)
 
-compute-counter-example-c₂ : {v : Rose ∞ NAT} → FST.⟦ counter-example ⟧ c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
+compute-counter-example-c₂ : {v : Rose ∞ NAT'} → FST.⟦ counter-example ⟧ c₂ ≡ v → 0 -< 0 -< 1 -< [] >- ∷ [] >- ∷ [] >- ≡ v
 compute-counter-example-c₂ p with f₁ ==ꟳ f₂ | f₂ ==ꟳ f₂ | c₂ f₁ in c₂-f₁ | c₂ f₂ in c₂-f₂
 compute-counter-example-c₂ p | yes f₁≡f₂ | _         | _     | _    = ⊥-elim (f₁≢f₂ f₁≡f₂)
 compute-counter-example-c₂ p | no f₁≢f₂  | yes f₂≡f₂ | false | true = p
@@ -175,7 +175,7 @@ they must be included in both variants. Simultaneously, this excludes the
 artifacts themselves because each configuration excludes one of them.
 ```agda
 shared-artifact : ∀ {F' : 𝔽}
-  → (e : OC F' ∞ NAT)
+  → (e : OC F' ∞ NAT')
   → (c₁ c₂ : OC.Configuration F')
   → just (0 -< rose-leaf 0 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₁
   → just (0 -< rose-leaf 1 ∷ [] >-) ≡ OC.⟦ e ⟧ₒ c₂
@@ -207,9 +207,9 @@ only prove that there is at least one more
 artifact.
 ```agda
 more-artifacts : ∀ {F' : 𝔽}
-  → (cs : List (OC F' ∞ NAT))
+  → (cs : List (OC F' ∞ NAT'))
   → (cₙ : OC.Configuration F')
-  → (v : Rose ∞ NAT)
+  → (v : Rose ∞ NAT')
   → 0 -< v ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse cₙ
   → 1 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
 more-artifacts (a -< cs' >- ∷ cs) cₙ v p = s≤s z≤n
@@ -252,7 +252,7 @@ variants forcing it to have exactly one shape. In this case, called
 under the intersection of `c₁` and `c₂`.
 ```agda
 induction : ∀ {F' : 𝔽}
-  → (cs : List (OC F' ∞ NAT))
+  → (cs : List (OC F' ∞ NAT'))
   → (c₁ c₂ c₃ : OC.Configuration F')
   → 0 -< rose-leaf 0 ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₁
   → 0 -< rose-leaf 1 ∷ [] >- ∷ [] ≡ OC.⟦ cs ⟧ₒ-recurse c₂
@@ -294,7 +294,7 @@ expression. The proof evaluates the FST expression on all relevant
 configurations which results in contradictions in every case.
 ```agda
 impossible : ∀ {F' : 𝔽}
-  → (cs : List (OC F' ∞ NAT))
+  → (cs : List (OC F' ∞ NAT'))
   → (c₁ c₂ : OC.Configuration F')
   → ((c : OC.Configuration F') → ∃[ c' ] OC.⟦ Root 0 cs ⟧ c ≡ FST.⟦ counter-example ⟧ c')
   → 2 ≤ length (OC.⟦ cs ⟧ₒ-recurse (all-oc true))
