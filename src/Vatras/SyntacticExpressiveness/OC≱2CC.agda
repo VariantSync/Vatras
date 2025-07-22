@@ -216,39 +216,40 @@ goal : ∀ {i} (n : ℕ) (2cc : 2CC.2CC i NAT)
 goal zero 2cc 2cc≅oc = size2CC>0 2cc
 goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
   begin-strict
-    n * sizeWFOC (oc (4 * n))
-  ≡⟨ Eq.cong (n *_) (size-oc (4 * n)) ⟩
-    n * (2 ^ (4 * n) + 2 * suc (4 * n))
-  ≤⟨ ℕ.*-monoʳ-≤ n (ℕ.+-monoʳ-≤ (2 ^ (4 * n)) (ℕ.*-monoʳ-≤ 2 (4*n<16^n n))) ⟩
-    n * (2 ^ (4 * n) + 2 * 16 ^ n)
-  ≡⟨ Eq.cong (λ x → n * (2 ^ (4 * n) + 2 * x)) (ℕ.^-*-assoc 2 4 n) ⟩
-    n * (2 ^ (4 * n) + 2 * 2 ^ (4 * n))
+    n * sizeWFOC (oc m)
+  ≡⟨ Eq.cong (n *_) (size-oc m) ⟩
+    n * (2 ^ m + 2 * suc m)
+  ≤⟨ ℕ.*-monoʳ-≤ n (ℕ.+-monoʳ-≤ (2 ^ m) (ℕ.*-monoʳ-≤ 2 (4*n<16^n n))) ⟩
+    n * (2 ^ m + 2 * 16 ^ n)
+  ≡⟨ Eq.cong (λ x → n * (2 ^ m + 2 * x)) (ℕ.^-*-assoc 2 4 n) ⟩
+    n * (2 ^ m + 2 * 2 ^ m)
   ≡⟨⟩
-    n * (3 * 2 ^ (4 * n))
-  <⟨ ℕ.*-monoʳ-< n (ℕ.*-monoˡ-< (2 ^ (4 * n)) {{ℕ.>-nonZero (ℕ.m^n>0 2 (4 * n))}} (ℕ.n<1+n 3)) ⟩
-    n * (4 * 2 ^ (4 * n))
-  ≡⟨ ℕ.*-assoc n 4 (2 ^ (4 * n)) ⟨
-    n * 4 * 2 ^ (4 * n)
-  ≡⟨ Eq.cong (_* 2 ^ (4 * n)) (ℕ.*-comm n 4) ⟩
-    4 * n * 2 ^ (4 * n)
-  <⟨ ℕ.*-monoˡ-< (2 ^ (4 * n)) {{ℕ.>-nonZero (ℕ.m^n>0 2 (4 * n))}} (ℕ.n<1+n (4 * n)) ⟩
-    suc (4 * n) * 2 ^ (4 * n)
-  ≡⟨ Eq.cong (_* 2 ^ (4 * n)) (List.length-upTo (suc (4 * n))) ⟨
-    List.length (List.upTo (suc (4 * n))) * 2 ^ (4 * n)
+    n * (3 * 2 ^ m)
+  <⟨ ℕ.*-monoʳ-< n (ℕ.*-monoˡ-< (2 ^ m) {{ℕ.>-nonZero (ℕ.m^n>0 2 m)}} (ℕ.n<1+n 3)) ⟩
+    n * (4 * 2 ^ m)
+  ≡⟨ ℕ.*-assoc n 4 (2 ^ m) ⟨
+    n * 4 * 2 ^ m
+  ≡⟨ Eq.cong (_* 2 ^ m) (ℕ.*-comm n 4) ⟩
+    m * 2 ^ m
+  <⟨ ℕ.*-monoˡ-< (2 ^ m) {{ℕ.>-nonZero (ℕ.m^n>0 2 m)}} (ℕ.n<1+n m) ⟩
+    suc m * 2 ^ m
+  ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo (suc m)) ⟨
+    List.length (List.upTo (suc m)) * 2 ^ m
   ≤⟨ unique-lengths⇒m*sizeRose≤size2CC
-       (2 ^ (4 * n))
+       (2 ^ m)
        2cc
-       (List.upTo (suc (4 * n)))
-       (variant (4 * n))
-       (variant-size (4 * n))
-       (variant-≉ (suc (4 * n)))
-       (Unique.applyUpTo⁺₁ id (suc (4 * n)) (λ i<j j<n → ℕ.<⇒≢ i<j))
-       (⊆⇒All∈ (4 * n) (suc (4 * n)) ℕ.≤-refl 2cc oc⊆2cc)
+       (List.upTo (suc m))
+       (variant m)
+       (variant-size m)
+       (variant-≉ (suc m))
+       (Unique.applyUpTo⁺₁ id (suc m) (λ i<j j<n → ℕ.<⇒≢ i<j))
+       (⊆⇒All∈ m (suc m) ℕ.≤-refl 2cc oc⊆2cc)
   ⟩
     size2CC 2cc
   ∎
   where
   open ℕ.≤-Reasoning
+  m = 4 * n
 
 OC≱2CC : SizedWFOC ≱Size Sized2CC
 OC≱2CC n = NAT , oc (4 * n) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc
