@@ -5,8 +5,8 @@ open import Function using (id; _∘_)
 
 open import Data.Bool using (Bool; false; true; if_then_else_; not; _∧_)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
-open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
-open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m; +-∸-assoc)
+open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _>_; _≤_; s≤s; z≤n)
+open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m; +-∸-assoc; ∸-monoʳ-≤)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.List.Properties using (length-++)
 open import Data.Product using (_×_; _,_)
@@ -56,6 +56,9 @@ n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
 n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
+
+m∸n<m : {m : ℕ} → (n : ℕ) → m > 0 → n > 0 → m ∸ n < m
+m∸n<m {suc m} (suc n) (s≤s m>0) (s≤s n>0) = s≤s (∸-monoʳ-≤ {zero} {n} m z≤n)
 
 ----- Properties of if_then_else
 -- TODO: These are contributed to STL now. Update our STL dependency and replace these by their STL counterpart.

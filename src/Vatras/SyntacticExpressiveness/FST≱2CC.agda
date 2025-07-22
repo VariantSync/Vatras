@@ -16,7 +16,7 @@ import Data.List.Relation.Binary.Subset.Propositional.Properties as Subset
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
-open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+open import Data.List.Relation.Unary.AllPairs as AllPairs using (AllPairs; []; _∷_)
 import Data.List.Relation.Unary.AllPairs.Properties as AllPairs
 import Data.List.Relation.Unary.Unique.Propositional as List
 import Data.List.Relation.Unary.Unique.Propositional.Properties as Unique
@@ -31,6 +31,7 @@ open import Relation.Nullary.Negation using (¬_)
 open import Relation.Unary using (Decidable)
 open import Size using (Size; ∞)
 
+open import Vatras.Util.AuxProofs using (m∸n<m)
 open import Vatras.Data.EqIndexedSet using (_⊆_; ⊆-trans; _∈_)
 open import Vatras.Framework.Definitions using (𝔸; NAT; atomSize)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
@@ -50,6 +51,7 @@ NAT' = record
 open FST.Impose NAT' hiding (_∈_)
 open import Vatras.Lang.FST.Composition ℕ NAT' using (⊛-all-unique)
 open import Vatras.Lang.FST.Util ℕ NAT' using (select≗filter)
+open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT' using (unique-lengths⇒m*sizeRose≤size2CC) renaming (_≉_ to _≉'_)
 
 artifact : ℕ → ℕ → FSTA ∞
 artifact n zero = (0 , 2 ^ n) Rose.-< [] >-
@@ -100,11 +102,12 @@ size-fst n =
 variant : ℕ → ℕ → FSTA ∞
 variant n i = (0 , 0) Rose.-< List.applyUpTo (artifact n) (suc i) >-
 
+-- TODO called variant-size in OC≱2CC
 size-variant
   : (n i : ℕ)
-  → 2 ^ n < sizeRose (variant n i)
+  → 2 ^ n ≤ sizeRose (variant n i)
 size-variant n i =
-  begin-strict
+  begin
     2 ^ n
   ≡⟨ ℕ.+-identityʳ (2 ^ n) ⟨
     2 ^ n + 0
@@ -120,115 +123,25 @@ size-variant n i =
   where
   open ℕ.≤-Reasoning
 
+variant-≉ : ∀ n {l₁} {l₂} → l₁ ≢ l₂ → variant n l₁ ≉' variant n l₂
+variant-≉ n {l₁} {l₂} l₁≢l₂ v₁≡v₂ = l₁≢l₂ (
+    l₁
+  ≡⟨ List.length-applyUpTo (artifact n ∘ suc) l₁ ⟨
+    List.length (List.applyUpTo (artifact n ∘ suc) l₁)
+  ≡⟨ ℕ.suc-injective v₁≡v₂ ⟩
+    List.length (List.applyUpTo (artifact n ∘ suc) l₂)
+  ≡⟨ List.length-applyUpTo (artifact n ∘ suc) l₂ ⟩
+    l₂
+  ∎)
+  where
+  open Eq.≡-Reasoning
+
+-- duplicated in OC≱2CC as size2CC>0
 1≤size2CC : ∀ {i : Size} {A : 𝔸}
   → (e : 2CC.2CC i A)
   → 1 ≤ size2CC e
 1≤size2CC (a 2CC.-< cs >-) = s≤s z≤n
 1≤size2CC (D 2CC.⟨ l , r ⟩) = s≤s z≤n
-
--- TODO duplicated in OC≱2CC
-variant∈e⇒length-cs
-  : ∀ {i} (n l : ℕ) (a : ℕ × ℕ) (cs : List (2CC.2CC i NAT'))
-  → variant n l ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
-  → List.length cs ≡ suc l
-variant∈e⇒length-cs n l a cs (c , v≡e) =
-    List.length cs
-  ≡⟨ List.length-map (λ e → 2CC.⟦ e ⟧ c) cs ⟨
-    List.length (List.map (λ e → 2CC.⟦ e ⟧ c) cs)
-  ≡⟨ Eq.cong List.length (proj₂ (Rose-injective v≡e)) ⟨
-    List.length (List.applyUpTo (artifact n) (suc l))
-  ≡⟨ List.length-applyUpTo (artifact n) (suc l) ⟩
-    suc l
-  ∎
-  where
-  open Eq.≡-Reasoning
-
--- TODO duplicated in OC≱2CC
-partition : ∀ {i : Size} (n D : ℕ)
-  → (c₁ c₂ : 2CC.2CC i NAT')
-  → (ls : List ℕ)
-  → List.Unique ls
-  → All (λ l → variant n l ∈ 2CC.⟦ D 2CC.⟨ c₁ , c₂ ⟩ ⟧) ls
-  → ∃[ ls₁ ] ∃[ ls₂ ]
-    ls₁ Subset.⊆ ls × ls₂ Subset.⊆ ls
-  × List.length ls₁ + List.length ls₂ ≡ List.length ls
-  × List.Unique ls₁ × All (λ l → variant n l ∈ 2CC.⟦ c₁ ⟧) ls₁
-  × List.Unique ls₂ × All (λ l → variant n l ∈ 2CC.⟦ c₂ ⟧) ls₂
-partition n D c₁ c₂ [] unique-ls ls⊆2cc =
-  [] , [] ,
-  Subset.⊆-refl , Subset.⊆-refl ,
-  Eq.refl ,
-  [] , [] ,
-  [] , []
-partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls⊆2cc)
-  with partition n D c₁ c₂ ls unique-ls ls⊆2cc
-... | ls₁ , ls₂ ,
-      ls₁⊆ls , ls₂⊆ls ,
-      ls₁+ls₂≡ls ,
-      unique-ls₁ , ls₁∈l ,
-      unique-ls₂ , ls₂∈r
-  with c D
-... | true =
-  l ∷ ls₁ , ls₂ ,
-  Subset.∷⁺ʳ l ls₁⊆ls , there ∘ ls₂⊆ls ,
-  Eq.cong suc ls₁+ls₂≡ls ,
-  All.anti-mono ls₁⊆ls l∉ls ∷ unique-ls₁ , (c , l≡2cc) ∷ ls₁∈l ,
-  unique-ls₂ , ls₂∈r
-... | false =
-  ls₁ , l ∷ ls₂ ,
-  there ∘ ls₁⊆ls , Subset.∷⁺ʳ l ls₂⊆ls ,
-  Eq.trans
-    (ℕ.+-suc (List.length ls₁) (List.length ls₂))
-    (Eq.cong suc ls₁+ls₂≡ls) ,
-  unique-ls₁ , ls₁∈l ,
-  All.anti-mono ls₂⊆ls l∉ls ∷ unique-ls₂ , (c , l≡2cc) ∷ ls₂∈r
-
--- TODO duplicated in OC≱2CC
-big : ∀ {i : Size} (n : ℕ)
-  → (2cc : 2CC.2CC i NAT')
-  → (ls : List ℕ)
-  → List.Unique ls
-  → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) ls
-  → List.length ls * 2 ^ n < size2CC 2cc
-big n (a 2CC.-< cs >-) [] unique-ls all-∈ = s≤s z≤n
-big n (a 2CC.-< cs >-) (l₁ ∷ []) unique-ls all-∈ =
-  begin-strict
-    1 * 2 ^ n
-  ≡⟨ ℕ.*-identityˡ (2 ^ n) ⟩
-    2 ^ n
-  <⟨ size-variant n l₁ ⟩
-    sizeRose (variant n l₁)
-  ≤⟨ 2CC.reflectsVariantSize (variant n l₁) (a 2CC.-< cs >-) (All.lookup all-∈ (here Eq.refl)) ⟩
-    size2CC (a 2CC.-< cs >-)
-  ∎
-  where
-  open ℕ.≤-Reasoning
-big n (a 2CC.-< cs >-) (l₁ ∷ l₂ ∷ ls) ((l₁≢l₂ ∷ l₁∉ls) ∷ unique-ls) all-∈ =
-  ⊥-elim (l₁≢l₂ (ℕ.suc-injective (Eq.trans
-    (Eq.sym (variant∈e⇒length-cs n l₁ a cs (All.lookup all-∈ (here Eq.refl))))
-    (variant∈e⇒length-cs n l₂ a cs (All.lookup all-∈ (there (here Eq.refl)))))))
-big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ with partition n D l r ls unique-ls all-∈
-big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈
-  | ls₁ , ls₂ ,
-    _ , _ ,
-    ls₁+ls₂≡ls ,
-    unique-ls₁ , ls₁∈l ,
-    unique-ls₂ , ls₂∈r =
-  begin-strict
-    List.length ls * 2 ^ n
-  <⟨ ℕ.n<1+n (List.length ls * 2 ^ n) ⟩
-    suc (List.length ls * 2 ^ n)
-  ≡⟨ Eq.cong (λ x → suc (x * 2 ^ n)) ls₁+ls₂≡ls ⟨
-    suc ((List.length ls₁ + List.length ls₂) * 2 ^ n)
-  ≡⟨ Eq.cong suc (ℕ.*-distribʳ-+ (2 ^ n) (List.length ls₁) (List.length ls₂)) ⟩
-    suc (List.length ls₁ * 2 ^ n + List.length ls₂ * 2 ^ n)
-  <⟨ s≤s (ℕ.+-mono-< (big n l ls₁ unique-ls₁ ls₁∈l) (big n r ls₂ unique-ls₂ ls₂∈r)) ⟩
-    suc (size2CC l + size2CC r)
-  ≡⟨⟩
-    size2CC (D 2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
 
 fst-config : ℕ → ℕ → Bool
 fst-config i f = f ℕ.≤ᵇ i
@@ -422,12 +335,15 @@ FST≱2CC (suc n) = NAT' , fst m , λ 2cc fst≅2cc →
     m * 2 ^ m
   ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo m) ⟨
     List.length (List.upTo m) * 2 ^ m
-  <⟨ big
-      m
-      2cc
-      (List.upTo m)
-      (Unique.applyUpTo⁺₁ id m (λ i<j j<n → ℕ.<⇒≢ i<j))
-      (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₁ fst≅2cc))
+  ≤⟨ unique-lengths⇒m*sizeRose≤size2CC
+       (2 ^ m)
+       2cc
+       (List.upTo m)
+       (variant m)
+       (size-variant m)
+       (variant-≉ m)
+       (Unique.applyUpTo⁺₁ id m (λ i<j j<n → ℕ.<⇒≢ i<j))
+       (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₁ fst≅2cc))
   ⟩
     size2CC 2cc
   ∎

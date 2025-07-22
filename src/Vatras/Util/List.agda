@@ -14,7 +14,6 @@ open import Data.List.Properties using (map-id; length-++)
 open import Data.List.Membership.Propositional using (_∈_)
 import Data.List.Membership.Propositional.Properties as List
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
-open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_)
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
 open import Data.List.Relation.Unary.Any using (here; there)
@@ -90,6 +89,7 @@ lookup-++ₗ (x ∷ xs) ys i = lookup-++ₗ xs ys i
 ∈∧∉⇒≢ (x ∷ xs) (there y∈xs) (y≢x ∷ z∉xs) y≡z = ∈∧∉⇒≢ xs y∈xs z∉xs y≡z
 
 module _ where
+  open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_)
   open import Data.List.Relation.Unary.Unique.Propositional using (Unique; _∷_)
 
   length≤ : ∀ {ℓ} {A : Set ℓ}
@@ -360,6 +360,63 @@ module _ where
     → All (λ y → All (P y) ys) xs
   AllAll-comm [] ys sym all-all = []
   AllAll-comm (x ∷ xs) ys sym all-all = All.map (λ All-P-y-xs → sym (All.head All-P-y-xs)) all-all ∷ AllAll-comm xs ys sym (All.map All.tail all-all)
+
+module _ where
+  open import Data.List.Relation.Ternary.Interleaving.Propositional using (Interleaving; []; consˡ; consʳ)
+  open import Data.List.Relation.Binary.Sublist.Propositional using (_⊆_; []; _∷_; _∷ʳ_)
+
+  Interleaving⇒Sublistˡ : ∀ {ℓ} {A : Set ℓ}
+    → {xs ys zs : List A}
+    → Interleaving xs ys zs
+    → xs ⊆ zs
+  Interleaving⇒Sublistˡ [] = []
+  Interleaving⇒Sublistˡ (consˡ zs) = refl ∷ Interleaving⇒Sublistˡ zs
+  Interleaving⇒Sublistˡ (consʳ zs) = _ ∷ʳ Interleaving⇒Sublistˡ zs
+
+  Interleaving⇒Sublistʳ : ∀ {ℓ} {A : Set ℓ}
+    → {xs ys zs : List A}
+    → Interleaving xs ys zs
+    → ys ⊆ zs
+  Interleaving⇒Sublistʳ [] = []
+  Interleaving⇒Sublistʳ (consˡ zs) = _ ∷ʳ Interleaving⇒Sublistʳ zs
+  Interleaving⇒Sublistʳ (consʳ zs) = refl ∷ Interleaving⇒Sublistʳ zs
+
+  sum-Interleaving : ∀ {ℓ} {A : Set ℓ}
+    → {f : A → ℕ}
+    → {xs ys zs : List A}
+    → Interleaving xs ys zs
+    → List.sum (List.map f xs) + List.sum (List.map f ys) ≡ List.sum (List.map f zs)
+  sum-Interleaving [] = refl
+  sum-Interleaving {f = f} {.z ∷ xs} {ys} {z ∷ zs} (consˡ partition) =
+      List.sum (List.map f (z ∷ xs)) + List.sum (List.map f ys)
+    ≡⟨⟩
+      f z + List.sum (List.map f xs) + List.sum (List.map f ys)
+    ≡⟨ ℕ.+-assoc (f z) (List.sum (List.map f xs)) (List.sum (List.map f ys)) ⟩
+      f z + (List.sum (List.map f xs) + List.sum (List.map f ys))
+    ≡⟨ Eq.cong (f z +_) (sum-Interleaving partition) ⟩
+      f z + List.sum (List.map f zs)
+    ≡⟨⟩
+      List.sum (List.map f (z ∷ zs))
+    ∎
+    where
+    open Eq.≡-Reasoning
+  sum-Interleaving {f = f} {xs} {.z ∷ ys} {z ∷ zs} (consʳ partition) =
+      List.sum (List.map f xs) + List.sum (List.map f (z ∷ ys))
+    ≡⟨⟩
+      List.sum (List.map f xs) + (f z + List.sum (List.map f ys))
+    ≡⟨ ℕ.+-assoc (List.sum (List.map f xs)) (f z) (List.sum (List.map f ys)) ⟨
+      List.sum (List.map f xs) + f z + List.sum (List.map f ys)
+    ≡⟨ Eq.cong (_+ List.sum (List.map f ys)) (ℕ.+-comm (List.sum (List.map f xs)) (f z)) ⟩
+      f z + List.sum (List.map f xs) + List.sum (List.map f ys)
+    ≡⟨ ℕ.+-assoc (f z) (List.sum (List.map f xs)) (List.sum (List.map f ys)) ⟩
+      f z + (List.sum (List.map f xs) + List.sum (List.map f ys))
+    ≡⟨ Eq.cong (f z +_) (sum-Interleaving partition) ⟩
+      f z + List.sum (List.map f zs)
+    ≡⟨⟩
+      List.sum (List.map f (z ∷ zs))
+    ∎
+    where
+    open Eq.≡-Reasoning
 
 map-applyUpTo : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂}
   → (f : A → B)

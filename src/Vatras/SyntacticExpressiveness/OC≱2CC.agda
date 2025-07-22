@@ -12,24 +12,27 @@ import Data.List.Relation.Binary.Subset.Propositional as Subset
 import Data.List.Relation.Binary.Subset.Propositional.Properties as Subset
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
+import Data.List.Relation.Unary.AllPairs as AllPairs
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.Unique.DecPropositional ℕ._≟_ using (Unique; []; _∷_)
 import Data.List.Relation.Unary.Unique.DecPropositional.Properties as Unique
 open import Data.Maybe using (just)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; ∃-syntax)
 
-open import Function using (_∘_; id)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
+open import Function using (_∘_; id; const)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
 open import Relation.Nullary.Decidable using (yes; no)
 open import Relation.Nullary.Reflects using (ofʸ; ofⁿ)
 open import Size using (Size; ∞)
 
+open import Vatras.Util.AuxProofs using (m∸n<m)
 import Vatras.Util.List as List
 open import Vatras.Data.EqIndexedSet using (_≅_; _∈_; _⊆_)
 open import Vatras.Framework.Variants using (Rose; children-equality)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
+open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
 open import Vatras.SyntacticExpressiveness using (_≱Size_)
 open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC)
 
@@ -88,29 +91,11 @@ variant-cs i = List.replicate i (0 Rose.-< [] >-)
 variant : ℕ → ℕ → Rose ∞ NAT
 variant n i = 0 Rose.-< exponential-artifact n ∷ variant-cs i >-
 
-variant∈e⇒length-cs
-  : ∀ {i} (n l : ℕ) (a : ℕ) (cs : List (2CC.2CC i NAT))
-  → variant n l ∈ 2CC.⟦ a 2CC.-< cs >- ⟧
-  → List.length cs ≡ suc l
-variant∈e⇒length-cs n l a cs (c , v≡e) =
-    List.length cs
-  ≡⟨ List.length-map (λ e → 2CC.⟦ e ⟧ c) cs ⟨
-    List.length (List.map (λ e → 2CC.⟦ e ⟧ c) cs)
-  ≡⟨ Eq.cong List.length (children-equality v≡e) ⟨
-    List.length (exponential-artifact n ∷ variant-cs l)
-  ≡⟨⟩
-    suc (List.length (variant-cs l))
-  ≡⟨ Eq.cong suc (List.length-replicate l) ⟩
-    suc l
-  ∎
-  where
-  open Eq.≡-Reasoning
-
 variant-size
   : (n l : ℕ)
-  → 2 ^ n < sizeRose (variant n l)
+  → 2 ^ n ≤ sizeRose (variant n l)
 variant-size n l =
-  begin-strict
+  begin
     2 ^ n
   ≡⟨ ℕ.+-identityʳ (2 ^ n) ⟨
     2 ^ n + 0
@@ -126,90 +111,18 @@ variant-size n l =
   where
   open ℕ.≤-Reasoning
 
-partition : ∀ {i : Size} (n D : ℕ)
-  → (c₁ c₂ : 2CC.2CC i NAT)
-  → (ls : List ℕ)
-  → Unique ls
-  → All (λ l → variant n l ∈ 2CC.⟦ D 2CC.⟨ c₁ , c₂ ⟩ ⟧) ls
-  → ∃[ ls₁ ] ∃[ ls₂ ]
-    ls₁ Subset.⊆ ls × ls₂ Subset.⊆ ls
-  × List.length ls₁ + List.length ls₂ ≡ List.length ls
-  × Unique ls₁ × All (λ l → variant n l ∈ 2CC.⟦ c₁ ⟧) ls₁
-  × Unique ls₂ × All (λ l → variant n l ∈ 2CC.⟦ c₂ ⟧) ls₂
-partition n D c₁ c₂ [] unique-ls ls⊆2cc =
-  [] , [] ,
-  Subset.⊆-refl , Subset.⊆-refl ,
-  Eq.refl ,
-  [] , [] ,
-  [] , []
-partition n D c₁ c₂ (l ∷ ls) (l∉ls ∷ unique-ls) ((c , l≡2cc) ∷ ls⊆2cc)
-  with partition n D c₁ c₂ ls unique-ls ls⊆2cc
-... | ls₁ , ls₂ ,
-      ls₁⊆ls , ls₂⊆ls ,
-      ls₁+ls₂≡ls ,
-      unique-ls₁ , ls₁∈l ,
-      unique-ls₂ , ls₂∈r
-  with c D
-... | true =
-  l ∷ ls₁ , ls₂ ,
-  Subset.∷⁺ʳ l ls₁⊆ls , there ∘ ls₂⊆ls ,
-  Eq.cong suc ls₁+ls₂≡ls ,
-  All.anti-mono ls₁⊆ls l∉ls ∷ unique-ls₁ , (c , l≡2cc) ∷ ls₁∈l ,
-  unique-ls₂ , ls₂∈r
-... | false =
-  ls₁ , l ∷ ls₂ ,
-  there ∘ ls₁⊆ls , Subset.∷⁺ʳ l ls₂⊆ls ,
-  Eq.trans
-    (ℕ.+-suc (List.length ls₁) (List.length ls₂))
-    (Eq.cong suc ls₁+ls₂≡ls) ,
-  unique-ls₁ , ls₁∈l ,
-  All.anti-mono ls₂⊆ls l∉ls ∷ unique-ls₂ , (c , l≡2cc) ∷ ls₂∈r
-
-big : ∀ {i : Size} (n : ℕ)
-  → (2cc : 2CC.2CC i NAT)
-  → (ls : List ℕ)
-  → Unique ls
-  → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) ls
-  → List.length ls * 2 ^ n < size2CC 2cc
-big n (a 2CC.-< cs >-) [] unique-ls all-∈ = s≤s z≤n
-big n (a 2CC.-< cs >-) (l₁ ∷ []) unique-ls all-∈ =
-  begin-strict
-    1 * 2 ^ n
-  ≡⟨ ℕ.*-identityˡ (2 ^ n) ⟩
-    2 ^ n
-  <⟨ variant-size n l₁ ⟩
-    sizeRose (variant n l₁)
-  ≤⟨ 2CC.reflectsVariantSize (variant n l₁) (a 2CC.-< cs >-) (All.lookup all-∈ (here Eq.refl)) ⟩
-    size2CC (a 2CC.2CC.-< cs >-)
-  ∎
+variant-≉ : ∀ n {l₁} {l₂} → l₁ ≢ l₂ → variant n l₁ ≉ variant n l₂
+variant-≉ n {l₁} {l₂} l₁≢l₂ v₁≡v₂ = l₁≢l₂ (
+    l₁
+  ≡⟨ List.length-replicate l₁ ⟨
+    List.length (variant-cs l₁)
+  ≡⟨ ℕ.suc-injective v₁≡v₂ ⟩
+    List.length (variant-cs l₂)
+  ≡⟨ List.length-replicate l₂ ⟩
+    l₂
+  ∎)
   where
-  open ℕ.≤-Reasoning
-big n (a 2CC.-< cs >-) (l₁ ∷ l₂ ∷ ls) ((l₁≢l₂ ∷ l₁∉ls) ∷ unique-ls) all-∈ =
-  ⊥-elim (l₁≢l₂ (ℕ.suc-injective (Eq.trans
-    (Eq.sym (variant∈e⇒length-cs n l₁ a cs (All.lookup all-∈ (here Eq.refl))))
-    (variant∈e⇒length-cs n l₂ a cs (All.lookup all-∈ (there (here Eq.refl)))))))
-big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈ with partition n D l r ls unique-ls all-∈
-big n (D 2CC.⟨ l , r ⟩) ls unique-ls all-∈
-  | ls₁ , ls₂ ,
-    _ , _ ,
-    ls₁+ls₂≡ls ,
-    unique-ls₁ , ls₁∈l ,
-    unique-ls₂ , ls₂∈r =
-  begin-strict
-    List.length ls * 2 ^ n
-  <⟨ ℕ.n<1+n (List.length ls * 2 ^ n) ⟩
-    suc (List.length ls * 2 ^ n)
-  ≡⟨ Eq.cong (λ x → suc (x * 2 ^ n)) ls₁+ls₂≡ls ⟨
-    suc ((List.length ls₁ + List.length ls₂) * 2 ^ n)
-  ≡⟨ Eq.cong suc (ℕ.*-distribʳ-+ (2 ^ n) (List.length ls₁) (List.length ls₂)) ⟩
-    suc (List.length ls₁ * 2 ^ n + List.length ls₂ * 2 ^ n)
-  <⟨ s≤s (ℕ.+-mono-< (big n l ls₁ unique-ls₁ ls₁∈l) (big n r ls₂ unique-ls₂ ls₂∈r)) ⟩
-    suc (size2CC l + size2CC r)
-  ≡⟨⟩
-    size2CC (D 2CC.⟨ l , r ⟩)
-  ∎
-  where
-  open ℕ.≤-Reasoning
+  open Eq.≡-Reasoning
 
 conf : ℕ → OC.Configuration
 conf n i = i <ᵇ n
@@ -326,12 +239,15 @@ goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
     suc (4 * n) * 2 ^ (4 * n)
   ≡⟨ Eq.cong (_* 2 ^ (4 * n)) (List.length-upTo (suc (4 * n))) ⟨
     List.length (List.upTo (suc (4 * n))) * 2 ^ (4 * n)
-  <⟨ big
-      (4 * n)
-      2cc
-      (List.upTo (suc (4 * n)))
-      (Unique.applyUpTo⁺₁ id (suc (4 * n)) (λ i<j j<n → ℕ.<⇒≢ i<j))
-      (⊆⇒All∈ (4 * n) (suc (4 * n)) ℕ.≤-refl 2cc oc⊆2cc)
+  ≤⟨ unique-lengths⇒m*sizeRose≤size2CC
+       (2 ^ (4 * n))
+       2cc
+       (List.upTo (suc (4 * n)))
+       (variant (4 * n))
+       (variant-size (4 * n))
+       (variant-≉ (suc (4 * n)))
+       (Unique.applyUpTo⁺₁ id (suc (4 * n)) (λ i<j j<n → ℕ.<⇒≢ i<j))
+       (⊆⇒All∈ (4 * n) (suc (4 * n)) ℕ.≤-refl 2cc oc⊆2cc)
   ⟩
     size2CC 2cc
   ∎
