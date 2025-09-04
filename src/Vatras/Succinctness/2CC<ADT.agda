@@ -1,4 +1,4 @@
-module Vatras.SyntacticExpressiveness.2CC<ADT where
+module Vatras.Succinctness.2CC<ADT where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥-elim)
@@ -31,9 +31,9 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) NAT' using (VariantGene
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
-open import Vatras.SyntacticExpressiveness using (_≱Size_; _<Size_)
-open import Vatras.SyntacticExpressiveness.Sizes ℕ using (Sized2CC; size2CC; SizedADT; sizeADT)
-open import Vatras.SyntacticExpressiveness.2CC≤ADT ℕ using (2CC≤ADT)
+open import Vatras.Succinctness using (_≱Size_; _<Size_)
+open import Vatras.Succinctness.Sizes ℕ using (Sized2CC; size2CC; SizedADT; sizeADT)
+open import Vatras.Succinctness.2CC≤ADT ℕ using (2CC≤ADT)
 
 e₁-cs : ℕ → ℕ → List (2CC.2CC ∞ NAT')
 e₁-cs zero D = []

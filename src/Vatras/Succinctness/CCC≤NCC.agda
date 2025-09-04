@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atomSize)
-module Vatras.SyntacticExpressiveness.CCC≤NCC (F : 𝔽) where
+module Vatras.Succinctness.CCC≤NCC (F : 𝔽) where
 
 open import Data.Nat as ℕ using (suc; _≤_; s≤s; _+_)
 import Data.Nat.Properties as ℕ
@@ -21,8 +21,8 @@ import Vatras.Util.Vec as Vec
 open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Translation.LanguageMap using (NCC→CCC)
-open import Vatras.SyntacticExpressiveness using (_≤Size_)
-open import Vatras.SyntacticExpressiveness.Sizes F using (SizedNCC; sizeNCC; SizedCCC; sizeCCC)
+open import Vatras.Succinctness using (_≤Size_)
+open import Vatras.Succinctness.Sizes F using (SizedNCC; sizeNCC; SizedCCC; sizeCCC)
 
 lemma : ∀ {i : Size} {A : 𝔸} (n : ℕ≥ 2) (ncc : NCC.NCC n i A) → sizeCCC (LanguageCompiler.compile (NCC→CCC n) ncc) ≤ sizeNCC n ncc
 lemma {A = A} (sucs n) (a NCC.NCC.-< cs >-) =

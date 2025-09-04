@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
-module Vatras.SyntacticExpressiveness.Sizes (F : 𝔽) where
+module Vatras.Succinctness.Sizes (F : 𝔽) where
 
 open import Data.Nat using (ℕ; suc; zero; _+_; _>_; s≤s; z≤n)
 import Data.List as List
@@ -11,7 +11,7 @@ open import Size using (Size; ∞)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
 open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
-open import Vatras.SyntacticExpressiveness using (SizedLang)
+open import Vatras.Succinctness using (SizedLang)
 
 sizeRose : ∀ {i : Size} {A : 𝔸} → Rose i A → ℕ
 sizeRose {A = A} (a Rose.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeRose cs))

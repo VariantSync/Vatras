@@ -1,4 +1,4 @@
-module Vatras.SyntacticExpressiveness.Reflection where
+module Vatras.Succinctness.Reflection where
 
 open import Data.Product using (_×_; _,_; Σ-syntax; map₁; uncurry; proj₁; proj₂; map₂)
 open import Data.Sum using (_⊎_)

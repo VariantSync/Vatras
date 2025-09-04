@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; NAT; atomSize)
 -- TODO abstract over (F : 𝔽) using a map (ℕ → 𝔽)
-module Vatras.SyntacticExpressiveness.OC≱2CC where
+module Vatras.Succinctness.OC≱2CC where
 
 open import Data.Bool using (true; false)
 open import Data.Empty using (⊥-elim)
@@ -33,8 +33,8 @@ open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
-open import Vatras.SyntacticExpressiveness using (_≱Size_)
-open import Vatras.SyntacticExpressiveness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
+open import Vatras.Succinctness using (_≱Size_)
+open import Vatras.Succinctness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
 
 options : ℕ → List (OC.OC ∞ NAT)
 options zero = []
