@@ -1,4 +1,4 @@
-module Vatras.Succinctness.FST≱2CC where
+module Vatras.Succinctness.Relations.FST≱2CC where
 
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_)
 import Data.Bool.Properties as Bool
@@ -38,7 +38,7 @@ open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
-open import Vatras.Succinctness using (_≱Size_)
+open import Vatras.Succinctness.ProofDefinition using (_≱Size_)
 open import Vatras.Succinctness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
 
 open FST.Impose NAT hiding (_∈_)

@@ -1,4 +1,4 @@
-module Vatras.Succinctness.2CC=2CC where
+module Vatras.Succinctness.Relations.2CC=2CC where
 
 open import Data.Nat as ℕ using (zero; suc; _+_)
 import Data.Nat.Properties as ℕ
@@ -19,7 +19,7 @@ import Vatras.Translation.Lang.2CC-to-NCC
 open Vatras.Translation.Lang.2CC-to-NCC.2Ary using () renaming (translate to 2CC→NCC; preserves to 2CC→NCC-preserves)
 import Vatras.Translation.Lang.NCC-to-2CC
 open Vatras.Translation.Lang.NCC-to-2CC.2Ary using () renaming (translate to NCC→2CC; preserves to NCC→2CC-preserves)
-open import Vatras.Succinctness using (_≤Size_; _=Size_)
+open import Vatras.Succinctness.ProofDefinition using (_≤Size_; _=Size_)
 open import Vatras.Succinctness.Sizes using (Sized2CC; size2CC; SizedNCC; sizeNCC)
 
 module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where

@@ -2,7 +2,7 @@ open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl; _≢_)
 open import Data.Nat as ℕ using (ℕ; zero; suc; pred; _≤_; z≤n; s≤s; _<_; _>_; _+_; _∸_; _*_; _<?_; _≤ᵇ_; _^_; _⊔_)
-module Vatras.Succinctness.2CC≤CCC (F : 𝔽) where
+module Vatras.Succinctness.Relations.2CC≤CCC (F : 𝔽) where
 
 open import Data.Bool as Bool using (true; false; if_then_else_)
 import Data.Bool.Properties as Bool
@@ -26,7 +26,7 @@ open import Vatras.Framework.Variants using (Rose)
 import Vatras.Util.List as List
 open import Vatras.Lang.All
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Succinctness using (_≤Size_)
+open import Vatras.Succinctness.ProofDefinition using (_≤Size_)
 open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedCCC; sizeCCC; sizeCCC>0)
 
 >⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ≤ᵇ n))

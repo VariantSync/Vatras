@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms; atomSize)
-module Vatras.Succinctness.2CC≤ADT (F : 𝔽) where
+module Vatras.Succinctness.Relations.2CC≤ADT (F : 𝔽) where
 
 open import Data.Nat using (suc; _≤_; s≤s; _+_)
 import Data.Nat.Properties as ℕ
@@ -17,7 +17,7 @@ open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.Translation.Lang.2CC.Rename using (2CC-rename)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Translation.LanguageMap using (ADT→2CC)
-open import Vatras.Succinctness using (_≤Size_)
+open import Vatras.Succinctness.ProofDefinition using (_≤Size_)
 open import Vatras.Succinctness.Sizes F using (sizeRose; Sized2CC; size2CC; SizedADT; sizeADT)
 open import Vatras.Lang.2CC.Encode using (encode; encoder)
 

@@ -11,7 +11,7 @@ open import Size using (Size; ∞)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
 open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
-open import Vatras.Succinctness using (SizedLang)
+open import Vatras.Succinctness.ProofDefinition using (SizedLang)
 
 sizeRose : ∀ {i : Size} {A : 𝔸} → Rose i A → ℕ
 sizeRose {A = A} (a Rose.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeRose cs))

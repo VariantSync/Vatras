@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸)
-module Vatras.Succinctness.2CC=CCC (F : 𝔽) where
+module Vatras.Succinctness.Relations.2CC=CCC (F : 𝔽) where
 
 open import Data.Nat using (ℕ; zero)
 open import Data.Product using (_×_; _,_; proj₁)
@@ -10,11 +10,11 @@ open import Size using (∞)
 open import Vatras.Util.Nat.AtLeast using (sucs)
 open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
-open import Vatras.Succinctness using (_=Size_; ≤Size-transitive)
+open import Vatras.Succinctness.ProofDefinition using (_=Size_; ≤Size-transitive)
 open import Vatras.Succinctness.Sizes F using (Sized2CC; SizedCCC)
-open import Vatras.Succinctness.2CC=2CC using (2CC=2CC; NCC=2CC)
-open import Vatras.Succinctness.2CC≤CCC F using (2CC≤CCC)
-open import Vatras.Succinctness.CCC≤NCC F using (CCC≤NCC)
+open import Vatras.Succinctness.Relations.2CC=2CC using (2CC=2CC; NCC=2CC)
+open import Vatras.Succinctness.Relations.2CC≤CCC F using (2CC≤CCC)
+open import Vatras.Succinctness.Relations.CCC≤NCC F using (CCC≤NCC)
 
 2CC=CCC :
   ∀ (f : F × ℕ → F)

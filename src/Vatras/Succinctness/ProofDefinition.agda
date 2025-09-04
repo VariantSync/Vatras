@@ -1,4 +1,4 @@
-module Vatras.Succinctness where
+module Vatras.Succinctness.ProofDefinition where
 
 open import Data.Empty using (⊥-elim)
 open import Data.Nat as ℕ using (ℕ; _≤_; _>_; _<_; _*_)
