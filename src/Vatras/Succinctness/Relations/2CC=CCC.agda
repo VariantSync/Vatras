@@ -10,8 +10,8 @@ open import Size using (∞)
 open import Vatras.Util.Nat.AtLeast using (sucs)
 open import Vatras.Framework.Variants using (Rose)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
-open import Vatras.Succinctness.ProofDefinition using (_=Size_; ≤Size-transitive)
-open import Vatras.Succinctness.Sizes F using (Sized2CC; SizedCCC)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_=Size_; ≤Size-transitive)
+open import Vatras.Succinctness.Sizes using (Sized2CC; SizedCCC)
 open import Vatras.Succinctness.Relations.2CC=2CC using (2CC=2CC; NCC=2CC)
 open import Vatras.Succinctness.Relations.2CC≤CCC F using (2CC≤CCC)
 open import Vatras.Succinctness.Relations.CCC≤NCC F using (CCC≤NCC)
@@ -21,7 +21,7 @@ open import Vatras.Succinctness.Relations.CCC≤NCC F using (CCC≤NCC)
   → (f⁻¹ : F → F × ℕ)
   → f⁻¹ ∘ f ≗ id
   → f ∘ f⁻¹ ≗ id
-  → Sized2CC =Size SizedCCC
+  → Sized2CC F =Size SizedCCC F
 2CC=CCC f f⁻¹ f⁻¹∘f≗id f∘f⁻¹≗id =
     ≤Size-transitive (proj₁ (2CC=2CC f f⁻¹ f⁻¹∘f≗id f∘f⁻¹≗id)) 2CC≤CCC
   , ≤Size-transitive (CCC≤NCC (sucs zero)) (proj₁ NCC=2CC)

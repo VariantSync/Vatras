@@ -38,8 +38,8 @@ open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
-open import Vatras.Succinctness.ProofDefinition using (_≱Size_)
-open import Vatras.Succinctness.Sizes ℕ using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≱Size_)
+open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
 
 open FST.Impose NAT hiding (_∈_)
 open import Vatras.Lang.FST.Composition ℕ NAT using (⊛-all-unique)
@@ -287,7 +287,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   where
   open ℕ.≤-Reasoning
 
-FST≱2CC : SizedFST ≱Size Sized2CC
+FST≱2CC : SizedFST ℕ ≱Size Sized2CC ℕ
 FST≱2CC zero = NAT , fst zero , λ 2cc fst≅2cc → size2CC>0 2cc
 FST≱2CC (suc n) = NAT , fst m , λ 2cc fst≅2cc →
   begin-strict

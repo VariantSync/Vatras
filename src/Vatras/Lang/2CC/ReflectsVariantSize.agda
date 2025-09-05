@@ -13,7 +13,7 @@ open import Size using (Size; ∞)
 open import Vatras.Data.EqIndexedSet using (_∈_)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 open import Vatras.Lang.2CC Dimension using (2CC; _⟨_,_⟩; _-<_>-; ⟦_⟧)
-open import Vatras.Succinctness.Sizes Dimension using (sizeRose; size2CC)
+open import Vatras.Succinctness.Sizes using (sizeRose; size2CC)
 
 reflectsVariantSize : ∀ {i : Size}
   → (v : Rose ∞ A)

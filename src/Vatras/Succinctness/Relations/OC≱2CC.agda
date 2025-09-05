@@ -33,8 +33,8 @@ open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
-open import Vatras.Succinctness.ProofDefinition using (_≱Size_)
-open import Vatras.Succinctness.Sizes ℕ using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≱Size_)
+open import Vatras.Succinctness.Sizes using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
 
 options : ℕ → List (OC.OC ∞ NAT)
 options zero = []
@@ -251,5 +251,5 @@ goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
   open ℕ.≤-Reasoning
   m = 4 * n
 
-OC≱2CC : SizedWFOC ≱Size Sized2CC
+OC≱2CC : SizedWFOC ℕ ≱Size Sized2CC ℕ
 OC≱2CC n = NAT , oc (4 * n) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc

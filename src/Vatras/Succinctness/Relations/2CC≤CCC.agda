@@ -26,7 +26,7 @@ open import Vatras.Framework.Variants using (Rose)
 import Vatras.Util.List as List
 open import Vatras.Lang.All
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Succinctness.ProofDefinition using (_≤Size_)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤Size_)
 open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedCCC; sizeCCC; sizeCCC>0)
 
 >⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ≤ᵇ n))
@@ -87,39 +87,39 @@ choice-list-size :
   ∀ {A : 𝔸} (D : F) (n : ℕ)
   → (c : 2CC.2CC (F × ℕ) ∞ A)
   → (cs : List (2CC.2CC (F × ℕ) ∞ A))
-  → size2CC (F × ℕ) (choice-list D n c cs) ≡ List.length cs + List.sum (List.map (size2CC (F × ℕ)) (c ∷ cs))
-choice-list-size D n c₁ [] = Eq.sym (ℕ.+-identityʳ (size2CC (F × ℕ) c₁))
+  → size2CC (choice-list D n c cs) ≡ List.length cs + List.sum (List.map size2CC (c ∷ cs))
+choice-list-size D n c₁ [] = Eq.sym (ℕ.+-identityʳ (size2CC c₁))
 choice-list-size D n c₁ (c₂ ∷ []) =
   begin
-    size2CC (F × ℕ) (choice-list D n c₁ (c₂ ∷ []))
+    size2CC (choice-list D n c₁ (c₂ ∷ []))
   ≡⟨⟩
-    size2CC (F × ℕ) ((D , n) 2CC.2CC.⟨ c₁ , c₂ ⟩)
+    size2CC ((D , n) 2CC.2CC.⟨ c₁ , c₂ ⟩)
   ≡⟨⟩
-    suc (size2CC (F × ℕ) c₁ + size2CC (F × ℕ) c₂)
-  ≡⟨ Eq.cong (λ x → suc (size2CC (F × ℕ) c₁ + x)) (ℕ.+-identityʳ (size2CC (F × ℕ) c₂)) ⟨
-    suc (size2CC (F × ℕ) c₁ + (size2CC (F × ℕ) c₂ + 0))
+    suc (size2CC c₁ + size2CC c₂)
+  ≡⟨ Eq.cong (λ x → suc (size2CC c₁ + x)) (ℕ.+-identityʳ (size2CC c₂)) ⟨
+    suc (size2CC c₁ + (size2CC c₂ + 0))
   ≡⟨⟩
-    List.length (c₂ ∷ []) + List.sum (List.map (size2CC (F × ℕ)) (c₁ ∷ c₂ ∷ []))
+    List.length (c₂ ∷ []) + List.sum (List.map size2CC (c₁ ∷ c₂ ∷ []))
   ∎
   where
   open Eq.≡-Reasoning
 choice-list-size D n c₁ (c₂ ∷ c₃ ∷ cs) =
   begin
-    size2CC (F × ℕ) (choice-list D n c₁ (c₂ ∷ c₃ ∷ cs))
+    size2CC (choice-list D n c₁ (c₂ ∷ c₃ ∷ cs))
   ≡⟨⟩
-    size2CC (F × ℕ) ((D , n) 2CC.2CC.⟨ c₁ , choice-list D (suc n) c₂ (c₃ ∷ cs) ⟩)
+    size2CC ((D , n) 2CC.2CC.⟨ c₁ , choice-list D (suc n) c₂ (c₃ ∷ cs) ⟩)
   ≡⟨⟩
-    suc (size2CC (F × ℕ) c₁ + size2CC (F × ℕ) (choice-list D (suc n) c₂ (c₃ ∷ cs)))
-  ≡⟨ Eq.cong (λ x → suc (size2CC (F × ℕ) c₁ + x)) (choice-list-size D (suc n) c₂ (c₃ ∷ cs)) ⟩
-    suc (size2CC (F × ℕ) c₁ + (List.length (c₃ ∷ cs) + List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs))))
-  ≡⟨ Eq.cong suc (ℕ.+-assoc (size2CC (F × ℕ) c₁) (List.length (c₃ ∷ cs)) (List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs)))) ⟨
-    suc (size2CC (F × ℕ) c₁ + List.length (c₃ ∷ cs) + List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs)))
-  ≡⟨ Eq.cong (λ x → suc (x + List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs)))) (ℕ.+-comm (size2CC (F × ℕ) c₁) (List.length (c₃ ∷ cs))) ⟩
-    suc (List.length (c₃ ∷ cs) + size2CC (F × ℕ) c₁ + List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs)))
-  ≡⟨ Eq.cong suc (ℕ.+-assoc (List.length (c₃ ∷ cs)) (size2CC (F × ℕ) c₁) (List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs)))) ⟩
-    suc (List.length (c₃ ∷ cs) + (size2CC (F × ℕ) c₁ + List.sum (List.map (size2CC (F × ℕ)) (c₂ ∷ c₃ ∷ cs))))
+    suc (size2CC c₁ + size2CC (choice-list D (suc n) c₂ (c₃ ∷ cs)))
+  ≡⟨ Eq.cong (λ x → suc (size2CC c₁ + x)) (choice-list-size D (suc n) c₂ (c₃ ∷ cs)) ⟩
+    suc (size2CC c₁ + (List.length (c₃ ∷ cs) + List.sum (List.map (size2CC) (c₂ ∷ c₃ ∷ cs))))
+  ≡⟨ Eq.cong suc (ℕ.+-assoc (size2CC c₁) (List.length (c₃ ∷ cs)) (List.sum (List.map size2CC (c₂ ∷ c₃ ∷ cs)))) ⟨
+    suc (size2CC c₁ + List.length (c₃ ∷ cs) + List.sum (List.map size2CC (c₂ ∷ c₃ ∷ cs)))
+  ≡⟨ Eq.cong (λ x → suc (x + List.sum (List.map size2CC (c₂ ∷ c₃ ∷ cs)))) (ℕ.+-comm (size2CC c₁) (List.length (c₃ ∷ cs))) ⟩
+    suc (List.length (c₃ ∷ cs) + size2CC c₁ + List.sum (List.map size2CC (c₂ ∷ c₃ ∷ cs)))
+  ≡⟨ Eq.cong suc (ℕ.+-assoc (List.length (c₃ ∷ cs)) (size2CC c₁) (List.sum (List.map size2CC (c₂ ∷ c₃ ∷ cs)))) ⟩
+    suc (List.length (c₃ ∷ cs) + (size2CC c₁ + List.sum (List.map size2CC (c₂ ∷ c₃ ∷ cs))))
   ≡⟨⟩
-    List.length (c₂ ∷ c₃ ∷ cs) + List.sum (List.map (size2CC (F × ℕ)) (c₁ ∷ c₂ ∷ c₃ ∷ cs))
+    List.length (c₂ ∷ c₃ ∷ cs) + List.sum (List.map size2CC (c₁ ∷ c₂ ∷ c₃ ∷ cs))
   ∎
   where
   open Eq.≡-Reasoning
@@ -132,54 +132,54 @@ translate (D CCC.CCC.⟨ c ∷ cs ⟩) = choice-list D zero (translate c) (List.
 
 translate-size : ∀ {i : Size} {A : 𝔸}
   → (ccc : CCC.CCC F i A)
-  → size2CC (F × ℕ) (translate ccc) < 2 * sizeCCC F ccc
+  → size2CC (translate ccc) < 2 * sizeCCC ccc
 translate-size {A = A} (a CCC.CCC.-< cs >-) =
   begin-strict
-    size2CC (F × ℕ) (translate (a CCC.CCC.-< cs >-))
+    size2CC (translate (a CCC.CCC.-< cs >-))
   ≡⟨⟩
-    size2CC (F × ℕ) (a 2CC.2CC.-< List.map translate cs >-)
+    size2CC (a 2CC.2CC.-< List.map translate cs >-)
   ≡⟨⟩
-    suc (atomSize A a + List.sum (List.map (size2CC (F × ℕ)) (List.map translate cs)))
+    suc (atomSize A a + List.sum (List.map size2CC (List.map translate cs)))
   ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟨
-    suc (atomSize A a + List.sum (List.map (size2CC (F × ℕ) ∘ translate) cs))
-  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (atomSize A a) (List.sum-map-≤ (size2CC (F × ℕ) ∘ translate) (λ c → 2 * sizeCCC F c) cs (ℕ.<⇒≤ ∘ translate-size))) ⟩
-    suc (atomSize A a + List.sum (List.map (λ c → 2 * sizeCCC F c) cs))
+    suc (atomSize A a + List.sum (List.map (size2CC ∘ translate) cs))
+  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (atomSize A a) (List.sum-map-≤ (size2CC ∘ translate) (λ c → 2 * sizeCCC c) cs (ℕ.<⇒≤ ∘ translate-size))) ⟩
+    suc (atomSize A a + List.sum (List.map (λ c → 2 * sizeCCC c) cs))
   ≡⟨ Eq.cong (λ x → suc (atomSize A a + List.sum x)) (List.map-∘ cs) ⟩
-    suc (atomSize A a + List.sum (List.map (2 *_) (List.map (sizeCCC F) cs)))
-  ≡⟨ Eq.cong (λ x → suc (atomSize A a + x)) (List.sum-* 2 (List.map (sizeCCC F) cs)) ⟩
-    suc (atomSize A a + 2 * List.sum (List.map (sizeCCC F) cs))
-  ≤⟨ s≤s (ℕ.+-monoˡ-≤ (2 * List.sum (List.map (sizeCCC F) cs)) (ℕ.m≤m+n (atomSize A a) (1 * atomSize A a))) ⟩
-    suc (atomSize A a + 1 * atomSize A a + 2 * List.sum (List.map (sizeCCC F) cs))
+    suc (atomSize A a + List.sum (List.map (2 *_) (List.map sizeCCC cs)))
+  ≡⟨ Eq.cong (λ x → suc (atomSize A a + x)) (List.sum-* 2 (List.map sizeCCC cs)) ⟩
+    suc (atomSize A a + 2 * List.sum (List.map sizeCCC cs))
+  ≤⟨ s≤s (ℕ.+-monoˡ-≤ (2 * List.sum (List.map sizeCCC cs)) (ℕ.m≤m+n (atomSize A a) (1 * atomSize A a))) ⟩
+    suc (atomSize A a + 1 * atomSize A a + 2 * List.sum (List.map sizeCCC cs))
   ≡⟨⟩
-    suc (2 * atomSize A a + 2 * List.sum (List.map (sizeCCC F) cs))
-  ≡⟨ Eq.cong suc (ℕ.*-distribˡ-+ 2 (atomSize A a) (List.sum (List.map (sizeCCC F) cs))) ⟨
-    1 + 2 * (atomSize A a + List.sum (List.map (sizeCCC F) cs))
-  <⟨ ℕ.+-monoˡ-< (2 * (atomSize A a + List.sum (List.map (sizeCCC F) cs))) {x = 1} {y = 2} (ℕ.n<1+n 1) ⟩
-    2 + 2 * (atomSize A a + List.sum (List.map (sizeCCC F) cs))
-  ≡⟨ ℕ.*-suc 2 (atomSize A a + List.sum (List.map (sizeCCC F) cs)) ⟨
-    2 * (suc (atomSize A a + List.sum (List.map (sizeCCC F) cs)))
+    suc (2 * atomSize A a + 2 * List.sum (List.map sizeCCC cs))
+  ≡⟨ Eq.cong suc (ℕ.*-distribˡ-+ 2 (atomSize A a) (List.sum (List.map sizeCCC cs))) ⟨
+    1 + 2 * (atomSize A a + List.sum (List.map sizeCCC cs))
+  <⟨ ℕ.+-monoˡ-< (2 * (atomSize A a + List.sum (List.map sizeCCC cs))) {x = 1} {y = 2} (ℕ.n<1+n 1) ⟩
+    2 + 2 * (atomSize A a + List.sum (List.map sizeCCC cs))
+  ≡⟨ ℕ.*-suc 2 (atomSize A a + List.sum (List.map sizeCCC cs)) ⟨
+    2 * (suc (atomSize A a + List.sum (List.map sizeCCC cs)))
   ≡⟨⟩
-    2 * sizeCCC F (a CCC.CCC.-< cs >-)
+    2 * sizeCCC (a CCC.CCC.-< cs >-)
   ∎
   where
   open ℕ.≤-Reasoning
 translate-size (D CCC.CCC.⟨ c ∷ cs ⟩) =
   begin-strict
-    size2CC (F × ℕ) (translate (D CCC.CCC.⟨ c ∷ cs ⟩))
+    size2CC (translate (D CCC.CCC.⟨ c ∷ cs ⟩))
   ≡⟨⟩
-    size2CC (F × ℕ) (choice-list D zero (translate c) (List.map translate cs))
+    size2CC (choice-list D zero (translate c) (List.map translate cs))
   ≡⟨ choice-list-size D zero (translate c) (List.map translate cs) ⟩
-    List.length (List.map translate cs) + List.sum (List.map (size2CC (F × ℕ)) (List.map translate (c ∷ cs)))
+    List.length (List.map translate cs) + List.sum (List.map size2CC (List.map translate (c ∷ cs)))
   ≡⟨ Eq.cong (λ x → List.length (List.map translate cs) + List.sum x) (List.map-∘ (c ∷ cs)) ⟨
-    List.length (List.map translate cs) + List.sum (List.map (size2CC (F × ℕ) ∘ translate) (c ∷ cs))
-  ≤⟨ ℕ.+-monoʳ-≤ (List.length (List.map translate cs)) (List.sum-map-< (size2CC (F × ℕ) ∘ translate) (λ c → 2 * sizeCCC F c) (c ∷ cs) translate-size) ⟩
-    List.length (List.map translate cs) + (List.sum (List.map (λ c → 2 * sizeCCC F c) (c ∷ cs)) ∸ List.length (c ∷ cs))
-  ≡⟨ Eq.cong (λ x → List.length (List.map translate cs) + (List.sum x ∸ List.length (c ∷ cs))) (List.map-∘ {g = 2 *_} {f = sizeCCC F} (c ∷ cs)) ⟩
-    List.length (List.map translate cs) + (List.sum (List.map (2 *_) (List.map (sizeCCC F) (c ∷ cs))) ∸ List.length (c ∷ cs))
-  ≡⟨ Eq.cong (λ x → List.length (List.map translate cs) + (x ∸ List.length (c ∷ cs))) (List.sum-* 2 (List.map (sizeCCC F) (c ∷ cs))) ⟩
-    List.length (List.map translate cs) + (2 * List.sum (List.map (sizeCCC F) (c ∷ cs)) ∸ List.length (c ∷ cs))
-  ≡⟨ Eq.cong (_+ (2 * List.sum (List.map (sizeCCC F) (c ∷ cs)) ∸ List.length (c ∷ cs))) (List.length-map translate cs) ⟩
-    List.length cs + (2 * List.sum (List.map (sizeCCC F) (c ∷ cs)) ∸ List.length (c ∷ cs))
+    List.length (List.map translate cs) + List.sum (List.map (size2CC ∘ translate) (c ∷ cs))
+  ≤⟨ ℕ.+-monoʳ-≤ (List.length (List.map translate cs)) (List.sum-map-< (size2CC ∘ translate) (λ c → 2 * sizeCCC c) (c ∷ cs) translate-size) ⟩
+    List.length (List.map translate cs) + (List.sum (List.map (λ c → 2 * sizeCCC c) (c ∷ cs)) ∸ List.length (c ∷ cs))
+  ≡⟨ Eq.cong (λ x → List.length (List.map translate cs) + (List.sum x ∸ List.length (c ∷ cs))) (List.map-∘ {g = 2 *_} {f = sizeCCC} (c ∷ cs)) ⟩
+    List.length (List.map translate cs) + (List.sum (List.map (2 *_) (List.map sizeCCC (c ∷ cs))) ∸ List.length (c ∷ cs))
+  ≡⟨ Eq.cong (λ x → List.length (List.map translate cs) + (x ∸ List.length (c ∷ cs))) (List.sum-* 2 (List.map sizeCCC (c ∷ cs))) ⟩
+    List.length (List.map translate cs) + (2 * List.sum (List.map sizeCCC (c ∷ cs)) ∸ List.length (c ∷ cs))
+  ≡⟨ Eq.cong (_+ (2 * List.sum (List.map sizeCCC (c ∷ cs)) ∸ List.length (c ∷ cs))) (List.length-map translate cs) ⟩
+    List.length cs + (2 * List.sum (List.map sizeCCC (c ∷ cs)) ∸ List.length (c ∷ cs))
   ≡⟨ ℕ.+-∸-assoc (List.length cs) (
     begin
       List.length (c ∷ cs)
@@ -189,21 +189,21 @@ translate-size (D CCC.CCC.⟨ c ∷ cs ⟩) =
       List.sum (List.replicate (List.length (c ∷ cs)) 1)
     ≡⟨ Eq.cong List.sum (List.map-const 1 (c ∷ cs)) ⟨
       List.sum (List.map (const 1) (c ∷ cs))
-    ≤⟨ List.sum-map-≤ (const 1) (sizeCCC F) (c ∷ cs) (sizeCCC>0 F) ⟩
-      List.sum (List.map (sizeCCC F) (c ∷ cs))
-    ≤⟨ ℕ.m≤n*m (List.sum (List.map (sizeCCC F) (c ∷ cs))) 2 ⟩
-      2 * List.sum (List.map (sizeCCC F) (c ∷ cs))
+    ≤⟨ List.sum-map-≤ (const 1) sizeCCC (c ∷ cs) sizeCCC>0 ⟩
+      List.sum (List.map sizeCCC (c ∷ cs))
+    ≤⟨ ℕ.m≤n*m (List.sum (List.map sizeCCC (c ∷ cs))) 2 ⟩
+      2 * List.sum (List.map sizeCCC (c ∷ cs))
     ∎)
   ⟨
-    (List.length cs + 2 * List.sum (List.map (sizeCCC F) (c ∷ cs))) ∸ List.length (c ∷ cs)
-  ≤⟨ ℕ.∸-monoʳ-≤ (List.length cs + 2 * List.sum (List.map (sizeCCC F) (c ∷ cs))) (ℕ.n≤1+n (List.length cs)) ⟩
-    (List.length cs + 2 * List.sum (List.map (sizeCCC F) (c ∷ cs))) ∸ List.length cs
-  ≡⟨ ℕ.m+n∸m≡n (List.length cs) (2 * List.sum (List.map (sizeCCC F) (c ∷ cs))) ⟩
-    2 * List.sum (List.map (sizeCCC F) (c ∷ cs))
-  <⟨ ℕ.*-monoʳ-< 2 (ℕ.n<1+n (List.sum (List.map (sizeCCC F) (c ∷ cs)))) ⟩
-    2 * suc (List.sum (List.map (sizeCCC F) (c ∷ cs)))
+    (List.length cs + 2 * List.sum (List.map sizeCCC (c ∷ cs))) ∸ List.length (c ∷ cs)
+  ≤⟨ ℕ.∸-monoʳ-≤ (List.length cs + 2 * List.sum (List.map sizeCCC (c ∷ cs))) (ℕ.n≤1+n (List.length cs)) ⟩
+    (List.length cs + 2 * List.sum (List.map sizeCCC (c ∷ cs))) ∸ List.length cs
+  ≡⟨ ℕ.m+n∸m≡n (List.length cs) (2 * List.sum (List.map sizeCCC (c ∷ cs))) ⟩
+    2 * List.sum (List.map sizeCCC (c ∷ cs))
+  <⟨ ℕ.*-monoʳ-< 2 (ℕ.n<1+n (List.sum (List.map sizeCCC (c ∷ cs)))) ⟩
+    2 * suc (List.sum (List.map sizeCCC (c ∷ cs)))
   ≡⟨⟩
-    2 * sizeCCC F (D CCC.CCC.⟨ c ∷ cs ⟩)
+    2 * sizeCCC (D CCC.CCC.⟨ c ∷ cs ⟩)
   ∎
   where
   open ℕ.≤-Reasoning

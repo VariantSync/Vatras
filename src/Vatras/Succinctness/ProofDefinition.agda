@@ -1,4 +1,5 @@
-module Vatras.Succinctness.ProofDefinition where
+open import Vatras.Framework.Definitions using (𝔸; 𝕍)
+module Vatras.Succinctness.ProofDefinition (V : 𝕍) where
 
 open import Data.Empty using (⊥-elim)
 open import Data.Nat as ℕ using (ℕ; _≤_; _>_; _<_; _*_)
@@ -10,19 +11,12 @@ open import Relation.Binary.Structures using (IsEquivalence; IsPreorder; IsParti
 open import Size using (∞)
 
 open import Vatras.Data.EqIndexedSet using (≅-refl; ≅-sym; ≅-trans; ≅→≅[]; ⊆-index)
-open import Vatras.Framework.Definitions using (𝔸)
-open import Vatras.Framework.Variants using (Rose)
-open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
+open import Vatras.Framework.Relation.Expression V using (_,_⊢_≣_)
 open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
+open import Vatras.Succinctness.Sizes using (SizedLang; Lang; size)
 
-record SizedLang : Set₂ where
-  field
-    Lang : VariabilityLanguage (Rose ∞)
-    size : {A : 𝔸} → Expression Lang A → ℕ
-open SizedLang
-
-_≤Size_ : SizedLang → SizedLang → Set₁
+_≤Size_ : SizedLang V → SizedLang V → Set₁
 L₁ ≤Size L₂ =
   Σ[ n ∈ ℕ ]
   ∀ (A : 𝔸) →
@@ -31,10 +25,10 @@ L₁ ≤Size L₂ =
       Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
     × size L₁ e₁ ≤ n * size L₂ e₂
 
-_=Size_ : SizedLang → SizedLang → Set₁
+_=Size_ : SizedLang V → SizedLang V → Set₁
 L₁ =Size L₂ = L₁ ≤Size L₂ × L₂ ≤Size L₁
 
-_≱Size_ : SizedLang → SizedLang → Set₁
+_≱Size_ : SizedLang V → SizedLang V → Set₁
 L₁ ≱Size L₂ =
   ∀ (n : ℕ) →
   Σ[ A ∈ 𝔸 ]
@@ -43,17 +37,17 @@ L₁ ≱Size L₂ =
   → Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
   → size L₂ e₂ > n * size L₁ e₁
 
-_<Size_ : SizedLang → SizedLang → Set₁
+_<Size_ : SizedLang V → SizedLang V → Set₁
 L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
 
 
-≤Size-refl : {L : SizedLang} → L ≤Size L
+≤Size-refl : {L : SizedLang V} → L ≤Size L
 ≤Size-refl {L} = 1 , λ A e → e , ≅-refl , ℕ.≤-reflexive (Eq.sym (ℕ.*-identityˡ (size L e)))
 
-≤Size-reflexive : {L₁ L₂ : SizedLang} → L₁ =Size L₂ → L₁ ≤Size L₂
+≤Size-reflexive : {L₁ L₂ : SizedLang V} → L₁ =Size L₂ → L₁ ≤Size L₂
 ≤Size-reflexive (L₁≤L₂ , L₂≤L₁) = L₁≤L₂
 
-≤Size-transitive : {L₁ L₂ L₃ : SizedLang} → L₁ ≤Size L₂ → L₂ ≤Size L₃ → L₁ ≤Size L₃
+≤Size-transitive : {L₁ L₂ L₃ : SizedLang V} → L₁ ≤Size L₂ → L₂ ≤Size L₃ → L₁ ≤Size L₃
 ≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₁ = n₁ * n₂
 ≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ with L₃→L₂ A e₃
 ≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ | e₂ , e₂≅e₃ , e₁≤e₂ with L₂→L₁ A e₂
@@ -70,20 +64,20 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
   where
   open ℕ.≤-Reasoning
 
-≤Size-antisymmetric : {L₁ L₂ : SizedLang} → L₁ ≤Size L₂ → L₂ ≤Size L₁ → L₁ =Size L₂
+≤Size-antisymmetric : {L₁ L₂ : SizedLang V} → L₁ ≤Size L₂ → L₂ ≤Size L₁ → L₁ =Size L₂
 ≤Size-antisymmetric L₁≤L₂ L₂≤L₁ = L₁≤L₂ , L₂≤L₁
 
 
-=Size-reflexive : {L : SizedLang} → L =Size L
+=Size-reflexive : {L : SizedLang V} → L =Size L
 =Size-reflexive = ≤Size-refl , ≤Size-refl
 
-=Size-symmetric : {L₁ L₂ : SizedLang} → L₁ =Size L₂ → L₂ =Size L₁
+=Size-symmetric : {L₁ L₂ : SizedLang V} → L₁ =Size L₂ → L₂ =Size L₁
 =Size-symmetric (L₁≤L₂ , L₂≤L₁) = L₂≤L₁ , L₁≤L₂
 
-=Size-transitive : {L₁ L₂ L₃ : SizedLang} → L₁ =Size L₂ → L₂ =Size L₃ → L₁ =Size L₃
+=Size-transitive : {L₁ L₂ L₃ : SizedLang V} → L₁ =Size L₂ → L₂ =Size L₃ → L₁ =Size L₃
 =Size-transitive (L₁≤L₂ , L₂≤L₁) (L₂≤L₃ , L₃≤L₂) = ≤Size-transitive L₁≤L₂ L₂≤L₃ , ≤Size-transitive L₃≤L₂ L₂≤L₁
 
-<Size-transitive : {L₁ L₂ L₃ : SizedLang} → L₁ <Size L₂ → L₂ <Size L₃ → L₁ <Size L₃
+<Size-transitive : {L₁ L₂ L₃ : SizedLang V} → L₁ <Size L₂ → L₂ <Size L₃ → L₁ <Size L₃
 <Size-transitive {L₁} {L₂} {L₃} (L₁≤L₂ , L₁≱L₂) (L₂≤L₃@(m , L₃→L₂) , L₂≱L₃) .proj₁ = ≤Size-transitive L₁≤L₂ L₂≤L₃
 <Size-transitive {L₁} {L₂} {L₃} (L₁≤L₂ , L₁≱L₂) (L₂≤L₃@(m , L₃→L₂) , L₂≱L₃) .proj₂ n with L₁≱L₂ (m * n)
 <Size-transitive {L₁} {L₂} {L₃} (L₁≤L₂ , L₁≱L₂) (L₂≤L₃@(m , L₃→L₂) , L₂≱L₃) .proj₂ n | A , e₁ , e₁< = A , e₁ , go
@@ -107,12 +101,12 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
     where
     open ℕ.≤-Reasoning
 
-<Size-irreflexive : {L₁ L₂ : SizedLang} → L₁ =Size L₂ → ¬ (L₁ <Size L₂)
+<Size-irreflexive : {L₁ L₂ : SizedLang V} → L₁ =Size L₂ → ¬ (L₁ <Size L₂)
 <Size-irreflexive {L₁} {L₂} (L₁≤L₂ , (n , L₁→L₂)) (L₁≤L₂' , L₁≱L₂) with L₁≱L₂ n
 <Size-irreflexive {L₁} {L₂} (L₁≤L₂ , (n , L₁→L₂)) (L₁≤L₂' , L₁≱L₂) | A , e₁ , e₂< with L₁→L₂ A e₁
 <Size-irreflexive {L₁} {L₂} (L₁≤L₂ , (n , L₁→L₂)) (L₁≤L₂' , L₁≱L₂) | A , e₁ , e₁< | e₂ , e₂≅e₁ , e₂≤e₁ = ℕ.n≮n (size L₂ e₂) (ℕ.≤-trans (ℕ.s≤s e₂≤e₁) (e₁< e₂ (≅-sym e₂≅e₁)))
 
-<Size-Respectsʳ : {L₁ L₂ L₃ : SizedLang} → L₂ =Size L₃ → L₁ <Size L₂ → L₁ <Size L₃
+<Size-Respectsʳ : {L₁ L₂ L₃ : SizedLang V} → L₂ =Size L₃ → L₁ <Size L₂ → L₁ <Size L₃
 <Size-Respectsʳ {L₁} {L₂} {L₃} (L₂≤L₃@(m , L₃→L₂) , L₃≤L₂) (L₁≤L₂ , L₁≱L₂) .proj₁ = ≤Size-transitive L₁≤L₂ L₂≤L₃
 <Size-Respectsʳ {L₁} {L₂} {L₃} (L₂≤L₃@(m , L₃→L₂) , L₃≤L₂) (L₁≤L₂ , L₁≱L₂) .proj₂ n with L₁≱L₂ (m * n)
 <Size-Respectsʳ {L₁} {L₂} {L₃} (L₂≤L₃@(m , L₃→L₂) , L₃≤L₂) (L₁≤L₂ , L₁≱L₂) .proj₂ n | A , e₁ , e₁< = A , e₁ , go
@@ -130,7 +124,7 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
     where
     open ℕ.≤-Reasoning
 
-<Size-Respectsˡ : {L₁ L₂ L₃ : SizedLang} → L₂ =Size L₃ → L₂ <Size L₁ → L₃ <Size L₁
+<Size-Respectsˡ : {L₁ L₂ L₃ : SizedLang V} → L₂ =Size L₃ → L₂ <Size L₁ → L₃ <Size L₁
 <Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₁ = ≤Size-transitive L₃≤L₂ L₂≤L₁
 <Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₂ n with L₂≱L₁ (m * n)
 <Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₂ n | A , e₂ , e₂< with L₂→L₃ A e₂
@@ -182,23 +176,23 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
   }
 
 
-<Size→≤Size : {L₁ L₂ : SizedLang} → L₁ <Size L₂ → L₁ ≤Size L₂
+<Size→≤Size : {L₁ L₂ : SizedLang V} → L₁ <Size L₂ → L₁ ≤Size L₂
 <Size→≤Size (L₁≤L₂ , L₁≱L₂) = L₁≤L₂
 
-≱→¬≤ : {L₁ L₂ : SizedLang} → L₁ ≱Size L₂ → ¬ (L₂ ≤Size L₁)
+≱→¬≤ : {L₁ L₂ : SizedLang V} → L₁ ≱Size L₂ → ¬ (L₂ ≤Size L₁)
 ≱→¬≤ {L₁} {L₂} L₁≱L₂ (n , L₁→L₂) with L₁≱L₂ n
 ≱→¬≤ {L₁} {L₂} L₁≱L₂ (n , L₁→L₂) | A , e₁ , e₁< with L₁→L₂ A e₁
 ≱→¬≤ {L₁} {L₂} L₁≱L₂ (n , L₁→L₂) | A , e₁ , e₁< | e₂ , e₂≅e₁ , e₂≤e₁ = ℕ.n≮n (size L₂ e₂) (ℕ.≤-trans (ℕ.s≤s e₂≤e₁) (e₁< e₂ (≅-sym e₂≅e₁)))
 
-≱→¬= : {L₁ L₂ : SizedLang} → L₁ ≱Size L₂ → ¬ (L₁ =Size L₂)
+≱→¬= : {L₁ L₂ : SizedLang V} → L₁ ≱Size L₂ → ¬ (L₁ =Size L₂)
 ≱→¬= L₁≠L₂ (L₁≤L₂ , L₂≤L₁) = ≱→¬≤ L₁≠L₂ L₂≤L₁
 
-≤→¬≱ : {L₁ L₂ : SizedLang} → L₁ ≤Size L₂ → ¬ (L₂ ≱Size L₁)
+≤→¬≱ : {L₁ L₂ : SizedLang V} → L₁ ≤Size L₂ → ¬ (L₂ ≱Size L₁)
 ≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ with L₂≱L₁ n
 ≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ | A , e₂ , e₂< with L₂→L₁ A e₂
 ≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ | A , e₂ , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (n * size L₂ e₂) (ℕ.≤-trans (e₂< e₁ (≅-sym e₂≅e₁)) e₁≤e₂)
 
-≤→Compiler : {L₁ L₂ : SizedLang} → L₁ ≤Size L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
+≤→Compiler : {L₁ L₂ : SizedLang V} → L₁ ≤Size L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
 ≤→Compiler (n , e₂→e₁) = record
   { compile = λ {A} e₂ → proj₁ (e₂→e₁ A e₂)
   ; config-compiler = λ {A} e₂ → record
@@ -208,8 +202,8 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
   ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (e₂→e₁ A e₂))))
   }
 
-¬Compiler→¬≤ : {L₁ L₂ : SizedLang} → ¬ LanguageCompiler (Lang L₁) (Lang L₂) → ¬ L₂ ≤Size L₁
+¬Compiler→¬≤ : {L₁ L₂ : SizedLang V} → ¬ LanguageCompiler (Lang L₁) (Lang L₂) → ¬ L₂ ≤Size L₁
 ¬Compiler→¬≤ ¬Compiler L₂≤L₁ = ¬Compiler (≤→Compiler L₂≤L₁)
 
-¬Compiler→≤ : {L₁ L₂ : SizedLang} → {A : 𝔸} → (e₂ : Expression (Lang L₂) A) → (∀ (e₁ : Expression (Lang L₁) A) → ¬ Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂) → L₂ ≱Size L₁
+¬Compiler→≤ : {L₁ L₂ : SizedLang V} → {A : 𝔸} → (e₂ : Expression (Lang L₂) A) → (∀ (e₁ : Expression (Lang L₁) A) → ¬ Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂) → L₂ ≱Size L₁
 ¬Compiler→≤ {A = A} e₂ e₁≇e₂ n = A , e₂ , λ e₁ e₂≅e₁ → ⊥-elim (e₁≇e₂ e₁ (≅-sym e₂≅e₁))

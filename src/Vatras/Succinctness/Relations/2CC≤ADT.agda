@@ -17,8 +17,8 @@ open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.Translation.Lang.2CC.Rename using (2CC-rename)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Translation.LanguageMap using (ADT→2CC)
-open import Vatras.Succinctness.ProofDefinition using (_≤Size_)
-open import Vatras.Succinctness.Sizes F using (sizeRose; Sized2CC; size2CC; SizedADT; sizeADT)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤Size_)
+open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedADT; sizeADT)
 open import Vatras.Lang.2CC.Encode using (encode; encoder)
 
 ADT→2CC' : LanguageCompiler ADT.ADTL 2CC.2CCL
@@ -42,7 +42,7 @@ lemma2 {A = A} (a Rose.-< cs >-) =
   where
   open ℕ.≤-Reasoning
 
-lemma : ∀ {A : 𝔸} → (adt : ADT.ADT A) → size2CC (LanguageCompiler.compile ADT→2CC' adt) ≤ sizeADT adt
+lemma : ∀ {A : 𝔸} → (adt : ADT.ADT A) → size2CC (LanguageCompiler.compile ADT→2CC' adt) ≤ sizeADT sizeRose adt
 lemma (ADT.ADT.leaf v) = ℕ.m≤n⇒m≤1+n (lemma2 v)
 lemma (D ADT.ADT.⟨ l , r ⟩) =
   begin
@@ -52,12 +52,12 @@ lemma (D ADT.ADT.⟨ l , r ⟩) =
   ≡⟨⟩
     suc (size2CC (LanguageCompiler.compile ADT→2CC' l) + size2CC (LanguageCompiler.compile ADT→2CC' r))
   ≤⟨ s≤s (ℕ.+-monoˡ-≤ (size2CC (LanguageCompiler.compile ADT→2CC' r)) (lemma l)) ⟩
-    suc (sizeADT l + size2CC (LanguageCompiler.compile ADT→2CC' r))
-  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (sizeADT l) (lemma r)) ⟩
-    suc (sizeADT l + sizeADT r)
+    suc (sizeADT sizeRose l + size2CC (LanguageCompiler.compile ADT→2CC' r))
+  ≤⟨ s≤s (ℕ.+-monoʳ-≤ (sizeADT sizeRose l) (lemma r)) ⟩
+    suc (sizeADT sizeRose l + sizeADT sizeRose r)
   ∎
   where
   open ℕ.≤-Reasoning
 
-2CC≤ADT : Sized2CC ≤Size SizedADT
-2CC≤ADT = 1 , λ A adt → LanguageCompiler.compile ADT→2CC' adt , ≅-sym (≅[]→≅ (LanguageCompiler.preserves ADT→2CC' adt)) , Eq.subst (size2CC (LanguageCompiler.compile ADT→2CC' adt )≤_) (Eq.sym (ℕ.+-identityʳ (sizeADT adt))) (lemma adt)
+2CC≤ADT : Sized2CC F ≤Size SizedADT F (Rose ∞) sizeRose
+2CC≤ADT = 1 , λ A adt → LanguageCompiler.compile ADT→2CC' adt , ≅-sym (≅[]→≅ (LanguageCompiler.preserves ADT→2CC' adt)) , Eq.subst (size2CC (LanguageCompiler.compile ADT→2CC' adt )≤_) (Eq.sym (ℕ.+-identityʳ (sizeADT sizeRose adt))) (lemma adt)

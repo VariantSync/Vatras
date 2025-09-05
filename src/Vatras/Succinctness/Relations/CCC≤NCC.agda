@@ -21,8 +21,8 @@ import Vatras.Util.Vec as Vec
 open import Vatras.Lang.All.Fixed F (Rose ∞)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Translation.LanguageMap using (NCC→CCC)
-open import Vatras.Succinctness.ProofDefinition using (_≤Size_)
-open import Vatras.Succinctness.Sizes F using (SizedNCC; sizeNCC; SizedCCC; sizeCCC)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤Size_)
+open import Vatras.Succinctness.Sizes using (SizedNCC; sizeNCC; SizedCCC; sizeCCC)
 
 lemma : ∀ {i : Size} {A : 𝔸} (n : ℕ≥ 2) (ncc : NCC.NCC n i A) → sizeCCC (LanguageCompiler.compile (NCC→CCC n) ncc) ≤ sizeNCC n ncc
 lemma {A = A} (sucs n) (a NCC.NCC.-< cs >-) =
@@ -66,5 +66,5 @@ lemma (sucs n) (D NCC.NCC.⟨ c ∷ cs ⟩) =
   where
   open ℕ.≤-Reasoning
 
-CCC≤NCC : (n : ℕ≥ 2) → SizedCCC ≤Size SizedNCC n
+CCC≤NCC : (n : ℕ≥ 2) → SizedCCC F ≤Size SizedNCC F n
 CCC≤NCC n = 1 , λ A ncc → LanguageCompiler.compile (NCC→CCC n) ncc , ≅-sym (≅[]→≅ (LanguageCompiler.preserves (NCC→CCC n) ncc)) , Eq.subst (sizeCCC (LanguageCompiler.compile (NCC→CCC n) ncc )≤_) (Eq.sym (ℕ.+-identityʳ (sizeNCC n ncc))) (lemma n ncc)

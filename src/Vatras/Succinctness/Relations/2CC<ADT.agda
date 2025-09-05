@@ -31,8 +31,8 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) NAT' using (VariantGene
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
-open import Vatras.Succinctness.ProofDefinition using (_≱Size_; _<Size_)
-open import Vatras.Succinctness.Sizes ℕ using (Sized2CC; size2CC; SizedADT; sizeADT)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≱Size_; _<Size_)
+open import Vatras.Succinctness.Sizes using (Sized2CC; size2CC; SizedADT; sizeADT; sizeRose)
 open import Vatras.Succinctness.Relations.2CC≤ADT ℕ using (2CC≤ADT)
 
 e₁-cs : ℕ → ℕ → List (2CC.2CC ∞ NAT')
@@ -134,7 +134,7 @@ ADT-leaf-count-lemma D l r =
   where
   open Eq.≡-Reasoning
 
-leafs-≤-size : (e₂ : ADT.ADT NAT') → ADT-leaf-count e₂ ≤ sizeADT e₂
+leafs-≤-size : (e₂ : ADT.ADT NAT') → ADT-leaf-count e₂ ≤ sizeADT sizeRose e₂
 leafs-≤-size (ADT.ADT.leaf v) = s≤s z≤n
 leafs-≤-size (D ADT.ADT.⟨ l , r ⟩) =
   begin
@@ -142,11 +142,11 @@ leafs-≤-size (D ADT.ADT.⟨ l , r ⟩) =
   ≡⟨ ADT-leaf-count-lemma D l r ⟩
     ADT-leaf-count l + ADT-leaf-count r
   ≤⟨ ℕ.+-monoʳ-≤ (ADT-leaf-count l) (leafs-≤-size r) ⟩
-    ADT-leaf-count l + sizeADT r
-  ≤⟨ ℕ.+-monoˡ-≤ (sizeADT r) (leafs-≤-size l) ⟩
-    sizeADT l + sizeADT r
-  <⟨ ℕ.n<1+n (sizeADT l + sizeADT r) ⟩
-    suc (sizeADT l + sizeADT r)
+    ADT-leaf-count l + sizeADT sizeRose r
+  ≤⟨ ℕ.+-monoˡ-≤ (sizeADT sizeRose r) (leafs-≤-size l) ⟩
+    sizeADT sizeRose l + sizeADT sizeRose r
+  <⟨ ℕ.n<1+n (sizeADT sizeRose l + sizeADT sizeRose r) ⟩
+    suc (sizeADT sizeRose l + sizeADT sizeRose r)
   ∎
   where
   open ℕ.≤-Reasoning
@@ -222,14 +222,14 @@ variants⊆⇒2^n≤ n l variants⊆l =
   where
   open ℕ.≤-Reasoning
 
-variants⊆e₂⇒2^n≤e₂ : ∀ n e₂ → variants n ⊆ ADT.⟦ e₂ ⟧ → 2 ^ n ≤ sizeADT e₂
+variants⊆e₂⇒2^n≤e₂ : ∀ n e₂ → variants n ⊆ ADT.⟦ e₂ ⟧ → 2 ^ n ≤ sizeADT sizeRose e₂
 variants⊆e₂⇒2^n≤e₂ n e₂ variants⊆e₂ =
   begin
     2 ^ n
   ≤⟨ variants⊆⇒2^n≤ n (ADT-leafs e₂) (⊆-trans variants⊆e₂ (ADT-leaf⊆⟦⟧ e₂)) ⟩
     ADT-leaf-count e₂
   ≤⟨ leafs-≤-size e₂ ⟩
-    sizeADT e₂
+    sizeADT sizeRose e₂
   ∎
   where
   open ℕ.≤-Reasoning
@@ -285,7 +285,7 @@ variants⊆e₂⇒2^n≤e₂ n e₂ variants⊆e₂ =
       16 ^ (1 + n)
     ∎
 
-lemma : ∀ n e₂ → 2CC.2CCL , ADT.ADTL ⊢ e₁ (4 * n) ≣ e₂ → n * size2CC (e₁ (4 * n)) < sizeADT e₂
+lemma : ∀ n e₂ → 2CC.2CCL , ADT.ADTL ⊢ e₁ (4 * n) ≣ e₂ → n * size2CC (e₁ (4 * n)) < sizeADT sizeRose e₂
 lemma zero (ADT.ADT.leaf v) (e₁⊆e₂ , e₂⊆e₁) = s≤s z≤n
 lemma zero (D ADT.ADT.⟨ l , r ⟩) (e₁⊆e₂ , e₂⊆e₁) = s≤s z≤n
 lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
@@ -316,14 +316,14 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   ≡⟨ ℕ.^-*-assoc 2 4 n ⟩
     2 ^ (4 * n)
   ≤⟨ variants⊆e₂⇒2^n≤e₂ (4 * n) e₂ (⊆-trans (variants⊆e₁ (4 * n)) e₁⊆e₂) ⟩
-    sizeADT e₂
+    sizeADT sizeRose e₂
   ∎
   where
   open ℕ.≤-Reasoning
   n = suc m
 
-2CC≱ADT : Sized2CC ≱Size SizedADT
+2CC≱ADT : Sized2CC ℕ ≱Size SizedADT ℕ (Rose ∞) sizeRose
 2CC≱ADT n = NAT' , e₁ (4 * n) , lemma n
 
-2CC<ADT : Sized2CC <Size SizedADT
+2CC<ADT : Sized2CC ℕ <Size SizedADT ℕ (Rose ∞) sizeRose
 2CC<ADT = 2CC≤ADT , 2CC≱ADT

@@ -21,7 +21,7 @@ open import Vatras.Data.EqIndexedSet using (_∈_)
 open import Vatras.Framework.Variants using (Rose; children-equality)
 open import Vatras.Lang.2CC Dimension using (2CC; _⟨_,_⟩; _-<_>-; ⟦_⟧)
 open import Vatras.Lang.2CC.ReflectsVariantSize using (reflectsVariantSize)
-open import Vatras.Succinctness.Sizes Dimension using (sizeRose; size2CC)
+open import Vatras.Succinctness.Sizes using (sizeRose; size2CC)
 
 _≉_ : Rose ∞ A → Rose ∞ A → Set
 (a₁ Rose.-< cs₁ >-) ≉ (a₂ Rose.-< cs₂ >-) = List.length cs₁ ≢ List.length cs₂
