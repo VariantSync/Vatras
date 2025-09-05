@@ -207,3 +207,26 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
 
 ¬Compiler→≤ : {L₁ L₂ : SizedLang V} → {A : 𝔸} → (e₂ : Expression (Lang L₂) A) → (∀ (e₁ : Expression (Lang L₁) A) → ¬ Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂) → L₂ ≱Size L₁
 ¬Compiler→≤ {A = A} e₂ e₁≇e₂ n = A , e₂ , λ e₁ e₂≅e₁ → ⊥-elim (e₁≇e₂ e₁ (≅-sym e₂≅e₁))
+
+
+translatable
+  : (VL₁ VL₂ : SizedLang V)
+  → {A : 𝔸}
+  → (e₁ : Expression (Lang VL₁) A)
+  → Set _
+translatable VL₁ VL₂ {A} e₁ =
+  Σ[ e₂ ∈ Expression (Lang VL₂) A ]
+  Lang VL₂ , Lang VL₁ ⊢ e₂ ≣ e₁
+
+simplification
+  : (f : ℕ → ℕ)
+  → (VL₁ VL₂ : SizedLang V)
+  → Set _
+simplification f VL₁ VL₂ =
+  ∀ (A : 𝔸) →
+  Σ[ m ∈ ℕ ]
+  ∀ (e₂ : Expression (Lang VL₂) A)
+  → translatable VL₂ VL₁ e₂
+  → Σ[ e₁ ∈ Expression (Lang VL₁) A ]
+      (Lang VL₁ , Lang VL₂ ⊢ e₁ ≣ e₂)
+    × size VL₁ e₁ ≤ m * f (size VL₂ e₂)
