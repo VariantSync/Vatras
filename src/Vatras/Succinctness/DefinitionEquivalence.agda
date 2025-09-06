@@ -2,7 +2,7 @@ open import Vatras.Framework.Definitions using (𝔸; 𝕍)
 module Vatras.Succinctness.DefinitionEquivalence (V : 𝕍) where
 
 open import Data.Empty using (⊥-elim)
-open import Data.Product using (_×_; _,_; Σ-syntax; ∃-syntax; ∄-syntax)
+open import Data.Product as Product using (_×_; _,_; proj₁; proj₂; Σ-syntax; ∃-syntax; ∄-syntax)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _≤_; _<_; _≤?_)
 import Data.Nat.Properties as ℕ
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_)
@@ -13,26 +13,18 @@ open import Vatras.Framework.VariabilityLanguage using (Expression)
 open import Vatras.Framework.Relation.Expression V using (_,_⊢_≣_)
 open import Vatras.Succinctness.Sizes using (SizedLang; Lang; size)
 open import Vatras.Succinctness.DesignedDefinition V using (minimalExpression; design)
-open import Vatras.Succinctness.ProofDefinition V using (simplification)
+open import Vatras.Succinctness.ProofDefinition V using (_≤ₛ[_]_)
 
 simplification→design
   : (f : ℕ → ℕ)
   → (VL₁ VL₂ : SizedLang V)
-  → simplification f VL₁ VL₂
+  → VL₁ ≤ₛ[ f ] VL₂
   → design f VL₁ VL₂
-
-simplification→design f VL₁ VL₂ simplification A with simplification A
-simplification→design f VL₁ VL₂ simplification A | m , simplification' = m , go
-  where
-  open ℕ.≤-Reasoning
-
-  go :
-    ∀ (e₁ : Expression (Lang VL₁) A) (e₂ : Expression (Lang VL₂) A) (e₁≅e₂ : Lang VL₁ , Lang VL₂ ⊢ e₁ ≣ e₂)
-    → minimalExpression VL₁ e₁
-    → minimalExpression VL₂ e₂
-    → size VL₁ e₁ ≤ m * f (size VL₂ e₂)
-  go e₁ e₂ e₁≅e₂ e₁-minimal e₂-minimal with simplification' e₂ (e₁ , e₁≅e₂)
-  go e₁ e₂ e₁≅e₂ e₁-minimal e₂-minimal | e₁' , e₁'≅e₂ , e₁'≤e₂ = ℕ.≤-trans (e₁-minimal e₁' (≅-trans e₁≅e₂ (≅-sym e₁'≅e₂))) e₁'≤e₂
+simplification→design f VL₁ VL₂ (m , simplification) .proj₁ = m
+simplification→design f VL₁ VL₂ (m , simplification) .proj₂ A e₁ e₂ e₁≅e₂ e₁-minimal e₂-minimal
+  with simplification A e₂ (e₁ , ≅-sym e₁≅e₂)
+... | e₁' , e₁'≅e₂ , e₁'≤e₂
+    = ℕ.≤-trans (e₁-minimal e₁' (≅-trans e₁≅e₂ (≅-sym e₁'≅e₂))) e₁'≤e₂
 
 open import Axiom.ExcludedMiddle
 module Classical (excludedMiddle : ∀ {ℓ} → ExcludedMiddle ℓ) where
@@ -85,25 +77,18 @@ module Classical (excludedMiddle : ∀ {ℓ} → ExcludedMiddle ℓ) where
     → (∀ n m → n ≤ m → f n ≤ f m)
     → (VL₁ VL₂ : SizedLang V)
     → design f VL₁ VL₂
-    → simplification f VL₁ VL₂
-  design→simplification f f-monotone VL₁ VL₂ design A with design A
-  design→simplification f f-monotone VL₁ VL₂ design A | m , design' = m , go
-    where
-    open ℕ.≤-Reasoning
-
-    go :
-      ∀ (e₂ : Expression (Lang VL₂) A)
-      → Σ[ e₁ ∈ Expression (Lang VL₁) A ]
-        (Lang VL₁ , Lang VL₂ ⊢ e₁ ≣ e₂)
-      → Σ[ e₁ ∈ Expression (Lang VL₁) A ]
-          (Lang VL₁ , Lang VL₂ ⊢ e₁ ≣ e₂)
-        × size VL₁ e₁ ≤ m * f (size VL₂ e₂)
-    go e₂ (e₁ , e₁≅e₂) with ∃minimalExpression VL₁ e₁ | ∃minimalExpression VL₂ e₂
-    go e₂ (e₁ , e₁≅e₂) | e₁' , e₁≅e₁' , e₁'-minimal | e₂' , e₂≅e₂' , e₂'-minimal = e₁' , ≅-trans (≅-sym e₁≅e₁') e₁≅e₂ , (
+    → VL₁ ≤ₛ[ f ] VL₂
+  design→simplification f f-monotone VL₁ VL₂ (m , design) .proj₁ = m
+  design→simplification f f-monotone VL₁ VL₂ (m , design) .proj₂ A e₂ (e₁ , e₂≅e₁)
+    with ∃minimalExpression VL₁ e₁ | ∃minimalExpression VL₂ e₂
+  ... | e₁' , e₁≅e₁' , e₁'-minimal | e₂' , e₂≅e₂' , e₂'-minimal
+    = e₁' , ≅-sym (≅-trans e₂≅e₁ e₁≅e₁') , (
       begin
         size VL₁ e₁'
-      ≤⟨ design' e₁' e₂' (≅-trans (≅-sym e₁≅e₁') (≅-trans e₁≅e₂ e₂≅e₂')) e₁'-minimal e₂'-minimal ⟩
+      ≤⟨ design A e₁' e₂' (≅-trans (≅-sym (≅-trans e₂≅e₁ e₁≅e₁')) e₂≅e₂') e₁'-minimal e₂'-minimal ⟩
         m * f (size VL₂ e₂')
       ≤⟨ ℕ.*-monoʳ-≤ m (f-monotone (size VL₂ e₂') (size VL₂ e₂) (e₂'-minimal e₂ (≅-sym e₂≅e₂'))) ⟩
         m * f (size VL₂ e₂)
       ∎)
+    where
+    open ℕ.≤-Reasoning

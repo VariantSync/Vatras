@@ -26,7 +26,7 @@ open import Vatras.Framework.Variants using (Rose)
 import Vatras.Util.List as List
 open import Vatras.Lang.All
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤Size_)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤ₛ_)
 open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedCCC; sizeCCC; sizeCCC>0)
 
 >⇒¬≤ᵇ : ∀ {m n : ℕ} → m > n → Bool.T (Bool.not (m ≤ᵇ n))
@@ -449,8 +449,8 @@ translate-preserves : ∀ {i : Size} {A : 𝔸}
   → 2CC.⟦ translate e ⟧ ≅[ fnoc (max-dimension e) ][ conf ] CCC.⟦ e ⟧
 translate-preserves e = translate-preserves-⊆ e (max-dimension e) ℕ.≤-refl , translate-preserves-⊇ e
 
-2CC≤CCC : Sized2CC (F × ℕ) ≤Size SizedCCC F
-2CC≤CCC = 2 , λ A ccc →
+2CC≤CCC : Sized2CC (F × ℕ) ≤ₛ SizedCCC F
+2CC≤CCC = 2 , λ A ccc ccc-translatable →
     translate ccc
   , ≅[]→≅ (translate-preserves ccc)
   , ℕ.<⇒≤ (translate-size ccc)

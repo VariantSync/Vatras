@@ -22,9 +22,9 @@ design
   → (VL₁ VL₂ : SizedLang V)
   → Set _
 design f VL₁ VL₂ =
+    Σ[ m ∈ ℕ ]
   ∀ (A : 𝔸)
-  → Σ[ m ∈ ℕ ]
-  ∀ (e₁ : Expression (Lang VL₁) A)
+    (e₁ : Expression (Lang VL₁) A)
     (e₂ : Expression (Lang VL₂) A)
   → Lang VL₁ , Lang VL₂ ⊢ e₁ ≣ e₂
   → minimalExpression VL₁ e₁

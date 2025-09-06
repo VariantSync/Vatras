@@ -33,7 +33,8 @@ open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
-open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≱Size_)
+open import Vatras.Translation.Lang.OC-to-2CC ℕ using (2CC≽OC)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_)
 open import Vatras.Succinctness.Sizes using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
 
 options : ℕ → List (OC.OC ∞ NAT)
@@ -211,10 +212,10 @@ config n i = i <ᵇ n
   open ℕ.≤-Reasoning
 
 goal : ∀ {i} (n : ℕ) (2cc : 2CC.2CC i NAT)
-  → OC.⟦ oc (4 * n) ⟧ ≅ 2CC.⟦ 2cc ⟧
+  → 2CC.⟦ 2cc ⟧ ≅ OC.⟦ oc (4 * n) ⟧
   → n * sizeWFOC (oc (4 * n)) < size2CC 2cc
-goal zero 2cc 2cc≅oc = size2CC>0 2cc
-goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
+goal zero 2cc oc≅2cc = size2CC>0 2cc
+goal n@(suc n-1) 2cc (2cc⊆oc , oc⊆2cc) =
   begin-strict
     n * sizeWFOC (oc m)
   ≡⟨ Eq.cong (n *_) (size-oc m) ⟩
@@ -251,5 +252,5 @@ goal n@(suc n-1) 2cc (oc⊆2cc , 2cc⊆oc) =
   open ℕ.≤-Reasoning
   m = 4 * n
 
-OC≱2CC : SizedWFOC ℕ ≱Size Sized2CC ℕ
-OC≱2CC n = NAT , oc (4 * n) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc
+OC≱2CC : Sized2CC ℕ ≰ₛ SizedWFOC ℕ
+OC≱2CC n = NAT , oc (4 * n) , 2CC≽OC (oc (4 * n)) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc

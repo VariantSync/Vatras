@@ -38,7 +38,10 @@ open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
-open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≱Size_)
+import Vatras.Translation.LanguageMap
+open import Vatras.Util.Nat.Diagonalization using (diagonalization; diagonalization⁻¹; diagonalization-injective)
+open Vatras.Translation.LanguageMap.Expressiveness diagonalization diagonalization⁻¹ diagonalization-injective using (2CC≽FST)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_)
 open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
 
 open FST.Impose NAT hiding (_∈_)
@@ -287,9 +290,9 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   where
   open ℕ.≤-Reasoning
 
-FST≱2CC : SizedFST ℕ ≱Size Sized2CC ℕ
-FST≱2CC zero = NAT , fst zero , λ 2cc fst≅2cc → size2CC>0 2cc
-FST≱2CC (suc n) = NAT , fst m , λ 2cc fst≅2cc →
+FST≱2CC : Sized2CC ℕ ≰ₛ SizedFST ℕ
+FST≱2CC zero = NAT , fst zero , 2CC≽FST zero ℕ._≟_ (fst zero) , λ 2cc 2cc≅fst → size2CC>0 2cc
+FST≱2CC (suc n) = NAT , fst m , 2CC≽FST zero ℕ._≟_ (fst m) , λ 2cc 2cc≅fst →
   begin-strict
     suc n * sizeFST (fst m)
   <⟨ ℕ.*-monoʳ-< (suc n) (
@@ -328,7 +331,7 @@ FST≱2CC (suc n) = NAT , fst m , λ 2cc fst≅2cc →
        (size-variant m)
        (variant-≉ m)
        (Unique.applyUpTo⁺₁ id m (λ i<j j<n → ℕ.<⇒≢ i<j))
-       (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₁ fst≅2cc))
+       (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₂ 2cc≅fst))
   ⟩
     size2CC 2cc
   ∎

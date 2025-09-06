@@ -1,57 +1,83 @@
 open import Vatras.Framework.Definitions using (𝔸; 𝕍)
 module Vatras.Succinctness.ProofDefinition (V : 𝕍) where
 
-open import Data.Empty using (⊥-elim)
-open import Data.Nat as ℕ using (ℕ; _≤_; _>_; _<_; _*_)
+open import Data.Nat as ℕ using (ℕ; _≤_; _>_; _*_)
 import Data.Nat.Properties as ℕ
-open import Data.Product using (_×_; _,_; Σ-syntax; proj₁; proj₂)
+open import Data.Product as Product using (_×_; _,_; Σ-syntax; proj₁; proj₂)
+open import Function using (id)
 open import Relation.Nullary.Negation using (¬_)
 import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Binary.Structures using (IsEquivalence; IsPreorder; IsPartialOrder; IsStrictPartialOrder)
-open import Size using (∞)
 
 open import Vatras.Data.EqIndexedSet using (≅-refl; ≅-sym; ≅-trans; ≅→≅[]; ⊆-index)
 open import Vatras.Framework.Relation.Expression V using (_,_⊢_≣_)
-open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
+open import Vatras.Framework.Relation.Expressiveness V using (_≽_; _≋_; ≽-trans; ≋-refl; ≋-sym; ≋-trans)
+open import Vatras.Framework.VariabilityLanguage using (Expression)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Succinctness.Sizes using (SizedLang; Lang; size)
 
-_≤Size_ : SizedLang V → SizedLang V → Set₁
-L₁ ≤Size L₂ =
+translatable
+  : (L₁ L₂ : SizedLang V)
+  → {A : 𝔸}
+  → (e₁ : Expression (Lang L₁) A)
+  → Set _
+translatable L₁ L₂ {A} e₁ =
+  Σ[ e₂ ∈ Expression (Lang L₂) A ]
+  Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
+
+_≤ₛ[_]_
+  : (L₁ : SizedLang V)
+  → (f : ℕ → ℕ)
+  → (L₂ : SizedLang V)
+  → Set _
+L₁ ≤ₛ[ f ] L₂ =
   Σ[ n ∈ ℕ ]
   ∀ (A : 𝔸) →
-  ∀ (e₂ : Expression (Lang L₂) A) →
-  Σ[ e₁ ∈ Expression (Lang L₁) A ]
+  ∀ (e₂ : Expression (Lang L₂) A)
+  → translatable L₂ L₁ e₂
+  → Σ[ e₁ ∈ Expression (Lang L₁) A ]
       Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
-    × size L₁ e₁ ≤ n * size L₂ e₂
+    × size L₁ e₁ ≤ n * f (size L₂ e₂)
 
-_=Size_ : SizedLang V → SizedLang V → Set₁
-L₁ =Size L₂ = L₁ ≤Size L₂ × L₂ ≤Size L₁
-
-_≱Size_ : SizedLang V → SizedLang V → Set₁
-L₁ ≱Size L₂ =
+_≰ₛ[_]_
+  : (L₁ : SizedLang V)
+  → (f : ℕ → ℕ)
+  → (L₂ : SizedLang V)
+  → Set _
+L₁ ≰ₛ[ f ] L₂ =
   ∀ (n : ℕ) →
   Σ[ A ∈ 𝔸 ]
-  Σ[ e₁ ∈ Expression (Lang L₁) A ]
-  ∀ (e₂ : Expression (Lang L₂) A )
-  → Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
-  → size L₂ e₂ > n * size L₁ e₁
+  Σ[ e₂ ∈ Expression (Lang L₂) A ]
+    translatable L₂ L₁ e₂
+  × ∀ (e₁ : Expression (Lang L₁) A)
+    → Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂
+    → size L₁ e₁ > n * f (size L₂ e₂)
 
-_<Size_ : SizedLang V → SizedLang V → Set₁
-L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
+_≤ₛ_ : SizedLang V → SizedLang V → Set₁
+L₁ ≤ₛ L₂ = L₁ ≤ₛ[ id ] L₂
+
+_=ₛ_ : SizedLang V → SizedLang V → Set₁
+L₁ =ₛ L₂ = L₁ ≤ₛ L₂ × L₂ ≤ₛ L₁
+
+_≰ₛ_ : SizedLang V → SizedLang V → Set₁
+L₁ ≰ₛ L₂ = L₁ ≰ₛ[ id ] L₂
+
+_<ₛ_ : SizedLang V → SizedLang V → Set₁
+L₁ <ₛ L₂ = L₁ ≤ₛ L₂ × L₂ ≰ₛ L₁
 
 
-≤Size-refl : {L : SizedLang V} → L ≤Size L
-≤Size-refl {L} = 1 , λ A e → e , ≅-refl , ℕ.≤-reflexive (Eq.sym (ℕ.*-identityˡ (size L e)))
+≤ₛ-refl : {L : SizedLang V} → L ≤ₛ L
+≤ₛ-refl {L} = 1 , λ A e e-translatable → e , ≅-refl , ℕ.≤-reflexive (Eq.sym (ℕ.*-identityˡ (size L e)))
 
-≤Size-reflexive : {L₁ L₂ : SizedLang V} → L₁ =Size L₂ → L₁ ≤Size L₂
-≤Size-reflexive (L₁≤L₂ , L₂≤L₁) = L₁≤L₂
+≤ₛ-reflexive : {L₁ L₂ : SizedLang V} → L₁ =ₛ L₂ → L₁ ≤ₛ L₂
+≤ₛ-reflexive (L₁≤ₛL₂ , L₂≤ₛL₁) = L₁≤ₛL₂
 
-≤Size-transitive : {L₁ L₂ L₃ : SizedLang V} → L₁ ≤Size L₂ → L₂ ≤Size L₃ → L₁ ≤Size L₃
-≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₁ = n₁ * n₂
-≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ with L₃→L₂ A e₃
-≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ | e₂ , e₂≅e₃ , e₁≤e₂ with L₂→L₁ A e₂
-≤Size-transitive {L₁} {L₂} {L₃} (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ | e₂ , e₂≅e₃ , e₂≤e₃ | e₁ , e₁≅e₂ , e₁≤e₂ = e₁ , ≅-trans e₁≅e₂ e₂≅e₃ ,
+≤ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≽ Lang L₃ → L₁ ≤ₛ L₂ → L₂ ≤ₛ L₃ → L₁ ≤ₛ L₃
+≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₁ = n₁ * n₂
+≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ e₃-translatable with L₃→L₂ A e₃ (L₂≽L₃ e₃)
+≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ e₃-translatable | e₂ , e₂≅e₃ , e₁≤e₂ with L₂→L₁ A e₂ (L₁≽L₂ e₂)
+≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ e₃-translatable | e₂ , e₂≅e₃ , e₂≤e₃ | e₁ , e₁≅e₂ , e₁≤e₂
+  = e₁ , ≅-trans e₁≅e₂ e₂≅e₃ ,
     (begin
       size L₁ e₁
     ≤⟨ e₁≤e₂ ⟩
@@ -64,27 +90,28 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
   where
   open ℕ.≤-Reasoning
 
-≤Size-antisymmetric : {L₁ L₂ : SizedLang V} → L₁ ≤Size L₂ → L₂ ≤Size L₁ → L₁ =Size L₂
-≤Size-antisymmetric L₁≤L₂ L₂≤L₁ = L₁≤L₂ , L₂≤L₁
+≤ₛ-antisymmetric : {L₁ L₂ : SizedLang V} → L₁ ≤ₛ L₂ → L₂ ≤ₛ L₁ → L₁ =ₛ L₂
+≤ₛ-antisymmetric L₁≤ₛL₂ L₂≤ₛL₁ = L₁≤ₛL₂ , L₂≤ₛL₁
 
 
-=Size-reflexive : {L : SizedLang V} → L =Size L
-=Size-reflexive = ≤Size-refl , ≤Size-refl
+=ₛ-reflexive : {L : SizedLang V} → L =ₛ L
+=ₛ-reflexive = ≤ₛ-refl , ≤ₛ-refl
 
-=Size-symmetric : {L₁ L₂ : SizedLang V} → L₁ =Size L₂ → L₂ =Size L₁
-=Size-symmetric (L₁≤L₂ , L₂≤L₁) = L₂≤L₁ , L₁≤L₂
+=ₛ-symmetric : {L₁ L₂ : SizedLang V} → L₁ =ₛ L₂ → L₂ =ₛ L₁
+=ₛ-symmetric (L₁≤ₛL₂ , L₂≤ₛL₁) = L₂≤ₛL₁ , L₁≤ₛL₂
 
-=Size-transitive : {L₁ L₂ L₃ : SizedLang V} → L₁ =Size L₂ → L₂ =Size L₃ → L₁ =Size L₃
-=Size-transitive (L₁≤L₂ , L₂≤L₁) (L₂≤L₃ , L₃≤L₂) = ≤Size-transitive L₁≤L₂ L₂≤L₃ , ≤Size-transitive L₃≤L₂ L₂≤L₁
+=ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≋ Lang L₂ → Lang L₂ ≋ Lang L₃ → L₁ =ₛ L₂ → L₂ =ₛ L₃ → L₁ =ₛ L₃
+=ₛ-transitive (L₁≽L₂ , L₂≽L₁) (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≤ₛL₁) (L₂≤ₛL₃ , L₃≤ₛL₂) = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃ , ≤ₛ-transitive L₃≽L₂ L₂≽L₁ L₃≤ₛL₂ L₂≤ₛL₁
 
-<Size-transitive : {L₁ L₂ L₃ : SizedLang V} → L₁ <Size L₂ → L₂ <Size L₃ → L₁ <Size L₃
-<Size-transitive {L₁} {L₂} {L₃} (L₁≤L₂ , L₁≱L₂) (L₂≤L₃@(m , L₃→L₂) , L₂≱L₃) .proj₁ = ≤Size-transitive L₁≤L₂ L₂≤L₃
-<Size-transitive {L₁} {L₂} {L₃} (L₁≤L₂ , L₁≱L₂) (L₂≤L₃@(m , L₃→L₂) , L₂≱L₃) .proj₂ n with L₁≱L₂ (m * n)
-<Size-transitive {L₁} {L₂} {L₃} (L₁≤L₂ , L₁≱L₂) (L₂≤L₃@(m , L₃→L₂) , L₂≱L₃) .proj₂ n | A , e₁ , e₁< = A , e₁ , go
+<ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≋ Lang L₃ → L₁ <ₛ L₂ → L₂ <ₛ L₃ → L₁ <ₛ L₃
+<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≰ₛL₁) (L₂≤ₛL₃@(m , L₃→L₂) , L₃≰ₛL₂) .proj₁ = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
+<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≰ₛL₁) (L₂≤ₛL₃@(m , L₃→L₂) , L₃≰ₛL₂) .proj₂ n with L₂≰ₛL₁ (m * n)
+<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≰ₛL₁) (L₂≤ₛL₃@(m , L₃→L₂) , L₃≰ₛL₂) .proj₂ n | A , e₁ , (e₂ , e₁≅e₂) , e₁<
+  = A , e₁ , Product.map₂ (≅-trans e₁≅e₂) (L₃≽L₂ e₂) , go
   where
-  go : (e₃ : Expression (Lang L₃) A) → Lang L₁ , Lang L₃ ⊢ e₁ ≣ e₃ → size L₃ e₃ > n * size L₁ e₁
-  go e₃ e₁≅e₃ with L₃→L₂ A e₃
-  go e₃ e₁≅e₃ | e₂ , e₂≅e₃ , e₂≤e₃ =
+  go : (e₃ : Expression (Lang L₃) A) → Lang L₃ , Lang L₁ ⊢ e₃ ≣ e₁ → size L₃ e₃ > n * size L₁ e₁
+  go e₃ e₃≅e₁ with L₃→L₂ A e₃ (L₂≽L₃ e₃)
+  go e₃ e₃≅e₁ | e₂ , e₂≅e₃ , e₂≤e₃ =
     begin-strict
       n * size L₁ e₁
     <⟨ ℕ.*-cancelˡ-< m (n * size L₁ e₁) (size L₃ e₃)
@@ -92,7 +119,7 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
         ℕ.suc (m * (n * size L₁ e₁))
       ≡⟨ Eq.cong ℕ.suc (ℕ.*-assoc m n (size L₁ e₁)) ⟨
         ℕ.suc (m * n * size L₁ e₁)
-      ≤⟨ ℕ.≤-trans (e₁< e₂ (≅-trans e₁≅e₃ (≅-sym e₂≅e₃))) e₂≤e₃ ⟩
+      ≤⟨ ℕ.≤-trans (e₁< e₂ (≅-trans e₂≅e₃ e₃≅e₁)) e₂≤e₃ ⟩
         m * size L₃ e₃
       ∎)
     ⟩
@@ -101,37 +128,39 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
     where
     open ℕ.≤-Reasoning
 
-<Size-irreflexive : {L₁ L₂ : SizedLang V} → L₁ =Size L₂ → ¬ (L₁ <Size L₂)
-<Size-irreflexive {L₁} {L₂} (L₁≤L₂ , (n , L₁→L₂)) (L₁≤L₂' , L₁≱L₂) with L₁≱L₂ n
-<Size-irreflexive {L₁} {L₂} (L₁≤L₂ , (n , L₁→L₂)) (L₁≤L₂' , L₁≱L₂) | A , e₁ , e₂< with L₁→L₂ A e₁
-<Size-irreflexive {L₁} {L₂} (L₁≤L₂ , (n , L₁→L₂)) (L₁≤L₂' , L₁≱L₂) | A , e₁ , e₁< | e₂ , e₂≅e₁ , e₂≤e₁ = ℕ.n≮n (size L₂ e₂) (ℕ.≤-trans (ℕ.s≤s e₂≤e₁) (e₁< e₂ (≅-sym e₂≅e₁)))
+<ₛ-irreflexive : {L₁ L₂ : SizedLang V} → L₁ =ₛ L₂ → ¬ (L₁ <ₛ L₂)
+<ₛ-irreflexive {L₁} {L₂} (L₁≤ₛL₂ , (n , L₁→L₂)) (L₁≤ₛL₂' , L₂≰ₛL₁) with L₂≰ₛL₁ n
+<ₛ-irreflexive {L₁} {L₂} (L₁≤ₛL₂ , (n , L₁→L₂)) (L₁≤ₛL₂' , L₂≰ₛL₁) | A , e₁ , e₁-translatable , e₂< with L₁→L₂ A e₁ e₁-translatable
+<ₛ-irreflexive {L₁} {L₂} (L₁≤ₛL₂ , (n , L₁→L₂)) (L₁≤ₛL₂' , L₂≰ₛL₁) | A , e₁ , e₁-translatable , e₁< | e₂ , e₁≅e₂ , e₂≤e₁ = ℕ.n≮n (size L₂ e₂) (ℕ.≤-trans (ℕ.s≤s e₂≤e₁) (e₁< e₂ e₁≅e₂))
 
-<Size-Respectsʳ : {L₁ L₂ L₃ : SizedLang V} → L₂ =Size L₃ → L₁ <Size L₂ → L₁ <Size L₃
-<Size-Respectsʳ {L₁} {L₂} {L₃} (L₂≤L₃@(m , L₃→L₂) , L₃≤L₂) (L₁≤L₂ , L₁≱L₂) .proj₁ = ≤Size-transitive L₁≤L₂ L₂≤L₃
-<Size-Respectsʳ {L₁} {L₂} {L₃} (L₂≤L₃@(m , L₃→L₂) , L₃≤L₂) (L₁≤L₂ , L₁≱L₂) .proj₂ n with L₁≱L₂ (m * n)
-<Size-Respectsʳ {L₁} {L₂} {L₃} (L₂≤L₃@(m , L₃→L₂) , L₃≤L₂) (L₁≤L₂ , L₁≱L₂) .proj₂ n | A , e₁ , e₁< = A , e₁ , go
+<ₛ-Respectsʳ : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≋ Lang L₂ → Lang L₂ ≋ Lang L₃ → L₂ =ₛ L₃ → L₁ <ₛ L₂ → L₁ <ₛ L₃
+<ₛ-Respectsʳ {L₁} {L₂} {L₃} (L₁≽L₂ , L₂≽L₁) (L₂≽L₃ , L₃≽L₂) (L₂≤ₛL₃@(m , L₃→L₂) , L₃≤ₛL₂) (L₁≤ₛL₂ , L₂≰ₛL₁) .proj₁ = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
+<ₛ-Respectsʳ {L₁} {L₂} {L₃} (L₁≽L₂ , L₂≽L₁) (L₂≽L₃ , L₃≽L₂) (L₂≤ₛL₃@(m , L₃→L₂) , L₃≤ₛL₂) (L₁≤ₛL₂ , L₂≰ₛL₁) .proj₂ n with L₂≰ₛL₁ (m * n)
+<ₛ-Respectsʳ {L₁} {L₂} {L₃} (L₁≽L₂ , L₂≽L₁) (L₂≽L₃ , L₃≽L₂) (L₂≤ₛL₃@(m , L₃→L₂) , L₃≤ₛL₂) (L₁≤ₛL₂ , L₂≰ₛL₁) .proj₂ n | A , e₁ , e₁-translatable , e₁<
+  = A , e₁ , (≽-trans L₃≽L₂ L₂≽L₁) e₁ , go
   where
-  go : (e₃ : Expression (Lang L₃) A) → Lang L₁ , Lang L₃ ⊢ e₁ ≣ e₃ → size L₃ e₃ > n * size L₁ e₁
-  go e₃ e₁≅e₃ with L₃→L₂ A e₃
-  go e₃ e₁≅e₃ | e₂ , e₂≅e₃ , e₂≤e₃ = ℕ.*-cancelˡ-< m (n * size L₁ e₁) (size L₃ e₃)
+  go : (e₃ : Expression (Lang L₃) A) → Lang L₃ , Lang L₁ ⊢ e₃ ≣ e₁ → size L₃ e₃ > n * size L₁ e₁
+  go e₃ e₃≅e₁ with L₃→L₂ A e₃ (L₂≽L₃ e₃)
+  go e₃ e₃≅e₁ | e₂ , e₂≅e₃ , e₂≤e₃ = ℕ.*-cancelˡ-< m (n * size L₁ e₁) (size L₃ e₃)
     (begin
       ℕ.suc (m * (n * size L₁ e₁))
     ≡⟨ Eq.cong ℕ.suc (ℕ.*-assoc m n (size L₁ e₁)) ⟨
       ℕ.suc (m * n * size L₁ e₁)
-    ≤⟨ ℕ.≤-trans (e₁< e₂ (≅-trans e₁≅e₃ (≅-sym e₂≅e₃))) e₂≤e₃ ⟩
+    ≤⟨ ℕ.≤-trans (e₁< e₂ (≅-trans e₂≅e₃ e₃≅e₁)) e₂≤e₃ ⟩
       m * size L₃ e₃
     ∎)
     where
     open ℕ.≤-Reasoning
 
-<Size-Respectsˡ : {L₁ L₂ L₃ : SizedLang V} → L₂ =Size L₃ → L₂ <Size L₁ → L₃ <Size L₁
-<Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₁ = ≤Size-transitive L₃≤L₂ L₂≤L₁
-<Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₂ n with L₂≱L₁ (m * n)
-<Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₂ n | A , e₂ , e₂< with L₂→L₃ A e₂
-<Size-Respectsˡ {L₁} {L₂} {L₃} (L₂≤L₃ , L₃≤L₂@(m , L₂→L₃)) (L₂≤L₁ , L₂≱L₁) .proj₂ n | A , e₂ , e₂< | e₃ , e₃≅e₂ , e₃≤e₂ = A , e₃ , go
+<ₛ-Respectsˡ : {L₁ L₂ L₃ : SizedLang V} → Lang L₃ ≋ Lang L₂ → Lang L₂ ≋ Lang L₁ → L₂ =ₛ L₃ → L₂ <ₛ L₁ → L₃ <ₛ L₁
+<ₛ-Respectsˡ {L₁} {L₂} {L₃} (L₃≽L₂ , L₂≽L₃) (L₂≽L₁ , L₁≽L₂) (L₂≤ₛL₃ , L₃≤ₛL₂@(m , L₂→L₃)) (L₂≤ₛL₁ , L₁≰ₛL₂) .proj₁ = ≤ₛ-transitive L₃≽L₂ L₂≽L₁ L₃≤ₛL₂ L₂≤ₛL₁
+<ₛ-Respectsˡ {L₁} {L₂} {L₃} (L₃≽L₂ , L₂≽L₃) (L₂≽L₁ , L₁≽L₂) (L₂≤ₛL₃ , L₃≤ₛL₂@(m , L₂→L₃)) (L₂≤ₛL₁ , L₁≰ₛL₂) .proj₂ n with L₁≰ₛL₂ (m * n)
+<ₛ-Respectsˡ {L₁} {L₂} {L₃} (L₃≽L₂ , L₂≽L₃) (L₂≽L₁ , L₁≽L₂) (L₂≤ₛL₃ , L₃≤ₛL₂@(m , L₂→L₃)) (L₂≤ₛL₁ , L₁≰ₛL₂) .proj₂ n | A , e₂ , e₂-translatable , e₂< with L₂→L₃ A e₂ (L₃≽L₂ e₂)
+<ₛ-Respectsˡ {L₁} {L₂} {L₃} (L₃≽L₂ , L₂≽L₃) (L₂≽L₁ , L₁≽L₂) (L₂≤ₛL₃ , L₃≤ₛL₂@(m , L₂→L₃)) (L₂≤ₛL₁ , L₁≰ₛL₂) .proj₂ n | A , e₂ , e₂-translatable , e₂< | e₃ , e₃≅e₂ , e₃≤e₂
+  = A , e₃ , (≽-trans L₁≽L₂ L₂≽L₃) e₃ , go
   where
-  go : (e₁ : Expression (Lang L₁) A) → Lang L₃ , Lang L₁ ⊢ e₃ ≣ e₁ → size L₁ e₁ > n * size L₃ e₃
-  go e₁ e₃≅e₁ =
+  go : (e₁ : Expression (Lang L₁) A) → Lang L₁ , Lang L₃ ⊢ e₁ ≣ e₃ → size L₁ e₁ > n * size L₃ e₃
+  go e₁ e₁≅e₃ =
     begin-strict
       n * size L₃ e₃
     ≤⟨ ℕ.*-monoʳ-≤ n e₃≤e₂ ⟩
@@ -140,93 +169,85 @@ L₁ <Size L₂ = L₁ ≤Size L₂ × L₁ ≱Size L₂
       n * m * size L₂ e₂
     ≡⟨ Eq.cong (_* size L₂ e₂) (ℕ.*-comm n m) ⟩
       m * n * size L₂ e₂
-    <⟨ e₂< e₁ (≅-trans (≅-sym e₃≅e₂) e₃≅e₁) ⟩
+    <⟨ e₂< e₁ (≅-trans e₁≅e₃ e₃≅e₂) ⟩
       size L₁ e₁
     ∎
     where
     open ℕ.≤-Reasoning
 
 
-=Size-IsEquivalence : IsEquivalence _=Size_
-=Size-IsEquivalence = record
-  { refl = =Size-reflexive
-  ; sym = =Size-symmetric
-  ; trans = =Size-transitive
+_=ₛ'_ : SizedLang V → SizedLang V → Set₁
+L₁ =ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≤ₛ L₁
+
+_≤ₛ'_ : SizedLang V → SizedLang V → Set₁
+L₁ ≤ₛ' L₂ = Lang L₁ ≽ Lang L₂ × L₁ ≤ₛ[ id ] L₂
+
+_<ₛ'_ : SizedLang V → SizedLang V → Set₁
+L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L₁
+
+=ₛ'-IsEquivalence : IsEquivalence _=ₛ'_
+=ₛ'-IsEquivalence = record
+  { refl = ≋-refl , =ₛ-reflexive
+  ; sym = Product.map ≋-sym =ₛ-symmetric
+  ; trans = λ (L₁≋L₂ , L₁=ₛL₂) (L₂≋L₃ , L₂=ₛL₃) → ≋-trans L₁≋L₂ L₂≋L₃ , =ₛ-transitive L₁≋L₂ L₂≋L₃ L₁=ₛL₂ L₂=ₛL₃
   }
 
-≤Size-IsPreOrder : IsPreorder _=Size_ _≤Size_
-≤Size-IsPreOrder = record
-  { isEquivalence = =Size-IsEquivalence
-  ; reflexive = ≤Size-reflexive
-  ; trans = ≤Size-transitive
+≤ₛ'-IsPreOrder : IsPreorder _=ₛ'_ _≤ₛ'_
+≤ₛ'-IsPreOrder = record
+  { isEquivalence = =ₛ'-IsEquivalence
+  ; reflexive = λ ((L₁≽L₂ , L₂≽L₁) , L₁≤ₛL₂) → L₁≽L₂ , ≤ₛ-reflexive L₁≤ₛL₂
+  ; trans = λ (L₁≽L₂ , L₁≤ₛL₂) (L₂≽L₃ , L₂≤ₛL₃) → ≽-trans L₁≽L₂ L₂≽L₃ , ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
   }
 
-≤Size-IsPartialOrder : IsPartialOrder _=Size_ _≤Size_
-≤Size-IsPartialOrder = record
-  { isPreorder = ≤Size-IsPreOrder
-  ; antisym = ≤Size-antisymmetric
+≤ₛ'-IsPartialOrder : IsPartialOrder _=ₛ'_ _≤ₛ'_
+≤ₛ'-IsPartialOrder = record
+  { isPreorder = ≤ₛ'-IsPreOrder
+  ; antisym = λ (L₁≽L₂ , L₁≤ₛL₂) (L₂≽L₁ , L₂≤ₛL₁) → (L₁≽L₂ , L₂≽L₁) , ≤ₛ-antisymmetric L₁≤ₛL₂ L₂≤ₛL₁
   }
 
-<Size-IsStrictPartialOrder : IsStrictPartialOrder _=Size_ _<Size_
-<Size-IsStrictPartialOrder = record
-  { isEquivalence = =Size-IsEquivalence
-  ; trans = <Size-transitive
-  ; irrefl = <Size-irreflexive
-  ; <-resp-≈ = <Size-Respectsʳ , <Size-Respectsˡ
+<ₛ'-IsStrictPartialOrder : IsStrictPartialOrder _=ₛ'_ _<ₛ'_
+<ₛ'-IsStrictPartialOrder = record
+  { isEquivalence = =ₛ'-IsEquivalence
+  ; trans = λ (L₁≋L₂@(L₁≽L₂ , L₂≽L₁) , L₁≤ₛL₂) (L₂≋L₃ , L₂≤ₛL₃) → ≋-trans L₁≋L₂ L₂≋L₃ , <ₛ-transitive L₁≽L₂ L₂≋L₃ L₁≤ₛL₂ L₂≤ₛL₃
+  ; irrefl = λ (L₁≋L₂ , L₁=ₛL₂) (L₁≋L₂ , L₁<ₛL₂) → <ₛ-irreflexive L₁=ₛL₂ L₁<ₛL₂
+  ; <-resp-≈ =
+      (λ (L₂≋L₃ , L₂=ₛL₃) (L₁≋L₂ , L₁<ₛL₂) → ≋-trans L₁≋L₂ L₂≋L₃ , <ₛ-Respectsʳ L₁≋L₂ L₂≋L₃ L₂=ₛL₃ L₁<ₛL₂)
+    , (λ (L₁≋L₂ , L₁=ₛL₂) (L₁≋L₃ , L₁<ₛL₃) → ≋-trans (≋-sym L₁≋L₂) L₁≋L₃ , <ₛ-Respectsˡ (≋-sym L₁≋L₂) L₁≋L₃ L₁=ₛL₂ L₁<ₛL₃)
   }
 
 
-<Size→≤Size : {L₁ L₂ : SizedLang V} → L₁ <Size L₂ → L₁ ≤Size L₂
-<Size→≤Size (L₁≤L₂ , L₁≱L₂) = L₁≤L₂
+=ₛ'→=ₛ : {L₁ L₂ : SizedLang V} → L₁ =ₛ' L₂ → L₁ =ₛ L₂
+=ₛ'→=ₛ = proj₂
 
-≱→¬≤ : {L₁ L₂ : SizedLang V} → L₁ ≱Size L₂ → ¬ (L₂ ≤Size L₁)
-≱→¬≤ {L₁} {L₂} L₁≱L₂ (n , L₁→L₂) with L₁≱L₂ n
-≱→¬≤ {L₁} {L₂} L₁≱L₂ (n , L₁→L₂) | A , e₁ , e₁< with L₁→L₂ A e₁
-≱→¬≤ {L₁} {L₂} L₁≱L₂ (n , L₁→L₂) | A , e₁ , e₁< | e₂ , e₂≅e₁ , e₂≤e₁ = ℕ.n≮n (size L₂ e₂) (ℕ.≤-trans (ℕ.s≤s e₂≤e₁) (e₁< e₂ (≅-sym e₂≅e₁)))
+≤ₛ'→≤ₛ : {L₁ L₂ : SizedLang V} → L₁ =ₛ' L₂ → L₁ =ₛ L₂
+≤ₛ'→≤ₛ = proj₂
 
-≱→¬= : {L₁ L₂ : SizedLang V} → L₁ ≱Size L₂ → ¬ (L₁ =Size L₂)
-≱→¬= L₁≠L₂ (L₁≤L₂ , L₂≤L₁) = ≱→¬≤ L₁≠L₂ L₂≤L₁
+<ₛ'→<ₛ : {L₁ L₂ : SizedLang V} → L₁ =ₛ' L₂ → L₁ =ₛ L₂
+<ₛ'→<ₛ = proj₂
 
-≤→¬≱ : {L₁ L₂ : SizedLang V} → L₁ ≤Size L₂ → ¬ (L₂ ≱Size L₁)
-≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ with L₂≱L₁ n
-≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ | A , e₂ , e₂< with L₂→L₁ A e₂
-≤→¬≱ {L₁} {L₂} (n , L₂→L₁) L₂≱L₁ | A , e₂ , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (n * size L₂ e₂) (ℕ.≤-trans (e₂< e₁ (≅-sym e₂≅e₁)) e₁≤e₂)
 
-≤→Compiler : {L₁ L₂ : SizedLang V} → L₁ ≤Size L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
-≤→Compiler (n , e₂→e₁) = record
-  { compile = λ {A} e₂ → proj₁ (e₂→e₁ A e₂)
+<ₛ→≤ₛ : {L₁ L₂ : SizedLang V} → L₁ <ₛ L₂ → L₁ ≤ₛ L₂
+<ₛ→≤ₛ (L₁≤ₛL₂ , L₂≰ₛL₁) = L₁≤ₛL₂
+
+≰→¬≤ : {L₁ L₂ : SizedLang V} → L₁ ≰ₛ L₂ → ¬ (L₁ ≤ₛ L₂)
+≰→¬≤ {L₁} {L₂} L₁≰ₛL₂ (n , L₁→L₂) with L₁≰ₛL₂ n
+≰→¬≤ {L₁} {L₂} L₁≰ₛL₂ (n , L₁→L₂) | A , e₂ , e₂-translatable , e₂< with L₁→L₂ A e₂ e₂-translatable
+≰→¬≤ {L₁} {L₂} L₁≰ₛL₂ (n , L₁→L₂) | A , e₂ , e₂-translatable , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (size L₁ e₁) (ℕ.≤-trans (ℕ.s≤s e₁≤e₂) (e₂< e₁ e₂≅e₁))
+
+≤→¬≰ : {L₁ L₂ : SizedLang V} → L₁ ≤ₛ L₂ → ¬ (L₁ ≰ₛ L₂)
+≤→¬≰ {L₁} {L₂} (n , L₂→L₁) L₂≰ₛL₁ with L₂≰ₛL₁ n
+≤→¬≰ {L₁} {L₂} (n , L₂→L₁) L₂≰ₛL₁ | A , e₂ , e₂-translatable , e₂< with L₂→L₁ A e₂ e₂-translatable
+≤→¬≰ {L₁} {L₂} (n , L₂→L₁) L₂≰ₛL₁ | A , e₂ , e₂-translatable , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (n * size L₂ e₂) (ℕ.≤-trans (e₂< e₁ e₂≅e₁) e₁≤e₂)
+
+≰→¬= : {L₁ L₂ : SizedLang V} → L₁ ≰ₛ L₂ → ¬ (L₁ =ₛ L₂)
+≰→¬= L₁≰ₛL₂ (L₁≤ₛL₂ , L₂≤ₛL₁) = ≰→¬≤ L₁≰ₛL₂ L₁≤ₛL₂
+
+≤→Compiler : {L₁ L₂ : SizedLang V} → Lang L₁ ≽ Lang L₂ → L₁ ≤ₛ L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
+≤→Compiler L₁≽L₂ (n , L₂→L₁) = record
+  { compile = λ {A} e₂ → proj₁ (L₂→L₁ A e₂ (L₁≽L₂ e₂))
   ; config-compiler = λ {A} e₂ → record
-    { to = ⊆-index (proj₂ (proj₁ (proj₂ (e₂→e₁ A e₂))))
-    ; from = ⊆-index (proj₁ (proj₁ (proj₂ (e₂→e₁ A e₂))))
+    { to = ⊆-index (proj₂ (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
+    ; from = ⊆-index (proj₁ (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
     }
-  ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (e₂→e₁ A e₂))))
+  ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
   }
-
-¬Compiler→¬≤ : {L₁ L₂ : SizedLang V} → ¬ LanguageCompiler (Lang L₁) (Lang L₂) → ¬ L₂ ≤Size L₁
-¬Compiler→¬≤ ¬Compiler L₂≤L₁ = ¬Compiler (≤→Compiler L₂≤L₁)
-
-¬Compiler→≤ : {L₁ L₂ : SizedLang V} → {A : 𝔸} → (e₂ : Expression (Lang L₂) A) → (∀ (e₁ : Expression (Lang L₁) A) → ¬ Lang L₁ , Lang L₂ ⊢ e₁ ≣ e₂) → L₂ ≱Size L₁
-¬Compiler→≤ {A = A} e₂ e₁≇e₂ n = A , e₂ , λ e₁ e₂≅e₁ → ⊥-elim (e₁≇e₂ e₁ (≅-sym e₂≅e₁))
-
-
-translatable
-  : (VL₁ VL₂ : SizedLang V)
-  → {A : 𝔸}
-  → (e₁ : Expression (Lang VL₁) A)
-  → Set _
-translatable VL₁ VL₂ {A} e₁ =
-  Σ[ e₂ ∈ Expression (Lang VL₂) A ]
-  Lang VL₂ , Lang VL₁ ⊢ e₂ ≣ e₁
-
-simplification
-  : (f : ℕ → ℕ)
-  → (VL₁ VL₂ : SizedLang V)
-  → Set _
-simplification f VL₁ VL₂ =
-  ∀ (A : 𝔸) →
-  Σ[ m ∈ ℕ ]
-  ∀ (e₂ : Expression (Lang VL₂) A)
-  → translatable VL₂ VL₁ e₂
-  → Σ[ e₁ ∈ Expression (Lang VL₁) A ]
-      (Lang VL₁ , Lang VL₂ ⊢ e₁ ≣ e₂)
-    × size VL₁ e₁ ≤ m * f (size VL₂ e₂)

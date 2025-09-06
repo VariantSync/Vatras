@@ -20,7 +20,7 @@ import Vatras.Translation.Lang.2CC-to-NCC
 open Vatras.Translation.Lang.2CC-to-NCC.2Ary using () renaming (translate to 2CC→NCC; preserves to 2CC→NCC-preserves)
 import Vatras.Translation.Lang.NCC-to-2CC
 open Vatras.Translation.Lang.NCC-to-2CC.2Ary using () renaming (translate to NCC→2CC; preserves to NCC→2CC-preserves)
-open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤Size_; _=Size_)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≤ₛ_; _=ₛ_)
 open import Vatras.Succinctness.Sizes using (Sized2CC; size2CC; SizedNCC; sizeNCC)
 
 module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) where
@@ -56,8 +56,8 @@ module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹
     where
     open Eq.≡-Reasoning
 
-  2CC≤2CC : Sized2CC F₁ ≤Size Sized2CC F₂
-  2CC≤2CC = 1 , λ A e →
+  2CC≤2CC : Sized2CC F₁ ≤ₛ Sized2CC F₂
+  2CC≤2CC = 1 , λ A e e-translatable →
       rename f e
     , ≅[]→≅ (rename-preserves f f⁻¹ f⁻¹∘f≗id e)
     , ℕ.≤-reflexive (Eq.trans (rename-preserves-size2CC e) (Eq.sym (ℕ.+-identityʳ (size2CC e))))
@@ -67,7 +67,7 @@ module _ {F₁ F₂ : 𝔽} (f : F₂ → F₁) (f⁻¹ : F₁ → F₂) (f⁻¹
   → (f⁻¹ : F₁ → F₂)
   → f⁻¹ ∘ f ≗ id
   → f ∘ f⁻¹ ≗ id
-  → Sized2CC F₁ =Size Sized2CC F₂
+  → Sized2CC F₁ =ₛ Sized2CC F₂
 2CC=2CC f f⁻¹ f⁻¹∘f≗id f∘f⁻¹≗id = 2CC≤2CC f f⁻¹ f⁻¹∘f≗id , 2CC≤2CC f⁻¹ f f∘f⁻¹≗id
 
 2CC→NCC-preserves-size : ∀ {i : Size} {A : 𝔸} {F : 𝔽}
@@ -147,7 +147,7 @@ NCC→2CC-preserves-size {F = F} (D NCC.NCC.⟨ c₁ ∷ c₂ ∷ [] ⟩) =
   open Eq.≡-Reasoning
 
 NCC=2CC : ∀ {F : 𝔽}
-  → SizedNCC F (sucs zero) =Size Sized2CC F
+  → SizedNCC F (sucs zero) =ₛ Sized2CC F
 NCC=2CC {F} =
-    (1 , λ A e → 2CC→NCC e , ≅[]→≅ (2CC→NCC-preserves e) , ℕ.≤-reflexive (Eq.trans (2CC→NCC-preserves-size e) (Eq.sym (ℕ.+-identityʳ (size2CC e)))))
-  , (1 , λ A e → NCC→2CC e , ≅[]→≅ (NCC→2CC-preserves e) , ℕ.≤-reflexive (Eq.trans (NCC→2CC-preserves-size e) (Eq.sym (ℕ.+-identityʳ (sizeNCC (sucs zero) e)))))
+    (1 , λ A e e-translatable → 2CC→NCC e , ≅[]→≅ (2CC→NCC-preserves e) , ℕ.≤-reflexive (Eq.trans (2CC→NCC-preserves-size e) (Eq.sym (ℕ.+-identityʳ (size2CC e)))))
+  , (1 , λ A e e-translatable → NCC→2CC e , ≅[]→≅ (NCC→2CC-preserves e) , ℕ.≤-reflexive (Eq.trans (NCC→2CC-preserves-size e) (Eq.sym (ℕ.+-identityʳ (sizeNCC (sucs zero) e)))))

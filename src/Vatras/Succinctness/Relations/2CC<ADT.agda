@@ -31,7 +31,8 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) NAT' using (VariantGene
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
-open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≱Size_; _<Size_)
+open import Vatras.Translation.Lang.2CC-to-ADT using (ADT≽2CC)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_; _<ₛ_)
 open import Vatras.Succinctness.Sizes using (Sized2CC; size2CC; SizedADT; sizeADT; sizeRose)
 open import Vatras.Succinctness.Relations.2CC≤ADT ℕ using (2CC≤ADT)
 
@@ -285,10 +286,10 @@ variants⊆e₂⇒2^n≤e₂ n e₂ variants⊆e₂ =
       16 ^ (1 + n)
     ∎
 
-lemma : ∀ n e₂ → 2CC.2CCL , ADT.ADTL ⊢ e₁ (4 * n) ≣ e₂ → n * size2CC (e₁ (4 * n)) < sizeADT sizeRose e₂
-lemma zero (ADT.ADT.leaf v) (e₁⊆e₂ , e₂⊆e₁) = s≤s z≤n
-lemma zero (D ADT.ADT.⟨ l , r ⟩) (e₁⊆e₂ , e₂⊆e₁) = s≤s z≤n
-lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
+lemma : ∀ n e₂ → ADT.ADTL , 2CC.2CCL ⊢ e₂ ≣ e₁ (4 * n) → n * size2CC (e₁ (4 * n)) < sizeADT sizeRose e₂
+lemma zero (ADT.ADT.leaf v) (e₂⊆e₁ , e₁⊆e₂) = s≤s z≤n
+lemma zero (D ADT.ADT.⟨ l , r ⟩) (e₂⊆e₁ , e₁⊆e₂) = s≤s z≤n
+lemma (suc m) e₂ (e₂⊆e₁ , e₁⊆e₂) =
   begin-strict
     n * size2CC (e₁ (4 * n))
   ≡⟨ Eq.cong (n *_) (size-e₁ (4 * n)) ⟩
@@ -322,8 +323,8 @@ lemma (suc m) e₂ (e₁⊆e₂ , e₂⊆e₁) =
   open ℕ.≤-Reasoning
   n = suc m
 
-2CC≱ADT : Sized2CC ℕ ≱Size SizedADT ℕ (Rose ∞) sizeRose
-2CC≱ADT n = NAT' , e₁ (4 * n) , lemma n
+2CC≱ADT : SizedADT ℕ (Rose ∞) sizeRose ≰ₛ Sized2CC ℕ
+2CC≱ADT n = NAT' , e₁ (4 * n) , ADT≽2CC (e₁ (4 * n)) , lemma n
 
-2CC<ADT : Sized2CC ℕ <Size SizedADT ℕ (Rose ∞) sizeRose
+2CC<ADT : Sized2CC ℕ <ₛ SizedADT ℕ (Rose ∞) sizeRose
 2CC<ADT = 2CC≤ADT , 2CC≱ADT
