@@ -10,7 +10,7 @@ import Data.Fin.Properties as Fin
 open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _*_; _⊔_; _≤_; _<_; s≤s; z≤n)
 open import Data.Nat.Properties as ℕ using (m≤m+n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
-open import Data.List.Properties using (map-id; length-++)
+open import Data.List.Properties as List using (map-id; length-++)
 open import Data.List.Membership.Propositional using (_∈_)
 import Data.List.Membership.Propositional.Properties as List
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
@@ -449,3 +449,35 @@ applyUpTo-++⁺ : ∀ {ℓ} {A : Set ℓ}
   → List.applyUpTo f (n + m) ≡ List.applyUpTo f n ++ List.applyUpTo (λ i → f (n + i)) m
 applyUpTo-++⁺ f zero m = refl
 applyUpTo-++⁺ f (suc n) m = Eq.cong (f zero ∷_) (applyUpTo-++⁺ (f ∘ suc) n m)
+
+upTo-m∸upTo-n>m : ∀ {m n : ℕ} → n ≤ m → m ≤ List.sum (List.upTo (suc m)) ∸ List.sum (List.upTo n)
+upTo-m∸upTo-n>m {m} {n} n≤m =
+  begin
+    m
+  ≡⟨ ℕ.m+n∸m≡n n m ⟨
+    n + m ∸ n
+  ≡⟨ ℕ.+-∸-assoc n n≤m ⟩
+    n + (m ∸ n)
+  ≡⟨ ℕ.+-identityʳ (n + (m ∸ n)) ⟨
+    n + (m ∸ n) + 0
+  ≤⟨ ℕ.m≤n+m ((n + (m ∸ n) + 0)) (List.sum (List.applyUpTo (n +_) (m ∸ n))) ⟩
+    List.sum (List.applyUpTo (n +_) (m ∸ n)) + (n + (m ∸ n) + 0)
+  ≡⟨ List.sum-++ (List.applyUpTo (n +_) (m ∸ n)) (n + (m ∸ n) ∷ []) ⟨
+    List.sum (List.applyUpTo (n +_) (m ∸ n) List.∷ʳ (n + (m ∸ n)))
+  ≡⟨ Eq.cong List.sum (applyUpTo-∷ʳ⁺ (n +_) (m ∸ n)) ⟩
+    List.sum (List.applyUpTo (n +_) (suc (m ∸ n)))
+  ≡⟨ Eq.cong (λ x → List.sum (List.applyUpTo (n +_) x)) (ℕ.+-∸-assoc 1 n≤m) ⟨
+    List.sum (List.applyUpTo (n +_) (suc m ∸ n))
+  ≡⟨ ℕ.m+n∸m≡n (List.sum (List.upTo n)) (List.sum (List.applyUpTo (n +_) (suc m ∸ n))) ⟨
+    List.sum (List.upTo n) + List.sum (List.applyUpTo (n +_) (suc m ∸ n)) ∸ List.sum (List.upTo n)
+  ≡⟨ Eq.cong (_∸ List.sum (List.upTo n)) (List.sum-++ (List.upTo n) (List.applyUpTo (n +_) (suc m ∸ n))) ⟨
+    List.sum (List.upTo n ++ List.applyUpTo (n +_) (suc m ∸ n)) ∸ List.sum (List.upTo n)
+  ≡⟨ Eq.cong (λ x → List.sum x ∸ List.sum (List.upTo n)) (applyUpTo-++⁺ id n (suc m ∸ n)) ⟨
+    List.sum (List.upTo (n + (suc m ∸ n))) ∸ List.sum (List.upTo n)
+  ≡⟨ Eq.cong (λ x → List.sum (List.upTo x) ∸ List.sum (List.upTo n)) (ℕ.+-∸-assoc n (ℕ.≤-trans n≤m (ℕ.n≤1+n m))) ⟨
+    List.sum (List.upTo (n + suc m ∸ n)) ∸ List.sum (List.upTo n)
+  ≡⟨ Eq.cong (λ x → List.sum (List.upTo x) ∸ List.sum (List.upTo n)) (ℕ.m+n∸m≡n n (suc m)) ⟩
+    List.sum (List.upTo (suc m)) ∸ List.sum (List.upTo n)
+  ∎
+  where
+  open ℕ.≤-Reasoning
