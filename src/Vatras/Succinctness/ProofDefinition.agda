@@ -1,13 +1,17 @@
 open import Vatras.Framework.Definitions using (𝔸; 𝕍)
 module Vatras.Succinctness.ProofDefinition (V : 𝕍) where
 
+import Axiom.ExcludedMiddle
+import Axiom.DoubleNegationElimination
+open import Data.Empty using (⊥-elim)
 open import Data.Nat as ℕ using (ℕ; _≤_; _>_; _*_)
 import Data.Nat.Properties as ℕ
 open import Data.Product as Product using (_×_; _,_; Σ-syntax; proj₁; proj₂)
-open import Function using (id)
-open import Relation.Nullary.Negation using (¬_)
+open import Function using (id; _∘_)
 import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Binary.Structures using (IsEquivalence; IsPreorder; IsPartialOrder; IsStrictPartialOrder)
+open import Relation.Nullary.Decidable using (yes; no)
+open import Relation.Nullary.Negation using (¬_; ¬∃⟶∀¬)
 
 open import Vatras.Data.EqIndexedSet using (≅-refl; ≅-sym; ≅-trans; ≅→≅[]; ⊆-index)
 open import Vatras.Framework.Relation.Expression V using (_,_⊢_≣_)
@@ -251,3 +255,31 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
     }
   ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
   }
+
+open Axiom.ExcludedMiddle using (ExcludedMiddle)
+open Axiom.DoubleNegationElimination using (em⇒dne)
+module Classical (excludedMiddle : ∀ {ℓ} → ExcludedMiddle ℓ) where
+  ¬∀→∃¬ : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → Set ℓ₂} → ¬ (∀ (a : A) → P a) → Σ[ a ∈ A ] ¬ P a
+  ¬∀→∃¬ {A = A} {P = P} ¬∀P with excludedMiddle {P = Σ[ a ∈ A ] ¬ P a}
+  ¬∀→∃¬ {A = A} {P = P} ¬∀P | yes ∃P = ∃P
+  ¬∀→∃¬ {A = A} {P = P} ¬∀P | no ∄P = ⊥-elim (¬∀P (λ a → em⇒dne excludedMiddle (¬∃⟶∀¬ ∄P a)))
+
+  map-∀ : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁} {P : A → Set ℓ₂} {Q : A → Set ℓ₃}
+    → (∀ {a} → P a → Q a) → (∀ (a : A) → P a) → (∀ (a : A) → Q a)
+  map-∀ f ∀P a = f (∀P a)
+
+  map-Σ : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁} {P : A → Set ℓ₂} {Q : A → Set ℓ₃}
+    → (∀ {a} → P a → Q a) → Σ[ a ∈ A ] P a → Σ[ a ∈ A ] Q a
+  map-Σ f (a , Pa) = a , f Pa
+
+  ¬∀→∃ : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁} {P : A → Set ℓ₂} {Q : A → Set ℓ₃} → (∀ {a : A} → ¬ P a → Q a) → ¬ (∀ (a : A) → P a) → Σ[ a ∈ A ] Q a
+  ¬∀→∃ f P = map-Σ f (¬∀→∃¬ P)
+
+  ¬∃→∀ : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁} {P : A → Set ℓ₂} {Q : A → Set ℓ₃} → (∀ {a : A} → ¬ P a → Q a) → ¬ (Σ[ a ∈ A ] P a) → ∀ (a : A) → Q a
+  ¬∃→∀ f P = map-∀ f (¬∃⟶∀¬ P)
+
+  ¬≤→≰ : {L₁ L₂ : SizedLang V} → ¬ (L₁ ≤ₛ L₂) → L₁ ≰ₛ L₂
+  ¬≤→≰ = ¬∃→∀ (¬∀→∃ (¬∀→∃ (¬∀→∃ (¬∃→∀ (¬∃→∀ ℕ.≰⇒>)))))
+
+  ¬≰→≤ : {L₁ L₂ : SizedLang V} → ¬ (L₁ ≰ₛ L₂) → L₁ ≤ₛ L₂
+  ¬≰→≤ = ¬∀→∃ (¬∃→∀ (¬∃→∀ (¬∃→∀ (¬∀→∃ (¬∀→∃ ℕ.≮⇒≥)))))
