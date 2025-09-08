@@ -12,8 +12,10 @@ import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Binary.Structures using (IsEquivalence; IsPreorder; IsPartialOrder; IsStrictPartialOrder)
 open import Relation.Nullary.Decidable using (yes; no)
 open import Relation.Nullary.Negation using (¬_; ¬∃⟶∀¬)
+open import Relation.Unary using (_∈_)
 
 open import Vatras.Data.EqIndexedSet using (≅-refl; ≅-sym; ≅-trans; ≅→≅[]; ⊆-index)
+open import Vatras.Util.Big-O using (𝒪[_])
 open import Vatras.Framework.Relation.Expression V using (_,_⊢_≣_)
 open import Vatras.Framework.Relation.Expressiveness V using (_≽_; _≋_; ≽-trans; ≋-refl; ≋-sym; ≋-trans)
 open import Vatras.Framework.VariabilityLanguage using (Expression)
@@ -255,6 +257,22 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
     }
   ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
   }
+
+≤ₛ-weakening : ∀ {L₁ L₂ : SizedLang V} {f g : ℕ → ℕ} → f ∈ 𝒪[ g ] → L₁ ≤ₛ[ f ] L₂ → L₁ ≤ₛ[ g ] L₂
+≤ₛ-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₁ = n * m
+≤ₛ-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₂ A e₂ e₂-translatable with L₂→L₁ A e₂ e₂-translatable
+≤ₛ-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₂ A e₂ e₂-translatable | e₁ , e₁≅e₂ , e₂≤e₁ = e₁ , e₁≅e₂ , (
+  begin
+    size L₁ e₁
+  ≤⟨ e₂≤e₁ ⟩
+    n * f (size L₂ e₂)
+  ≤⟨ ℕ.*-monoʳ-≤ n (f≤g (size L₂ e₂)) ⟩
+    n * (m * g (size L₂ e₂))
+  ≡⟨ ℕ.*-assoc n m (g (size L₂ e₂)) ⟨
+    n * m * g (size L₂ e₂)
+  ∎)
+  where
+  open ℕ.≤-Reasoning
 
 open Axiom.ExcludedMiddle using (ExcludedMiddle)
 open Axiom.DoubleNegationElimination using (em⇒dne)
