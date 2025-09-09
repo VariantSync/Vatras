@@ -8,6 +8,7 @@ import Data.Vec as Vec
 open import Function using (_∘_)
 open import Size using (Size; ∞)
 
+open import Vatras.Data.Prop using (Prop; true; false; var; ¬_; _∧_)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
 open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
 open import Vatras.Framework.Variants using (Rose)
@@ -93,6 +94,10 @@ sizeOC : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → OC.OC F i A → ℕ
 sizeOC {A = A} (a OC.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeOC cs))
 sizeOC (D OC.❲ c ❳) = suc (sizeOC c)
 
+sizeOC>0 : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → (oc : OC.OC F i A) → sizeOC oc > 0
+sizeOC>0 (a OC.-< cs >-) = s≤s z≤n
+sizeOC>0 (f OC.❲ c ❳) = s≤s z≤n
+
 sizeWFOC : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → OC.WFOC F i A → ℕ
 sizeWFOC {A = A} (OC.Root a cs) = suc (atomSize A a + List.sum (List.map sizeOC cs))
 
@@ -109,4 +114,25 @@ SizedFST : 𝔽 → SizedLang (Rose ∞)
 SizedFST F = record
   { Lang = FST.FSTL F
   ; size = sizeFST
+  }
+
+
+sizeProp : ∀ {F : 𝔽} → Prop F → ℕ
+sizeProp true = 1
+sizeProp false = 1
+sizeProp (var v) = 1
+sizeProp (¬ e) = suc (sizeProp e)
+sizeProp (e₁ ∧ e₂) = suc (sizeProp e₁ + sizeProp e₂)
+
+sizePropOC : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → PropOC.PropOC F i A → ℕ
+sizePropOC {A = A} (a PropOC.-< cs >-) = suc (atomSize A a + List.sum (List.map sizePropOC cs))
+sizePropOC (prop PropOC.❲ c ❳) = suc (sizeProp prop + sizePropOC c)
+
+sizeWFPropOC : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → PropOC.WFPropOC F i A → ℕ
+sizeWFPropOC {A = A} (PropOC.Root a cs) = suc (atomSize A a + List.sum (List.map sizePropOC cs))
+
+SizedWFPropOC : 𝔽 → SizedLang (Rose ∞)
+SizedWFPropOC F = record
+  { Lang = PropOC.WFPropOCL F
+  ; size = sizeWFPropOC
   }
