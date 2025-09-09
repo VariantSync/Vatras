@@ -21,6 +21,7 @@ import Vatras.Lang.OC
 import Vatras.Lang.FST
 import Vatras.Lang.Gruler
 import Vatras.Lang.VT
+import Vatras.Lang.PropOC
 
 open import Data.Empty.Polymorphic using (⊥)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
@@ -89,3 +90,8 @@ module VT where
   open Vatras.Lang.VT using (VT; UnrootedVT; VTL; Configuration) public
   module _ {F : 𝔽} where
     open Vatras.Lang.VT F hiding (VT; UnrootedVT; VTL; Configuration) public
+
+module PropOC where
+  open Vatras.Lang.PropOC using (PropOC; PropOCL; WFPropOC; WFPropOCL; Configuration) public
+  module _ {F : 𝔽} where
+    open Vatras.Lang.PropOC F hiding (PropOC; PropOCL; WFPropOC; WFPropOCL; Configuration) public

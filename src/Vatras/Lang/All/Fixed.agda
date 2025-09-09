@@ -14,6 +14,7 @@ import Vatras.Lang.OC
 import Vatras.Lang.FST
 import Vatras.Lang.Gruler
 import Vatras.Lang.VT
+import Vatras.Lang.PropOC
 
 module VariantList = Vatras.Lang.VariantList V
 module CCC = Vatras.Lang.CCC F
@@ -29,3 +30,4 @@ module OC = Vatras.Lang.OC F
 module FST = Vatras.Lang.FST F
 module Gruler = Vatras.Lang.Gruler F
 module VT = Vatras.Lang.VT F
+module PropOC = Vatras.Lang.PropOC F
