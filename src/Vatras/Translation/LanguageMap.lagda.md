@@ -368,6 +368,7 @@ Yet, variant lists and ADTs are generic in their type of variants and hence can 
 open import Vatras.Lang.VariantList.Properties
   using ()
   renaming (VariantList-is-Sound to VariantList-is-sound-on; VariantList-is-Complete to VariantList-is-complete-on)
+  public
 
 ADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (ADTL F V)
 ADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (VariantList-is-sound-on V) (ADT-to-VariantList.VariantList≽ADT F V _==_)
