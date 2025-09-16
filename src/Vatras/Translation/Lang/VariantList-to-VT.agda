@@ -17,7 +17,6 @@ open import Vatras.Util.List using (find-or-last)
 open import Vatras.Util.AuxProofs using (≡ᵇ-refl; m+n≢ᵇn)
 
 open import Vatras.Framework.Variants using (Forest; encode-idemp)
-open import Vatras.Framework.Annotation.IndexedDimension using (Indexed)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.Proof.ForFree Forest using (completeness-by-expressiveness)
 open import Vatras.Framework.Properties.Completeness Forest using (Complete)
