@@ -50,6 +50,7 @@ open NCC using (NCCL)
 open 2CC using (2CCL)
 open NADT using (NADTL)
 open ADT using (ADTL)
+open PropADT using (PropADTL)
 open OC using (WFOCL)
 open FST using (FSTL)
 open VT using (VTL)
@@ -72,6 +73,7 @@ import Vatras.Translation.Lang.Transitive.2CC-to-CCC as 2CC-to-CCC
 import Vatras.Translation.Lang.2CC-to-ADT as 2CC-to-ADT
 import Vatras.Translation.Lang.ADT-to-2CC as ADT-to-2CC
 import Vatras.Translation.Lang.ADT.DeadElim as DeadElim
+import Vatras.Translation.Lang.ADT.ADT-vs-PropADT as ADT-vs-PropADT
 import Vatras.Translation.Lang.ADT-to-VariantList as ADT-to-VariantList
 import Vatras.Translation.Lang.ADT-to-VT as ADT-to-VT
 import Vatras.Translation.Lang.VariantList-to-CCC as VariantList-to-CCC
@@ -381,6 +383,12 @@ ADTℕ-is-complete-on = VariantList-to-ADT.ADT-is-complete
 
 ADT-is-complete-on : ∀ {F : 𝔽} (f : ℕ → F) (f⁻¹ : F → ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (V : 𝕍) → Complete-on V (ADTL F V)
 ADT-is-complete-on f f⁻¹ f⁻¹∘f≗id V = completeness-by-expressiveness-on V (ADTℕ-is-complete-on V) (ADT-rename≽ADT V f f⁻¹ f⁻¹∘f≗id)
+
+PropADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (PropADTL F V)
+PropADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (ADT-is-sound-on V _==_) (ADT-vs-PropADT.ADT≽PropADT F V)
+
+PropADT-is-complete-on : ∀ {F : 𝔽} (f : ℕ → F) (f⁻¹ : F → ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (V : 𝕍) → Complete-on V (PropADTL F V)
+PropADT-is-complete-on {F} f f⁻¹ f⁻¹∘f≗id V = completeness-by-expressiveness-on V (ADT-is-complete-on f f⁻¹ f⁻¹∘f≗id V) (ADT-vs-PropADT.PropADT≽ADT F V)
 ```
 
 Variation Trees assume variants to be forests of rose trees.
