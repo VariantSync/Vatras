@@ -17,10 +17,8 @@ open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Framework.Variants using (Forest)
 open import Vatras.Framework.Compiler using (_⊕_; LanguageCompiler)
 
-import Vatras.Lang.ADT
-open Vatras.Lang.ADT (Prop F) Forest renaming (ADT to PropADT) using (leaf; _⟨_,_⟩)
-open Vatras.Lang.ADT       F  Forest using (ADTL)
-open import Vatras.Lang.ADT.Prop F Forest using (⟦_⟧ₚ; PropADTL)
+open import Vatras.Lang.ADT F Forest using (ADTL)
+open import Vatras.Lang.ADT.Prop F Forest
 open import Vatras.Lang.VT F as VT
 open import Vatras.Lang.VT.Encode F using (encode-forest; encode-forest-preserves)
 

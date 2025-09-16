@@ -14,7 +14,7 @@ open ADT hiding (⟦_⟧)
 
 open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Data.Prop
-open import Vatras.Lang.ADT.Prop F V
+open import Vatras.Lang.ADT.Prop F V using (⟦_⟧ₚ; PropADTL)
 open import Vatras.Util.AuxProofs using (if-flip; if-∧; if-cong; if-congˡ)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.Relation.Expressiveness V using (_≋_; _≽_; expressiveness-from-compiler)
