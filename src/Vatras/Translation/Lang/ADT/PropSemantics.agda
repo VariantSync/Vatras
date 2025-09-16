@@ -109,3 +109,25 @@ formula-elim-compiler = record
 
 ADT≽PropADT : ADTL F ≽ PropADTL
 ADT≽PropADT = expressiveness-from-compiler formula-elim-compiler
+
+{-|
+The inverse direction: Every ADT trivially is a PropADT because every feature name is a propositional formula.
+-}
+
+lift : ∀ {A} → ADT F A → ADT (Prop F) A
+lift (leaf v)      = leaf v
+lift (D ⟨ l , r ⟩) = var D ⟨ lift l , lift r ⟩
+
+lift-preserves : ∀ {A} → (e : ADT F A) → ⟦ e ⟧ ≗ ⟦ lift e ⟧ₚ
+lift-preserves (leaf x)      c = refl
+lift-preserves (D ⟨ l , r ⟩) c = if-cong (c D) (lift-preserves l c) (lift-preserves r c)
+
+lift-compiler : LanguageCompiler (ADTL F) PropADTL
+lift-compiler = record
+  { compile = lift
+  ; config-compiler = λ _ → record { to = id ; from = id }
+  ; preserves = ≗→≅[] ∘ lift-preserves
+  }
+
+PropADT≽ADT : PropADTL ≽ ADTL F
+PropADT≽ADT = expressiveness-from-compiler lift-compiler
