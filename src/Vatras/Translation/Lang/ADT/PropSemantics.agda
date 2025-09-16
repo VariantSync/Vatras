@@ -17,7 +17,7 @@ open import Vatras.Data.Prop
 open import Vatras.Lang.ADT.Prop F V
 open import Vatras.Util.AuxProofs using (if-flip; if-∧; if-cong; if-congˡ)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
+open import Vatras.Framework.Relation.Expressiveness V using (_≋_; _≽_; expressiveness-from-compiler)
 
 {-|
 Elimination of formulas in choices.
@@ -131,3 +131,11 @@ lift-compiler = record
 
 PropADT≽ADT : PropADTL ≽ ADTL F
 PropADT≽ADT = expressiveness-from-compiler lift-compiler
+
+{-|
+Finally, we can conclude that both languages are equally expressive.
+This means, using propositional formulas for choices instead of mere names does not increase expressiveness.
+Expressiveness is not reduced either.
+-}
+ADT≋PropADT : ADTL F ≋ PropADTL
+ADT≋PropADT = ADT≽PropADT , PropADT≽ADT
