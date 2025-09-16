@@ -23,7 +23,7 @@ open import Vatras.Lang.VT F as VT
 open import Vatras.Lang.VT.Encode F using (encode-forest; encode-forest-preserves)
 
 open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; expressiveness-from-compiler)
-open import Vatras.Translation.Lang.ADT.PropSemantics F Forest using (lift-compiler; ADT≽PropADT)
+open import Vatras.Translation.Lang.ADT.ADT-vs-PropADT F Forest using (lift-compiler; ADT≽PropADT)
 
 open import Vatras.Util.AuxProofs using (if-cong)
 

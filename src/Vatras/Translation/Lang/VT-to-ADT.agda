@@ -20,7 +20,7 @@ import Vatras.Lang.ADT.Merge Forest (_++_) as Merge
 open Merge.Prop F
 
 open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; ≽-trans; expressiveness-from-compiler)
-open import Vatras.Translation.Lang.ADT.PropSemantics F Forest using (formula-elim-compiler; ADT≽PropADT)
+open import Vatras.Translation.Lang.ADT.ADT-vs-PropADT F Forest using (formula-elim-compiler; ADT≽PropADT)
 
 -- artifact atom, artifact children, artifact neighbors
 {-|

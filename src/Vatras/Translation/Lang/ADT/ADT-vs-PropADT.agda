@@ -1,5 +1,5 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝕍; 𝔸)
-module Vatras.Translation.Lang.ADT.PropSemantics (F : 𝔽) (V : 𝕍) where
+module Vatras.Translation.Lang.ADT.ADT-vs-PropADT (F : 𝔽) (V : 𝕍) where
 
 open import Data.Bool using (if_then_else_; not) renaming (_∧_ to _and_)
 open import Data.Product using (_,_)
