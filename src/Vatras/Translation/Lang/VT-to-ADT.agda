@@ -22,7 +22,7 @@ open Merge.Named (Prop F) using (_⊕_)
 open Merge.Prop F using (⊕-specₚ)
 
 open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; ≽-trans; expressiveness-from-compiler)
-open import Vatras.Translation.Lang.ADT.PropSemantics F Forest using (formula-elim-compiler; PropADT≽ADT)
+open import Vatras.Translation.Lang.ADT.PropSemantics F Forest using (formula-elim-compiler; ADT≽PropADT)
 
 -- artifact atom, artifact children, artifact neighbors
 {-|
@@ -125,7 +125,7 @@ VT→ADT : LanguageCompiler VTL ADTL
 VT→ADT = VT→PropADT Compiler.⊕ formula-elim-compiler
 
 ADT≽VT : ADTL ≽ VTL
-ADT≽VT = ≽-trans PropADT≽ADT PropADT≽VT
+ADT≽VT = ≽-trans ADT≽PropADT PropADT≽VT
 
 {-|
 This module contains some tests for the translation function to see it in action.

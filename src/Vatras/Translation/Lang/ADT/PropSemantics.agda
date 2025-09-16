@@ -107,5 +107,5 @@ formula-elim-compiler = record
   ; preserves = ≗→≅[] ∘ preserves
   }
 
-PropADT≽ADT : ADTL F ≽ PropADTL
-PropADT≽ADT = expressiveness-from-compiler formula-elim-compiler
+ADT≽PropADT : ADTL F ≽ PropADTL
+ADT≽PropADT = expressiveness-from-compiler formula-elim-compiler
