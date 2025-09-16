@@ -1,5 +1,4 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸)
--- We assume the existence of at least one atom.
 module Vatras.Translation.Lang.VariantList-to-VT where
 
 open import Data.Bool as Bool using (if_then_else_; true; false)
