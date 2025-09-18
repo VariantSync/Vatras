@@ -31,17 +31,19 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) NAT' using (VariantGene
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 import Vatras.Util.List as List
 open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
+open 2CC using (2CC; _⟨_,_⟩; _-<_>-; 2CCL)
+open ADT using (ADT; _⟨_,_⟩; leaf; ADTL)
 open import Vatras.Translation.Lang.2CC-to-ADT using (ADT≽2CC)
 open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_; _<ₛ_)
 open import Vatras.Succinctness.Sizes using (Sized2CC; size2CC; SizedADT; sizeADT; sizeRose)
 open import Vatras.Succinctness.Relations.2CC≤ADT ℕ using (2CC≤ADT)
 
-e₁-cs : ℕ → ℕ → List (2CC.2CC ∞ NAT')
+e₁-cs : ℕ → ℕ → List (2CC ∞ NAT')
 e₁-cs zero D = []
-e₁-cs (suc n) D = D 2CC.2CC.⟨ 0 2CC.2CC.-< [] >- , 1 2CC.2CC.-< [] >- ⟩ ∷ e₁-cs n (suc D)
+e₁-cs (suc n) D = D ⟨ 0 -< [] >- , 1 -< [] >- ⟩ ∷ e₁-cs n (suc D)
 
-e₁ : ℕ → 2CC.2CC ∞ NAT'
-e₁ n = 0 2CC.2CC.-< e₁-cs n zero >-
+e₁ : ℕ → 2CC ∞ NAT'
+e₁ n = 0 -< e₁-cs n zero >-
 
 size-e₁-cs : ∀ n D → List.sum (List.map size2CC (e₁-cs n D)) ≡ n * 3
 size-e₁-cs zero D = refl
@@ -93,11 +95,11 @@ variants⊆e₁ n i = config n i' , Eq.cong (0 Rose.-<_>-) (go n i' zero λ o �
     ≡⟨ Eq.cong (0 Rose.-< [] >- ∷_) (go m (Fin.fromℕ< k<2^m) (suc D) (λ o → Eq.trans (Eq.trans (Eq.cong (config n i') (ℕ.+-suc o D)) (p (suc o))) (config-<2^m m j o k<2^m))) ⟩
       0 Rose.-< [] >- ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      (if true then 2CC.⟦ 0 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ 1 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
-    ≡⟨ Eq.cong (λ x → (if x then 2CC.⟦ 0 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ 1 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
-      (if config n i' D then 2CC.⟦ 0 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ 1 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      (if true then 2CC.⟦ 0 -< [] >- ⟧ (config n i') else 2CC.⟦ 1 -< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+    ≡⟨ Eq.cong (λ x → (if x then 2CC.⟦ 0 -< [] >- ⟧ (config n i') else 2CC.⟦ 1 -< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
+      (if config n i' D then 2CC.⟦ 0 -< [] >- ⟧ (config n i') else 2CC.⟦ 1 -< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      2CC.⟦ D 2CC.2CC.⟨ 0 2CC.2CC.-< [] >- , 1 2CC.2CC.-< [] >- ⟩ ⟧ (config n i') ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      2CC.⟦ D ⟨ 0 -< [] >- , 1 -< [] >- ⟩ ⟧ (config n i') ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ∎
   ... | no k≮2^m | p' =
     begin
@@ -105,26 +107,26 @@ variants⊆e₁ n i = config n i' , Eq.cong (0 Rose.-<_>-) (go n i' zero λ o �
     ≡⟨ Eq.cong (1 Rose.-< [] >- ∷_) (go m j' (suc D) (λ o → Eq.trans (Eq.trans (Eq.cong (config n i') (ℕ.+-suc o D)) (p (suc o))) (config-≮2^m m j o k≮2^m))) ⟩
       1 Rose.-< [] >- ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      (if false then 2CC.⟦ 0 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ 1 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
-    ≡⟨ Eq.cong (λ x → (if x then 2CC.⟦ 0 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ 1 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
-      (if config n i' D then 2CC.⟦ 0 2CC.2CC.-< [] >- ⟧ (config n i') else 2CC.⟦ 1 2CC.2CC.-< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      (if false then 2CC.⟦ 0 -< [] >- ⟧ (config n i') else 2CC.⟦ 1 -< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+    ≡⟨ Eq.cong (λ x → (if x then 2CC.⟦ 0 -< [] >- ⟧ (config n i') else 2CC.⟦ 1 -< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))) p' ⟨
+      (if config n i' D then 2CC.⟦ 0 -< [] >- ⟧ (config n i') else 2CC.⟦ 1 -< [] >- ⟧ (config n i')) ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ≡⟨⟩
-      2CC.⟦ D 2CC.2CC.⟨ 0 2CC.2CC.-< [] >- , 1 2CC.2CC.-< [] >- ⟩ ⟧ (config n i') ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
+      2CC.⟦ D ⟨ 0 -< [] >- , 1 -< [] >- ⟩ ⟧ (config n i') ∷ List.map (λ e → 2CC.⟦ e ⟧ (config n i')) (e₁-cs m (suc D))
     ∎
     where
     j' = Eq.subst Fin (ℕ.+-identityʳ (2 ^ m)) (Fin.reduce≥ j (ℕ.≮⇒≥ k≮2^m))
 
-ADT-leafs : ADT.ADT NAT' → List⁺ (Rose ∞ NAT')
-ADT-leafs (ADT.ADT.leaf v) = v ∷ []
-ADT-leafs (D ADT.ADT.⟨ l , r ⟩) = ADT-leafs l List⁺.⁺++⁺ ADT-leafs r
+ADT-leafs : ADT NAT' → List⁺ (Rose ∞ NAT')
+ADT-leafs (leaf v) = v ∷ []
+ADT-leafs (D ⟨ l , r ⟩) = ADT-leafs l List⁺.⁺++⁺ ADT-leafs r
 
-ADT-leaf-count : ADT.ADT NAT' → ℕ
+ADT-leaf-count : ADT NAT' → ℕ
 ADT-leaf-count e₂ = List⁺.length (ADT-leafs e₂)
 
-ADT-leaf-count-lemma : ∀ D → (l r : ADT.ADT NAT') → ADT-leaf-count (D ADT.ADT.⟨ l , r ⟩) ≡ ADT-leaf-count l + ADT-leaf-count r
+ADT-leaf-count-lemma : ∀ D → (l r : ADT NAT') → ADT-leaf-count (D ⟨ l , r ⟩) ≡ ADT-leaf-count l + ADT-leaf-count r
 ADT-leaf-count-lemma D l r =
   begin
-    ADT-leaf-count (D ADT.ADT.⟨ l , r ⟩)
+    ADT-leaf-count (D ⟨ l , r ⟩)
   ≡⟨⟩
     List⁺.length (ADT-leafs l List⁺.⁺++⁺ ADT-leafs r)
   ≡⟨ Eq.cong List.length (List⁺.toList-⁺++⁺ (ADT-leafs l) (ADT-leafs r)) ⟨
@@ -135,11 +137,11 @@ ADT-leaf-count-lemma D l r =
   where
   open Eq.≡-Reasoning
 
-leafs-≤-size : (e₂ : ADT.ADT NAT') → ADT-leaf-count e₂ ≤ sizeADT sizeRose e₂
-leafs-≤-size (ADT.ADT.leaf v) = s≤s z≤n
-leafs-≤-size (D ADT.ADT.⟨ l , r ⟩) =
+leafs-≤-size : (e₂ : ADT NAT') → ADT-leaf-count e₂ ≤ sizeADT sizeRose e₂
+leafs-≤-size (leaf v) = s≤s z≤n
+leafs-≤-size (D ⟨ l , r ⟩) =
   begin
-    ADT-leaf-count (D ADT.ADT.⟨ l , r ⟩)
+    ADT-leaf-count (D ⟨ l , r ⟩)
   ≡⟨ ADT-leaf-count-lemma D l r ⟩
     ADT-leaf-count l + ADT-leaf-count r
   ≤⟨ ℕ.+-monoʳ-≤ (ADT-leaf-count l) (leafs-≤-size r) ⟩
@@ -161,25 +163,25 @@ _≟ᵥ_ : ∀ {i} → (v₁ v₂ : Rose i NAT') → Dec (v₁ ≡ v₂)
 (a₁ Rose.-< cs₁ >-) ≟ᵥ (a₂ Rose.-< cs₂ >-) | yes a₁≡a₂ | no cs₁≢cs₂ = no (λ where refl → cs₁≢cs₂ refl)
 (a₁ Rose.-< cs₁ >-) ≟ᵥ (a₂ Rose.-< cs₂ >-) | yes refl | yes refl = yes refl
 
-ADT-leaf-count≤ₗ : ∀ D l r → ADT-leaf-count l ≤ ADT-leaf-count (D ADT.ADT.⟨ l , r ⟩)
+ADT-leaf-count≤ₗ : ∀ D l r → ADT-leaf-count l ≤ ADT-leaf-count (D ⟨ l , r ⟩)
 ADT-leaf-count≤ₗ D l r =
   begin
     ADT-leaf-count l
   ≤⟨ ℕ.m≤m+n (ADT-leaf-count l) (ADT-leaf-count r) ⟩
     ADT-leaf-count l + ADT-leaf-count r
   ≡⟨ ADT-leaf-count-lemma D l r ⟨
-    ADT-leaf-count (D ADT.ADT.⟨ l , r ⟩)
+    ADT-leaf-count (D ⟨ l , r ⟩)
   ∎
   where
   open ℕ.≤-Reasoning
 
 ADT-leaf∈⟦⟧ : ∀ v e₂ → v ∈ ADT.⟦ e₂ ⟧ → v ∈ listToIndexedSet (ADT-leafs e₂)
-ADT-leaf∈⟦⟧ v (ADT.ADT.leaf .v) (c , refl) = zero , refl
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) with c D
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | true with ADT-leaf∈⟦⟧ v l (c , p)
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | true | (i , p') = Fin.inject≤ i (ADT-leaf-count≤ₗ D l r) , Eq.trans p' (List.lookup-++ᵣ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | false with ADT-leaf∈⟦⟧ v r (c , p)
-ADT-leaf∈⟦⟧ v (D ADT.ADT.⟨ l , r ⟩) (c , p) | false | (i , p') = (Fin.cast (Eq.sym (ADT-leaf-count-lemma D l r)) (ADT-leaf-count l Fin.↑ʳ i)) , Eq.trans p' (List.lookup-++ₗ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
+ADT-leaf∈⟦⟧ v (leaf .v) (c , refl) = zero , refl
+ADT-leaf∈⟦⟧ v (D ⟨ l , r ⟩) (c , p) with c D
+ADT-leaf∈⟦⟧ v (D ⟨ l , r ⟩) (c , p) | true with ADT-leaf∈⟦⟧ v l (c , p)
+ADT-leaf∈⟦⟧ v (D ⟨ l , r ⟩) (c , p) | true | (i , p') = Fin.inject≤ i (ADT-leaf-count≤ₗ D l r) , Eq.trans p' (List.lookup-++ᵣ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
+ADT-leaf∈⟦⟧ v (D ⟨ l , r ⟩) (c , p) | false with ADT-leaf∈⟦⟧ v r (c , p)
+ADT-leaf∈⟦⟧ v (D ⟨ l , r ⟩) (c , p) | false | (i , p') = (Fin.cast (Eq.sym (ADT-leaf-count-lemma D l r)) (ADT-leaf-count l Fin.↑ʳ i)) , Eq.trans p' (List.lookup-++ₗ (List⁺.toList (ADT-leafs l)) (List⁺.toList (ADT-leafs r)) i)
 
 ADT-leaf⊆⟦⟧ : ∀ e₂ → ADT.⟦ e₂ ⟧ ⊆ listToIndexedSet (ADT-leafs e₂)
 ADT-leaf⊆⟦⟧ e₂ i = ADT-leaf∈⟦⟧ (ADT.⟦ e₂ ⟧ i) e₂ (i , refl)
@@ -286,9 +288,9 @@ variants⊆e₂⇒2^n≤e₂ n e₂ variants⊆e₂ =
       16 ^ (1 + n)
     ∎
 
-lemma : ∀ n e₂ → ADT.ADTL , 2CC.2CCL ⊢ e₂ ≣ e₁ (4 * n) → n * size2CC (e₁ (4 * n)) < sizeADT sizeRose e₂
-lemma zero (ADT.ADT.leaf v) (e₂⊆e₁ , e₁⊆e₂) = s≤s z≤n
-lemma zero (D ADT.ADT.⟨ l , r ⟩) (e₂⊆e₁ , e₁⊆e₂) = s≤s z≤n
+lemma : ∀ n e₂ → ADTL , 2CCL ⊢ e₂ ≣ e₁ (4 * n) → n * size2CC (e₁ (4 * n)) < sizeADT sizeRose e₂
+lemma zero (leaf v) (e₂⊆e₁ , e₁⊆e₂) = s≤s z≤n
+lemma zero (D ⟨ l , r ⟩) (e₂⊆e₁ , e₁⊆e₂) = s≤s z≤n
 lemma (suc m) e₂ (e₂⊆e₁ , e₁⊆e₂) =
   begin-strict
     n * size2CC (e₁ (4 * n))
