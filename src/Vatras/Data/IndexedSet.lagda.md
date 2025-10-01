@@ -640,6 +640,48 @@ singleton-set-is-nonempty : (A : 𝟙 iℓ) → nonempty A
 singleton-set-is-nonempty _ = tt
 ```
 
+## Operations
+
+```agda
+module _ where
+  open import Data.Sum using (_⊎_; inj₁; inj₂)
+  variable
+    α : Set iℓ
+    β : Set jℓ
+
+  {-|
+  Indexed Set Union (Or):
+  We can create the union of two indexed sets by accepting either of the input indices.
+  -}
+  infix 21 _⨆_
+  _⨆_ : IndexedSet α → IndexedSet β → IndexedSet (α ⊎ β)
+  (A ⨆ B) (inj₁ a) = A a
+  (A ⨆ B) (inj₂ b) = B b
+
+  {-|
+  Indexed Set Intersection (And):
+  The set intersection should contain only elements that are both in A _and_ B.
+  This means that an element is in the intersection if and only if there is an
+  index for both A and B that both point to the element.
+  Hence, the index set of the intersection set can be modelled as the type of
+  all indices from A that point to elements that also B points to.
+  -}
+  infix 21 _⨅_
+  _⨅_ : (A : IndexedSet α) → (B : IndexedSet β) → IndexedSet (Σ[ a ∈ α ] A a ∈ B)
+  (A ⨅ B) (a , b , eq) = A a -- We could also pick B b here.
+
+  {-|
+  Indexed Set Difference:
+  We can remove all elements pointed to by B from an indexed set A by restricting the set of indices
+  to those indices that do not point to elements in B.
+  Hence, the index set of the difference set can be modelled as the type of
+  all indices from A that point to elements that are not pointed at by B.
+  -}
+  infix 21 _∖_ -- use \setminus to create ∖ with Agda Input Mode in Emacs
+  _∖_ : (A : IndexedSet α) → (B : IndexedSet β) → IndexedSet (Σ[ a ∈ α ] (A a ∉ B))
+  (A ∖ B) (a , Aa∉B) = A a
+```
+
 ## Further Properties
 
 ### Reindexing
