@@ -135,6 +135,12 @@ A ⊢ i ≡ⁱ j = A i ≈ A j
 ```agda
 _∉_ : ∀ {I : Set iℓ} → Carrier → IndexedSet I → Set (ℓ ⊔ iℓ)
 a ∉ A = ∀ i → ¬ (a ≈ A i)
+
+Disjoint : ∀ {I : Set iℓ} {J : Set jℓ} (A : IndexedSet I) (B : IndexedSet J) → Set (ℓ ⊔ iℓ ⊔ jℓ)
+Disjoint A B = ∀ i → A i ∉ B
+
+Disjoint-flip : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → Disjoint A B → Disjoint B A
+Disjoint-flip disjointAB j i Bj≈Ai = disjointAB i j (Eq.sym Bj≈Ai)
 ```
 
 ## Singletons
