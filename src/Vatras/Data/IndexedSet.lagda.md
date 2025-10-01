@@ -130,6 +130,13 @@ _⊢_≡ⁱ_ : ∀ {I : Set iℓ} (A : IndexedSet I) → I → I → Set ℓ
 A ⊢ i ≡ⁱ j = A i ≈ A j
 ```
 
+## Inverse Operations
+
+```agda
+_∉_ : ∀ {I : Set iℓ} → Carrier → IndexedSet I → Set (ℓ ⊔ iℓ)
+a ∉ A = ∀ i → ¬ (a ≈ A i)
+```
+
 ## Singletons
 
 ```agda
