@@ -680,6 +680,141 @@ module _ where
   infix 21 _∖_ -- use \setminus to create ∖ with Agda Input Mode in Emacs
   _∖_ : (A : IndexedSet α) → (B : IndexedSet β) → IndexedSet (Σ[ a ∈ α ] (A a ∉ B))
   (A ∖ B) (a , Aa∉B) = A a
+
+  module _ where
+    open import Data.Empty using (⊥-elim)
+    variable
+      γ : Set kℓ
+      A : IndexedSet α
+      B : IndexedSet β
+      C : IndexedSet γ
+
+    -- ⨆ properties
+
+    ⊆-⨆ : A ⊆ A ⨆ B
+    ⊆-⨆ i = inj₁ i , Eq.refl
+
+    ⨆-⊆ : B ⊆ A → A ⨆ B ⊆ A
+    ⨆-⊆ _   (inj₁ a) = a , Eq.refl
+    ⨆-⊆ B⊆A (inj₂ b) = B⊆A b
+
+    ⨆-idemp : A ⨆ A ≅ A
+    ⨆-idemp = ⨆-⊆ ⊆-refl , ⊆-⨆
+
+    ⨆-comm-⊆ : A ⨆ B ⊆ B ⨆ A
+    ⨆-comm-⊆ (inj₁ a) = inj₂ a , Eq.refl
+    ⨆-comm-⊆ (inj₂ b) = inj₁ b , Eq.refl
+
+    ⨆-comm : A ⨆ B ≅ B ⨆ A
+    ⨆-comm = ⨆-comm-⊆ , ⨆-comm-⊆
+
+    ⨆-assoc-⊆ : (A ⨆ B) ⨆ C ⊆ A ⨆ (B ⨆ C)
+    ⨆-assoc-⊆ (inj₁ (inj₁ a)) = ⊆-⨆ a
+    ⨆-assoc-⊆ (inj₁ (inj₂ b)) = inj₂ (inj₁ b) , Eq.refl
+    ⨆-assoc-⊆ (inj₂ c)        = inj₂ (inj₂ c) , Eq.refl
+
+    ⨆-assoc-⊇ : A ⨆ (B ⨆ C) ⊆ (A ⨆ B) ⨆ C
+    ⨆-assoc-⊇ (inj₁ a)        = inj₁ (inj₁ a) , Eq.refl
+    ⨆-assoc-⊇ (inj₂ (inj₁ b)) = inj₁ (inj₂ b) , Eq.refl
+    ⨆-assoc-⊇ (inj₂ (inj₂ c)) = inj₂ c , Eq.refl
+
+    ⨆-assoc : (A ⨆ B) ⨆ C ≅ A ⨆ (B ⨆ C)
+    ⨆-assoc = ⨆-assoc-⊆ , ⨆-assoc-⊇
+
+    ⨆-idʳ : A ⨆ 𝟘 ≅ A
+    ⨆-idʳ = ⨆-⊆ 𝟘⊆A , ⊆-⨆
+
+    ⨆-idˡ : 𝟘 ⨆ A ≅ A
+    ⨆-idˡ = ≅-trans ⨆-comm ⨆-idʳ
+
+    -- ⨅ properties
+
+    ⨅-⊆ : A ⨅ B ⊆ A
+    ⨅-⊆ (a₁ , _ ) = a₁ , Eq.refl
+
+    ⊆-⨅ : A ⊆ B → A ⊆ A ⨅ B
+    ⊆-⨅ A⊆B a = (a , A⊆B a) , Eq.refl
+
+    ⨅-idemp : A ⨅ A ≅ A
+    ⨅-idemp = ⨅-⊆ , ⊆-⨅ ⊆-refl
+
+    ⨅-comm-⊆ : A ⨅ B ⊆ B ⨅ A
+    ⨅-comm-⊆ (a , b , Aa≈Bb) = (b , a , Eq.sym Aa≈Bb) , Aa≈Bb
+
+    ⨅-comm : A ⨅ B ≅ B ⨅ A
+    ⨅-comm = ⨅-comm-⊆ , ⨅-comm-⊆
+
+    ⨅-assoc-⊆ : (A ⨅ B) ⨅ C ⊆ A ⨅ (B ⨅ C)
+    ⨅-assoc-⊆ ((a , b , Aa≈Bb) , c , Aa≈Cc) = (a , (b , c , Eq.trans (Eq.sym Aa≈Bb) Aa≈Cc) , Aa≈Bb) , Eq.refl
+
+    ⨅-assoc-⊇ : A ⨅ (B ⨅ C) ⊆ (A ⨅ B) ⨅ C
+    ⨅-assoc-⊇ (a , (b , c , Bb≈Cc) , Aa≈Bb) = ((a , b , Aa≈Bb) , c , Eq.trans Aa≈Bb Bb≈Cc) , Eq.refl
+
+    ⨅-assoc : (A ⨅ B) ⨅ C ≅ A ⨅ (B ⨅ C)
+    ⨅-assoc = ⨅-assoc-⊆ , ⨅-assoc-⊇
+
+    ⨅-zeroˡ : 𝟘 ⨅ A ≅ 𝟘
+    ⨅-zeroˡ = ⨅-⊆  , ⊆-⨅ 𝟘⊆A
+
+    ⨅-zeroʳ : A ⨅ 𝟘 ≅ 𝟘
+    ⨅-zeroʳ = ≅-trans ⨅-comm ⨅-zeroˡ
+
+    -- "A ⨅ B ≅ 𝟘" and "Disjoint A B" are equivalent propositions.
+    -- "A ⨅ B ≅ 𝟘" is the canonical way of saying that two sets are disjoint.
+    -- "Disjoint A B" is a direct way of saying that for indexed sets.
+
+    ⨅-empty→Disjoint : A ⨅ B ≅ 𝟘 → Disjoint A B
+    ⨅-empty→Disjoint (A⨅B⊆𝟘 , 𝟘⊆A⨅B) a b Aa≈Bb with A⨅B⊆𝟘 (a , b , Aa≈Bb)
+    ... | ()
+
+    Disjoint→⨅-empty : Disjoint A B → A ⨅ B ≅ 𝟘
+    proj₁ (Disjoint→⨅-empty disjointAB) (a , b , Aa≈Bb) = ⊥-elim (disjointAB a b Aa≈Bb)
+    proj₂ (Disjoint→⨅-empty disjointAB) = 𝟘⊆A
+
+    -- ∖ properties
+
+    ∖-⊆ : A ∖ B ⊆ A
+    ∖-⊆ (a , Aa∉B) = a , Eq.refl
+
+    ⊆-∖ : A ⨅ B ≅ 𝟘 → A ⊆ (A ∖ B)
+    ⊆-∖ A⨅B≅𝟘 a = (a , ⨅-empty→Disjoint A⨅B≅𝟘 a) , Eq.refl
+
+    ≅-∖ : A ⨅ B ≅ 𝟘 → A ≅ (A ∖ B)
+    ≅-∖ A⨅B≅𝟘 = ⊆-∖ A⨅B≅𝟘 , ∖-⊆
+
+    ∖-id : A ∖ 𝟘 ≅ A
+    ∖-id = ∖-⊆ , ⊆-∖ ⨅-zeroʳ
+
+    ∖-zero-⊆ : 𝟘 ∖ A ⊆ 𝟘
+    ∖-zero-⊆ ()
+
+    ∖-zero : 𝟘 ∖ A ≅ 𝟘
+    ∖-zero = ∖-zero-⊆ , 𝟘⊆A
+
+    -- combined properties
+
+    ⨆-distrib-⨅-⊆ : A ⨆ (B ⨅ C) ⊆ (A ⨆ B) ⨅ (A ⨆ C)
+    ⨆-distrib-⨅-⊆ (inj₁ a)               = (inj₁ a , ⊆-⨆ a) , Eq.refl
+    ⨆-distrib-⨅-⊆ (inj₂ (b , c , Bb≈Cc)) = (inj₂ b , inj₂ c , Bb≈Cc) , Eq.refl
+
+    ⨆-distrib-⨅-⊇ : (A ⨆ B) ⨅ (A ⨆ C) ⊆ A ⨆ (B ⨅ C)
+    ⨆-distrib-⨅-⊇ (inj₁ a , _)              = inj₁ a , Eq.refl
+    ⨆-distrib-⨅-⊇ (inj₂ b , inj₁ a , Bb≈Aa) = inj₁ a , Bb≈Aa
+    ⨆-distrib-⨅-⊇ (inj₂ b , inj₂ c , Bb≈Cc) = inj₂ (b , c , Bb≈Cc) , Eq.refl
+
+    ⨆-distrib-⨅ : A ⨆ (B ⨅ C) ≅ (A ⨆ B) ⨅ (A ⨆ C)
+    ⨆-distrib-⨅ = ⨆-distrib-⨅-⊆ , ⨆-distrib-⨅-⊇
+
+    ⨅-distrib-⨆-⊆ : A ⨅ (B ⨆ C) ⊆ (A ⨅ B) ⨆ (A ⨅ C)
+    ⨅-distrib-⨆-⊆ (a , inj₁ b , Aa≈Bb) = inj₁ (a , b , Aa≈Bb) , Eq.refl
+    ⨅-distrib-⨆-⊆ (a , inj₂ c , Aa≈Cc) = inj₂ (a , c , Aa≈Cc) , Eq.refl
+
+    ⨅-distrib-⨆-⊇ : (A ⨅ B) ⨆ (A ⨅ C) ⊆ A ⨅ (B ⨆ C)
+    ⨅-distrib-⨆-⊇ (inj₁ (a , b , Aa≈Bb)) = (a , inj₁ b , Aa≈Bb) , Eq.refl
+    ⨅-distrib-⨆-⊇ (inj₂ (a , c , Aa≈Cc)) = (a , inj₂ c , Aa≈Cc) , Eq.refl
+
+    ⨅-distrib-⨆ : A ⨅ (B ⨆ C) ≅ (A ⨅ B) ⨆ (A ⨅ C)
+    ⨅-distrib-⨆ = ⨅-distrib-⨆-⊆ , ⨅-distrib-⨆-⊇
 ```
 
 ## Further Properties
