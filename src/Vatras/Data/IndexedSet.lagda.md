@@ -171,11 +171,13 @@ We now prove the following theorems:
 ⊆-refl i = i , Eq.refl
 
 -- There is no antisymmetry definition in Relation.Binary.Indexed.Heterogeneous.Definition. Adding that to the standard library would be good and a low hanging fruit.
-⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} → Antisym (_⊆_ {i₁ = I}) (_⊆_ {i₁ = J}) (_≅_)
+-- ⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} → Antisym (_⊆_ {i₁ = I}) (_⊆_ {i₁ = J}) (_≅_)
+⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → A ⊆ B → B ⊆ A → A ≅ B
 ⊆-antisym l r = l , r
 
 -- There are no generalized transitivity, symmetry and antisymmetry definitions which allow different levels in Relation.Binary.Indexed.Heterogeneous.Definition . Adding that to the standard library would be good and a low hanging fruit.
-⊆-trans : Transitive (IndexedSet {iℓ}) _⊆_
+-- ⊆-trans : Transitive (IndexedSet {iℓ}) _⊆_
+⊆-trans : ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K} → A ⊆ B → B ⊆ C → A ⊆ C
 ⊆-trans A⊆B B⊆C i =
   -- This proof looks resembles state monad bind >>=.
   -- interesting... 🤔
@@ -186,10 +188,10 @@ We now prove the following theorems:
 ≅-refl : Reflexive (IndexedSet {iℓ}) _≅_
 ≅-refl = ⊆-refl , ⊆-refl
 
-≅-sym : Symmetric (IndexedSet {iℓ}) _≅_
+≅-sym : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → B ≅ A
 ≅-sym (l , r) = r , l
 
-≅-trans : Transitive (IndexedSet {iℓ}) _≅_
+≅-trans : ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K} → A ≅ B → B ≅ C → A ≅ C
 ≅-trans (A⊆B , B⊆A) (B⊆C , C⊆B) =
     ⊆-trans A⊆B B⊆C
   , ⊆-trans C⊆B B⊆A
