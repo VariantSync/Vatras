@@ -45,7 +45,7 @@ module Eq = IsEquivalence isEquivalence
 ## Definitions
 
 ```agda
-variable
+private variable
   iℓ jℓ kℓ : Level
 
 -- An index can just be any set (of any universe, which is why it looks so complicated).
@@ -645,7 +645,7 @@ singleton-set-is-nonempty _ = tt
 ```agda
 module _ where
   open import Data.Sum using (_⊎_; inj₁; inj₂)
-  variable
+  private variable
     α : Set iℓ
     β : Set jℓ
 
@@ -683,7 +683,7 @@ module _ where
 
   module _ where
     open import Data.Empty using (⊥-elim)
-    variable
+    private variable
       γ : Set kℓ
       A : IndexedSet α
       B : IndexedSet β
