@@ -18,6 +18,9 @@ jobs:
       with:
         key: nix-${{ hashFiles('.github/workflows/check.yml', 'default.nix', 'nix/**') }}
         nix_file: nix/github-workflow-dependencies.nix
+    - name: Setup the environment
+      # Supress a warning about missing channels by using the shell from the environment
+      run: echo NIX_BUILD_SHELL="$(which bash)" >> "$GITHUB_ENV"
     - name: Check Agda files
       run: nix-shell --run './scripts/check-all.sh github-action'
     - name: Check for sources of inconsistencies
