@@ -17,6 +17,7 @@ import Vatras.Lang.NCC
 import Vatras.Lang.2CC
 import Vatras.Lang.NADT
 import Vatras.Lang.ADT
+import Vatras.Lang.ADT.Prop
 import Vatras.Lang.OC
 import Vatras.Lang.FST
 import Vatras.Lang.Gruler
@@ -68,6 +69,11 @@ module ADT where
     open Vatras.Lang.ADT F (λ _ → ⊥) using (Configuration) public
   module _ {F : 𝔽} {V : 𝕍} where
     open Vatras.Lang.ADT F V hiding (ADT; ADTL; Configuration) public
+
+module PropADT where
+  open Vatras.Lang.ADT.Prop using (PropADT; PropADTL) public
+  module _ {F : 𝔽} {V : 𝕍} where
+    open Vatras.Lang.ADT.Prop F V hiding (PropADT; PropADTL) public
 
 module OC where
   open Vatras.Lang.OC using (OC; OCL; WFOC; WFOCL; Configuration) public

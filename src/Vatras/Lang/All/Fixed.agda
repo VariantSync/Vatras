@@ -10,6 +10,7 @@ import Vatras.Lang.NCC
 import Vatras.Lang.2CC
 import Vatras.Lang.NADT
 import Vatras.Lang.ADT
+import Vatras.Lang.ADT.Prop
 import Vatras.Lang.OC
 import Vatras.Lang.FST
 import Vatras.Lang.Gruler
@@ -24,6 +25,7 @@ module NCC where
     open Vatras.Lang.NCC F n hiding (NCC; NCCL; Configuration) public
 module 2CC = Vatras.Lang.2CC F
 module NADT = Vatras.Lang.NADT F V
+module PropADT = Vatras.Lang.ADT.Prop F V
 module ADT = Vatras.Lang.ADT F V
 module OC = Vatras.Lang.OC F
 module FST = Vatras.Lang.FST F
