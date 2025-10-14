@@ -26,7 +26,6 @@ true≢false : ∀ {a : Bool}
 true≢false refl ()
 
 ----- Some arithmetic properties
--- TODO: Contribute some of these functions to STL
 
 ≡ᵇ-refl : ∀ (n : ℕ) → (n ≡ᵇ n) ≡ true
 ≡ᵇ-refl zero = refl
