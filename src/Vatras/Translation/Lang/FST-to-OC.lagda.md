@@ -282,10 +282,10 @@ induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | jus
     0 -< [] >- ∷ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
   ≡⟨⟩
     catMaybes (just (0 -< [] >-) ∷ List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)
-  ≡⟨ Eq.cong catMaybes (Eq.cong₂ _∷_ (shared-artifact e c₁ c₂
-                                                      (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₁)) (Eq.sym ⟦e⟧c₁))
-                                                      (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₂)) (Eq.sym ⟦e⟧c₂)))
-                                      refl) ⟩
+  ≡⟨ Eq.cong (λ eq → catMaybes (eq ∷ (List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)))
+       (shared-artifact e c₁ c₂
+         (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₁)) (Eq.sym ⟦e⟧c₁))
+         (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₂)) (Eq.sym ⟦e⟧c₂))) ⟩
     catMaybes (OC.⟦ e ⟧ₒ (c₁ ∧ c₂) ∷ List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)
   ≡⟨⟩
     OC.⟦ e ∷ cs ⟧ₒ-recurse (c₁ ∧ c₂)
