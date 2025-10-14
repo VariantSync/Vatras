@@ -10,6 +10,7 @@ module Vatras.Translation.Lang.2CC-to-ADT where
 open import Size using (Size; ∞)
 import Vatras.Data.EqIndexedSet as IndexedSet
 open import Data.Bool as Bool using (if_then_else_)
+import Data.Bool.Properties as Bool
 open import Data.List as List using (List; []; _∷_; _ʳ++_)
 import Data.List.Properties as List
 open import Vatras.Framework.Compiler using (LanguageCompiler)
@@ -59,7 +60,7 @@ preserves-≗ (d ⟨ l , r ⟩) config =
     ADT.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then ADT.⟦ translate l ⟧ config else ADT.⟦ translate r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-≗ l config) (preserves-≗ r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-≗ l config) (preserves-≗ r config) ⟩
     2CC.⟦ d ⟨ l , r ⟩ ⟧ config
   ∎
 
