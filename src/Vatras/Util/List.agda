@@ -4,14 +4,12 @@ Utilities for lists.
 module Vatras.Util.List where
 
 open import Data.Bool using (Bool; true; false)
-open import Data.Fin using (Fin)
-open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
-open import Data.Nat.Properties using (m≤m+n)
+open import Data.Nat using (ℕ; suc; zero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
-open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
+open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; _⁺++⁺_) renaming (map to map⁺)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
-open import Function using (id; _∘_; flip)
+open import Function using (id; _∘_)
 
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open Eq.≡-Reasoning
