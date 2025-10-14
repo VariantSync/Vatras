@@ -278,17 +278,15 @@ induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | jus
 induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ with OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂) in ⟦cs⟧c₁∧c₂ | OC.⟦ cs ⟧ₒ-recurse c₁ | subtreeₒ-recurse cs (c₁ ∧ c₂) c₁ implies-∧₁
 induction (e@(_ ❲ _ ❳) ∷ cs) c₁ c₂ c₃ p₁ p₂ p₃ | just _  | just _  | nothing | _ | .[] | .[] | [] = inj₂ (
     0 -< [] >- ∷ []
-  ≡⟨ Eq.cong₂ _∷_ refl ⟦cs⟧c₁∧c₂ ⟨
-    0 -< [] >- ∷ OC.⟦ cs ⟧ₒ-recurse (c₁ ∧ c₂)
   ≡⟨⟩
-    catMaybes (just (0 -< [] >-) ∷ List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)
-  ≡⟨ Eq.cong (λ eq → catMaybes (eq ∷ (List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)))
+    catMaybes (just (0 -< [] >-) ∷ [])
+  ≡⟨ Eq.cong (λ eq → catMaybes (eq ∷ []))
        (shared-artifact e c₁ c₂
          (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₁)) (Eq.sym ⟦e⟧c₁))
          (Eq.trans (Eq.cong just (List.∷-injectiveˡ p₂)) (Eq.sym ⟦e⟧c₂))) ⟩
-    catMaybes (OC.⟦ e ⟧ₒ (c₁ ∧ c₂) ∷ List.map (flip OC.⟦_⟧ₒ (c₁ ∧ c₂)) cs)
+    catMaybes (OC.⟦ e ⟧ₒ (c₁ ∧ c₂) ∷ [])
   ≡⟨⟩
-    OC.⟦ e ∷ cs ⟧ₒ-recurse (c₁ ∧ c₂)
+    OC.⟦ e ∷ [] ⟧ₒ-recurse (c₁ ∧ c₂)
   ∎)
 ```
 
