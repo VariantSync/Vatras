@@ -43,16 +43,6 @@ n<m→m≡ᵇn : ∀ {n m : ℕ} → n < m → (m ≡ᵇ n) ≡ false
 n<m→m≡ᵇn {zero} (s≤s n<m) = refl
 n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 
-1+[m-[1+n]]=m-n : ∀ (m n : ℕ) → (n < m) → suc (m ∸ suc n) ≡ m ∸ n
-1+[m-[1+n]]=m-n (suc m-1) n (s≤s n<m-1) =
-  begin
-    suc (suc m-1 ∸ suc n)
-  ≡⟨ Eq.cong suc refl ⟩
-    suc (m-1 ∸ n)
-  ≡⟨ +-∸-assoc 1 n<m-1 ⟨
-    suc m-1 ∸ n
-  ∎
-
 n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
 n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
