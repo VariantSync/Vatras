@@ -3,7 +3,7 @@ module Vatras.Util.AuxProofs where
 open import Level using (Level)
 open import Function using (id; _∘_)
 
-open import Data.Bool using (Bool; false; true; if_then_else_; not; _∧_)
+open import Data.Bool using (Bool; false; true)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m; +-∸-assoc)
@@ -56,55 +56,6 @@ n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
 n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
-
------ Properties of if_then_else
--- TODO: These are contributed to STL now. Update our STL dependency and replace these by their STL counterpart.
-
-if-idemp : ∀ {ℓ} {A : Set ℓ} {a : A}
-  → (c : Bool)
-    ------------------------
-  → (if c then a else a) ≡ a
-if-idemp false = refl
-if-idemp true  = refl
-
-if-idemp' : ∀ {ℓ} {A : Set ℓ}
-  → (a : A)
-    ------------------------
-  → ∀ {c} → (if c then a else a) ≡ a
-if-idemp' _ {b} = if-idemp b
-
-if-swap : ∀ {A : Set} (x y : Bool) (a b : A)
-  → (if x then a else (if y then a else b))
-  ≡ (if y then a else (if x then a else b))
-if-swap false _ _ _ = refl
-if-swap true false _ _ = refl
-if-swap true true _ _ = refl
-
-if-flip : ∀ {ℓ} {A : Set ℓ} (x : Bool) (a b : A)
-  → (if not x then a else b) ≡ (if x then b else a)
-if-flip false a b = refl
-if-flip true  a b = refl
-
-if-∧ : ∀ {ℓ} {A : Set ℓ} (x y : Bool) (a b : A)
-  → (if x ∧ y then a else b) ≡ (if x then (if y then a else b) else b)
-if-∧ false _ _ _ = refl
-if-∧ true  _ _ _ = refl
-
-if-congˡ : ∀ {ℓ} {A : Set ℓ} {a b c : A} x
-  → a ≡ c
-  → (if x then a else b) ≡ (if x then c else b)
-if-congˡ _ refl = refl
-
-if-congʳ : ∀ {ℓ} {A : Set ℓ} {a b d : A} x
-  → b ≡ d
-  → (if x then a else b) ≡ (if x then a else d)
-if-congʳ _ refl = refl
-
-if-cong : ∀ {ℓ} {A : Set ℓ} {a b c d : A} x
-  → a ≡ c
-  → b ≡ d
-  → (if x then a else b) ≡ (if x then c else d)
-if-cong _ refl refl = refl
 
 ----- Properties of Vectors
 

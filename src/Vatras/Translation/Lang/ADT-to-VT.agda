@@ -6,6 +6,7 @@ open import Vatras.Framework.Definitions using (𝔽)
 module Vatras.Translation.Lang.ADT-to-VT (F : 𝔽) where
 
 open import Data.Bool using (if_then_else_)
+open import Data.Bool.Properties using (if-cong₂)
 open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.Properties using (++-identityʳ)
 open import Function using (id; _∘_)
@@ -25,7 +26,6 @@ open import Vatras.Lang.VT.Encode F using (encode-forest; encode-forest-preserve
 open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; expressiveness-from-compiler)
 open import Vatras.Translation.Lang.ADT.ADT-vs-PropADT F Forest using (lift-compiler; ADT≽PropADT)
 
-open import Vatras.Util.AuxProofs using (if-cong)
 
 translate' : ∀ {A} → PropADT A → List (UnrootedVT A)
 translate' (leaf v)      = encode-forest v
@@ -40,7 +40,7 @@ preserves (D ⟨ l , r ⟩) c =
     ⟦ D ⟨ l , r ⟩ ⟧ₚ c
   ≡⟨⟩
     (if eval D c then ⟦ l ⟧ₚ c else ⟦ r ⟧ₚ c)
-  ≡⟨ if-cong (eval D c) (preserves l c) (preserves r c) ⟩
+  ≡⟨ if-cong₂ (eval D c) (preserves l c) (preserves r c) ⟩
     (if eval D c then configure-all (translate' l) c else configure-all (translate' r) c)
   ≡⟨ ++-identityʳ _ ⟨
     (if eval D c then configure-all (translate' l) c else configure-all (translate' r) c) ++ []
