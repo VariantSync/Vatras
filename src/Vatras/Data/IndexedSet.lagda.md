@@ -45,7 +45,7 @@ module Eq = IsEquivalence isEquivalence
 ## Definitions
 
 ```agda
-variable
+private variable
   iℓ jℓ kℓ : Level
 
 -- An index can just be any set (of any universe, which is why it looks so complicated).
@@ -130,6 +130,19 @@ _⊢_≡ⁱ_ : ∀ {I : Set iℓ} (A : IndexedSet I) → I → I → Set ℓ
 A ⊢ i ≡ⁱ j = A i ≈ A j
 ```
 
+## Inverse Operations
+
+```agda
+_∉_ : ∀ {I : Set iℓ} → Carrier → IndexedSet I → Set (ℓ ⊔ iℓ)
+a ∉ A = ∀ i → ¬ (a ≈ A i)
+
+Disjoint : ∀ {I : Set iℓ} {J : Set jℓ} (A : IndexedSet I) (B : IndexedSet J) → Set (ℓ ⊔ iℓ ⊔ jℓ)
+Disjoint A B = ∀ i → A i ∉ B
+
+Disjoint-flip : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → Disjoint A B → Disjoint B A
+Disjoint-flip disjointAB j i Bj≈Ai = disjointAB i j (Eq.sym Bj≈Ai)
+```
+
 ## Singletons
 
 ```agda
@@ -164,11 +177,13 @@ We now prove the following theorems:
 ⊆-refl i = i , Eq.refl
 
 -- There is no antisymmetry definition in Relation.Binary.Indexed.Heterogeneous.Definition. Adding that to the standard library would be good and a low hanging fruit.
-⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} → Antisym (_⊆_ {i₁ = I}) (_⊆_ {i₁ = J}) (_≅_)
+-- ⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} → Antisym (_⊆_ {i₁ = I}) (_⊆_ {i₁ = J}) (_≅_)
+⊆-antisym : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → A ⊆ B → B ⊆ A → A ≅ B
 ⊆-antisym l r = l , r
 
 -- There are no generalized transitivity, symmetry and antisymmetry definitions which allow different levels in Relation.Binary.Indexed.Heterogeneous.Definition . Adding that to the standard library would be good and a low hanging fruit.
-⊆-trans : Transitive (IndexedSet {iℓ}) _⊆_
+-- ⊆-trans : Transitive (IndexedSet {iℓ}) _⊆_
+⊆-trans : ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K} → A ⊆ B → B ⊆ C → A ⊆ C
 ⊆-trans A⊆B B⊆C i =
   -- This proof looks resembles state monad bind >>=.
   -- interesting... 🤔
@@ -179,10 +194,10 @@ We now prove the following theorems:
 ≅-refl : Reflexive (IndexedSet {iℓ}) _≅_
 ≅-refl = ⊆-refl , ⊆-refl
 
-≅-sym : Symmetric (IndexedSet {iℓ}) _≅_
+≅-sym : ∀ {I : Set iℓ} {J : Set jℓ} {A : IndexedSet I} {B : IndexedSet J} → A ≅ B → B ≅ A
 ≅-sym (l , r) = r , l
 
-≅-trans : Transitive (IndexedSet {iℓ}) _≅_
+≅-trans : ∀ {I : Set iℓ} {J : Set jℓ} {K : Set kℓ} {A : IndexedSet I} {B : IndexedSet J} {C : IndexedSet K} → A ≅ B → B ≅ C → A ≅ C
 ≅-trans (A⊆B , B⊆A) (B⊆C , C⊆B) =
     ⊆-trans A⊆B B⊆C
   , ⊆-trans C⊆B B⊆A
@@ -623,6 +638,183 @@ all-empty-sets-are-equal A-empty = empty-set⊆𝟘 A-empty , 𝟘⊆A
 -- A canonical singleton indexed set is not empty.
 singleton-set-is-nonempty : (A : 𝟙 iℓ) → nonempty A
 singleton-set-is-nonempty _ = tt
+```
+
+## Operations
+
+```agda
+module _ where
+  open import Data.Sum using (_⊎_; inj₁; inj₂)
+  private variable
+    α : Set iℓ
+    β : Set jℓ
+
+  {-|
+  Indexed Set Union (Or):
+  We can create the union of two indexed sets by accepting either of the input indices.
+  -}
+  infix 21 _⨆_
+  _⨆_ : IndexedSet α → IndexedSet β → IndexedSet (α ⊎ β)
+  (A ⨆ B) (inj₁ a) = A a
+  (A ⨆ B) (inj₂ b) = B b
+
+  {-|
+  Indexed Set Intersection (And):
+  The set intersection should contain only elements that are both in A _and_ B.
+  This means that an element is in the intersection if and only if there is an
+  index for both A and B that both point to the element.
+  Hence, the index set of the intersection set can be modelled as the type of
+  all indices from A that point to elements that also B points to.
+  -}
+  infix 21 _⨅_
+  _⨅_ : (A : IndexedSet α) → (B : IndexedSet β) → IndexedSet (Σ[ a ∈ α ] A a ∈ B)
+  (A ⨅ B) (a , b , eq) = A a -- We could also pick B b here.
+
+  {-|
+  Indexed Set Difference:
+  We can remove all elements pointed to by B from an indexed set A by restricting the set of indices
+  to those indices that do not point to elements in B.
+  Hence, the index set of the difference set can be modelled as the type of
+  all indices from A that point to elements that are not pointed at by B.
+  -}
+  infix 21 _∖_ -- use \setminus to create ∖ with Agda Input Mode in Emacs
+  _∖_ : (A : IndexedSet α) → (B : IndexedSet β) → IndexedSet (Σ[ a ∈ α ] (A a ∉ B))
+  (A ∖ B) (a , Aa∉B) = A a
+
+  module _ where
+    open import Data.Empty using (⊥-elim)
+    private variable
+      γ : Set kℓ
+      A : IndexedSet α
+      B : IndexedSet β
+      C : IndexedSet γ
+
+    -- ⨆ properties
+
+    ⊆-⨆ : A ⊆ A ⨆ B
+    ⊆-⨆ i = inj₁ i , Eq.refl
+
+    ⨆-⊆ : B ⊆ A → A ⨆ B ⊆ A
+    ⨆-⊆ _   (inj₁ a) = a , Eq.refl
+    ⨆-⊆ B⊆A (inj₂ b) = B⊆A b
+
+    ⨆-idemp : A ⨆ A ≅ A
+    ⨆-idemp = ⨆-⊆ ⊆-refl , ⊆-⨆
+
+    ⨆-comm-⊆ : A ⨆ B ⊆ B ⨆ A
+    ⨆-comm-⊆ (inj₁ a) = inj₂ a , Eq.refl
+    ⨆-comm-⊆ (inj₂ b) = inj₁ b , Eq.refl
+
+    ⨆-comm : A ⨆ B ≅ B ⨆ A
+    ⨆-comm = ⨆-comm-⊆ , ⨆-comm-⊆
+
+    ⨆-assoc-⊆ : (A ⨆ B) ⨆ C ⊆ A ⨆ (B ⨆ C)
+    ⨆-assoc-⊆ (inj₁ (inj₁ a)) = ⊆-⨆ a
+    ⨆-assoc-⊆ (inj₁ (inj₂ b)) = inj₂ (inj₁ b) , Eq.refl
+    ⨆-assoc-⊆ (inj₂ c)        = inj₂ (inj₂ c) , Eq.refl
+
+    ⨆-assoc-⊇ : A ⨆ (B ⨆ C) ⊆ (A ⨆ B) ⨆ C
+    ⨆-assoc-⊇ (inj₁ a)        = inj₁ (inj₁ a) , Eq.refl
+    ⨆-assoc-⊇ (inj₂ (inj₁ b)) = inj₁ (inj₂ b) , Eq.refl
+    ⨆-assoc-⊇ (inj₂ (inj₂ c)) = inj₂ c , Eq.refl
+
+    ⨆-assoc : (A ⨆ B) ⨆ C ≅ A ⨆ (B ⨆ C)
+    ⨆-assoc = ⨆-assoc-⊆ , ⨆-assoc-⊇
+
+    ⨆-idʳ : A ⨆ 𝟘 ≅ A
+    ⨆-idʳ = ⨆-⊆ 𝟘⊆A , ⊆-⨆
+
+    ⨆-idˡ : 𝟘 ⨆ A ≅ A
+    ⨆-idˡ = ≅-trans ⨆-comm ⨆-idʳ
+
+    -- ⨅ properties
+
+    ⨅-⊆ : A ⨅ B ⊆ A
+    ⨅-⊆ (a₁ , _ ) = a₁ , Eq.refl
+
+    ⊆-⨅ : A ⊆ B → A ⊆ A ⨅ B
+    ⊆-⨅ A⊆B a = (a , A⊆B a) , Eq.refl
+
+    ⨅-idemp : A ⨅ A ≅ A
+    ⨅-idemp = ⨅-⊆ , ⊆-⨅ ⊆-refl
+
+    ⨅-comm-⊆ : A ⨅ B ⊆ B ⨅ A
+    ⨅-comm-⊆ (a , b , Aa≈Bb) = (b , a , Eq.sym Aa≈Bb) , Aa≈Bb
+
+    ⨅-comm : A ⨅ B ≅ B ⨅ A
+    ⨅-comm = ⨅-comm-⊆ , ⨅-comm-⊆
+
+    ⨅-assoc-⊆ : (A ⨅ B) ⨅ C ⊆ A ⨅ (B ⨅ C)
+    ⨅-assoc-⊆ ((a , b , Aa≈Bb) , c , Aa≈Cc) = (a , (b , c , Eq.trans (Eq.sym Aa≈Bb) Aa≈Cc) , Aa≈Bb) , Eq.refl
+
+    ⨅-assoc-⊇ : A ⨅ (B ⨅ C) ⊆ (A ⨅ B) ⨅ C
+    ⨅-assoc-⊇ (a , (b , c , Bb≈Cc) , Aa≈Bb) = ((a , b , Aa≈Bb) , c , Eq.trans Aa≈Bb Bb≈Cc) , Eq.refl
+
+    ⨅-assoc : (A ⨅ B) ⨅ C ≅ A ⨅ (B ⨅ C)
+    ⨅-assoc = ⨅-assoc-⊆ , ⨅-assoc-⊇
+
+    ⨅-zeroˡ : 𝟘 ⨅ A ≅ 𝟘
+    ⨅-zeroˡ = ⨅-⊆  , ⊆-⨅ 𝟘⊆A
+
+    ⨅-zeroʳ : A ⨅ 𝟘 ≅ 𝟘
+    ⨅-zeroʳ = ≅-trans ⨅-comm ⨅-zeroˡ
+
+    -- "A ⨅ B ≅ 𝟘" and "Disjoint A B" are equivalent propositions.
+    -- "A ⨅ B ≅ 𝟘" is the canonical way of saying that two sets are disjoint.
+    -- "Disjoint A B" is a direct way of saying that for indexed sets.
+
+    ⨅-empty→Disjoint : A ⨅ B ≅ 𝟘 → Disjoint A B
+    ⨅-empty→Disjoint (A⨅B⊆𝟘 , 𝟘⊆A⨅B) a b Aa≈Bb with A⨅B⊆𝟘 (a , b , Aa≈Bb)
+    ... | ()
+
+    Disjoint→⨅-empty : Disjoint A B → A ⨅ B ≅ 𝟘
+    proj₁ (Disjoint→⨅-empty disjointAB) (a , b , Aa≈Bb) = ⊥-elim (disjointAB a b Aa≈Bb)
+    proj₂ (Disjoint→⨅-empty disjointAB) = 𝟘⊆A
+
+    -- ∖ properties
+
+    ∖-⊆ : A ∖ B ⊆ A
+    ∖-⊆ (a , Aa∉B) = a , Eq.refl
+
+    ⊆-∖ : A ⨅ B ≅ 𝟘 → A ⊆ (A ∖ B)
+    ⊆-∖ A⨅B≅𝟘 a = (a , ⨅-empty→Disjoint A⨅B≅𝟘 a) , Eq.refl
+
+    ≅-∖ : A ⨅ B ≅ 𝟘 → A ≅ (A ∖ B)
+    ≅-∖ A⨅B≅𝟘 = ⊆-∖ A⨅B≅𝟘 , ∖-⊆
+
+    ∖-id : A ∖ 𝟘 ≅ A
+    ∖-id = ∖-⊆ , ⊆-∖ ⨅-zeroʳ
+
+    ∖-zero-⊆ : 𝟘 ∖ A ⊆ 𝟘
+    ∖-zero-⊆ ()
+
+    ∖-zero : 𝟘 ∖ A ≅ 𝟘
+    ∖-zero = ∖-zero-⊆ , 𝟘⊆A
+
+    -- combined properties
+
+    ⨆-distrib-⨅-⊆ : A ⨆ (B ⨅ C) ⊆ (A ⨆ B) ⨅ (A ⨆ C)
+    ⨆-distrib-⨅-⊆ (inj₁ a)               = (inj₁ a , ⊆-⨆ a) , Eq.refl
+    ⨆-distrib-⨅-⊆ (inj₂ (b , c , Bb≈Cc)) = (inj₂ b , inj₂ c , Bb≈Cc) , Eq.refl
+
+    ⨆-distrib-⨅-⊇ : (A ⨆ B) ⨅ (A ⨆ C) ⊆ A ⨆ (B ⨅ C)
+    ⨆-distrib-⨅-⊇ (inj₁ a , _)              = inj₁ a , Eq.refl
+    ⨆-distrib-⨅-⊇ (inj₂ b , inj₁ a , Bb≈Aa) = inj₁ a , Bb≈Aa
+    ⨆-distrib-⨅-⊇ (inj₂ b , inj₂ c , Bb≈Cc) = inj₂ (b , c , Bb≈Cc) , Eq.refl
+
+    ⨆-distrib-⨅ : A ⨆ (B ⨅ C) ≅ (A ⨆ B) ⨅ (A ⨆ C)
+    ⨆-distrib-⨅ = ⨆-distrib-⨅-⊆ , ⨆-distrib-⨅-⊇
+
+    ⨅-distrib-⨆-⊆ : A ⨅ (B ⨆ C) ⊆ (A ⨅ B) ⨆ (A ⨅ C)
+    ⨅-distrib-⨆-⊆ (a , inj₁ b , Aa≈Bb) = inj₁ (a , b , Aa≈Bb) , Eq.refl
+    ⨅-distrib-⨆-⊆ (a , inj₂ c , Aa≈Cc) = inj₂ (a , c , Aa≈Cc) , Eq.refl
+
+    ⨅-distrib-⨆-⊇ : (A ⨅ B) ⨆ (A ⨅ C) ⊆ A ⨅ (B ⨆ C)
+    ⨅-distrib-⨆-⊇ (inj₁ (a , b , Aa≈Bb)) = (a , inj₁ b , Aa≈Bb) , Eq.refl
+    ⨅-distrib-⨆-⊇ (inj₂ (a , c , Aa≈Cc)) = (a , inj₂ c , Aa≈Cc) , Eq.refl
+
+    ⨅-distrib-⨆ : A ⨅ (B ⨆ C) ≅ (A ⨅ B) ⨆ (A ⨅ C)
+    ⨅-distrib-⨆ = ⨅-distrib-⨆-⊆ , ⨅-distrib-⨆-⊇
 ```
 
 ## Further Properties
