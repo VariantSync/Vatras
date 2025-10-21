@@ -31,7 +31,7 @@ When run in a terminal, our demo will show a translation roundtrip, showcasing t
 
 Vatras is a library to study and compare meta-languages for specifying variability in source code and data.
 Some software systems are configurable _before_ they are compiled, i.e., statically.
-A common way example for implementing static variability is by conditional compilation, as for example possible with the C preprocessor.
+A common way to implement static variability is by conditional compilation, as for example possible with the C preprocessor.
 For instance, the following [code snippet from the Linux kernel](https://github.com/torvalds/linux/blob/e271ed52b344ac02d4581286961d0c40acc54c03/include/linux/console.h#L479-L486)
 
 ```C
