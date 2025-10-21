@@ -153,8 +153,8 @@ In general, we **recommend Nix** because it creates a sandbox environment with a
 - For **Mac** users, we recommend Nix or Docker. (We experienced problems with installing Agda manually.)
 - For **Linux** users, any alternative is fine but we recommend Nix for the reasons mentioned above.
 
-There are no other software requirements apart from having either Nix, Docker, or Agda installed, depending on which alternative you choose..
-The only dependency of our library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory and is taken care of automatically by our [makefile](makefile).
+There are no other software requirements apart from having either Nix, Docker, or Agda installed, depending on which alternative you choose.
+The only dependency of our library is the Agda standard library which is automatically taken care of by our Nix and Docker setups.
 
 Note that building for the first time (or running `nix-shell`) will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min and a lot of terminal output).
 
@@ -253,24 +253,8 @@ make
 which will compile the library and run its small demo.
 The expected output is explained in detail in the Step-by-Step guide below.
 
-## Step-by-Step Guide
 
-The "Kick-The-Tires" section above basically explains all necessary steps to get the library up and running.
-Here, we give additional instructions on the expected output and how to play with other demo inputs.
-For using the library once you finished the setup, please have a look at the later _Reusability Guide_, which, among other
-information, includes an overview of the library, notes on our mechanized proofs, and tutorials for getting to know the library.
-
-### How does the demo know which standard library to use?
-
-Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided [makefile](makefile) sets this environment variable temporarily and locally during the build process to the `.libs` directory within this repository. (Your global setup will not be affected). If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
-
-```shell
-export AGDA_DIR="path/to/this/repository/libs"
-```
-
-Beware that setting the variable will overwrite any previously set directory. In that case you might want to overwrite the variable only temporarily while working on this project.
-
-### Expected Output
+#### Expected Output
 
 The demo will print a long terminal output of about 1250 lines.
 A copy of the expected output can be found in the [expected-output.txt](expected-output.txt).
@@ -593,23 +577,13 @@ during a Docker build, you might have encountered an out of memory issue.
 Try to rerun the same command after closing other applications which might comsume a lot of RAM.
 In some cases it may also be necessary to disable some kind of out-of-memory killer (also known as OOM killer or OOM deamon) but use this option with caution.
 
-### Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
-The following error may occur when executing `make` after a manual setup: 
-```
-Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
-Reason: ./libs/../agda-stdlib/standard-library.agda-lib: openBinaryFile: does not exist (No such file or directory)
-make: *** [makefile:15: build] Error 42
-```
-This error indicates that the `agda-stdlib` git submodule has not been set up correctly. 
-Executing `git submodule update --init` in the root of the repository should fix the problem. 
-
 ## Where does the library name 'Vatras' come from?
 
 The name Vatras is (of course) an acronym, which stands for _VAriability language TRAnslationS_.
 Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who stems from the city of Varant, which almost sounds like _Variant_.
 Vatras is praying to the god Adanos, who brings some kind of equality or balance loosely speaking.
 
-[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
-[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
+[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.8.0-blue.svg
+[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.8.0
 [ghcup]: https://www.haskell.org/ghcup/
 [plfa]: https://plfa.github.io/GettingStarted/
