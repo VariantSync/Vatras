@@ -140,9 +140,9 @@ We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and w
 > In case of problems, there is a "Troubleshooting" section at the bottom of this file.
 
 ### Setup
-Clone the library and its submodules to a directory of your choice:
+Clone the library to a directory of your choice:
 ```shell 
-git clone --recursive https://github.com/VariantSync/Vatras.git
+git clone https://github.com/VariantSync/Vatras.git
 ```
 
 There are **three alternative ways** to compile the library and run its small demo.
@@ -160,7 +160,7 @@ Note that building for the first time (or running `nix-shell`) will take a while
 
 #### Alternative 1: Setup via Nix
 
-The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). When you open a WSL2 terminal terminal, you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
+The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). When you open a WSL2 terminal, you can install Nix by following the instructions for installing Nix on Linux from the [NixOS website](https://nixos.org/download/).
 
 When you have Nix installed on your system, open a terminal, navigate to this directory, and then simply open a Nix shell by typing
 ```shell
@@ -189,7 +189,7 @@ How to install Docker depends on your operating system. **For Windows or Mac**, 
 Once you have installed Docker, start the Docker daemon.
 **On Windows**, open the search bar using the 'Windows Key' and search for 'Docker' or 'Docker Desktop'.
 **On Linux**, the docker daemon typically runs automatically, so there is nothing to do; otherwise, start Docker's service using your service manager (e.g., with `systemd`, execute `sudo systemctl start docker`).
-More detailed instructions on starting the deamon are given [here](https://docs.docker.com/config/daemon/start/) on the docker website.
+More detailed instructions on starting the deamon are given [on the docker website](https://docs.docker.com/config/daemon/start/).
 
 Afterwards, open a terminal and navigate to this repository's directory (the directory containing this README.md).
 First, you must create the docker image:
@@ -210,7 +210,7 @@ docker run -t vatras
 
 #### Alternative 3: Manual Setup
 
-The library needs Agda version 2.6.4.3 (newer version should also work but we did not test them).
+The library needs Agda version 2.8.0 (newer version should also work but we did not test them).
 There are different ways to install Agda.
 Following the [Agda book's installation instructions], we recommend using [GHCup][ghcup] to install GHC, Cabal, and Agda as follows (You may skip steps for tools you have already installed but there might be compatibility errors with some versions):
 
@@ -222,10 +222,10 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
 1. Install the GHC compiler and the cabal build tool with [GHCup][ghcup].
 
     ```shell
-    ghcup install ghc 9.2.4
+    ghcup install ghc 9.12.2
     ghcup install cabal recommended
 
-    ghcup set ghc 9.2.4
+    ghcup set ghc 9.12.2
     ghcup set cabal recommended
     ```
 
@@ -233,16 +233,25 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
 
     ```shell
     cabal update
-    cabal install Agda-2.6.4.3
+    cabal install Agda-2.8.0
     ```
 
    To test whether the installation worked or whether your existing installation of Agda has the right version you can check the following command's output:
    ```shell
    > agda --version
-   Agda version 2.6.4.3
+   Agda version 2.8.0
    ```
+
+3. Install the [Agda standard library](https://github.com/agda/agda-stdlib) version 2.3.
+
+    ```shell
+    wget -O agda-stdlib.tar.gz https://github.com/agda/agda-stdlib/archive/v2.3.tar.gz
+    tar -xzf agda-stdlib.tar.gz
+    mkdir -p "$(agda --print-agda-app-dir)"
+    realpath agda-stdlib-2.3/standard-library.agda-lib >> "$(agda --print-agda-app-dir)/libraries"
+    ```
    
-In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup, or check the troubleshooting instructions at the bottom of this file.
+In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.8.0/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup, or check the troubleshooting instructions at the bottom of this file.
 
 To test whether your setup is correct, and to run the demo you may use our makefile.
 Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
@@ -342,9 +351,21 @@ Then add your new list to the `examples` list at the bottom of the file.
 
 ### Using our library in your own Agda projects
 
+In order to use Vatras in your project, you need to state `Vatras` as a dependency in your Agda library file.
+An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
+Its content, including the dependency to Vatras, should include the following:
+```
+name: YOUR-PROJECT-NAME
+depend: Vatras
+include: SOME/PATH/IN/YOUR/PROJECT
+```
+For details about Agda's library management, please have a look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.8.0/tools/package-system.html).
+
+Afterwards, you need to follow one of the following alternatives to let Agda know where to find Vatras.
+
 #### Alternative 1: Installation via Nix
 
-When using Nix, you can use this repository as a library in you own project, by using `agda.withPackages`:
+When using Nix, you can install this repository as an Agda library by using `agda.withPackages`:
 ```nix
 agda = nixpkgs.agda.withPackages [
   nixpkgs.agdaPackages.standard-library
@@ -357,19 +378,13 @@ Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) cr
 
 #### Alternative 2: Manual installation
 
-After downloading this library, you can register it by appending the path of [Vatras.agda-lib](Vatras.agda-lib) to the file `$AGDA_DIR/libraries`, creating it if necessary.
-If the environment variable `AGDA_DIR` is unset, it defaults to `~/.agda` on unix-like systems and `C:\Users\USERNAME\AppData\Roaming\agda` or similar on Windows.
-After registering this library on your system, you can use it in your project by stating `Vatras` as a dependency in your Agda library file.
-An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
-Its content, including the dependency to Vatras, should include the following:
-
+After downloading this library, you can register it using the following commands:
+```shell
+mkdir -p "$(agda --print-agda-app-dir)"
+realpath Vatras.agda-lib >> "$(agda --print-agda-app-dir)/libraries"
 ```
-name: YOUR-PROJECT-NAME
-depend: Vatras
-include: SOME/PATH/IN/YOUR/PROJECT
-```
-
-For details about Agda's library management, please have a look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html).
+Make sure that you also have the Agda standard library version 2.3 installed.
+See step 3 in the [manual setup](#alternative-3-manual-setup) for details on how to install ths Agda standard library.
 
 ### Notes on Mechanized Proofs
 
