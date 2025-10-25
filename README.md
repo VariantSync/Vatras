@@ -171,7 +171,7 @@ To compile the library and run the demo, simply run make:
 ```shell
 make
 ```
-The expected output is explained in detail in the Step-by-Step guide below.
+The expected output is explained in detail in the [Expected Output section](#expected-output) below.
 
 Alternatively, the demo can be compiled locally to `./result/bin`.
 ```shell
@@ -260,12 +260,12 @@ Then run
 make
 ```
 which will compile the library and run its small demo.
-The expected output is explained in detail in the Step-by-Step guide below.
+The expected output is explained in detail in the [Expected Output section](#expected-output) below.
 
 
 #### Expected Output
 
-The demo will print a long terminal output of about 1250 lines.
+The demo will print a long terminal output of very rougly 1000 lines.
 A copy of the expected output can be found in the [expected-output.txt](expected-output.txt).
 
 First, the demo prints unicode characters to terminal, as a test for you to see whether your terminal supports unicode.
