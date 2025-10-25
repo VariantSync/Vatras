@@ -592,6 +592,25 @@ during a Docker build, you might have encountered an out of memory issue.
 Try to rerun the same command after closing other applications which might comsume a lot of RAM.
 In some cases it may also be necessary to disable some kind of out-of-memory killer (also known as OOM killer or OOM deamon) but use this option with caution.
 
+### Docker fails to open Git repository
+
+If you see an error like
+```
+error: opening Git repository '"/home/user"': failed to resolve path '/home/your-user-name/some/path/.git/worktrees/Vatras': No such file or directory
+------
+Dockerfile:19
+--------------------
+  17 |
+  18 |     # Verify all proofs and build the demo.
+  19 | >>> RUN nix-build
+  20 |
+  21 |     # Copy the demo with all runtime dependencies (ignoring build-time dependencies)
+--------------------
+ERROR: failed to solve: process "/bin/sh -c nix-build" did not complete successfully: exit code: 1
+```
+you may be in a Git worktree or your Git directory is out of place for some other reason.
+Ensure that `git rev-parse --path-format=absolute --git-common-dir` (the path of the Git repository's data) is in your current working directory by creating a fresh non-bare clone without creating a second Git worktree.
+
 ## Where does the library name 'Vatras' come from?
 
 The name Vatras is (of course) an acronym, which stands for _VAriability language TRAnslationS_.
