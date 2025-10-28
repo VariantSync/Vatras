@@ -9,8 +9,6 @@ open import Data.Bool.Properties using (if-float)
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≗_)
 open Relation.Binary.PropositionalEquality.≡-Reasoning
 
-open import Vatras.Util.AuxProofs using (if-cong)
-
 import Vatras.Lang.ADT
 
 module Named (F : 𝔽) where

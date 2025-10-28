@@ -7,6 +7,7 @@ open import Data.Bool using (true; false; if_then_else_; _∧_)
 open import Data.Char as Char using (Char)
 open import Data.Nat using (ℕ; _*_; _∸_; ⌊_/2⌋; ⌈_/2⌉; _≤ᵇ_)
 open import Data.List as List using (List; _∷_; [_]; concat; splitAt; _∷ʳ_)
+open import Data.Nat.ListAction using (sum)
 open import Data.Maybe using (nothing; just)
 open import Data.String using (String; _++_; _==_; replicate; fromChar; toList; fromList; Alignment; fromAlignment)
 open import Data.Product as Prod using (_,_; proj₁; map₁)
@@ -48,7 +49,7 @@ charWidth c =
   codePoint = Char.toℕ c
 
 stringLength : String → ℕ
-stringLength line = List.sum (List.map charWidth (Data.String.toList line))
+stringLength line = sum (List.map charWidth (Data.String.toList line))
 
 length : Line → ℕ
 length line = stringLength (content line)

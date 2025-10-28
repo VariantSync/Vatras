@@ -18,7 +18,7 @@ module Vatras.Translation.Lang.VariantList-to-CCC
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using ([]; _∷_; map)
 open import Data.List.NonEmpty using (List⁺; _∷_) renaming (map to map⁺)
-open import Data.List.NonEmpty.Properties using () renaming (map-∘ to map⁺-∘; map-cong to map⁺-cong)
+open import Data.List.NonEmpty.Properties using () renaming (map-id to map⁺-id; map-∘ to map⁺-∘; map-cong to map⁺-cong)
 open import Data.Product using (_,_; proj₁)
 
 open import Function using (id; flip; _∘_; _$_)
@@ -34,7 +34,7 @@ open import Vatras.Lang.All.Fixed Dimension (Rose ∞)
 open VariantList using (VariantList; VariantListL)
 open CCC using (CCC; CCCL; _⟨_⟩)
 
-open import Vatras.Util.List using (find-or-last; map-find-or-last; map⁺-id)
+open import Vatras.Util.List using (find-or-last; map-find-or-last)
 ```
 
 ## Translation
