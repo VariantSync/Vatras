@@ -60,7 +60,7 @@ eliminate-idempotent-choices-preserves (a -< cs >-) c =
 eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c with eliminate-idempotent-choices l ≟ eliminate-idempotent-choices r
 eliminate-idempotent-choices-preserves (D ⟨ l , r ⟩) c | no l≢r =
     (if c D then ⟦ eliminate-idempotent-choices l ⟧ c else ⟦ eliminate-idempotent-choices r ⟧ c)
-  ≡⟨ Eq.cong₂ (if c D then_else_) (eliminate-idempotent-choices-preserves l c) (eliminate-idempotent-choices-preserves r c) ⟩
+  ≡⟨ Bool.if-cong₂ _ (eliminate-idempotent-choices-preserves l c) (eliminate-idempotent-choices-preserves r c) ⟩
     (if c D then ⟦ l ⟧ c else ⟦ r ⟧ c)
   ≡⟨⟩
     ⟦ D ⟨ l , r ⟩ ⟧ c

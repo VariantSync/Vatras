@@ -47,7 +47,7 @@ preserves-≗ Variant→2CC (f ⟨ l , r ⟩) config =
     2CC.⟦ f ⟨ translate Variant→2CC l , translate Variant→2CC r ⟩ ⟧ config
   ≡⟨⟩
     (if config f then 2CC.⟦ translate Variant→2CC l ⟧ config else 2CC.⟦ translate Variant→2CC r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config f then_else_) (preserves-≗ Variant→2CC l config) (preserves-≗ Variant→2CC r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-≗ Variant→2CC l config) (preserves-≗ Variant→2CC r config) ⟩
     (if config f then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
   ≡⟨⟩
     ADT.⟦ f ⟨ l , r ⟩ ⟧ config
