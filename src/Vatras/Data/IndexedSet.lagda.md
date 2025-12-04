@@ -690,3 +690,15 @@ re-index {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-
   , re-indexʳ {_≈ᵃ_ = _≈ᵃ_} rename M rename-is-surjective ≈ᵃ-refl ≈ᵇ-sym M-is-congruent
 ```
 
+### Ungrouped Properties
+
+```agda
+module _ where
+  open import Data.Nat as ℕ using (ℕ)
+  open import Data.Fin as Fin using (Fin)
+  open import Data.List using (lookup; tabulate)
+
+  tabulate⁺ : ∀ {j} {J : Set j} {n : ℕ} {A : IndexedSet (Fin n)} {B : IndexedSet J} → A ⊆ B → lookup (tabulate A) ⊆ B
+  tabulate⁺ {n = ℕ.suc n} x Fin.zero = x Fin.zero
+  tabulate⁺ {n = ℕ.suc n} x (Fin.suc i) = tabulate⁺ (x ∘ Fin.suc) i
+```

@@ -304,6 +304,26 @@ sum-map-< f g (x ∷ xs) f<g =
   where
   open ℕ.≤-Reasoning
 
+sum-map-const :
+  ∀ {ℓ} {A : Set ℓ}
+  → (n : ℕ)
+  → (xs : List A)
+  → List.sum (List.map (const n) xs) ≡ n * List.length xs
+sum-map-const n [] = Eq.sym (ℕ.*-zeroʳ n)
+sum-map-const n (x ∷ xs) =
+    List.sum (List.map (const n) (x ∷ xs))
+  ≡⟨⟩
+    n + List.sum (List.map (const n) xs)
+  ≡⟨ Eq.cong (n +_) (sum-map-const n xs) ⟩
+    n + n * List.length xs
+  ≡⟨ ℕ.*-suc n (List.length xs) ⟨
+    n * suc (List.length xs)
+  ≡⟨⟩
+    n * List.length (x ∷ xs)
+  ∎
+  where
+  open Eq.≡-Reasoning
+
 sum-* : ∀ (n : ℕ) (xs : List ℕ) → List.sum (List.map (n *_) xs) ≡ n * List.sum xs
 sum-* n [] = Eq.sym (ℕ.*-zeroʳ n)
 sum-* n (x ∷ xs) =
@@ -381,39 +401,68 @@ module _ where
   Interleaving⇒Sublistʳ (consˡ zs) = _ ∷ʳ Interleaving⇒Sublistʳ zs
   Interleaving⇒Sublistʳ (consʳ zs) = refl ∷ Interleaving⇒Sublistʳ zs
 
-  sum-Interleaving : ∀ {ℓ} {A : Set ℓ}
-    → {f : A → ℕ}
+  All-Interleavingₗ :
+    ∀ {a} {p} {A : Set a} {P : A → Set p}
     → {xs ys zs : List A}
     → Interleaving xs ys zs
-    → List.sum (List.map f xs) + List.sum (List.map f ys) ≡ List.sum (List.map f zs)
+    → All P zs
+    → All P xs
+  All-Interleavingₗ [] [] = []
+  All-Interleavingₗ (consˡ interleaving) (pz ∷ all-zs) = pz ∷ All-Interleavingₗ interleaving all-zs
+  All-Interleavingₗ (consʳ interleaving) (pz ∷ all-zs) = All-Interleavingₗ interleaving all-zs
+
+  All-Interleavingᵣ :
+    ∀ {a} {p} {A : Set a} {P : A → Set p}
+    → {xs ys zs : List A}
+    → Interleaving xs ys zs
+    → All P zs
+    → All P ys
+  All-Interleavingᵣ [] [] = []
+  All-Interleavingᵣ (consˡ interleaving) (pz ∷ all-zs) = All-Interleavingᵣ interleaving all-zs
+  All-Interleavingᵣ (consʳ interleaving) (pz ∷ all-zs) = pz ∷ All-Interleavingᵣ interleaving all-zs
+
+  map-Interleaving :
+    ∀ {a} {b} {A : Set a} {B : Set b}
+    → {f : A → B}
+    → {xs ys zs : List A}
+    → Interleaving xs ys zs
+    → Interleaving (List.map f xs) (List.map f ys) (List.map f zs)
+  map-Interleaving [] = []
+  map-Interleaving (consˡ interleaving) = consˡ (map-Interleaving interleaving)
+  map-Interleaving (consʳ interleaving) = consʳ (map-Interleaving interleaving)
+
+  sum-Interleaving :
+    ∀ {xs ys zs : List ℕ}
+    → Interleaving xs ys zs
+    → List.sum xs + List.sum ys ≡ List.sum zs
   sum-Interleaving [] = refl
-  sum-Interleaving {f = f} {.z ∷ xs} {ys} {z ∷ zs} (consˡ partition) =
-      List.sum (List.map f (z ∷ xs)) + List.sum (List.map f ys)
+  sum-Interleaving {x ∷ xs} {ys} {.x ∷ zs} (consˡ interleaving) =
+      List.sum (x ∷ xs) + List.sum ys
     ≡⟨⟩
-      f z + List.sum (List.map f xs) + List.sum (List.map f ys)
-    ≡⟨ ℕ.+-assoc (f z) (List.sum (List.map f xs)) (List.sum (List.map f ys)) ⟩
-      f z + (List.sum (List.map f xs) + List.sum (List.map f ys))
-    ≡⟨ Eq.cong (f z +_) (sum-Interleaving partition) ⟩
-      f z + List.sum (List.map f zs)
+      x + List.sum xs + List.sum ys
+    ≡⟨ ℕ.+-assoc x (List.sum xs) (List.sum ys) ⟩
+      x + (List.sum xs + List.sum ys)
+    ≡⟨ Eq.cong (x +_) (sum-Interleaving interleaving) ⟩
+      x + List.sum zs
     ≡⟨⟩
-      List.sum (List.map f (z ∷ zs))
+      List.sum (x ∷ zs)
     ∎
     where
     open Eq.≡-Reasoning
-  sum-Interleaving {f = f} {xs} {.z ∷ ys} {z ∷ zs} (consʳ partition) =
-      List.sum (List.map f xs) + List.sum (List.map f (z ∷ ys))
+  sum-Interleaving {xs} {y ∷ ys} {.y ∷ zs} (consʳ interleaving) =
+      List.sum xs + List.sum (y ∷ ys)
     ≡⟨⟩
-      List.sum (List.map f xs) + (f z + List.sum (List.map f ys))
-    ≡⟨ ℕ.+-assoc (List.sum (List.map f xs)) (f z) (List.sum (List.map f ys)) ⟨
-      List.sum (List.map f xs) + f z + List.sum (List.map f ys)
-    ≡⟨ Eq.cong (_+ List.sum (List.map f ys)) (ℕ.+-comm (List.sum (List.map f xs)) (f z)) ⟩
-      f z + List.sum (List.map f xs) + List.sum (List.map f ys)
-    ≡⟨ ℕ.+-assoc (f z) (List.sum (List.map f xs)) (List.sum (List.map f ys)) ⟩
-      f z + (List.sum (List.map f xs) + List.sum (List.map f ys))
-    ≡⟨ Eq.cong (f z +_) (sum-Interleaving partition) ⟩
-      f z + List.sum (List.map f zs)
+      List.sum xs + (y + List.sum ys)
+    ≡⟨ ℕ.+-assoc (List.sum xs) y (List.sum ys) ⟨
+      List.sum xs + y + List.sum ys
+    ≡⟨ Eq.cong (_+ List.sum ys) (ℕ.+-comm (List.sum xs) y) ⟩
+      y + List.sum xs + List.sum ys
+    ≡⟨ ℕ.+-assoc y (List.sum xs) (List.sum ys) ⟩
+      y + (List.sum xs + List.sum ys)
+    ≡⟨ Eq.cong (y +_) (sum-Interleaving interleaving) ⟩
+      y + List.sum zs
     ≡⟨⟩
-      List.sum (List.map f (z ∷ zs))
+      List.sum (y ∷ zs)
     ∎
     where
     open Eq.≡-Reasoning

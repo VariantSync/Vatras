@@ -86,7 +86,7 @@ sum≤size2CC (D ⟨ c₁ , c₂ ⟩) is f unique-vs vs⊆e with partition D c�
 ... | is₁ , is₂ , partition , vs₁⊆c₁ , vs₂⊆c₂ =
   begin
     List.sum (List.map (sizeRose ∘ f) is)
-  ≡⟨ List.sum-Interleaving partition ⟨
+  ≡⟨ List.sum-Interleaving (List.map-Interleaving partition) ⟨
     List.sum (List.map (sizeRose ∘ f) is₁) + List.sum (List.map (sizeRose ∘ f) is₂)
   ≤⟨ ℕ.+-mono-≤ (sum≤size2CC c₁ is₁ f (List.AllPairs-resp-⊆ (List.Interleaving⇒Sublistˡ partition) unique-vs) vs₁⊆c₁) (sum≤size2CC c₂ is₂ f (List.AllPairs-resp-⊆ (List.Interleaving⇒Sublistʳ partition) unique-vs) vs₂⊆c₂) ⟩
     size2CC c₁ + size2CC c₂

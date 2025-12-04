@@ -408,6 +408,21 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
   where
   open ℕ.≤-Reasoning
 
+≰ₛ-strengthening : ∀ {L₁ L₂ : SizedLang V} {f g : ℕ → ℕ} → f ∈ 𝒪[ g ] → L₁ ≰ₛ[ g ] L₂ → L₁ ≰ₛ[ f ] L₂
+≰ₛ-strengthening {L₁} {L₂} {f} {g} (m , f≤g) L₁≰ₛL₂ n with L₁≰ₛL₂ (n * m)
+... | A , e₂ , e₂-translatable , >e₂ = A , e₂ , e₂-translatable , λ e₁ e₁≅e₂ →
+  begin-strict
+    n * f (size L₂ e₂)
+  ≤⟨ ℕ.*-monoʳ-≤ n (f≤g (size L₂ e₂)) ⟩
+    n * (m * g (size L₂ e₂))
+  ≡⟨ ℕ.*-assoc n m (g (size L₂ e₂)) ⟨
+    (n * m) * g (size L₂ e₂)
+  <⟨ >e₂ e₁ e₁≅e₂ ⟩
+    size L₁ e₁
+  ∎
+  where
+  open ℕ.≤-Reasoning
+
 open Axiom.ExcludedMiddle using (ExcludedMiddle)
 open Axiom.DoubleNegationElimination using (em⇒dne)
 module Classical (excludedMiddle : ∀ {ℓ} → ExcludedMiddle ℓ) where
