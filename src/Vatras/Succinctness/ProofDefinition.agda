@@ -119,7 +119,12 @@ L₁ <ₛ L₂ = L₁ ≤ₛ L₂ × L₂ ≰ₛ L₁
 ≤ₛ-reflexive : {L₁ L₂ : SizedLang V} → L₁ =ₛ L₂ → L₁ ≤ₛ L₂
 ≤ₛ-reflexive (L₁≤ₛL₂ , L₂≤ₛL₁) = L₁≤ₛL₂
 
-≤ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≽ Lang L₃ → L₁ ≤ₛ L₂ → L₂ ≤ₛ L₃ → L₁ ≤ₛ L₃
+≤ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} →
+    Lang L₁ ≽ Lang L₂
+  → Lang L₂ ≽ Lang L₃
+  → L₁ ≤ₛ L₂
+  → L₂ ≤ₛ L₃
+  → L₁ ≤ₛ L₃
 ≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₁ = n₁ * n₂
 ≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ e₃-translatable with L₃→L₂ A e₃ (L₂≽L₃ e₃)
 ≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ (n₁ , L₂→L₁) (n₂ , L₃→L₂) .proj₂ A e₃ e₃-translatable | e₂ , e₂≅e₃ , e₁≤e₂ with L₂→L₁ A e₂ (L₁≽L₂ e₂)
@@ -153,12 +158,15 @@ L₁ <ₛ L₂ = L₁ ≤ₛ L₂ × L₂ ≰ₛ L₁
 <ₛ→≤ₛ : {L₁ L₂ : SizedLang V} → L₁ <ₛ L₂ → L₁ ≤ₛ L₂
 <ₛ→≤ₛ (L₁≤ₛL₂ , L₂≰ₛL₁) = L₁≤ₛL₂
 
-
-≤ₛ-<ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≽ Lang L₃ → L₁ ≤ₛ L₂ → L₂ <ₛ L₃ → L₁ <ₛ L₃
-≤ₛ-<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ L₁≤ₛL₂@(m , L₂→L₁) (L₂≤ₛL₃ , L₃≰ₛL₂) .proj₁ = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
-≤ₛ-<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ L₁≤ₛL₂@(m , L₂→L₁) (L₂≤ₛL₃ , L₃≰ₛL₂) .proj₂ n with L₃≰ₛL₂ (n * m)
-≤ₛ-<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ L₁≤ₛL₂@(m , L₂→L₁) (L₂≤ₛL₃ , L₃≰ₛL₂) .proj₂ n | A , e₂ , (e₃ , e₂≅e₃) , e₂< with L₂→L₁ A e₂ (L₁≽L₂ e₂)
-≤ₛ-<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ L₁≤ₛL₂@(m , L₂→L₁) (L₂≤ₛL₃ , L₃≰ₛL₂) .proj₂ n | A , e₂ , (e₃ , e₂≅e₃) , e₂< | e₁ , e₁≅e₂ , e₁≤e₂
+≤ₛ-≱ₛ-transitive :
+  ∀ {L₁ L₂ L₃ : SizedLang V}
+  → Lang L₁ ≽ Lang L₂
+  → L₁ ≤ₛ L₂
+  → L₃ ≰ₛ L₂
+  → L₃ ≰ₛ L₁
+≤ₛ-≱ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₁≤ₛL₂@(m , L₂→L₁) L₃≰ₛL₂ n with L₃≰ₛL₂ (n * m)
+≤ₛ-≱ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₁≤ₛL₂@(m , L₂→L₁) L₃≰ₛL₂ n | A , e₂ , (e₃ , e₂≅e₃) , e₂< with L₂→L₁ A e₂ (L₁≽L₂ e₂)
+≤ₛ-≱ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₁≤ₛL₂@(m , L₂→L₁) L₃≰ₛL₂ n | A , e₂ , (e₃ , e₂≅e₃) , e₂< | e₁ , e₁≅e₂ , e₁≤e₂
   = A , e₁ , (e₃ , ≅-trans e₁≅e₂ e₂≅e₃) , λ e₃' e₃≅e₁ →
     begin-strict
       n * size L₁ e₁
@@ -172,10 +180,18 @@ L₁ <ₛ L₂ = L₁ ≤ₛ L₂ × L₂ ≰ₛ L₁
   where
   open ℕ.≤-Reasoning
 
-<ₛ-≤ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≋ Lang L₃ → L₁ <ₛ L₂ → L₂ ≤ₛ L₃ → L₁ <ₛ L₃
-<ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≰ₛL₁) L₂≤ₛL₃@(m , L₃→L₂) .proj₁ = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
-<ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≰ₛL₁) L₂≤ₛL₃@(m , L₃→L₂) .proj₂ n with L₂≰ₛL₁ (m * n)
-<ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ (L₂≽L₃ , L₃≽L₂) (L₁≤ₛL₂ , L₂≰ₛL₁) L₂≤ₛL₃@(m , L₃→L₂) .proj₂ n | A , e₁ , (e₂ , e₁≅e₂) , e₁<
+≤ₛ-<ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≽ Lang L₃ → L₁ ≤ₛ L₂ → L₂ <ₛ L₃ → L₁ <ₛ L₃
+≤ₛ-<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ (L₂≤ₛL₃ , L₃≰ₛL₂) .proj₁ = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
+≤ₛ-<ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ (L₂≤ₛL₃ , L₃≰ₛL₂) .proj₂ = ≤ₛ-≱ₛ-transitive L₁≽L₂ L₁≤ₛL₂ L₃≰ₛL₂
+
+≱ₛ-≤ₛ-transitive :
+  ∀ {L₁ L₂ L₃ : SizedLang V}
+  → Lang L₂ ≋ Lang L₃
+  → L₂ ≰ₛ L₁
+  → L₂ ≤ₛ L₃
+  → L₃ ≰ₛ L₁
+≱ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} (L₂≽L₃ , L₃≽L₂) L₂≰ₛL₁ L₂≤ₛL₃@(m , L₃→L₂) n with L₂≰ₛL₁ (m * n)
+≱ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} (L₂≽L₃ , L₃≽L₂) L₂≰ₛL₁ L₂≤ₛL₃@(m , L₃→L₂) n | A , e₁ , (e₂ , e₁≅e₂) , e₁<
   = A , e₁ , Product.map₂ (≅-trans e₁≅e₂) (L₃≽L₂ e₂) , go
   where
   go : (e₃ : Expression (Lang L₃) A) → Lang L₃ , Lang L₁ ⊢ e₃ ≣ e₁ → size L₃ e₃ > n * size L₁ e₁
@@ -198,6 +214,10 @@ L₁ <ₛ L₂ = L₁ ≤ₛ L₂ × L₂ ≰ₛ L₁
     ∎
     where
     open ℕ.≤-Reasoning
+
+<ₛ-≤ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≋ Lang L₃ → L₁ <ₛ L₂ → L₂ ≤ₛ L₃ → L₁ <ₛ L₃
+<ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≋L₃@(L₂≽L₃ , _) (L₁≤ₛL₂ , L₂≰ₛL₁) L₂≤ₛL₃ .proj₁ = ≤ₛ-transitive L₁≽L₂ L₂≽L₃ L₁≤ₛL₂ L₂≤ₛL₃
+<ₛ-≤ₛ-transitive {L₁} {L₂} {L₃} L₁≽L₂ L₂≋L₃@(L₂≽L₃ , _) (L₁≤ₛL₂ , L₂≰ₛL₁) L₂≤ₛL₃ .proj₂ = ≱ₛ-≤ₛ-transitive L₂≋L₃ L₂≰ₛL₁ L₂≤ₛL₃
 
 <ₛ-transitive : {L₁ L₂ L₃ : SizedLang V} → Lang L₁ ≽ Lang L₂ → Lang L₂ ≋ Lang L₃ → L₁ <ₛ L₂ → L₂ <ₛ L₃ → L₁ <ₛ L₃
 <ₛ-transitive L₁≽L₂ L₂≋L₃ L₁<ₛL₂ L₂<ₛL₃ = <ₛ-≤ₛ-transitive L₁≽L₂ L₂≋L₃ L₁<ₛL₂ (<ₛ→≤ₛ L₂<ₛL₃)
