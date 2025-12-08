@@ -20,6 +20,7 @@ import Data.List.Relation.Binary.Subset.Propositional.Properties as Subset
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
 import Data.List.Relation.Unary.AllPairs as AllPairs
+import Data.List.Relation.Unary.AllPairs.Properties as AllPairs
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.Unique.DecPropositional ℕ._≟_ using (Unique; []; _∷_)
 import Data.List.Relation.Unary.Unique.DecPropositional.Properties as Unique
@@ -37,7 +38,7 @@ open import Vatras.Framework.Variants using (Rose; children-equality)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Lang.All.Fixed F (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
-open import Vatras.Lang.2CC.FixedArtifactLength F NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
+open import Vatras.Lang.2CC.FixedArtifactLength F NAT using (_≉_; different-children-counts)
 open import Vatras.Translation.Lang.OC-to-2CC F using (2CC≽OC)
 open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_)
 open import Vatras.Succinctness.Sizes using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
@@ -278,12 +279,12 @@ config≡false l i l≤i = go l zero (ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-id
   → l ≤ suc n
   → (2cc : 2CC.2CC i NAT)
   → OC.⟦ oc n ⟧ ⊆ 2CC.⟦ 2cc ⟧
-  → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) (List.upTo l)
+  → All (_∈ 2CC.⟦ 2cc ⟧) (List.applyUpTo (variant n) l)
 ⊆⇒All∈ n zero l≤n 2cc oc⊆2cc = []
 ⊆⇒All∈ n (suc l) (s≤s l≤n) 2cc oc⊆2cc =
   Eq.subst
-    (All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧))
-    (List.applyUpTo-∷ʳ⁺ id l)
+    (All (λ l → l ∈ 2CC.⟦ 2cc ⟧))
+    (List.applyUpTo-∷ʳ⁺ (variant n) l)
     (All.∷ʳ⁺
       (⊆⇒All∈ n l (ℕ.<⇒≤ (s≤s l≤n)) 2cc oc⊆2cc)
       (Eq.subst
@@ -335,17 +336,15 @@ goal n@(suc n-1) 2cc (2cc⊆oc , oc⊆2cc) =
     m * 2 ^ m
   <⟨ ℕ.*-monoˡ-< (2 ^ m) {{ℕ.>-nonZero (ℕ.m^n>0 2 m)}} (ℕ.n<1+n m) ⟩
     suc m * 2 ^ m
-  ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo (suc m)) ⟨
-    List.length (List.upTo (suc m)) * 2 ^ m
-  ≤⟨ unique-lengths⇒m*sizeRose≤size2CC
+  ≡⟨ Eq.cong (_* 2 ^ m) (List.length-applyUpTo (variant m) (suc m)) ⟨
+    List.length (List.applyUpTo (variant m) (suc m)) * 2 ^ m
+  ≤⟨ different-children-counts
        (2 ^ m)
        2cc
-       (List.upTo (suc m))
-       (variant m)
-       (size-variant m)
-       (variant-≉ (suc m))
-       (Unique.applyUpTo⁺₁ id (suc m) (λ i<j j<n → ℕ.<⇒≢ i<j))
+       (List.applyUpTo (variant m) (suc m))
        (⊆⇒All∈ m (suc m) ℕ.≤-refl 2cc oc⊆2cc)
+       (All.applyUpTo⁺₂ (variant m) (suc m) (size-variant m))
+       (AllPairs.applyUpTo⁺₁ (variant m) (suc m) (λ i<j j<n → variant-≉ m (ℕ.<⇒≢ i<j)))
   ⟩
     size2CC 2cc
   ∎

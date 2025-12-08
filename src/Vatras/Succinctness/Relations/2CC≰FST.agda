@@ -56,7 +56,7 @@ open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedF
 open FST.Impose NAT hiding (_∈_; _==_)
 open import Vatras.Lang.FST.Composition F NAT using (⊛-all-unique)
 open import Vatras.Lang.FST.Util F NAT using (select≗filter)
-open import Vatras.Lang.2CC.FixedArtifactLength F NAT using (unique-lengths⇒m*sizeRose≤size2CC) renaming (_≉_ to _≉'_)
+open import Vatras.Lang.2CC.FixedArtifactLength F NAT using (different-children-counts) renaming (_≉_ to _≉'_)
 
 artifact : ℕ → ℕ → FSTA ∞
 artifact n zero = (0 , 2 ^ n) Rose.-< [] >-
@@ -301,7 +301,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   → k + l ≤ suc n
   → (2cc : 2CC.2CC i NAT)
   → FST.⟦ fst n ⟧ ⊆ 2CC.⟦ 2cc ⟧
-  → All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧) (List.applyUpTo (k +_) l)
+  → All (_∈ 2CC.⟦ 2cc ⟧) (List.applyUpTo (λ m → variant n (k + m)) l)
 ⊆⇒All∈ n zero k l≤n 2cc fst⊆2cc = []
 ⊆⇒All∈ n (suc l) k l≤n 2cc fst⊆2cc with variant∈fst n k (ℕ.≤-pred (
   begin
@@ -322,8 +322,8 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
     (Eq.sym (ℕ.+-identityʳ k))
     (Eq.trans variant≡fst fst≡2cc))
   ∷ Eq.subst
-    (All (λ l → variant n l ∈ 2CC.⟦ 2cc ⟧))
-    (List.applyUpTo-cong (λ l → Eq.sym (ℕ.+-suc k l)) l)
+    (All (_∈ 2CC.⟦ 2cc ⟧))
+    (List.applyUpTo-cong (λ l → Eq.cong (variant n) (Eq.sym (ℕ.+-suc k l))) l)
     (⊆⇒All∈ n l (suc k) (ℕ.≤-trans (ℕ.≤-reflexive (Eq.sym (ℕ.+-suc k l))) l≤n) 2cc fst⊆2cc)
 
 2*n≤2^n : (n : ℕ) → 2 * n ≤ 2 ^ n
@@ -379,17 +379,15 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
     6 * suc n * 2 ^ m
   ≡⟨⟩
     m * 2 ^ m
-  ≡⟨ Eq.cong (_* 2 ^ m) (List.length-upTo m) ⟨
-    List.length (List.upTo m) * 2 ^ m
-  ≤⟨ unique-lengths⇒m*sizeRose≤size2CC
+  ≡⟨ Eq.cong (_* 2 ^ m) (List.length-applyUpTo (variant m) m) ⟨
+    List.length (List.applyUpTo (variant m) m) * 2 ^ m
+  ≤⟨ different-children-counts
        (2 ^ m)
        2cc
-       (List.upTo m)
-       (variant m)
-       (size-variant m)
-       (variant-≉ m)
-       (Unique.applyUpTo⁺₁ id m (λ i<j j<n → ℕ.<⇒≢ i<j))
+       (List.applyUpTo (variant m) m)
        (⊆⇒All∈ m m 0 (ℕ.n≤1+n m) 2cc (proj₂ 2cc≅fst))
+       (All.applyUpTo⁺₂ (variant m) m (size-variant m))
+       (AllPairs.applyUpTo⁺₁ (variant m) m (λ i<j j<m → variant-≉ m (ℕ.<⇒≢ i<j)))
   ⟩
     size2CC 2cc
   ∎
