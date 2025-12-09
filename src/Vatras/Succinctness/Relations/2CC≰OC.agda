@@ -1,10 +1,17 @@
+open import Data.Nat as ℕ using (ℕ; zero; suc; _≤_; _<_; s≤s; z≤n; _+_; _*_; _^_; _∸_; _≟_)
+open import Relation.Binary using (DecidableEquality)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; NAT; atomSize)
--- TODO abstract over (F : 𝔽) using a map (ℕ → 𝔽)
-module Vatras.Succinctness.Relations.2CC≰OC where
 
-open import Data.Bool using (true; false)
+module Vatras.Succinctness.Relations.2CC≰OC
+  (F : 𝔽)
+  (f : ℕ → F)
+  (_==_ : DecidableEquality F)
+  (f-injective : ∀ {i j : ℕ} → i ≢ j → f i ≢ f j)
+  where
+
+open import Data.Bool using (true; false; _∨_; if_then_else_)
 open import Data.Empty using (⊥-elim)
-open import Data.Nat as ℕ using (ℕ; zero; suc; _≤_; _<_; s≤s; z≤n; _<ᵇ_; _+_; _*_; _^_; _∸_)
 import Data.Nat.Properties as ℕ
 open import Data.List as List using (List; []; _∷_)
 import Data.List.Properties as List
@@ -16,30 +23,28 @@ import Data.List.Relation.Unary.AllPairs as AllPairs
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.Unique.DecPropositional ℕ._≟_ using (Unique; []; _∷_)
 import Data.List.Relation.Unary.Unique.DecPropositional.Properties as Unique
-open import Data.Maybe using (just)
+open import Data.Maybe using (nothing; just)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; ∃-syntax)
 
 open import Function using (_∘_; id; const)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
-open import Relation.Nullary.Decidable using (yes; no)
-open import Relation.Nullary.Reflects using (ofʸ; ofⁿ)
+open import Relation.Nullary.Decidable using (Dec; _because_; does; yes; no)
 open import Size using (Size; ∞)
 
-open import Vatras.Util.AuxProofs using (m∸n<m)
+open import Vatras.Util.AuxProofs using (m∸n<m; does≡true; does≡false)
 import Vatras.Util.List as List
 open import Vatras.Data.EqIndexedSet using (_≅_; _∈_; _⊆_)
 open import Vatras.Framework.Variants using (Rose; children-equality)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
+open import Vatras.Lang.All.Fixed F (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
-open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
-open import Vatras.Translation.Lang.OC-to-2CC ℕ using (2CC≽OC)
+open import Vatras.Lang.2CC.FixedArtifactLength F NAT using (_≉_; unique-lengths⇒m*sizeRose≤size2CC)
+open import Vatras.Translation.Lang.OC-to-2CC F using (2CC≽OC)
 open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_)
 open import Vatras.Succinctness.Sizes using (sizeRose; SizedWFOC; sizeWFOC; sizeOC; Sized2CC; size2CC; size2CC>0)
 
 options : ℕ → List (OC.OC ∞ NAT)
 options zero = []
-options (suc n) = n OC.❲ (0 , 0) OC.-< [] >- ❳ ∷ options n
+options (suc n) = f n OC.❲ (0 , 0) OC.-< [] >- ❳ ∷ options n
 
 oc : ℕ → OC.WFOC ∞ NAT
 oc n = OC.Root (0 , 0) ((0 , 2 ^ n) OC.-< [] >- ∷ options n)
@@ -126,18 +131,100 @@ variant-≉ n {l₁} {l₂} l₁≢l₂ v₁≡v₂ = l₁≢l₂ (
   open Eq.≡-Reasoning
 
 config : ℕ → OC.Configuration
-config n i = i <ᵇ n
+config n i = List.any (λ k → does (i == f k)) (List.upTo n)
+
+config≡true : ∀ l i → i < l → config l (f i) ≡ true
+config≡true l i i<l = go l zero z≤n i<l
+  where
+  go : ∀ l k → k ≤ i → i < k + l → List.any (λ k → does (f i == f k)) (List.applyUpTo (k +_) l) ≡ true
+  go zero k k≤i i<k+l = ⊥-elim (ℕ.n≮n k (ℕ.≤-trans (ℕ.≤-<-trans k≤i i<k+l) (ℕ.≤-reflexive (ℕ.+-identityʳ k))))
+  go (suc l) k k≤i i<k+l with i ≟ k
+  go (suc l) k k≤i i<k+l | yes i≡k =
+      List.any (λ k → does (f i == f k)) (List.applyUpTo (k +_) (suc l))
+    ≡⟨⟩
+      List.any (λ k → does (f i == f k)) ((k + 0) ∷ List.applyUpTo (λ m → k + suc m) l)
+    ≡⟨ Eq.cong (λ x → List.any (λ k → does (f i == f k)) (k + 0 ∷ x)) (List.applyUpTo-cong (λ m → ℕ.+-suc k m) l) ⟩
+      List.any (λ k → does (f i == f k)) ((k + 0) ∷ List.applyUpTo (suc k +_) l)
+    ≡⟨ Eq.cong (λ x → List.any (λ k → does (f i == f k)) (x ∷ List.applyUpTo (suc k +_) l)) (ℕ.+-identityʳ k) ⟩
+      List.any (λ k → does (f i == f k)) (k ∷ List.applyUpTo (suc k +_) l)
+    ≡⟨⟩
+      does (f i == f k) ∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨ Eq.cong (_∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)) (does≡true (f i == f k) (Eq.cong f i≡k)) ⟩
+      true ∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨⟩
+      true
+    ∎
+    where
+    open Eq.≡-Reasoning
+  go (suc l) k k≤i i<k+l | no i≢k =
+      List.any (λ k → does (f i == f k)) (List.applyUpTo (k +_) (suc l))
+    ≡⟨⟩
+      List.any (λ k → does (f i == f k)) ((k + 0) ∷ List.applyUpTo (λ m → k + suc m) l)
+    ≡⟨ Eq.cong (λ x → List.any (λ k → does (f i == f k)) (k + 0 ∷ x)) (List.applyUpTo-cong (λ m → ℕ.+-suc k m) l) ⟩
+      List.any (λ k → does (f i == f k)) ((k + 0) ∷ List.applyUpTo (suc k +_) l)
+    ≡⟨ Eq.cong (λ x → List.any (λ k → does (f i == f k)) (x ∷ List.applyUpTo (suc k +_) l)) (ℕ.+-identityʳ k) ⟩
+      List.any (λ k → does (f i == f k)) (k ∷ List.applyUpTo (suc k +_) l)
+    ≡⟨⟩
+      does (f i == f k) ∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨ Eq.cong (_∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)) (does≡false (f i == f k) (f-injective i≢k)) ⟩
+      false ∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨⟩
+      List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨ go l (suc k) (ℕ.≤∧≢⇒< k≤i (i≢k ∘ Eq.sym)) (ℕ.<-≤-trans i<k+l (ℕ.≤-reflexive (ℕ.+-suc k l))) ⟩
+      true
+    ∎
+    where
+    open Eq.≡-Reasoning
+
+config≡false : ∀ l i → l ≤ i → config l (f i) ≡ false
+config≡false l i l≤i = go l zero (ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-identityʳ l)) l≤i)
+  where
+  go : ∀ l k → l + k ≤ i → List.any (λ k → does (f i == f k)) (List.applyUpTo (k +_) l) ≡ false
+  go zero k l+k≤i = Eq.refl
+  go (suc l) k l+k≤i =
+      List.any (λ k → does (f i == f k)) (List.applyUpTo (k +_) (suc l))
+    ≡⟨⟩
+      List.any (λ k → does (f i == f k)) ((k + 0) ∷ List.applyUpTo (λ m → k + suc m) l)
+    ≡⟨ Eq.cong (λ x → List.any (λ k → does (f i == f k)) (k + 0 ∷ x)) (List.applyUpTo-cong (λ m → ℕ.+-suc k m) l) ⟩
+      List.any (λ k → does (f i == f k)) ((k + 0) ∷ List.applyUpTo (suc k +_) l)
+    ≡⟨ Eq.cong (λ x → List.any (λ k → does (f i == f k)) (x ∷ List.applyUpTo (suc k +_) l)) (ℕ.+-identityʳ k) ⟩
+      List.any (λ k → does (f i == f k)) (k ∷ List.applyUpTo (suc k +_) l)
+    ≡⟨⟩
+      does (f i == f k) ∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨ Eq.cong (_∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)) (does≡false (f i == f k) (f-injective (ℕ.<⇒≢ (ℕ.≤-<-trans (ℕ.m≤n+m k l) l+k≤i) ∘ Eq.sym))) ⟩
+      false ∨ List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨⟩
+      List.any (λ k → does (f i == f k)) (List.applyUpTo (suc k +_) l)
+    ≡⟨ go l (suc k) (ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-suc l k)) l+k≤i) ⟩
+      false
+    ∎
+    where
+    open Eq.≡-Reasoning
 
 ⟦options⟧-tail : ∀ n l
   → n ≤ l
   → List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
   ≡ variant-cs n
 ⟦options⟧-tail zero l n≤l = Eq.refl
-⟦options⟧-tail (suc n) l n<l with ℕ.<ᵇ-reflects-< n l
-⟦options⟧-tail (suc n) l n<l | reflects-n<l with n <ᵇ l
-⟦options⟧-tail (suc n) l n<l | ofʸ n<l' | .true =
-  Eq.cong ((0 , 0) Rose.-< [] >- ∷_) (⟦options⟧-tail n l (ℕ.<⇒≤ n<l))
-⟦options⟧-tail (suc n) l n<l | ofⁿ n≮l | .false = ⊥-elim (n≮l n<l)
+⟦options⟧-tail (suc n) l n<l =
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options (suc n)))
+  ≡⟨⟩
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (f n OC.❲ (0 , 0) OC.-< [] >- ❳ ∷ options n))
+  ≡⟨⟩
+    List.catMaybes (OC.⟦ f n OC.❲ (0 , 0) OC.-< [] >- ❳ ⟧ₒ (config l) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨⟩
+    List.catMaybes ((if config l (f n) then just ((0 , 0) Rose.-< [] >-) else nothing) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨ Eq.cong (λ x → List.catMaybes ((if x then just ((0 , 0) Rose.-< [] >-) else nothing) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))) (config≡true l n n<l) ⟩
+    List.catMaybes ((if true then just ((0 , 0) Rose.-< [] >-) else nothing) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨⟩
+    List.catMaybes ((just ((0 , 0) Rose.-< [] >-)) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨⟩
+    ((0 , 0) Rose.-< [] >-) ∷ List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨ Eq.cong ((0 , 0) Rose.-< [] >- ∷_) (⟦options⟧-tail n l (ℕ.<⇒≤ n<l)) ⟩
+    ((0 , 0) Rose.-< [] >-) ∷ variant-cs n
+  ∎
+  where
+  open Eq.≡-Reasoning
 
 ⟦options⟧ : ∀ n l
   → l ≤ n
@@ -145,9 +232,23 @@ config n i = i <ᵇ n
   ≡ variant-cs l
 ⟦options⟧ zero .zero z≤n = Eq.refl
 ⟦options⟧ (suc n) l l≤n with n ℕ.<? l
-⟦options⟧ (suc n) l l≤n | no n≮l with n ℕ.<ᵇ l | ℕ.<ᵇ-reflects-< n l
-⟦options⟧ (suc n) l l≤n | no n≮l | .false | ofⁿ n≮l' = ⟦options⟧ n l (ℕ.≮⇒≥ n≮l)
-⟦options⟧ (suc n) l l≤n | no n≮l | .true | ofʸ n<l = ⊥-elim (n≮l n<l)
+⟦options⟧ (suc n) l l≤n | no n≮l =
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options (suc n)))
+  ≡⟨⟩
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (f n OC.❲ (0 , 0) OC.-< [] >- ❳ ∷ options n))
+  ≡⟨⟩
+    List.catMaybes (OC.⟦ f n OC.❲ (0 , 0) OC.-< [] >- ❳ ⟧ₒ (config l) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨⟩
+    List.catMaybes ((if config l (f n) then just ((0 , 0) Rose.-< [] >-) else nothing) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨ Eq.cong (λ x → List.catMaybes ((if x then just ((0 , 0) Rose.-< [] >-) else nothing) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))) (config≡false l n (ℕ.≮⇒≥ n≮l)) ⟩
+    List.catMaybes ((if false then just ((0 , 0) Rose.-< [] >-) else nothing) ∷ List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨⟩
+    List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options n))
+  ≡⟨ ⟦options⟧ n l (ℕ.≮⇒≥ n≮l) ⟩
+    variant-cs l
+  ∎
+  where
+  open Eq.≡-Reasoning
 ⟦options⟧ (suc n) l l≤n | yes n<l =
     List.catMaybes (List.map (λ e → OC.⟦ e ⟧ₒ (config l)) (options (suc n)))
   ≡⟨ ⟦options⟧-tail (suc n) l n<l ⟩
@@ -252,5 +353,5 @@ goal n@(suc n-1) 2cc (2cc⊆oc , oc⊆2cc) =
   open ℕ.≤-Reasoning
   m = 4 * n
 
-2CC≰OC : Sized2CC ℕ ≰ₛ SizedWFOC ℕ
+2CC≰OC : Sized2CC F ≰ₛ SizedWFOC F
 2CC≰OC n = NAT , oc (4 * n) , 2CC≽OC (oc (4 * n)) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc
