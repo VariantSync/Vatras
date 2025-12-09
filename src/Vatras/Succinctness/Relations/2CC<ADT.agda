@@ -46,7 +46,7 @@ open import Vatras.Framework.VariantGenerator (Rose ∞) NAT' using (VariantGene
 open import Vatras.Framework.Relation.Expression (Rose ∞) using (_,_⊢_≣_)
 open import Vatras.Util.List as List using (find-or-last)
 open import Vatras.Translation.Lang.2CC-to-ADT using (ADT≽2CC)
-open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ[_]_; _<ₛ_; ≰ₛ-strengthening)
+open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ[_]_; _<ₛ_; ≰ₛ[]-strengthening)
 open import Vatras.Succinctness.Sizes using (Sized2CC; size2CC; SizedADT; sizeADT; sizeRose)
 
 open import Vatras.Succinctness.Relations.2CC≤ADT F using (2CC≤ADT)
@@ -573,4 +573,4 @@ id∈𝒪[exponential] .proj₁ = 15
 id∈𝒪[exponential] .proj₂ n = 2^n≥n n
 
 2CC<ADT : Sized2CC F <ₛ SizedADT F (Rose ∞) sizeRose
-2CC<ADT = 2CC≤ADT , ≰ₛ-strengthening id∈𝒪[exponential] ADT≰2CC
+2CC<ADT = 2CC≤ADT , ≰ₛ[]-strengthening id∈𝒪[exponential] ADT≰2CC

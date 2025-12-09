@@ -389,21 +389,21 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
 <ₛ'→<ₛ = proj₂
 
 
-≰→¬≤ : {L₁ L₂ : SizedLang V} → L₁ ≰ₛ L₂ → ¬ (L₁ ≤ₛ L₂)
-≰→¬≤ {L₁} {L₂} L₁≰ₛL₂ (n , L₁→L₂) with L₁≰ₛL₂ n
-≰→¬≤ {L₁} {L₂} L₁≰ₛL₂ (n , L₁→L₂) | A , e₂ , e₂-translatable , e₂< with L₁→L₂ A e₂ e₂-translatable
-≰→¬≤ {L₁} {L₂} L₁≰ₛL₂ (n , L₁→L₂) | A , e₂ , e₂-translatable , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (size L₁ e₁) (ℕ.≤-trans (ℕ.s≤s e₁≤e₂) (e₂< e₁ e₂≅e₁))
+≰[]→¬≤[] : {L₁ L₂ : SizedLang V} (f : ℕ → ℕ) → L₁ ≰ₛ[ f ] L₂ → ¬ (L₁ ≤ₛ[ f ] L₂)
+≰[]→¬≤[] {L₁} {L₂} f L₁≰ₛL₂ (n , L₁→L₂) with L₁≰ₛL₂ n
+≰[]→¬≤[] {L₁} {L₂} f L₁≰ₛL₂ (n , L₁→L₂) | A , e₂ , e₂-translatable , e₂< with L₁→L₂ A e₂ e₂-translatable
+≰[]→¬≤[] {L₁} {L₂} f L₁≰ₛL₂ (n , L₁→L₂) | A , e₂ , e₂-translatable , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (size L₁ e₁) (ℕ.≤-trans (ℕ.s≤s e₁≤e₂) (e₂< e₁ e₂≅e₁))
 
-≤→¬≰ : {L₁ L₂ : SizedLang V} → L₁ ≤ₛ L₂ → ¬ (L₁ ≰ₛ L₂)
-≤→¬≰ {L₁} {L₂} (n , L₂→L₁) L₂≰ₛL₁ with L₂≰ₛL₁ n
-≤→¬≰ {L₁} {L₂} (n , L₂→L₁) L₂≰ₛL₁ | A , e₂ , e₂-translatable , e₂< with L₂→L₁ A e₂ e₂-translatable
-≤→¬≰ {L₁} {L₂} (n , L₂→L₁) L₂≰ₛL₁ | A , e₂ , e₂-translatable , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (n * size L₂ e₂) (ℕ.≤-trans (e₂< e₁ e₂≅e₁) e₁≤e₂)
+≤[]→¬≰[] : {L₁ L₂ : SizedLang V} (f : ℕ → ℕ) → L₁ ≤ₛ[ f ] L₂ → ¬ (L₁ ≰ₛ[ f ] L₂)
+≤[]→¬≰[] {L₁} {L₂} f (n , L₂→L₁) L₂≰ₛL₁ with L₂≰ₛL₁ n
+≤[]→¬≰[] {L₁} {L₂} f (n , L₂→L₁) L₂≰ₛL₁ | A , e₂ , e₂-translatable , e₂< with L₂→L₁ A e₂ e₂-translatable
+≤[]→¬≰[] {L₁} {L₂} f (n , L₂→L₁) L₂≰ₛL₁ | A , e₂ , e₂-translatable , e₂< | e₁ , e₂≅e₁ , e₁≤e₂ = ℕ.n≮n (n * f (size L₂ e₂)) (ℕ.≤-trans (e₂< e₁ e₂≅e₁) e₁≤e₂)
 
 ≰→¬= : {L₁ L₂ : SizedLang V} → L₁ ≰ₛ L₂ → ¬ (L₁ =ₛ L₂)
-≰→¬= L₁≰ₛL₂ (L₁≤ₛL₂ , L₂≤ₛL₁) = ≰→¬≤ L₁≰ₛL₂ L₁≤ₛL₂
+≰→¬= L₁≰ₛL₂ (L₁≤ₛL₂ , L₂≤ₛL₁) = ≰[]→¬≤[] id L₁≰ₛL₂ L₁≤ₛL₂
 
-≤→Compiler : {L₁ L₂ : SizedLang V} → Lang L₁ ≽ Lang L₂ → L₁ ≤ₛ L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
-≤→Compiler L₁≽L₂ (n , L₂→L₁) = record
+≤[]→Compiler : {L₁ L₂ : SizedLang V} (f : ℕ → ℕ) → Lang L₁ ≽ Lang L₂ → L₁ ≤ₛ[ f ] L₂ → LanguageCompiler (Lang L₂) (Lang L₁)
+≤[]→Compiler f L₁≽L₂ (n , L₂→L₁) = record
   { compile = λ {A} e₂ → proj₁ (L₂→L₁ A e₂ (L₁≽L₂ e₂))
   ; config-compiler = λ {A} e₂ → record
     { to = ⊆-index (proj₂ (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
@@ -412,10 +412,10 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
   ; preserves = λ {A} e₂ → ≅→≅[] (≅-sym (proj₁ (proj₂ (L₂→L₁ A e₂ (L₁≽L₂ e₂)))))
   }
 
-≤ₛ-weakening : ∀ {L₁ L₂ : SizedLang V} {f g : ℕ → ℕ} → f ∈ 𝒪[ g ] → L₁ ≤ₛ[ f ] L₂ → L₁ ≤ₛ[ g ] L₂
-≤ₛ-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₁ = n * m
-≤ₛ-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₂ A e₂ e₂-translatable with L₂→L₁ A e₂ e₂-translatable
-≤ₛ-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₂ A e₂ e₂-translatable | e₁ , e₁≅e₂ , e₂≤e₁ = e₁ , e₁≅e₂ , (
+≤ₛ[]-weakening : ∀ {L₁ L₂ : SizedLang V} {f g : ℕ → ℕ} → f ∈ 𝒪[ g ] → L₁ ≤ₛ[ f ] L₂ → L₁ ≤ₛ[ g ] L₂
+≤ₛ[]-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₁ = n * m
+≤ₛ[]-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₂ A e₂ e₂-translatable with L₂→L₁ A e₂ e₂-translatable
+≤ₛ[]-weakening {L₁} {L₂} {f} {g} (m , f≤g) (n , L₂→L₁) .proj₂ A e₂ e₂-translatable | e₁ , e₁≅e₂ , e₂≤e₁ = e₁ , e₁≅e₂ , (
   begin
     size L₁ e₁
   ≤⟨ e₂≤e₁ ⟩
@@ -428,8 +428,8 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
   where
   open ℕ.≤-Reasoning
 
-≰ₛ-strengthening : ∀ {L₁ L₂ : SizedLang V} {f g : ℕ → ℕ} → f ∈ 𝒪[ g ] → L₁ ≰ₛ[ g ] L₂ → L₁ ≰ₛ[ f ] L₂
-≰ₛ-strengthening {L₁} {L₂} {f} {g} (m , f≤g) L₁≰ₛL₂ n with L₁≰ₛL₂ (n * m)
+≰ₛ[]-strengthening : ∀ {L₁ L₂ : SizedLang V} {f g : ℕ → ℕ} → f ∈ 𝒪[ g ] → L₁ ≰ₛ[ g ] L₂ → L₁ ≰ₛ[ f ] L₂
+≰ₛ[]-strengthening {L₁} {L₂} {f} {g} (m , f≤g) L₁≰ₛL₂ n with L₁≰ₛL₂ (n * m)
 ... | A , e₂ , e₂-translatable , >e₂ = A , e₂ , e₂-translatable , λ e₁ e₁≅e₂ →
   begin-strict
     n * f (size L₂ e₂)
@@ -465,8 +465,8 @@ module Classical (excludedMiddle : ∀ {ℓ} → ExcludedMiddle ℓ) where
   ¬∃→∀ : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁} {P : A → Set ℓ₂} {Q : A → Set ℓ₃} → (∀ {a : A} → ¬ P a → Q a) → ¬ (Σ[ a ∈ A ] P a) → ∀ (a : A) → Q a
   ¬∃→∀ f P = map-∀ f (¬∃⟶∀¬ P)
 
-  ¬≤→≰ : {L₁ L₂ : SizedLang V} → ¬ (L₁ ≤ₛ L₂) → L₁ ≰ₛ L₂
-  ¬≤→≰ = ¬∃→∀ (¬∀→∃ (¬∀→∃ (¬∀→∃ (¬∃→∀ (¬∃→∀ ℕ.≰⇒>)))))
+  ¬≤ₛ[]→≰ₛ[] : {L₁ L₂ : SizedLang V} (f : ℕ → ℕ) → ¬ (L₁ ≤ₛ[ f ] L₂) → L₁ ≰ₛ[ f ] L₂
+  ¬≤ₛ[]→≰ₛ[] f = ¬∃→∀ (¬∀→∃ (¬∀→∃ (¬∀→∃ (¬∃→∀ (¬∃→∀ ℕ.≰⇒>)))))
 
-  ¬≰→≤ : {L₁ L₂ : SizedLang V} → ¬ (L₁ ≰ₛ L₂) → L₁ ≤ₛ L₂
-  ¬≰→≤ = ¬∀→∃ (¬∃→∀ (¬∃→∀ (¬∃→∀ (¬∀→∃ (¬∀→∃ ℕ.≮⇒≥)))))
+  ¬≰[]→≤[] : {L₁ L₂ : SizedLang V} (f : ℕ → ℕ) → ¬ (L₁ ≰ₛ[ f ] L₂) → L₁ ≤ₛ[ f ] L₂
+  ¬≰[]→≤[] f = ¬∀→∃ (¬∃→∀ (¬∃→∀ (¬∃→∀ (¬∀→∃ (¬∀→∃ ℕ.≮⇒≥)))))
