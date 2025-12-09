@@ -329,6 +329,33 @@ sum-map-const n (x ∷ xs) =
   where
   open Eq.≡-Reasoning
 
+sum-+ : ∀ (n : ℕ) (xs : List ℕ) → List.sum (List.map (n +_) xs) ≡ n * List.length xs + List.sum xs
+sum-+ n [] = Eq.trans (Eq.sym (ℕ.*-zeroʳ n)) (Eq.sym (ℕ.+-identityʳ (n * 0)))
+sum-+ n (x ∷ xs) =
+  begin
+    List.sum (List.map (n +_) (x ∷ xs))
+  ≡⟨⟩
+    n + x + List.sum (List.map (n +_) xs)
+  ≡⟨ Eq.cong (n + x +_) (sum-+ n xs) ⟩
+    n + x + (n * List.length xs + List.sum xs)
+  ≡⟨ Eq.cong (_+ (n * List.length xs + List.sum xs)) (ℕ.+-comm n x) ⟩
+    x + n + (n * List.length xs + List.sum xs)
+  ≡⟨ ℕ.+-assoc (x + n) (n * List.length xs) (List.sum xs) ⟨
+    (x + n + n * List.length xs) + List.sum xs
+  ≡⟨ Eq.cong (_+ List.sum xs) (ℕ.+-assoc x n (n * List.length xs)) ⟩
+    (x + (n + n * List.length xs)) + List.sum xs
+  ≡⟨ Eq.cong (_+ List.sum xs) (ℕ.+-comm x (n + n * List.length xs)) ⟩
+    ((n + n * List.length xs) + x) + List.sum xs
+  ≡⟨ ℕ.+-assoc (n + n * List.length xs) x (List.sum xs) ⟩
+    (n + n * List.length xs) + (x + List.sum xs)
+  ≡⟨ Eq.cong (_+ (x + List.sum xs)) (ℕ.*-suc n (List.length xs)) ⟨
+    n * suc (List.length xs) + (x + List.sum xs)
+  ≡⟨⟩
+    n * List.length (x ∷ xs) + List.sum (x ∷ xs)
+  ∎
+  where
+  open Eq.≡-Reasoning
+
 sum-* : ∀ (n : ℕ) (xs : List ℕ) → List.sum (List.map (n *_) xs) ≡ n * List.sum xs
 sum-* n [] = Eq.sym (ℕ.*-zeroʳ n)
 sum-* n (x ∷ xs) =
