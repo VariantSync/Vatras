@@ -38,6 +38,11 @@ max-≤ n (.n ∷ xs) (here refl) = ℕ.m≤m⊔n n (max xs)
 max-≤ n (x ∷ xs) (there x∈xs) = ℕ.≤-trans (max-≤ n xs x∈xs) (ℕ.m≤n⊔m x (max xs))
 
 -- TODO: Contribute to stl
+map-⁺++⁺ : ∀ {a} {A : Set a} {b} {B : Set b} (f : A → B) (xs ys : List⁺ A)
+  → List⁺.map f (xs ⁺++⁺ ys) ≡ List⁺.map f xs ⁺++⁺ List⁺.map f ys
+map-⁺++⁺ f (x ∷ xs) (y ∷ ys) = Eq.cong (f x ∷_) (List.map-++ f xs (y ∷ ys))
+
+-- TODO: Contribute to stl
 ⁺++⁺-length : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A)
   → List⁺.length (xs ⁺++⁺ ys) ≡ List⁺.length xs + List⁺.length ys
 ⁺++⁺-length (x ∷ xs) (y ∷ ys) = length-++ (x ∷ xs)
