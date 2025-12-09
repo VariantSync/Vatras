@@ -7,13 +7,14 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; zero; suc)
 import Data.Fin.Properties as Fin
-open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _*_; _⊔_; _≤_; _<_; s≤s; z≤n)
+open import Data.Nat using (ℕ; suc; zero; NonZero; _+_; _∸_; _*_; _⊔_; _≤_; _≥_; _<_; s≤s; z≤n)
 open import Data.Nat.Properties as ℕ using (m≤m+n)
 open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
 open import Data.List.Properties as List using (map-id; length-++)
 open import Data.List.Membership.Propositional using (_∈_)
 import Data.List.Membership.Propositional.Properties as List
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; toList; _⁺++⁺_) renaming (map to map⁺)
+import Data.List.NonEmpty.Properties as List⁺
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
 open import Data.List.Relation.Unary.Any using (here; there)
@@ -36,6 +37,12 @@ max-≤ : (n : ℕ) → (xs : List ℕ) → n ∈ xs → n ≤ max xs
 max-≤ n [] ()
 max-≤ n (.n ∷ xs) (here refl) = ℕ.m≤m⊔n n (max xs)
 max-≤ n (x ∷ xs) (there x∈xs) = ℕ.≤-trans (max-≤ n xs x∈xs) (ℕ.m≤n⊔m x (max xs))
+
+-- TODO: Contribute to stl
+last-∷ : ∀ {ℓ} {A : Set ℓ} → (x y : A) → (zs : List A) → List⁺.last (x ∷ y ∷ zs) ≡ List⁺.last (y ∷ zs)
+last-∷ x y zs with List.initLast zs
+last-∷ x y .[] | [] = refl
+last-∷ x y .(xs List.∷ʳ x₁) | xs List.∷ʳ′ x₁ = refl
 
 -- TODO: Contribute to stl
 map-⁺++⁺ : ∀ {a} {A : Set a} {b} {B : Set b} (f : A → B) (xs ys : List⁺ A)
@@ -138,6 +145,13 @@ find-or-last-zero : ∀ {ℓ} {A : Set ℓ} (x : A) (xs : List A)
   → find-or-last zero (x ∷ xs) ≡ x
 find-or-last-zero _ [] = refl
 find-or-last-zero _ (_ ∷ _) = refl
+
+find-or-last-last : ∀ {ℓ} {A : Set ℓ}
+  → (n : ℕ) (xs : List⁺ A)
+  → suc n ≥ List⁺.length xs
+  → find-or-last n xs ≡ List⁺.last xs
+find-or-last-last n (x ∷ []) n≥xs = refl
+find-or-last-last (suc n) (x ∷ y ∷ zs) (s≤s n≥xs) = Eq.trans (find-or-last-last n (y ∷ zs) n≥xs) (Eq.sym (last-∷ x y zs))
 
 map-find-or-last : ∀ {a b} {A : Set a} {B : Set b}
   → (f : A → B)

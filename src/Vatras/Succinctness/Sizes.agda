@@ -23,6 +23,9 @@ open SizedLang public
 sizeRose : ∀ {i : Size} {A : 𝔸} → Rose i A → ℕ
 sizeRose {A = A} (a Rose.-< cs >-) = suc (atomSize A a + List.sum (List.map sizeRose cs))
 
+sizeRose>0 : ∀ {i : Size} {A : 𝔸} → (v : Rose i A) → sizeRose v > 0
+sizeRose>0 {A = A} (a Rose.-< cs >-) = s≤s z≤n
+
 size2CC : ∀ {F : 𝔽} {i : Size} {A : 𝔸} → 2CC.2CC F i A → ℕ
 size2CC {A = A} (a 2CC.2CC.-< cs >-) = suc (atomSize A a + List.sum (List.map size2CC cs))
 size2CC (D 2CC.2CC.⟨ l , r ⟩) = suc (size2CC l + size2CC r)
