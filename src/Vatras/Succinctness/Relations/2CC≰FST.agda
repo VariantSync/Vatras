@@ -1,4 +1,4 @@
-module Vatras.Succinctness.Relations.FST≱2CC where
+module Vatras.Succinctness.Relations.2CC≰FST where
 
 open import Data.Bool as Bool using (Bool; true; false; if_then_else_)
 import Data.Bool.Properties as Bool
@@ -290,9 +290,9 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   where
   open ℕ.≤-Reasoning
 
-FST≱2CC : Sized2CC ℕ ≰ₛ SizedFST ℕ
-FST≱2CC zero = NAT , fst zero , 2CC≽FST zero ℕ._≟_ (fst zero) , λ 2cc 2cc≅fst → size2CC>0 2cc
-FST≱2CC (suc n) = NAT , fst m , 2CC≽FST zero ℕ._≟_ (fst m) , λ 2cc 2cc≅fst →
+2CC≰FST : Sized2CC ℕ ≰ₛ SizedFST ℕ
+2CC≰FST zero = NAT , fst zero , 2CC≽FST zero ℕ._≟_ (fst zero) , λ 2cc 2cc≅fst → size2CC>0 2cc
+2CC≰FST (suc n) = NAT , fst m , 2CC≽FST zero ℕ._≟_ (fst m) , λ 2cc 2cc≅fst →
   begin-strict
     suc n * sizeFST (fst m)
   <⟨ ℕ.*-monoʳ-< (suc n) (

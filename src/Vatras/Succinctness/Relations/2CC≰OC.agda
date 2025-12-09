@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; NAT; atomSize)
 -- TODO abstract over (F : 𝔽) using a map (ℕ → 𝔽)
-module Vatras.Succinctness.Relations.OC≱2CC where
+module Vatras.Succinctness.Relations.2CC≰OC where
 
 open import Data.Bool using (true; false)
 open import Data.Empty using (⊥-elim)
@@ -252,5 +252,5 @@ goal n@(suc n-1) 2cc (2cc⊆oc , oc⊆2cc) =
   open ℕ.≤-Reasoning
   m = 4 * n
 
-OC≱2CC : Sized2CC ℕ ≰ₛ SizedWFOC ℕ
-OC≱2CC n = NAT , oc (4 * n) , 2CC≽OC (oc (4 * n)) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc
+2CC≰OC : Sized2CC ℕ ≰ₛ SizedWFOC ℕ
+2CC≰OC n = NAT , oc (4 * n) , 2CC≽OC (oc (4 * n)) , λ 2cc oc≅2cc → goal n 2cc oc≅2cc
