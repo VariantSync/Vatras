@@ -4,6 +4,7 @@ open import Level using (Level)
 open import Function using (id; _∘_)
 
 open import Data.Bool using (Bool; false; true; if_then_else_; not; _∧_)
+open import Data.Empty using (⊥-elim)
 open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.Nat using (ℕ; zero; suc; NonZero; _≡ᵇ_; _⊓_; _+_; _∸_; _<_; _>_; _≤_; s≤s; z≤n)
 open import Data.Nat.Properties using (n<1+n; m⊓n≤m; +-comm; +-∸-comm; n∸n≡0; m≤n+m; +-∸-assoc; ∸-monoʳ-≤)
@@ -11,7 +12,8 @@ open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.List.Properties using (length-++)
 open import Data.Product using (_×_; _,_)
 open import Relation.Binary using (DecidableEquality)
-open import Relation.Nullary.Decidable using (yes; no)
+open import Relation.Nullary using (¬_)
+open import Relation.Nullary.Decidable using (Dec; does; yes; no)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; _≗_; refl)
@@ -108,6 +110,17 @@ if-cong : ∀ {ℓ} {A : Set ℓ} {a b c d : A} x
   → b ≡ d
   → (if x then a else b) ≡ (if x then c else d)
 if-cong _ refl refl = refl
+
+----- Properties for Decidability
+
+does≡true : ∀ {p} {P : Set p} → (dec : Dec P) → P → does dec ≡ true
+does≡true (no ¬p) p = ⊥-elim (¬p p)
+does≡true (yes p) p' = Eq.refl
+
+does≡false : ∀ {p} {P : Set p} → (dec : Dec P) → ¬ P → does dec ≡ false
+does≡false (no ¬p) ¬p' = Eq.refl
+does≡false (yes p) ¬p = ⊥-elim (¬p p)
+
 
 ----- Properties of Vectors
 

@@ -1,9 +1,23 @@
-module Vatras.Succinctness.Relations.2CC≰FST where
+open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; _<_; z≤n; s≤s; _>_; _+_; _∸_; _*_; _^_; _≟_)
+open import Data.Product as Prod using (_×_; _,_; proj₁; proj₂; Σ-syntax; ∃-syntax)
+open import Function using (_∘_; _∘′_; const; id)
+open import Relation.Binary using (DecidableEquality)
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; _≢_; refl)
+open import Vatras.Framework.Definitions using (𝔸; 𝔽; NAT; atomSize)
 
-open import Data.Bool as Bool using (Bool; true; false; if_then_else_)
+module Vatras.Succinctness.Relations.2CC≰FST
+  (F : 𝔽)
+  (f : ℕ → F)
+  (_==_ : DecidableEquality F)
+  (f-injective : ∀ {i j : ℕ} → i ≢ j → f i ≢ f j)
+  (diagonalization : F × ℕ → F)
+  (diagonalization⁻¹ : F → F × ℕ)
+  (diagonalization-injective : diagonalization⁻¹ ∘ diagonalization ≗ id)
+  where
+
+open import Data.Bool as Bool using (Bool; true; false; _∨_; if_then_else_)
 import Data.Bool.Properties as Bool
 open import Data.Empty using (⊥-elim)
-open import Data.Nat as ℕ using (ℕ; suc; zero; _≤_; _<_; z≤n; s≤s; _>_; _+_; _∸_; _*_; _^_)
 import Data.Nat.Properties as ℕ
 open import Data.Fin as Fin using (Fin; zero; suc)
 import Data.Fin.Properties as Fin
@@ -20,34 +34,29 @@ open import Data.List.Relation.Unary.AllPairs as AllPairs using (AllPairs; []; _
 import Data.List.Relation.Unary.AllPairs.Properties as AllPairs
 import Data.List.Relation.Unary.Unique.Propositional as List
 import Data.List.Relation.Unary.Unique.Propositional.Properties as Unique
-open import Data.Product as Prod using (_×_; _,_; proj₁; proj₂; Σ-syntax; ∃-syntax)
 import Data.Product.Properties as Prod
 open import Data.Unit using (tt)
-open import Function using (_∘_; _∘′_; const; id)
 open import Function.Bundles using (Equivalence)
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; _≢_; refl)
-open import Relation.Nullary.Decidable using (Dec; yes; no)
+open import Relation.Nullary.Decidable using (Dec; does; yes; no)
 open import Relation.Nullary.Negation using (¬_)
 open import Relation.Unary using (Decidable)
 open import Size using (Size; ∞)
 
-open import Vatras.Util.AuxProofs using (m∸n<m)
+open import Vatras.Util.AuxProofs using (true≢false; m∸n<m; does≡true; does≡false)
 open import Vatras.Data.EqIndexedSet using (_⊆_; ⊆-trans; _∈_)
-open import Vatras.Framework.Definitions using (𝔸; NAT; atomSize)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
-open import Vatras.Lang.All.Fixed ℕ (Rose ∞)
+open import Vatras.Lang.All.Fixed F (Rose ∞)
 import Vatras.Lang.2CC.ReflectsVariantSize as 2CC
 import Vatras.Translation.LanguageMap
-open import Vatras.Util.Nat.Diagonalization using (diagonalization; diagonalization⁻¹; diagonalization-injective)
 open Vatras.Translation.LanguageMap.Expressiveness diagonalization diagonalization⁻¹ diagonalization-injective using (2CC≽FST)
 open import Vatras.Succinctness.ProofDefinition (Rose ∞) using (_≰ₛ_)
 open import Vatras.Succinctness.Sizes using (sizeRose; Sized2CC; size2CC; SizedFST; sizeFST; size2CC>0)
 
-open FST.Impose NAT hiding (_∈_)
-open import Vatras.Lang.FST.Composition ℕ NAT using (⊛-all-unique)
-open import Vatras.Lang.FST.Util ℕ NAT using (select≗filter)
-open import Vatras.Lang.2CC.FixedArtifactLength ℕ NAT using (unique-lengths⇒m*sizeRose≤size2CC) renaming (_≉_ to _≉'_)
+open FST.Impose NAT hiding (_∈_; _==_)
+open import Vatras.Lang.FST.Composition F NAT using (⊛-all-unique)
+open import Vatras.Lang.FST.Util F NAT using (select≗filter)
+open import Vatras.Lang.2CC.FixedArtifactLength F NAT using (unique-lengths⇒m*sizeRose≤size2CC) renaming (_≉_ to _≉'_)
 
 artifact : ℕ → ℕ → FSTA ∞
 artifact n zero = (0 , 2 ^ n) Rose.-< [] >-
@@ -61,7 +70,7 @@ feature : ℕ → ℕ → FSF
 feature n i = (artifact n i ∷ []) ⊚ ([] ∷ [] , artifact-wf n i ∷ [])
 
 fst : ℕ → SPL
-fst n = (0 , 0) ◀ List.applyUpTo (λ i → i :: feature n i) (suc n)
+fst n = (0 , 0) ◀ List.applyUpTo (λ i → f i :: feature n i) (suc n)
 
 size-fst :
   ∀ (n : ℕ)
@@ -70,11 +79,11 @@ size-fst n =
   begin
     sizeFST (fst n)
   ≡⟨⟩
-    1 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → i :: feature n i) (suc n)))
+    1 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → f i :: feature n i) (suc n)))
   ≡⟨⟩
-    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → suc i :: feature n (suc i)) n))
-  ≡⟨ Eq.cong (λ x → 2 + (sizeRose (artifact n zero) + 0 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) x))) (List.map-upTo (λ i → suc i :: feature n (suc i)) n) ⟨
-    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.map (λ i → suc i :: feature n (suc i)) (List.upTo n)))
+    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.applyUpTo (λ i → f (suc i) :: feature n (suc i)) n))
+  ≡⟨ Eq.cong (λ x → 2 + (sizeRose (artifact n zero) + 0 + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) x))) (List.map-upTo (λ i → f (suc i) :: feature n (suc i)) n) ⟨
+    2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (suc ∘ List.sum ∘ List.map sizeRose ∘ FST.Impose.trees ∘ FST.Impose.impl) (List.map (λ i → f (suc i) :: feature n (suc i)) (List.upTo n)))
   ≡⟨ Eq.cong (λ x → 2 + (sizeRose (artifact n zero) + 0) + List.sum x) (List.map-∘ (List.upTo n)) ⟨
     2 + (sizeRose (artifact n zero) + 0) + List.sum (List.map (λ i → suc (sizeRose (artifact n (suc i)) + 0)) (List.upTo n))
   ≡⟨⟩
@@ -131,41 +140,42 @@ variant-≉ n {l₁} {l₂} l₁≢l₂ v₁≡v₂ = l₁≢l₂ (
   where
   open Eq.≡-Reasoning
 
-fst-config : ℕ → ℕ → Bool
-fst-config i f = f ℕ.≤ᵇ i
+fst-config : ℕ → FST.Configuration
+fst-config i f' = List.any (λ k → does (f k == f')) (List.upTo (suc i))
+-- f' ℕ.≤ᵇ i
 
 select-applyUpTo-feature :
   ∀ (k n i : ℕ)
   → i ≤ n
-  → select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
+  → select (fst-config i) (List.applyUpTo (λ m → f m :: feature k m) (suc n))
   ≡ List.applyUpTo (feature k) (suc i)
 select-applyUpTo-feature k n i i≤n =
-    select (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n))
-  ≡⟨ select≗filter (fst-config i) (List.applyUpTo (λ m → m :: feature k m) (suc n)) ⟩
-    List.map impl (List.filter P? (List.applyUpTo (λ m → m :: feature k m) (suc n)))
-  ≡⟨ Eq.cong (λ x → List.map impl (List.filterᵇ (fst-config i ∘ name) (List.applyUpTo (λ m → m :: feature k m) (suc x)))) (ℕ.m+[n∸m]≡n i≤n) ⟨
-    List.map impl (List.filter P? (List.applyUpTo (λ m → m :: feature k m) (suc i + (n ∸ i))))
-  ≡⟨ Eq.cong (λ x → List.map impl (List.filterᵇ (fst-config i ∘ name) x)) (List.applyUpTo-++⁺ (λ m → m :: feature k m) (suc i) (n ∸ i)) ⟩
+    select (fst-config i) (List.applyUpTo (λ m → f m :: feature k m) (suc n))
+  ≡⟨ select≗filter (fst-config i) (List.applyUpTo (λ m → f m :: feature k m) (suc n)) ⟩
+    List.map impl (List.filter P? (List.applyUpTo (λ m → f m :: feature k m) (suc n)))
+  ≡⟨ Eq.cong (λ x → List.map impl (List.filterᵇ (fst-config i ∘ name) (List.applyUpTo (λ m → f m :: feature k m) (suc x)))) (ℕ.m+[n∸m]≡n i≤n) ⟨
+    List.map impl (List.filter P? (List.applyUpTo (λ m → f m :: feature k m) (suc i + (n ∸ i))))
+  ≡⟨ Eq.cong (λ x → List.map impl (List.filterᵇ (fst-config i ∘ name) x)) (List.applyUpTo-++⁺ (λ m → f m :: feature k m) (suc i) (n ∸ i)) ⟩
     List.map impl (List.filter P?
-      (  List.applyUpTo (λ m → m :: feature k m) (suc i)
-      ++ List.applyUpTo (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i)))
+      (  List.applyUpTo (λ m → f m :: feature k m) (suc i)
+      ++ List.applyUpTo (λ m → f (suc i + m) :: feature k (suc i + m)) (n ∸ i)))
   ≡⟨ Eq.cong (List.map impl) (List.filter-++ (Bool.T? ∘ fst-config i ∘ name)
-      (List.applyUpTo (λ m → m :: feature k m) (suc i))
-      (List.applyUpTo (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i)) )
+      (List.applyUpTo (λ m → f m :: feature k m) (suc i))
+      (List.applyUpTo (λ m → f (suc i + m) :: feature k (suc i + m)) (n ∸ i)) )
   ⟩
     List.map impl
-      (  List.filter P? (List.applyUpTo (λ m → m :: feature k m) (suc i))
-      ++ List.filter P? (List.applyUpTo (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i)))
+      (  List.filter P? (List.applyUpTo (λ m → f m :: feature k m) (suc i))
+      ++ List.filter P? (List.applyUpTo (λ m → f (suc i + m) :: feature k (suc i + m)) (n ∸ i)))
   ≡⟨ Eq.cong (List.map impl) (Eq.cong₂ _++_
       (List.filter-all P?
-        (All.applyUpTo⁺₁ (λ m → m :: feature k m) (suc i) P-true))
+        (All.applyUpTo⁺₁ (λ m → f m :: feature k m) (suc i) P-true))
       (List.filter-none P?
-        (All.applyUpTo⁺₂ (λ m → suc i + m :: feature k (suc i + m)) (n ∸ i) P-false)))
+        (All.applyUpTo⁺₂ (λ m → f (suc i + m) :: feature k (suc i + m)) (n ∸ i) P-false)))
   ⟩
-    List.map impl (List.applyUpTo (λ m → m :: feature k m) (suc i) ++ [])
-  ≡⟨ Eq.cong (List.map impl) (List.++-identityʳ (List.applyUpTo (λ m → m :: feature k m) (suc i))) ⟩
-    List.map impl (List.applyUpTo (λ m → m :: feature k m) (suc i))
-  ≡⟨ List.map-applyUpTo impl (λ m → m :: feature k m) (suc i) ⟩
+    List.map impl (List.applyUpTo (λ m → f m :: feature k m) (suc i) ++ [])
+  ≡⟨ Eq.cong (List.map impl) (List.++-identityʳ (List.applyUpTo (λ m → f m :: feature k m) (suc i))) ⟩
+    List.map impl (List.applyUpTo (λ m → f m :: feature k m) (suc i))
+  ≡⟨ List.map-applyUpTo impl (λ m → f m :: feature k m) (suc i) ⟩
     List.applyUpTo (feature k) (suc i)
   ∎
   where
@@ -177,11 +187,59 @@ select-applyUpTo-feature k n i i≤n =
   P? : Decidable P
   P? = Bool.T? ∘ fst-config i ∘ name
 
-  P-true : {j : ℕ} → j < suc i → P (j :: feature k j)
-  P-true (s≤s j≤i) = ℕ.≤⇒≤ᵇ j≤i
+  P-true : {j : ℕ} → j < suc i → P (f j :: feature k j)
+  P-true {j} (s≤s j≤i) = Equivalence.from Bool.T-≡ (go (suc i) zero z≤n (s≤s j≤i))
+    where
+    go : ∀ i k → k ≤ j → j < k + i → List.any (λ k → does (f k == f j)) (List.applyUpTo (k +_) i) ≡ true
+    go zero k k≤j j<k+i = ⊥-elim (ℕ.≤⇒≯ k≤j (ℕ.≤-trans j<k+i (ℕ.≤-reflexive (ℕ.+-identityʳ k))))
+    go (suc i) k k≤j j<k+i with k ≟ j
+    go (suc i) k k≤j j<k+i | yes k≡j =
+        List.any (λ k → does (f k == f j)) (List.applyUpTo (k +_) (suc i))
+      ≡⟨⟩
+        does (f (k + zero) == f j) ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (λ x → does (f x == f j) ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)) (ℕ.+-identityʳ k) ⟩
+        does (f k == f j) ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (_∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)) (does≡true (f k == f j) (Eq.cong f k≡j)) ⟩
+        true ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨⟩
+        true
+      ∎
+    go (suc i) k k≤j j<k+i | no k≢j =
+        List.any (λ k → does (f k == f j)) (List.applyUpTo (k +_) (suc i))
+      ≡⟨⟩
+        does (f (k + zero) == f j) ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (λ x → does (f x == f j) ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)) (ℕ.+-identityʳ k) ⟩
+        does (f k == f j) ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (_∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)) (does≡false (f k == f j) (f-injective k≢j)) ⟩
+        false ∨ List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨⟩
+        List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (λ x → List.any (λ k → does (f k == f j)) x) (List.applyUpTo-cong (λ m → ℕ.+-suc k m) i) ⟩
+        List.any (λ k → does (f k == f j)) (List.applyUpTo (λ m → suc k + m) i)
+      ≡⟨ go i (suc k) (ℕ.≤∧≢⇒< k≤j k≢j) (ℕ.≤-trans j<k+i (ℕ.≤-reflexive (ℕ.+-suc k i))) ⟩
+        true
+      ∎
 
-  P-false : (j : ℕ) → ¬ P (suc i + j :: feature k (suc i + j))
-  P-false j p = ℕ.<⇒≱ (ℕ.≤ᵇ⇒≤ (suc i + j) i p) (ℕ.m≤m+n i j)
+  P-false : (j : ℕ) → ¬ P (f (suc i + j) :: feature k (suc i + j))
+  P-false j p = true≢false (Equivalence.to Bool.T-≡ p) (go (suc i) (suc i + j) zero (ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-identityʳ (suc i))) (ℕ.m≤m+n (suc i) j)))
+    where
+    go : ∀ i m k → i + k ≤ m → List.any (λ k → does (f k == f m)) (List.applyUpTo (k +_) i) ≡ false
+    go zero m k k≤j = refl
+    go (suc i) m k k≤j =
+        List.any (λ k → does (f k == f m)) (List.applyUpTo (k +_) (suc i))
+      ≡⟨⟩
+        does (f (k + zero) == f m) ∨ List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (λ x → does (f x == f m) ∨ List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → k + suc m) i)) (ℕ.+-identityʳ k) ⟩
+        does (f k == f m) ∨ List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (_∨ List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → k + suc m) i)) (does≡false (f k == f m) (f-injective (ℕ.<⇒≢ (ℕ.≤-<-trans (ℕ.m≤n+m k i) (ℕ.<-≤-trans (ℕ.n<1+n (i + k)) k≤j))))) ⟩
+        false ∨ List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨⟩
+        List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → k + suc m) i)
+      ≡⟨ Eq.cong (λ x → List.any (λ k → does (f k == f m)) x) (List.applyUpTo-cong (λ m → ℕ.+-suc k m) i) ⟩
+        List.any (λ k → does (f k == f m)) (List.applyUpTo (λ m → suc k + m) i)
+      ≡⟨ go i m (suc k) (ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-suc i k)) k≤j) ⟩
+        false
+      ∎
 
 unique-variant : ∀ n m i → Unique (List.concatMap forget-uniqueness (List.applyUpTo (λ k → feature n (m + k)) i))
 unique-variant n m zero = []
@@ -234,7 +292,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   ≡⟨ ⊛-all-unique (List.applyUpTo (feature n) (suc i)) (unique-variant n zero (suc i)) ⟨
     forget-uniqueness (⊛-all (List.applyUpTo (feature n) (suc i)))
   ≡⟨ Eq.cong (λ x → forget-uniqueness (⊛-all x)) (select-applyUpTo-feature n n i i≤n) ⟨
-    forget-uniqueness (⊛-all (select (fst-config i) (List.applyUpTo (λ m → m :: feature n m) (suc n))))
+    forget-uniqueness (⊛-all (select (fst-config i) (List.applyUpTo (λ m → f m :: feature n m) (suc n))))
   ∎)
   where
   open Eq.≡-Reasoning
@@ -290,9 +348,9 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   where
   open ℕ.≤-Reasoning
 
-2CC≰FST : Sized2CC ℕ ≰ₛ SizedFST ℕ
-2CC≰FST zero = NAT , fst zero , 2CC≽FST zero ℕ._≟_ (fst zero) , λ 2cc 2cc≅fst → size2CC>0 2cc
-2CC≰FST (suc n) = NAT , fst m , 2CC≽FST zero ℕ._≟_ (fst m) , λ 2cc 2cc≅fst →
+2CC≰FST : Sized2CC F ≰ₛ SizedFST F
+2CC≰FST zero = NAT , fst zero , 2CC≽FST (f 0) _==_ (fst zero) , λ 2cc 2cc≅fst → size2CC>0 2cc
+2CC≰FST (suc n) = NAT , fst m , 2CC≽FST (f 0) _==_ (fst m) , λ 2cc 2cc≅fst →
   begin-strict
     suc n * sizeFST (fst m)
   <⟨ ℕ.*-monoʳ-< (suc n) (
