@@ -65,6 +65,10 @@ sizeADT : {F : 𝔽} {V : 𝕍} {A : 𝔸} → ({A : 𝔸} → V A → ℕ) → 
 sizeADT variantSize (ADT.ADT.leaf v) = suc (variantSize v)
 sizeADT variantSize (D ADT.ADT.⟨ l , r ⟩) = suc (sizeADT variantSize l + sizeADT variantSize r)
 
+sizeADT>0 : {F : 𝔽} {V : 𝕍} → (variantSize : {A : 𝔸} → V A → ℕ) → {A : 𝔸} → (adt : ADT.ADT F V A) → sizeADT variantSize adt > 0
+sizeADT>0 variantSize (ADT.ADT.leaf v) = s≤s z≤n
+sizeADT>0 variantSize (D ADT.ADT.⟨ l , r ⟩) = s≤s z≤n
+
 SizedADT : 𝔽 → (V : 𝕍) → ({A : 𝔸} → V A → ℕ) → SizedLang V
 SizedADT F V variantSize = record
   { Lang = ADT.ADTL F V
@@ -74,6 +78,10 @@ SizedADT F V variantSize = record
 sizeNADT : {F : 𝔽} {V : 𝕍} {i : Size} {A : 𝔸} → ({A : 𝔸} → V A → ℕ) → NADT.NADT F V i A → ℕ
 sizeNADT variantSize (NADT.NADT.leaf v) = suc (variantSize v)
 sizeNADT variantSize (D NADT.NADT.⟨ cs ⟩) = suc (List.sum (List.map (sizeNADT variantSize) (List⁺.toList cs)))
+
+sizeNADT>0 : {F : 𝔽} {V : 𝕍} → (variantSize : {A : 𝔸} → V A → ℕ) → {A : 𝔸} → {i : Size} → (nadt : NADT.NADT F V i A) → sizeNADT variantSize nadt > 0
+sizeNADT>0 variantSize (NADT.NADT.leaf v) = s≤s z≤n
+sizeNADT>0 variantSize (D NADT.NADT.⟨ cs ⟩) = s≤s z≤n
 
 SizedNADT : 𝔽 → (V : 𝕍) → ({A : 𝔸} → V A → ℕ) → SizedLang V
 SizedNADT F V variantSize = record
