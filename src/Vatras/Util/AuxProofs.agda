@@ -111,6 +111,14 @@ if-cong : ∀ {ℓ} {A : Set ℓ} {a b c d : A} x
   → (if x then a else b) ≡ (if x then c else d)
 if-cong _ refl refl = refl
 
+Predicate-if : ∀ {a} {A : Set a} {p} (P : A → Set p) {a b : A} x
+  → P a
+  → P b
+  → P (if x then a else b)
+Predicate-if P false p₁ p₂ = p₂
+Predicate-if P true p₁ p₂ = p₁
+
+
 ----- Properties for Decidability
 
 does≡true : ∀ {p} {P : Set p} → (dec : Dec P) → P → does dec ≡ true
