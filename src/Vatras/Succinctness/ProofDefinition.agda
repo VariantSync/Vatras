@@ -20,7 +20,7 @@ open import Vatras.Util.Big-O using (𝒪[_])
 open Vatras.Util.Big-O.Examples using (n∈𝒪[n])
 open import Vatras.Framework.Relation.Expression V using (_,_⊢_≣_)
 open import Vatras.Framework.Relation.Expressiveness V using (_≽_; _≋_; ≽-trans; ≋-refl; ≋-sym; ≋-trans)
-open import Vatras.Framework.VariabilityLanguage using (Expression)
+open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Succinctness.Sizes using (SizedLang; Lang; size)
 
@@ -440,6 +440,48 @@ L₁ <ₛ' L₂ = Lang L₁ ≋ Lang L₂ × L₁ ≤ₛ L₂ × L₂ ≰ₛ L�
   <⟨ >e₂ e₁ e₁≅e₂ ⟩
     size L₁ e₁
   ∎
+  where
+  open ℕ.≤-Reasoning
+
+proportionalSize : ∀ {ℓ} {L : 𝔸 → Set ℓ} → ({A : 𝔸} → L A → ℕ) → ({A : 𝔸} → L A → ℕ) → Set _
+proportionalSize {L = L} s₁ s₂ =
+  Σ[ n ∈ ℕ ]
+  Σ[ m ∈ ℕ ]
+  ∀ {A : 𝔸}
+  → (e : L A)
+  → s₁ e ≤ n * s₂ e
+  × s₂ e ≤ m * s₁ e
+
+sizeDefinitionIndependence :
+  ∀ (L₁ L₂ : VariabilityLanguage V)
+  → (s₁ s₂ : ∀ {A : 𝔸} → Expression L₁ A → ℕ)
+  → (s₃ s₄ : ∀ {A : 𝔸} → Expression L₂ A → ℕ)
+  → proportionalSize {L = Expression L₁} s₁ s₂
+  → proportionalSize {L = Expression L₂} s₃ s₄
+  → record {Lang = L₁; size = s₁} ≤ₛ record {Lang = L₂; size = s₃}
+  → record {Lang = L₁; size = s₂} ≤ₛ record {Lang = L₂; size = s₄}
+sizeDefinitionIndependence L₁ L₂ s₁ s₂ s₃ s₄ (n₁ , m₁ , s₁=s₂) (n₂ , m₂ , s₃=s₄) (k , L₂→L₁) .proj₁ = m₁ * k * n₂
+sizeDefinitionIndependence L₁ L₂ s₁ s₂ s₃ s₄ (n₁ , m₁ , s₁=s₂) (n₂ , m₂ , s₃=s₄) (k , L₂→L₁) .proj₂ A e₂ e₂-translatable
+  with L₂→L₁ A e₂ e₂-translatable
+... | e₁ , e₁≅e₂ , e₁≤e₂
+  with s₁=s₂ e₁
+... | s₁≤s₂ , s₂≤s₁
+  with s₃=s₄ e₂
+... | s₃≤s₄ , s₄≤s₃
+  = e₁ , e₁≅e₂ , (
+    begin
+      s₂ e₁
+    ≤⟨ s₂≤s₁ ⟩
+      m₁ * s₁ e₁
+    ≤⟨ ℕ.*-monoʳ-≤ m₁ e₁≤e₂ ⟩
+      m₁ * (k * s₃ e₂)
+    ≡⟨ ℕ.*-assoc m₁ k (s₃ e₂) ⟨
+      m₁ * k * s₃ e₂
+    ≤⟨ ℕ.*-monoʳ-≤ (m₁ * k) s₃≤s₄ ⟩
+      m₁ * k * (n₂ * s₄ e₂)
+    ≡⟨ ℕ.*-assoc (m₁ * k) n₂ (s₄ e₂) ⟨
+      m₁ * k * n₂ * s₄ e₂
+    ∎)
   where
   open ℕ.≤-Reasoning
 
