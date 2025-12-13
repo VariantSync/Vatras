@@ -50,12 +50,6 @@ last-∷ x y zs with List.initLast zs
 last-∷ x y .[] | [] = refl
 last-∷ x y .(xs List.∷ʳ x₁) | xs List.∷ʳ′ x₁ = refl
 
--- TODO: Contribute to stl
-++-tail : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
-  → (xs ++ y ∷ []) ++ ys ≡ xs ++ y ∷ ys
-++-tail y ys [] = refl
-++-tail y ys (x ∷ xs) = Eq.cong (x ∷_) (++-tail y ys xs)
-
 ∈xs++v∷ys⇒∈xs++ys : ∀ {ℓ} {A : Set ℓ}
   → (u v : A)
   → (xs ys : List A)
