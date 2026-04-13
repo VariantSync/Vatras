@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Vatras.Util.Nat.Diagonalization where
 
 open import Data.Bool using (Bool; true; false)
