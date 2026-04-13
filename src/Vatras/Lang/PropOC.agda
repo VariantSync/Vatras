@@ -1,3 +1,8 @@
+{-|
+A specialization of option calculus with propositional formulas as dimensions.
+The semantics is adapted in order to evaluate the propositional formulas.
+Hence, the configuration consists of an `Assignment` of variables to `Bool`.
+-}
 open import Vatras.Framework.Definitions using (𝔽; ℂ; 𝔼)
 
 module Vatras.Lang.PropOC (F : 𝔽) where

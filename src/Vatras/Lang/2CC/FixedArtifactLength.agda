@@ -1,3 +1,7 @@
+{-|
+This module shows that artifacts of choice calculus expressions have a fixed number of children.
+Afterwards, we introduce some more usable lemmas on top og this insight.
+-}
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
 module Vatras.Lang.2CC.FixedArtifactLength (Dimension : 𝔽) (A : 𝔸) where
 
@@ -26,6 +30,11 @@ open import Vatras.Succinctness.Sizes using (sizeRose; size2CC)
 _≉_ : Rose ∞ A → Rose ∞ A → Set
 (a₁ Rose.-< cs₁ >-) ≉ (a₂ Rose.-< cs₂ >-) = List.length cs₁ ≢ List.length cs₂
 
+{-|
+The key insight of this module:
+Given a choice calculus expression with an artifact at the root,
+all expressed variants must have the same number of children.
+-}
 fixedChildCount : ∀ {i}
   → {a₁ : atoms A} {cs₁ : List (Rose ∞ A)}
   → {a₂ : atoms A} {cs₂ : List (2CC i A)}
@@ -41,6 +50,11 @@ fixedChildCount {cs₁ = cs₁} {cs₂ = cs₂} (c , v≡e) =
   where
   open Eq.≡-Reasoning
 
+{-|
+We can partition a list of variants
+on whether we can choose the left or right alternative of a choice
+in order to configure each variant.
+-}
 partition : ∀ {i : Size}
   → (D : Dimension) (c₁ c₂ : 2CC i A)
   → (vs : List (Rose ∞ A))
@@ -58,6 +72,10 @@ partition D c₁ c₂ (v ∷ vs) (v∉vs ∷ unique-vs) ((c , v≡e) ∷ vs⊆e)
 ... | true = v ∷ vs₁ , vs₂ , consˡ partition , (c , v≡e) ∷ vs₁⊆e , vs₂⊆e
 ... | false = vs₁ , v ∷ vs₂ , consʳ partition , vs₁⊆e , (c , v≡e) ∷ vs₂⊆e
 
+{-|
+Gives a lower bound on the size of a choice calculus expression
+given that it expresses a number of variants with pairwise different child count.
+-}
 sum≤size2CC : ∀ {i : Size}
   → (e : 2CC i A)
   → (vs : List (Rose ∞ A))
@@ -93,6 +111,12 @@ sum≤size2CC (D ⟨ c₁ , c₂ ⟩) vs unique-vs vs⊆e with partition D c₁ 
   where
   open ℕ.≤-Reasoning
 
+{-|
+Gives a lower bound on the size of a choice calculus expression
+given that it expresses a number of variants with pairwise different child count.
+In contrast to `sum≤size2CC`, this lemma is a simplified special case
+which makes use of a lower bound on the variant size.
+-}
 different-children-counts :
   ∀ {i : Size}
   → (n : ℕ)

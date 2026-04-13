@@ -1,3 +1,11 @@
+{-|
+This module is a formal proof that ℕ and ℕ × ℕ have equal cardinality.
+In particular, we provide a bijection between ℕ and ℕ × ℕ
+using a version of Cantor's diagonal argument.
+
+This is already a well established result.
+We only provide a full proof of this result due to procrastination 😅.
+-}
 module Vatras.Util.Nat.Diagonalization where
 
 open import Data.Bool using (Bool; true; false)
@@ -13,6 +21,15 @@ open import Relation.Nullary.Decidable using (yes; no)
 
 import Vatras.Util.List as List
 
+{-|
+A bijection between ℕ × ℕ and ℕ.
+It counts through the pair like in a triangle:
+y\x 0 1 2 3
+0   0 2 5 9
+1   1 4 8
+2   3 7
+3   6
+-}
 diagonalization : ℕ × ℕ → ℕ
 diagonalization (x , y) = List.sum (List.upTo (suc (x + y))) + x
 

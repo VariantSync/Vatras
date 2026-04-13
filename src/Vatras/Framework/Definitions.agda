@@ -24,6 +24,7 @@ Any actual data we can think of to plug in here (e.g., strings, tokens or
 nodes of an abstract syntax tree) can be checked for equality.
 -}
 record 𝔸 : Set₁ where
+  -- We do not actually need eta equality in Vatras and it does break a proof when enabled (no idea why).
   no-eta-equality
   field
     atoms : Set
@@ -67,6 +68,11 @@ and hence expressions are parameterized in the type of this atomic data.
 𝔼 = 𝔸 → Set₁
 
 -- some default atoms
+{-|
+String artifacts.
+Equality is defined character wise
+and size is measured by length (in characters not bytes).
+-}
 STRING : 𝔸
 STRING = record
   { atoms = String
@@ -74,6 +80,12 @@ STRING = record
   ; atomSize = String.length
   }
 
+{-|
+Pairs of natural numbers as artifacts.
+The first element in the pair is treated as an identifier
+whereas the second element determines the size of the artifact.
+Both elements of the pair are tested for equality.
+-}
 NAT : 𝔸
 NAT = record
   { atoms = ℕ × ℕ
@@ -81,6 +93,11 @@ NAT = record
   ; atomSize = proj₂
   }
 
+{-|
+Natural number artifacts.
+Each number is treated as a separate artifact.
+The size of all artifacts is zero.
+-}
 NAT' : 𝔸
 NAT' = record
   { atoms = ℕ

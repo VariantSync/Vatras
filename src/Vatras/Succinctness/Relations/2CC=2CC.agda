@@ -1,3 +1,9 @@
+{-|
+Renaming dimensions of binary choice calculus expressions preserves their size.
+Furthermore, the two representations of choice calculus in Vatras,
+namely 2CC and NCC with binary choices,
+are equally succinct.
+-}
 module Vatras.Succinctness.Relations.2CC=2CC where
 
 open import Data.Nat as ℕ using (zero; suc; _+_)
