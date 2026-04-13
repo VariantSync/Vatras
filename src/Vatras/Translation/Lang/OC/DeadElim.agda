@@ -1,6 +1,6 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝔸; atoms)
 open import Relation.Binary using (DecidableEquality)
-module Vatras.Lang.OC.DeadElim (F : 𝔽) (_≟_ : DecidableEquality F) where
+module Vatras.Translation.Lang.OC.DeadElim (F : 𝔽) (_≟_ : DecidableEquality F) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥-elim)
