@@ -121,15 +121,15 @@ simple-drop : ∀ {a} {A : Set a} (n : ℕ) {m : ℕ} → Vec A (n + m) → Vec 
 simple-drop zero xs = xs
 simple-drop (suc n) (x ∷ xs) = simple-drop n xs
 
--- TODO variable names
 simple-drop-tail :
-  ∀ {a} {A : Set a} {n k : ℕ} (D : ℕ) (v₁ : Vec A n) (x : A) (v₂ : Vec A k)
+  ∀ {a} {A : Set a} {n k : ℕ}
+  → (D : ℕ) (xs : Vec A n) (y : A) (zs : Vec A k)
   → (n≡D+m : n ≡ D + suc k)
   → (n≡D+m' : n ≡ suc D + k)
-  → simple-drop D (Vec.cast n≡D+m v₁) ≡ x ∷ v₂
-  → simple-drop (suc D) (Vec.cast n≡D+m' v₁) ≡ v₂
-simple-drop-tail zero (x₂ ∷ v₁) x v₂ n≡D+m n≡D+m' x₁ = Vec.∷-injectiveʳ x₁
-simple-drop-tail (suc D) (x₂ ∷ v₁) x v₂ n≡D+m n≡D+m' x₁ = simple-drop-tail D v₁ x v₂ (ℕ.suc-injective n≡D+m) (ℕ.suc-injective n≡D+m') x₁
+  → simple-drop D (Vec.cast n≡D+m xs) ≡ y ∷ zs
+  → simple-drop (suc D) (Vec.cast n≡D+m' xs) ≡ zs
+simple-drop-tail zero (x ∷ xs) y zs n≡D+m n≡D+m' h = Vec.∷-injectiveʳ h
+simple-drop-tail (suc D) (x ∷ xs) y zs n≡D+m n≡D+m' h = simple-drop-tail D xs y zs (ℕ.suc-injective n≡D+m) (ℕ.suc-injective n≡D+m') h
 
 cast-is-id : ∀ {a} {A : Set a} {n : ℕ} (v : Vec A n) → Vec.cast refl v ≡ v
 cast-is-id [] = refl
@@ -147,23 +147,26 @@ variants⊆e₁ n bs = config n bs , Eq.cong (0 Rose.-<_>-) (go n bs zero refl (
   config : ∀ n → Vec Bool n → 2CC.Configuration
   config n bs d = config' n zero bs d
 
-  -- TODO variable naming
-  config-lemma : ∀ m b (bs' : Vec Bool m) D → (n≡D+m : n ≡ D + suc m) → simple-drop D (Vec.cast n≡D+m bs) ≡ b ∷ bs' → config' n zero bs (f D) ≡ b
+  config-lemma :
+    ∀ m b (bs' : Vec Bool m) D
+    → (n≡D+m : n ≡ D + suc m)
+    → simple-drop D (Vec.cast n≡D+m bs) ≡ b ∷ bs'
+    → config' n zero bs (f D) ≡ b
   config-lemma m b bs' D n≡D+m x = go n zero bs D D b bs' (Eq.sym (ℕ.+-identityʳ D)) n≡D+m x
     where
     go :
-      ∀ n m bs D k {x : ℕ} b (bs' : Vec Bool x)
+      ∀ n m bs D k {x : ℕ} b' (bs' : Vec Bool x)
       → D ≡ k + m
       → (n≡k+x : n ≡ k + suc x)
-      → simple-drop k (Vec.cast n≡k+x bs) ≡ b ∷ bs'
-      → config' n m bs (f D) ≡ b
-    go zero m [] D k b bs' x₁ n≡k+x x₂ = ⊥-elim (ℕ.n≮0 (ℕ.≤-trans (ℕ.m≤n+m (suc _) k) (ℕ.≤-reflexive (Eq.sym n≡k+x))))
-    go (suc n) m (x₃ ∷ bs) D zero b bs' x₁ n≡k+x x₂ rewrite ℕ.suc-injective n≡k+x rewrite x₁ with f m == f m
-    go (suc n) m (x₃ ∷ bs) D zero b bs' x₁ n≡k+x x₂ | yes refl = Vec.∷-injectiveˡ x₂
-    go (suc n) m (x₃ ∷ bs) D zero b bs' x₁ n≡k+x x₂ | no f-m≢f-m = ⊥-elim (f-m≢f-m refl)
-    go (suc n) m (x₃ ∷ bs) D (suc k) b bs' x₁ n≡k+x x₂ with f m == f D
-    go (suc n) m (x₃ ∷ bs) D (suc k) b bs' x₁ n≡k+x x₂ | yes f-m≡f-D = ⊥-elim (f-injective (ℕ.<⇒≢ (ℕ.≤-<-trans (ℕ.m≤n+m m k) (ℕ.<-≤-trans (ℕ.n<1+n (k + m)) (ℕ.≤-reflexive (Eq.sym x₁))))) f-m≡f-D)
-    go (suc n) m (x₃ ∷ bs) D (suc k) b bs' x₁ (n≡k+x) x₂ | no f-m≢f-D = go n (suc m) bs D k b bs' (Eq.trans x₁ (Eq.sym (ℕ.+-suc k m))) (ℕ.suc-injective n≡k+x) x₂
+      → simple-drop k (Vec.cast n≡k+x bs) ≡ b' ∷ bs'
+      → config' n m bs (f D) ≡ b'
+    go zero m [] D k b' bs' D≡k+m n≡k+x h = ⊥-elim (ℕ.n≮0 (ℕ.≤-trans (ℕ.m≤n+m (suc _) k) (ℕ.≤-reflexive (Eq.sym n≡k+x))))
+    go (suc n) m (b ∷ bs) D zero b' bs' D≡k+m n≡k+x h rewrite ℕ.suc-injective n≡k+x rewrite D≡k+m with f m == f m
+    go (suc n) m (b ∷ bs) D zero b' bs' D≡k+m n≡k+x h | yes refl = Vec.∷-injectiveˡ h
+    go (suc n) m (b ∷ bs) D zero b' bs' D≡k+m n≡k+x h | no f-m≢f-m = ⊥-elim (f-m≢f-m refl)
+    go (suc n) m (b ∷ bs) D (suc k) b' bs' D≡k+m n≡k+x h with f m == f D
+    go (suc n) m (b ∷ bs) D (suc k) b' bs' D≡k+m n≡k+x h | yes f-m≡f-D = ⊥-elim (f-injective (ℕ.<⇒≢ (ℕ.≤-<-trans (ℕ.m≤n+m m k) (ℕ.<-≤-trans (ℕ.n<1+n (k + m)) (ℕ.≤-reflexive (Eq.sym D≡k+m))))) f-m≡f-D)
+    go (suc n) m (b ∷ bs) D (suc k) b' bs' D≡k+m (n≡k+x) h | no f-m≢f-D = go n (suc m) bs D k b' bs' (Eq.trans D≡k+m (Eq.sym (ℕ.+-suc k m))) (ℕ.suc-injective n≡k+x) h
 
   go : ∀ (m : ℕ) (bs' : Vec Bool m) (D : ℕ) → (n≡D+m : n ≡ D + m) → simple-drop D (Vec.cast n≡D+m bs) ≡ bs'
     → variants-cs m bs' ≡ List.map (λ e → 2CC.⟦ e ⟧ (config n bs)) (e₁-cs m D)
@@ -339,18 +342,21 @@ sizeRose∈variants n v p | bs , v≡variants-bs =
   where
   open Eq.≡-Reasoning
 
-todo5 :
+lookup≡find-or-last :
   ∀ {a} {A : Set a} (xs : List⁺ A) (i : Fin (List⁺.length xs))
   → List.lookup (List⁺.toList xs) i
   ≡ find-or-last (Fin.toℕ i) xs
-todo5 (x ∷ []) zero = refl
-todo5 (x₁ ∷ x₂ ∷ xs) zero = refl
-todo5 (x₁ ∷ x₂ ∷ xs) (suc i) = todo5 (x₂ ∷ xs) i
+lookup≡find-or-last (x ∷ []) zero = refl
+lookup≡find-or-last (x₁ ∷ x₂ ∷ xs) zero = refl
+lookup≡find-or-last (x₁ ∷ x₂ ∷ xs) (suc i) = lookup≡find-or-last (x₂ ∷ xs) i
 
-todo : ∀ {i} {I : Set i} {a} {A : Set a} {n : ℕ} {M : Vec Bool n → A} {N : I → A} → M ⊆ N → List.lookup (List.map M (List⁺.toList (enumerate-binary n))) ⊆ N
-todo {n = zero} M⊆N zero = M⊆N []
-todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i with Fin.toℕ i <? List⁺.length (List⁺.map (λ z → M (true ∷ z)) (enumerate-binary n))
-todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | yes i<2^n = Product.map₂ lemma (todo (M⊆N ∘ (true ∷_)) (Fin.fromℕ< {Fin.toℕ i} i<2^n))
+lookup-enumerate-binary⊆ :
+  ∀ {i} {I : Set i} {a} {A : Set a} {n : ℕ} {M : Vec Bool n → A} {N : I → A}
+  → M ⊆ N
+  → List.lookup (List.map M (List⁺.toList (enumerate-binary n))) ⊆ N
+lookup-enumerate-binary⊆ {n = zero} M⊆N zero = M⊆N []
+lookup-enumerate-binary⊆ {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i with Fin.toℕ i <? List⁺.length (List⁺.map (λ z → M (true ∷ z)) (enumerate-binary n))
+lookup-enumerate-binary⊆ {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | yes i<2^n = Product.map₂ lemma (lookup-enumerate-binary⊆ (M⊆N ∘ (true ∷_)) (Fin.fromℕ< {Fin.toℕ i} i<2^n))
   where
   open Eq.≡-Reasoning
 
@@ -360,7 +366,7 @@ todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | yes i<2^n = Product.map�
   lemma {j} p =
       List.lookup (List⁺.toList (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))) i
 
-    ≡⟨ todo5 (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) i ⟩
+    ≡⟨ lookup≡find-or-last (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) i ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))
     ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) x) (List.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))
@@ -370,12 +376,12 @@ todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | yes i<2^n = Product.map�
       find-or-last (Fin.toℕ i) (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n))
     ≡⟨ Eq.cong (λ x → find-or-last x (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n))) (Fin.toℕ-fromℕ< i<2^n) ⟨
       find-or-last (Fin.toℕ (Fin.fromℕ< i<2^n)) (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n))
-    ≡⟨ todo5 (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n)) (Fin.fromℕ< i<2^n) ⟨
+    ≡⟨ lookup≡find-or-last (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n)) (Fin.fromℕ< i<2^n) ⟨
       List.lookup (List⁺.toList (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n))) (Fin.fromℕ< i<2^n)
     ≡⟨ p ⟩
       N j
     ∎
-todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | no i≮2^n = Product.map₂ lemma2 (todo (M⊆N ∘ (false ∷_)) (Fin.fromℕ< {Fin.toℕ i ∸ 2 ^ n} lemma))
+lookup-enumerate-binary⊆ {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | no i≮2^n = Product.map₂ lemma2 (lookup-enumerate-binary⊆ (M⊆N ∘ (false ∷_)) (Fin.fromℕ< {Fin.toℕ i ∸ 2 ^ n} lemma))
   where
   lemma : Fin.toℕ i ∸ 2 ^ n < List⁺.length (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n))
   lemma =
@@ -408,7 +414,7 @@ todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | no i≮2^n = Product.map�
     → List.lookup (List⁺.toList (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))) i ≡ N j
   lemma2 {j} p =
       List.lookup (List⁺.toList (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))) i
-    ≡⟨ todo5 (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) i ⟩
+    ≡⟨ lookup≡find-or-last (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) i ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))
     ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) x) (List.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))
@@ -424,7 +430,7 @@ todo {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | no i≮2^n = Product.map�
       find-or-last (Fin.toℕ i ∸ 2 ^ n) (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n))
     ≡⟨ Eq.cong (λ x → find-or-last x (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n))) (Fin.toℕ-fromℕ< lemma) ⟨
       find-or-last (Fin.toℕ (Fin.fromℕ< lemma)) (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n))
-    ≡⟨ todo5 (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n)) (Fin.fromℕ< lemma) ⟨
+    ≡⟨ lookup≡find-or-last (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n)) (Fin.fromℕ< lemma) ⟨
       List.lookup (List⁺.toList (List⁺.map (M ∘ (false ∷_)) (enumerate-binary n))) (Fin.fromℕ< lemma)
     ≡⟨ p ⟩
       N j
@@ -464,7 +470,7 @@ lemma (suc k) e₂ (e₂⊆e₁ , e₁⊆e₂) =
     List.sum (List.map (const (suc m)) (List.map (variants m) (List⁺.toList (enumerate-binary m))))
   ≡⟨ Eq.cong List.sum (List.map-cong-with∈ (List.map (variants m) (List⁺.toList (enumerate-binary m))) (sizeRose∈variants m)) ⟩
     List.sum (List.map sizeRose (List.map (variants m) (List⁺.toList (enumerate-binary m))))
-  ≤⟨ minimal-adt-size e₂ (List.map (variants m) (List⁺.toList (enumerate-binary m))) (Unique.map⁺ (variants-injective m) (enumerate-binary-unique m)) (⊆-trans (todo (variants⊆e₁ m)) e₁⊆e₂) ⟩
+  ≤⟨ minimal-adt-size e₂ (List.map (variants m) (List⁺.toList (enumerate-binary m))) (Unique.map⁺ (variants-injective m) (enumerate-binary-unique m)) (⊆-trans (lookup-enumerate-binary⊆ (variants⊆e₁ m)) e₁⊆e₂) ⟩
     sizeADT sizeRose e₂
   ∎
   where
