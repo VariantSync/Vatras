@@ -32,9 +32,9 @@ data Undead {A : 𝔸} : {i : Size} → OC i A → Set₁ where
 
 elimDead' : {i : Size} → {A : 𝔸} → (env : List F) → OC i A → Σ (OC ∞ A) (RestrictOptions env)
 elimDead' env (a -< cs >-) = a -< List.map proj₁ (List.map (elimDead' env) cs) >- , (env -< All.fromList (List.map (elimDead' env) cs) >-)
-elimDead' env (a ❲ c ❳) with a ∈? env
-elimDead' env (a ❲ c ❳) | yes a∈env = elimDead' env c
-elimDead' env (a ❲ c ❳) | no a∉env = a ❲ proj₁ (elimDead' (a ∷ env) c) ❳ , a∉env ❲ proj₂ (elimDead' (a ∷ env) c) ❳
+elimDead' env (f ❲ c ❳) with f ∈? env
+elimDead' env (f ❲ c ❳) | yes a∈env = elimDead' env c
+elimDead' env (f ❲ c ❳) | no a∉env = f ❲ proj₁ (elimDead' (f ∷ env) c) ❳ , a∉env ❲ proj₂ (elimDead' (f ∷ env) c) ❳
 
 elimDead : {i : Size} → {A : 𝔸} → OC i A → OC ∞ A
 elimDead e = proj₁ (elimDead' [] e)
@@ -57,13 +57,13 @@ elimDead-preserves' env (a -< cs >-) c c-env≡true =
   ∎
   where
   open Eq.≡-Reasoning
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true with a ∈? env
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true | yes a∈env with c a in c-a
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true | yes a∈env | true = elimDead-preserves' env e c c-env≡true
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true | yes a∈env | false = ⊥-elim (true≢false (All.lookup c-env≡true a∈env) c-a)
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true | no a∉env with c a in c-a
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true | no a∉env | true = elimDead-preserves' (a ∷ env) e c (c-a ∷ c-env≡true)
-elimDead-preserves' env (a ❲ e ❳) c c-env≡true | no a∉env | false = Eq.refl
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true with f ∈? env
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true | yes a∈env with c f in c-a
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true | yes a∈env | true = elimDead-preserves' env e c c-env≡true
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true | yes a∈env | false = ⊥-elim (true≢false (All.lookup c-env≡true a∈env) c-a)
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true | no a∉env with c f in c-a
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true | no a∉env | true = elimDead-preserves' (f ∷ env) e c (c-a ∷ c-env≡true)
+elimDead-preserves' env (f ❲ e ❳) c c-env≡true | no a∉env | false = Eq.refl
 
 elimDead-preserves : {i : Size} → {A : 𝔸} → (e : OC i A) → ⟦ elimDead e ⟧ₒ ≅[ id ][ id ] ⟦ e ⟧ₒ
 elimDead-preserves e = ≗→≅[] (λ c → elimDead-preserves' [] e c [])
