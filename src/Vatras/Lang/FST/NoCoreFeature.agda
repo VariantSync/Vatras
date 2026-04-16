@@ -1,12 +1,12 @@
 {-|
-Proof that feature structure trees do not contain a base artifact.
+Proof that feature structure trees do not contain a core feature.
 In other words: Every feature structure tree contains a variant that has no children.
 Hence, feature structure trees are incomplete
 (they cannot encode a variant set that does not contain a variant without children).
 -}
 
 open import Vatras.Framework.Definitions using (𝔽; NAT')
-module Vatras.Lang.FST.NoBaseArtifacts {F : 𝔽} where
+module Vatras.Lang.FST.NoCoreFeature {F : 𝔽} where
 
 open import Data.Bool using (true; false)
 open import Data.Fin using (zero)
