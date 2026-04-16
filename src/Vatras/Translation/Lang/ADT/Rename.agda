@@ -56,7 +56,7 @@ preserves-⊆ f (d ⟨ l , r ⟩) config =
     ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
   ≡⟨⟩
     (if config (f d) then ADT.⟦ rename f l ⟧ config else ADT.⟦ rename f r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f l config) (preserves-⊆ f r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-⊆ f l config) (preserves-⊆ f r config) ⟩
     (if config (f d) then ADT.⟦ l ⟧ (config ∘ f) else ADT.⟦ r ⟧ (config ∘ f))
   ≡⟨⟩
     ADT.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
@@ -73,9 +73,9 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     ADT.⟦ d ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-⊇ f f⁻¹ is-inverse l config) (preserves-⊇ f f⁻¹ is-inverse r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-⊇ f f⁻¹ is-inverse l config) (preserves-⊇ f f⁻¹ is-inverse r config) ⟩
     (if config d then ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
-  ≡⟨ Eq.cong-app (Eq.cong-app (Eq.cong if_then_else_ (Eq.cong config (is-inverse d))) (ADT.⟦ rename f l ⟧ (config ∘ f⁻¹))) (ADT.⟦ rename f r ⟧ (config ∘ f⁻¹)) ⟨
+  ≡⟨ Bool.if-cong (Eq.cong config (is-inverse d)) ⟨
     (if config (f⁻¹ (f d)) then ADT.⟦ rename f l ⟧ (config ∘ f⁻¹) else ADT.⟦ rename f r ⟧ (config ∘ f⁻¹))
   ≡⟨⟩
     ADT.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ (config ∘ f⁻¹)

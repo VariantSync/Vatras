@@ -4,6 +4,12 @@ Utilities for lists.
 module Vatras.Util.List where
 
 open import Data.Bool using (Bool; true; false)
+open import Data.Nat using (ℕ; suc; zero; _+_; _∸_; _⊔_; _≤_; _<_; s≤s; z≤n)
+open import Data.List as List using (List; []; _∷_; lookup; foldr; _++_)
+open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_; _⁺++⁺_) renaming (map to map⁺)
+open import Data.Vec as Vec using (Vec; []; _∷_)
+open import Vatras.Util.Nat.AtLeast as ℕ≥ using (ℕ≥; sucs)
+open import Function using (id; _∘_)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin as Fin using (Fin; zero; suc)
 import Data.Fin.Properties as Fin
@@ -45,37 +51,6 @@ last-∷ x y .[] | [] = refl
 last-∷ x y .(xs List.∷ʳ x₁) | xs List.∷ʳ′ x₁ = refl
 
 -- TODO: Contribute to stl
-map-⁺++⁺ : ∀ {a} {A : Set a} {b} {B : Set b} (f : A → B) (xs ys : List⁺ A)
-  → List⁺.map f (xs ⁺++⁺ ys) ≡ List⁺.map f xs ⁺++⁺ List⁺.map f ys
-map-⁺++⁺ f (x ∷ xs) (y ∷ ys) = Eq.cong (f x ∷_) (List.map-++ f xs (y ∷ ys))
-
--- TODO: Contribute to stl
-⁺++⁺-length : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A)
-  → List⁺.length (xs ⁺++⁺ ys) ≡ List⁺.length xs + List⁺.length ys
-⁺++⁺-length (x ∷ xs) (y ∷ ys) = length-++ (x ∷ xs)
-
-⁺++⁺-length-≤ : ∀ {ℓ} {A : Set ℓ} (xs ys : List⁺ A) → List⁺.length xs ≤ List⁺.length (xs ⁺++⁺ ys)
-⁺++⁺-length-≤ xs ys rewrite ⁺++⁺-length xs ys = m≤m+n (List⁺.length xs) (List⁺.length ys)
-
-length-++-≤ₗ : ∀ {ℓ} {A : Set ℓ}
-  → (xs ys : List A)
-  → List.length xs ≤ List.length (xs List.++ ys)
-length-++-≤ₗ xs ys = Eq.subst (_ ≤_) (Eq.sym (length-++ xs)) (ℕ.m≤m+n (List.length xs) (List.length ys))
-
-lookup-++ᵣ : ∀ {ℓ} {A : Set ℓ}
-  → (xs ys : List A)
-  → (i : Fin (List.length xs))
-  → List.lookup xs i ≡ List.lookup (xs List.++ ys) (Fin.inject≤ i (length-++-≤ₗ xs ys))
-lookup-++ᵣ (x ∷ xs) ys zero = refl
-lookup-++ᵣ (x ∷ xs) ys (suc i) = lookup-++ᵣ xs ys i
-
-lookup-++ₗ : ∀ {ℓ} {A : Set ℓ}
-  → (xs ys : List A)
-  → (i : Fin (List.length ys))
-  → List.lookup ys i ≡ List.lookup (xs List.++ ys) (Fin.cast (Eq.sym (length-++ xs)) (List.length xs Fin.↑ʳ i))
-lookup-++ₗ [] ys i = Eq.cong (List.lookup ys) (Eq.sym (Fin.cast-is-id refl i))
-lookup-++ₗ (x ∷ xs) ys i = lookup-++ₗ xs ys i
-
 ++-tail : ∀ {ℓ} {A : Set ℓ} (y : A) (ys xs : List A)
   → (xs ++ y ∷ []) ++ ys ≡ xs ++ y ∷ ys
 ++-tail y ys [] = refl
@@ -512,20 +487,6 @@ module _ where
     ∎
     where
     open Eq.≡-Reasoning
-
-map-applyUpTo : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂}
-  → (f : A → B)
-  → (g : ℕ → A)
-  → (n : ℕ)
-  → List.map f (List.applyUpTo g n) ≡ List.applyUpTo (f ∘ g) n
-map-applyUpTo f g zero = refl
-map-applyUpTo f g (suc n) = Eq.cong (f (g zero) ∷_) (map-applyUpTo f (g ∘ suc) n)
-
-map-upTo : ∀ {ℓ₁} {A : Set ℓ₁}
-  → (f : ℕ → A)
-  → (n : ℕ)
-  → List.map f (List.upTo n) ≡ List.applyUpTo f n
-map-upTo f n = map-applyUpTo f id n
 
 applyUpTo-cong : ∀ {ℓ₁} {A : Set ℓ₁}
   → {f g : ℕ → A}

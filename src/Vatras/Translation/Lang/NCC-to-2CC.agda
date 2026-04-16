@@ -7,6 +7,7 @@ module Vatras.Translation.Lang.NCC-to-2CC where
 
 open import Size using (Size; ∞)
 open import Data.Bool using (true; false; if_then_else_)
+import Data.Bool.Properties as Bool
 import Vatras.Data.EqIndexedSet as IndexedSet
 open import Data.Fin as Fin using (Fin; zero; suc)
 open import Data.List as List using (List)
@@ -70,7 +71,7 @@ module 2Ary where
       2CC.⟦ d ⟨ translate l , translate r ⟩ ⟧ config
     ≡⟨⟩
       (if config d then 2CC.⟦ translate l ⟧ config else 2CC.⟦ translate r ⟧ config)
-    ≡⟨ Eq.cong₂ (if_then_else_ (config d)) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
+    ≡⟨ Bool.if-cong₂ _ (preserves-⊆ l config) (preserves-⊆ r config) ⟩
       (if config d then NCC.⟦ l ⟧ (fnoc config) else NCC.⟦ r ⟧ (fnoc config))
     ≡⟨ lemma ⟩
       Vec.lookup (NCC.⟦ l ⟧ (fnoc config) ∷ NCC.⟦ r ⟧ (fnoc config) ∷ []) (fnoc config d)
@@ -109,7 +110,7 @@ module 2Ary where
       Vec.lookup (NCC.⟦ l ⟧ config ∷ NCC.⟦ r ⟧ config ∷ []) (config d)
     ≡⟨ lemma ⟩
       (if conf config d then NCC.⟦ l ⟧ config else NCC.⟦ r ⟧ config)
-    ≡⟨ Eq.cong₂ (if_then_else_ (conf config d)) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
+    ≡⟨ Bool.if-cong₂ _ (preserves-⊇ l config) (preserves-⊇ r config) ⟩
       (if conf config d then 2CC.⟦ translate l ⟧ (conf config) else 2CC.⟦ translate r ⟧ (conf config))
     ≡⟨⟩
       2CC.⟦ translate (d ⟨ l ∷ r ∷ [] ⟩) ⟧ (conf config)

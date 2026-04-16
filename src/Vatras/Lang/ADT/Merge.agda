@@ -9,8 +9,6 @@ open import Data.Bool.Properties using (if-float)
 open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≗_)
 open Relation.Binary.PropositionalEquality.≡-Reasoning
 
-open import Vatras.Util.AuxProofs using (if-cong)
-
 import Vatras.Lang.ADT
 
 module Named (F : 𝔽) where
@@ -66,11 +64,10 @@ module Named (F : 𝔽) where
 
 module Prop (F : 𝔽) where
   open import Vatras.Data.Prop
-  open Vatras.Lang.ADT (Prop F) V
   open import Vatras.Lang.ADT.Prop F V
-  open Named (Prop F)
+  open Named (Prop F) using (_⊕_) public
 
-  ⊕-specₚ : ∀ {A} (l r : ADT A) (c : Assignment F) →
+  ⊕-specₚ : ∀ {A} (l r : PropADT A) (c : Assignment F) →
      ⟦ l ⊕ r ⟧ₚ c ≡ ⟦ l ⟧ₚ c +ᵥ ⟦ r ⟧ₚ c
   ⊕-specₚ (leaf v) (leaf r) c = refl
   ⊕-specₚ (leaf l) (E ⟨ el , er ⟩) c with eval E c

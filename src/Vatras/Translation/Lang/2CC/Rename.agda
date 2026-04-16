@@ -67,7 +67,7 @@ preserves-⊆ f (d ⟨ l , r ⟩) config =
     2CC.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ config
   ≡⟨⟩
     (if config (f d) then 2CC.⟦ rename f l ⟧ config else 2CC.⟦ rename f r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config (f d) then_else_) (preserves-⊆ f l config) (preserves-⊆ f r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-⊆ f l config) (preserves-⊆ f r config) ⟩
     (if config (f d) then 2CC.⟦ l ⟧ (config ∘ f) else 2CC.⟦ r ⟧ (config ∘ f))
   ≡⟨⟩
     2CC.⟦ d ⟨ l , r ⟩ ⟧ (config ∘ f)
@@ -96,11 +96,9 @@ preserves-⊇ f f⁻¹ is-inverse (d ⟨ l , r ⟩) config =
     2CC.⟦ d ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
     (if config d then 2CC.⟦ l ⟧ config else 2CC.⟦ r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config d then_else_) (preserves-⊇ f f⁻¹ is-inverse l config) (preserves-⊇ f f⁻¹ is-inverse r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-⊇ f f⁻¹ is-inverse l config) (preserves-⊇ f f⁻¹ is-inverse r config) ⟩
     (if config d then 2CC.⟦ rename f l ⟧ (config ∘ f⁻¹) else 2CC.⟦ rename f r ⟧ (config ∘ f⁻¹))
-  ≡⟨ Eq.cong (if_then 2CC.⟦ rename f l ⟧ (config ∘ f⁻¹) else 2CC.⟦ rename f r ⟧ (config ∘ f⁻¹))
-      (Eq.cong config
-        (Eq.sym (is-inverse d))) ⟩
+  ≡⟨ Bool.if-cong (Eq.cong config (Eq.sym (is-inverse d))) ⟩
     (if (config ∘ f⁻¹) (f d) then 2CC.⟦ rename f l ⟧ (config ∘ f⁻¹) else 2CC.⟦ rename f r ⟧ (config ∘ f⁻¹))
   ≡⟨⟩
     2CC.⟦ f d ⟨ rename f l , rename f r ⟩ ⟧ (config ∘ f⁻¹)

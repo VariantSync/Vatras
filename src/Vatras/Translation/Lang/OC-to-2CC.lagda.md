@@ -397,7 +397,7 @@ preservesₒ c (T-artifact {a = a} {b = b} {ls = ls} {es = es} {rs = rs} {e₁ =
 preservesₒ c (T-option {a = a} {O = O} {e = e} {ls = ls} {rs = rs} {eᵒ⁻ʸ = ey} {eᵒ⁻ⁿ = en} ⟶ey ⟶en) with c O
 ... | true  = begin
                 Artifactᵥ a (map (flip ⟦_⟧₂ c) ls ++ (catMaybes (⟦ e ⟧ₒ c ∷ map (flip ⟦_⟧ₒ c) (toList rs))))
-              ≡⟨ preservesₒ-option-size e ⟩ -- prove that size constraint on e does not matter for ⟦_⟧ₒ
+              ≡⟨ preservesₒ-option-size {rs = rs} e ⟩ -- prove that size constraint on e does not matter for ⟦_⟧ₒ
                 ⟦ a -< ls ≪ e ∷ rs >- ⟧ₜ c
               ≡⟨ preservesₒ c ⟶ey ⟩ -- apply induction hypothesis
                 ⟦ ey ⟧₂ c

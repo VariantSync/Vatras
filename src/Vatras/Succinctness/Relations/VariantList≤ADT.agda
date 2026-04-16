@@ -14,6 +14,7 @@ import Data.Bool.Properties as Bool
 open import Data.List as List using ([]; _∷_)
 import Data.List.Properties as List
 open import Data.List.NonEmpty as List⁺ using (_⁺++⁺_)
+import Data.List.NonEmpty.Properties as List⁺
 open import Data.Product using (_,_; proj₁; proj₂)
 import Data.Nat.Properties as ℕ
 import Relation.Binary.PropositionalEquality as Eq
@@ -89,7 +90,7 @@ size-tr (f ⟨ l , r ⟩) =
     sizeVariantList {V} sizeV (tr l ⁺++⁺ tr r)
   ≡⟨⟩
     List.sum (List⁺.toList (List⁺.map sizeV (tr l ⁺++⁺ tr r)))
-  ≡⟨ Eq.cong (λ x → List.sum (List⁺.toList x)) (List.map-⁺++⁺ sizeV (tr l) (tr r)) ⟩
+  ≡⟨ Eq.cong (λ x → List.sum (List⁺.toList x)) (List⁺.map-⁺++⁺ sizeV (tr l) (tr r)) ⟩
     List.sum (List⁺.toList (List⁺.map sizeV (tr l) ⁺++⁺ List⁺.map sizeV (tr r)))
   ≡⟨ List.sum-++ (List⁺.toList (List⁺.map sizeV (tr l))) (List⁺.toList (List⁺.map sizeV (tr r))) ⟩
     List.sum (List⁺.toList (List⁺.map sizeV (tr l))) + List.sum (List⁺.toList (List⁺.map sizeV (tr r)))

@@ -1,4 +1,4 @@
 name: Vatras
-depend: standard-library-2.0
+depend: standard-library-2.3
 include: src
 flags: --sized-types

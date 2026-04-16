@@ -14,6 +14,7 @@ module Vatras.Translation.Lang.ADT.WalkSemantics
   where
 
 open import Data.Bool using (Bool; true; false; not; if_then_else_)
+open import Data.Bool.Properties using (if-cong)
 open import Data.Empty using (⊥-elim)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
@@ -169,7 +170,7 @@ path-to-fun-step-l-inner D l r lp (D' ⟨ a , b ⟩) ((.D' ↣ .true) ∷ ep) tl
     ⟦ D' ⟨ a , b ⟩ ⟧ c-big
   ≡⟨⟩
     (if c-big D' then ⟦ a ⟧ c-big else ⟦ b ⟧ c-big)
-  ≡⟨ Eq.cong (if_then ⟦ a ⟧ c-big else ⟦ b ⟧ c-big) (path-to-fun-step-l-inner2 D l r lp tlp x D' (endswith-Any sub (here (fromWitness refl)))) ⟩
+  ≡⟨ if-cong (path-to-fun-step-l-inner2 D l r lp tlp x D' (endswith-Any sub (here (fromWitness refl)))) ⟩
     (if c-sml D' then ⟦ a ⟧ c-big else ⟦ b ⟧ c-big)
   ≡⟨ lem ⟩
     (if c-sml D' then ⟦ a ⟧ c-sml else ⟦ b ⟧ c-sml)

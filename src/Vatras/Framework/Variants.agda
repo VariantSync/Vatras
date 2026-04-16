@@ -152,7 +152,7 @@ module _ (V : 𝕍) (A : 𝔸) {L : VariabilityLanguage V} (encoder : VariantEnc
 -- atom containment
 open import Relation.Nullary.Decidable using (yes; no)
 open import Data.Bool using (Bool; true)
-open import Data.List using (or)
+open import Data.Bool.ListAction using (or)
 
 has-atom : ∀ {A i} → atoms A → Rose i A → Bool
 has-atom {A} a (b -< cs >-) with atomsEqual? A a b

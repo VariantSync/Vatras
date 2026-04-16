@@ -1,21 +1,18 @@
-.PHONY: andrun check check-all check-everything build build-2.6.4.3 run clean
+.PHONY: andrun check check-all check-everything build run clean
 
 andrun : build run
 
 check:
-	env AGDA_DIR="./libs" agda src/Vatras/Main.agda
+	agda src/Vatras/Main.agda
 
 check-all:
 	./scripts/check-all.sh
 
 check-everything: src/Vatras/Everything.agda
-	env AGDA_DIR="./libs" agda src/Vatras/Everything.agda
+	agda src/Vatras/Everything.agda
 
 build:
-	env AGDA_DIR="./libs" agda --compile src/Vatras/Main.agda
-
-build-2.6.4.3:
-	env AGDA_DIR="./libs" agda-2.6.4.3 --compile src/Vatras/Main.agda
+	agda --compile src/Vatras/Main.agda
 
 run:
 	./src/Main

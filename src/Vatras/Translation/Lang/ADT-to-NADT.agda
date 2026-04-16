@@ -54,7 +54,7 @@ preserves-⊆ (f ⟨ l , r ⟩) config =
     NADT.⟦ if fnoc config f then translate l else translate r ⟧ config
   ≡⟨ Bool.if-float (λ e → NADT.⟦ e ⟧ config) (fnoc config f) ⟩
     (if fnoc config f then NADT.⟦ translate l ⟧ config else NADT.⟦ translate r ⟧ config)
-  ≡⟨ Eq.cong₂ (if fnoc config f then_else_) (preserves-⊆ l config) (preserves-⊆ r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-⊆ l config) (preserves-⊆ r config) ⟩
     (if fnoc config f then ADT.⟦ l ⟧ (fnoc config) else ADT.⟦ r ⟧ (fnoc config))
   ≡⟨⟩
     ADT.⟦ f ⟨ l , r ⟩ ⟧ (fnoc config)
@@ -71,7 +71,7 @@ preserves-⊇ (f ⟨ l , r ⟩) config =
     ADT.⟦ f ⟨ l , r ⟩ ⟧ config
   ≡⟨⟩
     (if config f then ADT.⟦ l ⟧ config else ADT.⟦ r ⟧ config)
-  ≡⟨ Eq.cong₂ (if config f then_else_) (preserves-⊇ l config) (preserves-⊇ r config) ⟩
+  ≡⟨ Bool.if-cong₂ _ (preserves-⊇ l config) (preserves-⊇ r config) ⟩
     (if config f then NADT.⟦ translate l ⟧ (conf config) else NADT.⟦ translate r ⟧ (conf config))
   ≡⟨ Bool.if-float (λ e → NADT.⟦ e ⟧ (conf config)) (config f) ⟨
     NADT.⟦ if config f then translate l else translate r ⟧ (conf config)

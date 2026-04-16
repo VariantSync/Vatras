@@ -93,7 +93,7 @@ length-enumerate-binary (suc n) =
     List⁺.length (enumerate-binary (suc n))
   ≡⟨⟩
     List⁺.length (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))
-  ≡⟨ List.⁺++⁺-length (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n)) ⟩
+  ≡⟨ List⁺.length-⁺++⁺ (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n)) ⟩
     List⁺.length (List⁺.map (true ∷_) (enumerate-binary n)) + List⁺.length (List⁺.map (false ∷_) (enumerate-binary n))
   ≡⟨ Eq.cong₂ _+_ (List⁺.length-map (true ∷_) (enumerate-binary n)) (List⁺.length-map (false ∷_) (enumerate-binary n)) ⟩
     List⁺.length (enumerate-binary n) + List⁺.length (enumerate-binary n)
@@ -368,7 +368,7 @@ lookup-enumerate-binary⊆ {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | yes
 
     ≡⟨ lookup≡find-or-last (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) i ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))
-    ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) x) (List.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
+    ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) x) (List⁺.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))
     ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) (x ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))) (List⁺.map-∘ (enumerate-binary n)) ⟨
       find-or-last (Fin.toℕ i) (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n) ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))
@@ -389,9 +389,9 @@ lookup-enumerate-binary⊆ {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | no 
       Fin.toℕ i ∸ 2 ^ n
     <⟨ ℕ.∸-monoˡ-< (Fin.toℕ<n i) (ℕ.≤-trans (ℕ.≤-reflexive (Eq.sym (Eq.trans (List⁺.length-map (M ∘ (true ∷_)) (enumerate-binary n)) (length-enumerate-binary n)))) (ℕ.≮⇒≥ i≮2^n)) ⟩
       List⁺.length (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) ∸ 2 ^ n
-    ≡⟨ Eq.cong (λ x → List⁺.length x ∸ 2 ^ n) (List.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
+    ≡⟨ Eq.cong (λ x → List⁺.length x ∸ 2 ^ n) (List⁺.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
       List⁺.length (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n))) ∸ 2 ^ n
-    ≡⟨ Eq.cong (_∸ 2 ^ n) (List.⁺++⁺-length (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n))) (List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))) ⟩
+    ≡⟨ Eq.cong (_∸ 2 ^ n) (List⁺.length-⁺++⁺ (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n))) (List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))) ⟩
       List⁺.length (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n))) + List⁺.length (List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n))) ∸ 2 ^ n
     ≡⟨ Eq.cong (λ x → List⁺.length x + List⁺.length (List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n))) ∸ 2 ^ n) (List⁺.map-∘ (enumerate-binary n)) ⟨
       List⁺.length (List⁺.map (M ∘ (true ∷_)) (enumerate-binary n)) + List⁺.length (List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n))) ∸ 2 ^ n
@@ -416,7 +416,7 @@ lookup-enumerate-binary⊆ {I = I} {A = A} {n = suc n} {M = M} {N} M⊆N i | no 
       List.lookup (List⁺.toList (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))) i
     ≡⟨ lookup≡find-or-last (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n))) i ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n) ⁺++⁺ List⁺.map (false ∷_) (enumerate-binary n)))
-    ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) x) (List.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
+    ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) x) (List⁺.map-⁺++⁺ M (List⁺.map (true ∷_) (enumerate-binary n)) (List⁺.map (false ∷_) (enumerate-binary n))) ⟩
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ List⁺.map M (List⁺.map (false ∷_) (enumerate-binary n)))
     ≡⟨ Eq.cong (λ x → find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ x)) (List⁺.map-∘ (enumerate-binary n)) ⟨
       find-or-last (Fin.toℕ i) (List⁺.map M (List⁺.map (true ∷_) (enumerate-binary n)) ⁺++⁺ List⁺.map (M ∘ (false ∷_)) (enumerate-binary n))

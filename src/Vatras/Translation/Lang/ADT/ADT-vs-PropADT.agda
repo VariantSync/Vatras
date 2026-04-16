@@ -1,7 +1,8 @@
 open import Vatras.Framework.Definitions using (𝔽; 𝕍; 𝔸)
-module Vatras.Translation.Lang.ADT.PropSemantics (F : 𝔽) (V : 𝕍) where
+module Vatras.Translation.Lang.ADT.ADT-vs-PropADT (F : 𝔽) (V : 𝕍) where
 
 open import Data.Bool using (if_then_else_; not) renaming (_∧_ to _and_)
+open import Data.Bool.Properties using (if-not; if-∧; if-cong₂; if-cong-then)
 open import Data.Product using (_,_)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≗_; refl)
@@ -14,10 +15,9 @@ open ADT hiding (⟦_⟧)
 
 open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Data.Prop
-open import Vatras.Lang.ADT.Prop F V
-open import Vatras.Util.AuxProofs using (if-flip; if-∧; if-cong; if-congˡ)
+open import Vatras.Lang.ADT.Prop F V using (⟦_⟧ₚ; PropADTL)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Framework.Relation.Expressiveness V using (_≽_; expressiveness-from-compiler)
+open import Vatras.Framework.Relation.Expressiveness V using (_≋_; _≽_; expressiveness-from-compiler)
 
 {-|
 Elimination of formulas in choices.
@@ -57,7 +57,7 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
     elim-sem (¬ P) l r c
   ≡⟨⟩
     (if not (eval P c) then ⟦ l ⟧ c else ⟦ r ⟧ c)
-  ≡⟨ if-flip (eval P c) _ _ ⟩
+  ≡⟨ if-not (eval P c) ⟩
     (if eval P c then ⟦ r ⟧ c else ⟦ l ⟧ c)
   ≡⟨⟩
     elim-sem P r l c
@@ -70,11 +70,11 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
     elim-sem (P ∧ Q) l r c
   ≡⟨⟩
     (if eval P c and eval Q c then ⟦ l ⟧ c else ⟦ r ⟧ c)
-  ≡⟨ if-∧ (eval P c) (eval Q c) _ _ ⟩
+  ≡⟨ if-∧ (eval P c) ⟩
     (if eval P c then (if eval Q c then ⟦ l ⟧ c else ⟦ r ⟧ c) else ⟦ r ⟧ c)
   ≡⟨⟩
     (if eval P c then elim-sem Q l r c else ⟦ r ⟧ c)
-  ≡⟨ if-congˡ (eval P c) (↓-presʳ Q l r c) ⟩
+  ≡⟨ if-cong-then (eval P c) (↓-presʳ Q l r c) ⟩
     (if eval P c then ⟦ ↓ Q ⟨ l , r ⟩ ⟧ c else ⟦ r ⟧ c)
   ≡⟨⟩
     elim-sem P (↓ Q ⟨ l , r ⟩) r c
@@ -85,7 +85,7 @@ elim-sem P l r c = if eval P c then ⟦ l ⟧ c else ⟦ r ⟧ c
 mutual
   ↓-presˡ : ∀ {A} (P : Prop F) (l r : ADT (Prop F) A)
     → ⟦ P ⟨ l , r ⟩ ⟧ₚ ≗ elim-sem P (elim-formulas l) (elim-formulas r)
-  ↓-presˡ P l r c = if-cong _ (preserves l c) (preserves r c)
+  ↓-presˡ P l r c = if-cong₂ _ (preserves l c) (preserves r c)
 
   preserves
     : ∀ {A}
@@ -107,5 +107,35 @@ formula-elim-compiler = record
   ; preserves = ≗→≅[] ∘ preserves
   }
 
-PropADT≽ADT : ADTL F ≽ PropADTL
-PropADT≽ADT = expressiveness-from-compiler formula-elim-compiler
+ADT≽PropADT : ADTL F ≽ PropADTL
+ADT≽PropADT = expressiveness-from-compiler formula-elim-compiler
+
+{-|
+The inverse direction: Every ADT trivially is a PropADT because every feature name is a propositional formula.
+-}
+
+lift : ∀ {A} → ADT F A → ADT (Prop F) A
+lift (leaf v)      = leaf v
+lift (D ⟨ l , r ⟩) = var D ⟨ lift l , lift r ⟩
+
+lift-preserves : ∀ {A} → (e : ADT F A) → ⟦ e ⟧ ≗ ⟦ lift e ⟧ₚ
+lift-preserves (leaf x)      c = refl
+lift-preserves (D ⟨ l , r ⟩) c = if-cong₂ (c D) (lift-preserves l c) (lift-preserves r c)
+
+lift-compiler : LanguageCompiler (ADTL F) PropADTL
+lift-compiler = record
+  { compile = lift
+  ; config-compiler = λ _ → record { to = id ; from = id }
+  ; preserves = ≗→≅[] ∘ lift-preserves
+  }
+
+PropADT≽ADT : PropADTL ≽ ADTL F
+PropADT≽ADT = expressiveness-from-compiler lift-compiler
+
+{-|
+Finally, we can conclude that both languages are equally expressive.
+This means, using propositional formulas for choices instead of mere names does not increase expressiveness.
+Expressiveness is not reduced either.
+-}
+ADT≋PropADT : ADTL F ≋ PropADTL
+ADT≋PropADT = ADT≽PropADT , PropADT≽ADT

@@ -17,6 +17,7 @@ open import Function using (_∘_)
 
 open import Data.List using (List; []; _∷_)
 open import Data.List.NonEmpty using (List⁺; _∷_; _⁺++⁺_; length)
+open import Data.List.NonEmpty.Properties using (length-⁺++⁺; length-⁺++⁺-≤ˡ)
 open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _<_; _≤?_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-trans; ≰⇒>; m≤m+n; +-monoʳ-<)
 open import Data.Product using (_,_)
@@ -42,7 +43,7 @@ open import Vatras.Lang.ADT.Path F V _==_
 open import Vatras.Translation.Lang.ADT.DeadElim F V _==_ as DeadElim using (node; kill-dead; ⟦_⟧ᵤ; UndeadADT; UndeadADTL)
 open import Vatras.Translation.Lang.ADT.WalkSemantics F V _==_ as Walk using ()
 
-open import Vatras.Util.List using (find-or-last; ⁺++⁺-length; ⁺++⁺-length-≤; find-or-last-append; find-or-last-prepend-+; find-or-last-prepend-∸)
+open import Vatras.Util.List using (find-or-last; find-or-last-append; find-or-last-prepend-+; find-or-last-prepend-∸)
 
 {-
 This translates a ADT to a VariantList.
@@ -81,7 +82,7 @@ conf-bounded : ∀ {A}
   → (c : PathConfig e)
   → conf e c < length (tr e)
 conf-bounded (leaf v) (.[] is-valid tleaf) = s≤s z≤n
-conf-bounded (D ⟨ l , r ⟩) ((.D ↣ true  ∷ p) is-valid walk-left  t) = ≤-trans (conf-bounded l (p is-valid t)) (⁺++⁺-length-≤ (tr l) (tr r))
+conf-bounded (D ⟨ l , r ⟩) ((.D ↣ true  ∷ p) is-valid walk-left  t) = ≤-trans (conf-bounded l (p is-valid t)) (length-⁺++⁺-≤ˡ (tr l) (tr r))
 conf-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
   where
     c = p is-valid t
@@ -96,7 +97,7 @@ conf-bounded (D ⟨ l , r ⟩) ((.D ↣ false ∷ p) is-valid walk-right t) = go
 
     -- use the sum rule for ⁺++⁺ on the right hand side
     go : length (tr l) + conf r c < length (tr l ⁺++⁺ tr r)
-    go rewrite ⁺++⁺-length (tr l) (tr r) = gox
+    go rewrite length-⁺++⁺ (tr l) (tr r) = gox
 
 preservation-walk-to-list-conf : ∀ {A : 𝔸}
   → (e : ADT A)

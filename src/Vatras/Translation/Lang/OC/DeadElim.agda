@@ -13,6 +13,7 @@ open import Relation.Binary using (DecidableEquality)
 module Vatras.Translation.Lang.OC.DeadElim (F : 𝔽) (_≟_ : DecidableEquality F) where
 
 open import Data.Bool using (Bool; true; false; if_then_else_)
+import Data.Bool.Properties as Bool
 open import Data.Empty using (⊥-elim)
 open import Data.List as List using (List; []; _∷_)
 import Data.List.Properties as List
@@ -26,7 +27,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≢_)
 open import Relation.Nullary.Decidable using (yes; no; decidable-stable)
 open import Size using (Size; ∞)
 
-open import Vatras.Util.AuxProofs using (true≢false; if-idemp)
+open import Vatras.Util.AuxProofs using (true≢false)
 import Vatras.Util.List as List
 open import Vatras.Data.EqIndexedSet using (_≅[_][_]_; ≗→≅[]; _≅_; _⊆_)
 open import Vatras.Framework.Variants using (_-<_>-)
@@ -168,7 +169,7 @@ join-options f₁ f₂ e undead-e'@(undead (f₁∉env ❲ f₂∉env ❲ undead
   go-⊆ c with c f₂ in c-f₂
   go-⊆ c | false = c , (
       (if c f₁ then nothing else nothing)
-    ≡⟨ if-idemp (c f₁) ⟩
+    ≡⟨ Bool.if-eta (c f₁) ⟩
       nothing
     ≡⟨ Eq.cong (λ b → if b then ⟦ e ⟧ₒ c else nothing) c-f₂ ⟨
       (if c f₂ then ⟦ e ⟧ₒ c else nothing)

@@ -3,35 +3,23 @@
 [![Check the Agda files](https://github.com/pmbittner/Vatras/actions/workflows/check.yml/badge.svg)](https://github.com/pmbittner/Vatras/actions/workflows/check.yml)
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13502454.svg)](https://doi.org/10.5281/zenodo.13502454)
-
-[![Preprint](https://img.shields.io/badge/OOPSLA'24-Preprint-purple)](https://github.com/SoftVarE-Group/Papers/raw/main/2024/2024-OOPSLA-Bittner.pdf)
-[![Paper](https://img.shields.io/badge/OOPSLA'24-Paper-purple)](https://doi.org/10.1145/3689747)
-[![Slides](https://img.shields.io/badge/OOPSLA'24-Slides-purple)](https://github.com/SoftVarE-Group/Slides/raw/main/2024/2024-10-25-OOPSLA-Variability-Languages.pdf)
-[![Talk](https://img.shields.io/badge/OOPSLA'24-Talk-purple)](https://www.youtube.com/watch?v=kHYEHSHLffU&t=12713)
 [![Distinguished-Artifact](https://img.shields.io/badge/OOPSLA'24-Distinguished%20Artifact-gold)](https://2024.splashcon.org/track/splash-2024-oopsla-artifacts#Chair-s-Report)
 
-<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
-<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
+Vatras is a library to study, compare, and translate meta-languages for variability in source code, data, or any other configurable artifact such as sandwiches 🍞🥗🧀🍅. Among other things, Vatras features:
 
-Vatras is the supplementary Agda library for our OOPSLA'24 paper:
+- Formalizations of existing languages, calculi, and models for variability from the literature as algebraic data types.
+- A formal theory of expressiveness of such variability languages.
+- A web of compilers that translate these languages into each other.
+- Proofs of compiler correctness and expressiveness relationships.
+- Proofs when a compiler from one to another language cannot exist.
+- Tutorials for formalizing and integrating new variability languages.
 
-> _On the Expressive Power of Languages for Static Variability_. Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. Object-Oriented Programming, Systems, Languages & Applications, 2024 (**OOPSLA 2024**).
-
-This library formalizes all results in our paper:
-
-- All **formal languages for static software variability** presented in our survey (Section 3 + Table 1) are formalized as algebraic datatypes.
-- The library implements our **formal framework for language comparisons**, including necessary data structures, theorems, and proofs (Section 4).
-- This library contains **all theorems and proofs to establish the map of variability languages we find** by comparing the languages from our survey with our framework (Section 5).
-
-Additionally, our library comes with a small **demo**, and **tutorials** for getting to know the library and for formalizing your own variability languages (see "Tutorials" section below).
-When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
 
 ## What is Static Variability and What is Vatras?
 
 Vatras is a library to study and compare meta-languages for specifying variability in source code and data.
 Some software systems are configurable _before_ they are compiled, i.e., statically.
-A common way example for implementing static variability is by conditional compilation, as for example possible with the C preprocessor.
+A common way to implement static variability is by conditional compilation, as for example possible with the C preprocessor.
 For instance, the following [code snippet from the Linux kernel](https://github.com/torvalds/linux/blob/e271ed52b344ac02d4581286961d0c40acc54c03/include/linux/console.h#L479-L486)
 
 ```C
@@ -131,6 +119,32 @@ Vatras includes a range of proofs of these properties for existing languages as 
 As a showcase, Vatras will show a roundtrip translation of the configurable sandwich specification above when you run it.
 Details on the features implemented in Vatras, including tutorials for integrating new languages, can be found in the **Reusability Guide** below.
 
+## Publications
+
+### Analyzing Edits to Static Variability (PhD Thesis, 2025)
+
+[![Thesis](https://img.shields.io/badge/Thesis-PDF-purple)](https://doi.org/10.18725/OPARU-58798)
+[![Slides](https://img.shields.io/badge/Thesis-Slides-purple)](https://github.com/TUBS-ISF/Slides/raw/main/2025/2025-08-12-PhD-Defense-Bittner.pdf)
+
+> P. M. Bittner. _Analyzing Edits to Static Variability_. PhD Thesis, University of Ulm, August 2025. Reviewed by Thomas Thüm, Matthias Tichy, and Martin Erwig.
+
+The PhD thesis presents a refined and extended version of our OOPSLA'24 paper in chapter 3. In the thesis, we extended the discussion on existing variability languages to better reflect and compare their assumptions on the underlying object language and their varying semantic domains. Consequently, we also extended our formal framework and case study to also study differences in semantic domains. We also refined the notation to better align with the Agda code and to avoid some minor ambiguities.
+
+### On the Expressive Power of Languages for Static Variability (OOPSLA'24)
+
+[![Preprint](https://img.shields.io/badge/OOPSLA'24-Preprint-purple)](https://github.com/SoftVarE-Group/Papers/raw/main/2024/2024-OOPSLA-Bittner.pdf)
+[![Paper](https://img.shields.io/badge/OOPSLA'24-Paper-purple)](https://doi.org/10.1145/3689747)
+[![Slides](https://img.shields.io/badge/OOPSLA'24-Slides-purple)](https://github.com/SoftVarE-Group/Slides/raw/main/2024/2024-10-25-OOPSLA-Variability-Languages.pdf)
+[![Talk](https://img.shields.io/badge/OOPSLA'24-Talk-purple)](https://www.youtube.com/watch?v=kHYEHSHLffU&t=12713)
+[![Artifact DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13502454.svg)](https://doi.org/10.5281/zenodo.13502454)
+
+> _On the Expressive Power of Languages for Static Variability_. Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. Object-Oriented Programming, Systems, Languages & Applications, 2024 (**OOPSLA 2024**).
+
+<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
+<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
+
+Initially, Vatras emerged as the supplementary Agda library for this OOPSLA'24 paper. Below, you fill find a table that maps all theorems and definitions in the paper to their respective Agda implementation.
+
 ## Kick-the-Tires
 
 This section gives you a short "Getting Started" guide.
@@ -140,9 +154,9 @@ We tested our setup on Manjaro, NixOS, Windows Subsystem for Linux (WSL2), and w
 > In case of problems, there is a "Troubleshooting" section at the bottom of this file.
 
 ### Setup
-Clone the library and its submodules to a directory of your choice:
+Clone the library to a directory of your choice:
 ```shell 
-git clone --recursive https://github.com/VariantSync/Vatras.git
+git clone https://github.com/VariantSync/Vatras.git
 ```
 
 There are **three alternative ways** to compile the library and run its small demo.
@@ -153,14 +167,14 @@ In general, we **recommend Nix** because it creates a sandbox environment with a
 - For **Mac** users, we recommend Nix or Docker. (We experienced problems with installing Agda manually.)
 - For **Linux** users, any alternative is fine but we recommend Nix for the reasons mentioned above.
 
-There are no other software requirements apart from having either Nix, Docker, or Agda installed, depending on which alternative you choose..
-The only dependency of our library is the Agda standard library which is shipped as a git submodule within the `agda-stdlib` directory and is taken care of automatically by our [makefile](makefile).
+There are no other software requirements apart from having either Nix, Docker, or Agda installed, depending on which alternative you choose.
+The only dependency of our library is the Agda standard library which is automatically taken care of by our Nix and Docker setups.
 
 Note that building for the first time (or running `nix-shell`) will take a while because Agda has to build the required dependencies from the standard library (expect ~5-10min and a lot of terminal output).
 
 #### Alternative 1: Setup via Nix
 
-The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). When you open a WSL2 terminal terminal, you can install Nix by following the instructions for installing Nix on linux from the [NixOS website](https://nixos.org/download/).
+The installation of Nix depends on your operating system. Head to the [NixOS website](https://nixos.org/download/) and follow the installation instructions for your system. Follow the download instructions for `Nix: the package manager`, not `NixOS: the Linux distribution`! Note that Nix is not directly available for Windows but it can be used from within Windows Subsystem for Linux (WSL2). When you open a WSL2 terminal, you can install Nix by following the instructions for installing Nix on Linux from the [NixOS website](https://nixos.org/download/).
 
 When you have Nix installed on your system, open a terminal, navigate to this directory, and then simply open a Nix shell by typing
 ```shell
@@ -171,7 +185,7 @@ To compile the library and run the demo, simply run make:
 ```shell
 make
 ```
-The expected output is explained in detail in the Step-by-Step guide below.
+The expected output is explained in detail in the [Expected Output section](#expected-output) below.
 
 Alternatively, the demo can be compiled locally to `./result/bin`.
 ```shell
@@ -189,7 +203,7 @@ How to install Docker depends on your operating system. **For Windows or Mac**, 
 Once you have installed Docker, start the Docker daemon.
 **On Windows**, open the search bar using the 'Windows Key' and search for 'Docker' or 'Docker Desktop'.
 **On Linux**, the docker daemon typically runs automatically, so there is nothing to do; otherwise, start Docker's service using your service manager (e.g., with `systemd`, execute `sudo systemctl start docker`).
-More detailed instructions on starting the deamon are given [here](https://docs.docker.com/config/daemon/start/) on the docker website.
+More detailed instructions on starting the deamon are given [on the docker website](https://docs.docker.com/config/daemon/start/).
 
 Afterwards, open a terminal and navigate to this repository's directory (the directory containing this README.md).
 First, you must create the docker image:
@@ -210,7 +224,7 @@ docker run -t vatras
 
 #### Alternative 3: Manual Setup
 
-The library needs Agda version 2.6.4.3 (newer version should also work but we did not test them).
+The library needs Agda version 2.8.0 (newer version should also work but we did not test them).
 There are different ways to install Agda.
 Following the [Agda book's installation instructions], we recommend using [GHCup][ghcup] to install GHC, Cabal, and Agda as follows (You may skip steps for tools you have already installed but there might be compatibility errors with some versions):
 
@@ -222,10 +236,10 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
 1. Install the GHC compiler and the cabal build tool with [GHCup][ghcup].
 
     ```shell
-    ghcup install ghc 9.2.4
+    ghcup install ghc 9.12.2
     ghcup install cabal recommended
 
-    ghcup set ghc 9.2.4
+    ghcup set ghc 9.12.2
     ghcup set cabal recommended
     ```
 
@@ -233,16 +247,25 @@ Following the [Agda book's installation instructions], we recommend using [GHCup
 
     ```shell
     cabal update
-    cabal install Agda-2.6.4.3
+    cabal install Agda-2.8.0
     ```
 
    To test whether the installation worked or whether your existing installation of Agda has the right version you can check the following command's output:
    ```shell
    > agda --version
-   Agda version 2.6.4.3
+   Agda version 2.8.0
    ```
+
+3. Install the [Agda standard library](https://github.com/agda/agda-stdlib) version 2.3.
+
+    ```shell
+    wget -O agda-stdlib.tar.gz https://github.com/agda/agda-stdlib/archive/v2.3.tar.gz
+    tar -xzf agda-stdlib.tar.gz
+    mkdir -p "$(agda --print-agda-app-dir)"
+    realpath agda-stdlib-2.3/standard-library.agda-lib >> "$(agda --print-agda-app-dir)/libraries"
+    ```
    
-In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.6.4.3/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup, or check the troubleshooting instructions at the bottom of this file.
+In case of confusion or trouble, we recommend to check the [official installation instructions](https://agda.readthedocs.io/en/v2.8.0/getting-started/installation.html), or follow the Getting-Started guide in the [Programming Language Foundations in Agda][plfa] book, or use the Nix setup, or check the troubleshooting instructions at the bottom of this file.
 
 To test whether your setup is correct, and to run the demo you may use our makefile.
 Make sure your terminal is in full-screen because the demo assumes to have at least 100 characters of horizontal space in the terminal for pretty-printing.
@@ -251,28 +274,12 @@ Then run
 make
 ```
 which will compile the library and run its small demo.
-The expected output is explained in detail in the Step-by-Step guide below.
+The expected output is explained in detail in the [Expected Output section](#expected-output) below.
 
-## Step-by-Step Guide
 
-The "Kick-The-Tires" section above basically explains all necessary steps to get the library up and running.
-Here, we give additional instructions on the expected output and how to play with other demo inputs.
-For using the library once you finished the setup, please have a look at the later _Reusability Guide_, which, among other
-information, includes an overview of the library, notes on our mechanized proofs, and tutorials for getting to know the library.
+#### Expected Output
 
-### How does the demo know which standard library to use?
-
-Agda looks for its dependencies in a directory specified by the environment variable `AGDA_DIR`. The provided [makefile](makefile) sets this environment variable temporarily and locally during the build process to the `.libs` directory within this repository. (Your global setup will not be affected). If you want to run `agda` manually, or if you want to work on this project in an editor (e.g., emacs) then you have to set this environment variable to the libs directory in this repository.
-
-```shell
-export AGDA_DIR="path/to/this/repository/libs"
-```
-
-Beware that setting the variable will overwrite any previously set directory. In that case you might want to overwrite the variable only temporarily while working on this project.
-
-### Expected Output
-
-The demo will print a long terminal output of about 1250 lines.
+The demo will print a long terminal output of very rougly 1000 lines.
 A copy of the expected output can be found in the [expected-output.txt](expected-output.txt).
 
 First, the demo prints unicode characters to terminal, as a test for you to see whether your terminal supports unicode.
@@ -358,9 +365,21 @@ Then add your new list to the `examples` list at the bottom of the file.
 
 ### Using our library in your own Agda projects
 
+In order to use Vatras in your project, you need to state `Vatras` as a dependency in your Agda library file.
+An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
+Its content, including the dependency to Vatras, should include the following:
+```
+name: YOUR-PROJECT-NAME
+depend: Vatras
+include: SOME/PATH/IN/YOUR/PROJECT
+```
+For details about Agda's library management, please have a look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.8.0/tools/package-system.html).
+
+Afterwards, you need to follow one of the following alternatives to let Agda know where to find Vatras.
+
 #### Alternative 1: Installation via Nix
 
-When using Nix, you can use this repository as a library in you own project, by using `agda.withPackages`:
+When using Nix, you can install this repository as an Agda library by using `agda.withPackages`:
 ```nix
 agda = nixpkgs.agda.withPackages [
   nixpkgs.agdaPackages.standard-library
@@ -373,25 +392,19 @@ Though, not required, we recommend to use the [nixpkgs pin](nix/sources.json) cr
 
 #### Alternative 2: Manual installation
 
-After downloading this library, you can register it by appending the path of [Vatras.agda-lib](Vatras.agda-lib) to the file `$AGDA_DIR/libraries`, creating it if necessary.
-If the environment variable `AGDA_DIR` is unset, it defaults to `~/.agda` on unix-like systems and `C:\Users\USERNAME\AppData\Roaming\agda` or similar on Windows.
-After registering this library on your system, you can use it in your project by stating `Vatras` as a dependency in your Agda library file.
-An Agda library file has the suffix `.agda-lib` and is usually contained in the root directory of your project.
-Its content, including the dependency to Vatras, should include the following:
-
+After downloading this library, you can register it using the following commands:
+```shell
+mkdir -p "$(agda --print-agda-app-dir)"
+realpath Vatras.agda-lib >> "$(agda --print-agda-app-dir)/libraries"
 ```
-name: YOUR-PROJECT-NAME
-depend: Vatras
-include: SOME/PATH/IN/YOUR/PROJECT
-```
-
-For details about Agda's library management, please have a look at [Agda's packaging guide](https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html).
+Make sure that you also have the Agda standard library version 2.3 installed.
+See step 3 in the [manual setup](#alternative-3-manual-setup) for details on how to install ths Agda standard library.
 
 ### Notes on Mechanized Proofs
 
 #### Paper-to-Library Correspondence
 
-Our Agda formalization exhaustively formalizes all definitions, theorems, and proofs from our paper.
+Our Agda formalization exhaustively formalizes all definitions, theorems, and proofs from our OOPSLA'24 paper.
 The following table shows where each of the definitions, theorems, and proofs from the paper are formalized in this library.
 
 | statement       | notation in paper                 | name in our Agda Library                                           | file                                                                                                               | notes                                                                                                                                                              |
@@ -593,15 +606,24 @@ during a Docker build, you might have encountered an out of memory issue.
 Try to rerun the same command after closing other applications which might comsume a lot of RAM.
 In some cases it may also be necessary to disable some kind of out-of-memory killer (also known as OOM killer or OOM deamon) but use this option with caution.
 
-### Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
-The following error may occur when executing `make` after a manual setup: 
+### Docker fails to open Git repository
+
+If you see an error like
 ```
-Failed to read library file ./libs/../agda-stdlib/standard-library.agda-lib.
-Reason: ./libs/../agda-stdlib/standard-library.agda-lib: openBinaryFile: does not exist (No such file or directory)
-make: *** [makefile:15: build] Error 42
+error: opening Git repository '"/home/user"': failed to resolve path '/home/your-user-name/some/path/.git/worktrees/Vatras': No such file or directory
+------
+Dockerfile:19
+--------------------
+  17 |
+  18 |     # Verify all proofs and build the demo.
+  19 | >>> RUN nix-build
+  20 |
+  21 |     # Copy the demo with all runtime dependencies (ignoring build-time dependencies)
+--------------------
+ERROR: failed to solve: process "/bin/sh -c nix-build" did not complete successfully: exit code: 1
 ```
-This error indicates that the `agda-stdlib` git submodule has not been set up correctly. 
-Executing `git submodule update --init` in the root of the repository should fix the problem. 
+you may be in a Git worktree or your Git directory is out of place for some other reason.
+Ensure that `git rev-parse --path-format=absolute --git-common-dir` (the path of the Git repository's data) is in your current working directory by creating a fresh non-bare clone without creating a second Git worktree.
 
 ## Where does the library name 'Vatras' come from?
 
@@ -609,7 +631,7 @@ The name Vatras is (of course) an acronym, which stands for _VAriability languag
 Besides, Vatras is a water mage in the classic german RPG [Gothic II](https://almanach.worldofgothic.de/index.php/Vatras), who stems from the city of Varant, which almost sounds like _Variant_.
 Vatras is praying to the god Adanos, who brings some kind of equality or balance loosely speaking.
 
-[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.6.4.3-blue.svg
-[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.6.4.3
+[agda-badge-version-svg]: https://img.shields.io/badge/agda-v2.8.0-blue.svg
+[agda-badge-version-url]: https://github.com/agda/agda/releases/tag/v2.8.0
 [ghcup]: https://www.haskell.org/ghcup/
 [plfa]: https://plfa.github.io/GettingStarted/

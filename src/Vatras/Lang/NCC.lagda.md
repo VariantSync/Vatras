@@ -3,10 +3,12 @@
 This module defines the choice calculus in which every choice must have the same
 fixed number of alternatives, called $n-CC$ in our paper.
 
-It's required that arity $n$ is at least one to have semantics. However, we require
-that the arity is at least two, otherwise there is this annoying one-arity
-language in the NCC language family which is incomplete.
-In our paper, we also only inspect the languages with `n ≥ 2`.
+We require the arity $n$ to be at least two.
+An arity of zero would mean that all choices have zero alternatives.
+Choices with zero alternatives hence would constitute leaf terms without a clear purpose.
+Choices with exactly one alternative have only one way to be configured: selecting that single alternative.
+In both cases of an arity of zero or one, an $n-CC$ term denotes a single constant variant.
+For this reason, we restrict $n$ to be at least two, as we also did in our paper.
 
 ## Module
 
@@ -39,10 +41,8 @@ data NCC : Size → 𝔼 where
 ## Semantics
 
 The semantics is very similar to the semantics for core choice calculus.
-The differences are:
-
-- We can restrict configuration to choose alternatives within bounds because the arity of choices is known in advance.
-- We can then do a vector lookup instead of a list lookup in the semantics.
+The only difference is that we can restrict the configuration process to choose alternatives within bounds because the arity of choices is known in advance.
+We hence do a vector lookup instead of a list lookup.
 
 ```agda
 Configuration : ℂ

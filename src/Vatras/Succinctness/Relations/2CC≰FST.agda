@@ -42,7 +42,7 @@ open import Relation.Nullary.Negation using (¬_)
 open import Relation.Unary using (Decidable)
 open import Size using (Size; ∞)
 
-open import Vatras.Util.AuxProofs using (true≢false; m∸n<m; does≡true; does≡false)
+open import Vatras.Util.AuxProofs using (true≢false; does≡true; does≡false)
 open import Vatras.Data.EqIndexedSet using (_⊆_; ⊆-trans; _∈_)
 open import Vatras.Framework.Variants using (Rose; Rose-injective)
 import Vatras.Util.List as List
@@ -175,7 +175,7 @@ select-applyUpTo-feature k n i i≤n =
     List.map impl (List.applyUpTo (λ m → f m :: feature k m) (suc i) ++ [])
   ≡⟨ Eq.cong (List.map impl) (List.++-identityʳ (List.applyUpTo (λ m → f m :: feature k m) (suc i))) ⟩
     List.map impl (List.applyUpTo (λ m → f m :: feature k m) (suc i))
-  ≡⟨ List.map-applyUpTo impl (λ m → f m :: feature k m) (suc i) ⟩
+  ≡⟨ List.map-applyUpTo (λ m → f m :: feature k m) impl (suc i) ⟩
     List.applyUpTo (feature k) (suc i)
   ∎
   where
@@ -277,7 +277,7 @@ variant∈fst :
 variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
   begin
     List.applyUpTo (artifact n) (suc i)
-  ≡⟨ List.map-applyUpTo (artifact n) id (suc i) ⟨
+  ≡⟨ List.map-applyUpTo id (artifact n) (suc i) ⟨
     List.map (artifact n) (List.upTo (suc i))
   ≡⟨ List.concat-[-] (List.map (artifact n) (List.upTo (suc i))) ⟨
     List.concat (List.map (_∷ []) (List.map (artifact n) (List.upTo (suc i))))
@@ -287,7 +287,7 @@ variant∈fst n i i≤n = fst-config i , Eq.cong ((0 , 0) Rose.-<_>-) (
     List.concat (List.map (λ k → forget-uniqueness (feature n k)) (List.upTo (suc i)))
   ≡⟨ Eq.cong List.concat (List.map-∘ {g = forget-uniqueness} {f = feature n} (List.upTo (suc i))) ⟩
     List.concatMap forget-uniqueness (List.map (feature n) (List.upTo (suc i)))
-  ≡⟨ Eq.cong (List.concatMap forget-uniqueness) (List.map-applyUpTo (feature n) id (suc i)) ⟩
+  ≡⟨ Eq.cong (List.concatMap forget-uniqueness) (List.map-applyUpTo id (feature n) (suc i)) ⟩
     List.concatMap forget-uniqueness (List.applyUpTo (feature n) (suc i))
   ≡⟨ ⊛-all-unique (List.applyUpTo (feature n) (suc i)) (unique-variant n zero (suc i)) ⟨
     forget-uniqueness (⊛-all (List.applyUpTo (feature n) (suc i)))

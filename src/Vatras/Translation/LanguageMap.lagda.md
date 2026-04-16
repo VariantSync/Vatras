@@ -50,12 +50,14 @@ open NCC using (NCCL)
 open 2CC using (2CCL)
 open NADT using (NADTL)
 open ADT using (ADTL)
+open PropADT using (PropADTL)
 open OC using (WFOCL)
 open FST using (FSTL)
 open VT using (VTL)
 open PropOC using (WFPropOCL)
 
 open import Vatras.Lang.CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
+open import Vatras.Translation.Lang.ADT.Rename using (ADT-rename≽ADT)
 open import Vatras.Translation.Lang.NCC.Rename using (NCC-rename≽NCC)
 open import Vatras.Translation.Lang.2CC.Rename using (2CC-rename; 2CC-rename≽2CC)
 open import Vatras.Translation.Lang.VT.Rename using (VT-rename≽VT)
@@ -72,7 +74,9 @@ import Vatras.Translation.Lang.Transitive.2CC-to-CCC as 2CC-to-CCC
 import Vatras.Translation.Lang.2CC-to-ADT as 2CC-to-ADT
 import Vatras.Translation.Lang.ADT-to-2CC as ADT-to-2CC
 import Vatras.Translation.Lang.ADT.DeadElim as DeadElim
+import Vatras.Translation.Lang.ADT.ADT-vs-PropADT as ADT-vs-PropADT
 import Vatras.Translation.Lang.ADT-to-VariantList as ADT-to-VariantList
+import Vatras.Translation.Lang.ADT-to-VT as ADT-to-VT
 import Vatras.Translation.Lang.VariantList-to-CCC as VariantList-to-CCC
 import Vatras.Translation.Lang.ADT-to-NADT as ADT-to-NADT
 import Vatras.Translation.Lang.NADT-to-CCC as NADT-to-CCC
@@ -80,7 +84,7 @@ import Vatras.Translation.Lang.OC-to-2CC as OC-to-2CC
 import Vatras.Translation.Lang.OC-to-FST as OC-to-FST
 import Vatras.Translation.Lang.FST-to-OC as FST-to-OC
 import Vatras.Translation.Lang.FST-to-VariantList as FST-to-VariantList
-import Vatras.Translation.Lang.VariantList-to-VT as VariantList-to-VT
+import Vatras.Translation.Lang.VariantList-to-ADT as VariantList-to-ADT
 import Vatras.Translation.Lang.VT-to-ADT as VT-to-ADT
 import Vatras.Translation.Lang.OC-to-PropOC as OC-to-PropOC
 ```
@@ -367,24 +371,40 @@ FST-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound (FSTL F)
 FST-is-sound {F} _==_ = soundness-by-expressiveness VariantList-is-Sound (FST-to-VariantList.VariantList≽FST F _==_)
 ```
 
-Variation Trees assume variants to be forests of rose trees.
-We hence cannot directly integrate it into the circle of compilers above.
-Yet, variant lists and ADTs are generic in their type of variants and hence can also denote forests.
+Clone-and-Own (i.e., VariantList) and Algebraic Decision Trees are generic in their variant type.
+Both languages are sound and complete for any type of variants.
 ```agda
 open import Vatras.Lang.VariantList.Properties
   using ()
-  renaming (VariantList-is-Sound to VariantList-is-sound-on; VariantList-is-Complete to VariantList-is-complete-on)
+  renaming (
+      VariantList-is-Sound    to VariantList-is-sound-on
+    ; VariantList-is-Complete to VariantList-is-complete-on)
+  public
 
 ADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (ADTL F V)
 ADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (VariantList-is-sound-on V) (ADT-to-VariantList.VariantList≽ADT F V _==_)
 
-VTℕ-is-complete : Complete-on Forest (VTL ℕ)
-VTℕ-is-complete = VariantList-to-VT.VT-is-complete
+ADTℕ-is-complete-on : ∀ V → Complete-on V (ADTL ℕ V)
+ADTℕ-is-complete-on = VariantList-to-ADT.ADT-is-complete
+
+ADT-is-complete-on : ∀ {F : 𝔽} (f : ℕ → F) (f⁻¹ : F → ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (V : 𝕍) → Complete-on V (ADTL F V)
+ADT-is-complete-on f f⁻¹ f⁻¹∘f≗id V = completeness-by-expressiveness-on V (ADTℕ-is-complete-on V) (ADT-rename≽ADT V f f⁻¹ f⁻¹∘f≗id)
+
+PropADT-is-sound-on : ∀ {F : 𝔽} (V : 𝕍) (_==_ : DecidableEquality F) → Sound-on V (PropADTL F V)
+PropADT-is-sound-on {F} V _==_ = soundness-by-expressiveness-on V (ADT-is-sound-on V _==_) (ADT-vs-PropADT.ADT≽PropADT F V)
+
+PropADT-is-complete-on : ∀ {F : 𝔽} (f : ℕ → F) (f⁻¹ : F → ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id) (V : 𝕍) → Complete-on V (PropADTL F V)
+PropADT-is-complete-on {F} f f⁻¹ f⁻¹∘f≗id V = completeness-by-expressiveness-on V (ADT-is-complete-on f f⁻¹ f⁻¹∘f≗id V) (ADT-vs-PropADT.PropADT≽ADT F V)
+```
+
+Variation Trees assume variants to be forests of rose trees.
+We hence cannot directly integrate them into the circle of compilers above.
+Yet, variant lists and ADTs are generic in their type of variants and hence can also denote forests.
+```agda
+VT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound-on Forest (VTL F)
+VT-is-sound {F} _==_ = soundness-by-expressiveness-on Forest (ADT-is-sound-on Forest _==_) (VT-to-ADT.ADT≽VT F)
 
 VT-is-complete : {F : 𝔽} (f : ℕ → F) (f⁻¹ : F → ℕ) (f⁻¹∘f≗id : f⁻¹ ∘ f ≗ id)
   → Complete-on Forest (VTL F)
-VT-is-complete f f⁻¹ f⁻¹∘f≗id = completeness-by-expressiveness-on Forest VTℕ-is-complete (VT-rename≽VT f f⁻¹ f⁻¹∘f≗id)
-
-VT-is-sound : ∀ {F : 𝔽} (_==_ : DecidableEquality F) → Sound-on Forest (VTL F)
-VT-is-sound {F} _==_ = soundness-by-expressiveness-on Forest (ADT-is-sound-on Forest _==_) (VT-to-ADT.ADT≽VT F)
+VT-is-complete {F} f f⁻¹ f⁻¹∘f≗id = completeness-by-expressiveness-on Forest (ADT-is-complete-on f f⁻¹ f⁻¹∘f≗id Forest) (ADT-to-VT.VT≽ADT F)
 ```

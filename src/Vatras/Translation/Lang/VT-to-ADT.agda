@@ -11,18 +11,16 @@ open import Vatras.Data.Prop using (Prop; eval)
 open import Vatras.Data.EqIndexedSet using (≗→≅[])
 open import Vatras.Framework.Variants using (Forest; _-<_>-)
 open import Vatras.Framework.Compiler as Compiler using (LanguageCompiler)
-import Vatras.Lang.ADT
-open Vatras.Lang.ADT (Prop F) Forest using (ADT; leaf; _⟨_,_⟩)
-open Vatras.Lang.ADT       F  Forest using (ADTL)
+
+open import Vatras.Lang.ADT F Forest using (ADTL)
+open import Vatras.Lang.ADT.Prop F Forest using (PropADT; PropADTL; ⟦_⟧ₚ; leaf; _⟨_,_⟩)
 open import Vatras.Lang.VT F as VT
 
-open import Vatras.Lang.ADT.Prop F Forest using (⟦_⟧ₚ; PropADTL)
 import Vatras.Lang.ADT.Merge Forest (_++_) as Merge
-open Merge.Named (Prop F) using (_⊕_)
-open Merge.Prop F using (⊕-specₚ)
+open Merge.Prop F
 
 open import Vatras.Framework.Relation.Expressiveness Forest using (_≽_; ≽-trans; expressiveness-from-compiler)
-open import Vatras.Translation.Lang.ADT.PropSemantics F Forest using (formula-elim-compiler; PropADT≽ADT)
+open import Vatras.Translation.Lang.ADT.ADT-vs-PropADT F Forest using (formula-elim-compiler; ADT≽PropADT)
 
 -- artifact atom, artifact children, artifact neighbors
 {-|
@@ -31,13 +29,13 @@ by the first given ADT (i.e., these are supposed to be children of the atom), wi
 second ADT being the right neighbors.
 For a formal specification, see push-down-left-spec below.
 -}
-push-down-left : ∀ {A} → atoms A → ADT A → ADT A → ADT A
+push-down-left : ∀ {A} → atoms A → PropADT A → PropADT A → PropADT A
 push-down-left a (leaf v)      (leaf v')     = leaf (a -< v >- ∷ v')
 push-down-left a c@(leaf v)    (D ⟨ l , r ⟩) = D ⟨ push-down-left a c l , push-down-left a c r ⟩
 push-down-left a (D ⟨ l , r ⟩) n             = D ⟨ push-down-left a l n , push-down-left a r n ⟩
 
 -- formal specification of push-down-left: It should create an ADT such that for any configuration c, there is an artifact at the top of left
-push-down-left-spec : ∀ {A} (a : atoms A) (l n : ADT A) c
+push-down-left-spec : ∀ {A} (a : atoms A) (l n : PropADT A) c
   → ⟦ push-down-left a l n ⟧ₚ c ≡ a -< ⟦ l ⟧ₚ c >- ∷ ⟦ n ⟧ₚ c
 push-down-left-spec a (leaf v) (leaf v') c = refl
 push-down-left-spec a (D ⟨ l , r ⟩) n c with eval D c
@@ -57,16 +55,16 @@ mutual
   but can translate both lists first, and them compose the result
     translate-all l ⊕ translate-all r.
   -}
-  translate-both : ∀ {A} → (l r : List (UnrootedVT A)) → ADT A
+  translate-both : ∀ {A} → (l r : List (UnrootedVT A)) → PropADT A
   translate-both l r = translate-all l ⊕ translate-all r
 
-  translate-all : ∀ {A} → List (UnrootedVT A) → ADT A
+  translate-all : ∀ {A} → List (UnrootedVT A) → PropADT A
   translate-all []                               = leaf []
   translate-all (a -< l >- ∷ xs)                 = push-down-left a (translate-all l) (translate-all xs)
   translate-all (if[ p ]then[ l ] ∷ xs)          = p ⟨ translate-both l xs , translate-all xs ⟩
   translate-all (if[ p ]then[ l ]else[ r ] ∷ xs) = p ⟨ translate-both l xs , translate-both r xs ⟩
 
-translate : ∀ {A} → VT A → ADT A
+translate : ∀ {A} → VT A → PropADT A
 translate if-true[ xs ] = translate-all xs
 
 -- Preservation Proofs --
@@ -125,7 +123,7 @@ VT→ADT : LanguageCompiler VTL ADTL
 VT→ADT = VT→PropADT Compiler.⊕ formula-elim-compiler
 
 ADT≽VT : ADTL ≽ VTL
-ADT≽VT = ≽-trans PropADT≽ADT PropADT≽VT
+ADT≽VT = ≽-trans ADT≽PropADT PropADT≽VT
 
 {-|
 This module contains some tests for the translation function to see it in action.
@@ -140,7 +138,7 @@ module Test {A : 𝔸} where
         vt-leaf a ∷ vt-leaf b ∷ []
       ]
 
-    adt : ADT A
+    adt : PropADT A
     adt = leaf (rose-leaf a ∷ rose-leaf b ∷ [])
 
     tr : translate vt ≡ adt
@@ -160,7 +158,7 @@ module Test {A : 𝔸} where
         >- ∷ []
       ]
 
-    adt : ADT A
+    adt : PropADT A
     adt = X ⟨ leaf (forest-singleton a (forest-leaf b)) , leaf (forest-leaf a) ⟩
 
     tr : translate vt ≡ adt
@@ -186,7 +184,7 @@ module Test {A : 𝔸} where
         >- ∷ []
       ]
 
-    adt : ADT A
+    adt : PropADT A
     adt =
       X ⟨
         leaf (forest-singleton a (rose-leaf b₁ ∷ rose-leaf b₂ ∷ [])) ,

@@ -11,12 +11,12 @@ variants.
 module Vatras.Translation.Lang.VT.Rename where
 
 open import Data.Bool using (if_then_else_)
+open import Data.Bool.Properties using (if-cong; if-cong-then; if-cong₂)
 open import Data.List as List using (List; []; _∷_; _++_)
 open import Data.Product using (_,_)
 open import Function using (id; _∘_)
 open import Relation.Binary.PropositionalEquality as Eq using (refl; _≗_)
 
-open import Vatras.Util.AuxProofs using (if-congˡ; if-cong)
 open import Vatras.Data.EqIndexedSet using (_≅[_][_]_; _⊆[_]_; ≅[]-sym)
 open import Vatras.Framework.Compiler using (LanguageCompiler)
 open import Vatras.Framework.Definitions using (𝔸; 𝔽)
@@ -79,9 +79,9 @@ module _ {D₁ D₂ : 𝔽} {A : 𝔸} (f : D₁ → D₂) where
       VT.configure (rename' f (if[ p ]then[ l ])) config
     ≡⟨⟩
       (if Prop.eval (Prop.rename f p) config then VT.configure-all (rename'-all f l) config else [])
-    ≡⟨ Eq.cong (if_then _ else []) (Prop.rename-spec f p config) ⟩
+    ≡⟨ if-cong (Prop.rename-spec f p config) ⟩
       (if Prop.eval p (config ∘ f) then VT.configure-all (rename'-all f l) config else [])
-    ≡⟨ if-congˡ (Prop.eval p (config ∘ f)) (preserves-⊆-all l config) ⟩
+    ≡⟨ if-cong-then (Prop.eval p (config ∘ f)) (preserves-⊆-all l config) ⟩
       (if Prop.eval p (config ∘ f) then VT.configure-all l (config ∘ f) else [])
     ≡⟨⟩
       VT.configure (if[ p ]then[ l ]) (config ∘ f)
@@ -90,9 +90,9 @@ module _ {D₁ D₂ : 𝔽} {A : 𝔸} (f : D₁ → D₂) where
       VT.configure (rename' f (if[ p ]then[ l ]else[ r ])) config
     ≡⟨⟩
       (if Prop.eval (Prop.rename f p) config then VT.configure-all (rename'-all f l) config else VT.configure-all (rename'-all f r) config)
-    ≡⟨ Eq.cong (if_then _ else _) (Prop.rename-spec f p config) ⟩
+    ≡⟨ if-cong (Prop.rename-spec f p config) ⟩
       (if Prop.eval p (config ∘ f) then VT.configure-all (rename'-all f l) config else VT.configure-all (rename'-all f r) config)
-    ≡⟨ if-cong _ (preserves-⊆-all l config) (preserves-⊆-all r config) ⟩
+    ≡⟨ if-cong₂ _ (preserves-⊆-all l config) (preserves-⊆-all r config) ⟩
       (if Prop.eval p (config ∘ f) then VT.configure-all l (config ∘ f) else VT.configure-all r (config ∘ f))
     ≡⟨⟩
       VT.configure (if[ p ]then[ l ]else[ r ]) (config ∘ f)
@@ -121,9 +121,9 @@ module _ {D₁ D₂ : 𝔽} {A : 𝔸} (f : D₁ → D₂) (f⁻¹ : D₂ → D�
       VT.configure (if[ p ]then[ l ]) config
     ≡⟨⟩
       (if Prop.eval p config then VT.configure-all l config else [])
-    ≡⟨ if-congˡ (Prop.eval p config) (preserves-⊇-all l config) ⟩
+    ≡⟨ if-cong-then (Prop.eval p config) (preserves-⊇-all l config) ⟩
       (if Prop.eval p config then VT.configure-all (rename'-all f l) (config ∘ f⁻¹) else [])
-    ≡⟨ Eq.cong (if_then _ else []) (Prop.rename-preserves f f⁻¹ f∘f⁻¹≗id p config) ⟨
+    ≡⟨ if-cong (Prop.rename-preserves f f⁻¹ f∘f⁻¹≗id p config) ⟨
       (if Prop.eval (Prop.rename f p) (config ∘ f⁻¹) then VT.configure-all (rename'-all f l) (config ∘ f⁻¹) else [])
     ≡⟨⟩
       VT.configure (rename' f (if[ p ]then[ l ])) (config ∘ f⁻¹)
@@ -132,9 +132,9 @@ module _ {D₁ D₂ : 𝔽} {A : 𝔸} (f : D₁ → D₂) (f⁻¹ : D₂ → D�
       VT.configure (if[ p ]then[ l ]else[ r ]) config
     ≡⟨⟩
       (if Prop.eval p config then VT.configure-all l config else VT.configure-all r config)
-    ≡⟨ if-cong _ (preserves-⊇-all l config) (preserves-⊇-all r config) ⟩
+    ≡⟨ if-cong₂ _ (preserves-⊇-all l config) (preserves-⊇-all r config) ⟩
       (if Prop.eval p config then VT.configure-all (rename'-all f l) (config ∘ f⁻¹) else VT.configure-all (rename'-all f r) (config ∘ f⁻¹))
-    ≡⟨ Eq.cong (if_then _ else _) (Prop.rename-preserves f f⁻¹ f∘f⁻¹≗id p config) ⟨
+    ≡⟨ if-cong (Prop.rename-preserves f f⁻¹ f∘f⁻¹≗id p config) ⟨
       (if Prop.eval (Prop.rename f p) (config ∘ f⁻¹) then VT.configure-all (rename'-all f l) (config ∘ f⁻¹) else VT.configure-all (rename'-all f r) (config ∘ f⁻¹))
     ≡⟨⟩
       VT.configure (rename' f (if[ p ]then[ l ]else[ r ])) (config ∘ f⁻¹)

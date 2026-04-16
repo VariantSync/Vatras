@@ -48,7 +48,7 @@ push-down-artifact {A = A} a cs = go cs []
       (if config d
         then ⟦ go a cs (c₁ ∷ cs') vs ⟧ config
         else ⟦ go a cs (c₂ ∷ cs') vs ⟧ config)
-    ≡⟨ Eq.cong₂ (if config d then_else_) (go' (c₁ ∷ cs') vs) (go' (c₂ ∷ cs') vs) ⟩
+    ≡⟨ Bool.if-cong₂ _ (go' (c₁ ∷ cs') vs) (go' (c₂ ∷ cs') vs) ⟩
       (if config d
         then a -< vs ʳ++ List.map (λ e → ⟦ e ⟧ config) (c₁ ∷ cs') >-
         else a -< vs ʳ++ List.map (λ e → ⟦ e ⟧ config) (c₂ ∷ cs') >-)
