@@ -54,6 +54,7 @@ open PropADT using (PropADTL)
 open OC using (WFOCL)
 open FST using (FSTL)
 open VT using (VTL)
+open PropOC using (WFPropOCL)
 
 open import Vatras.Lang.CCC.Encode using () renaming (encoder to CCC-Rose-encoder)
 open import Vatras.Translation.Lang.ADT.Rename using (ADT-rename≽ADT)
@@ -85,6 +86,7 @@ import Vatras.Translation.Lang.FST-to-OC as FST-to-OC
 import Vatras.Translation.Lang.FST-to-VariantList as FST-to-VariantList
 import Vatras.Translation.Lang.VariantList-to-ADT as VariantList-to-ADT
 import Vatras.Translation.Lang.VT-to-ADT as VT-to-ADT
+import Vatras.Translation.Lang.OC-to-PropOC as OC-to-PropOC
 ```
 
 
@@ -233,6 +235,10 @@ module Expressiveness {F : 𝔽} (f : F × ℕ → F) (f⁻¹ : F → F × ℕ) 
 
   2CC≽FST : F → (_==_ : DecidableEquality F) → 2CCL F ≽ FSTL F
   2CC≽FST D _==_ = ≽-trans 2CC≽CCC (≽-trans (CCC≽VariantList D) (VariantList≽FST _==_))
+
+
+  PropOC≽OC : WFPropOCL F ≽ WFOCL F
+  PropOC≽OC = OC-to-PropOC.PropOC≽OC F
 
 
   CCC≋NCC : ∀ (n : ℕ≥ 2) → CCCL F ≋ NCCL F n

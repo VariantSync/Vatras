@@ -1,9 +1,12 @@
 module Vatras.Framework.Definitions where
 
 open import Data.Maybe using (Maybe; just)
+open import Data.Nat as ℕ using (ℕ; zero)
 open import Data.Product using (_×_; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to _and_)
+import Data.Product.Properties as Product
+open import Data.String as String using (String)
 open import Data.Unit using (⊤; tt) public
-open import Function using (id; _∘_)
+open import Function using (id; _∘_; const)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; _≗_; refl)
 open import Relation.Binary using (DecidableEquality)
 open import Relation.Nullary.Negation using (¬_)
@@ -20,12 +23,14 @@ the core definitions because it is quite reasonable.
 Any actual data we can think of to plug in here (e.g., strings, tokens or
 nodes of an abstract syntax tree) can be checked for equality.
 -}
-𝔸 : Set₁
-𝔸 = Σ Set DecidableEquality
-
--- retrieve the set of atoms from an atom type 𝔸
-atoms : 𝔸 → Set
-atoms = proj₁
+record 𝔸 : Set₁ where
+  -- We do not actually need eta equality in Vatras and it does break a proof when enabled (no idea why).
+  no-eta-equality
+  field
+    atoms : Set
+    atomsEqual? : DecidableEquality atoms
+    atomSize : atoms → ℕ
+open 𝔸 public
 
 {-|
 Variant Language.
@@ -63,14 +68,39 @@ and hence expressions are parameterized in the type of this atomic data.
 𝔼 = 𝔸 → Set₁
 
 -- some default atoms
-module _ where
-  open import Data.String using (String; _≟_)
+{-|
+String artifacts.
+Equality is defined character wise
+and size is measured by length (in characters not bytes).
+-}
+STRING : 𝔸
+STRING = record
+  { atoms = String
+  ; atomsEqual? = String._≟_
+  ; atomSize = String.length
+  }
 
-  STRING : 𝔸
-  STRING = String and _≟_
+{-|
+Pairs of natural numbers as artifacts.
+The first element in the pair is treated as an identifier
+whereas the second element determines the size of the artifact.
+Both elements of the pair are tested for equality.
+-}
+NAT : 𝔸
+NAT = record
+  { atoms = ℕ × ℕ
+  ; atomsEqual? = Product.≡-dec ℕ._≟_ ℕ._≟_
+  ; atomSize = proj₂
+  }
 
-module _ where
-  open import Data.Nat using (ℕ; _≟_)
-
-  NAT : 𝔸
-  NAT = ℕ and _≟_
+{-|
+Natural number artifacts.
+Each number is treated as a separate artifact.
+The size of all artifacts is zero.
+-}
+NAT' : 𝔸
+NAT' = record
+  { atoms = ℕ
+  ; atomsEqual? = ℕ._≟_
+  ; atomSize = const zero
+  }

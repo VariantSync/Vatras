@@ -130,6 +130,14 @@ Details on the features implemented in Vatras, including tutorials for integrati
 
 The PhD thesis presents a refined and extended version of our OOPSLA'24 paper in chapter 3. In the thesis, we extended the discussion on existing variability languages to better reflect and compare their assumptions on the underlying object language and their varying semantic domains. Consequently, we also extended our formal framework and case study to also study differences in semantic domains. We also refined the notation to better align with the Agda code and to avoid some minor ambiguities.
 
+### On the Succinctness of Languages for Static Variability
+
+[![Thesis](https://img.shields.io/badge/Thesis-PDF-purple)](https://doi.org/10.18725/OPARU-59127)
+
+> Benjamin Moosherr. _On the Succinctness of Languages for Static Variability_. Master Thesis, University of Ulm, November 2025. Reviewed by Matthias Tichy and Thomas Thüm. Supervised by Paul Maximilian Bittner.
+
+This master thesis extends Vatras by a succinctness relation. Succinctness expresses how the size of expressions must change when translated using a variability language compiler. Hence, succinctness allows us to differentiate between variability languages which have equal semantic expressiveness but whose translation results in combinatorial explosion.
+
 ### On the Expressive Power of Languages for Static Variability (OOPSLA'24)
 
 [![Preprint](https://img.shields.io/badge/OOPSLA'24-Preprint-purple)](https://github.com/SoftVarE-Group/Papers/raw/main/2024/2024-OOPSLA-Bittner.pdf)

@@ -4,7 +4,7 @@ open import Data.Fin as Fin using (Fin; zero; suc)
 open import Data.List as List using (List; []; _∷_)
 open import Data.List.NonEmpty as List⁺ using (_∷_)
 import Data.List.Properties as List
-open import Data.Nat as ℕ using (ℕ; zero; suc; _≤_; s≤s; z≤n)
+open import Data.Nat as ℕ using (ℕ; zero; suc; _≤_; s≤s; z≤n; _+_)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 import Vatras.Util.List as List
@@ -67,3 +67,7 @@ zipWith₂ : ∀ {ℓA ℓB ℓC} {A : Set ℓA} {B : Set ℓB} {C : Set ℓC} {
   → Vec.zipWith (λ x y → f y) xs ys ≡ Vec.map f ys
 zipWith₂ f [] [] = refl
 zipWith₂ f (x ∷ xs) (y ∷ ys) = Eq.cong (f y ∷_) (zipWith₂ f xs ys)
+
+sum-toList : ∀ {n : ℕ} → (xs : Vec ℕ n) → List.sum (Vec.toList xs) ≡ Vec.sum xs
+sum-toList [] = refl
+sum-toList (x ∷ xs) = Eq.cong (x +_) (sum-toList xs)

@@ -1,5 +1,5 @@
 open import Data.String as String using (String; _++_)
-open import Vatras.Framework.Definitions using (𝔽)
+open import Vatras.Framework.Definitions using (𝔽; STRING)
 open import Vatras.Util.Nat.AtLeast using (ℕ≥)
 module Vatras.Lang.NCC.Show {Dimension : 𝔽} {n : ℕ≥ 2} (show-D : Dimension → String) where
 
@@ -11,13 +11,13 @@ open import Data.Product using (_,_)
 open import Vatras.Show.Lines
 open import Vatras.Lang.NCC Dimension n using (NCC; _⟨_⟩; _-<_>-)
 
-show : ∀ {i} → NCC i (String , String._≟_) → String
+show : ∀ {i} → NCC i STRING → String
 show (a -< [] >-) = a
 show (a -< es@(_ ∷ _) >-) = a ++ "-<" ++ (String.intersperse ", " (List.map show es)) ++ ">-"
 show (D ⟨ cs ⟩) = show-D D ++ "⟨" ++ (String.intersperse ", " (List.map show (Vec.toList cs))) ++ "⟩"
 
 
-pretty : ∀ {i : Size} → NCC i (String , String._≟_) → Lines
+pretty : ∀ {i : Size} → NCC i STRING → Lines
 pretty (a -< [] >-) = > a
 pretty (a -< es@(_ ∷ _) >-) = do
   > a ++ "-<"

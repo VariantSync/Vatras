@@ -13,7 +13,7 @@ open import Level using (0ℓ)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
-open import Vatras.Framework.Definitions using (ℂ)
+open import Vatras.Framework.Definitions using (ℂ; STRING)
 open import Vatras.Framework.Variants using (Rose; show-rose)
 
 Feature = String
@@ -60,7 +60,7 @@ OC→2CC-Test-conffnoc-allno = refl ∷ refl ∷ refl ∷ refl ∷ []
 
 -- Translate an option calculus expression.
 -- Then configure it with an all-yes and an all-no config and print the resulting variants.
-exp-oc-to-bcc : Experiment (WFOC Feature ∞ (String , String._≟_))
+exp-oc-to-bcc : Experiment (WFOC Feature ∞ STRING)
 getName exp-oc-to-bcc = "Translate OC to 2CC"
 get     exp-oc-to-bcc ex@(name ≔ oc) = do
   let --trans-result   = translate oc

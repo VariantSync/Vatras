@@ -3,12 +3,15 @@ module Vatras.Util.AuxProofs where
 open import Level using (Level)
 open import Function using (id; _∘_)
 
-open import Data.Bool using (Bool; false; true)
+open import Data.Bool using (Bool; false; true; if_then_else_)
+open import Data.Empty using (⊥-elim)
+open import Data.Fin using (Fin; zero; suc; fromℕ<)
 open import Data.Nat using (ℕ; zero; suc; _≡ᵇ_; _+_; _∸_; _<_; _≤_; s≤s; z≤n)
 open import Data.Nat.Properties using (n<1+n; n∸n≡0; m≤n+m)
 open import Data.Product using (_×_; _,_)
 open import Relation.Binary using (DecidableEquality)
-open import Relation.Nullary.Decidable using (yes; no)
+open import Relation.Nullary using (¬_)
+open import Relation.Nullary.Decidable using (Dec; does; yes; no)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; _≗_; refl)
@@ -42,6 +45,27 @@ n<m→m≡ᵇn {suc n} (s≤s n<m) = n<m→m≡ᵇn n<m
 n∸1+m<n∸m : {n m : ℕ} → suc m ≤ n → n ∸ suc m < n ∸ m
 n∸1+m<n∸m {suc n} {zero} (s≤s m<n) = n<1+n n
 n∸1+m<n∸m {suc n} {suc m} (s≤s m<n) = n∸1+m<n∸m m<n
+
+----- Properties of if_then_else
+
+Predicate-if : ∀ {a} {A : Set a} {p} (P : A → Set p) {a b : A} x
+  → P a
+  → P b
+  → P (if x then a else b)
+Predicate-if P false p₁ p₂ = p₂
+Predicate-if P true p₁ p₂ = p₁
+
+
+----- Properties for Decidability
+
+does≡true : ∀ {p} {P : Set p} → (dec : Dec P) → P → does dec ≡ true
+does≡true (no ¬p) p = ⊥-elim (¬p p)
+does≡true (yes p) p' = Eq.refl
+
+does≡false : ∀ {p} {P : Set p} → (dec : Dec P) → ¬ P → does dec ≡ false
+does≡false (no ¬p) ¬p' = Eq.refl
+does≡false (yes p) ¬p = ⊥-elim (¬p p)
+
 
 ----- Properties of Vectors
 

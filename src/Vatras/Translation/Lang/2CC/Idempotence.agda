@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔸; 𝔽)
+open import Vatras.Framework.Definitions using (𝔸; 𝔽; atomsEqual?)
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 module Vatras.Translation.Lang.2CC.Idempotence (Dimension : 𝔽) (_==_ : DecidableEquality Dimension) where
@@ -22,7 +22,7 @@ open import Vatras.Lang.All
 open 2CC
 
 _≟_ : ∀ {i : Size} {A : 𝔸} → DecidableEquality (2CC Dimension i A)
-_≟_ {A = _ , _≟ₐ_} (a₁ -< cs₁ >-) (a₂ -< cs₂ >-) with a₁ ≟ₐ a₂ | List.≡-dec _≟_ cs₁ cs₂
+_≟_ {A = A} (a₁ -< cs₁ >-) (a₂ -< cs₂ >-) with atomsEqual? A a₁ a₂ | List.≡-dec _≟_ cs₁ cs₂
 (a₁ -< cs₁ >-) ≟ (a₂ -< cs₂ >-) | yes a₁≡a₂ | yes cs₁≡cs₂ = yes (Eq.cong₂ _-<_>- a₁≡a₂ cs₁≡cs₂)
 (a₁ -< cs₁ >-) ≟ (a₂ -< cs₂ >-) | yes a₁≡a₂ | no cs₁≢cs₂ = no λ where refl → cs₁≢cs₂ refl
 (a₁ -< cs₁ >-) ≟ (a₂ -< cs₂ >-) | no a₁≢a₂ | _ = no λ where refl → a₁≢a₂ refl
