@@ -17,7 +17,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
 open import Vatras.Framework.Compiler using (LanguageCompiler)
-open import Vatras.Framework.Definitions using (ℂ; 𝔸)
+open import Vatras.Framework.Definitions using (ℂ; STRING)
 open import Vatras.Framework.Variants using (Rose; show-rose)
 open import Vatras.Framework.VariabilityLanguage using (VariabilityLanguage; Expression)
 open import Vatras.Util.AuxProofs using (decidableEquality-×)
@@ -50,12 +50,10 @@ open import Vatras.Test.Example
 open import Vatras.Test.Examples.OC
 
 Feature = String
-Artifact : 𝔸
-Artifact = String , String._≟_
 
 open CCC-to-NCC using (⌈_⌉; numberOfAlternatives≤⌈_⌉)
 
-CCC→NCC-Exact : (e : CCC Feature ∞ Artifact) → NCC Feature ⌈ e ⌉ ∞ Artifact
+CCC→NCC-Exact : (e : CCC Feature ∞ STRING) → NCC Feature ⌈ e ⌉ ∞ STRING
 CCC→NCC-Exact e = CCC-to-NCC.translate ⌈ e ⌉ e (numberOfAlternatives≤⌈_⌉ e)
 
 
@@ -75,14 +73,14 @@ translate e E₂-name translator show = return-level e' do
   pretty-e' = show e'
 
 compile : ∀ {VL₁ VL₂ : VariabilityLanguage Variant}
-  → Expression VL₁ Artifact
+  → Expression VL₁ STRING
   → String
   → LanguageCompiler VL₁ VL₂
-  → (Expression VL₂ Artifact → Lines)
-  → Lines' (Expression VL₂ Artifact)
+  → (Expression VL₂ STRING → Lines)
+  → Lines' (Expression VL₂ STRING)
 compile e VL₂-name compiler show = translate e VL₂-name (LanguageCompiler.compile compiler) show
 
-round-trip : Experiment (CCC Feature ∞ (String , String._≟_))
+round-trip : Experiment (CCC Feature ∞ STRING)
 getName round-trip = "Translate CCC in one round-trip into equally expressive variability languages"
 get     round-trip ex@(name ≔ ccc) = do
   [ Center ]> "CCC, original expression"
@@ -102,10 +100,10 @@ get     round-trip ex@(name ≔ ccc) = do
   linebreak
 
 
-ex-trivial : Example (CCC Feature ∞ Artifact)
+ex-trivial : Example (CCC Feature ∞ STRING)
 ex-trivial = "trivial" ≔ "D" ⟨ "l" -< [] >- ∷ "r" -< [] >- ∷ [] ⟩
 
-ex-sandwich : Example (CCC Feature ∞ Artifact)
+ex-sandwich : Example (CCC Feature ∞ STRING)
 ex-sandwich = "Sandwich Recipe" ≔
   "🍞"
     -< "Salad?"
@@ -129,5 +127,5 @@ ex-sandwich = "Sandwich Recipe" ≔
     ∷ []
     >-
 
-examples : List (Example (CCC Feature ∞ Artifact))
+examples : List (Example (CCC Feature ∞ STRING))
 examples = ex-trivial ∷ ex-sandwich ∷ []

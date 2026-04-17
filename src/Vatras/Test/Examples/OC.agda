@@ -6,7 +6,7 @@ open import Data.Product using (_,_)
 open import Size using (Size; ↑_; ∞)
 
 -- open import Framework.Annotation.Name using (Option)
-open import Vatras.Framework.Definitions using (𝔸; 𝔽)
+open import Vatras.Framework.Definitions using (STRING)
 open import Vatras.Lang.All
 open OC using (WFOC; Root; _❲_❳; opt; oc-leaf)
 open import Vatras.Lang.OC.Util using (singleton)
@@ -14,7 +14,7 @@ open import Vatras.Lang.OC.Util using (singleton)
 open import Vatras.Test.Example
 
 OCExample : Set₁
-OCExample = Example (WFOC String ∞ (String , String._≟_))
+OCExample = Example (WFOC String ∞ STRING)
 
 optex-unary : OCExample
 optex-unary = "unary" ≔ (Root "r" [ opt "O" (oc-leaf "a") ])

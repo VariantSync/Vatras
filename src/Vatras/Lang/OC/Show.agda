@@ -1,4 +1,4 @@
-open import Vatras.Framework.Definitions using (𝔽)
+open import Vatras.Framework.Definitions using (𝔽; STRING)
 open import Data.String as String using (String; _++_)
 module Vatras.Lang.OC.Show {Option : 𝔽} (print-opt : Option → String) where
 
@@ -10,15 +10,15 @@ open import Data.List as List using ([]; _∷_)
 open import Vatras.Show.Lines hiding (map)
 open import Vatras.Lang.OC Option using (OC; _❲_❳; _-<_>-; WFOC; forgetWF)
 
-show-oc : ∀ {i : Size} → OC i (String , String._≟_) → String
+show-oc : ∀ {i : Size} → OC i STRING → String
 show-oc (s -< [] >-) = s
 show-oc (s -< es@(_ ∷ _) >-) = s ++ "-<" ++ (String.intersperse ", " (List.map show-oc es)) ++ ">-"
 show-oc (O ❲ e ❳) = print-opt O ++ "❲" ++ show-oc e ++ "❳"
 
-show-wfoc : ∀ {i : Size} → WFOC i (String , String._≟_) → String
+show-wfoc : ∀ {i : Size} → WFOC i STRING → String
 show-wfoc = show-oc ∘ forgetWF
 
-pretty-oc : ∀ {i : Size} → OC i (String , String._≟_) → Lines
+pretty-oc : ∀ {i : Size} → OC i STRING → Lines
 pretty-oc (s -< [] >-) = > s
 pretty-oc (s -< es@(_ ∷ _) >-) = do
   > s ++ "-<"
@@ -30,5 +30,5 @@ pretty-oc (O ❲ e ❳) = do
   indent 2 (pretty-oc e)
   > "❳"
 
-pretty-wfoc : ∀ {i : Size} → WFOC i (String , String._≟_) → Lines
+pretty-wfoc : ∀ {i : Size} → WFOC i STRING → Lines
 pretty-wfoc = pretty-oc ∘ forgetWF

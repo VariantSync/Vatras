@@ -16,7 +16,7 @@ open import Vatras.Test.Example
 open import Vatras.Test.Experiment
 open import Vatras.Show.Lines hiding (map)
 open import Vatras.Util.ShowHelpers
-open import Data.String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
+open import Data.String as String using (String; _<+>_; _++_) renaming (_≟_ to _≟ˢ_)
 
 open import Vatras.Framework.Variants using (show-rose)
 
@@ -66,7 +66,13 @@ module Java where
   _≟-ast_ : DecidableEquality ASTNode
   _≟-ast_ = _≟ˢ_
 
-  open FST.Impose {String} (ASTNode , _≟-ast_)
+  A : 𝔸
+  A = record
+    { atoms = ASTNode
+    ; atomsEqual? = _≟-ast_
+    ; atomSize = String.length
+    }
+  open FST.Impose {String} A
 
   module Calculator where
     fname-Add = "Add"
@@ -120,4 +126,4 @@ module Java where
 
     toy-calculator-experiment =
       let eq = _≟-ast_ in
-      exp String (ASTNode , eq) id id (pick-all ∷ pick-only eq fname-Add ∷ [])
+      exp String A id id (pick-all ∷ pick-only eq fname-Add ∷ [])

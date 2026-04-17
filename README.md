@@ -3,29 +3,17 @@
 [![Check the Agda files](https://github.com/pmbittner/Vatras/actions/workflows/check.yml/badge.svg)](https://github.com/pmbittner/Vatras/actions/workflows/check.yml)
 [![agda][agda-badge-version-svg]][agda-badge-version-url]
 [![License](https://img.shields.io/badge/License-GNU%20LGPLv3-blue)](LICENSE.LGPL3)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13502454.svg)](https://doi.org/10.5281/zenodo.13502454)
-
-[![Preprint](https://img.shields.io/badge/OOPSLA'24-Preprint-purple)](https://github.com/SoftVarE-Group/Papers/raw/main/2024/2024-OOPSLA-Bittner.pdf)
-[![Paper](https://img.shields.io/badge/OOPSLA'24-Paper-purple)](https://doi.org/10.1145/3689747)
-[![Slides](https://img.shields.io/badge/OOPSLA'24-Slides-purple)](https://github.com/SoftVarE-Group/Slides/raw/main/2024/2024-10-25-OOPSLA-Variability-Languages.pdf)
-[![Talk](https://img.shields.io/badge/OOPSLA'24-Talk-purple)](https://www.youtube.com/watch?v=kHYEHSHLffU&t=12713)
 [![Distinguished-Artifact](https://img.shields.io/badge/OOPSLA'24-Distinguished%20Artifact-gold)](https://2024.splashcon.org/track/splash-2024-oopsla-artifacts#Chair-s-Report)
 
-<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
-<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
+Vatras is a library to study, compare, and translate meta-languages for variability in source code, data, or any other configurable artifact such as sandwiches 🍞🥗🧀🍅. Among other things, Vatras features:
 
-Vatras is the supplementary Agda library for our OOPSLA'24 paper:
+- Formalizations of existing languages, calculi, and models for variability from the literature as algebraic data types.
+- A formal theory of expressiveness of such variability languages.
+- A web of compilers that translate these languages into each other.
+- Proofs of compiler correctness and expressiveness relationships.
+- Proofs when a compiler from one to another language cannot exist.
+- Tutorials for formalizing and integrating new variability languages.
 
-> _On the Expressive Power of Languages for Static Variability_. Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. Object-Oriented Programming, Systems, Languages & Applications, 2024 (**OOPSLA 2024**).
-
-This library formalizes all results in our paper:
-
-- All **formal languages for static software variability** presented in our survey (Section 3 + Table 1) are formalized as algebraic datatypes.
-- The library implements our **formal framework for language comparisons**, including necessary data structures, theorems, and proofs (Section 4).
-- This library contains **all theorems and proofs to establish the map of variability languages we find** by comparing the languages from our survey with our framework (Section 5).
-
-Additionally, our library comes with a small **demo**, and **tutorials** for getting to know the library and for formalizing your own variability languages (see "Tutorials" section below).
-When run in a terminal, our demo will show a translation roundtrip, showcasing the circle of compilers developed for identifying the map of variability languages (Section 5).
 
 ## What is Static Variability and What is Vatras?
 
@@ -130,6 +118,40 @@ Proofs of these properties come as _encodings_ for completeness (i.e., a functio
 Vatras includes a range of proofs of these properties for existing languages as explained in our respective paper.
 As a showcase, Vatras will show a roundtrip translation of the configurable sandwich specification above when you run it.
 Details on the features implemented in Vatras, including tutorials for integrating new languages, can be found in the **Reusability Guide** below.
+
+## Publications
+
+### Analyzing Edits to Static Variability (PhD Thesis, 2025)
+
+[![Thesis](https://img.shields.io/badge/Thesis-PDF-purple)](https://doi.org/10.18725/OPARU-58798)
+[![Slides](https://img.shields.io/badge/Thesis-Slides-purple)](https://github.com/TUBS-ISF/Slides/raw/main/2025/2025-08-12-PhD-Defense-Bittner.pdf)
+
+> P. M. Bittner. _Analyzing Edits to Static Variability_. PhD Thesis, University of Ulm, August 2025. Reviewed by Thomas Thüm, Matthias Tichy, and Martin Erwig.
+
+The PhD thesis presents a refined and extended version of our OOPSLA'24 paper in chapter 3. In the thesis, we extended the discussion on existing variability languages to better reflect and compare their assumptions on the underlying object language and their varying semantic domains. Consequently, we also extended our formal framework and case study to also study differences in semantic domains. We also refined the notation to better align with the Agda code and to avoid some minor ambiguities.
+
+### On the Succinctness of Languages for Static Variability
+
+[![Thesis](https://img.shields.io/badge/Thesis-PDF-purple)](https://doi.org/10.18725/OPARU-59127)
+
+> Benjamin Moosherr. _On the Succinctness of Languages for Static Variability_. Master Thesis, University of Ulm, November 2025. Reviewed by Matthias Tichy and Thomas Thüm. Supervised by Paul Maximilian Bittner.
+
+This master thesis extends Vatras by a succinctness relation. Succinctness expresses how the size of expressions must change when translated using a variability language compiler. Hence, succinctness allows us to differentiate between variability languages which have equal semantic expressiveness but whose translation results in combinatorial explosion.
+
+### On the Expressive Power of Languages for Static Variability (OOPSLA'24)
+
+[![Preprint](https://img.shields.io/badge/OOPSLA'24-Preprint-purple)](https://github.com/SoftVarE-Group/Papers/raw/main/2024/2024-OOPSLA-Bittner.pdf)
+[![Paper](https://img.shields.io/badge/OOPSLA'24-Paper-purple)](https://doi.org/10.1145/3689747)
+[![Slides](https://img.shields.io/badge/OOPSLA'24-Slides-purple)](https://github.com/SoftVarE-Group/Slides/raw/main/2024/2024-10-25-OOPSLA-Variability-Languages.pdf)
+[![Talk](https://img.shields.io/badge/OOPSLA'24-Talk-purple)](https://www.youtube.com/watch?v=kHYEHSHLffU&t=12713)
+[![Artifact DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13502454.svg)](https://doi.org/10.5281/zenodo.13502454)
+
+> _On the Expressive Power of Languages for Static Variability_. Paul M. Bittner, Alexander Schultheiß, Benjamin Moosherr, Jeffrey M. Young, Leopoldo Teixeira, Eric Walkingshaw, Parisa Ataei, Thomas Thüm. Object-Oriented Programming, Systems, Languages & Applications, 2024 (**OOPSLA 2024**).
+
+<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/results_reproduced_v1_1.png" alt="ACM Results Reproduced" width="114" height="113"/>
+<img padding="10" align="right" src="https://www.acm.org/binaries/content/gallery/acm/publications/artifact-review-v1_1-badges/artifacts_evaluated_reusable_v1_1.png" alt="ACM Artifacts Evaluated Reusable" width="114" height="113"/>
+
+Initially, Vatras emerged as the supplementary Agda library for this OOPSLA'24 paper. Below, you fill find a table that maps all theorems and definitions in the paper to their respective Agda implementation.
 
 ## Kick-the-Tires
 
@@ -390,7 +412,7 @@ See step 3 in the [manual setup](#alternative-3-manual-setup) for details on how
 
 #### Paper-to-Library Correspondence
 
-Our Agda formalization exhaustively formalizes all definitions, theorems, and proofs from our paper.
+Our Agda formalization exhaustively formalizes all definitions, theorems, and proofs from our OOPSLA'24 paper.
 The following table shows where each of the definitions, theorems, and proofs from the paper are formalized in this library.
 
 | statement       | notation in paper                 | name in our Agda Library                                           | file                                                                                                               | notes                                                                                                                                                              |

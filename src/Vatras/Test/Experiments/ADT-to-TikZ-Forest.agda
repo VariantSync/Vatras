@@ -22,12 +22,9 @@ open import Vatras.Test.Experiment
 open import Vatras.Show.Lines
 open import Vatras.Util.Named
 
-STR : 𝔸
-STR = (String , String._≟_)
-
-STRCCC = CCC String ∞ STR
-STR2CC = 2CC String ∞ STR
-STRADT = ADT String (Rose ∞) STR
+STRCCC = CCC String ∞ STRING
+STR2CC = 2CC String ∞ STRING
+STRADT = ADT String (Rose ∞) STRING
 
 rose-to-tikz-forest : ∀ {i} {A : 𝔸} → (atoms A → String) → Rose i A → Lines
 rose-to-tikz-forest pretty-atom (a -< [] >-) = > "[" ++ pretty-atom a ++ "]"

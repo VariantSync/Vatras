@@ -34,7 +34,6 @@ open import Vatras.Framework.Composition.FeatureAlgebra
 open import Vatras.Framework.VariabilityLanguage
 
 open import Vatras.Util.Function using (cong-app₂)
-open import Vatras.Util.List using (++-tail)
 ```
 
 ## Basic Definitions
@@ -56,7 +55,7 @@ module Impose (AtomSet : 𝔸) where
 
   private
     A = atoms AtomSet
-    _≟_ = proj₂ AtomSet
+    _≟_ = atomsEqual? AtomSet
 
   fst-leaf : A → FSTA ∞
   fst-leaf = rose-leaf
@@ -385,7 +384,7 @@ We now prove some useful properties of the above statements.
   ⊕-strangers ls [] _ _ rewrite ++-identityʳ ls = refl
   ⊕-strangers ls (r ∷ rs) (r∉rs ∷ u-rs) (r∉ls ∷ d-ls-rs)
     -- Goal: (ls ⊙ r) ⊕ rs ≡ ls ++ r ∷ rs
-    rewrite (Eq.sym (++-tail r rs ls))
+    rewrite (Eq.sym (List.∷ʳ-++ ls r rs))
     -- Goal: (ls ⊙ r) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
     rewrite ⊙-stranger r ls r∉ls
     -- Goal: (ls ++ r ∷ []) ⊕ rs ≡ (ls ++ r ∷ []) ++ rs
